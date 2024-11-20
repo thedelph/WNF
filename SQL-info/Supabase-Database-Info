@@ -1,0 +1,1081 @@
+[
+  {
+    "database_structure": {
+      "tables": [
+        {
+          "table_name": "admin_permissions",
+          "description": null,
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "description": null,
+              "position": 1
+            },
+            {
+              "name": "admin_role_id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 2
+            },
+            {
+              "name": "permission",
+              "type": "USER-DEFINED",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 3
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "CURRENT_TIMESTAMP",
+              "description": null,
+              "position": 4
+            }
+          ],
+          "constraints": [
+            {
+              "name": "admin_permissions_admin_role_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "admin_role_id",
+              "foreign_table": "admin_roles",
+              "foreign_column": "id"
+            },
+            {
+              "name": "admin_permissions_admin_role_id_permission_key",
+              "type": "UNIQUE",
+              "column": "admin_role_id",
+              "foreign_table": "admin_permissions",
+              "foreign_column": "admin_role_id"
+            },
+            {
+              "name": "admin_permissions_admin_role_id_permission_key",
+              "type": "UNIQUE",
+              "column": "admin_role_id",
+              "foreign_table": "admin_permissions",
+              "foreign_column": "permission"
+            },
+            {
+              "name": "admin_permissions_admin_role_id_permission_key",
+              "type": "UNIQUE",
+              "column": "permission",
+              "foreign_table": "admin_permissions",
+              "foreign_column": "admin_role_id"
+            },
+            {
+              "name": "admin_permissions_admin_role_id_permission_key",
+              "type": "UNIQUE",
+              "column": "permission",
+              "foreign_table": "admin_permissions",
+              "foreign_column": "permission"
+            },
+            {
+              "name": "admin_permissions_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "admin_permissions",
+              "foreign_column": "id"
+            },
+            {
+              "name": "2200_30519_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_30519_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_30519_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            }
+          ],
+          "indexes": [
+            {
+              "name": "admin_permissions_pkey",
+              "definition": "CREATE UNIQUE INDEX admin_permissions_pkey ON public.admin_permissions USING btree (id)"
+            },
+            {
+              "name": "admin_permissions_admin_role_id_permission_key",
+              "definition": "CREATE UNIQUE INDEX admin_permissions_admin_role_id_permission_key ON public.admin_permissions USING btree (admin_role_id, permission)"
+            }
+          ],
+          "rls_policies": [
+            {
+              "name": "super_admin_manage_permissions",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "authenticated"
+              ],
+              "command": "ALL",
+              "definition": "(EXISTS ( SELECT 1\n   FROM admin_roles ar\n  WHERE ((ar.player_id = ( SELECT players.id\n           FROM players\n          WHERE (players.user_id = auth.uid()))) AND (ar.is_super_admin = true))))"
+            }
+          ]
+        },
+        {
+          "table_name": "admin_roles",
+          "description": null,
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "description": null,
+              "position": 1
+            },
+            {
+              "name": "player_id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 2
+            },
+            {
+              "name": "is_super_admin",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 3
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "CURRENT_TIMESTAMP",
+              "description": null,
+              "position": 4
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "CURRENT_TIMESTAMP",
+              "description": null,
+              "position": 5
+            }
+          ],
+          "constraints": [
+            {
+              "name": "admin_roles_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "admin_roles",
+              "foreign_column": "id"
+            },
+            {
+              "name": "admin_roles_player_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "player_id",
+              "foreign_table": "players",
+              "foreign_column": "id"
+            },
+            {
+              "name": "2200_30505_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_30505_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            }
+          ],
+          "indexes": [
+            {
+              "name": "admin_roles_pkey",
+              "definition": "CREATE UNIQUE INDEX admin_roles_pkey ON public.admin_roles USING btree (id)"
+            }
+          ],
+          "rls_policies": null
+        },
+        {
+          "table_name": "game_registrations",
+          "description": null,
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": "gen_random_uuid()",
+              "description": null,
+              "position": 1
+            },
+            {
+              "name": "game_id",
+              "type": "uuid",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 2
+            },
+            {
+              "name": "player_id",
+              "type": "uuid",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 3
+            },
+            {
+              "name": "status",
+              "type": "text",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 4
+            },
+            {
+              "name": "team",
+              "type": "text",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 5
+            },
+            {
+              "name": "paid",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 6
+            },
+            {
+              "name": "payment_link",
+              "type": "text",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 7
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "timezone('utc'::text, now())",
+              "description": null,
+              "position": 8
+            }
+          ],
+          "constraints": [
+            {
+              "name": "game_registrations_game_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "game_id",
+              "foreign_table": "games",
+              "foreign_column": "id"
+            },
+            {
+              "name": "game_registrations_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "game_registrations",
+              "foreign_column": "id"
+            },
+            {
+              "name": "game_registrations_player_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "player_id",
+              "foreign_table": "players",
+              "foreign_column": "id"
+            },
+            {
+              "name": "game_registrations_status_check",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "game_registrations",
+              "foreign_column": "status"
+            },
+            {
+              "name": "game_registrations_team_check",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "game_registrations",
+              "foreign_column": "team"
+            },
+            {
+              "name": "unique_game_player",
+              "type": "UNIQUE",
+              "column": "game_id",
+              "foreign_table": "game_registrations",
+              "foreign_column": "game_id"
+            },
+            {
+              "name": "unique_game_player",
+              "type": "UNIQUE",
+              "column": "game_id",
+              "foreign_table": "game_registrations",
+              "foreign_column": "player_id"
+            },
+            {
+              "name": "unique_game_player",
+              "type": "UNIQUE",
+              "column": "player_id",
+              "foreign_table": "game_registrations",
+              "foreign_column": "game_id"
+            },
+            {
+              "name": "unique_game_player",
+              "type": "UNIQUE",
+              "column": "player_id",
+              "foreign_table": "game_registrations",
+              "foreign_column": "player_id"
+            },
+            {
+              "name": "2200_29630_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_29630_4_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            }
+          ],
+          "indexes": [
+            {
+              "name": "game_registrations_pkey",
+              "definition": "CREATE UNIQUE INDEX game_registrations_pkey ON public.game_registrations USING btree (id)"
+            },
+            {
+              "name": "unique_game_player",
+              "definition": "CREATE UNIQUE INDEX unique_game_player ON public.game_registrations USING btree (game_id, player_id)"
+            }
+          ],
+          "rls_policies": [
+            {
+              "name": "Admins can register any player",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "INSERT",
+              "definition": null
+            },
+            {
+              "name": "Everyone can view game registrations",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "SELECT",
+              "definition": "true"
+            },
+            {
+              "name": "Players can delete their own registration",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "DELETE",
+              "definition": "(auth.uid() IN ( SELECT players.user_id\n   FROM players\n  WHERE (players.id = game_registrations.player_id)))"
+            },
+            {
+              "name": "Players can register themselves",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "INSERT",
+              "definition": null
+            },
+            {
+              "name": "Players can update their own registration",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "UPDATE",
+              "definition": "(auth.uid() IN ( SELECT players.user_id\n   FROM players\n  WHERE (players.id = game_registrations.player_id)))"
+            }
+          ]
+        },
+        {
+          "table_name": "games",
+          "description": null,
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": "gen_random_uuid()",
+              "description": null,
+              "position": 1
+            },
+            {
+              "name": "date",
+              "type": "timestamp with time zone",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 2
+            },
+            {
+              "name": "registration_window_start",
+              "type": "timestamp with time zone",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 3
+            },
+            {
+              "name": "registration_window_end",
+              "type": "timestamp with time zone",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 4
+            },
+            {
+              "name": "status",
+              "type": "text",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 5
+            },
+            {
+              "name": "score_blue",
+              "type": "integer",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 6
+            },
+            {
+              "name": "score_orange",
+              "type": "integer",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 7
+            },
+            {
+              "name": "outcome",
+              "type": "text",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 8
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "timezone('utc'::text, now())",
+              "description": null,
+              "position": 9
+            },
+            {
+              "name": "venue_id",
+              "type": "uuid",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 10
+            },
+            {
+              "name": "max_players",
+              "type": "integer",
+              "nullable": "YES",
+              "default": "18",
+              "description": null,
+              "position": 11
+            },
+            {
+              "name": "random_slots",
+              "type": "integer",
+              "nullable": "NO",
+              "default": "2",
+              "description": null,
+              "position": 12
+            },
+            {
+              "name": "is_historical",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 13
+            },
+            {
+              "name": "sequence_number",
+              "type": "integer",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 14
+            }
+          ],
+          "constraints": [
+            {
+              "name": "games_outcome_check",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "outcome"
+            },
+            {
+              "name": "games_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "games",
+              "foreign_column": "id"
+            },
+            {
+              "name": "games_status_check",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "status"
+            },
+            {
+              "name": "games_venue_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "venue_id",
+              "foreign_table": "venues",
+              "foreign_column": "id"
+            },
+            {
+              "name": "valid_dates",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "date"
+            },
+            {
+              "name": "valid_dates",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "registration_window_end"
+            },
+            {
+              "name": "valid_dates",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "registration_window_start"
+            },
+            {
+              "name": "valid_score",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "score_blue"
+            },
+            {
+              "name": "valid_score",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "score_orange"
+            },
+            {
+              "name": "2200_29617_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_29617_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_29617_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_29617_4_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_29617_5_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_29617_12_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            }
+          ],
+          "indexes": [
+            {
+              "name": "games_pkey",
+              "definition": "CREATE UNIQUE INDEX games_pkey ON public.games USING btree (id)"
+            }
+          ],
+          "rls_policies": [
+            {
+              "name": "Everyone can view games",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "SELECT",
+              "definition": "true"
+            },
+            {
+              "name": "Only admins can delete games",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "DELETE",
+              "definition": "(auth.uid() IN ( SELECT p.user_id\n   FROM players p\n  WHERE (p.is_admin = true)))"
+            },
+            {
+              "name": "Only admins can insert games",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "INSERT",
+              "definition": null
+            },
+            {
+              "name": "Only admins can update games",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "UPDATE",
+              "definition": "(auth.uid() IN ( SELECT players.user_id\n   FROM players\n  WHERE (players.is_admin = true)))"
+            }
+          ]
+        },
+        {
+          "table_name": "players",
+          "description": null,
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": "gen_random_uuid()",
+              "description": null,
+              "position": 1
+            },
+            {
+              "name": "user_id",
+              "type": "uuid",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 2
+            },
+            {
+              "name": "friendly_name",
+              "type": "text",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 3
+            },
+            {
+              "name": "preferred_position",
+              "type": "text",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 4
+            },
+            {
+              "name": "caps",
+              "type": "integer",
+              "nullable": "YES",
+              "default": "0",
+              "description": null,
+              "position": 5
+            },
+            {
+              "name": "win_rate",
+              "type": "numeric",
+              "nullable": "YES",
+              "default": "0",
+              "description": null,
+              "position": 7
+            },
+            {
+              "name": "active_bonuses",
+              "type": "integer",
+              "nullable": "YES",
+              "default": "0",
+              "description": null,
+              "position": 8
+            },
+            {
+              "name": "active_penalties",
+              "type": "integer",
+              "nullable": "YES",
+              "default": "0",
+              "description": null,
+              "position": 9
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "timezone('utc'::text, now())",
+              "description": null,
+              "position": 10
+            },
+            {
+              "name": "is_admin",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 11
+            },
+            {
+              "name": "is_super_admin",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 12
+            },
+            {
+              "name": "avatar_svg",
+              "type": "text",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 13
+            },
+            {
+              "name": "avatar_options",
+              "type": "jsonb",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 14
+            },
+            {
+              "name": "attack_rating",
+              "type": "numeric",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 15
+            },
+            {
+              "name": "defense_rating",
+              "type": "numeric",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 16
+            },
+            {
+              "name": "is_test_user",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 17
+            },
+            {
+              "name": "manual_caps_override",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 18
+            },
+            {
+              "name": "current_streak",
+              "type": "integer",
+              "nullable": "YES",
+              "default": "0",
+              "description": null,
+              "position": 19
+            },
+            {
+              "name": "max_streak",
+              "type": "integer",
+              "nullable": "YES",
+              "default": "0",
+              "description": null,
+              "position": 20
+            }
+          ],
+          "constraints": [
+            {
+              "name": "players_friendly_name_key",
+              "type": "UNIQUE",
+              "column": "friendly_name",
+              "foreign_table": "players",
+              "foreign_column": "friendly_name"
+            },
+            {
+              "name": "players_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "players",
+              "foreign_column": "id"
+            },
+            {
+              "name": "players_user_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "user_id",
+              "foreign_table": "users",
+              "foreign_column": "id"
+            },
+            {
+              "name": "valid_position",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "players",
+              "foreign_column": "preferred_position"
+            },
+            {
+              "name": "valid_win_rate",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "players",
+              "foreign_column": "win_rate"
+            },
+            {
+              "name": "2200_28996_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_28996_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            }
+          ],
+          "indexes": [
+            {
+              "name": "players_pkey",
+              "definition": "CREATE UNIQUE INDEX players_pkey ON public.players USING btree (id)"
+            },
+            {
+              "name": "players_friendly_name_key",
+              "definition": "CREATE UNIQUE INDEX players_friendly_name_key ON public.players USING btree (friendly_name)"
+            },
+            {
+              "name": "players_user_id_idx",
+              "definition": "CREATE INDEX players_user_id_idx ON public.players USING btree (user_id)"
+            },
+            {
+              "name": "players_friendly_name_idx",
+              "definition": "CREATE INDEX players_friendly_name_idx ON public.players USING btree (friendly_name)"
+            }
+          ],
+          "rls_policies": [
+            {
+              "name": "Allow creation of regular and test users",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "INSERT",
+              "definition": null
+            },
+            {
+              "name": "Enable read access for all users",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "SELECT",
+              "definition": "true"
+            },
+            {
+              "name": "Enable update for authenticated users",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "UPDATE",
+              "definition": "(auth.role() = 'authenticated'::text)"
+            },
+            {
+              "name": "Super admins can delete players",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "DELETE",
+              "definition": "(EXISTS ( SELECT 1\n   FROM players p\n  WHERE ((p.user_id = auth.uid()) AND (p.is_super_admin = true))))"
+            },
+            {
+              "name": "Super admins can update any player",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "UPDATE",
+              "definition": "(EXISTS ( SELECT 1\n   FROM players players_1\n  WHERE ((players_1.id = auth.uid()) AND (players_1.is_super_admin = true))))"
+            },
+            {
+              "name": "Users can create their profile",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "INSERT",
+              "definition": null
+            },
+            {
+              "name": "Users can update their own profile",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "UPDATE",
+              "definition": "(auth.uid() = id)"
+            }
+          ]
+        },
+        {
+          "table_name": "venues",
+          "description": null,
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "description": null,
+              "position": 1
+            },
+            {
+              "name": "name",
+              "type": "text",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 2
+            },
+            {
+              "name": "address",
+              "type": "text",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 3
+            },
+            {
+              "name": "is_default",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 4
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "now()",
+              "description": null,
+              "position": 5
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "now()",
+              "description": null,
+              "position": 6
+            },
+            {
+              "name": "google_maps_url",
+              "type": "text",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 7
+            }
+          ],
+          "constraints": [
+            {
+              "name": "venues_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "venues",
+              "foreign_column": "id"
+            },
+            {
+              "name": "2200_30948_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_30948_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_30948_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            }
+          ],
+          "indexes": [
+            {
+              "name": "venues_pkey",
+              "definition": "CREATE UNIQUE INDEX venues_pkey ON public.venues USING btree (id)"
+            }
+          ],
+          "rls_policies": null
+        }
+      ]
+    }
+  }
+]
