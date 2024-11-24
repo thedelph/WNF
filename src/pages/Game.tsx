@@ -1,198 +1,187 @@
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../utils/supabase';
 import { GameDetails } from '../components/game/GameDetails';
-import { RegisteredPlayers } from '../components/game/RegisteredPlayers';
+import { Game as GameType, GAME_STATUSES } from '../types/game';
 import { PlayerSelectionResults } from '../components/games/PlayerSelectionResults';
 import { useRegistrationClose } from '../hooks/useRegistrationClose';
-import { useGameRegistration } from '../hooks/useGameRegistration';
-import { DebugInfo } from '../components/DebugInfo';
-import { Game as GameType } from '../types/game';
+import { calculatePlayerXP } from '../utils/playerUtils';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { toast } from 'react-hot-toast';
+import { RegisteredPlayers } from '../components/game/RegisteredPlayers';
 
 const Game = () => {
   const [upcomingGame, setUpcomingGame] = useState<GameType | null>(null);
-  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
-  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [playerData, setPlayerData] = useState({
+    registrations: [],
+    selectedPlayers: [],
+    reservePlayers: []
+  });
 
-  const fetchUpcomingGame = async () => {
+  const fetchGameData = useCallback(async () => {
     try {
-      const now = new Date().toISOString();
+      setIsLoading(true);
       
-      const { data, error } = await supabase
+      // Fetch the next game that hasn't been completed
+      const { data: games, error: gameError } = await supabase
         .from('games')
-        .select(`
-          *,
-          venue:venues(*),
-          game_registrations(
-            id,
-            status,
-            player_id,
-            randomly_selected,
-            players(
-              id,
-              friendly_name,
-              caps,
-              active_bonuses,
-              active_penalties,
-              current_streak
-            )
-          )
-        `)
-        .gte('date', now)
-        .in('status', ['open', 'upcoming', 'pending_teams', 'teams_announced'])
+        .select('*')
+        .neq('status', 'completed')
+        .gte('date', new Date().toISOString())
         .order('date', { ascending: true })
         .limit(1);
 
-      if (error) {
-        console.error('Game fetch error:', error);
+      if (gameError) throw gameError;
+      if (!games || games.length === 0) {
+        setIsLoading(false);
         return;
       }
 
-      if (!data || data.length === 0) {
-        setUpcomingGame(null);
-        return;
+      const currentGame = games[0];
+
+      // Fetch registrations with player details using the correct foreign key
+      const { data: registrations, error: regError } = await supabase
+        .from('game_registrations')
+        .select(`
+          id,
+          status,
+          randomly_selected,
+          player:players!game_registrations_player_id_fkey (
+            id,
+            friendly_name,
+            caps,
+            active_bonuses,
+            active_penalties,
+            current_streak
+          )
+        `)
+        .eq('game_id', currentGame.id);
+
+      if (regError) {
+        console.error('Registration fetch error:', regError);
+        throw regError;
       }
 
-      setUpcomingGame(data[0]);
-    } catch (error) {
-      console.error('Error fetching upcoming game:', error);
-    }
-  };
+      // Process registrations with proper XP calculation
+      const processedPlayers = (registrations || []).map(reg => ({
+        id: reg.id,
+        friendly_name: reg.player.friendly_name,
+        xp: calculatePlayerXP({
+          caps: reg.player.caps,
+          activeBonuses: reg.player.active_bonuses,
+          activePenalties: reg.player.active_penalties,
+          currentStreak: reg.player.current_streak
+        }),
+        stats: {
+          caps: reg.player.caps,
+          activeBonuses: reg.player.active_bonuses,
+          activePenalties: reg.player.active_penalties,
+          currentStreak: reg.player.current_streak
+        },
+        isRandomlySelected: reg.randomly_selected
+      }));
 
-  // Fetch current player ID
-  useEffect(() => {
-    const getPlayerId = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const { data: player, error } = await supabase
-          .from('players')
-          .select('id')
-          .eq('user_id', user.id)
+      // Split into selected and reserve players
+      const selectedPlayers = processedPlayers.filter(p => 
+        registrations.find(r => r.id === p.id)?.status === 'selected' ||
+        registrations.find(r => r.id === p.id)?.status === 'confirmed'
+      );
+      const reservePlayers = processedPlayers.filter(p => 
+        registrations.find(r => r.id === p.id)?.status === 'reserve'
+      );
+
+      setUpcomingGame(currentGame);
+      setPlayerData({
+        registrations: processedPlayers.map(p => ({
+          id: p.id,
+          players: {
+            friendly_name: p.friendly_name
+          }
+        })),
+        selectedPlayers,
+        reservePlayers
+      });
+
+      if (currentGame.status === 'players_announced') {
+        const { data: selectionResults, error: selectionError } = await supabase
+          .from('game_selections')
+          .select('*')
+          .eq('game_id', currentGame.id)
           .single();
 
-        if (error) {
-          console.error('Error fetching player:', error);
-          return;
+        if (!selectionError && selectionResults) {
+          setPlayerData({
+            ...playerData,
+            selectedPlayers: selectionResults.selectedPlayers,
+            reservePlayers: selectionResults.reservePlayers
+          });
         }
-
-        console.log('Found player:', player);
-        if (player) {
-          setCurrentPlayerId(player.id);
-        }
-      } catch (error) {
-        console.error('Error in getPlayerId:', error);
       }
-    };
-
-    getPlayerId();
-  }, [user]);
-
-  // Fetch game data on mount and when user changes
-  useEffect(() => {
-    fetchUpcomingGame();
+    } catch (error) {
+      console.error('Error fetching game data:', error);
+      toast.error('Failed to load game data');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const {
-    isRegistered,
-    handleRegister,
-    handleUnregister
-  } = useGameRegistration(upcomingGame?.id, currentPlayerId, fetchUpcomingGame);
-
-  const {
-    isProcessingClose,
-    hasPassedWindowEnd,
-    handleRegistrationWindowClose
-  } = useRegistrationClose({
+  // Use the registration close hook
+  const { isProcessingClose } = useRegistrationClose({
     upcomingGame,
-    onGameUpdated: fetchUpcomingGame
+    onGameUpdated: fetchGameData
   });
 
-  const handleClose = async () => {
-    console.log('Starting registration close process...');
-    if (!upcomingGame) {
-      console.error('No game found');
-      return;
-    }
-    
-    try {
-      await handleRegistrationWindowClose();
-      console.log('Registration close completed');
-    } catch (error) {
-      console.error('Failed to close registration:', error);
-    }
+  useEffect(() => {
+    fetchGameData();
+  }, [fetchGameData]);
+
+  const isRegistrationOpen = (game: GameType) => {
+    const now = new Date();
+    const regStart = new Date(game.registration_window_start);
+    const regEnd = new Date(game.registration_window_end);
+    return now >= regStart && now <= regEnd;
   };
 
-  if (!upcomingGame) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-lg text-gray-600">No upcoming games scheduled</p>
-      </div>
-    );
-  }
-
-  const registeredPlayers = upcomingGame.game_registrations || [];
-  const now = new Date();
-  const registrationEnd = new Date(upcomingGame.registration_window_end);
-  const isRegistrationWindowOpen = now <= registrationEnd;
-
-  // Calculate selected and reserve players
-  const selectedPlayers = registeredPlayers
-    .filter(reg => reg.status === 'selected')
-    .map(reg => ({
-      id: reg.player_id,
-      friendly_name: reg.players?.friendly_name || 'Unknown Player',
-      isRandomlySelected: reg.randomly_selected || false
-    }));
-
-  const reservePlayers = registeredPlayers
-    .filter(reg => reg.status === 'reserve')
-    .map(reg => ({
-      id: reg.player_id,
-      friendly_name: reg.players?.friendly_name || 'Unknown Player'
-    }));
+  const isBeforeRegistration = (game: GameType) => {
+    const now = new Date();
+    const regStart = new Date(game.registration_window_start);
+    return now < regStart;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={upcomingGame.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="space-y-8"
-        >
-          <GameDetails
-            date={upcomingGame.date}
-            registeredCount={registeredPlayers.length}
-            maxPlayers={upcomingGame.max_players}
-            isRegistered={isRegistered}
-            isRegistrationWindowOpen={isRegistrationWindowOpen}
-            onRegister={handleRegister}
-            onUnregister={handleUnregister}
-            onClose={handleClose}
-            isProcessingClose={isProcessingClose}
-          />
-
-          {!isRegistrationWindowOpen && (
-            <PlayerSelectionResults
-              selectedPlayers={selectedPlayers}
-              reservePlayers={reservePlayers}
-            />
+      <GameDetails game={upcomingGame} />
+      
+      {isLoading || isProcessingClose ? (
+        <LoadingSpinner />
+      ) : upcomingGame && (
+        <>
+          {/* Before registration opens */}
+          {isBeforeRegistration(upcomingGame) && (
+            <div className="mt-8 text-center text-gray-600">
+              Registration opens at {new Date(upcomingGame.registration_window_start).toLocaleString()}
+            </div>
           )}
 
-          <RegisteredPlayers
-            registrations={registeredPlayers}
-          />
+          {/* During registration window */}
+          {isRegistrationOpen(upcomingGame) && (
+            <>
+              <div className="mt-8">
+                <h2 className="text-xl font-semibold mb-4">Currently Registered Players</h2>
+                <RegisteredPlayers registrations={playerData.registrations} />
+              </div>
+            </>
+          )}
 
-          <DebugInfo
-            upcomingGame={upcomingGame}
-            isProcessingClose={isProcessingClose}
-            hasPassedWindowEnd={hasPassedWindowEnd}
-          />
-        </motion.div>
-      </AnimatePresence>
+          {/* After registration closes */}
+          {upcomingGame.status === 'players_announced' && (
+            <PlayerSelectionResults 
+              selectedPlayers={playerData.selectedPlayers}
+              reservePlayers={playerData.reservePlayers}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };

@@ -111,13 +111,25 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
         if (orangeError) throw orangeError
       }
 
-      console.log('Created game with registrations:', {
-        game,
-        bluePlayers,
-        orangePlayers
-      })
+      // After successfully creating game registrations, update caps for all players
+      const allPlayers = [...bluePlayers, ...orangePlayers]
+      
+      for (const player of allPlayers) {
+        const { error: capsError } = await supabaseAdmin
+          .from('players')
+          .update({
+            caps: supabase.rpc('increment_caps', { value: 1 })
+          })
+          .eq('id', player.id)
 
-      toast.success('Historical game added successfully')
+        if (capsError) {
+          console.error(`Error updating caps for player ${player.id}:`, capsError)
+        }
+      }
+
+      console.log('Updated caps for players:', allPlayers.map(p => p.name))
+      
+      toast.success('Historical game and caps added successfully')
       onGameAdded()
       resetForm()
     } catch (error) {

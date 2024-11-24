@@ -24,28 +24,30 @@ const CreateTestUserModal: React.FC<CreateTestUserModalProps> = ({
 
   const handleCreateTestUser = async (e: React.FormEvent) => {
     e.preventDefault()
+    
     try {
-      const { error } = await supabaseAdmin
+      const { data, error } = await supabaseAdmin
         .from('players')
         .insert({
           friendly_name: formData.friendly_name,
           ...(formData.preferred_position ? { preferred_position: formData.preferred_position } : {}),
           is_test_user: true,
           caps: formData.caps,
-          xp: formData.caps,
           win_rate: 0,
           ...(formData.attack_rating ? { attack_rating: formData.attack_rating } : {}),
           ...(formData.defense_rating ? { defense_rating: formData.defense_rating } : {})
         })
+        .select()
 
       if (error) throw error
       
+      console.log('Created user:', data)
       toast.success('Test user created successfully')
       onUserCreated()
       onClose()
     } catch (error) {
       console.error('Error creating test user:', error)
-      toast.error('Failed to create test user')
+      toast.error(`Failed to create test user: ${error.message}`)
     }
   }
 

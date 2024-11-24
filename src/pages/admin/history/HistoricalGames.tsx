@@ -15,6 +15,7 @@ export default function HistoricalGames() {
   const [loading, setLoading] = useState(true)
   const { isAdmin } = useAdmin()
   const [outcome, setOutcome] = useState<GameOutcome>(null)
+  const [isRecalculating, setIsRecalculating] = useState(false)
 
   useEffect(() => {
     fetchGames()
@@ -51,6 +52,53 @@ export default function HistoricalGames() {
     }
   }
 
+  const recalculateAllCaps = async () => {
+    try {
+      setIsRecalculating(true)
+      
+      // First, get all players
+      const { data: players, error: playersError } = await supabaseAdmin
+        .from('players')
+        .select('id, friendly_name')
+
+      if (playersError) throw playersError
+
+      // For each player, count their game registrations
+      for (const player of players) {
+        const { count, error: countError } = await supabaseAdmin
+          .from('game_registrations')
+          .select('*', { count: 'exact', head: false })
+          .eq('player_id', player.id)
+          .eq('status', 'selected')
+
+        if (countError) {
+          console.error(`Error counting games for player ${player.friendly_name}:`, countError)
+          continue
+        }
+
+        // Update player's caps with the counted value
+        const { error: updateError } = await supabaseAdmin
+          .from('players')
+          .update({ caps: count })
+          .eq('id', player.id)
+
+        if (updateError) {
+          console.error(`Error updating caps for player ${player.friendly_name}:`, updateError)
+          continue
+        }
+
+        console.log(`Updated caps for ${player.friendly_name} to ${count}`)
+      }
+
+      toast.success('Successfully recalculated all player caps')
+    } catch (error) {
+      console.error('Error recalculating caps:', error)
+      toast.error('Failed to recalculate caps')
+    } finally {
+      setIsRecalculating(false)
+    }
+  }
+
   if (!isAdmin) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -66,7 +114,16 @@ export default function HistoricalGames() {
       transition={{ duration: 0.5 }}
       className="container mx-auto px-4 py-8"
     >
-      <h1 className="text-3xl font-bold mb-8 text-center">Historical Games</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-center">Historical Games</h1>
+        <button 
+          onClick={recalculateAllCaps}
+          disabled={isRecalculating}
+          className={`btn btn-secondary ${isRecalculating ? 'loading' : ''}`}
+        >
+          {isRecalculating ? 'Recalculating...' : 'Recalculate All Caps'}
+        </button>
+      </div>
       <div className="grid gap-8 md:grid-cols-2">
         <div>
           <h2 className="text-2xl font-semibold mb-4">Add New Game</h2>

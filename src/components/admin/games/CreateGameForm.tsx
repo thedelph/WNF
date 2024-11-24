@@ -20,6 +20,16 @@ interface Props {
   setMaxPlayers: (num: number) => void
   randomSlots: number
   setRandomSlots: (num: number) => void
+  presets: {
+    id: string;
+    name: string;
+    venue_id: string;
+    day_of_week: string;
+    start_time: string;
+    registration_hours_before: number;
+    registration_hours_until: number;
+  }[];
+  onPresetSelect: (presetId: string) => void;
 }
 
 export const CreateGameForm: React.FC<Props> = ({
@@ -38,11 +48,32 @@ export const CreateGameForm: React.FC<Props> = ({
   maxPlayers,
   setMaxPlayers,
   randomSlots,
-  setRandomSlots
+  setRandomSlots,
+  presets,
+  onPresetSelect
 }) => {
   return (
     <FormContainer title="Create New Game">
       <form onSubmit={onSubmit} className="space-y-4">
+        {presets && presets.length > 0 && (
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-semibold">Quick Setup</span>
+            </label>
+            <select
+              onChange={(e) => onPresetSelect(e.target.value)}
+              className="select select-bordered"
+            >
+              <option value="">Choose a preset...</option>
+              {presets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="form-control">
           <label className="label">
             <span className="label-text">Game Date</span>
@@ -72,6 +103,12 @@ export const CreateGameForm: React.FC<Props> = ({
         <div className="form-control">
           <label className="label">
             <span className="label-text">Registration Window Start</span>
+            <span 
+              className="label-text-alt text-primary cursor-pointer hover:underline"
+              onClick={() => setRegistrationStart(new Date().toISOString().slice(0, 16))}
+            >
+              Set to now
+            </span>
           </label>
           <input
             type="datetime-local"
@@ -85,6 +122,15 @@ export const CreateGameForm: React.FC<Props> = ({
         <div className="form-control">
           <label className="label">
             <span className="label-text">Registration Window End</span>
+            <span 
+              className="label-text-alt text-primary cursor-pointer hover:underline"
+              onClick={() => {
+                const oneMinuteFromNow = new Date(Date.now() + 60000);
+                setRegistrationEnd(oneMinuteFromNow.toISOString().slice(0, 16));
+              }}
+            >
+              1 min from now
+            </span>
           </label>
           <input
             type="datetime-local"

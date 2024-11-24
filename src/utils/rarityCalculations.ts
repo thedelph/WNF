@@ -1,31 +1,42 @@
 export const calculateRarity = (xp: number, allXp: number[]): 'Legendary' | 'Epic' | 'Rare' | 'Uncommon' | 'Common' => {
-  // Sort XP values in descending order
-  const sortedXP = [...allXp].sort((a, b) => b - a)
-  const totalPlayers = sortedXP.length
+  const sortedXP = [...allXp].sort((a, b) => b - a);
+  const position = sortedXP.indexOf(xp);
+  const totalPlayers = allXp.length;
   
-  console.log('Total Players:', totalPlayers)
-  console.log('Sorted XP Values:', sortedXP)
-  console.log('Current XP:', xp)
+  const thresholds = {
+    legendary: Math.max(1, Math.ceil(totalPlayers * 0.02)),  // Top 2%
+    epic: Math.max(2, Math.ceil(totalPlayers * 0.07)),       // Top 7%
+    rare: Math.max(4, Math.ceil(totalPlayers * 0.20)),       // Top 20%
+    uncommon: Math.max(8, Math.ceil(totalPlayers * 0.40))    // Top 40%
+  };
   
-  // Calculate exact cutoff positions
-  const legendaryCount = Math.max(1, Math.round(totalPlayers * 0.01))
-  const epicCount = Math.max(2, Math.round(totalPlayers * 0.04))
-  const rareCount = Math.max(7, Math.round(totalPlayers * 0.15))
-  const uncommonCount = Math.round(totalPlayers * 0.33)
+  console.log('Rarity Calculation:', {
+    xp,
+    position,
+    totalPlayers,
+    thresholds,
+    topXPValues: sortedXP.slice(0, 5),
+    uniqueXPValues: new Set(allXp).size
+  });
+
+  if (position < thresholds.legendary) return 'Legendary';
+  if (position < thresholds.epic) return 'Epic';
+  if (position < thresholds.rare) return 'Rare';
+  if (position < thresholds.uncommon) return 'Uncommon';
+  return 'Common';
+};
+
+export const calculatePlayerXP = ({
+  caps = 0,
+  activeBonuses = 0,
+  activePenalties = 0,
+  currentStreak = 0
+}: PlayerStats): number => {
+  const bonusModifier = activeBonuses * 0.1;
+  const penaltyModifier = activePenalties * 0.1;
+  const streakModifier = currentStreak * 0.1;
   
-  console.log('Distribution:', {
-    legendary: legendaryCount,
-    epic: epicCount,
-    rare: rareCount,
-    uncommon: uncommonCount,
-    common: totalPlayers - (legendaryCount + epicCount + rareCount + uncommonCount)
-  })
+  const totalModifier = 1 + bonusModifier - penaltyModifier + streakModifier;
   
-  const position = sortedXP.indexOf(xp)
-  
-  if (position < legendaryCount) return 'Legendary'
-  if (position < (legendaryCount + epicCount)) return 'Epic'
-  if (position < (legendaryCount + epicCount + rareCount)) return 'Rare'
-  if (position < (legendaryCount + epicCount + rareCount + uncommonCount)) return 'Uncommon'
-  return 'Common'
-}
+  return Math.round(caps * totalModifier);
+};

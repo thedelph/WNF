@@ -16,11 +16,12 @@ import { Toaster } from 'react-hot-toast'
 import HistoricalGames from './pages/admin/history/HistoricalGames'
 import PlayerList from './pages/PlayerList'
 import PlayerProfile from './pages/PlayerProfile'
+import PaymentDashboard from './components/admin/payments/PaymentDashboard'
 
 const App: React.FC = () => {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
+    <AuthProvider>
+      <ErrorBoundary>
         <Layout>
           <Routes>
             <Route path="/admin" element={<AdminPortal />} />
@@ -34,11 +35,12 @@ const App: React.FC = () => {
             <Route path="/admin/history" element={<HistoricalGames />} />
             <Route path="/players" element={<PlayerList />} />
             <Route path="/players/:id" element={<PlayerProfile />} />
+            <Route path="/admin/payments" element={<PaymentDashboard />} />
           </Routes>
           <Toaster />
         </Layout>
-      </AuthProvider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </AuthProvider>
   )
 }
 

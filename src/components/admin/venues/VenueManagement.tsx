@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { supabase } from '../../../utils/supabase'
 import { Venue } from '../../../types/game'
 import FormContainer from '../../common/containers/FormContainer'
+import { PresetManagement } from './PresetManagement'
 
 interface Props {
   venues: Venue[]
@@ -180,6 +181,8 @@ export const VenueManagement: React.FC<Props> = ({ venues, onUpdate }) => {
             Add Venue
           </button>
         )}
+
+        <PresetManagement venues={venues} onUpdate={onUpdate} />
       </div>
     </FormContainer>
   )

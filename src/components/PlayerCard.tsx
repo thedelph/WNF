@@ -48,11 +48,28 @@ export default function PlayerCard({
     }
   }
 
-  const calculatedXP = calculatePlayerXP(caps, currentStreak, activeBonuses, activePenalties);
+  const calculatedXP = calculatePlayerXP({
+    caps,
+    activeBonuses,
+    activePenalties,
+    currentStreak
+  });
   const streakModifier = currentStreak * 0.1
   const bonusModifier = activeBonuses * 0.1
   const penaltyModifier = activePenalties * -0.1
   const totalModifier = streakModifier + bonusModifier + penaltyModifier
+
+  console.log('PlayerCard Props:', {
+    friendlyName,
+    caps,
+    xp: calculatedXP,
+    modifiers: {
+      streak: streakModifier,
+      bonus: bonusModifier,
+      penalty: penaltyModifier,
+      total: totalModifier
+    }
+  });
 
   return (
     <motion.div 

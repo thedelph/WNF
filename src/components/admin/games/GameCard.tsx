@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Game } from '../../../types/game'
+import { Game, GameStatus, GAME_STATUSES } from '../../../types/game'
 import { format } from 'date-fns'
 import { GameRegistrations } from './GameRegistrations'
 import { PlayerSelectionResults } from '../../games/PlayerSelectionResults'
@@ -21,6 +21,7 @@ interface Props {
   onRegisterPlayer: (gameId: string) => void
   onUnregisterPlayer: (registrationId: string) => void
   onRegistrationClose: (gameId: string) => void
+  onResetGameStatus: (gameId: string) => void
 }
 
 export const GameCard: React.FC<Props> = ({
@@ -37,6 +38,7 @@ export const GameCard: React.FC<Props> = ({
   onRegisterPlayer,
   onUnregisterPlayer,
   onRegistrationClose,
+  onResetGameStatus,
 }) => {
   console.log('GameCard Render:', {
     gameId: game.id,
@@ -52,6 +54,45 @@ export const GameCard: React.FC<Props> = ({
     setShowRegistrationsModal(false)
     onRegistrationClose(game.id)
   }
+
+  const getStatusBadgeColor = (status: GameStatus) => {
+    switch (status) {
+      case GAME_STATUSES.OPEN:
+        return 'badge-success';
+      case GAME_STATUSES.UPCOMING:
+        return 'badge-info';
+      case GAME_STATUSES.PENDING_TEAMS:
+        return 'badge-warning';
+      case GAME_STATUSES.TEAMS_ANNOUNCED:
+      case GAME_STATUSES.PLAYERS_ANNOUNCED:
+        return 'badge-primary';
+      case GAME_STATUSES.COMPLETED:
+        return 'badge-secondary';
+      default:
+        return 'badge-ghost';
+    }
+  };
+
+  const renderAdminControls = () => {
+    if (game.status === 'players_announced' || game.status === 'teams_announced') {
+      return (
+        <button
+          onClick={() => {
+            if (window.confirm('Are you sure you want to reset this game? This will clear all player selections.')) {
+              onResetGameStatus(game.id);
+            }
+          }}
+          className="btn btn-sm btn-warning gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+          </svg>
+          Reset Selection
+        </button>
+      );
+    }
+    return null;
+  };
 
   return (
     <motion.div
@@ -82,6 +123,7 @@ export const GameCard: React.FC<Props> = ({
           </div>
           
           <div className="flex flex-col gap-2">
+            {renderAdminControls()}
             <button
               onClick={() => onEditClick(game)}
               className="btn btn-sm btn-ghost"

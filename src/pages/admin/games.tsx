@@ -8,20 +8,21 @@ import { EditGameModal } from '../../components/admin/games/EditGameModal'
 import { GameCard } from '../../components/admin/games/GameCard'
 import { CreateGameForm } from '../../components/admin/games/CreateGameForm'
 import { VenueManagement } from '../../components/admin/venues/VenueManagement'
-import { Game, Venue, GameRegistration } from '../../types/game'
+import { Game, Venue, GameRegistration, GameStatus, GAME_STATUSES, isValidGameStatus } from '../../types/game'
 import { Toaster } from 'react-hot-toast'
 import { selectPlayers } from '../../utils/playerSelection'
 import { selectTeamMembers } from '../../utils/teamselection'
 import { GameRegistrations } from '../../components/admin/games/GameRegistrations'
+import { handlePlayerSelection } from '../../utils/playerSelection'
 
-const shuffleArray = <T>(array: T[]): T[] => {
+function shuffleArray<T>(array: T[]): T[] {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
   return newArray;
-};
+}
 
 const calculatePlayerXP = (player: any): number => {
   if (!player) return 0;
@@ -60,6 +61,7 @@ const GameManagement: React.FC = () => {
   const [randomSlots, setRandomSlots] = useState(2)
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null)
   const [isRegistrationsModalOpen, setIsRegistrationsModalOpen] = useState(false)
+  const [presets, setPresets] = useState([]);
 
   useEffect(() => {
     fetchVenues()
@@ -91,6 +93,66 @@ const GameManagement: React.FC = () => {
       fetchRegistrations(game.id)
     }
   }, [games])
+
+  useEffect(() => {
+    fetchPresets();
+  }, []);
+
+  const fetchPresets = async () => {
+    console.log('Fetching presets...');
+    const { data, error } = await supabase
+      .from('venue_presets')
+      .select('*')
+      .order('name');
+
+    console.log('Presets response:', { data, error });
+
+    if (error) {
+      toast.error('Failed to fetch presets');
+      return;
+    }
+
+    setPresets(data);
+  };
+
+  const handlePresetSelect = async (presetId: string) => {
+    const preset = presets.find(p => p.id === presetId);
+    if (!preset) return;
+
+    // Calculate next occurrence of the day
+    const today = new Date();
+    const daysUntilNext = getDaysUntilNext(preset.day_of_week);
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate() + daysUntilNext);
+    
+    // Set the game date and time
+    setDate(nextDate.toISOString().split('T')[0]);
+    setTime(preset.start_time);
+    setVenueId(preset.venue_id);
+    
+    // Calculate registration window
+    const gameDate = new Date(nextDate);
+    const [hours, minutes] = preset.start_time.split(':');
+    gameDate.setHours(parseInt(hours), parseInt(minutes));
+    
+    const regStart = new Date(gameDate);
+    regStart.setHours(regStart.getHours() - preset.registration_hours_before);
+    setRegistrationStart(regStart.toISOString().slice(0, 16));
+    
+    const regEnd = new Date(gameDate);
+    regEnd.setHours(regEnd.getHours() - preset.registration_hours_until);
+    setRegistrationEnd(regEnd.toISOString().slice(0, 16));
+  };
+
+  // Helper function to calculate days until next occurrence
+  const getDaysUntilNext = (targetDay: string) => {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const today = new Date().getDay();
+    const targetDayNum = days.indexOf(targetDay.toLowerCase());
+    let daysUntil = targetDayNum - today;
+    if (daysUntil <= 0) daysUntil += 7;
+    return daysUntil;
+  };
 
   const fetchVenues = async () => {
     const { data, error } = await supabase
@@ -622,7 +684,9 @@ const GameManagement: React.FC = () => {
       // Update game status
       const { error: updateGameError } = await supabaseAdmin
         .from('games')
-        .update({ status: 'pending_teams' })
+        .update({ 
+          status: GAME_STATUSES.PENDING_TEAMS 
+        })
         .eq('id', gameId);
 
       if (updateGameError) throw updateGameError;
@@ -681,6 +745,115 @@ const GameManagement: React.FC = () => {
     }
   };
 
+  const validateGameStatus = (status: string): GameStatus => {
+    if (!isValidGameStatus(status)) {
+      throw new Error(`Invalid game status: ${status}`);
+    }
+    return status;
+  };
+
+  const handleResetGameStatus = async (gameId: string) => {
+    try {
+      // Get the game details first
+      const { data: game, error: gameError } = await supabase
+        .from('games')
+        .select('*')
+        .eq('id', gameId)
+        .single();
+
+      if (gameError) throw gameError;
+
+      // First reset ALL registrations to reserve status
+      const { error: resetError } = await supabaseAdmin
+        .from('game_registrations')
+        .update({ 
+          status: 'reserve',
+          randomly_selected: false 
+        })
+        .eq('game_id', gameId);
+
+      if (resetError) throw resetError;
+
+      // Get all registrations and sort by XP
+      const { data: registrations, error: regError } = await supabase
+        .from('game_registrations')
+        .select(`
+          *,
+          registered_player:players!game_registrations_player_id_fkey (
+            id,
+            friendly_name,
+            caps,
+            active_bonuses,
+            active_penalties,
+            current_streak
+          )
+        `)
+        .eq('game_id', gameId);
+
+      if (regError) throw regError;
+
+      // Sort players by XP
+      const sortedPlayers = registrations
+        .map(reg => ({
+          ...reg,
+          xp: calculatePlayerXP(reg.registered_player)
+        }))
+        .sort((a, b) => b.xp - a.xp);
+
+      // Calculate merit slots (total slots minus random slots)
+      const meritSlots = game.max_players - game.random_slots;
+
+      // Take top players by XP for merit slots
+      const meritPlayers = sortedPlayers.slice(0, meritSlots);
+
+      // Remaining players eligible for random selection
+      const randomPool = sortedPlayers.filter(p => 
+        !meritPlayers.find(mp => mp.id === p.id)
+      );
+
+      // Make random selections
+      const randomlySelected = shuffleArray(randomPool)
+        .slice(0, game.random_slots);
+
+      // Update merit players
+      if (meritPlayers.length > 0) {
+        await supabaseAdmin
+          .from('game_registrations')
+          .update({ 
+            status: 'selected',
+            randomly_selected: false 
+          })
+          .in('id', meritPlayers.map(p => p.id));
+      }
+
+      // Update randomly selected players
+      if (randomlySelected.length > 0) {
+        await supabaseAdmin
+          .from('game_registrations')
+          .update({ 
+            status: 'selected',
+            randomly_selected: true 
+          })
+          .in('id', randomlySelected.map(p => p.id));
+      }
+
+      // Update game status
+      await supabaseAdmin
+        .from('games')
+        .update({ status: 'players_announced' })
+        .eq('id', gameId);
+
+      toast.success('Game reset and players reselected successfully');
+      await fetchGames();
+      if (selectedGameId === gameId) {
+        await fetchRegistrations(gameId);
+      }
+    } catch (error) {
+      console.error('Error resetting game:', error);
+      toast.error('Failed to reset game');
+    }
+  };
+
   if (adminLoading) {
     return <div className="text-center mt-8">Loading...</div>
   }
@@ -723,6 +896,7 @@ const GameManagement: React.FC = () => {
                 onRegisterPlayer={handleRegisterPlayers}
                 onUnregisterPlayer={handleUnregisterPlayer}
                 onRegistrationClose={handleRegistrationClose}
+                onResetGameStatus={handleResetGameStatus}
               />
             ))}
           </div>
@@ -747,6 +921,8 @@ const GameManagement: React.FC = () => {
           setMaxPlayers={setMaxPlayers}
           randomSlots={randomSlots}
           setRandomSlots={setRandomSlots}
+          presets={presets}
+          onPresetSelect={handlePresetSelect}
         />
         <VenueManagement
           venues={venues}

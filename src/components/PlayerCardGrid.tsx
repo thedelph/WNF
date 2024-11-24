@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import PlayerCard from './PlayerCard'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
+import { calculatePlayerXP } from '../utils/xpCalculations'
+import { calculateRarity } from '../utils/rarityCalculations'
 
 interface Player {
   id: string
-  friendlyName: string
-  xp: number
+  friendly_name: string
+  xp?: number
   caps: number
-  preferredPosition: string
-  activeBonuses: number
-  activePenalties: number
-  winRate: number
-  currentStreak: number
-  maxStreak: number
-  rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
+  preferred_position: string | null
+  active_bonuses: number
+  active_penalties: number
+  win_rate: number
+  current_streak: number
+  max_streak: number
+  rarity?: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
 }
 
 export default function PlayerCardGrid() {
@@ -30,90 +32,108 @@ export default function PlayerCardGrid() {
 
   const fetchPlayers = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const { data, error } = await supabase
         .from('players')
-        .select(`
-          id,
-          friendly_name,
-          xp,
-          caps,
-          preferred_position,
-          active_bonuses,
-          active_penalties,
-          win_rate,
-          current_streak,
-          max_streak
-        `)
+        .select('*');
       
-      if (error) throw error
+      if (error) throw error;
 
-      const playersWithRarity = data.map(player => ({
-        id: player.id,
-        friendlyName: player.friendly_name,
-        xp: player.xp || 0,
-        caps: player.caps || 0,
-        preferredPosition: player.preferred_position,
-        activeBonuses: player.active_bonuses || 0,
-        activePenalties: player.active_penalties || 0,
-        winRate: player.win_rate || 0,
-        currentStreak: Number(player.current_streak) || 0,
-        maxStreak: Number(player.max_streak) || 0,
-        rarity: calculateRarity(player.xp, data.map(p => p.xp))
-      }))
+      // Debug top players by caps
+      const topPlayersByCaps = [...data]
+        .sort((a, b) => b.caps - a.caps)
+        .slice(0, 5);
+      
+      console.log('DEBUG: Top 5 Players by Caps:', 
+        topPlayersByCaps.map(p => ({
+          name: p.friendly_name,
+          caps: p.caps,
+          streak: p.current_streak,
+          bonuses: p.active_bonuses,
+          penalties: p.active_penalties
+        }))
+      );
 
-      console.log('Fetched players with streaks:', playersWithRarity)
-      setPlayers(playersWithRarity)
+      const playersWithXP = data.map(player => {
+        const stats = {
+          caps: player.caps || 0,
+          activeBonuses: player.active_bonuses || 0,
+          activePenalties: player.active_penalties || 0,
+          currentStreak: player.current_streak || 0
+        };
+
+        const xp = calculatePlayerXP(stats);
+
+        return {
+          id: player.id,
+          friendlyName: player.friendly_name,
+          caps: player.caps || 0,
+          preferredPosition: player.preferred_position || '',
+          activeBonuses: player.active_bonuses || 0,
+          activePenalties: player.active_penalties || 0,
+          winRate: player.win_rate || 0,
+          currentStreak: player.current_streak || 0,
+          maxStreak: player.max_streak || 0,
+          avatarSvg: player.avatar_svg || '',
+          xp
+        };
+      });
+
+      const allXPValues = playersWithXP.map(p => p.xp).sort((a,b) => b-a);
+      
+      console.log('DEBUG: XP Distribution Analysis:', {
+        uniqueValues: new Set(allXPValues).size,
+        top5XP: allXPValues.slice(0,5),
+        bottom5XP: allXPValues.slice(-5),
+        average: allXPValues.reduce((a,b) => a + b, 0) / allXPValues.length,
+        median: allXPValues[Math.floor(allXPValues.length / 2)],
+        nonZeroCount: allXPValues.filter(xp => xp > 0).length
+      });
+
+      const playersWithRarity = playersWithXP.map(player => {
+        const rarity = calculateRarity(player.xp, allXPValues);
+        
+        // Debug rarity for top players
+        if (player.xp > 15) {
+          console.log(`DEBUG: ${player.friendly_name} Rarity:`, {
+            xp: player.xp,
+            position: allXPValues.indexOf(player.xp),
+            rarity,
+            thresholds: {
+              legendary: Math.floor(allXPValues.length * 0.05),
+              epic: Math.floor(allXPValues.length * 0.15),
+              rare: Math.floor(allXPValues.length * 0.30)
+            }
+          });
+        }
+
+        return {
+          ...player,
+          rarity
+        };
+      });
+
+      setPlayers(playersWithRarity);
     } catch (error) {
-      toast.error('Error fetching players')
-      console.error('Error:', error)
+      console.error('DEBUG: Error in fetchPlayers:', error);
+      toast.error('Error fetching players');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const calculateRarity = (xp: number, allPlayers: number[]): 'Legendary' | 'Epic' | 'Rare' | 'Uncommon' | 'Common' => {
-    // Sort XP values in descending order
-    const sortedXP = [...allPlayers].sort((a, b) => b - a)
-    const totalPlayers = sortedXP.length
-    
-    console.log('Total Players:', totalPlayers)
-    console.log('Sorted XP Values:', sortedXP)
-    console.log('Current XP:', xp)
-    
-    // Calculate exact cutoff positions
-    const legendaryCount = Math.max(1, Math.round(totalPlayers * 0.01))
-    const epicCount = Math.max(2, Math.round(totalPlayers * 0.04))
-    const rareCount = Math.max(7, Math.round(totalPlayers * 0.15))
-    const uncommonCount = Math.round(totalPlayers * 0.33)
-    
-    console.log('Distribution:', {
-      legendary: legendaryCount,
-      epic: epicCount,
-      rare: rareCount,
-      uncommon: uncommonCount,
-      common: totalPlayers - (legendaryCount + epicCount + rareCount + uncommonCount)
-    })
-    
-    const position = sortedXP.indexOf(xp)
-    
-    if (position < legendaryCount) return 'Legendary'
-    if (position < (legendaryCount + epicCount)) return 'Epic'
-    if (position < (legendaryCount + epicCount + rareCount)) return 'Rare'
-    if (position < (legendaryCount + epicCount + rareCount + uncommonCount)) return 'Uncommon'
-    return 'Common'
-  }
+  };
 
   const sortedAndFilteredPlayers = players
-    .filter(player => 
-      player.friendlyName.toLowerCase().includes(filterBy.toLowerCase()) ||
-      player.preferredPosition.toLowerCase().includes(filterBy.toLowerCase())
-    )
-    .sort((a, b) => {
-      if (a[sortBy] < b[sortBy]) return 1
-      if (a[sortBy] > b[sortBy]) return -1
-      return 0
+    .filter(player => {
+      const searchTerm = filterBy.toLowerCase();
+      const name = player.friendly_name?.toLowerCase() || '';
+      const position = player.preferred_position?.toLowerCase() || '';
+      return name.includes(searchTerm) || position.includes(searchTerm);
     })
+    .sort((a, b) => {
+      if (a[sortBy] < b[sortBy]) return 1;
+      if (a[sortBy] > b[sortBy]) return -1;
+      return 0;
+    });
 
   return (
     <div className="container mx-auto px-4">
