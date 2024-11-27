@@ -6,6 +6,8 @@ import { GameRegistrations } from './GameRegistrations'
 import { PlayerSelectionResults } from '../../games/PlayerSelectionResults'
 import { DebugInfo } from './DebugInfo'
 import { FaUser, FaUserClock } from 'react-icons/fa';
+import { deleteGame } from '../../../utils/gameUtils';
+import { toast } from 'react-hot-toast';
 
 interface Props {
   game: Game
@@ -137,7 +139,17 @@ export const GameCard: React.FC<Props> = ({
               Registrations
             </button>
             <button
-              onClick={() => onDeleteClick(game.id)}
+              onClick={async () => {
+                if (window.confirm('Are you sure you want to delete this game? This action cannot be undone.')) {
+                  const { error } = await deleteGame(game.id);
+                  if (error) {
+                    toast.error('Failed to delete game');
+                  } else {
+                    onDeleteClick(game.id);
+                    toast.success('Game deleted successfully');
+                  }
+                }
+              }}
               className="btn btn-sm btn-error"
             >
               Delete

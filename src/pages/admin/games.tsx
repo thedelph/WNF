@@ -14,6 +14,7 @@ import { selectPlayers } from '../../utils/playerSelection'
 import { selectTeamMembers } from '../../utils/teamselection'
 import { GameRegistrations } from '../../components/admin/games/GameRegistrations'
 import { handlePlayerSelection } from '../../utils/playerSelection'
+import { deleteGame } from '../../utils/gameUtils'; // Fix the import path
 
 function shuffleArray<T>(array: T[]): T[] {
   const newArray = [...array];
@@ -414,44 +415,22 @@ const GameManagement: React.FC = () => {
 
   const handleDeleteGame = async (gameId: string) => {
     try {
-      // First delete all registrations for this game using supabaseAdmin
-      const { error: regError } = await supabaseAdmin
-        .from('game_registrations')
-        .delete()
-        .eq('game_id', gameId)
-
-      if (regError) {
-        console.error('Error deleting game registrations:', regError)
-        toast.error('Failed to delete game registrations')
-        return
+      const { error } = await deleteGame(gameId);
+      
+      if (error) {
+        console.error('Error deleting game:', error);
+        toast.error('Failed to delete game');
+        return;
       }
 
-      // Then delete the game itself using supabaseAdmin
-      const { data, error: gameError } = await supabaseAdmin
-        .from('games')
-        .delete()
-        .eq('id', gameId)
-        .select() // This will return the deleted row if successful
-
-      if (gameError) {
-        console.error('Error deleting game:', gameError)
-        toast.error('Failed to delete game')
-        return
-      }
-
-      if (!data || data.length === 0) {
-        toast.error('Game deletion failed - no rows affected')
-        return
-      }
-
-      // Only update local state if deletion was successful
-      setGames(prevGames => prevGames.filter(game => game.id !== gameId))
-      toast.success('Game deleted successfully')
+      // Update local state if deletion was successful
+      setGames(prevGames => prevGames.filter(game => game.id !== gameId));
+      toast.success('Game deleted successfully');
     } catch (error) {
-      console.error('Error in delete operation:', error)
-      toast.error('Failed to delete game')
+      console.error('Error in delete operation:', error);
+      toast.error('Failed to delete game');
     }
-  }
+  };
 
   const handleEditGame = (game: Game) => {
     setSelectedGame(game)

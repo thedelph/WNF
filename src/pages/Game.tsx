@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { GameDetails } from '../components/game/GameDetails';
 import { Game as GameType, GAME_STATUSES } from '../types/game';
@@ -8,6 +9,7 @@ import { calculatePlayerXP } from '../utils/playerUtils';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import { RegisteredPlayers } from '../components/game/RegisteredPlayers';
+import { motion } from 'framer-motion';
 
 const Game = () => {
   const [upcomingGame, setUpcomingGame] = useState<GameType | null>(null);
@@ -15,12 +17,14 @@ const Game = () => {
   const [playerData, setPlayerData] = useState({
     registrations: [],
     selectedPlayers: [],
-    reservePlayers: []
+    reservePlayers: [],
+    selectionNotes: [] as string[]
   });
 
   const fetchGameData = useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log('Starting game data fetch...');
       
       // Fetch the next game that hasn't been completed
       const { data: games, error: gameError } = await supabase
@@ -78,30 +82,13 @@ const Game = () => {
           activePenalties: reg.player.active_penalties,
           currentStreak: reg.player.current_streak
         },
-        isRandomlySelected: reg.randomly_selected
+        isRandomlySelected: reg.randomly_selected,
+        status: reg.status
       }));
 
-      // Split into selected and reserve players
-      const selectedPlayers = processedPlayers.filter(p => 
-        registrations.find(r => r.id === p.id)?.status === 'selected' ||
-        registrations.find(r => r.id === p.id)?.status === 'confirmed'
-      );
-      const reservePlayers = processedPlayers.filter(p => 
-        registrations.find(r => r.id === p.id)?.status === 'reserve'
-      );
-
       setUpcomingGame(currentGame);
-      setPlayerData({
-        registrations: processedPlayers.map(p => ({
-          id: p.id,
-          players: {
-            friendly_name: p.friendly_name
-          }
-        })),
-        selectedPlayers,
-        reservePlayers
-      });
 
+      // If players have been announced, fetch the selection results
       if (currentGame.status === 'players_announced') {
         const { data: selectionResults, error: selectionError } = await supabase
           .from('game_selections')
@@ -110,12 +97,45 @@ const Game = () => {
           .single();
 
         if (!selectionError && selectionResults) {
+          console.log('Selection results:', selectionResults);
+          console.log('Selection metadata:', selectionResults.selection_metadata);
+          console.log('Selection notes:', selectionResults.selection_metadata?.selectionNotes);
+          
+          const notes = selectionResults.selection_metadata?.selectionNotes || [];
+          console.log('Extracted notes:', notes);
+          
           setPlayerData({
-            ...playerData,
-            selectedPlayers: selectionResults.selectedPlayers,
-            reservePlayers: selectionResults.reservePlayers
+            registrations: processedPlayers,
+            selectedPlayers: selectionResults.selected_players || [],
+            reservePlayers: selectionResults.reserve_players || [],
+            selectionNotes: notes
+          });
+
+          console.log('Updated player data with notes:', notes);
+        } else {
+          console.log('No selection results found or error:', selectionError);
+          // Split into selected and reserve players based on status
+          const selectedPlayers = processedPlayers.filter(p => 
+            p.status === 'selected' || p.status === 'confirmed'
+          );
+          const reservePlayers = processedPlayers.filter(p => 
+            p.status === 'reserve'
+          );
+          
+          setPlayerData({
+            registrations: processedPlayers,
+            selectedPlayers,
+            reservePlayers,
+            selectionNotes: []
           });
         }
+      } else {
+        setPlayerData({
+          registrations: processedPlayers,
+          selectedPlayers: [],
+          reservePlayers: [],
+          selectionNotes: []
+        });
       }
     } catch (error) {
       console.error('Error fetching game data:', error);
@@ -148,14 +168,74 @@ const Game = () => {
     return now < regStart;
   };
 
+  const handleDebugDownload = () => {
+    if (!upcomingGame || !playerData.selectedPlayers.length) return;
+
+    const debugData = {
+      gameSettings: {
+        maxPlayers: upcomingGame.max_players,
+        randomSlots: upcomingGame.random_slots,
+        date: upcomingGame.date,
+        registrationWindow: {
+          start: upcomingGame.registration_window_start,
+          end: upcomingGame.registration_window_end
+        }
+      },
+      selectionResults: {
+        selectedPlayers: playerData.selectedPlayers.map((player, index) => ({
+          position: index + 1,
+          name: player.friendly_name,
+          xp: player.xp,
+          stats: player.stats,
+          selectionReason: player.isRandomlySelected ? 'Random Selection' : 'Merit Selection (XP)',
+          explanation: player.isRandomlySelected 
+            ? `Selected randomly from remaining players after merit selection`
+            : `Selected by merit with ${player.xp.toFixed(1)} XP`
+        })),
+        reservePlayers: playerData.reservePlayers.map(player => ({
+          name: player.friendly_name,
+          xp: player.xp,
+          stats: player.stats,
+          xpNeededForMerit: Math.max(0, 14 - player.xp).toFixed(1),
+          explanation: `Reserve - Needs ${Math.max(0, 14 - player.xp).toFixed(1)} more XP for merit selection`
+        })),
+        selectionProcess: {
+          meritThreshold: 14.0,
+          totalPlayers: playerData.registrations.length,
+          meritSlots: 16,
+          randomSlots: 2,
+          adjustedRandomSlots: playerData.selectionNotes?.some(note => note.includes('Random slots reduced')) ? 1 : 2,
+          tiedPlayers: playerData.selectedPlayers
+            .filter(p => Math.abs(p.xp - 15.0) < 0.01)
+            .map(p => p.friendly_name),
+          notes: playerData.selectionNotes || []
+        }
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `game-selection-debug-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <GameDetails game={upcomingGame} />
-      
-      {isLoading || isProcessingClose ? (
-        <LoadingSpinner />
-      ) : upcomingGame && (
-        <>
+      {isLoading ? (
+        <div className="text-center">Loading...</div>
+      ) : upcomingGame ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <GameDetails game={upcomingGame} />
+
           {/* Before registration opens */}
           {isBeforeRegistration(upcomingGame) && (
             <div className="mt-8 text-center text-gray-600">
@@ -168,19 +248,48 @@ const Game = () => {
             <>
               <div className="mt-8">
                 <h2 className="text-xl font-semibold mb-4">Currently Registered Players</h2>
-                <RegisteredPlayers registrations={playerData.registrations} />
+                <RegisteredPlayers 
+                  registrations={playerData.registrations} 
+                  selectionNotes={playerData.selectionNotes}
+                />
               </div>
             </>
           )}
 
           {/* After registration closes */}
-          {upcomingGame.status === 'players_announced' && (
-            <PlayerSelectionResults 
-              selectedPlayers={playerData.selectedPlayers}
-              reservePlayers={playerData.reservePlayers}
-            />
+          {upcomingGame.status === 'players_announced' && playerData?.selectedPlayers?.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">Player Selection Results</h2>
+              <div className="space-y-8">
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleDebugDownload}
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm flex items-center space-x-2"
+                  >
+                    <span>Download Debug Data</span>
+                  </button>
+                </div>
+                {playerData.selectionNotes && playerData.selectionNotes.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-blue-800 mb-2">Selection Notes:</h3>
+                    <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
+                      {playerData.selectionNotes.map((note, i) => {
+                        console.log('Rendering note:', note);
+                        return <li key={i}>{note}</li>;
+                      })}
+                    </ul>
+                  </div>
+                )}
+                <PlayerSelectionResults 
+                  selectedPlayers={playerData.selectedPlayers}
+                  reservePlayers={playerData.reservePlayers}
+                />
+              </div>
+            </div>
           )}
-        </>
+        </motion.div>
+      ) : (
+        <div className="text-center text-xl">No upcoming games found.</div>
       )}
     </div>
   );

@@ -76,10 +76,14 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
         .insert({
           game_id: id,
           selected_players: result.selectedPlayers,
-          reserve_players: result.reservePlayers
+          reserve_players: result.reservePlayers,
+          debug_info: result.debug
         });
 
-      if (selectionError) throw selectionError;
+      if (selectionError) {
+        console.error('Error storing selection results:', selectionError);
+        throw selectionError;
+      }
       
       await props.onGameUpdated();
       toast.success('Teams have been selected');

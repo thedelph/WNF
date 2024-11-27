@@ -15,7 +15,7 @@ export const calculatePlayerXP = ({
   const penaltyModifier = activePenalties * 0.1;
   const streakModifier = currentStreak * 0.1;
   
-  const totalModifier = 1 + bonusModifier - penaltyModifier + streakModifier;
+  const totalModifier = 10 + bonusModifier - penaltyModifier + streakModifier;
   
   return Math.round(caps * totalModifier);
 };

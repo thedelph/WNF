@@ -48,23 +48,27 @@ export interface PlayerSelectionResult {
   debug: SelectionDebugInfo;
 }
 
+interface SelectionDebugInfo {
+  startTime: string;
+  endTime: string;
+  totalRegistrations: number;
+  meritSlots: number;
+  randomSlots: number;
+  adjustedRandomSlots: number;
+  selectionNotes: string[];
+  xpDistribution: Record<number, number>;
+}
+
 export const handlePlayerSelection = async ({
   gameId,
   maxPlayers,
   randomSlots
 }: PlayerSelectionParams): Promise<PlayerSelectionResult> => {
   const startTime = new Date().toISOString();
+  const selectionNotes: string[] = [];
+  console.log('Starting player selection with params:', { gameId, maxPlayers, randomSlots });
 
   try {
-    // Reset all registrations to 'registered' status
-    await supabaseAdmin
-      .from('game_registrations')
-      .update({ 
-        status: 'registered',
-        randomly_selected: false 
-      })
-      .eq('game_id', gameId);
-
     // Fetch all registrations
     const { data: registrations, error: fetchError } = await supabaseAdmin
       .from('game_registrations')
@@ -80,214 +84,216 @@ export const handlePlayerSelection = async ({
           current_streak
         )
       `)
-      .eq('game_id', gameId)
-      .eq('status', 'registered');
+      .eq('game_id', gameId);
 
     if (fetchError) {
       console.error('Player selection fetch error:', fetchError);
       throw fetchError;
     }
 
-    // Calculate XP for each player using the proper XP calculation
-    const playersWithXP: PlayerWithXP[] = registrations.map(reg => ({
-      id: reg.id,
-      player_id: reg.player_id,
-      friendly_name: reg.player.friendly_name,
-      stats: {
+    console.log('Fetched registrations:', registrations);
+
+    // Calculate XP for each player
+    const playersWithXP: PlayerWithXP[] = registrations.map(reg => {
+      const stats = {
         caps: reg.player.caps,
         activeBonuses: reg.player.active_bonuses,
         activePenalties: reg.player.active_penalties,
         currentStreak: reg.player.current_streak
-      },
-      xp: calculatePlayerXP({
-        caps: reg.player.caps,
-        activeBonuses: reg.player.active_bonuses,
-        activePenalties: reg.player.active_penalties,
-        currentStreak: reg.player.current_streak
-      })
+      };
+      
+      // Calculate XP using the same formula as the display
+      const calculatedXP = calculatePlayerXP(stats);
+      
+      return {
+        id: reg.id,
+        player_id: reg.player.player_id,
+        friendly_name: reg.player.friendly_name,
+        xp: calculatedXP,
+        stats
+      };
+    });
+
+    // Sort players by XP (highest to lowest) and handle ties
+    const sortedPlayers = [...playersWithXP].sort((a, b) => {
+      // Sort by calculated XP first
+      const xpDiff = b.xp - a.xp;
+      if (xpDiff !== 0) return xpDiff;
+      
+      // If XP is tied, sort by caps
+      const capsDiff = b.stats.caps - a.stats.caps;
+      if (capsDiff !== 0) return capsDiff;
+      
+      // If still tied, sort by streak
+      const streakDiff = b.stats.currentStreak - a.stats.currentStreak;
+      if (streakDiff !== 0) return streakDiff;
+      
+      // If still tied, sort randomly
+      return Math.random() - 0.5;
+    });
+
+    console.log('Players with calculated XP:', playersWithXP.map(p => ({
+      name: p.friendly_name,
+      xp: p.xp,
+      caps: p.stats.caps,
+      streak: p.stats.currentStreak
+    })));
+
+    // Calculate how many players to select by merit vs random
+    const meritSlots = maxPlayers - randomSlots;
+    console.log('Selection slots:', { meritSlots, randomSlots, total: maxPlayers });
+
+    // Sort players by XP and get the top meritSlots players
+    const meritPlayers = sortedPlayers.slice(0, meritSlots);
+    const meritThreshold = meritPlayers[meritPlayers.length - 1]?.xp || 0;
+    
+    console.log('Merit-based selections:', meritPlayers.map(p => ({
+      name: p.friendly_name,
+      xp: p.xp
+    })));
+
+    // Remove merit players from the pool for random selection
+    const remainingPlayers = sortedPlayers.filter(
+      p => !meritPlayers.some(mp => mp.id === p.id)
+    );
+    
+    // Randomly select from remaining players
+    const shuffledRemaining = shuffleArray([...remainingPlayers]);
+    const randomlySelected = shuffledRemaining.slice(0, randomSlots);
+
+    console.log('Random selections:', randomlySelected.map(p => ({
+      name: p.friendly_name,
+      xp: p.xp
+    })));
+
+    // Combine selected players and mark the rest as reserves
+    const allSelectedPlayers = [...meritPlayers, ...randomlySelected];
+    console.log('Total selected players:', allSelectedPlayers.length, 'Expected:', maxPlayers);
+
+    // Sort reserves by XP for fairness in display
+    const reservePlayers = sortedPlayers
+      .filter(p => !allSelectedPlayers.some(s => s.id === p.id))
+      .sort((a, b) => b.xp - a.xp);
+
+    // Format the selected players with their selection method
+    const formattedSelectedPlayers = allSelectedPlayers.map(p => ({
+      id: p.id,
+      friendly_name: p.friendly_name,
+      xp: p.xp,
+      stats: p.stats,
+      isRandomlySelected: randomlySelected.some(r => r.id === p.id)
     }));
 
-    // Sort players by calculated XP descending
-    const sortedPlayers = [...playersWithXP].sort((a, b) => b.xp - a.xp);
+    // Format reserve players (sorted by XP)
+    const formattedReservePlayers = reservePlayers.map(p => ({
+      id: p.id,
+      friendly_name: p.friendly_name,
+      xp: p.xp,
+      stats: p.stats
+    }));
 
-    const meritSlots = maxPlayers - randomSlots;
-    
-    // Select merit-based players
-    let selectedPlayers: PlayerWithXP[] = [];
-    let currentXP = Infinity;
-    let tiedPlayers: PlayerWithXP[] = [];
+    // Update registration statuses
+    const selectedIds = formattedSelectedPlayers.map(p => p.id);
+    const reserveIds = formattedReservePlayers.map(p => p.id);
 
-    for (const player of sortedPlayers) {
-      if (selectedPlayers.length < meritSlots) {
-        // If this player's XP is different from current group
-        if (player.xp !== currentXP) {
-          // Process previous tied players
-          if (selectedPlayers.length + tiedPlayers.length <= meritSlots) {
-            selectedPlayers.push(...tiedPlayers);
-          } else {
-            const remainingSlots = meritSlots - selectedPlayers.length;
-            const randomlySelectedTied = shuffleArray(tiedPlayers).slice(0, remainingSlots);
-            selectedPlayers.push(...randomlySelectedTied);
-          }
-          // Reset for new XP level
-          tiedPlayers = [];
-          currentXP = player.xp;
-        }
-        tiedPlayers.push(player);
-      } else {
-        break;
-      }
+    // Update selected players
+    if (selectedIds.length > 0) {
+      const { error: selectedError } = await supabaseAdmin
+        .from('game_registrations')
+        .update({ 
+          status: 'selected',
+          randomly_selected: false
+        })
+        .eq('game_id', gameId)
+        .in('id', selectedIds);
+
+      if (selectedError) throw selectedError;
     }
 
-    // Handle any remaining tied players at the cutoff
-    if (selectedPlayers.length < meritSlots) {
-      const remainingSlots = meritSlots - selectedPlayers.length;
-      const randomlySelectedTied = shuffleArray(tiedPlayers).slice(0, remainingSlots);
-      selectedPlayers.push(...randomlySelectedTied);
+    // Update randomly selected players
+    const randomlySelectedIds = formattedSelectedPlayers
+      .filter(p => p.isRandomlySelected)
+      .map(p => p.id);
+
+    if (randomlySelectedIds.length > 0) {
+      const { error: randomError } = await supabaseAdmin
+        .from('game_registrations')
+        .update({ randomly_selected: true })
+        .eq('game_id', gameId)
+        .in('id', randomlySelectedIds);
+
+      if (randomError) throw randomError;
     }
 
-    // Prepare random selection pool
-    const randomPool = sortedPlayers.filter(p => !selectedPlayers.some(sp => sp.id === p.id));
-    
-    // Randomly select remaining players
-    const randomlySelected = shuffleArray(randomPool).slice(0, randomSlots);
+    // Update reserve players
+    if (reserveIds.length > 0) {
+      const { error: reserveError } = await supabaseAdmin
+        .from('game_registrations')
+        .update({ 
+          status: 'reserve',
+          randomly_selected: false
+        })
+        .eq('game_id', gameId)
+        .in('id', reserveIds);
 
-    // Combine merit and random selections
-    const finalSelectedPlayers = [...selectedPlayers, ...randomlySelected];
-    const reservePlayers = sortedPlayers.filter(p => !finalSelectedPlayers.some(sp => sp.id === p.id));
+      if (reserveError) throw reserveError;
+    }
 
-    // Update database with results
-    const updatePromises = [
-      ...finalSelectedPlayers.map(p => 
-        supabaseAdmin
-          .from('game_registrations')
-          .update({ 
-            status: 'selected', 
-            randomly_selected: randomlySelected.some(rp => rp.id === p.id) 
-          })
-          .eq('id', p.id)
-      ),
-      ...reservePlayers.map(p => 
-        supabaseAdmin
-          .from('game_registrations')
-          .update({ status: 'reserve' })
-          .eq('id', p.id)
-      )
-    ];
+    console.log('Selection results:', {
+      selectedPlayers: formattedSelectedPlayers,
+      reservePlayers: formattedReservePlayers
+    });
 
-    await Promise.all(updatePromises);
-
-    // Prepare debug info
-    const debugInfo: SelectionDebugInfo = {
-      timestamp: startTime,
-      gameDetails: {
-        id: gameId,
-        maxPlayers,
+    // Save selection results to database
+    const selectionData = {
+      game_id: gameId,
+      selected_players: formattedSelectedPlayers,
+      reserve_players: formattedReservePlayers,
+      selection_metadata: {
+        startTime,
+        endTime: new Date().toISOString(),
+        totalRegistrations: registrations.length,
+        meritSlots,
         randomSlots,
-        meritSlots
-      },
-      xpAnalysis: {
-        highestXP: sortedPlayers[0].xp,
-        lowestXP: sortedPlayers[sortedPlayers.length - 1].xp,
-        averageXP: sortedPlayers.reduce((sum, p) => sum + p.xp, 0) / sortedPlayers.length,
-        xpCutoff: selectedPlayers[selectedPlayers.length - 1].xp,
-        tiedPlayersAtCutoff: tiedPlayers.map(p => ({
-          name: p.friendly_name,
-          xp: p.xp,
-          selected: finalSelectedPlayers.some(sp => sp.id === p.id),
-          reason: finalSelectedPlayers.some(sp => sp.id === p.id) ? "Selected in tie-break" : "Not selected in tie-break"
-        }))
-      },
-      selectionSteps: [
-        {
-          step: "1. Initial Sort",
-          description: `Sorted ${sortedPlayers.length} players by XP`,
-          timestamp: new Date().toISOString()
-        },
-        {
-          step: "2. Merit Selection",
-          description: `Selected top ${meritSlots} players by XP, handling ties`,
-          affectedPlayers: selectedPlayers.map(p => p.friendly_name),
-          timestamp: new Date().toISOString()
-        },
-        {
-          step: "3. Random Selection",
-          description: `Randomly selected ${randomSlots} players from remaining pool`,
-          affectedPlayers: randomlySelected.map(p => p.friendly_name),
-          timestamp: new Date().toISOString()
-        }
-      ],
-      playerDecisions: sortedPlayers.map(p => ({
-        name: p.friendly_name,
-        xp: p.xp,
-        status: finalSelectedPlayers.some(sp => sp.id === p.id) ? "selected" : "reserve",
-        selectionType: selectedPlayers.some(sp => sp.id === p.id) ? "merit" : 
-                       randomlySelected.some(rp => rp.id === p.id) ? "random" : "reserve",
-        reason: determineSelectionReason(p, selectedPlayers, randomlySelected, selectedPlayers[selectedPlayers.length - 1].xp)
-      })),
-      statistics: {
-        xpDistribution: calculateXPDistribution(sortedPlayers),
-        averages: {
-          selectedPlayersAvgXP: finalSelectedPlayers.reduce((sum, p) => sum + p.xp, 0) / finalSelectedPlayers.length,
-          reservePlayersAvgXP: reservePlayers.reduce((sum, p) => sum + p.xp, 0) / reservePlayers.length,
-          overallAvgXP: sortedPlayers.reduce((sum, p) => sum + p.xp, 0) / sortedPlayers.length
-        },
-        randomSelection: {
-          totalEligible: randomPool.length,
-          selectionProbability: randomSlots / randomPool.length,
-          selectedCount: randomlySelected.length
-        }
-      },
-      timing: {
-        selectionStart: startTime,
-        selectionEnd: new Date().toISOString(),
-        totalDuration: new Date().getTime() - new Date(startTime).getTime()
+        adjustedRandomSlots: randomSlots,
+        selectionNotes,
+        xpDistribution: calculateXPDistribution(playersWithXP)
       }
     };
+    console.log('Saving selection data:', JSON.stringify(selectionData, null, 2));
+
+    const { data: savedData, error: saveError } = await supabaseAdmin
+      .from('game_selections')
+      .upsert(selectionData)
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('Error saving selection data:', saveError);
+      throw saveError;
+    }
+
+    console.log('Saved selection data:', savedData);
 
     return {
-      selectedPlayers: finalSelectedPlayers.map(p => ({
-        id: p.id,
-        friendly_name: p.friendly_name,
-        isRandomlySelected: randomlySelected.some(rp => rp.id === p.id),
-        xp: p.xp,
-        stats: p.stats
-      })),
-      reservePlayers: reservePlayers.map(p => ({
-        id: p.id,
-        friendly_name: p.friendly_name,
-        xp: p.xp,
-        stats: p.stats
-      })),
-      debug: debugInfo
+      selectedPlayers: formattedSelectedPlayers,
+      reservePlayers: formattedReservePlayers,
+      debug: {
+        startTime,
+        endTime: new Date().toISOString(),
+        totalRegistrations: registrations.length,
+        meritSlots,
+        randomSlots,
+        adjustedRandomSlots: randomSlots,
+        selectionNotes,
+        xpDistribution: calculateXPDistribution(playersWithXP)
+      }
     };
-
   } catch (error) {
     console.error('Error in player selection:', error);
     throw error;
   }
 };
-
-function determineSelectionReason(
-  player: PlayerWithXP,
-  meritPlayers: PlayerWithXP[],
-  randomlySelected: PlayerWithXP[],
-  cutoffXP: number
-): string {
-  if (meritPlayers.some(mp => mp.id === player.id)) {
-    return player.xp > cutoffXP ? 
-      `Selected by merit - ${player.xp} XP above cutoff` :
-      `Selected by merit - won tie-break at ${player.xp} XP cutoff`;
-  }
-  
-  if (randomlySelected.some(rs => rs.id === player.id)) {
-    return `Selected for random slot from pool of ${randomlySelected.length} players`;
-  }
-  
-  return player.xp >= cutoffXP ?
-    `Reserve - lost tie-break at ${player.xp} XP cutoff for merit slot` :
-    `Reserve - ${player.xp} XP below merit cutoff (${cutoffXP}), not selected in random draw`;
-}
 
 function calculateXPDistribution(players: PlayerWithXP[]): Record<number, number> {
   return players.reduce((acc, p) => {
@@ -295,4 +301,3 @@ function calculateXPDistribution(players: PlayerWithXP[]): Record<number, number
     return acc;
   }, {} as Record<number, number>);
 }
-
