@@ -7,9 +7,10 @@ import TeamGenerationCard from '../../components/admin/cards/TeamGenerationCard'
 import PaymentManagementCard from '../../components/admin/cards/PaymentManagementCard'
 import AdminManagementCard from '../../components/admin/cards/AdminManagementCard'
 import HistoricalDataCard from '../../components/admin/cards/HistoricalDataCard'
+import RatingsCard from '../../components/admin/cards/RatingsCard'
 
 const AdminPortal: React.FC = () => {
-  const { isAdmin, loading: adminLoading } = useAdmin()
+  const { isAdmin, isSuperAdmin, loading: adminLoading } = useAdmin()
 
   if (adminLoading) {
     return <div className="text-center mt-8">Loading...</div>
@@ -36,6 +37,7 @@ const AdminPortal: React.FC = () => {
         <PaymentManagementCard />
         <AdminManagementCard />
         <HistoricalDataCard />
+        {isSuperAdmin && <RatingsCard />}
       </div>
     </div>
   )

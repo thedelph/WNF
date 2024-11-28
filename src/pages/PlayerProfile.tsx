@@ -121,9 +121,11 @@ export default function PlayerProfile() {
   const getGameOutcome = (game: GameHistory): string => {
     if (!game?.games?.outcome) return 'Unknown';
     if (game.games.outcome === 'draw') return 'Draw';
-    if (!game.team) return 'Unknown';
-    const isWin = (game.team.toLowerCase() === 'blue' && game.games.outcome === 'blue_win') ||
-                 (game.team.toLowerCase() === 'orange' && game.games.outcome === 'orange_win');
+    if (!game?.team) return 'Unknown';
+    
+    const team = game.team.toLowerCase();
+    const isWin = (team === 'blue' && game.games.outcome === 'blue_win') ||
+                 (team === 'orange' && game.games.outcome === 'orange_win');
     return isWin ? 'Won' : 'Lost';
   }
 
@@ -251,8 +253,6 @@ export default function PlayerProfile() {
           }
         }
 
-        setPlayer(playerData)
-
         // Fetch games with proper ordering
         const { data: gamesData, error: gamesError } = await supabase
           .from('game_registrations')
@@ -294,6 +294,27 @@ export default function PlayerProfile() {
             score_orange: game.games?.score_orange || 0
           }))
 
+        // Calculate win rate
+        const gamesWithKnownOutcome = processedGames.filter(game => 
+          game.games?.outcome !== null
+        );
+        
+        const wins = gamesWithKnownOutcome.filter(game => {
+          const team = game.team.toLowerCase();
+          return (team === 'blue' && game.games.outcome === 'blue_win') ||
+                 (team === 'orange' && game.games.outcome === 'orange_win');
+        });
+
+        const winRate = gamesWithKnownOutcome.length > 0 
+          ? Number(((wins.length / gamesWithKnownOutcome.length) * 100).toFixed(1))
+          : 0;
+
+        // Update player data with calculated win rate
+        const updatedPlayerData = {
+          ...playerData,
+          win_rate: winRate
+        };
+        setPlayer(updatedPlayerData);
         setGames(processedGames)
 
       } catch (error) {
@@ -591,8 +612,7 @@ export default function PlayerProfile() {
                         <td>
                           <div className={`badge badge-sm font-medium ${
                             !game.team ? 'badge-ghost opacity-50' :
-                            game.team.toLowerCase() === 'blue' ? 'badge-info' :
-                            'badge-warning'
+                            game.team?.toLowerCase() === 'blue' ? 'badge-info' : 'badge-warning'
                           }`}>
                             {game.team ? game.team.charAt(0).toUpperCase() + game.team.slice(1) : 'Unknown'}
                           </div>
@@ -611,15 +631,19 @@ export default function PlayerProfile() {
                           {game.games.score_blue !== null && game.games.score_orange !== null ? (
                             <div className="flex gap-2 items-center">
                               <div className={`badge badge-sm font-medium ${
-                                game.team.toLowerCase() === 'blue' ? 'badge-info' : 'badge-warning'
+                                !game.team ? 'badge-ghost' :
+                                game.team?.toLowerCase() === 'blue' ? 'badge-info' : 'badge-warning'
                               }`}>
-                                {game.team.toLowerCase() === 'blue' ? game.games.score_blue : game.games.score_orange}
+                                {!game.team ? '?' : 
+                                 game.team?.toLowerCase() === 'blue' ? game.games.score_blue : game.games.score_orange}
                               </div>
                               <span>-</span>
                               <div className={`badge badge-sm font-medium ${
-                                game.team.toLowerCase() === 'blue' ? 'badge-warning' : 'badge-info'
+                                !game.team ? 'badge-ghost' :
+                                game.team?.toLowerCase() === 'blue' ? 'badge-warning' : 'badge-info'
                               }`}>
-                                {game.team.toLowerCase() === 'blue' ? game.games.score_orange : game.games.score_blue}
+                                {!game.team ? '?' :
+                                 game.team?.toLowerCase() === 'blue' ? game.games.score_orange : game.games.score_blue}
                               </div>
                             </div>
                           ) : (

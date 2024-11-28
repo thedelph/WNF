@@ -24,7 +24,7 @@ export default function PlayerCard({
   caps,
   preferredPosition,
   activeBonuses,
-  activePenalties,
+  activePenalties,  
   winRate,
   currentStreak,
   maxStreak,
@@ -58,18 +58,6 @@ export default function PlayerCard({
   const bonusModifier = activeBonuses * 0.1
   const penaltyModifier = activePenalties * -0.1
   const totalModifier = streakModifier + bonusModifier + penaltyModifier
-
-  console.log('PlayerCard Props:', {
-    friendlyName,
-    caps,
-    xp: calculatedXP,
-    modifiers: {
-      streak: streakModifier,
-      bonus: bonusModifier,
-      penalty: penaltyModifier,
-      total: totalModifier
-    }
-  });
 
   return (
     <motion.div 
@@ -122,8 +110,7 @@ export default function PlayerCard({
                   <span className="text-sm font-bold">+{(streakModifier * 100).toFixed(0)}%</span>
                 </motion.div>
               )}
-              
-              {activeBonuses > 0 && (
+　　 　　　　　　{activeBonuses > 0 && (
                 <motion.div 
                   className="flex justify-between items-center bg-green-500/20 rounded-lg p-2"
                   initial={{ x: -20, opacity: 0 }}
@@ -191,7 +178,7 @@ export default function PlayerCard({
                   <Trophy className="w-4 h-4" />
                   <span>Win Rate</span>
                 </div>
-                <span className="font-bold">{winRate}%</span>
+                <span className="font-bold">{typeof winRate === 'number' ? winRate.toFixed(1) : '0.0'}%</span>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">

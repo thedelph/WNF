@@ -18,6 +18,7 @@ import PlayerList from './pages/PlayerList'
 import PlayerProfile from './pages/PlayerProfile'
 import PaymentDashboard from './components/admin/payments/PaymentDashboard'
 import Ratings from './pages/Ratings'
+import RatingsView from './pages/admin/ratings'
 
 const App: React.FC = () => {
   return (
@@ -38,6 +39,7 @@ const App: React.FC = () => {
             <Route path="/players/:id" element={<PlayerProfile />} />
             <Route path="/admin/payments" element={<PaymentDashboard />} />
             <Route path="/ratings" element={<Ratings />} />
+            <Route path="/admin/ratings" element={<RatingsView />} />
           </Routes>
           <Toaster />
         </Layout>
