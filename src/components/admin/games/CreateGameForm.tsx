@@ -20,6 +20,8 @@ interface Props {
   setMaxPlayers: (num: number) => void
   randomSlots: number
   setRandomSlots: (num: number) => void
+  pitchCost: number
+  setPitchCost: (cost: number) => void
   presets: {
     id: string;
     name: string;
@@ -28,6 +30,7 @@ interface Props {
     start_time: string;
     registration_hours_before: number;
     registration_hours_until: number;
+    pitch_cost: number;
   }[];
   onPresetSelect: (presetId: string) => void;
 }
@@ -49,6 +52,8 @@ export const CreateGameForm: React.FC<Props> = ({
   setMaxPlayers,
   randomSlots,
   setRandomSlots,
+  pitchCost,
+  setPitchCost,
   presets,
   onPresetSelect
 }) => {
@@ -190,6 +195,24 @@ export const CreateGameForm: React.FC<Props> = ({
           />
           <label className="label">
             <span className="label-text-alt">Number of slots to be assigned randomly</span>
+          </label>
+        </div>
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Pitch Cost (£)</span>
+          </label>
+          <input
+            type="number"
+            value={pitchCost}
+            onChange={(e) => setPitchCost(parseFloat(e.target.value))}
+            min={0}
+            step={0.01}
+            className="input input-bordered"
+            required
+          />
+          <label className="label">
+            <span className="label-text-alt">Total cost for renting the pitch</span>
           </label>
         </div>
 

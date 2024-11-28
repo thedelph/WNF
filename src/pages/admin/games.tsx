@@ -45,6 +45,8 @@ const GameManagement: React.FC = () => {
   const [registrationEnd, setRegistrationEnd] = useState('')
   const [venueId, setVenueId] = useState('')
   const [maxPlayers, setMaxPlayers] = useState(18)
+  const [randomSlots, setRandomSlots] = useState(2)
+  const [pitchCost, setPitchCost] = useState(0)
   const [isAddingVenue, setIsAddingVenue] = useState(false)
   const [newVenueName, setNewVenueName] = useState('')
   const [newVenueAddress, setNewVenueAddress] = useState('')
@@ -59,7 +61,6 @@ const GameManagement: React.FC = () => {
   const [showRegistrations, setShowRegistrations] = useState(false)
   const [players, setPlayers] = useState<{ id: string; friendly_name: string }[]>([])
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
-  const [randomSlots, setRandomSlots] = useState(2)
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null)
   const [isRegistrationsModalOpen, setIsRegistrationsModalOpen] = useState(false)
   const [presets, setPresets] = useState([]);
@@ -130,6 +131,7 @@ const GameManagement: React.FC = () => {
     setDate(nextDate.toISOString().split('T')[0]);
     setTime(preset.start_time);
     setVenueId(preset.venue_id);
+    setPitchCost(preset.pitch_cost || 0);
     
     // Calculate registration window
     const gameDate = new Date(nextDate);
@@ -321,6 +323,7 @@ const GameManagement: React.FC = () => {
           venue_id: venueId,
           max_players: maxPlayers,
           random_slots: randomSlots,
+          pitch_cost: pitchCost,
           status: initialStatus
         })
         .select()
@@ -340,7 +343,9 @@ const GameManagement: React.FC = () => {
       setTime('21:00');
       setRegistrationStart('');
       setRegistrationEnd('');
-      
+      setMaxPlayers(18);
+      setRandomSlots(2);
+      setPitchCost(0);
     } catch (error) {
       console.error('Error creating game:', error);
       toast.error('Failed to create game');
@@ -900,6 +905,8 @@ const GameManagement: React.FC = () => {
           setMaxPlayers={setMaxPlayers}
           randomSlots={randomSlots}
           setRandomSlots={setRandomSlots}
+          pitchCost={pitchCost}
+          setPitchCost={setPitchCost}
           presets={presets}
           onPresetSelect={handlePresetSelect}
         />

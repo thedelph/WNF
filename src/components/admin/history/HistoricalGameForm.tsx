@@ -118,7 +118,7 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
         const { error: capsError } = await supabaseAdmin
           .from('players')
           .update({
-            caps: supabase.rpc('increment_caps', { value: 1 })
+            caps: supabaseAdmin.rpc('increment_caps', { value: 1 })
           })
           .eq('id', player.id)
 

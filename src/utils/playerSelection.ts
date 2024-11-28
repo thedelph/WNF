@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '../utils/supabase';
-import { calculatePlayerXP } from './playerUtils';
+import { calculatePlayerXP } from './xpCalculations';
 import { shuffleArray } from './arrayUtils';
 
 export interface PlayerSelectionParams {
@@ -107,45 +107,34 @@ export const handlePlayerSelection = async ({
       
       return {
         id: reg.id,
-        player_id: reg.player.player_id,
+        player_id: reg.player_id,
         friendly_name: reg.player.friendly_name,
         xp: calculatedXP,
         stats
       };
     });
 
-    // Sort players by XP (highest to lowest) and handle ties
+    // Sort players by XP (highest to lowest) with tiebreakers
     const sortedPlayers = [...playersWithXP].sort((a, b) => {
-      // Sort by calculated XP first
-      const xpDiff = b.xp - a.xp;
-      if (xpDiff !== 0) return xpDiff;
+      // Primary sort by XP
+      if (b.xp !== a.xp) return b.xp - a.xp;
       
-      // If XP is tied, sort by caps
-      const capsDiff = b.stats.caps - a.stats.caps;
-      if (capsDiff !== 0) return capsDiff;
+      // Secondary sort by current streak
+      if (b.stats.currentStreak !== a.stats.currentStreak) return b.stats.currentStreak - a.stats.currentStreak;
       
-      // If still tied, sort by streak
-      const streakDiff = b.stats.currentStreak - a.stats.currentStreak;
-      if (streakDiff !== 0) return streakDiff;
+      // Tertiary sort by caps
+      if (b.stats.caps !== a.stats.caps) return b.stats.caps - a.stats.caps;
       
-      // If still tied, sort randomly
-      return Math.random() - 0.5;
+      // Final tiebreaker by name for consistency
+      return a.friendly_name.localeCompare(b.friendly_name);
     });
 
-    console.log('Players with calculated XP:', playersWithXP.map(p => ({
-      name: p.friendly_name,
-      xp: p.xp,
-      caps: p.stats.caps,
-      streak: p.stats.currentStreak
-    })));
-
-    // Calculate how many players to select by merit vs random
-    const meritSlots = maxPlayers - randomSlots;
-    console.log('Selection slots:', { meritSlots, randomSlots, total: maxPlayers });
-
-    // Sort players by XP and get the top meritSlots players
+    // Calculate merit and random slots
+    let meritSlots = maxPlayers - randomSlots;
+    let adjustedRandomSlots = randomSlots;
+    
+    // Select merit-based players
     const meritPlayers = sortedPlayers.slice(0, meritSlots);
-    const meritThreshold = meritPlayers[meritPlayers.length - 1]?.xp || 0;
     
     console.log('Merit-based selections:', meritPlayers.map(p => ({
       name: p.friendly_name,
@@ -157,9 +146,10 @@ export const handlePlayerSelection = async ({
       p => !meritPlayers.some(mp => mp.id === p.id)
     );
     
-    // Randomly select from remaining players
+    // Always select enough random players to reach maxPlayers
+    const neededRandomPlayers = maxPlayers - meritPlayers.length;
     const shuffledRemaining = shuffleArray([...remainingPlayers]);
-    const randomlySelected = shuffledRemaining.slice(0, randomSlots);
+    const randomlySelected = shuffledRemaining.slice(0, neededRandomPlayers);
 
     console.log('Random selections:', randomlySelected.map(p => ({
       name: p.friendly_name,
@@ -170,6 +160,15 @@ export const handlePlayerSelection = async ({
     const allSelectedPlayers = [...meritPlayers, ...randomlySelected];
     console.log('Total selected players:', allSelectedPlayers.length, 'Expected:', maxPlayers);
 
+    if (allSelectedPlayers.length !== maxPlayers) {
+      console.error('Selection error: Wrong number of players selected', {
+        total: allSelectedPlayers.length,
+        expected: maxPlayers,
+        merit: meritPlayers.length,
+        random: randomlySelected.length
+      });
+    }
+
     // Sort reserves by XP for fairness in display
     const reservePlayers = sortedPlayers
       .filter(p => !allSelectedPlayers.some(s => s.id === p.id))
@@ -177,7 +176,7 @@ export const handlePlayerSelection = async ({
 
     // Format the selected players with their selection method
     const formattedSelectedPlayers = allSelectedPlayers.map(p => ({
-      id: p.id,
+      id: p.player_id,  
       friendly_name: p.friendly_name,
       xp: p.xp,
       stats: p.stats,
@@ -186,15 +185,15 @@ export const handlePlayerSelection = async ({
 
     // Format reserve players (sorted by XP)
     const formattedReservePlayers = reservePlayers.map(p => ({
-      id: p.id,
+      id: p.player_id,  
       friendly_name: p.friendly_name,
       xp: p.xp,
       stats: p.stats
     }));
 
-    // Update registration statuses
-    const selectedIds = formattedSelectedPlayers.map(p => p.id);
-    const reserveIds = formattedReservePlayers.map(p => p.id);
+    // Update registration statuses using registration IDs
+    const selectedIds = allSelectedPlayers.map(p => p.id);  
+    const reserveIds = reservePlayers.map(p => p.id);  
 
     // Update selected players
     if (selectedIds.length > 0) {
@@ -255,7 +254,7 @@ export const handlePlayerSelection = async ({
         totalRegistrations: registrations.length,
         meritSlots,
         randomSlots,
-        adjustedRandomSlots: randomSlots,
+        adjustedRandomSlots,
         selectionNotes,
         xpDistribution: calculateXPDistribution(playersWithXP)
       }
@@ -284,7 +283,7 @@ export const handlePlayerSelection = async ({
         totalRegistrations: registrations.length,
         meritSlots,
         randomSlots,
-        adjustedRandomSlots: randomSlots,
+        adjustedRandomSlots,
         selectionNotes,
         xpDistribution: calculateXPDistribution(playersWithXP)
       }

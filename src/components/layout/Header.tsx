@@ -43,6 +43,9 @@ const Header: React.FC = () => {
             {user && (
               <>
                 <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
+                  <Link to="/ratings">Ratings</Link>
+                </motion.li>
+                <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
                   <Link to="/profile">Profile</Link>
                 </motion.li>
                 {(isAdmin || isSuperAdmin) && !loading && (

@@ -262,14 +262,6 @@
               "position": 6
             },
             {
-              "name": "payment_link",
-              "type": "text",
-              "nullable": "YES",
-              "default": null,
-              "description": null,
-              "position": 7
-            },
-            {
               "name": "created_at",
               "type": "timestamp with time zone",
               "nullable": "YES",
@@ -300,6 +292,14 @@
               "default": null,
               "description": null,
               "position": 11
+            },
+            {
+              "name": "payment_received_date",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 12
             }
           ],
           "constraints": [
@@ -707,9 +707,68 @@
               "default": null,
               "description": null,
               "position": 15
+            },
+            {
+              "name": "payment_link",
+              "type": "text",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 16
+            },
+            {
+              "name": "needs_completion",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 17
+            },
+            {
+              "name": "completed",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 18
             }
           ],
           "constraints": [
+            {
+              "name": "check_needs_completion",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "created_at"
+            },
+            {
+              "name": "check_needs_completion",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "needs_completion"
+            },
+            {
+              "name": "check_needs_completion",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "outcome"
+            },
+            {
+              "name": "check_needs_completion",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "score_blue"
+            },
+            {
+              "name": "check_needs_completion",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "games",
+              "foreign_column": "score_orange"
+            },
             {
               "name": "games_outcome_check",
               "type": "CHECK",
@@ -951,6 +1010,198 @@
             }
           ],
           "rls_policies": null
+        },
+        {
+          "table_name": "player_ratings",
+          "description": null,
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "description": null,
+              "position": 1
+            },
+            {
+              "name": "rater_id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 2
+            },
+            {
+              "name": "rated_player_id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 3
+            },
+            {
+              "name": "attack_rating",
+              "type": "numeric",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 4
+            },
+            {
+              "name": "defense_rating",
+              "type": "numeric",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 5
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "CURRENT_TIMESTAMP",
+              "description": null,
+              "position": 6
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "CURRENT_TIMESTAMP",
+              "description": null,
+              "position": 7
+            }
+          ],
+          "constraints": [
+            {
+              "name": "cannot_rate_self",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "player_ratings",
+              "foreign_column": "rated_player_id"
+            },
+            {
+              "name": "cannot_rate_self",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "player_ratings",
+              "foreign_column": "rater_id"
+            },
+            {
+              "name": "player_ratings_attack_rating_check",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "player_ratings",
+              "foreign_column": "attack_rating"
+            },
+            {
+              "name": "player_ratings_defense_rating_check",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "player_ratings",
+              "foreign_column": "defense_rating"
+            },
+            {
+              "name": "player_ratings_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "player_ratings",
+              "foreign_column": "id"
+            },
+            {
+              "name": "player_ratings_rated_player_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "rated_player_id",
+              "foreign_table": "players",
+              "foreign_column": "id"
+            },
+            {
+              "name": "player_ratings_rater_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "rater_id",
+              "foreign_table": "players",
+              "foreign_column": "id"
+            },
+            {
+              "name": "unique_rating_pair",
+              "type": "UNIQUE",
+              "column": "rater_id",
+              "foreign_table": "player_ratings",
+              "foreign_column": "rater_id"
+            },
+            {
+              "name": "unique_rating_pair",
+              "type": "UNIQUE",
+              "column": "rater_id",
+              "foreign_table": "player_ratings",
+              "foreign_column": "rated_player_id"
+            },
+            {
+              "name": "unique_rating_pair",
+              "type": "UNIQUE",
+              "column": "rated_player_id",
+              "foreign_table": "player_ratings",
+              "foreign_column": "rater_id"
+            },
+            {
+              "name": "unique_rating_pair",
+              "type": "UNIQUE",
+              "column": "rated_player_id",
+              "foreign_table": "player_ratings",
+              "foreign_column": "rated_player_id"
+            },
+            {
+              "name": "2200_69054_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_69054_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_69054_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            }
+          ],
+          "indexes": [
+            {
+              "name": "player_ratings_pkey",
+              "definition": "CREATE UNIQUE INDEX player_ratings_pkey ON public.player_ratings USING btree (id)"
+            },
+            {
+              "name": "unique_rating_pair",
+              "definition": "CREATE UNIQUE INDEX unique_rating_pair ON public.player_ratings USING btree (rater_id, rated_player_id)"
+            }
+          ],
+          "rls_policies": [
+            {
+              "name": "Players can rate others they've played with",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "ALL",
+              "definition": "(EXISTS ( SELECT 1\n   FROM players\n  WHERE ((players.id = player_ratings.rater_id) AND (players.user_id = auth.uid()))))"
+            },
+            {
+              "name": "View ratings policy",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "SELECT",
+              "definition": "((EXISTS ( SELECT 1\n   FROM (players p\n     JOIN admin_roles ar ON ((p.id = ar.player_id)))\n  WHERE (p.user_id = auth.uid()))) OR (EXISTS ( SELECT 1\n   FROM players\n  WHERE ((players.user_id = auth.uid()) AND ((players.id = player_ratings.rater_id) OR (players.id = player_ratings.rated_player_id))))))"
+            }
+          ]
         },
         {
           "table_name": "players",
@@ -1319,6 +1570,14 @@
               "default": "CURRENT_TIMESTAMP",
               "description": null,
               "position": 9
+            },
+            {
+              "name": "pitch_cost",
+              "type": "numeric",
+              "nullable": "YES",
+              "default": "0",
+              "description": null,
+              "position": 10
             }
           ],
           "constraints": [

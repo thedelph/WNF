@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-toastify'
 import AvatarCreator from '../components/AvatarCreator'
+import { calculatePlayerXP } from '../utils/xpCalculations'
 
 interface PlayerProfile {
   id: string
@@ -228,7 +229,15 @@ export default function Component() {
               <h3 className="text-xl font-semibold mb-4">Stats</h3>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: 'XP', value: profile.xp },
+                  { 
+                    label: 'XP', 
+                    value: calculatePlayerXP({
+                      caps: profile.caps ?? 0,
+                      activeBonuses: profile.active_bonuses ?? 0,
+                      activePenalties: profile.active_penalties ?? 0,
+                      currentStreak: profile.current_streak ?? 0
+                    }).toString()
+                  },
                   { label: 'Caps', value: profile.caps },
                   { label: 'Win Rate', value: `${profile.win_rate}%` },
                   { label: 'Active Bonuses', value: profile.active_bonuses },

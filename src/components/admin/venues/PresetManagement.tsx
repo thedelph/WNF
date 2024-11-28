@@ -13,6 +13,7 @@ interface Preset {
   start_time: string;
   registration_hours_before: number;
   registration_hours_until: number;
+  pitch_cost: number;
 }
 
 interface Props {
@@ -32,6 +33,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
   const [startTime, setStartTime] = useState('21:00');
   const [regHoursBefore, setRegHoursBefore] = useState(48);
   const [regHoursUntil, setRegHoursUntil] = useState(1);
+  const [pitchCost, setPitchCost] = useState(50.00);
   const [isAdding, setIsAdding] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
 
@@ -60,6 +62,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
     setStartTime('21:00');
     setRegHoursBefore(48);
     setRegHoursUntil(1);
+    setPitchCost(50.00);
     setEditingPreset(null);
     setIsAdding(false);
   };
@@ -72,6 +75,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
     setStartTime(preset.start_time);
     setRegHoursBefore(preset.registration_hours_before);
     setRegHoursUntil(preset.registration_hours_until);
+    setPitchCost(preset.pitch_cost || 50.00);
     setIsAdding(true);
   };
 
@@ -107,7 +111,8 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
             day_of_week: dayOfWeek,
             start_time: startTime,
             registration_hours_before: regHoursBefore,
-            registration_hours_until: regHoursUntil
+            registration_hours_until: regHoursUntil,
+            pitch_cost: pitchCost
           })
           .eq('id', editingPreset.id);
 
@@ -122,7 +127,8 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
             day_of_week: dayOfWeek,
             start_time: startTime,
             registration_hours_before: regHoursBefore,
-            registration_hours_until: regHoursUntil
+            registration_hours_until: regHoursUntil,
+            pitch_cost: pitchCost
           });
 
         if (error) throw error;
@@ -168,6 +174,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
                   <p>Day: {preset.day_of_week.charAt(0).toUpperCase() + preset.day_of_week.slice(1)}</p>
                   <p>Time: {preset.start_time}</p>
                   <p>Registration: {preset.registration_hours_before}h before to {preset.registration_hours_until}h before</p>
+                  <p>Pitch Cost: £{preset.pitch_cost?.toFixed(2) || '50.00'}</p>
                 </div>
               </div>
             </div>
@@ -279,6 +286,24 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
                   required
                 />
               </div>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Pitch Cost (£)</span>
+              </label>
+              <input
+                type="number"
+                value={pitchCost}
+                onChange={(e) => setPitchCost(parseFloat(e.target.value))}
+                className="input input-bordered"
+                min={0}
+                step={0.01}
+                required
+              />
+              <label className="label">
+                <span className="label-text-alt">Total cost for renting the pitch</span>
+              </label>
             </div>
 
             <div className="flex gap-2">

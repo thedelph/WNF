@@ -13,6 +13,7 @@ interface Props {
   games: Game[]
   loading: boolean
   onGameDeleted: () => void
+  recalculateAllCaps: () => Promise<void>
 }
 
 interface Filters {
@@ -29,7 +30,7 @@ interface PlayerStreak {
   lastGameDate: Date | null
 }
 
-const HistoricalGameList: React.FC<Props> = ({ games, loading, onGameDeleted }) => {
+const HistoricalGameList: React.FC<Props> = ({ games, loading, onGameDeleted, recalculateAllCaps }) => {
   const [filters, setFilters] = useState<Filters>({
     dateFrom: '',
     dateTo: '',
@@ -39,9 +40,13 @@ const HistoricalGameList: React.FC<Props> = ({ games, loading, onGameDeleted }) 
 
   useEffect(() => {
     if (games.length > 0) {
-      calculateAndUpdateStreaks(games)
+      const updateAll = async () => {
+        await calculateAndUpdateStreaks(games)
+        await recalculateAllCaps()
+      }
+      updateAll()
     }
-  }, [games])
+  }, [games.length])
 
   const calculateAndUpdateStreaks = async (games: Game[]) => {
     try {

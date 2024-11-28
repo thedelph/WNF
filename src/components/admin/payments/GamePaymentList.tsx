@@ -23,7 +23,10 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
     try {
       const { error } = await supabase
         .from('game_registrations')
-        .update({ paid })
+        .update({ 
+          paid,
+          payment_received_date: paid ? new Date().toISOString() : null
+        })
         .match({ game_id: gameId, player_id: playerId });
 
       if (error) throw error;
@@ -36,11 +39,34 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
     }
   };
 
+  const handleMarkAllPaid = async (gameId: string) => {
+    try {
+      const { error } = await supabase
+        .from('game_registrations')
+        .update({ 
+          paid: true,
+          payment_received_date: new Date().toISOString()
+        })
+        .eq('game_id', gameId);
+
+      if (error) throw error;
+      
+      toast.success('All players marked as paid');
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating payments:', error);
+      toast.error('Failed to update payment status');
+    }
+  };
+
   const handleBulkPaymentUpdate = async (paid: boolean) => {
     try {
       const { error } = await supabase
         .from('game_registrations')
-        .update({ paid })
+        .update({ 
+          paid,
+          payment_received_date: paid ? new Date().toISOString() : null
+        })
         .in('game_id', Array.from(selectedGames));
 
       if (error) throw error;
@@ -91,31 +117,32 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
             key={game.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
             className="card bg-base-100 shadow-xl"
           >
             <div className="card-body">
-              <div className="flex items-center gap-4">
-                <input
-                  type="checkbox"
-                  className="checkbox"
-                  checked={selectedGames.has(game.id)}
-                  onChange={(e) => {
-                    const newSelected = new Set(selectedGames);
-                    if (e.target.checked) {
-                      newSelected.add(game.id);
-                    } else {
-                      newSelected.delete(game.id);
-                    }
-                    setSelectedGames(newSelected);
-                  }}
-                />
-                <h3 className="text-lg font-bold">
-                  {new Date(game.date).toLocaleDateString()}
+              <div className="flex justify-between items-center">
+                <h3 className="card-title">
+                  {new Date(game.date).toLocaleDateString()} - {game.venue?.name}
                 </h3>
-                <span className="badge badge-primary">
-                  £{game.pitch_cost?.toFixed(2) || '0.00'}
-                </span>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => handleMarkAllPaid(game.id)}
+                >
+                  Mark All Paid
+                </button>
+              </div>
+              
+              <div className="stats shadow mb-4">
+                <div className="stat">
+                  <div className="stat-title">Total Cost</div>
+                  <div className="stat-value text-primary">£{game.pitch_cost}</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title">Cost Per Player</div>
+                  <div className="stat-value text-secondary">
+                    £{(game.pitch_cost / (game.game_registrations?.length || 1)).toFixed(2)}
+                  </div>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
@@ -123,37 +150,39 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
                   <thead>
                     <tr>
                       <th>Player</th>
-                      <th>Status</th>
-                      <th>Paid By</th>
+                      <th>Payment Status</th>
+                      <th>Payment Date</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {game.game_registrations?.map((registration) => (
-                      <tr key={registration.id}>
-                        <td>{registration.player?.friendly_name}</td>
+                    {game.game_registrations?.map((reg) => (
+                      <motion.tr
+                        key={reg.player_id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="hover"
+                      >
+                        <td>{reg.player.friendly_name}</td>
                         <td>
-                          <span className={`badge ${registration.paid ? 'badge-success' : 'badge-error'}`}>
-                            {registration.paid ? 'Paid' : 'Unpaid'}
+                          <span className={`badge ${reg.paid ? 'badge-success' : 'badge-error'}`}>
+                            {reg.paid ? 'Paid' : 'Unpaid'}
                           </span>
                         </td>
                         <td>
-                          {registration.paid_by_player_id ? 
-                            registration.paid_by?.friendly_name : '-'}
+                          {reg.payment_received_date 
+                            ? new Date(reg.payment_received_date).toLocaleDateString()
+                            : '-'}
                         </td>
                         <td>
                           <button
-                            className="btn btn-sm btn-ghost"
-                            onClick={() => handlePaymentToggle(
-                              game.id,
-                              registration.player_id,
-                              !registration.paid
-                            )}
+                            className={`btn btn-sm ${reg.paid ? 'btn-error' : 'btn-success'}`}
+                            onClick={() => handlePaymentToggle(game.id, reg.player_id, !reg.paid)}
                           >
-                            {registration.paid ? 'Mark Unpaid' : 'Mark Paid'}
+                            {reg.paid ? 'Mark Unpaid' : 'Mark Paid'}
                           </button>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>

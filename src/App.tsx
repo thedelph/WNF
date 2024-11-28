@@ -17,6 +17,7 @@ import HistoricalGames from './pages/admin/history/HistoricalGames'
 import PlayerList from './pages/PlayerList'
 import PlayerProfile from './pages/PlayerProfile'
 import PaymentDashboard from './components/admin/payments/PaymentDashboard'
+import Ratings from './pages/Ratings'
 
 const App: React.FC = () => {
   return (
@@ -36,6 +37,7 @@ const App: React.FC = () => {
             <Route path="/players" element={<PlayerList />} />
             <Route path="/players/:id" element={<PlayerProfile />} />
             <Route path="/admin/payments" element={<PaymentDashboard />} />
+            <Route path="/ratings" element={<Ratings />} />
           </Routes>
           <Toaster />
         </Layout>

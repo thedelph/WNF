@@ -15,29 +15,40 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
   useEffect(() => {
     if (!props?.upcomingGame) return;
 
-    const now = new Date();
-    const registrationEnd = new Date(props.upcomingGame.registration_window_end);
-    
-    // Check if we need to process player selection
-    const shouldProcessSelection = 
-      now > registrationEnd && 
-      props.upcomingGame.status === 'open' &&  // Add status check
-      !isProcessingClose && 
-      !hasPassedWindowEnd;
+    const checkRegistrationStatus = () => {
+      const now = new Date();
+      const registrationEnd = new Date(props.upcomingGame!.registration_window_end);
+      
+      // Check if we need to process player selection
+      const shouldProcessSelection = 
+        now > registrationEnd && 
+        props.upcomingGame!.status === 'open' &&  // Add status check
+        !isProcessingClose && 
+        !hasPassedWindowEnd;
 
-    console.log('Registration close check:', {
-      now: now.toISOString(),
-      registrationEnd: registrationEnd.toISOString(),
-      isPastEndTime: now > registrationEnd,
-      gameStatus: props.upcomingGame.status,
-      shouldProcessSelection,
-      isProcessingClose,
-      hasPassedWindowEnd
-    });
+      console.log('Registration close check:', {
+        now: now.toISOString(),
+        registrationEnd: registrationEnd.toISOString(),
+        isPastEndTime: now > registrationEnd,
+        gameStatus: props.upcomingGame!.status,
+        shouldProcessSelection,
+        isProcessingClose,
+        hasPassedWindowEnd
+      });
 
-    if (shouldProcessSelection) {
-      handleRegistrationWindowClose();
-    }
+      if (shouldProcessSelection) {
+        handleRegistrationWindowClose();
+      }
+    };
+
+    // Initial check
+    checkRegistrationStatus();
+
+    // Set up polling every 10 seconds
+    const intervalId = setInterval(checkRegistrationStatus, 10000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
   }, [props?.upcomingGame, isProcessingClose, hasPassedWindowEnd]);
 
   const handleRegistrationWindowClose = async () => {
@@ -77,7 +88,7 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
           game_id: id,
           selected_players: result.selectedPlayers,
           reserve_players: result.reservePlayers,
-          debug_info: result.debug
+          selection_metadata: result.debug
         });
 
       if (selectionError) {

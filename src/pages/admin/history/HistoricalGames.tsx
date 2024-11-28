@@ -9,9 +9,11 @@ import { Game } from '../../../types/game'
 import HistoricalGameForm from '../../../components/admin/history/HistoricalGameForm'
 import CSVImport from '../../../components/admin/history/csv/CSVImport'
 import HistoricalGameList from '../../../components/admin/history/list/HistoricalGameList'
+import GameCompletionForm from '../../../components/admin/history/GameCompletionForm'
 
 export default function HistoricalGames() {
   const [games, setGames] = useState<Game[]>([])
+  const [pendingGames, setPendingGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const { isAdmin } = useAdmin()
   const [outcome, setOutcome] = useState<GameOutcome>(null)
@@ -24,7 +26,31 @@ export default function HistoricalGames() {
   const fetchGames = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabaseAdmin
+      
+      // Fetch games that need completion (only for games created after 2023-11-15)
+      const { data: pendingData, error: pendingError } = await supabaseAdmin
+        .from('games')
+        .select(`
+          *,
+          game_registrations (
+            id,
+            team,
+            player_id,
+            players:player_id (
+              id,
+              friendly_name
+            )
+          )
+        `)
+        .eq('needs_completion', true)
+        .gt('created_at', '2023-11-15')
+        .order('date', { ascending: false })
+
+      if (pendingError) throw pendingError
+      setPendingGames(pendingData)
+
+      // Fetch historical games
+      const { data: historicalData, error: historicalError } = await supabaseAdmin
         .from('games')
         .select(`
           *,
@@ -41,15 +67,18 @@ export default function HistoricalGames() {
         .eq('is_historical', true)
         .order('date', { ascending: false })
 
-      if (error) throw error
-      console.log('Fetched games with registrations:', data)
-      setGames(data)
+      if (historicalError) throw historicalError
+      setGames(historicalData)
     } catch (error) {
       console.error('Error fetching games:', error)
-      toast.error('Failed to fetch historical games')
+      toast.error('Failed to fetch games')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGameComplete = () => {
+    fetchGames()
   }
 
   const recalculateAllCaps = async () => {
@@ -114,8 +143,49 @@ export default function HistoricalGames() {
       transition={{ duration: 0.5 }}
       className="container mx-auto px-4 py-8"
     >
+      <h1 className="text-3xl font-bold mb-8">Historical Games</h1>
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          {pendingGames.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4">Games Needing Completion</h2>
+              {pendingGames.map(game => (
+                <GameCompletionForm 
+                  key={game.id} 
+                  game={game} 
+                  onComplete={handleGameComplete} 
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-2xl font-semibold mb-4">Add Historical Game</h2>
+              <HistoricalGameForm onGameAdded={fetchGames} />
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-2xl font-semibold mb-4">Import Historical Games</h2>
+              <CSVImport onGamesImported={fetchGames} />
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-2xl font-semibold mb-4">Historical Games List</h2>
+              <HistoricalGameList
+                games={games}
+                loading={loading}
+                onGameDeleted={fetchGames}
+                recalculateAllCaps={recalculateAllCaps}
+              />
+            </div>
+          </div>
+        </>
+      )}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-center">Historical Games</h1>
         <button 
           onClick={recalculateAllCaps}
           disabled={isRecalculating}
@@ -123,20 +193,6 @@ export default function HistoricalGames() {
         >
           {isRecalculating ? 'Recalculating...' : 'Recalculate All Caps'}
         </button>
-      </div>
-      <div className="grid gap-8 md:grid-cols-2">
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Add New Game</h2>
-          <HistoricalGameForm onGameAdded={fetchGames} />
-        </div>
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Import from CSV</h2>
-          <CSVImport onImportComplete={fetchGames} />
-        </div>
-      </div>
-      <div className="mt-12">
-        <h2 className="text-2xl font-semibold mb-4">Game List</h2>
-        <HistoricalGameList games={games} loading={loading} onGameDeleted={fetchGames} />
       </div>
     </motion.div>
   )
