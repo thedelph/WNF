@@ -3,10 +3,14 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { GameDetails } from '../components/game/GameDetails';
 import { Game as GameType } from '../types/game';
+import { RegisteredPlayers } from '../components/game/RegisteredPlayers';
 import { PlayerSelectionResults } from '../components/games/PlayerSelectionResults';
-import { useRegistrationClose } from '../hooks/useRegistrationClose';
+import { TeamSelectionResults } from '../components/games/TeamSelectionResults';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { handlePlayerSelection } from '../utils/playerSelection';
+import { useRegistrationClose } from '../hooks/useRegistrationClose';
+import { useTeamAnnouncement } from '../hooks/useTeamAnnouncement';
+import { useRegistrationOpen } from '../hooks/useRegistrationOpen';
 
 const Game = () => {
   const [upcomingGame, setUpcomingGame] = useState<GameType | null>(null);
@@ -162,6 +166,7 @@ const Game = () => {
           address: games.venues.address,
           google_maps_url: games.venues.google_maps_url
         } : null,
+        registrations: games.game_registrations || [],
         registrations_count: games.registrations_count?.[0]?.count || 0
       };
 
@@ -182,6 +187,40 @@ const Game = () => {
     fetchGameData();
   }, [fetchGameData]);
 
+  const { isProcessingOpen } = useRegistrationOpen({
+    game: upcomingGame,
+    onGameUpdated: fetchGameData
+  });
+
+  const { isProcessingClose } = useRegistrationClose({
+    game: upcomingGame,
+    onGameUpdated: fetchGameData
+  });
+
+  const { isProcessingAnnouncement } = useTeamAnnouncement({
+    game: upcomingGame,
+    onGameUpdated: fetchGameData
+  });
+
+  const renderPlayerList = () => {
+    if (isProcessingOpen || isProcessingClose || isProcessingAnnouncement) {
+      return <LoadingSpinner />;
+    }
+
+    switch (upcomingGame?.status) {
+      case 'open':
+      case 'upcoming':
+        return <RegisteredPlayers gameId={upcomingGame.id} />;
+      case 'players_announced':
+        return <PlayerSelectionResults gameId={upcomingGame.id} />;
+      case 'teams_announced':
+      case 'completed':
+        return <TeamSelectionResults gameId={upcomingGame.id} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {isLoading ? (
@@ -195,7 +234,9 @@ const Game = () => {
           isUserRegistered={isUserRegistered}
           handleRegistration={handleRegistration}
           handlePlayerSelection={handlePlayerSelection}
-        />
+        >
+          {renderPlayerList()}
+        </GameDetails>
       )}
     </div>
   );

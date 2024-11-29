@@ -1,9 +1,8 @@
 export const GAME_STATUSES = {
   OPEN: 'open',
   UPCOMING: 'upcoming',
-  PENDING_TEAMS: 'pending_teams',
-  TEAMS_ANNOUNCED: 'teams_announced',
-  PLAYERS_ANNOUNCED: 'players_announced',
+  PLAYERS_ANNOUNCED: 'players_announced',  // After registration closes, players are selected
+  TEAMS_ANNOUNCED: 'teams_announced',      // After team announcement time, teams are balanced
   COMPLETED: 'completed'
 } as const;
 
@@ -14,6 +13,18 @@ export interface Venue {
   name: string
   address: string
   google_maps_url?: string
+}
+
+export interface VenuePreset {
+  id: string
+  name: string
+  venue_id: string
+  day_of_week: string
+  start_time: string
+  registration_hours_before: number
+  registration_hours_until: number
+  team_announcement_hours: number
+  pitch_cost: number
 }
 
 export interface GameRegistration {
@@ -35,6 +46,8 @@ export interface Game {
   random_slots: number
   registration_window_start: string
   registration_window_end: string
+  team_announcement_time: string
+  teams_announced: boolean
   venue: {
     id: string
     name: string
@@ -73,7 +86,6 @@ export const isValidGameStatus = (status: string): status is GameStatus => {
 export const ACTIVE_GAME_STATUSES = [
   GAME_STATUSES.OPEN,
   GAME_STATUSES.UPCOMING,
-  GAME_STATUSES.PENDING_TEAMS,
-  GAME_STATUSES.TEAMS_ANNOUNCED,
   GAME_STATUSES.PLAYERS_ANNOUNCED,
+  GAME_STATUSES.TEAMS_ANNOUNCED,
 ] as const

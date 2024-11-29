@@ -2,6 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Venue } from '../../../types/game'
 import FormContainer from '../../common/containers/FormContainer'
+import toast from 'react-hot-toast'
 
 interface Props {
   venues: Venue[]
@@ -22,6 +23,8 @@ interface Props {
   setRandomSlots: (num: number) => void
   pitchCost: number
   setPitchCost: (cost: number) => void
+  teamAnnouncementTime: string
+  setTeamAnnouncementTime: (date: string) => void
   presets: {
     id: string;
     name: string;
@@ -54,6 +57,8 @@ export const CreateGameForm: React.FC<Props> = ({
   setRandomSlots,
   pitchCost,
   setPitchCost,
+  teamAnnouncementTime,
+  setTeamAnnouncementTime,
   presets,
   onPresetSelect
 }) => {
@@ -108,12 +113,13 @@ export const CreateGameForm: React.FC<Props> = ({
         <div className="form-control">
           <label className="label">
             <span className="label-text">Registration Window Start</span>
-            <span 
-              className="label-text-alt text-primary cursor-pointer hover:underline"
+            <button 
+              type="button"
+              className="btn btn-xs"
               onClick={() => setRegistrationStart(new Date().toISOString().slice(0, 16))}
             >
-              Set to now
-            </span>
+              Set to Now
+            </button>
           </label>
           <input
             type="datetime-local"
@@ -127,20 +133,59 @@ export const CreateGameForm: React.FC<Props> = ({
         <div className="form-control">
           <label className="label">
             <span className="label-text">Registration Window End</span>
-            <span 
-              className="label-text-alt text-primary cursor-pointer hover:underline"
+            <button 
+              type="button"
+              className="btn btn-xs"
               onClick={() => {
                 const oneMinuteFromNow = new Date(Date.now() + 60000);
                 setRegistrationEnd(oneMinuteFromNow.toISOString().slice(0, 16));
               }}
             >
-              1 min from now
-            </span>
+              1 Min from Now
+            </button>
           </label>
           <input
             type="datetime-local"
             value={registrationEnd}
             onChange={(e) => setRegistrationEnd(e.target.value)}
+            className="input input-bordered"
+            required
+          />
+        </div>
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Team Announcement Time</span>
+            <button
+              type="button"
+              className="btn btn-xs"
+              onClick={() => {
+                if (!date || !time) {
+                  toast.error('Please set game date and time first');
+                  return;
+                }
+                try {
+                  const gameDateTime = new Date(`${date}T${time}`);
+                  if (isNaN(gameDateTime.getTime())) {
+                    toast.error('Invalid game date or time');
+                    return;
+                  }
+                  const announcementTime = new Date(gameDateTime);
+                  announcementTime.setHours(announcementTime.getHours() - 4);
+                  setTeamAnnouncementTime(announcementTime.toISOString().slice(0, 16));
+                } catch (error) {
+                  console.error('Error setting team announcement time:', error);
+                  toast.error('Failed to set team announcement time');
+                }
+              }}
+            >
+              4H Before Game
+            </button>
+          </label>
+          <input
+            type="datetime-local"
+            value={teamAnnouncementTime}
+            onChange={(e) => setTeamAnnouncementTime(e.target.value)}
             className="input input-bordered"
             required
           />

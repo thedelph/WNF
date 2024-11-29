@@ -13,6 +13,7 @@ interface Preset {
   start_time: string;
   registration_hours_before: number;
   registration_hours_until: number;
+  team_announcement_hours: number;
   pitch_cost: number;
 }
 
@@ -33,6 +34,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
   const [startTime, setStartTime] = useState('21:00');
   const [regHoursBefore, setRegHoursBefore] = useState(48);
   const [regHoursUntil, setRegHoursUntil] = useState(1);
+  const [teamAnnouncementHours, setTeamAnnouncementHours] = useState(4);
   const [pitchCost, setPitchCost] = useState(50.00);
   const [isAdding, setIsAdding] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
@@ -62,6 +64,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
     setStartTime('21:00');
     setRegHoursBefore(48);
     setRegHoursUntil(1);
+    setTeamAnnouncementHours(4);
     setPitchCost(50.00);
     setEditingPreset(null);
     setIsAdding(false);
@@ -75,6 +78,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
     setStartTime(preset.start_time);
     setRegHoursBefore(preset.registration_hours_before);
     setRegHoursUntil(preset.registration_hours_until);
+    setTeamAnnouncementHours(preset.team_announcement_hours || 4);
     setPitchCost(preset.pitch_cost || 50.00);
     setIsAdding(true);
   };
@@ -112,6 +116,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
             start_time: startTime,
             registration_hours_before: regHoursBefore,
             registration_hours_until: regHoursUntil,
+            team_announcement_hours: teamAnnouncementHours,
             pitch_cost: pitchCost
           })
           .eq('id', editingPreset.id);
@@ -128,6 +133,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
             start_time: startTime,
             registration_hours_before: regHoursBefore,
             registration_hours_until: regHoursUntil,
+            team_announcement_hours: teamAnnouncementHours,
             pitch_cost: pitchCost
           });
 
@@ -174,6 +180,7 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
                   <p>Day: {preset.day_of_week.charAt(0).toUpperCase() + preset.day_of_week.slice(1)}</p>
                   <p>Time: {preset.start_time}</p>
                   <p>Registration: {preset.registration_hours_before}h before to {preset.registration_hours_until}h before</p>
+                  <p>Team Announcement: {preset.team_announcement_hours || 4}h before game</p>
                   <p>Pitch Cost: £{preset.pitch_cost?.toFixed(2) || '50.00'}</p>
                 </div>
               </div>
@@ -286,6 +293,24 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
                   required
                 />
               </div>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Team Announcement Hours Before Game</span>
+              </label>
+              <input
+                type="number"
+                value={teamAnnouncementHours}
+                onChange={(e) => setTeamAnnouncementHours(parseInt(e.target.value))}
+                className="input input-bordered"
+                min={1}
+                max={48}
+                required
+              />
+              <label className="label">
+                <span className="label-text-alt">Hours before game start when teams will be announced</span>
+              </label>
             </div>
 
             <div className="form-control">

@@ -189,8 +189,7 @@ export default function Ratings() {
             defense_rating: ratings.defense
           },
           {
-            onConflict: 'rater_id,rated_player_id',
-            ignoreDuplicates: false
+            onConflict: 'rater_id,rated_player_id'
           }
         );
 

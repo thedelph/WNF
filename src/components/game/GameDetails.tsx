@@ -9,6 +9,7 @@ import CountdownTimer from '../CountdownTimer';
 import { useRegistrationClose } from '../../hooks/useRegistrationClose';
 import { RegisteredPlayers } from './RegisteredPlayers';
 import { PlayerSelectionResults } from '../games/PlayerSelectionResults';
+import { TeamSelectionResults } from '../games/TeamSelectionResults';
 
 interface Props {
   game: Game;
@@ -118,48 +119,88 @@ export const GameDetails: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Registration Window */}
-        {game.status === 'open' && (
-          <div className="mt-6 bg-base-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold mb-2">Registration Window</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">
-                  Opens: {format(new Date(game.registration_window_start), 'MMM do h:mm a')}
-                  <br />
-                  Closes: {format(new Date(game.registration_window_end), 'MMM do h:mm a')}
-                </p>
-              </div>
-              <div className="flex items-center justify-end">
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="badge badge-primary p-3 font-semibold"
-                >
-                  <CountdownTimer targetDate={new Date(game.registration_window_end)} />
-                </motion.div>
+        {/* Game Status Information */}
+        <div className="mt-6 space-y-4">
+          {/* Registration Window */}
+          {game.status === 'upcoming' && (
+            <div className="bg-base-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-2">Registration Opens In</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Opens: {format(new Date(game.registration_window_start), 'MMM do h:mm a')}
+                    <br />
+                    Closes: {format(new Date(game.registration_window_end), 'MMM do h:mm a')}
+                  </p>
+                </div>
+                <div className="flex items-center justify-end">
+                  <CountdownTimer targetDate={new Date(game.registration_window_start)} />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      {/* Show either RegisteredPlayers or PlayerSelectionResults based on game status */}
-      <div className="mt-6">
-        {game.status === 'players_announced' && game.game_selections?.[0] ? (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-4">Teamsheet</h3>
-            <PlayerSelectionResults
-              selectedPlayers={game.game_selections[0].selected_players}
-              reservePlayers={game.game_selections[0].reserve_players}
-            />
-          </div>
-        ) : (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-4">Registered Interest</h3>
-            <RegisteredPlayers registrations={game.game_registrations || []} />
-          </div>
-        )}
+          {game.status === 'open' && (
+            <div className="bg-base-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-2">Registration Window</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Opens: {format(new Date(game.registration_window_start), 'MMM do h:mm a')}
+                    <br />
+                    Closes: {format(new Date(game.registration_window_end), 'MMM do h:mm a')}
+                  </p>
+                </div>
+                <div className="flex items-center justify-end">
+                  <CountdownTimer targetDate={new Date(game.registration_window_end)} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {game.status === 'players_announced' && (
+            <div className="bg-base-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-2">Team Announcement</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Teams will be announced at: {format(new Date(game.team_announcement_time), 'MMM do h:mm a')}
+                  </p>
+                </div>
+                <div className="flex items-center justify-end">
+                  <CountdownTimer targetDate={new Date(game.team_announcement_time)} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {game.status === 'teams_announced' && (
+            <div className="bg-base-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-2">Game Start</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Game starts at: {format(new Date(game.date), 'MMM do h:mm a')}
+                  </p>
+                </div>
+                <div className="flex items-center justify-end">
+                  <CountdownTimer targetDate={new Date(game.date)} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Player Lists */}
+        <div className="mt-6">
+          {(game.status === 'open' || game.status === 'upcoming') && (
+            <RegisteredPlayers registrations={game.registrations || []} />
+          )}
+          {game.status === 'players_announced' && (
+            <PlayerSelectionResults gameId={game.id} />
+          )}
+          {game.status === 'teams_announced' && <TeamSelectionResults gameId={game.id} />}
+        </div>
       </div>
     </div>
   );

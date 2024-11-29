@@ -43,6 +43,7 @@ const GameManagement: React.FC = () => {
   const [time, setTime] = useState('21:00')
   const [registrationStart, setRegistrationStart] = useState('')
   const [registrationEnd, setRegistrationEnd] = useState('')
+  const [teamAnnouncementTime, setTeamAnnouncementTime] = useState('')
   const [venueId, setVenueId] = useState('')
   const [maxPlayers, setMaxPlayers] = useState(18)
   const [randomSlots, setRandomSlots] = useState(2)
@@ -145,6 +146,11 @@ const GameManagement: React.FC = () => {
     const regEnd = new Date(gameDate);
     regEnd.setHours(regEnd.getHours() - preset.registration_hours_until);
     setRegistrationEnd(regEnd.toISOString().slice(0, 16));
+
+    // Set team announcement time using the preset hours
+    const announcementTime = new Date(gameDate);
+    announcementTime.setHours(announcementTime.getHours() - (preset.team_announcement_hours || 4));
+    setTeamAnnouncementTime(announcementTime.toISOString().slice(0, 16));
   };
 
   // Helper function to calculate days until next occurrence
@@ -283,12 +289,14 @@ const GameManagement: React.FC = () => {
       const gameDate = new Date(`${date}T${time}`);
       const regStart = new Date(registrationStart);
       const regEnd = new Date(registrationEnd);
+      const teamAnnounce = new Date(teamAnnouncementTime);
       const now = new Date();
 
       console.log('Creating game with details:', {
         gameDate,
         regStart,
         regEnd,
+        teamAnnounce,
         currentTime: now,
         venueId,
         maxPlayers,
@@ -306,6 +314,16 @@ const GameManagement: React.FC = () => {
         return;
       }
 
+      if (teamAnnounce <= regEnd) {
+        toast.error('Team announcement must be after registration end');
+        return;
+      }
+
+      if (teamAnnounce >= gameDate) {
+        toast.error('Team announcement must be before game start');
+        return;
+      }
+
       // Determine initial status
       let initialStatus: GameStatus = 'upcoming';
       if (now >= regStart && now < regEnd) {
@@ -320,11 +338,13 @@ const GameManagement: React.FC = () => {
           date: gameDate.toISOString(),
           registration_window_start: regStart.toISOString(),
           registration_window_end: regEnd.toISOString(),
+          team_announcement_time: teamAnnounce.toISOString(),
           venue_id: venueId,
           max_players: maxPlayers,
           random_slots: randomSlots,
           pitch_cost: pitchCost,
-          status: initialStatus
+          status: initialStatus,
+          teams_announced: false
         })
         .select()
         .single();
@@ -343,6 +363,7 @@ const GameManagement: React.FC = () => {
       setTime('21:00');
       setRegistrationStart('');
       setRegistrationEnd('');
+      setTeamAnnouncementTime('');
       setMaxPlayers(18);
       setRandomSlots(2);
       setPitchCost(0);
@@ -443,6 +464,7 @@ const GameManagement: React.FC = () => {
     setTime(new Date(game.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
     setRegistrationStart(game.registration_window_start)
     setRegistrationEnd(game.registration_window_end)
+    setTeamAnnouncementTime(game.team_announcement_time)
     setVenueId(game.venue_id)
     setMaxPlayers(game.max_players)
     setIsEditingGame(true)
@@ -456,6 +478,7 @@ const GameManagement: React.FC = () => {
       const gameDate = new Date(`${date}T${time}`)
       const regStart = new Date(registrationStart)
       const regEnd = new Date(registrationEnd)
+      const teamAnnounce = new Date(teamAnnouncementTime)
 
       const { error } = await supabase
         .from('games')
@@ -463,6 +486,7 @@ const GameManagement: React.FC = () => {
           date: gameDate.toISOString(),
           registration_window_start: regStart.toISOString(),
           registration_window_end: regEnd.toISOString(),
+          team_announcement_time: teamAnnounce.toISOString(),
           venue_id: venueId,
           max_players: maxPlayers
         })
@@ -591,7 +615,7 @@ const GameManagement: React.FC = () => {
         .select(`
           id,
           player_id,
-          players (
+          players!game_registrations_player_id_fkey (
             id,
             friendly_name,
             caps,
@@ -621,6 +645,9 @@ const GameManagement: React.FC = () => {
       // Randomly select remaining players from the pool
       const remainingPlayers = playersWithXP.slice(meritSlots);
       const randomPlayers = shuffleArray(remainingPlayers).slice(0, randomSlots);
+
+      // Combine selected players for later use
+      const selectedPlayers = [...meritPlayers, ...randomPlayers];
 
       // Update selected players status - Merit based first
       if (meritPlayers.length > 0) {
@@ -799,6 +826,9 @@ const GameManagement: React.FC = () => {
       const randomlySelected = shuffleArray(randomPool)
         .slice(0, game.random_slots);
 
+      // Combine selected players for later use
+      const selectedPlayers = [...meritPlayers, ...randomlySelected];
+
       // Update merit players
       if (meritPlayers.length > 0) {
         await supabaseAdmin
@@ -899,6 +929,8 @@ const GameManagement: React.FC = () => {
           setRegistrationStart={setRegistrationStart}
           registrationEnd={registrationEnd}
           setRegistrationEnd={setRegistrationEnd}
+          teamAnnouncementTime={teamAnnouncementTime}
+          setTeamAnnouncementTime={setTeamAnnouncementTime}
           venueId={venueId}
           setVenueId={setVenueId}
           maxPlayers={maxPlayers}

@@ -9,15 +9,6 @@ export const calculateRarity = (xp: number, allXp: number[]): 'Legendary' | 'Epi
     rare: Math.max(4, Math.ceil(totalPlayers * 0.20)),       // Top 20%
     uncommon: Math.max(8, Math.ceil(totalPlayers * 0.40))    // Top 40%
   };
-  
-  console.log('Rarity Calculation:', {
-    xp,
-    position,
-    totalPlayers,
-    thresholds,
-    topXPValues: sortedXP.slice(0, 5),
-    uniqueXPValues: new Set(allXp).size
-  });
 
   if (position < thresholds.legendary) return 'Legendary';
   if (position < thresholds.epic) return 'Epic';

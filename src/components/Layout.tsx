@@ -1,13 +1,31 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '../context/AuthContext'
 import Header from './layout/Header'
 import Footer from './layout/Footer'
+import { subscribeToTeamAnnouncements, showTeamAnnouncementNotification } from '../utils/teamNotifications'
 
 interface LayoutProps {
   children: React.ReactNode
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.id) {
+      // Subscribe to team announcements
+      const unsubscribe = subscribeToTeamAnnouncements(
+        user.id,
+        showTeamAnnouncementNotification
+      );
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [user?.id]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />

@@ -4,7 +4,7 @@ import { supabaseAdmin } from '../utils/supabase';
 import { handlePlayerSelection } from '../utils/playerSelection';
 
 interface UseRegistrationCloseProps {
-  upcomingGame?: any;
+  game?: any;
   onGameUpdated: () => Promise<void>;
 }
 
@@ -13,16 +13,16 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
   const [hasPassedWindowEnd, setHasPassedWindowEnd] = useState(false);
 
   useEffect(() => {
-    if (!props?.upcomingGame) return;
+    if (!props?.game) return;
 
     const checkRegistrationStatus = () => {
       const now = new Date();
-      const registrationEnd = new Date(props.upcomingGame!.registration_window_end);
+      const registrationEnd = new Date(props.game!.registration_window_end);
       
       // Check if we need to process player selection
       const shouldProcessSelection = 
         now > registrationEnd && 
-        props.upcomingGame!.status === 'open' &&  // Add status check
+        props.game!.status === 'open' &&  
         !isProcessingClose && 
         !hasPassedWindowEnd;
 
@@ -30,7 +30,7 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
         now: now.toISOString(),
         registrationEnd: registrationEnd.toISOString(),
         isPastEndTime: now > registrationEnd,
-        gameStatus: props.upcomingGame!.status,
+        gameStatus: props.game!.status,
         shouldProcessSelection,
         isProcessingClose,
         hasPassedWindowEnd
@@ -49,15 +49,15 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
 
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
-  }, [props?.upcomingGame, isProcessingClose, hasPassedWindowEnd]);
+  }, [props?.game, isProcessingClose, hasPassedWindowEnd]);
 
   const handleRegistrationWindowClose = async () => {
-    if (!props?.upcomingGame) return;
+    if (!props?.game) return;
 
     setIsProcessingClose(true);
     
     try {
-      const { id, max_players, random_slots } = props.upcomingGame;
+      const { id, max_players, random_slots } = props.game;
       
       console.log('Starting player selection for game:', {
         id,
@@ -97,7 +97,7 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
       }
       
       await props.onGameUpdated();
-      toast.success('Teams have been selected');
+      toast.success('Players have been selected');
       setHasPassedWindowEnd(true);
 
     } catch (error) {

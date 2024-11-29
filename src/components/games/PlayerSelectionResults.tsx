@@ -26,14 +26,14 @@ interface ExtendedPlayerData {
 }
 
 interface PlayerSelectionResultsProps {
-  selectedPlayers: Player[];
-  reservePlayers: Player[];
+  gameId: string;
 }
 
 export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({
-  selectedPlayers,
-  reservePlayers
+  gameId
 }) => {
+  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [reservePlayers, setReservePlayers] = useState<Player[]>([]);
   const [extendedPlayerData, setExtendedPlayerData] = useState<Record<string, ExtendedPlayerData>>({});
   const [loading, setLoading] = useState(true);
   const [selectedExpanded, setSelectedExpanded] = useState(false);
@@ -41,10 +41,32 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({
   const { player: currentPlayer, loading: userLoading, error: userError } = useUser();
 
   useEffect(() => {
-    console.log('Current Player:', currentPlayer);
-    console.log('User Loading:', userLoading);
-    console.log('User Error:', userError);
-  }, [currentPlayer, userLoading, userError]);
+    const fetchSelectionData = async () => {
+      try {
+        const { data: selectionData, error: selectionError } = await supabase
+          .from('game_selections')
+          .select('*')
+          .eq('game_id', gameId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (selectionError) throw selectionError;
+        
+        if (selectionData) {
+          console.log('Selection data:', selectionData);
+          setSelectedPlayers(selectionData.selected_players || []);
+          setReservePlayers(selectionData.reserve_players || []);
+        }
+      } catch (error) {
+        console.error('Error fetching selection data:', error);
+      }
+    };
+
+    if (gameId) {
+      fetchSelectionData();
+    }
+  }, [gameId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,23 +149,6 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({
 
     fetchData();
   }, [selectedPlayers, reservePlayers]);
-
-  // Debug logging for all players
-  useEffect(() => {
-    if (!loading && currentPlayer) {
-      [...selectedPlayers, ...reservePlayers].forEach(player => {
-        const extendedData = extendedPlayerData[player.id];
-        console.log('All Players Comparison:', {
-          player: player.friendly_name,
-          registrationId: player.id,
-          playerId: extendedData?.id,
-          currentPlayerId: currentPlayer?.id,
-          isCurrentUser: extendedData?.id === currentPlayer?.id,
-          extendedData: !!extendedData
-        });
-      });
-    }
-  }, [selectedPlayers, reservePlayers, extendedPlayerData, currentPlayer, loading]);
 
   const getCalculatedXP = (player: Player): number => {
     if (!player.stats) return player.xp;

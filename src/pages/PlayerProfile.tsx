@@ -628,7 +628,12 @@ export default function PlayerProfile() {
                           </div>
                         </td>
                         <td>
-                          {game.games.score_blue !== null && game.games.score_orange !== null ? (
+                          {(game.games.score_blue !== null && 
+                            game.games.score_orange !== null && 
+                            game.games.score_blue !== undefined && 
+                            game.games.score_orange !== undefined && 
+                            !(game.games.score_blue === 0 && game.games.score_orange === 0) &&
+                            outcome !== 'Unknown') ? (
                             <div className="flex gap-2 items-center">
                               <div className={`badge badge-sm font-medium ${
                                 !game.team ? 'badge-ghost' :

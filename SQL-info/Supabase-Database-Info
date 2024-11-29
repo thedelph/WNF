@@ -731,6 +731,22 @@
               "default": "false",
               "description": null,
               "position": 18
+            },
+            {
+              "name": "teams_announced",
+              "type": "boolean",
+              "nullable": "YES",
+              "default": "false",
+              "description": null,
+              "position": 19
+            },
+            {
+              "name": "team_announcement_time",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 20
             }
           ],
           "constraints": [
@@ -1358,6 +1374,22 @@
               "default": "0",
               "description": null,
               "position": 20
+            },
+            {
+              "name": "average_attack_rating",
+              "type": "numeric",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 21
+            },
+            {
+              "name": "average_defense_rating",
+              "type": "numeric",
+              "nullable": "YES",
+              "default": null,
+              "description": null,
+              "position": 22
             }
           ],
           "constraints": [
@@ -1578,6 +1610,14 @@
               "default": "0",
               "description": null,
               "position": 10
+            },
+            {
+              "name": "team_announcement_hours",
+              "type": "integer",
+              "nullable": "NO",
+              "default": "4",
+              "description": null,
+              "position": 11
             }
           ],
           "constraints": [
@@ -1632,6 +1672,13 @@
             },
             {
               "name": "2200_57405_7_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_57405_11_not_null",
               "type": "CHECK",
               "column": null,
               "foreign_table": null,
