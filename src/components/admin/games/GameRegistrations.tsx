@@ -111,6 +111,7 @@ export const GameRegistrations: React.FC<Props> = ({
           game_id: gameId,
           player_id: playerId,
           status: 'registered',
+          selection_method: 'none',
           team: null,
           created_at: new Date().toISOString()
         })))
@@ -144,6 +145,67 @@ export const GameRegistrations: React.FC<Props> = ({
       toast.error('Failed to unregister player')
     }
   }
+
+  const renderRegistrationList = () => {
+    // Sort registrations by XP and selection method
+    const sortedRegistrations = [...registrations]
+      .map(reg => ({
+        ...reg,
+        xp: calculatePlayerXP(reg.player),
+        friendly_name: reg.player?.friendly_name || '',
+        isRandomlySelected: reg.selection_method === 'random'
+      }))
+      .sort((a, b) => {
+        // First sort by selection status (selected first)
+        if (a.status === 'selected' && b.status !== 'selected') return -1;
+        if (b.status === 'selected' && a.status !== 'selected') return 1;
+        
+        // Then sort by XP within each status group
+        return b.xp - a.xp;
+      });
+
+    return (
+      <div className="space-y-2">
+        {sortedRegistrations.map((reg) => {
+          const isSelected = reg.status === 'selected';
+          const selectionBadge = isSelected ? (
+            <span className={`text-xs px-2 py-1 rounded ${reg.isRandomlySelected ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
+              {reg.isRandomlySelected ? 'Random' : 'Merit'}
+            </span>
+          ) : null;
+
+          return (
+            <div 
+              key={reg.id}
+              className={`flex items-center justify-between p-2 rounded ${
+                isSelected ? 'bg-white shadow' : 'bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <span className={`font-medium ${isSelected ? 'text-gray-900' : 'text-gray-500'}`}>
+                  {reg.player?.friendly_name}
+                </span>
+                {selectionBadge}
+              </div>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-500">
+                  XP: {reg.xp}
+                </span>
+                {reg.status === 'pending' && (
+                  <button
+                    onClick={() => onUnregister(reg.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <FaTimes />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <motion.div
@@ -223,54 +285,7 @@ export const GameRegistrations: React.FC<Props> = ({
           <div>
             <h3 className="font-bold mb-2">Selected Players</h3>
             <div className="h-80 overflow-y-auto border border-base-300 rounded-lg">
-              <AnimatePresence>
-                {registrations
-                  .filter(reg => reg.status === 'selected')
-                  .sort((a, b) => {
-                    const aXP = calculatePlayerXP(players.find(p => p.id === a.player_id));
-                    const bXP = calculatePlayerXP(players.find(p => p.id === b.player_id));
-                    return bXP - aXP; // Sort by XP descending
-                  })
-                  .map((reg, index) => {
-                    const player = players.find(p => p.id === reg.player_id);
-                    const xp = calculatePlayerXP(player);
-                    
-                    return (
-                      <motion.div
-                        key={reg.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className={`flex justify-between items-center p-2 ${
-                          reg.randomly_selected 
-                            ? 'bg-secondary bg-opacity-20 border-l-4 border-secondary' 
-                            : 'hover:bg-base-200'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-mono w-6">{index + 1}.</span>
-                          <span>{player?.friendly_name}</span>
-                          {reg.randomly_selected && (
-                            <span className="px-2 py-1 text-xs bg-secondary text-secondary-content rounded-full">
-                              Random Pick
-                            </span>
-                          )}
-                          <span className="text-sm text-base-content/70">
-                            XP: {xp.toFixed(1)}
-                          </span>
-                        </div>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleUnregister(reg.id)}
-                          className="btn btn-ghost btn-xs"
-                        >
-                          <FaUserMinus className="text-error" />
-                        </motion.button>
-                      </motion.div>
-                    );
-                  })}
-              </AnimatePresence>
+              {renderRegistrationList()}
             </div>
           </div>
         </div>

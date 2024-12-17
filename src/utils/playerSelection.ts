@@ -24,6 +24,7 @@ interface PlayerWithXP {
 export interface PlayerSelectionResult {
   selectedPlayers: Array<{
     id: string;
+    player_id: string;
     friendly_name: string;
     isRandomlySelected: boolean;
     xp: number;
@@ -36,6 +37,7 @@ export interface PlayerSelectionResult {
   }>;
   reservePlayers: Array<{
     id: string;
+    player_id: string;
     friendly_name: string;
     xp: number;
     stats: {
@@ -66,7 +68,6 @@ export const handlePlayerSelection = async ({
 }: PlayerSelectionParams): Promise<PlayerSelectionResult> => {
   const startTime = new Date().toISOString();
   const selectionNotes: string[] = [];
-  console.log('Starting player selection with params:', { gameId, maxPlayers, randomSlots });
 
   try {
     // Fetch all registrations
@@ -87,11 +88,8 @@ export const handlePlayerSelection = async ({
       .eq('game_id', gameId);
 
     if (fetchError) {
-      console.error('Player selection fetch error:', fetchError);
       throw fetchError;
     }
-
-    console.log('Fetched registrations:', registrations);
 
     // Calculate XP for each player
     const playersWithXP: PlayerWithXP[] = registrations.map(reg => {
@@ -136,38 +134,17 @@ export const handlePlayerSelection = async ({
     // Select merit-based players
     const meritPlayers = sortedPlayers.slice(0, meritSlots);
     
-    console.log('Merit-based selections:', meritPlayers.map(p => ({
-      name: p.friendly_name,
-      xp: p.xp
-    })));
-
     // Remove merit players from the pool for random selection
     const remainingPlayers = sortedPlayers.filter(
       p => !meritPlayers.some(mp => mp.id === p.id)
     );
     
-    // Always select enough random players to reach maxPlayers
-    const neededRandomPlayers = maxPlayers - meritPlayers.length;
+    // Select random players based on randomSlots parameter
     const shuffledRemaining = shuffleArray([...remainingPlayers]);
-    const randomlySelected = shuffledRemaining.slice(0, neededRandomPlayers);
-
-    console.log('Random selections:', randomlySelected.map(p => ({
-      name: p.friendly_name,
-      xp: p.xp
-    })));
+    const randomlySelected = shuffledRemaining.slice(0, adjustedRandomSlots);
 
     // Combine selected players and mark the rest as reserves
     const allSelectedPlayers = [...meritPlayers, ...randomlySelected];
-    console.log('Total selected players:', allSelectedPlayers.length, 'Expected:', maxPlayers);
-
-    if (allSelectedPlayers.length !== maxPlayers) {
-      console.error('Selection error: Wrong number of players selected', {
-        total: allSelectedPlayers.length,
-        expected: maxPlayers,
-        merit: meritPlayers.length,
-        random: randomlySelected.length
-      });
-    }
 
     // Sort reserves by XP for fairness in display
     const reservePlayers = sortedPlayers
@@ -176,7 +153,8 @@ export const handlePlayerSelection = async ({
 
     // Format the selected players with their selection method
     const formattedSelectedPlayers = allSelectedPlayers.map(p => ({
-      id: p.player_id,  
+      id: p.id,
+      player_id: p.player_id,
       friendly_name: p.friendly_name,
       xp: p.xp,
       stats: p.stats,
@@ -185,63 +163,48 @@ export const handlePlayerSelection = async ({
 
     // Format reserve players (sorted by XP)
     const formattedReservePlayers = reservePlayers.map(p => ({
-      id: p.player_id,  
+      id: p.id,
+      player_id: p.player_id,
       friendly_name: p.friendly_name,
       xp: p.xp,
       stats: p.stats
     }));
 
     // Update registration statuses using registration IDs
-    const selectedIds = allSelectedPlayers.map(p => p.id);  
-    const reserveIds = reservePlayers.map(p => p.id);  
+    const selectedRegistrationIds = allSelectedPlayers.map(p => p.id);  
+    const reserveRegistrationIds = reservePlayers.map(p => p.id);  
 
     // Update selected players
-    if (selectedIds.length > 0) {
+    if (selectedRegistrationIds.length > 0) {
+      const selectedUpdates = selectedRegistrationIds.map(registrationId => ({
+        id: registrationId,
+        status: 'selected',
+        selection_method: randomlySelected.some(r => r.id === registrationId) ? 'random' : 'merit'
+      }));
+
       const { error: selectedError } = await supabaseAdmin
         .from('game_registrations')
-        .update({ 
-          status: 'selected',
-          randomly_selected: false
-        })
-        .eq('game_id', gameId)
-        .in('id', selectedIds);
+        .upsert(selectedUpdates);
 
-      if (selectedError) throw selectedError;
-    }
-
-    // Update randomly selected players
-    const randomlySelectedIds = formattedSelectedPlayers
-      .filter(p => p.isRandomlySelected)
-      .map(p => p.id);
-
-    if (randomlySelectedIds.length > 0) {
-      const { error: randomError } = await supabaseAdmin
-        .from('game_registrations')
-        .update({ randomly_selected: true })
-        .eq('game_id', gameId)
-        .in('id', randomlySelectedIds);
-
-      if (randomError) throw randomError;
+      if (selectedError) {
+        throw selectedError;
+      }
     }
 
     // Update reserve players
-    if (reserveIds.length > 0) {
+    if (reserveRegistrationIds.length > 0) {
+      const reserveUpdates = reserveRegistrationIds.map(registrationId => ({
+        id: registrationId,
+        status: 'reserve',
+        selection_method: 'none'
+      }));
+
       const { error: reserveError } = await supabaseAdmin
         .from('game_registrations')
-        .update({ 
-          status: 'reserve',
-          randomly_selected: false
-        })
-        .eq('game_id', gameId)
-        .in('id', reserveIds);
+        .upsert(reserveUpdates);
 
       if (reserveError) throw reserveError;
     }
-
-    console.log('Selection results:', {
-      selectedPlayers: formattedSelectedPlayers,
-      reservePlayers: formattedReservePlayers
-    });
 
     // Save selection results to database
     const selectionData = {
@@ -259,7 +222,6 @@ export const handlePlayerSelection = async ({
         xpDistribution: calculateXPDistribution(playersWithXP)
       }
     };
-    console.log('Saving selection data:', JSON.stringify(selectionData, null, 2));
 
     const { data: savedData, error: saveError } = await supabaseAdmin
       .from('game_selections')
@@ -268,11 +230,8 @@ export const handlePlayerSelection = async ({
       .single();
 
     if (saveError) {
-      console.error('Error saving selection data:', saveError);
       throw saveError;
     }
-
-    console.log('Saved selection data:', savedData);
 
     return {
       selectedPlayers: formattedSelectedPlayers,
@@ -289,7 +248,6 @@ export const handlePlayerSelection = async ({
       }
     };
   } catch (error) {
-    console.error('Error in player selection:', error);
     throw error;
   }
 };

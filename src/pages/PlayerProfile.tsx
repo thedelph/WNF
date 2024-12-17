@@ -28,7 +28,6 @@ interface PlayerStats {
   friendly_name: string
   xp?: number
   caps?: number
-  preferred_position: string
   active_bonuses?: number
   active_penalties?: number
   win_rate?: number
@@ -456,7 +455,6 @@ export default function PlayerProfile() {
           />
           <div>
             <h1 className="text-3xl font-bold">{player.friendly_name}</h1>
-            <p className="text-xl">{player.preferred_position}</p>
           </div>
         </div>
       </motion.div>

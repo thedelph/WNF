@@ -1,251 +1,382 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { FaUser, FaUserClock, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import { calculatePlayerXP, PlayerStats } from '../../utils/xpCalculations';
+import { calculatePlayerXP } from '../../utils/xpCalculations';
 import { calculateRarity } from '../../utils/rarityCalculations';
 import PlayerCard from '../PlayerCard';
 import { supabase } from '../../utils/supabase';
 import { useUser } from '../../hooks/useUser';
+import { showDialog, useNavigate } from "../../utils/dialog";
+import { handlePlayerSelfDropout } from '../../utils/dropoutHandler';
+import { PlayerSelectionResultsProps, ExtendedPlayerData } from '../../types/playerSelection';
+import { toast } from 'react-hot-toast';
+import { SlotOfferCountdown } from './SlotOfferCountdown';
 
-interface Player {
-  id: string;
-  friendly_name: string;
-  isRandomlySelected?: boolean;
-  xp: number;
-  stats?: PlayerStats;
-}
+export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ gameId }) => {
+  const [selectedPlayers, setSelectedPlayers] = useState<ExtendedPlayerData[]>([]);
+  const [reservePlayers, setReservePlayers] = useState<ExtendedPlayerData[]>([]);
+  const [droppedOutPlayers, setDroppedOutPlayers] = useState<ExtendedPlayerData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSelected, setShowSelected] = useState(true);
+  const [showReserves, setShowReserves] = useState(false);
+  const [showDroppedOut, setShowDroppedOut] = useState(false);
+  const [gameDate, setGameDate] = useState<Date | null>(null);
+  const [firstDropoutTime, setFirstDropoutTime] = useState<Date | null>(null);
+  const { player } = useUser();
+  const navigate = useNavigate();
 
-interface ExtendedPlayerData {
-  id: string;
-  friendly_name: string;
-  preferred_position: string;
-  win_rate: number;
-  max_streak: number;
-  avatar_svg: string;
-  stats: PlayerStats;
-}
+  // Check if the current user has dropped out
+  const hasDroppedOut = useMemo(() => {
+    return droppedOutPlayers.some(p => p.id === player?.id);
+  }, [droppedOutPlayers, player?.id]);
 
-interface PlayerSelectionResultsProps {
-  gameId: string;
-}
+  const fetchGamePlayers = async () => {
+    try {
+      console.log('Fetching game players for game:', gameId);
 
-export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({
-  gameId
-}) => {
-  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
-  const [reservePlayers, setReservePlayers] = useState<Player[]>([]);
-  const [extendedPlayerData, setExtendedPlayerData] = useState<Record<string, ExtendedPlayerData>>({});
-  const [loading, setLoading] = useState(true);
-  const [selectedExpanded, setSelectedExpanded] = useState(false);
-  const [reserveExpanded, setReserveExpanded] = useState(false);
-  const { player: currentPlayer, loading: userLoading, error: userError } = useUser();
+      // Get game details first
+      const { data: gameData, error: gameError } = await supabase
+        .from('games')
+        .select('*')
+        .eq('id', gameId)
+        .single();
 
-  useEffect(() => {
-    const fetchSelectionData = async () => {
-      try {
-        const { data: selectionData, error: selectionError } = await supabase
-          .from('game_selections')
-          .select('*')
-          .eq('game_id', gameId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+      if (gameError) throw gameError;
+      const parsedGameDate = new Date(gameData.date);
+      setGameDate(parsedGameDate);
+      console.log('Game date:', parsedGameDate);
 
-        if (selectionError) throw selectionError;
-        
-        if (selectionData) {
-          console.log('Selection data:', selectionData);
-          setSelectedPlayers(selectionData.selected_players || []);
-          setReservePlayers(selectionData.reserve_players || []);
-        }
-      } catch (error) {
-        console.error('Error fetching selection data:', error);
+      // Get first dropout time
+      const { data: dropoutData, error: dropoutError } = await supabase
+        .from('game_registrations')
+        .select('created_at')
+        .eq('game_id', gameId)
+        .eq('status', 'dropped_out')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (!dropoutError && dropoutData) {
+        const parsedDropoutTime = new Date(dropoutData.created_at);
+        setFirstDropoutTime(parsedDropoutTime);
+        console.log('First dropout time:', parsedDropoutTime);
+      } else {
+        console.log('No dropouts found');
       }
-    };
 
-    if (gameId) {
-      fetchSelectionData();
-    }
-  }, [gameId]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const allPlayers = [...selectedPlayers, ...reservePlayers];
-        if (allPlayers.length === 0) {
-          setLoading(false);
-          return;
-        }
-
-        // First, fetch the registration data to get player IDs
-        const { data: registrationData, error: regError } = await supabase
-          .from('game_registrations')
-          .select(`
+      const { data: registrations, error } = await supabase
+        .from('game_registrations')
+        .select(`
+          player_id,
+          status,
+          created_at,
+          selection_method,
+          players!game_registrations_player_id_fkey (
             id,
-            player:players!game_registrations_player_id_fkey (
-              id,
-              friendly_name,
-              preferred_position,
-              win_rate,
-              max_streak,
-              avatar_svg,
-              caps,
-              active_bonuses,
-              active_penalties,
-              current_streak
-            )
-          `)
-          .in('id', allPlayers.map(p => p.id));
+            friendly_name,
+            caps,
+            active_bonuses,
+            active_penalties,
+            current_streak,
+            max_streak,
+            win_rate,
+            avatar_svg
+          )
+        `)
+        .eq('game_id', gameId)
+        .order('created_at', { ascending: true });
 
-        if (regError) {
-          console.error('Error fetching registration data:', regError);
-          throw regError;
+      if (error) throw error;
+
+      // Fetch slot offers separately
+      const { data: slotOffers, error: slotOffersError } = await supabase
+        .from('slot_offers')
+        .select('*')
+        .eq('game_id', gameId);
+
+      if (slotOffersError) throw slotOffersError;
+
+      console.log('Slot offers:', slotOffers);
+
+      const selected: ExtendedPlayerData[] = [];
+      const reserves: ExtendedPlayerData[] = [];
+      const droppedOut: ExtendedPlayerData[] = [];
+
+      registrations?.forEach(reg => {
+        const player = reg.players;
+        if (!player) return;
+
+        // Find slot offers for this player
+        const playerSlotOffers = slotOffers?.filter(
+          offer => offer.player_id === player.id
+        ) || [];
+
+        console.log('Player slot offers:', {
+          player: player.friendly_name,
+          offers: playerSlotOffers
+        });
+
+        const playerData: ExtendedPlayerData = {
+          id: player.id,
+          friendly_name: player.friendly_name,
+          win_rate: player.win_rate || 0,
+          max_streak: player.max_streak || 0,
+          avatar_svg: player.avatar_svg || '',
+          stats: {
+            caps: player.caps || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            currentStreak: player.current_streak || 0,
+            dropoutPenalties: 0  // This will need to be calculated from player_penalties table if needed
+          },
+          isRandomlySelected: reg.selection_method === 'random',
+          selectionMethod: reg.selection_method || 'merit',
+          preferredPosition: '',
+          slotOffers: playerSlotOffers
+        };
+
+        if (reg.status === 'selected') {
+          selected.push(playerData);
+        } else if (reg.status === 'reserve') {
+          reserves.push(playerData);
+        } else if (reg.status === 'dropped_out') {
+          droppedOut.push(playerData);
         }
+      });
 
-        if (!registrationData) {
-          console.warn('No registration data returned from database');
-          throw new Error('No registration data found in database');
-        }
+      console.log('Processed players:', {
+        selected: selected.map(p => ({ 
+          name: p.friendly_name, 
+          method: p.selectionMethod,
+          isRandom: p.isRandomlySelected 
+        })),
+        reserves: reserves.length,
+        droppedOut: droppedOut.length
+      });
 
-        // Map the data to our expected format
-        const playerDataMap = registrationData.reduce((acc, reg) => {
-          if (!reg.player) return acc;
-
-          const stats = {
-            caps: reg.player.caps || 0,
-            activeBonuses: reg.player.active_bonuses || 0,
-            activePenalties: reg.player.active_penalties || 0,
-            currentStreak: reg.player.current_streak || 0
-          };
-
-          // Store using registration ID as key for lookup, but keep player ID for comparison
-          acc[reg.id] = {
-            id: reg.player.id, // This is the actual player ID
-            friendly_name: reg.player.friendly_name,
-            preferred_position: reg.player.preferred_position || '',
-            win_rate: reg.player.win_rate || 0,
-            max_streak: reg.player.max_streak || 0,
-            avatar_svg: reg.player.avatar_svg || '',
-            stats
-          };
-
-          console.log('Mapped player data:', {
-            registrationId: reg.id,
-            playerId: reg.player.id,
-            name: reg.player.friendly_name
-          });
-
-          return acc;
-        }, {} as Record<string, ExtendedPlayerData>);
-
-        setExtendedPlayerData(playerDataMap);
-      } catch (error) {
-        console.error('Error fetching player data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [selectedPlayers, reservePlayers]);
-
-  const getCalculatedXP = (player: Player): number => {
-    if (!player.stats) return player.xp;
-    return calculatePlayerXP(player.stats);
+      setSelectedPlayers(selected);
+      setReservePlayers(reserves);
+      setDroppedOutPlayers(droppedOut);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching players:', error);
+      setIsLoading(false);
+    }
   };
 
-  // Add null checks and provide default empty arrays
-  const sortedSelectedPlayers = (selectedPlayers || []).sort(
-    (a, b) => getCalculatedXP(b) - getCalculatedXP(a)
-  );
+  useEffect(() => {
+    fetchGamePlayers();
+  }, [gameId]);
 
-  const sortedReservePlayers = (reservePlayers || []).sort(
-    (a, b) => getCalculatedXP(b) - getCalculatedXP(a)
-  );
+  const handleDropout = async () => {
+    try {
+      if (!player?.id || !gameId) {
+        toast.error('Unable to drop out: Missing player or game information');
+        return;
+      }
+      
+      await handlePlayerSelfDropout(player.id, gameId);
+      // Refresh the player lists after successful dropout
+      await fetchGamePlayers();
+    } catch (error) {
+      console.error('Error dropping out:', error);
+      // Error toast is already shown in handlePlayerSelfDropout
+    }
+  };
 
-  // Calculate rarity based on all players' XP
-  const allXPValues = [...sortedSelectedPlayers, ...sortedReservePlayers].map(p => getCalculatedXP(p));
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">
+      <div className="loading loading-spinner loading-lg"></div>
+    </div>;
+  }
 
-  const renderPlayerSection = (players: Player[], title: string, icon: JSX.Element, isExpanded: boolean, setExpanded: (expanded: boolean) => void) => (
-    <div className="mb-6">
-      <button 
-        onClick={() => setExpanded(!isExpanded)}
-        className="w-full text-left text-xl font-semibold mb-3 flex items-center gap-2 hover:bg-gray-100 p-2 rounded transition-colors"
-      >
-        {icon}
-        {title} ({players.length})
-        {isExpanded ? <FaChevronDown className="ml-2" /> : <FaChevronRight className="ml-2" />}
-      </button>
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 justify-items-end">
-              {loading ? (
-                <div>Loading player data...</div>
-              ) : (
-                players.map((player) => {
-                  const extendedData = extendedPlayerData[player.id];
-                  const isCurrentUser = extendedData?.id === currentPlayer?.id;
-                  
-                  return (
-                    <div key={player.id} className="relative w-full">
-                      {player.isRandomlySelected && (
-                        <div className="absolute -top-2 right-0 -translate-x-full z-10 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
-                          Random Pick
-                        </div>
-                      )}
-                      {isCurrentUser && (
-                        <div className="absolute -top-2 left-0 z-10 bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
-                          You
-                        </div>
-                      )}
-                      <PlayerCard
-                        id={extendedData?.id || player.id}
-                        friendlyName={extendedData?.friendly_name || player.friendly_name}
-                        caps={extendedData?.stats.caps || (player.stats?.caps || 0)}
-                        preferredPosition={extendedData?.preferred_position || ''}
-                        activeBonuses={extendedData?.stats.activeBonuses || (player.stats?.activeBonuses || 0)}
-                        activePenalties={extendedData?.stats.activePenalties || (player.stats?.activePenalties || 0)}
-                        winRate={extendedData?.win_rate || 0}
-                        currentStreak={extendedData?.stats.currentStreak || (player.stats?.currentStreak || 0)}
-                        maxStreak={extendedData?.max_streak || 0}
-                        rarity={calculateRarity(getCalculatedXP(player), allXPValues)}
-                        avatarSvg={extendedData?.avatar_svg || ''}
-                      />
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+  // Calculate XP values for all players and sort selected players by XP
+  const allPlayers = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers];
+  const allXpValues = allPlayers.map(player => calculatePlayerXP(player.stats));
+  
+  // Sort selected players by XP in descending order
+  const sortedSelectedPlayers = [...selectedPlayers].sort((a, b) => {
+    const xpA = calculatePlayerXP(a.stats);
+    const xpB = calculatePlayerXP(b.stats);
+    return xpB - xpA;
+  });
+
+  // Sort reserve players by XP in descending order
+  const sortedReservePlayers = [...reservePlayers].sort((a, b) => {
+    const xpA = calculatePlayerXP(a.stats);
+    const xpB = calculatePlayerXP(b.stats);
+    return xpB - xpA;
+  });
 
   return (
-    <div>
-      {renderPlayerSection(
-        sortedSelectedPlayers,
-        'Selected Players',
-        <FaUser className="text-green-500" />,
-        selectedExpanded,
-        setSelectedExpanded
+    <div className="space-y-4">
+      <button
+        onClick={handleDropout}
+        className={`btn btn-sm ${hasDroppedOut ? 'btn-disabled bg-gray-500 text-white cursor-not-allowed' : 'btn-error'}`}
+        disabled={hasDroppedOut}
+      >
+        {hasDroppedOut ? 'DROPPED OUT' : 'DROP OUT'}
+      </button>
+
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setShowSelected(!showSelected)}
+            className="btn btn-ghost btn-sm w-full flex justify-between items-center"
+          >
+            <span className="flex items-center gap-2">
+              <FaUser />
+              Selected Players ({selectedPlayers.length})
+            </span>
+            {showSelected ? <FaChevronDown /> : <FaChevronRight />}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showSelected && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {sortedSelectedPlayers.map((player) => (
+                  <PlayerCard
+                    key={player.id}
+                    id={player.id}
+                    friendlyName={player.friendly_name}
+                    caps={player.stats.caps}
+                    preferredPosition=""
+                    activeBonuses={player.stats.activeBonuses}
+                    activePenalties={player.stats.activePenalties}
+                    winRate={player.win_rate}
+                    currentStreak={player.stats.currentStreak}
+                    maxStreak={player.max_streak}
+                    rarity={calculateRarity(calculatePlayerXP(player.stats), allXpValues)}
+                    avatarSvg={player.avatar_svg}
+                    isRandomlySelected={player.isRandomlySelected}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {reservePlayers.length > 0 && (
+        <div className="flex flex-col space-y-4">
+          <button
+            onClick={() => setShowReserves(!showReserves)}
+            className="btn btn-ghost btn-sm w-full flex justify-between items-center"
+          >
+            <span className="flex items-center gap-2">
+              <FaUserClock />
+              Reserve Players ({reservePlayers.length})
+            </span>
+            {showReserves ? <FaChevronDown /> : <FaChevronRight />}
+          </button>
+
+          <AnimatePresence>
+            {showReserves && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {sortedReservePlayers.map((player) => {
+                    console.log('Rendering player card for:', player.friendly_name, {
+                      hasSlotOffer: player.slotOffers?.some(offer => offer.status === 'pending'),
+                      slotOfferStatus: player.slotOffers?.find(offer => 
+                        offer.status === 'pending' || offer.status === 'accepted'
+                      )?.status,
+                      gameDate,
+                      firstDropoutTime
+                    });
+                    return (
+                      <PlayerCard
+                        key={player.id}
+                        id={player.id}
+                        friendlyName={player.friendly_name}
+                        caps={player.stats.caps}
+                        preferredPosition=""
+                        activeBonuses={player.stats.activeBonuses}
+                        activePenalties={player.stats.activePenalties}
+                        winRate={player.win_rate}
+                        currentStreak={player.stats.currentStreak}
+                        maxStreak={player.max_streak}
+                        rarity={calculateRarity(calculatePlayerXP(player.stats), allXpValues)}
+                        avatarSvg={player.avatar_svg}
+                        hasSlotOffer={player.slotOffers?.some(offer => offer.status === 'pending')}
+                        slotOfferStatus={player.slotOffers?.find(offer => 
+                          offer.status === 'pending' || offer.status === 'accepted'
+                        )?.status}
+                      >
+                        <div className="flex flex-col gap-1">
+                          {gameDate && firstDropoutTime && (
+                            <SlotOfferCountdown
+                              player={player}
+                              reservePlayers={sortedReservePlayers}
+                              gameDate={gameDate}
+                              firstDropoutTime={firstDropoutTime}
+                            />
+                          )}
+                        </div>
+                      </PlayerCard>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       )}
-      {renderPlayerSection(
-        sortedReservePlayers,
-        'Reserve Players',
-        <FaUserClock className="text-yellow-500" />,
-        reserveExpanded,
-        setReserveExpanded
-      )}
+
+      <div className="mt-4">
+        <button
+          onClick={() => setShowDroppedOut(!showDroppedOut)}
+          className="btn btn-ghost btn-sm w-full flex justify-between items-center"
+        >
+          <span className="flex items-center gap-2">
+            <FaUser />
+            Dropped Out Players ({droppedOutPlayers.length})
+          </span>
+          {showDroppedOut ? <FaChevronDown /> : <FaChevronRight />}
+        </button>
+
+        <AnimatePresence>
+          {showDroppedOut && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+                {droppedOutPlayers.map((player) => (
+                  <PlayerCard
+                    key={player.id}
+                    id={player.id}
+                    friendlyName={player.friendly_name}
+                    caps={player.stats.caps}
+                    preferredPosition=""
+                    activeBonuses={player.stats.activeBonuses}
+                    activePenalties={player.stats.activePenalties}
+                    winRate={player.win_rate}
+                    currentStreak={player.stats.currentStreak}
+                    maxStreak={player.max_streak}
+                    rarity={calculateRarity(calculatePlayerXP(player.stats), allXpValues)}
+                    avatarSvg={player.avatar_svg}
+                    isRandomlySelected={player.isRandomlySelected}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };

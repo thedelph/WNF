@@ -14,7 +14,6 @@ interface PlayerProfile {
   friendly_name: string
   xp: number
   caps: number
-  preferred_position: string
   active_bonuses: number
   active_penalties: number
   win_rate: number
@@ -30,7 +29,6 @@ export default function Component() {
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [friendlyName, setFriendlyName] = useState('')
-  const [preferredPosition, setPreferredPosition] = useState('')
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
 
   useEffect(() => {
@@ -67,7 +65,7 @@ export default function Component() {
   const handleEditProfile = () => setIsEditing(true)
 
   const handleSaveProfile = async () => {
-    if (!friendlyName || !preferredPosition) {
+    if (!friendlyName) {
       toast.error('Please fill in all fields.')
       return
     }
@@ -81,7 +79,7 @@ export default function Component() {
     try {
       const { error } = await supabase
         .from('players')
-        .update({ friendly_name: friendlyName, preferred_position: preferredPosition })
+        .update({ friendly_name: friendlyName })
         .eq('user_id', user!.id)
 
       if (error) throw error
@@ -89,7 +87,6 @@ export default function Component() {
       setProfile((prevProfile) => ({
         ...prevProfile!,
         friendly_name: friendlyName,
-        preferred_position: preferredPosition,
       }))
 
       toast.success('Profile updated successfully!')
@@ -176,24 +173,6 @@ export default function Component() {
                     <span className="label-text font-medium">Email</span>
                   </label>
                   <p className="text-lg">{user.email}</p>
-                </div>
-                <div>
-                  <label className="label">
-                    <span className="label-text font-medium">Preferred Position</span>
-                  </label>
-                  {isEditing ? (
-                    <select 
-                      value={preferredPosition} 
-                      onChange={(e) => setPreferredPosition(e.target.value)} 
-                      className="select select-bordered w-full"
-                    >
-                      {['GK', 'LB', 'CB', 'RB', 'RM', 'CM', 'LM', 'ST'].map((pos) => (
-                        <option key={pos} value={pos}>{pos}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p className="text-lg">{profile.preferred_position}</p>
-                  )}
                 </div>
                 <div>
                   <label className="label">

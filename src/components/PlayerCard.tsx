@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Trophy, Star, Medal, CircleOff, CircleDot, Sparkles } from 'lucide-react'
 import { calculatePlayerXP } from '../utils/xpCalculations';
+import { usePlayerPenalties } from '../hooks/usePlayerPenalties';
+import { useUser } from '../hooks/useUser';
 
 interface PlayerCardProps {
   id: string
@@ -16,6 +18,11 @@ interface PlayerCardProps {
   maxStreak: number
   rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
   avatarSvg: string
+  isRandomlySelected?: boolean
+  status?: 'selected' | 'reserve' | 'dropped_out';
+  hasSlotOffer?: boolean;
+  slotOfferStatus?: 'pending' | 'accepted' | 'declined';
+  children?: React.ReactNode;
 }
 
 export default function PlayerCard({
@@ -29,9 +36,16 @@ export default function PlayerCard({
   currentStreak,
   maxStreak,
   rarity,
-  avatarSvg
+  avatarSvg,
+  isRandomlySelected,
+  status,
+  hasSlotOffer,
+  slotOfferStatus,
+  children
 }: PlayerCardProps) {
-  const [isFlipped, setIsFlipped] = useState(false)
+  const [isFlipped, setIsFlipped] = useState(false);
+  const { dropoutPenalties } = usePlayerPenalties(id);
+  const { player } = useUser();
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
@@ -52,12 +66,51 @@ export default function PlayerCard({
     caps,
     activeBonuses,
     activePenalties,
-    currentStreak
+    currentStreak,
+    dropoutPenalties
   });
-  const streakModifier = currentStreak * 0.1
-  const bonusModifier = activeBonuses * 0.1
-  const penaltyModifier = activePenalties * -0.1
-  const totalModifier = streakModifier + bonusModifier + penaltyModifier
+  const streakModifier = currentStreak * 0.1;
+  const bonusModifier = activeBonuses * 0.1;
+  const penaltyModifier = activePenalties * -0.1;
+  const dropoutModifier = dropoutPenalties * -0.5; // 50% penalty per dropout
+  const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
+
+  const getStatusBadge = () => {
+    if (!status || status === 'reserve') return null;
+
+    const badges = {
+      selected: 'badge-success',
+      dropped_out: 'badge-error'
+    };
+
+    return (
+      <div className={`badge ${badges[status]} badge-sm`}>
+        {status.replace('_', ' ')}
+      </div>
+    );
+  };
+
+  const getSlotOfferBadge = () => {
+    if (!hasSlotOffer && slotOfferStatus !== 'accepted') return null;
+
+    const badges = {
+      pending: 'badge-info',
+      accepted: 'badge-success',
+      declined: 'badge-error'
+    };
+
+    const labels = {
+      pending: 'Slot Offered',
+      accepted: 'Slot Accepted',
+      declined: 'Slot Declined'
+    };
+
+    return (
+      <div className={`badge ${badges[slotOfferStatus || 'pending']} badge-sm`}>
+        {labels[slotOfferStatus || 'pending']}
+      </div>
+    );
+  };
 
   return (
     <motion.div 
@@ -82,8 +135,18 @@ export default function PlayerCard({
           <div className="card-body p-4">
             <div className="flex justify-between items-center mb-2">
               <h2 className="card-title text-xl">{friendlyName}</h2>
+              {isRandomlySelected && (
+                <div className="badge badge-secondary">Random Pick</div>
+              )}
             </div>
             
+            {/* Status badges */}
+            <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
+              {getStatusBadge()}
+              {getSlotOfferBadge()}
+              {children}
+            </div>
+
             {/* Caps Section */}
             <div className="bg-black/30 rounded-lg p-3 mb-4">
               <div className="flex justify-between items-center">
@@ -99,18 +162,31 @@ export default function PlayerCard({
             <div className="space-y-2">
               {currentStreak > 0 && (
                 <motion.div 
-                  className="flex justify-between items-center bg-white/10 rounded-lg p-2"
+                  className="flex justify-between items-center bg-green-500/20 rounded-lg p-2"
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                 >
                   <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4" />
                     <span className="text-sm">Streak Bonus</span>
                   </div>
                   <span className="text-sm font-bold">+{(streakModifier * 100).toFixed(0)}%</span>
                 </motion.div>
               )}
-　　 　　　　　　{activeBonuses > 0 && (
+              {dropoutPenalties > 0 && (
+                <motion.div 
+                  className="flex justify-between items-center bg-red-500/20 rounded-lg p-2"
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <CircleOff className="w-4 h-4" />
+                    <span className="text-sm">Dropout Penalty</span>
+                  </div>
+                  <span className="text-sm font-bold text-red-500">-{(dropoutModifier * -100).toFixed(0)}%</span>
+                </motion.div>
+              )}
+              {activeBonuses > 0 && (
                 <motion.div 
                   className="flex justify-between items-center bg-green-500/20 rounded-lg p-2"
                   initial={{ x: -20, opacity: 0 }}
@@ -123,7 +199,6 @@ export default function PlayerCard({
                   <span className="text-sm font-bold">+{(bonusModifier * 100).toFixed(0)}%</span>
                 </motion.div>
               )}
-
               {activePenalties > 0 && (
                 <motion.div 
                   className="flex justify-between items-center bg-red-500/20 rounded-lg p-2"
@@ -152,6 +227,9 @@ export default function PlayerCard({
               </div>
             </div>
 
+            {player?.id === id && (
+              <div className="absolute bottom-4 left-4 badge badge-neutral">You</div>
+            )}
             <div className="absolute bottom-4 right-4 badge badge-outline">{rarity}</div>
           </div>
         </motion.div>

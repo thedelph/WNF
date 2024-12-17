@@ -24,6 +24,8 @@ interface Props {
     selectedPlayers: any[];
     reservePlayers: any[];
   }>;
+  handleGameUpdate: () => Promise<void>;
+  children?: React.ReactNode;
 }
 
 export const GameDetails: React.FC<Props> = ({
@@ -31,16 +33,20 @@ export const GameDetails: React.FC<Props> = ({
   isRegistrationClosed,
   isUserRegistered,
   handleRegistration,
-  handlePlayerSelection
+  handlePlayerSelection,
+  handleGameUpdate,
+  children
 }) => {
   const [isRegistering, setIsRegistering] = useState(false);
 
   // Use the registration close hook
   useRegistrationClose({
-    upcomingGame: game,
+    game,
     onGameUpdated: async () => {
-      // Force a refresh of the game data
-      window.location.reload();
+      // Notify parent to refresh data instead of reloading page
+      if (handleGameUpdate) {
+        await handleGameUpdate();
+      }
     }
   });
 
@@ -48,6 +54,8 @@ export const GameDetails: React.FC<Props> = ({
     try {
       setIsRegistering(true);
       await handleRegistration();
+    } catch (error) {
+      console.error('Error handling registration:', error);
     } finally {
       setIsRegistering(false);
     }
@@ -90,11 +98,18 @@ export const GameDetails: React.FC<Props> = ({
                 isUserRegistered ? 'btn-error' : 'btn-success'
               } ${isRegistering ? 'loading' : ''}`}
             >
-              {isRegistering
-                ? 'Processing...'
-                : isUserRegistered
-                ? 'Unregister Interest'
-                : 'Register Interest'}
+              {isRegistering ? (
+                'Processing...'
+              ) : isUserRegistered ? (
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Unregister Interest
+                </span>
+              ) : (
+                'Register Interest'
+              )}
             </button>
           )}
         </div>
@@ -193,13 +208,7 @@ export const GameDetails: React.FC<Props> = ({
 
         {/* Player Lists */}
         <div className="mt-6">
-          {(game.status === 'open' || game.status === 'upcoming') && (
-            <RegisteredPlayers registrations={game.registrations || []} />
-          )}
-          {game.status === 'players_announced' && (
-            <PlayerSelectionResults gameId={game.id} />
-          )}
-          {game.status === 'teams_announced' && <TeamSelectionResults gameId={game.id} />}
+          {children}
         </div>
       </div>
     </div>

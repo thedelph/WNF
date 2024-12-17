@@ -25,16 +25,6 @@ export const useRegistrationOpen = (props?: UseRegistrationOpenProps) => {
         !isProcessingOpen && 
         !hasOpened;
 
-      console.log('Registration open check:', {
-        now: now.toISOString(),
-        registrationStart: registrationStart.toISOString(),
-        isPastStartTime: now >= registrationStart,
-        gameStatus: props.game!.status,
-        shouldOpenRegistration,
-        isProcessingOpen,
-        hasOpened
-      });
-
       if (shouldOpenRegistration) {
         handleRegistrationWindowOpen();
       }
@@ -58,8 +48,6 @@ export const useRegistrationOpen = (props?: UseRegistrationOpenProps) => {
     try {
       const { id } = props.game;
       
-      console.log('Opening registration for game:', { id });
-
       // Update game status to open
       const { error: statusError } = await supabaseAdmin
         .from('games')
@@ -72,7 +60,6 @@ export const useRegistrationOpen = (props?: UseRegistrationOpenProps) => {
       toast.success('Registration is now open');
       setHasOpened(true);
     } catch (error) {
-      console.error('Error opening registration:', error);
       toast.error('Failed to open registration');
     } finally {
       setIsProcessingOpen(false);

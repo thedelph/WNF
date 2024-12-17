@@ -30,18 +30,6 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
         !hasAnnouncedTeams &&
         errorCount < MAX_RETRIES;
 
-      console.log('Team announcement check:', {
-        now: now.toISOString(),
-        announcementTime: announcementTime.toISOString(),
-        isPastAnnouncementTime: now > announcementTime,
-        gameStatus: props.game!.status,
-        teamsAnnounced: props.game!.teams_announced,
-        shouldAnnounceTeams,
-        isProcessingAnnouncement,
-        hasAnnouncedTeams,
-        errorCount
-      });
-
       if (shouldAnnounceTeams) {
         handleTeamAnnouncement();
       }
@@ -64,48 +52,58 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
     
     try {
       const { id } = props.game;
-      
-      console.log('Starting team announcement for game:', { id });
 
       // Get selected players
-      const { data: selections, error: selectionsError } = await supabaseAdmin
-        .from('game_selections')
-        .select('selected_players')
+      const { data: registrations, error: registrationsError } = await supabaseAdmin
+        .from('game_registrations')
+        .select(`
+          id,
+          players!game_registrations_player_id_fkey (
+            id,
+            friendly_name,
+            attack_rating,
+            defense_rating,
+            win_rate
+          )
+        `)
         .eq('game_id', id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .eq('status', 'selected');
 
-      if (selectionsError) throw selectionsError;
+      if (registrationsError) throw registrationsError;
 
-      if (!selections || !selections.selected_players || selections.selected_players.length === 0) {
+      if (!registrations || registrations.length === 0) {
         throw new Error('No selected players found');
       }
 
-      console.log('Selected players before balancing:', selections.selected_players);
-
-      // Convert selected players to PlayerRating format
-      const playerRatings = selections.selected_players.map(player => ({
-        player_id: player.id,
-        attack_rating: player.stats?.caps || 0,
-        defense_rating: player.stats?.caps || 0,
-        win_rate: player.stats?.win_rate || 50
+      // Convert registrations to PlayerRating format
+      const playerRatings = registrations.map(reg => ({
+        player_id: reg.players.id,
+        attack_rating: reg.players.attack_rating || 0,
+        defense_rating: reg.players.defense_rating || 0,
+        win_rate: reg.players.win_rate || 50
       }));
-
-      console.log('Player ratings for balancing:', playerRatings);
 
       // Balance teams
       const teams = await balanceTeams(playerRatings);
-      
-      console.log('Teams after balancing:', teams);
 
       if (!teams) {
         throw new Error('Team balancing returned null');
       }
 
-      if (!teams.orangeTeam || !teams.blueTeam) {
+      if (!teams.blueTeam || !teams.orangeTeam) {
         throw new Error(`Invalid team structure: ${JSON.stringify(teams)}`);
       }
+
+      // Transform the balanced teams back into the expected format
+      const transformedPlayers = registrations.map(reg => {
+        const isBlueTeam = teams.blueTeam.includes(reg.players.id);
+        const isOrangeTeam = teams.orangeTeam.includes(reg.players.id);
+        return {
+          player: reg.players,
+          selection_type: 'selected',
+          team: isBlueTeam ? 'blue' : isOrangeTeam ? 'orange' : undefined
+        };
+      });
 
       // Update player registrations with team assignments
       for (const team of ['orange', 'blue'] as const) {
@@ -113,15 +111,60 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
         if (teamPlayers && teamPlayers.length > 0) {
           const { error: updateError } = await supabaseAdmin
             .from('game_registrations')
-            .update({ team })
+            .update({ 
+              team,
+              status: 'selected'
+            })
             .eq('game_id', id)
-            .in('player_id', teamPlayers.map(p => p.player_id));
+            .in('player_id', teamPlayers);
 
           if (updateError) throw updateError;
         }
       }
 
-      // Update game status
+      // Get player details for team assignments
+      const { data: playerDetails, error: playerError } = await supabaseAdmin
+        .from('players')
+        .select('id, friendly_name, attack_rating, defense_rating')
+        .in('id', [...teams.blueTeam, ...teams.orangeTeam]);
+
+      if (playerError) throw playerError;
+
+      const playerMap = new Map(playerDetails.map(player => [player.id, player]));
+
+      // Save balanced team assignments
+      const teamAssignments = {
+        teams: [
+          ...teams.blueTeam.map(playerId => ({
+            player_id: playerId,
+            friendly_name: playerMap.get(playerId)?.friendly_name,
+            attack_rating: playerMap.get(playerId)?.attack_rating,
+            defense_rating: playerMap.get(playerId)?.defense_rating,
+            team: 'blue'
+          })),
+          ...teams.orangeTeam.map(playerId => ({
+            player_id: playerId,
+            friendly_name: playerMap.get(playerId)?.friendly_name,
+            attack_rating: playerMap.get(playerId)?.attack_rating,
+            defense_rating: playerMap.get(playerId)?.defense_rating,
+            team: 'orange'
+          }))
+        ],
+        stats: teams.stats
+      };
+
+      const { error: balancedTeamError } = await supabaseAdmin
+        .from('balanced_team_assignments')
+        .upsert({
+          game_id: id,
+          team_assignments: teamAssignments,
+          total_differential: teams.difference,
+          attack_differential: teams.stats.blue.attack - teams.stats.orange.attack,
+          defense_differential: teams.stats.blue.defense - teams.stats.orange.defense
+        });
+
+      if (balancedTeamError) throw balancedTeamError;
+
       const { error: statusError } = await supabaseAdmin
         .from('games')
         .update({ 
@@ -137,7 +180,6 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
       setHasAnnouncedTeams(true);
       setErrorCount(0); // Reset error count on success
     } catch (error) {
-      console.error('Error in team announcement:', error);
       setErrorCount(prev => {
         const newCount = prev + 1;
         if (newCount >= MAX_RETRIES) {

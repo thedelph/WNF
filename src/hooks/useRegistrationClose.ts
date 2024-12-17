@@ -26,16 +26,6 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
         !isProcessingClose && 
         !hasPassedWindowEnd;
 
-      console.log('Registration close check:', {
-        now: now.toISOString(),
-        registrationEnd: registrationEnd.toISOString(),
-        isPastEndTime: now > registrationEnd,
-        gameStatus: props.game!.status,
-        shouldProcessSelection,
-        isProcessingClose,
-        hasPassedWindowEnd
-      });
-
       if (shouldProcessSelection) {
         handleRegistrationWindowClose();
       }
@@ -59,12 +49,6 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
     try {
       const { id, max_players, random_slots } = props.game;
       
-      console.log('Starting player selection for game:', {
-        id,
-        maxPlayers: max_players,
-        randomSlots: random_slots
-      });
-
       // First update game status
       const { error: statusError } = await supabaseAdmin
         .from('games')
@@ -79,8 +63,6 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
         randomSlots: random_slots
       });
 
-      console.log('Player selection completed:', result);
-
       // Store selection results
       const { error: selectionError } = await supabaseAdmin
         .from('game_selections')
@@ -91,17 +73,16 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
           selection_metadata: result.debug
         });
 
-      if (selectionError) {
-        console.error('Error storing selection results:', selectionError);
-        throw selectionError;
+      if (selectionError) throw selectionError;
+      
+      if (props.onGameUpdated) {
+        await props.onGameUpdated();
       }
       
-      await props.onGameUpdated();
       toast.success('Players have been selected');
       setHasPassedWindowEnd(true);
 
     } catch (error) {
-      console.error('Registration close error:', error);
       toast.error('Failed to close registration');
     } finally {
       setIsProcessingClose(false);

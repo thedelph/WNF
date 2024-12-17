@@ -20,6 +20,7 @@ import PaymentDashboard from './components/admin/payments/PaymentDashboard'
 import Ratings from './pages/Ratings'
 import RatingsView from './pages/admin/ratings'
 import Teams from './pages/admin/Teams'
+import TeamBalancingOverview from './components/admin/pages/TeamBalancingOverview'
 
 const App: React.FC = () => {
   return (
@@ -42,6 +43,7 @@ const App: React.FC = () => {
             <Route path="/ratings" element={<Ratings />} />
             <Route path="/admin/ratings" element={<RatingsView />} />
             <Route path="/admin/teams/:gameId" element={<Teams />} />
+            <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
           </Routes>
           <Toaster />
         </Layout>

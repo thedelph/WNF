@@ -85,7 +85,7 @@ const EditPlayer: React.FC = () => {
         .from('players')
         .update({
           friendly_name: player.friendly_name,
-          xp: player.xp,
+          ...(player.xp !== undefined ? { xp: player.xp } : {}),
           caps: useManualOverride ? player.caps : calculatedCaps,
           preferred_position: player.preferred_position,
           is_test_user: player.is_test_user,
@@ -190,7 +190,6 @@ const EditPlayer: React.FC = () => {
             name="xp"
             value={player.xp}
             onChange={handleChange}
-            required
             className="input input-bordered w-full"
           />
         </div>

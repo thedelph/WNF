@@ -28,7 +28,9 @@ interface RegisteredPlayersProps {
 
 export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrations }) => {
   const getCalculatedXP = (registration: GameRegistration): number => {
-    if (!registration?.player) return 0;
+    if (!registration?.player) {
+      return 0;
+    }
     
     const stats = {
       caps: registration.player.caps || 0,
@@ -41,7 +43,11 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
   };
 
   // Filter out any invalid registrations and sort by XP
-  const validRegistrations = registrations.filter(reg => reg && reg.player && reg.id);
+  const validRegistrations = (registrations || []).filter(reg => {
+    const isValid = reg && reg.player && reg.id;
+    return isValid;
+  });
+
   const sortedRegistrations = [...validRegistrations].sort(
     (a, b) => getCalculatedXP(b) - getCalculatedXP(a)
   );

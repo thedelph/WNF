@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { GameDetails } from '../components/game/GameDetails';
@@ -23,33 +23,43 @@ const Game = () => {
   });
 
   const { isRegistrationClosed } = useRegistrationClose(upcomingGame?.date);
+  const { isTeamAnnouncementTime, handleTeamAnnouncement } = useTeamAnnouncement({
+    game: upcomingGame,
+    onGameUpdated: async () => {
+      await fetchGameData();
+    }
+  });
+  const { isRegistrationOpen } = useRegistrationOpen(upcomingGame?.date);
 
   // Check if current user is registered
   const [isUserRegistered, setIsUserRegistered] = useState(false);
+  const [currentRegistration, setCurrentRegistration] = useState<any>(null);
+
+  const checkUserRegistration = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !upcomingGame) return;
+
+    // Get player profile first
+    const { data: playerProfile } = await supabase
+      .from('players')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!playerProfile) return;
+
+    // Check registration using player ID
+    const registration = upcomingGame.game_registrations?.find(
+      reg => reg.player?.id === playerProfile.id
+    );
+
+    setCurrentRegistration(registration);
+    setIsUserRegistered(!!registration);
+  }, [upcomingGame]);
 
   useEffect(() => {
-    const checkUserRegistration = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !upcomingGame) return;
-
-      // Get player profile first
-      const { data: playerProfile } = await supabase
-        .from('players')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!playerProfile) return;
-
-      // Check registration using player ID
-      const isRegistered = upcomingGame.game_registrations?.some(
-        reg => reg.player_id === playerProfile.id
-      ) || false;
-      setIsUserRegistered(isRegistered);
-    };
-
     checkUserRegistration();
-  }, [upcomingGame]);
+  }, [checkUserRegistration, upcomingGame?.game_registrations]);
 
   const handleRegistration = async () => {
     try {
@@ -73,25 +83,41 @@ const Game = () => {
         return;
       }
 
-      if (isUserRegistered) {
-        // Unregister
+      // Check current registration status first
+      const { data: existingReg } = await supabase
+        .from('game_registrations')
+        .select('id, status')
+        .eq('game_id', upcomingGame.id)
+        .eq('player_id', playerProfile.id)
+        .single();
+
+      if (existingReg) {
+        // Already registered, so unregister
         const { error } = await supabase
           .from('game_registrations')
           .delete()
-          .match({ game_id: upcomingGame.id, player_id: playerProfile.id });
+          .eq('game_id', upcomingGame.id)
+          .eq('player_id', playerProfile.id);
 
         if (error) throw error;
+        setIsUserRegistered(false);
+        setCurrentRegistration(null);
       } else {
-        // Register
-        const { error } = await supabase
+        // Not registered, so register
+        const { data: newReg, error } = await supabase
           .from('game_registrations')
           .insert({
             game_id: upcomingGame.id,
             player_id: playerProfile.id,
-            status: 'registered'
-          });
+            status: 'registered',
+            selection_method: 'none'
+          })
+          .select('*')
+          .single();
 
         if (error) throw error;
+        setIsUserRegistered(true);
+        setCurrentRegistration(newReg);
       }
 
       // Refresh game data
@@ -102,13 +128,14 @@ const Game = () => {
     }
   };
 
+  const { id } = useParams();
+
   const fetchGameData = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log('Starting game data fetch...');
       
-      // Fetch the next game that hasn't been completed
-      const { data: games, error: gameError } = await supabase
+      // Base query with all required relations
+      const baseQuery = supabase
         .from('games')
         .select(`
           *,
@@ -121,71 +148,97 @@ const Game = () => {
           game_registrations (
             id,
             status,
-            randomly_selected,
-            player_id,
+            team,
+            selection_method,
             player:players!game_registrations_player_id_fkey (
               id,
               friendly_name,
-              preferred_position,
               caps,
               active_bonuses,
               active_penalties,
               current_streak,
-              max_streak,
               win_rate,
+              max_streak,
               avatar_svg
             )
-          ),
-          game_selections (
-            selected_players,
-            reserve_players
-          ),
-          registrations_count:game_registrations(count)
-        `)
-        .neq('status', 'completed')
-        .gte('date', new Date().toISOString())
-        .order('date', { ascending: true })
-        .limit(1)
-        .single();
+          )
+        `);
 
-      if (gameError) {
-        console.error('Game fetch error:', gameError);
-        return;
+      // Execute different queries based on whether we have an ID
+      const { data: game, error } = id 
+        ? await baseQuery
+            .eq('id', id)
+            .single()
+        : await baseQuery
+            .gte('date', new Date().toISOString())
+            .order('date', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching game data:', error);
+        throw error;
       }
 
-      if (!games) {
+      if (!game) {
+        setUpcomingGame(null);
         setIsLoading(false);
         return;
       }
 
-      // Transform the venue data to match the expected format
-      const gameWithVenue = {
-        ...games,
-        venue: games.venues ? {
-          name: games.venues.name,
-          address: games.venues.address,
-          google_maps_url: games.venues.google_maps_url
-        } : null,
-        registrations: games.game_registrations || [],
-        registrations_count: games.registrations_count?.[0]?.count || 0
-      };
+      setUpcomingGame(game);
 
-      setUpcomingGame(gameWithVenue);
-      setPlayerData(prev => ({
-        ...prev,
-        registrations: games.game_registrations || []
+      const registrations = game.game_registrations || [];
+      
+      // Get all valid registrations (must have player data)
+      const allValidRegistrations = registrations.filter(reg => 
+        reg && reg.player
+      );
+
+      // Transform selected players for team display - include both merit and random selections
+      const selectedRegistrations = registrations.filter(reg => 
+        reg && reg.player && reg.status === 'selected'
+      );
+
+      const transformedPlayers = selectedRegistrations.map(reg => ({
+        player: reg.player,
+        selection_type: reg.selection_method || 'merit',
+        team: reg.team?.toLowerCase()
       }));
 
+      // Update player data state
+      const newPlayerData = {
+        registrations: allValidRegistrations.map(reg => ({
+          ...reg,
+          player: {
+            ...reg.player,
+            processed: true
+          }
+        })),
+        selectedPlayers: transformedPlayers,
+        reservePlayers: registrations
+          .filter(reg => reg.status === 'reserve' && reg.player)
+          .map(reg => reg.player),
+        selectionNotes: []
+      };
+
+      setPlayerData(newPlayerData);
     } catch (error) {
       console.error('Error fetching game data:', error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     fetchGameData();
   }, [fetchGameData]);
+
+  useEffect(() => {
+    if (upcomingGame?.status === 'teams_announced' || upcomingGame?.status === 'completed') {
+      fetchGameData();
+    }
+  }, [upcomingGame?.status, fetchGameData]);
 
   const { isProcessingOpen } = useRegistrationOpen({
     game: upcomingGame,
@@ -197,25 +250,39 @@ const Game = () => {
     onGameUpdated: fetchGameData
   });
 
-  const { isProcessingAnnouncement } = useTeamAnnouncement({
-    game: upcomingGame,
-    onGameUpdated: fetchGameData
-  });
+  const teamSelectionComponent = useMemo(() => {
+    if (upcomingGame?.status !== 'teams_announced' && upcomingGame?.status !== 'completed') {
+      return null;
+    }
+
+    return (
+      <TeamSelectionResults 
+        key={`team-selection-${playerData.selectedPlayers.length}`}
+        gameId={upcomingGame.id}
+        selectedPlayers={playerData.selectedPlayers}
+        reservePlayers={playerData.reservePlayers}
+      />
+    );
+  }, [upcomingGame?.status, upcomingGame?.id, playerData.selectedPlayers, playerData.reservePlayers]);
 
   const renderPlayerList = () => {
-    if (isProcessingOpen || isProcessingClose || isProcessingAnnouncement) {
+    if (isProcessingOpen || isProcessingClose || isTeamAnnouncementTime || isLoading) {
       return <LoadingSpinner />;
     }
 
-    switch (upcomingGame?.status) {
+    if (!upcomingGame) {
+      return null;
+    }
+
+    switch (upcomingGame.status) {
       case 'open':
       case 'upcoming':
-        return <RegisteredPlayers gameId={upcomingGame.id} />;
+        return <RegisteredPlayers registrations={playerData.registrations} />;
       case 'players_announced':
         return <PlayerSelectionResults gameId={upcomingGame.id} />;
       case 'teams_announced':
       case 'completed':
-        return <TeamSelectionResults gameId={upcomingGame.id} />;
+        return teamSelectionComponent;
       default:
         return null;
     }

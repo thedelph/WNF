@@ -5,6 +5,7 @@ import { useAdmin } from '../../hooks/useAdmin'
 import { motion } from 'framer-motion'
 import { supabase } from '../../utils/supabase'
 import { toast } from 'react-toastify'
+import { Notifications } from '../Notifications'
 
 const Header: React.FC = () => {
   const navigate = useNavigate()
@@ -33,7 +34,7 @@ const Header: React.FC = () => {
           <Link to="/" className="text-xl font-bold">WNF</Link>
         </div>
         <div className="flex-none">
-          <ul className="menu menu-horizontal px-1">
+          <ul className="menu menu-horizontal px-1 items-center">
             <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
               <Link to="/games">Games</Link>
             </motion.li>
@@ -55,6 +56,9 @@ const Header: React.FC = () => {
                     </Link>
                   </motion.li>
                 )}
+                <li className="mx-2">
+                  <Notifications />
+                </li>
                 <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
                   <button onClick={handleLogout} className="btn btn-ghost btn-sm">
                     Logout

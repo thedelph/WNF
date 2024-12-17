@@ -8,7 +8,7 @@ const TeamGenerationCard: React.FC = () => {
         <h2 className="card-title">Team Generation</h2>
         <p>Generate and balance teams for upcoming games</p>
         <div className="card-actions justify-end">
-          <Link to="/admin/teams" className="btn btn-primary">Generate Teams</Link>
+          <Link to="/admin/team-balancing" className="btn btn-primary">Team Overview</Link>
         </div>
       </div>
     </div>
