@@ -1,24 +1,63 @@
 import React, { useEffect, useState } from 'react';
 import { calculatePlayerXP } from '../../utils/xpCalculations';
 import { ExtendedPlayerData } from '../../types/playerSelection';
+import { CheckCircle } from 'lucide-react';
 
 interface SlotOfferCountdownProps {
   player: ExtendedPlayerData;
   reservePlayers: ExtendedPlayerData[];
-  gameDate: Date;
+  gameDate: Date | null;
   firstDropoutTime: Date | null;
+  hasActiveOffers: boolean;
+  selectedPlayersCount: number;
+  maxPlayers: number;
 }
 
 export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
   player,
   reservePlayers,
   gameDate,
-  firstDropoutTime
+  firstDropoutTime,
+  hasActiveOffers,
+  selectedPlayersCount,
+  maxPlayers
 }) => {
   const [timeUntilOffer, setTimeUntilOffer] = useState<string | null>(null);
 
+  const playerIndex = reservePlayers.findIndex(p => p.id === player.id);
+  const isFirstReserve = playerIndex === 0;
+  const slotsAvailable = maxPlayers > selectedPlayersCount;
+
+  // Don't show anything if player has declined
+  if (player.has_declined) {
+    return null;
+  }
+
+  // If there are no active offers and slots are available, show "Available Now" for first reserve
+  if (isFirstReserve && !hasActiveOffers && slotsAvailable) {
+    return (
+      <div className="badge badge-success gap-2">
+        <div className="flex items-center">
+          <span className="mr-1">Available Now</span>
+          <CheckCircle className="h-4 w-4" />
+        </div>
+      </div>
+    );
+  }
+
+  // Don't show any countdown if there are no active offers
+  if (!hasActiveOffers) {
+    return null;
+  }
+
   useEffect(() => {
     const calculateTimeUntilOffer = () => {
+      // If there are no active offers and all slots are filled, don't show countdown
+      if (!hasActiveOffers && selectedPlayersCount >= maxPlayers) {
+        console.log('No active offers and all slots filled');
+        return null;
+      }
+
       if (!firstDropoutTime) {
         console.log('No first dropout time');
         return null;
@@ -41,7 +80,7 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
       console.log('Calculating offer time for:', player.friendly_name, {
         playerIndex,
         totalPlayers: sortedPlayers.length,
-        gameDate: gameDate.toISOString(),
+        gameDate: gameDate?.toISOString(),
         firstDropoutTime: firstDropoutTime.toISOString(),
         now: new Date().toISOString()
       });
@@ -65,19 +104,32 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
       // Calculate total time window for offers (from first dropout until game day)
       const totalTimeWindow = gameDayStart.getTime() - firstDropoutTime.getTime();
       
-      // Calculate time per player (divide window by number of reserve players)
-      const timePerPlayer = totalTimeWindow / totalPlayers;
+      // Get active reserve players (excluding declined offers)
+      const activeReservePlayers = sortedPlayers.filter(p => !p.has_declined);
+      const totalActivePlayers = activeReservePlayers.length;
+      
+      // Calculate time per player (divide window by number of ACTIVE reserve players)
+      const timePerPlayer = totalTimeWindow / totalActivePlayers;
+      
+      // Find player's position in active players list
+      const activePlayerIndex = activeReservePlayers.findIndex(p => p.id === player.id);
+      if (activePlayerIndex === -1) {
+        console.log('Player not found in active players list');
+        return null;
+      }
       
       // Calculate when this player's offer should be available
-      const playerOfferTime = new Date(firstDropoutTime.getTime() + (timePerPlayer * playerIndex));
+      const playerOfferTime = new Date(firstDropoutTime.getTime() + (timePerPlayer * activePlayerIndex));
 
       console.log('Time calculations:', {
         now: now.toISOString(),
-        gameDate: gameDate.toISOString(),
+        gameDate: gameDate?.toISOString(),
         gameDayStart: gameDayStart.toISOString(),
         hoursUntilGameDay: (gameDayStart.getTime() - now.getTime()) / (1000 * 60 * 60),
         playerOfferTime: playerOfferTime.toISOString(),
         timePerPlayer: timePerPlayer / (1000 * 60 * 60) + ' hours',
+        totalActivePlayers,
+        activePlayerIndex,
         hasDeclined: playerRegistration?.has_declined,
         hasOffer: playerRegistration?.has_offer
       });
@@ -133,7 +185,7 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [player, reservePlayers, gameDate, firstDropoutTime]);
+  }, [player, reservePlayers, gameDate, firstDropoutTime, hasActiveOffers, selectedPlayersCount, maxPlayers]);
 
   if (!timeUntilOffer) return null;
 

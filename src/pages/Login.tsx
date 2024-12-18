@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../utils/supabase'
-import { toast } from 'react-toastify'
+import toast from 'react-hot-toast'
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('')

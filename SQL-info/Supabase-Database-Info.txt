@@ -487,7 +487,7 @@
               "description": null,
               "position": 2,
               "n_distinct": 28,
-              "most_common_values": "{0fb540c6-ec8b-4208-ba00-67e2d0fba92f,9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
+              "most_common_values": "{be1a5650-677e-4e4c-94df-f5fa4dc5a7a7,9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
               "most_common_frequencies": "{0.105675,0.0430528,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.0332681,0.0313112,0.0313112,0.0313112,0.0313112,0.0313112,0.0313112,0.0234834,0.0234834,0.0195695}"
             },
             {
@@ -508,9 +508,9 @@
               "default": null,
               "description": null,
               "position": 4,
-              "n_distinct": 2,
-              "most_common_values": "{selected,registered}",
-              "most_common_frequencies": "{0.894325,0.105675}"
+              "n_distinct": 3,
+              "most_common_values": "{selected,reserve}",
+              "most_common_frequencies": "{0.908023,0.0900196}"
             },
             {
               "name": "team",
@@ -542,7 +542,7 @@
               "description": null,
               "position": 8,
               "n_distinct": -0.107632,
-              "most_common_values": "{\"2024-12-17 17:08:55.723+00\",\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:10:01.571742+00\",\"2024-11-15 15:10:01.674978+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
+              "most_common_values": "{\"2024-12-18 14:24:01.001+00\",\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:10:01.571742+00\",\"2024-11-15 15:10:01.674978+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
               "most_common_frequencies": "{0.105675,0.0215264,0.0215264,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0117417,0.0117417,0.0117417,0.0117417,0.00978474,0.00978474}"
             },
             {
@@ -587,7 +587,7 @@
               "position": 13,
               "n_distinct": 2,
               "most_common_values": "{merit,none}",
-              "most_common_frequencies": "{0.894325,0.105675}"
+              "most_common_frequencies": "{0.90998,0.0900196}"
             }
           ],
           "constraints": [
@@ -779,8 +779,8 @@
           "table_name": "game_selections",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "320 kB",
-          "estimated_rows": 0,
+          "total_size": "384 kB",
+          "estimated_rows": 6,
           "columns": [
             {
               "name": "id",
@@ -801,7 +801,7 @@
               "description": null,
               "position": 2,
               "n_distinct": -0.166667,
-              "most_common_values": "{5300ae9a-7c73-41d7-bff2-4698133d6caa}",
+              "most_common_values": "{be1a5650-677e-4e4c-94df-f5fa4dc5a7a7}",
               "most_common_frequencies": "{1}"
             },
             {
@@ -1394,8 +1394,8 @@
           "table_name": "notifications",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "248 kB",
-          "estimated_rows": 40,
+          "total_size": "296 kB",
+          "estimated_rows": 155,
           "columns": [
             {
               "name": "id",
@@ -1415,9 +1415,9 @@
               "default": null,
               "description": null,
               "position": 2,
-              "n_distinct": 47,
-              "most_common_values": "{dd6651f8-9203-4efb-92ca-e2b6f8230f97,3a712b45-cd7e-4e66-a6dd-133255be5895,5d401fa5-157f-445f-9f06-def9de2ae6ce,18ebd05e-2357-44c6-a49d-d280ceed7784,32f8ab9b-1259-4764-b463-aa2e70ca8c74,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,05bb40f8-d63f-4469-9a35-e466d1f2f1da,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,be3517a2-68e2-4884-85f9-18eb16eebdd0,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,9082191f-69ff-469f-baa6-46cc918346ae,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,c465ed34-a5df-42ef-9332-3273a72f4c4d,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,33443732-814b-4407-bbf0-8b30b57ef390,5200018e-14e6-46a0-8dff-2aa113ea6b8e,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,a950fdd0-847e-4f4d-96f5-9064719c8953,c83d54c5-3468-4fde-b2b6-220034bb7480,0bfd9afb-285d-474b-86cc-c91ab64c5622,5c0e1219-9355-4078-b76d-a63ec320969c,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,a0a34603-1309-4c2c-9064-02e62cda7d41,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,78ba8339-270a-4d10-b7f6-f10999568948,8ad90589-7135-461f-b61d-272cbf3f6d04,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,75e00430-067e-44af-b498-84b28edd51be,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,84c631df-a046-41e9-a10c-4a77561e6c08,a298edef-70b4-4805-95eb-f921c50c2838,be32d4f4-d8a2-4ac4-8fb2-21879753581c,767cc150-1746-4d71-a8db-b9771f2f7770,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e790c8d4-4068-4f9e-b34f-633e392c562e,b2466431-ede1-4eaa-a86e-ad0c7128b125,813eac3e-b880-4988-823f-a345c5d6ed87,876113b5-d7c3-41bc-ab69-4b6859f864a5,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
-              "most_common_frequencies": "{0.0572519,0.0477099,0.0419847,0.0362595,0.0343511,0.0343511,0.0343511,0.0324427,0.028626,0.0267176,0.0267176,0.0248092,0.0248092,0.0248092,0.0248092,0.0248092,0.0248092,0.0229008,0.0229008,0.0229008,0.0209924,0.0209924,0.0209924,0.019084,0.019084,0.019084,0.0171756,0.0171756,0.0171756,0.0171756,0.0171756,0.0171756,0.0152672,0.0152672,0.0152672,0.0133588,0.0114504,0.0114504,0.0114504,0.0114504,0.00954198,0.00954198,0.00954198,0.00763359,0.00572519,0.00572519,0.00572519}"
+              "n_distinct": -0.368794,
+              "most_common_values": "{904a7c17-c8cc-4aff-958d-7788dea001dc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,a950fdd0-847e-4f4d-96f5-9064719c8953,05bb40f8-d63f-4469-9a35-e466d1f2f1da,3a712b45-cd7e-4e66-a6dd-133255be5895,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,84c631df-a046-41e9-a10c-4a77561e6c08,8ad90589-7135-461f-b61d-272cbf3f6d04,b2466431-ede1-4eaa-a86e-ad0c7128b125,be32d4f4-d8a2-4ac4-8fb2-21879753581c,dd6651f8-9203-4efb-92ca-e2b6f8230f97,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,22e64ff0-c283-47a4-a445-91f7f7194373,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,33443732-814b-4407-bbf0-8b30b57ef390,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,75e00430-067e-44af-b498-84b28edd51be,78ba8339-270a-4d10-b7f6-f10999568948,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca}",
+              "most_common_frequencies": "{0.134752,0.12766,0.0425532,0.035461,0.0283688,0.0283688,0.0212766,0.0212766,0.0212766,0.0212766,0.0212766,0.0212766,0.0212766,0.0212766,0.0212766,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844}"
             },
             {
               "name": "type",
@@ -1428,7 +1428,7 @@
               "position": 3,
               "n_distinct": 2,
               "most_common_values": "{slot_offer,system_message}",
-              "most_common_frequencies": "{0.984733,0.0152672}"
+              "most_common_frequencies": "{0.865248,0.134752}"
             },
             {
               "name": "message",
@@ -1437,9 +1437,9 @@
               "default": null,
               "description": null,
               "position": 4,
-              "n_distinct": 5,
-              "most_common_values": "{\"A spot has opened up in the game on 18/12/2024. Would you like to join?\",\"A spot has opened up in WNF #28 on 18/12/2024. Would you like to join?\",\"You have declined the slot offer for WNF #28 on 18/12/2024\",\"You have declined the spot for WNF #28\",\"You have been added to WNF #28 on 18/12/2024\"}",
-              "most_common_frequencies": "{0.858779,0.112595,0.0152672,0.00954198,0.00381679}"
+              "n_distinct": 8,
+              "most_common_values": "{\"A spot has opened up in WNF #28 on 19/12/2024. Would you like to join?\",\"A spot has opened up in WNF #28 on 25/12/2024. Would you like to join?\",\"A spot has opened up in WNF #28 on 20/12/2024. Would you like to join?\",\"Created 1 slot offers for WNF #28 on 25/12/2024\"}",
+              "most_common_frequencies": "{0.609929,0.141844,0.113475,0.106383}"
             },
             {
               "name": "action_url",
@@ -1459,9 +1459,9 @@
               "default": "CURRENT_TIMESTAMP",
               "description": null,
               "position": 6,
-              "n_distinct": -0.120229,
-              "most_common_values": "{\"2024-12-17 16:56:26.438801+00\",\"2024-12-17 17:03:15.200978+00\",\"2024-12-17 15:25:14.347985+00\",\"2024-12-17 16:52:08.087416+00\",\"2024-12-17 16:04:17.098742+00\",\"2024-12-17 16:12:15.824261+00\",\"2024-12-17 16:17:14.132047+00\",\"2024-12-17 16:25:14.883793+00\",\"2024-12-17 16:30:11.134992+00\",\"2024-12-17 16:34:16.049051+00\",\"2024-12-17 16:38:17.493067+00\",\"2024-12-17 16:43:13.664609+00\",\"2024-12-17 16:47:11.119215+00\",\"2024-12-17 15:59:05.870323+00\",\"2024-12-17 15:25:14.408678+00\",\"2024-12-17 15:34:11.65159+00\",\"2024-12-17 15:40:13.135962+00\",\"2024-12-17 15:44:07.429461+00\",\"2024-12-17 15:47:11.173986+00\",\"2024-12-17 15:49:05.673094+00\",\"2024-12-17 15:52:10.958381+00\",\"2024-12-17 15:55:08.490174+00\",\"2024-12-17 16:01:10.579358+00\",\"2024-12-17 15:36:09.242299+00\",\"2024-12-17 15:38:09.269409+00\",\"2024-12-17 15:55:54.151581+00\",\"2024-12-17 15:56:11.080703+00\",\"2024-12-17 15:59:16.850441+00\",\"2024-12-17 15:59:30.460152+00\"}",
-              "most_common_frequencies": "{0.0763359,0.0763359,0.0610687,0.0381679,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0305344,0.028626,0.028626,0.028626,0.028626,0.028626,0.028626,0.028626,0.028626,0.028626,0.0267176,0.0267176,0.00381679,0.00381679,0.00381679,0.00381679}"
+              "n_distinct": -0.198582,
+              "most_common_values": "{\"2024-12-18 13:32:20.472045+00\",\"2024-12-18 13:37:24.750385+00\",\"2024-12-18 13:38:19.784552+00\",\"2024-12-18 13:33:27.995256+00\",\"2024-12-18 13:33:30.240263+00\",\"2024-12-18 12:12:27.154562+00\",\"2024-12-18 12:36:21.430541+00\",\"2024-12-18 12:40:18.835381+00\",\"2024-12-18 12:43:18.459895+00\",\"2024-12-18 12:53:53.248127+00\",\"2024-12-18 13:00:15.83751+00\",\"2024-12-18 13:02:19.830649+00\",\"2024-12-18 13:04:20.844445+00\",\"2024-12-18 13:07:17.470682+00\",\"2024-12-18 13:12:21.528577+00\",\"2024-12-18 13:15:27.880739+00\",\"2024-12-18 13:19:27.300357+00\",\"2024-12-18 13:23:21.665639+00\",\"2024-12-18 13:25:24.27134+00\",\"2024-12-18 13:29:17.756585+00\",\"2024-12-18 13:44:24.704108+00\"}",
+              "most_common_frequencies": "{0.29078,0.269504,0.106383,0.035461,0.0212766,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844,0.0141844}"
             },
             {
               "name": "read_at",
@@ -1470,7 +1470,7 @@
               "default": null,
               "description": null,
               "position": 7,
-              "n_distinct": 0,
+              "n_distinct": -0.134752,
               "most_common_values": null,
               "most_common_frequencies": null
             },
@@ -1492,9 +1492,9 @@
               "default": null,
               "description": null,
               "position": 9,
-              "n_distinct": -0.112595,
-              "most_common_values": "{\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"214561ab-d43e-40c9-8ad3-2c50c89a84cb\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"f78caacc-2e29-4772-a59c-5e3fe290672c\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"696e4109-6b3d-4741-a165-bac18ace6d7c\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"2ceb1bb8-5e6e-4836-98f9-bc14c6639eb2\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"5e94ff05-2fea-4e6b-8538-696ba4627122\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"6b1f3e76-f820-4c10-a1b4-6a154bdf8f24\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"78cfe421-f07d-4ce3-bc6d-af78636ab6fe\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"a6550cbc-5f39-4fe7-b607-5e6eb1a9bfff\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"a9b42587-7f99-4d94-abb2-8c62a6325c49\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"b356c7d2-88a6-45b8-a330-1ca0958fba4b\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"bec4770c-8e0f-4b5a-8f52-040520b2a7af\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"f5387fed-5bae-4a0d-839e-e2800405c9cd\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"fa86d531-ce38-432c-8e7c-431516d3c0e8\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"0f4f1599-639b-49f9-a3de-4d53b93e4ebc\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"07b222a4-af45-4590-911c-de6336b046dc\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"1b42ce20-6aba-49be-9589-2b99d111e458\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"27e8b2d6-b291-40fa-a4ef-f63e9cc119d7\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"5300ae9a-7c73-41d7-bff2-4698133d6caa\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"696e4109-6b3d-4741-a165-bac18ace6d7c\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"d2bc92b5-ecc9-4ce7-a49d-5f9da9059da3\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"dc82d55b-17a9-4105-b1b8-fc4529f30d2f\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"e1a9e67a-8fff-45e0-b60b-5034edc2e491\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"eab2f670-6776-41c5-b5e6-5cff1118e645\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"4b827b06-e51e-40f4-a8aa-5baf58e54860\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"d04583f2-700f-4136-8538-a5823c5b83ab\\\", \\\"dropped_out_player_id\\\": \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"0f4f1599-639b-49f9-a3de-4d53b93e4ebc\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"5300ae9a-7c73-41d7-bff2-4698133d6caa\\\"}\",\"{\\\"action\\\": \\\"slot_offer\\\", \\\"game_id\\\": \\\"f5387fed-5bae-4a0d-839e-e2800405c9cd\\\"}\",\"{\\\"action\\\": \\\"slot_offer_declined\\\", \\\"game_id\\\": \\\"0f4f1599-639b-49f9-a3de-4d53b93e4ebc\\\"}\",\"{\\\"action\\\": \\\"slot_offer_declined\\\", \\\"game_id\\\": \\\"5300ae9a-7c73-41d7-bff2-4698133d6caa\\\"}\"}",
-              "most_common_frequencies": "{0.0763359,0.0763359,0.0610687,0.0381679,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0362595,0.0305344,0.028626,0.028626,0.028626,0.028626,0.028626,0.028626,0.028626,0.028626,0.028626,0.0267176,0.0267176,0.00763359,0.00572519,0.00381679,0.00381679,0.00381679}"
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null
             }
           ],
           "constraints": [
@@ -1584,24 +1584,6 @@
               "definition": "true"
             },
             {
-              "name": "Players can view their notifications",
-              "permissive": "PERMISSIVE",
-              "roles": [
-                "authenticated"
-              ],
-              "command": "SELECT",
-              "definition": "(auth.uid() IN ( SELECT players.user_id\n   FROM players\n  WHERE (players.id = notifications.player_id)))"
-            },
-            {
-              "name": "Admins can view all notifications",
-              "permissive": "PERMISSIVE",
-              "roles": [
-                "authenticated"
-              ],
-              "command": "SELECT",
-              "definition": "(EXISTS ( SELECT 1\n   FROM (admin_roles ar\n     JOIN players p ON ((p.id = ar.player_id)))\n  WHERE (p.user_id = auth.uid())))"
-            },
-            {
               "name": "Players can update their notifications",
               "permissive": "PERMISSIVE",
               "roles": [
@@ -1681,6 +1663,24 @@
               ],
               "command": "INSERT",
               "definition": null
+            },
+            {
+              "name": "Players can view their notifications",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "authenticated"
+              ],
+              "command": "SELECT",
+              "definition": "((auth.uid() IN ( SELECT players.user_id\n   FROM players\n  WHERE (players.id = notifications.player_id))) OR (EXISTS ( SELECT 1\n   FROM ((admin_roles ar\n     JOIN admin_permissions ap ON ((ap.admin_role_id = ar.id)))\n     JOIN players p ON ((p.id = ar.player_id)))\n  WHERE ((p.user_id = auth.uid()) AND (ap.permission = 'manage_games'::text)))))"
+            },
+            {
+              "name": "Admins can view all notifications",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "authenticated"
+              ],
+              "command": "SELECT",
+              "definition": "(EXISTS ( SELECT 1\n   FROM ((admin_roles ar\n     JOIN admin_permissions ap ON ((ap.admin_role_id = ar.id)))\n     JOIN players p ON ((p.id = ar.player_id)))\n  WHERE ((p.user_id = auth.uid()) AND (ap.permission = 'manage_games'::text))))"
             }
           ]
         },
@@ -2803,7 +2803,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "72 kB",
-          "estimated_rows": 0,
+          "estimated_rows": 2,
           "columns": [
             {
               "name": "id",
@@ -3029,7 +3029,14 @@
               "foreign_column": null
             }
           ],
-          "triggers": null,
+          "triggers": [
+            {
+              "name": "trigger_void_other_slot_offers",
+              "timing": "BEFORE",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION void_other_slot_offers()"
+            }
+          ],
           "indexes": [
             {
               "name": "idx_slot_offers_game_player",
@@ -3460,7 +3467,8 @@
             "pending",
             "accepted",
             "declined",
-            "expired"
+            "expired",
+            "voided"
           ]
         }
       ],
@@ -3521,6 +3529,12 @@
           "description": null
         },
         {
+          "name": "handle_slot_offer_response",
+          "arguments": "p_offer_id uuid, p_status text",
+          "return_type": "void",
+          "description": null
+        },
+        {
           "name": "update_player_streaks",
           "arguments": "",
           "return_type": "trigger",
@@ -3575,27 +3589,39 @@
           "description": null
         },
         {
-          "name": "get_players_with_game_count",
-          "arguments": "current_player_id uuid",
-          "return_type": "TABLE(id uuid, friendly_name text, games_played bigint)",
-          "description": null
-        },
-        {
-          "name": "update_updated_at",
-          "arguments": "",
-          "return_type": "trigger",
-          "description": null
-        },
-        {
           "name": "get_reserve_players_by_xp",
           "arguments": "p_game_id uuid",
           "return_type": "TABLE(player_id uuid, xp numeric, rank integer)",
           "description": null
         },
         {
+          "name": "get_players_with_game_count",
+          "arguments": "current_player_id uuid",
+          "return_type": "TABLE(id uuid, friendly_name text, games_played bigint)",
+          "description": null
+        },
+        {
+          "name": "get_next_slot_offer_players",
+          "arguments": "p_game_id uuid, p_hours_until_game numeric",
+          "return_type": "TABLE(player_id uuid)",
+          "description": null
+        },
+        {
+          "name": "void_other_slot_offers",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null
+        },
+        {
           "name": "create_slot_offers_for_game",
-          "arguments": "p_game_id uuid, p_admin_id uuid DEFAULT NULL::uuid",
-          "return_type": "void",
+          "arguments": "p_game_id uuid, p_admin_id uuid DEFAULT NULL::uuid, p_dropped_out_player_id uuid DEFAULT NULL::uuid",
+          "return_type": "integer",
+          "description": null
+        },
+        {
+          "name": "update_updated_at",
+          "arguments": "",
+          "return_type": "trigger",
           "description": null
         },
         {
@@ -3614,12 +3640,6 @@
           "name": "update_game_sequence_numbers",
           "arguments": "",
           "return_type": "trigger",
-          "description": null
-        },
-        {
-          "name": "get_next_slot_offer_players",
-          "arguments": "p_game_id uuid, p_hours_until_game numeric",
-          "return_type": "TABLE(player_id uuid)",
           "description": null
         },
         {

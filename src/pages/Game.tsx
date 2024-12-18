@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import { GameDetails } from '../components/game/GameDetails';
+import { GameHeader } from '../components/game/GameHeader';
 import { Game as GameType } from '../types/game';
 import { RegisteredPlayers } from '../components/game/RegisteredPlayers';
 import { PlayerSelectionResults } from '../components/games/PlayerSelectionResults';
@@ -11,6 +12,7 @@ import { handlePlayerSelection } from '../utils/playerSelection';
 import { useRegistrationClose } from '../hooks/useRegistrationClose';
 import { useTeamAnnouncement } from '../hooks/useTeamAnnouncement';
 import { useRegistrationOpen } from '../hooks/useRegistrationOpen';
+import { format } from 'date-fns';
 
 const Game = () => {
   const [upcomingGame, setUpcomingGame] = useState<GameType | null>(null);
@@ -289,21 +291,26 @@ const Game = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-8">
       {isLoading ? (
-        <LoadingSpinner />
-      ) : !upcomingGame ? (
-        <div className="text-center text-xl">No upcoming games found.</div>
-      ) : (
-        <GameDetails 
-          game={upcomingGame} 
-          isRegistrationClosed={isRegistrationClosed}
-          isUserRegistered={isUserRegistered}
-          handleRegistration={handleRegistration}
-          handlePlayerSelection={handlePlayerSelection}
-        >
+        <div className="flex justify-center items-center h-64">
+          <div className="loading loading-spinner loading-lg"></div>
+        </div>
+      ) : upcomingGame ? (
+        <>
+          <GameHeader
+            gameNumber={upcomingGame.sequence_number || 0}
+            date={upcomingGame.date}
+            time={format(new Date(upcomingGame.date), 'HH:mm')}
+            totalPlayers={upcomingGame.max_players || 0}
+            xpSlots={upcomingGame.max_players - (upcomingGame.random_slots || 0)}
+            randomSlots={upcomingGame.random_slots || 0}
+            currentlyRegistered={upcomingGame.game_registrations?.length || 0}
+          />
           {renderPlayerList()}
-        </GameDetails>
+        </>
+      ) : (
+        <div className="text-center text-xl">No upcoming games found.</div>
       )}
     </div>
   );

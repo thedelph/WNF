@@ -121,16 +121,16 @@ export const GameDetails: React.FC<Props> = ({
             <div className="stat-value">{game.max_players}</div>
           </div>
           <div className="stat bg-base-200 rounded-lg p-4">
-            <div className="stat-title">XP Spots</div>
+            <div className="stat-title">XP Slots</div>
             <div className="stat-value">{game.max_players - game.random_slots}</div>
           </div>
           <div className="stat bg-base-200 rounded-lg p-4">
-            <div className="stat-title">Random Spots</div>
+            <div className="stat-title">Random Slots</div>
             <div className="stat-value">{game.random_slots}</div>
           </div>
           <div className="stat bg-base-200 rounded-lg p-4">
             <div className="stat-title">Currently Registered</div>
-            <div className="stat-value">{game.registrations_count || 0}</div>
+            <div className="stat-value">{game.game_registrations?.length || 0}</div>
           </div>
         </div>
 

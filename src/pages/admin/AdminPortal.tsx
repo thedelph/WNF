@@ -8,6 +8,7 @@ import PaymentManagementCard from '../../components/admin/cards/PaymentManagemen
 import AdminManagementCard from '../../components/admin/cards/AdminManagementCard'
 import HistoricalDataCard from '../../components/admin/cards/HistoricalDataCard'
 import RatingsCard from '../../components/admin/cards/RatingsCard'
+import { SlotOffersCard } from '../../components/admin/cards/SlotOffersCard'
 
 const AdminPortal: React.FC = () => {
   const { isAdmin, isSuperAdmin, loading: adminLoading } = useAdmin()
@@ -37,6 +38,7 @@ const AdminPortal: React.FC = () => {
         <PaymentManagementCard />
         <AdminManagementCard />
         <HistoricalDataCard />
+        <SlotOffersCard />
         {isSuperAdmin && <RatingsCard />}
       </div>
     </div>

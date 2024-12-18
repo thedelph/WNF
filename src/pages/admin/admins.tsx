@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import FormContainer from '../../components/common/containers/FormContainer'
 import AdminList from '../../components/admin/AdminList'
 import AdminForm from '../../components/admin/AdminForm'
+import { SlotOffersCard } from '../../components/admin/cards/SlotOffersCard'
 
 const AdminManagement: React.FC = () => {
   const { user } = useAuth()
@@ -63,6 +64,16 @@ const AdminManagement: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <AdminManagementCard />
+            <PlayerManagementCard />
+            <GameManagementCard />
+            <SlotOffersCard />
+            <TeamGenerationCard />
+            <RatingsCard />
+            <PaymentManagementCard />
+            <HistoricalDataCard />
+          </div>
           {!isAddingAdmin ? (
             <button
               onClick={() => setIsAddingAdmin(true)}
@@ -79,7 +90,6 @@ const AdminManagement: React.FC = () => {
               onCancel={() => setIsAddingAdmin(false)}
             />
           )}
-
           <AdminList
             admins={admins}
             onUpdate={fetchAdmins}

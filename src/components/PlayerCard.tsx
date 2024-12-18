@@ -91,18 +91,24 @@ export default function PlayerCard({
   };
 
   const getSlotOfferBadge = () => {
+    if (slotOfferStatus === 'declined') {
+      return (
+        <div className="badge badge-error badge-sm">
+          DECLINED
+        </div>
+      );
+    }
+
     if (!hasSlotOffer && slotOfferStatus !== 'accepted') return null;
 
     const badges = {
       pending: 'badge-info',
-      accepted: 'badge-success',
-      declined: 'badge-error'
+      accepted: 'badge-success'
     };
 
     const labels = {
       pending: 'Slot Offered',
       accepted: 'Slot Accepted',
-      declined: 'Slot Declined'
     };
 
     return (
@@ -155,6 +161,19 @@ export default function PlayerCard({
                   <span className="text-sm">Caps</span>
                 </div>
                 <span className="text-2xl font-bold">{caps}</span>
+              </div>
+            </div>
+
+            {/* XP Section */}
+            <div className="mb-4">
+              <div className="bg-black/40 rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    <span className="text-sm font-bold">XP</span>
+                  </div>
+                  <span className="text-3xl font-bold">{calculatedXP}</span>
+                </div>
               </div>
             </div>
 
@@ -214,23 +233,12 @@ export default function PlayerCard({
               )}
             </div>
 
-            {/* XP Section */}
             <div className="mt-auto">
-              <div className="bg-black/40 rounded-lg p-3">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    <span className="text-sm font-bold">XP</span>
-                  </div>
-                  <span className="text-3xl font-bold">{calculatedXP}</span>
-                </div>
-              </div>
+              {player?.id === id && (
+                <div className="absolute bottom-4 left-4 badge badge-neutral">You</div>
+              )}
+              <div className="absolute bottom-4 right-4 badge badge-outline">{rarity}</div>
             </div>
-
-            {player?.id === id && (
-              <div className="absolute bottom-4 left-4 badge badge-neutral">You</div>
-            )}
-            <div className="absolute bottom-4 right-4 badge badge-outline">{rarity}</div>
           </div>
         </motion.div>
 

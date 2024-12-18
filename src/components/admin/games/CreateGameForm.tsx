@@ -1,89 +1,152 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { Venue } from '../../../types/game'
-import FormContainer from '../../common/containers/FormContainer'
-import toast from 'react-hot-toast'
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Venue } from '../../../types/game';
+import FormContainer from '../../common/containers/FormContainer';
+import toast from 'react-hot-toast';
+import { supabase } from '../../../utils/supabase';
 
-interface Props {
-  venues: Venue[]
-  onSubmit: (e: React.FormEvent) => Promise<void>
-  date: string
-  setDate: (date: string) => void
-  time: string
-  setTime: (time: string) => void
-  registrationStart: string
-  setRegistrationStart: (date: string) => void
-  registrationEnd: string
-  setRegistrationEnd: (date: string) => void
-  venueId: string
-  setVenueId: (id: string) => void
-  maxPlayers: number
-  setMaxPlayers: (num: number) => void
-  randomSlots: number
-  setRandomSlots: (num: number) => void
-  pitchCost: number
-  setPitchCost: (cost: number) => void
-  teamAnnouncementTime: string
-  setTeamAnnouncementTime: (date: string) => void
-  presets: {
-    id: string;
-    name: string;
-    venue_id: string;
-    day_of_week: string;
-    start_time: string;
-    registration_hours_before: number;
-    registration_hours_until: number;
-    pitch_cost: number;
-  }[];
-  onPresetSelect: (presetId: string) => void;
+interface CreateGameFormProps {
+  date?: string;
+  time?: string;
+  venueId?: string;
+  pitchCost?: number;
+  registrationStart?: string;
+  registrationEnd?: string;
+  teamAnnouncementTime?: string;
+  onGameCreated?: () => void;
 }
 
-export const CreateGameForm: React.FC<Props> = ({
-  venues,
-  onSubmit,
-  date,
-  setDate,
-  time,
-  setTime,
-  registrationStart,
-  setRegistrationStart,
-  registrationEnd,
-  setRegistrationEnd,
-  venueId,
-  setVenueId,
-  maxPlayers,
-  setMaxPlayers,
-  randomSlots,
-  setRandomSlots,
-  pitchCost,
-  setPitchCost,
-  teamAnnouncementTime,
-  setTeamAnnouncementTime,
-  presets,
-  onPresetSelect
+export const CreateGameForm: React.FC<CreateGameFormProps> = ({
+  date: presetDate,
+  time: presetTime,
+  venueId: presetVenueId,
+  pitchCost: presetPitchCost,
+  registrationStart: presetRegistrationStart,
+  registrationEnd: presetRegistrationEnd,
+  teamAnnouncementTime: presetTeamAnnouncementTime,
+  onGameCreated,
 }) => {
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [date, setDate] = useState(presetDate || '');
+  const [time, setTime] = useState(presetTime || '21:00');
+  const [registrationStart, setRegistrationStart] = useState(presetRegistrationStart || '');
+  const [registrationEnd, setRegistrationEnd] = useState(presetRegistrationEnd || '');
+  const [teamAnnouncementTime, setTeamAnnouncementTime] = useState(presetTeamAnnouncementTime || '');
+  const [venueId, setVenueId] = useState(presetVenueId || '');
+  const [maxPlayers, setMaxPlayers] = useState(18);
+  const [randomSlots, setRandomSlots] = useState(2);
+  const [pitchCost, setPitchCost] = useState(presetPitchCost || 0);
+
+  useEffect(() => {
+    fetchVenues();
+  }, []);
+
+  // Update form when preset values change
+  useEffect(() => {
+    if (presetDate) setDate(presetDate);
+    if (presetTime) setTime(presetTime);
+    if (presetVenueId) setVenueId(presetVenueId);
+    if (presetPitchCost) setPitchCost(presetPitchCost);
+    if (presetRegistrationStart) setRegistrationStart(presetRegistrationStart);
+    if (presetRegistrationEnd) setRegistrationEnd(presetRegistrationEnd);
+    if (presetTeamAnnouncementTime) setTeamAnnouncementTime(presetTeamAnnouncementTime);
+  }, [presetDate, presetTime, presetVenueId, presetPitchCost, presetRegistrationStart, presetRegistrationEnd, presetTeamAnnouncementTime]);
+
+  const fetchVenues = async () => {
+    const { data, error } = await supabase
+      .from('venues')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      toast.error('Failed to fetch venues');
+      return;
+    }
+
+    setVenues(data || []);
+    if (data?.length > 0) {
+      const defaultVenue = data.find(v => v.is_default) || data[0];
+      setVenueId(defaultVenue.id);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const gameDate = new Date(`${date}T${time}`);
+      const regStart = new Date(registrationStart);
+      const regEnd = new Date(registrationEnd);
+      const teamAnnounce = new Date(teamAnnouncementTime);
+      const now = new Date();
+
+      // Validate dates
+      if (regStart >= regEnd) {
+        toast.error('Registration start must be before registration end');
+        return;
+      }
+
+      if (gameDate <= regEnd) {
+        toast.error('Game date must be after registration end');
+        return;
+      }
+
+      if (teamAnnounce <= regEnd) {
+        toast.error('Team announcement must be after registration end');
+        return;
+      }
+
+      if (teamAnnounce >= gameDate) {
+        toast.error('Team announcement must be before game start');
+        return;
+      }
+
+      // Determine initial status
+      let initialStatus = 'upcoming';
+      if (now >= regStart && now < regEnd) {
+        initialStatus = 'open';
+      }
+
+      const { error } = await supabase
+        .from('games')
+        .insert({
+          date: gameDate.toISOString(),
+          registration_window_start: regStart.toISOString(),
+          registration_window_end: regEnd.toISOString(),
+          team_announcement_time: teamAnnounce.toISOString(),
+          venue_id: venueId,
+          max_players: maxPlayers,
+          random_slots: randomSlots,
+          pitch_cost: pitchCost,
+          status: initialStatus,
+          teams_announced: false
+        });
+
+      if (error) throw error;
+
+      toast.success('Game created successfully!');
+      
+      // Reset form
+      setDate('');
+      setTime('21:00');
+      setRegistrationStart('');
+      setRegistrationEnd('');
+      setTeamAnnouncementTime('');
+      setMaxPlayers(18);
+      setRandomSlots(2);
+      setPitchCost(0);
+
+      // Notify parent component
+      onGameCreated?.();
+    } catch (error) {
+      console.error('Error creating game:', error);
+      toast.error('Failed to create game');
+    }
+  };
+
   return (
     <FormContainer title="Create New Game">
-      <form onSubmit={onSubmit} className="space-y-4">
-        {presets && presets.length > 0 && (
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-semibold">Quick Setup</span>
-            </label>
-            <select
-              onChange={(e) => onPresetSelect(e.target.value)}
-              className="select select-bordered"
-            >
-              <option value="">Choose a preset...</option>
-              {presets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="form-control">
           <label className="label">
             <span className="label-text">Game Date</span>
@@ -218,7 +281,7 @@ export const CreateGameForm: React.FC<Props> = ({
             type="number"
             value={maxPlayers}
             onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-            min={2}
+            min={1}
             max={30}
             className="input input-bordered"
             required
@@ -272,4 +335,4 @@ export const CreateGameForm: React.FC<Props> = ({
       </form>
     </FormContainer>
   )
-}
+};

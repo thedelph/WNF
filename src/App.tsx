@@ -21,6 +21,9 @@ import Ratings from './pages/Ratings'
 import RatingsView from './pages/admin/ratings'
 import Teams from './pages/admin/Teams'
 import TeamBalancingOverview from './components/admin/pages/TeamBalancingOverview'
+import Login from './pages/Login'
+import NotificationsPage from './pages/NotificationsPage'
+import { SlotOffersPage } from './pages/admin/SlotOffersPage';
 
 const App: React.FC = () => {
   return (
@@ -28,6 +31,7 @@ const App: React.FC = () => {
       <ErrorBoundary>
         <Layout>
           <Routes>
+            <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminPortal />} />
             <Route path="/admin/admins" element={<AdminManagement />} />
             <Route path="/admin/permissions" element={<AdminPermissions />} />
@@ -44,6 +48,8 @@ const App: React.FC = () => {
             <Route path="/admin/ratings" element={<RatingsView />} />
             <Route path="/admin/teams/:gameId" element={<Teams />} />
             <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
+            <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
           </Routes>
           <Toaster />
         </Layout>
