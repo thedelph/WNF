@@ -53,19 +53,7 @@ export default function HistoricalGames() {
       const { data: historicalData, error: historicalError } = await supabaseAdmin
         .from('games')
         .select(`
-          id,
-          date,
-          status,
-          sequence_number,
-          score_blue,
-          score_orange,
-          outcome,
-          venue:venue_id (
-            id,
-            name,
-            address,
-            google_maps_url
-          ),
+          *,
           game_registrations (
             id,
             team,

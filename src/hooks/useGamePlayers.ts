@@ -45,9 +45,21 @@ export const useGamePlayers = (gameId: string): UseGamePlayersResult => {
 
       if (gameError) throw gameError
 
+<<<<<<< HEAD
       // Transform game data
       const transformedGame = transformGameFromDB(gameData as GameDBResponse)
       setGame(transformedGame)
+=======
+      // Get first dropout time
+      const { data: dropoutData, error: dropoutError } = await supabase
+        .from('game_registrations')
+        .select('created_at')
+        .eq('game_id', gameId)
+        .eq('status', 'dropped_out')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+>>>>>>> parent of 69d0f2c (updates)
 
       // Fetch players in the game
       const { data: playersData, error: playersError } = await supabase
