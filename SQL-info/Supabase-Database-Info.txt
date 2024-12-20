@@ -466,7 +466,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "312 kB",
-          "estimated_rows": 511,
+          "estimated_rows": 475,
           "columns": [
             {
               "name": "id",
@@ -486,9 +486,9 @@
               "default": null,
               "description": null,
               "position": 2,
-              "n_distinct": 28,
-              "most_common_values": "{be1a5650-677e-4e4c-94df-f5fa4dc5a7a7,9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
-              "most_common_frequencies": "{0.105675,0.0430528,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.035225,0.0332681,0.0313112,0.0313112,0.0313112,0.0313112,0.0313112,0.0313112,0.0234834,0.0234834,0.0195695}"
+              "n_distinct": 29,
+              "most_common_values": "{029653dd-c09d-426e-9b6f-89f1b13b2e43,9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
+              "most_common_frequencies": "{0.102079,0.0415879,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0321361,0.0302457,0.0302457,0.0302457,0.0302457,0.0302457,0.0302457,0.0226843,0.0226843,0.0189036}"
             },
             {
               "name": "player_id",
@@ -497,9 +497,9 @@
               "default": null,
               "description": null,
               "position": 3,
-              "n_distinct": -0.105675,
-              "most_common_values": "{2711aec5-829a-4569-a85f-ecf8c89f123d,1db2da77-3c88-4bda-989b-349b4cab6604,876113b5-d7c3-41bc-ab69-4b6859f864a5,904a7c17-c8cc-4aff-958d-7788dea001dc,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,eb0d48cc-bc0c-4c73-8744-26518b8b6083,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,81c9ec8f-7b81-4263-879e-b2088aefaca8,5c0e1219-9355-4078-b76d-a63ec320969c,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,3a712b45-cd7e-4e66-a6dd-133255be5895,84c631df-a046-41e9-a10c-4a77561e6c08,8ad90589-7135-461f-b61d-272cbf3f6d04,be32d4f4-d8a2-4ac4-8fb2-21879753581c,b2466431-ede1-4eaa-a86e-ad0c7128b125,5d401fa5-157f-445f-9f06-def9de2ae6ce,a950fdd0-847e-4f4d-96f5-9064719c8953,32f8ab9b-1259-4764-b463-aa2e70ca8c74,dd6651f8-9203-4efb-92ca-e2b6f8230f97,05bb40f8-d63f-4469-9a35-e466d1f2f1da,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,18ebd05e-2357-44c6-a49d-d280ceed7784,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,c465ed34-a5df-42ef-9332-3273a72f4c4d,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,78ba8339-270a-4d10-b7f6-f10999568948,9082191f-69ff-469f-baa6-46cc918346ae,be3517a2-68e2-4884-85f9-18eb16eebdd0,d31a40f9-1972-43e9-9864-277110c9e958,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,75e00430-067e-44af-b498-84b28edd51be,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,c83d54c5-3468-4fde-b2b6-220034bb7480,d3920bbc-a281-4b97-bc88-96315e38d3ba,0bfd9afb-285d-474b-86cc-c91ab64c5622,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,33443732-814b-4407-bbf0-8b30b57ef390,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,767cc150-1746-4d71-a8db-b9771f2f7770,813eac3e-b880-4988-823f-a345c5d6ed87,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
-              "most_common_frequencies": "{0.0489237,0.0469667,0.0469667,0.0469667,0.0450098,0.0450098,0.0430528,0.0430528,0.0410959,0.0410959,0.0391389,0.037182,0.0332681,0.0332681,0.0332681,0.0313112,0.0273973,0.0273973,0.0254403,0.0254403,0.0234834,0.0234834,0.0136986,0.0117417,0.0117417,0.00978474,0.00782779,0.00782779,0.00782779,0.00782779,0.00782779,0.00587084,0.00587084,0.00587084,0.00587084,0.00587084,0.00587084,0.00587084,0.00587084,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389,0.00391389}"
+              "n_distinct": -0.102079,
+              "most_common_values": "{2711aec5-829a-4569-a85f-ecf8c89f123d,1db2da77-3c88-4bda-989b-349b4cab6604,876113b5-d7c3-41bc-ab69-4b6859f864a5,904a7c17-c8cc-4aff-958d-7788dea001dc,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,eb0d48cc-bc0c-4c73-8744-26518b8b6083,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,81c9ec8f-7b81-4263-879e-b2088aefaca8,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,5c0e1219-9355-4078-b76d-a63ec320969c,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,3a712b45-cd7e-4e66-a6dd-133255be5895,84c631df-a046-41e9-a10c-4a77561e6c08,8ad90589-7135-461f-b61d-272cbf3f6d04,be32d4f4-d8a2-4ac4-8fb2-21879753581c,b2466431-ede1-4eaa-a86e-ad0c7128b125,5d401fa5-157f-445f-9f06-def9de2ae6ce,32f8ab9b-1259-4764-b463-aa2e70ca8c74,a950fdd0-847e-4f4d-96f5-9064719c8953,dd6651f8-9203-4efb-92ca-e2b6f8230f97,05bb40f8-d63f-4469-9a35-e466d1f2f1da,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,18ebd05e-2357-44c6-a49d-d280ceed7784,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,78ba8339-270a-4d10-b7f6-f10999568948,9082191f-69ff-469f-baa6-46cc918346ae,d31a40f9-1972-43e9-9864-277110c9e958,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,75e00430-067e-44af-b498-84b28edd51be,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,c83d54c5-3468-4fde-b2b6-220034bb7480,d3920bbc-a281-4b97-bc88-96315e38d3ba,0bfd9afb-285d-474b-86cc-c91ab64c5622,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,33443732-814b-4407-bbf0-8b30b57ef390,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,767cc150-1746-4d71-a8db-b9771f2f7770,813eac3e-b880-4988-823f-a345c5d6ed87,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
+              "most_common_frequencies": "{0.0491493,0.047259,0.047259,0.047259,0.0453686,0.0453686,0.0434783,0.0415879,0.0415879,0.0396975,0.0396975,0.0378072,0.0340265,0.0321361,0.0321361,0.0302457,0.0283554,0.026465,0.026465,0.026465,0.0245747,0.0245747,0.0132325,0.0132325,0.0113422,0.0094518,0.0094518,0.00756144,0.00756144,0.00756144,0.00756144,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072}"
             },
             {
               "name": "status",
@@ -508,9 +508,9 @@
               "default": null,
               "description": null,
               "position": 4,
-              "n_distinct": 3,
+              "n_distinct": 2,
               "most_common_values": "{selected,reserve}",
-              "most_common_frequencies": "{0.908023,0.0900196}"
+              "most_common_frequencies": "{0.931947,0.0680529}"
             },
             {
               "name": "team",
@@ -521,7 +521,7 @@
               "position": 5,
               "n_distinct": 2,
               "most_common_values": "{orange,blue}",
-              "most_common_frequencies": "{0.448141,0.446184}"
+              "most_common_frequencies": "{0.449905,0.448015}"
             },
             {
               "name": "paid",
@@ -541,9 +541,9 @@
               "default": "timezone('utc'::text, now())",
               "description": null,
               "position": 8,
-              "n_distinct": -0.107632,
-              "most_common_values": "{\"2024-12-18 14:24:01.001+00\",\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:10:01.571742+00\",\"2024-11-15 15:10:01.674978+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
-              "most_common_frequencies": "{0.105675,0.0215264,0.0215264,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0176125,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0156556,0.0117417,0.0117417,0.0117417,0.0117417,0.00978474,0.00978474}"
+              "n_distinct": -0.10775,
+              "most_common_values": "{\"2024-12-19 14:33:46.443+00\",\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:10:01.571742+00\",\"2024-11-15 15:10:01.674978+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-12-19 13:43:26.197049+00\",\"2024-12-19 13:43:26.287209+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
+              "most_common_frequencies": "{0.102079,0.020794,0.020794,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0113422,0.0113422,0.0113422,0.0113422,0.0094518,0.0094518}"
             },
             {
               "name": "paid_by_player_id",
@@ -585,9 +585,9 @@
               "default": "'none'::text",
               "description": null,
               "position": 13,
-              "n_distinct": 2,
-              "most_common_values": "{merit,none}",
-              "most_common_frequencies": "{0.90998,0.0900196}"
+              "n_distinct": 3,
+              "most_common_values": "{merit,none,random}",
+              "most_common_frequencies": "{0.89414,0.102079,0.00378072}"
             }
           ],
           "constraints": [
@@ -779,8 +779,8 @@
           "table_name": "game_selections",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "384 kB",
-          "estimated_rows": 6,
+          "total_size": "272 kB",
+          "estimated_rows": 0,
           "columns": [
             {
               "name": "id",
@@ -800,8 +800,8 @@
               "default": null,
               "description": null,
               "position": 2,
-              "n_distinct": -0.166667,
-              "most_common_values": "{be1a5650-677e-4e4c-94df-f5fa4dc5a7a7}",
+              "n_distinct": -0.5,
+              "most_common_values": "{52ae3c28-0d61-479a-be49-83ffb21f1f1b}",
               "most_common_frequencies": "{1}"
             },
             {
@@ -986,9 +986,9 @@
               "default": null,
               "description": null,
               "position": 5,
-              "n_distinct": 2,
+              "n_distinct": 1,
               "most_common_values": "{completed}",
-              "most_common_frequencies": "{0.964286}"
+              "most_common_frequencies": "{1}"
             },
             {
               "name": "score_blue",
@@ -998,8 +998,8 @@
               "description": null,
               "position": 6,
               "n_distinct": -0.178571,
-              "most_common_values": "{5,4}",
-              "most_common_frequencies": "{0.178571,0.142857}"
+              "most_common_values": "{5,4,3}",
+              "most_common_frequencies": "{0.178571,0.142857,0.0714286}"
             },
             {
               "name": "score_orange",
@@ -1008,7 +1008,7 @@
               "default": null,
               "description": null,
               "position": 7,
-              "n_distinct": -0.178571,
+              "n_distinct": -0.214286,
               "most_common_values": "{5,3}",
               "most_common_frequencies": "{0.178571,0.142857}"
             },
@@ -1021,7 +1021,7 @@
               "position": 8,
               "n_distinct": -0.107143,
               "most_common_values": "{blue_win,orange_win,draw}",
-              "most_common_frequencies": "{0.321429,0.25,0.0714286}"
+              "most_common_frequencies": "{0.357143,0.25,0.0714286}"
             },
             {
               "name": "created_at",
@@ -1041,9 +1041,9 @@
               "default": null,
               "description": null,
               "position": 10,
-              "n_distinct": -0.0357143,
-              "most_common_values": null,
-              "most_common_frequencies": null
+              "n_distinct": 1,
+              "most_common_values": "{abe7111c-c99b-47f6-9508-75234c70cd9f}",
+              "most_common_frequencies": "{1}"
             },
             {
               "name": "max_players",
@@ -1052,9 +1052,9 @@
               "default": "18",
               "description": null,
               "position": 11,
-              "n_distinct": -0.25,
+              "n_distinct": -0.214286,
               "most_common_values": "{18,16,12}",
-              "most_common_frequencies": "{0.571429,0.214286,0.0714286}"
+              "most_common_frequencies": "{0.607143,0.214286,0.0714286}"
             },
             {
               "name": "random_slots",
@@ -1074,9 +1074,9 @@
               "default": "false",
               "description": null,
               "position": 13,
-              "n_distinct": 2,
+              "n_distinct": 1,
               "most_common_values": "{t}",
-              "most_common_frequencies": "{0.964286}"
+              "most_common_frequencies": "{1}"
             },
             {
               "name": "sequence_number",
@@ -1096,7 +1096,7 @@
               "default": null,
               "description": null,
               "position": 15,
-              "n_distinct": -0.0357143,
+              "n_distinct": 0,
               "most_common_values": null,
               "most_common_frequencies": null
             },
@@ -1118,9 +1118,9 @@
               "default": "false",
               "description": null,
               "position": 17,
-              "n_distinct": 2,
+              "n_distinct": 1,
               "most_common_values": "{f}",
-              "most_common_frequencies": "{0.964286}"
+              "most_common_frequencies": "{1}"
             },
             {
               "name": "completed",
@@ -1151,7 +1151,7 @@
               "default": null,
               "description": null,
               "position": 20,
-              "n_distinct": -0.928571,
+              "n_distinct": -0.892857,
               "most_common_values": null,
               "most_common_frequencies": null
             }
@@ -1394,8 +1394,8 @@
           "table_name": "notifications",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "296 kB",
-          "estimated_rows": 155,
+          "total_size": "304 kB",
+          "estimated_rows": 176,
           "columns": [
             {
               "name": "id",
@@ -2488,9 +2488,9 @@
               "default": "0",
               "description": null,
               "position": 5,
-              "n_distinct": -0.333333,
-              "most_common_values": "{1,2,3,16,23,5,11,12,13,20,21,22}",
-              "most_common_frequencies": "{0.277778,0.148148,0.0925926,0.0555556,0.0555556,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037}"
+              "n_distinct": -0.351852,
+              "most_common_values": "{1,2,3,13,24,4,6,12,16,20,21,23}",
+              "most_common_frequencies": "{0.277778,0.148148,0.0740741,0.0555556,0.0555556,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037}"
             },
             {
               "name": "win_rate",
@@ -2587,9 +2587,9 @@
               "default": null,
               "description": null,
               "position": 15,
-              "n_distinct": -0.166667,
-              "most_common_values": "{0,6.0000000000000000,7.0000000000000000,5.0000000000000000,8.0000000000000000,9.0000000000000000}",
-              "most_common_frequencies": "{0.537037,0.12963,0.12963,0.0740741,0.037037,0.037037}"
+              "n_distinct": -0.185185,
+              "most_common_values": "{0,6.0000000000000000,7,5.0000000000000000,8.0000000000000000,9.0000000000000000}",
+              "most_common_frequencies": "{0.537037,0.12963,0.111111,0.0740741,0.037037,0.037037}"
             },
             {
               "name": "defense_rating",
@@ -2598,9 +2598,9 @@
               "default": null,
               "description": null,
               "position": 16,
-              "n_distinct": -0.148148,
-              "most_common_values": "{0,4.0000000000000000,7.0000000000000000,8.0000000000000000,5.0000000000000000,6.0000000000000000}",
-              "most_common_frequencies": "{0.537037,0.0925926,0.0925926,0.0925926,0.0740741,0.0740741}"
+              "n_distinct": -0.166667,
+              "most_common_values": "{0,4,7.0000000000000000,5.0000000000000000,6.0000000000000000,8.0000000000000000}",
+              "most_common_frequencies": "{0.537037,0.0925926,0.0925926,0.0740741,0.0740741,0.0740741}"
             },
             {
               "name": "is_test_user",
@@ -2632,8 +2632,8 @@
               "description": null,
               "position": 19,
               "n_distinct": -0.148148,
-              "most_common_values": "{0,1,2,3}",
-              "most_common_frequencies": "{0.685185,0.111111,0.0740741,0.0555556}"
+              "most_common_values": "{0,2,3,1,4}",
+              "most_common_frequencies": "{0.666667,0.0925926,0.0740741,0.0555556,0.0555556}"
             },
             {
               "name": "max_streak",
@@ -2643,8 +2643,8 @@
               "description": null,
               "position": 20,
               "n_distinct": -0.259259,
-              "most_common_values": "{1,2,11,4,5,6,3,7,13}",
-              "most_common_frequencies": "{0.462963,0.0925926,0.0740741,0.0555556,0.0555556,0.0555556,0.037037,0.037037,0.037037}"
+              "most_common_values": "{1,2,3,4,5,6,11,8,12,13}",
+              "most_common_frequencies": "{0.462963,0.0740741,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.037037,0.037037,0.037037}"
             },
             {
               "name": "average_attack_rating",
@@ -2803,7 +2803,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "72 kB",
-          "estimated_rows": 2,
+          "estimated_rows": 0,
           "columns": [
             {
               "name": "id",
@@ -3547,6 +3547,12 @@
           "description": null
         },
         {
+          "name": "get_team_color_stats",
+          "arguments": "target_year integer DEFAULT NULL::integer",
+          "return_type": "TABLE(winning_color text, win_rate numeric)",
+          "description": null
+        },
+        {
           "name": "handle_registration_close",
           "arguments": "input_game_id uuid",
           "return_type": "void",
@@ -3559,9 +3565,9 @@
           "description": null
         },
         {
-          "name": "calculate_player_streaks",
-          "arguments": "player_id uuid",
-          "return_type": "TABLE(current_streak integer, max_streak integer)",
+          "name": "get_player_team_colors",
+          "arguments": "target_year integer DEFAULT NULL::integer",
+          "return_type": "TABLE(id uuid, friendly_name text, team text, team_frequency numeric, caps integer)",
           "description": null
         },
         {
@@ -3574,6 +3580,12 @@
           "name": "update_game_needs_completion",
           "arguments": "",
           "return_type": "trigger",
+          "description": null
+        },
+        {
+          "name": "get_game_years",
+          "arguments": "",
+          "return_type": "TABLE(year integer)",
           "description": null
         },
         {
@@ -3601,12 +3613,6 @@
           "description": null
         },
         {
-          "name": "get_next_slot_offer_players",
-          "arguments": "p_game_id uuid, p_hours_until_game numeric",
-          "return_type": "TABLE(player_id uuid)",
-          "description": null
-        },
-        {
           "name": "void_other_slot_offers",
           "arguments": "",
           "return_type": "trigger",
@@ -3619,9 +3625,27 @@
           "description": null
         },
         {
+          "name": "get_next_slot_offer_players",
+          "arguments": "p_game_id uuid, p_hours_until_game numeric",
+          "return_type": "TABLE(player_id uuid)",
+          "description": null
+        },
+        {
           "name": "update_updated_at",
           "arguments": "",
           "return_type": "trigger",
+          "description": null
+        },
+        {
+          "name": "get_player_stats",
+          "arguments": "target_year integer DEFAULT NULL::integer",
+          "return_type": "TABLE(id uuid, friendly_name text, caps integer, win_rate numeric, current_streak integer, max_streak integer, recent_games integer)",
+          "description": null
+        },
+        {
+          "name": "calculate_player_streaks",
+          "arguments": "player_id uuid",
+          "return_type": "TABLE(current_streak integer, max_streak integer)",
           "description": null
         },
         {
@@ -3643,6 +3667,18 @@
           "description": null
         },
         {
+          "name": "get_player_caps",
+          "arguments": "target_year integer DEFAULT NULL::integer",
+          "return_type": "TABLE(id uuid, friendly_name text, total_games integer)",
+          "description": null
+        },
+        {
+          "name": "get_player_attendance_streaks",
+          "arguments": "target_year integer DEFAULT NULL::integer",
+          "return_type": "TABLE(id uuid, friendly_name text, current_streak integer, max_streak integer)",
+          "description": null
+        },
+        {
           "name": "handle_slot_offer_response_text",
           "arguments": "p_game_id uuid, p_player_id uuid, p_response text",
           "return_type": "text",
@@ -3652,6 +3688,12 @@
           "name": "create_slot_offers",
           "arguments": "p_game_id uuid",
           "return_type": "void",
+          "description": null
+        },
+        {
+          "name": "get_player_win_rates",
+          "arguments": "target_year integer DEFAULT NULL::integer",
+          "return_type": "TABLE(id uuid, friendly_name text, total_games integer, wins integer, draws integer, losses integer, win_rate numeric)",
           "description": null
         },
         {

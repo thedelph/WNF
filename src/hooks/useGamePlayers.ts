@@ -40,7 +40,7 @@ export const useGamePlayers = (gameId: string) => {
         .eq('status', 'dropped_out')
         .order('created_at', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!dropoutError && dropoutData) {
         setFirstDropoutTime(new Date(dropoutData.created_at));

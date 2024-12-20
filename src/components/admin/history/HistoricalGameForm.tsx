@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { supabaseAdmin } from '../../../utils/supabase'
 import { toast } from 'react-hot-toast'
 import { Player } from '../../../types/player'
+import { useVenues } from '../../../hooks/useVenues'
 
 interface Props {
   onGameAdded: () => void
@@ -19,6 +20,7 @@ type GameOutcome = 'blue_win' | 'orange_win' | 'draw' | null;
 
 const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
   const [date, setDate] = useState('')
+  const [venueId, setVenueId] = useState<string>('')
   const [blueScore, setBlueScore] = useState('')
   const [orangeScore, setOrangeScore] = useState('')
   const [bluePlayers, setBluePlayers] = useState<TeamPlayer[]>([])
@@ -27,10 +29,17 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [outcome, setOutcome] = useState<GameOutcome>(null)
+  const { venues, isLoading: venuesLoading } = useVenues()
 
   useEffect(() => {
     fetchPlayers()
   }, [])
+
+  useEffect(() => {
+    if (venues.length === 1 && !venueId) {
+      setVenueId(venues[0].id)
+    }
+  }, [venues, venueId])
 
   const fetchPlayers = async () => {
     try {
@@ -70,7 +79,8 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
         registration_window_end: endDate.toISOString(),
         max_players: Math.max(bluePlayers.length + orangePlayers.length, 10),
         random_slots: 0,
-        outcome: determineOutcome(blueScore, orangeScore, outcome)
+        outcome: determineOutcome(blueScore, orangeScore, outcome),
+        venue_id: venueId
       }
 
       const { data: game, error: gameError } = await supabaseAdmin
@@ -111,23 +121,17 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
         if (orangeError) throw orangeError
       }
 
-      // After successfully creating game registrations, update caps for all players
-      const allPlayers = [...bluePlayers, ...orangePlayers]
-      
-      for (const player of allPlayers) {
+      // Update caps for all players
+      for (const player of [...bluePlayers, ...orangePlayers]) {
         const { error: capsError } = await supabaseAdmin
-          .from('players')
-          .update({
-            caps: supabaseAdmin.rpc('increment_caps', { value: 1 })
-          })
-          .eq('id', player.id)
+          .rpc('increment_caps', { player_id: player.id })
 
         if (capsError) {
           console.error(`Error updating caps for player ${player.id}:`, capsError)
         }
       }
 
-      console.log('Updated caps for players:', allPlayers.map(p => p.name))
+      console.log('Updated caps for players:', [...bluePlayers, ...orangePlayers].map(p => p.name))
       
       toast.success('Historical game and caps added successfully')
       onGameAdded()
@@ -176,7 +180,7 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
     return 'draw'
   }
 
-  if (isLoading) {
+  if (isLoading || venuesLoading) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -208,6 +212,24 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
               className="input input-bordered w-full"
               required
             />
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Venue</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
+              value={venueId}
+              onChange={(e) => setVenueId(e.target.value)}
+            >
+              <option value="">Select a venue...</option>
+              {venues.map(venue => (
+                <option key={venue.id} value={venue.id}>
+                  {venue.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -280,6 +302,7 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
               className={`btn btn-primary ${isSaving ? 'loading' : ''}`}
               disabled={isSaving || 
                 !date || 
+                !venueId || 
                 (bluePlayers.length === 0 && orangePlayers.length === 0)}
             >
               {isSaving ? 'Adding...' : 'Add Game'}

@@ -1,6 +1,7 @@
 import React from "react"
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Outlet } from "react-router-dom"
 import Layout from "./components/Layout"
+import StandaloneLayout from "./components/layout/StandaloneLayout"
 import AdminPortal from "./pages/admin/AdminPortal"
 import AdminManagement from "./pages/admin/admins"
 import AdminPermissions from "./pages/admin/permissions"
@@ -24,13 +25,31 @@ import TeamBalancingOverview from './components/admin/pages/TeamBalancingOvervie
 import Login from './pages/Login'
 import NotificationsPage from './pages/NotificationsPage'
 import { SlotOffersPage } from './pages/admin/SlotOffersPage';
+import Dashboard from './pages/Dashboard'
+import StandaloneDashboard from './pages/StandaloneDashboard'
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <ErrorBoundary>
-        <Layout>
-          <Routes>
+        <Routes>
+          {/* Standalone Dashboard Route */}
+          <Route 
+            path="/standalone-dashboard" 
+            element={
+              <StandaloneLayout>
+                <StandaloneDashboard />
+              </StandaloneLayout>
+            } 
+          />
+          
+          {/* Regular Layout Routes */}
+          <Route element={
+            <Layout>
+              <Outlet />
+            </Layout>
+          }>
+            <Route path="/" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminPortal />} />
             <Route path="/admin/admins" element={<AdminManagement />} />
@@ -50,9 +69,9 @@ const App: React.FC = () => {
             <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
             <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
-          </Routes>
-          <Toaster />
-        </Layout>
+          </Route>
+        </Routes>
+        <Toaster />
       </ErrorBoundary>
     </AuthProvider>
   )

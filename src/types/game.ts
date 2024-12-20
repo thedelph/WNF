@@ -48,6 +48,10 @@ export interface Game {
   registration_window_end: string
   team_announcement_time: string
   teams_announced: boolean
+  sequence_number?: number   // WNF sequence number
+  score_blue?: number       // Blue team's score
+  score_orange?: number     // Orange team's score
+  outcome?: 'blue_win' | 'orange_win' | 'draw' | null  // Game outcome
   venue: {
     id: string
     name: string
