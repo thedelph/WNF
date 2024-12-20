@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { calculatePlayerXP } from '../../utils/xpCalculations';
-import { ExtendedPlayerData } from '../../types/playerSelection';
+import { calculatePlayerXP } from '../../utils/calculatePlayerXP';
+import { ExtendedPlayerData, PlayerXPStats } from '../../types/player';
 import { CheckCircle } from 'lucide-react';
 
 interface SlotOfferCountdownProps {
@@ -29,7 +29,7 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
   const slotsAvailable = maxPlayers > selectedPlayersCount;
 
   // Don't show anything if player has declined
-  if (player.has_declined) {
+  if (player.hasDeclined) {
     return null;
   }
 
@@ -65,9 +65,21 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
 
       // Sort players by XP
       const sortedPlayers = [...reservePlayers].sort((a, b) => {
-        const xpA = calculatePlayerXP(a.stats);
-        const xpB = calculatePlayerXP(b.stats);
-        return xpB - xpA;
+        const xpStatsA: PlayerXPStats = {
+          caps: a.stats?.caps || 0,
+          activeBonuses: a.stats?.activeBonuses || 0,
+          activePenalties: a.stats?.activePenalties || 0,
+          currentStreak: a.stats?.currentStreak || 0,
+          dropoutPenalties: a.stats?.dropoutPenalties || 0
+        };
+        const xpStatsB: PlayerXPStats = {
+          caps: b.stats?.caps || 0,
+          activeBonuses: b.stats?.activeBonuses || 0,
+          activePenalties: b.stats?.activePenalties || 0,
+          currentStreak: b.stats?.currentStreak || 0,
+          dropoutPenalties: b.stats?.dropoutPenalties || 0
+        };
+        return calculatePlayerXP(xpStatsB) - calculatePlayerXP(xpStatsA);
       });
 
       // Find player's position in the sorted list
@@ -92,20 +104,20 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
       const playerRegistration = sortedPlayers[playerIndex];
       
       // If player has declined, show that first
-      if (playerRegistration?.has_declined) {
+      if (playerRegistration?.hasDeclined) {
         console.log('Player has declined');
         return { text: "Offer Declined", isAvailable: false };
       }
       
       // Set gameDayStart to midnight of the game day in local timezone
-      const gameDayStart = new Date(gameDate);
+      const gameDayStart = new Date(gameDate || new Date());
       gameDayStart.setHours(0, 0, 0, 0);
 
       // Calculate total time window for offers (from first dropout until game day)
       const totalTimeWindow = gameDayStart.getTime() - firstDropoutTime.getTime();
       
       // Get active reserve players (excluding declined offers)
-      const activeReservePlayers = sortedPlayers.filter(p => !p.has_declined);
+      const activeReservePlayers = sortedPlayers.filter(p => !p.hasDeclined);
       const totalActivePlayers = activeReservePlayers.length;
       
       // Calculate time per player (divide window by number of ACTIVE reserve players)
@@ -130,8 +142,8 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
         timePerPlayer: timePerPlayer / (1000 * 60 * 60) + ' hours',
         totalActivePlayers,
         activePlayerIndex,
-        hasDeclined: playerRegistration?.has_declined,
-        hasOffer: playerRegistration?.has_offer
+        hasDeclined: playerRegistration?.hasDeclined,
+        hasOffer: playerRegistration?.hasSlotOffer
       });
 
       // If it's past game day, return "Available Now"
@@ -141,66 +153,55 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
       }
 
       // If this player has an active offer, show "Available Now"
-      if (playerRegistration?.has_offer) {
+      if (playerRegistration?.hasSlotOffer) {
         console.log('Player has offer');
         return { text: "Available Now", isAvailable: true };
       }
 
       // If it's past the player's offer time and they haven't declined
-      if (now >= playerOfferTime && !playerRegistration?.has_declined) {
+      if (now >= playerOfferTime && !playerRegistration?.hasDeclined) {
         console.log('Past player offer time');
         return { text: "Available Now", isAvailable: true };
       }
 
-      // Calculate time remaining until this player's offer
-      const timeRemaining = playerOfferTime.getTime() - now.getTime();
-      const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
-      const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+      // Calculate time until offer
+      const timeUntilOffer = playerOfferTime.getTime() - now.getTime();
+      const hours = Math.floor(timeUntilOffer / (1000 * 60 * 60));
+      const minutes = Math.floor((timeUntilOffer % (1000 * 60 * 60)) / (1000 * 60));
 
-      if (hours > 24) {
-        const days = Math.floor(hours / 24);
-        console.log(`Offer in ${days}d ${hours % 24}h`);
-        return { 
-          text: `Offer in ${days}d ${hours % 24}h`, 
-          isAvailable: false 
-        };
-      }
-      
-      console.log(`Offer in ${hours}h ${minutes}m`);
-      return { 
-        text: `Offer in ${hours}h ${minutes}m`, 
-        isAvailable: false 
+      // Return formatted time string
+      return {
+        text: `${hours}h ${minutes}m`,
+        isAvailable: false
       };
     };
 
-    // Initial calculation
-    const result = calculateTimeUntilOffer();
-    console.log('Countdown result:', result);
-    setTimeUntilOffer(result ? JSON.stringify(result) : null);
-
-    // Update every minute
+    // Update countdown every minute
     const interval = setInterval(() => {
       const result = calculateTimeUntilOffer();
-      setTimeUntilOffer(result ? JSON.stringify(result) : null);
+      if (result) {
+        setTimeUntilOffer(result.text);
+      }
     }, 60000);
+
+    // Initial calculation
+    const result = calculateTimeUntilOffer();
+    if (result) {
+      setTimeUntilOffer(result.text);
+    }
 
     return () => clearInterval(interval);
   }, [player, reservePlayers, gameDate, firstDropoutTime, hasActiveOffers, selectedPlayersCount, maxPlayers]);
 
-  if (!timeUntilOffer) return null;
-
-  const { text, isAvailable } = JSON.parse(timeUntilOffer);
+  if (!timeUntilOffer) {
+    return null;
+  }
 
   return (
-    <div className={`badge ${isAvailable ? 'badge-success' : 'badge-neutral'} badge-sm gap-1`}>
-      {isAvailable ? (
-        <>
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          {text}
-        </>
-      ) : (
-        text
-      )}
+    <div className="badge badge-info gap-2">
+      <div className="flex items-center">
+        <span className="mr-1">{timeUntilOffer}</span>
+      </div>
     </div>
   );
 };

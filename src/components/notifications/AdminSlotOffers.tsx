@@ -1,183 +1,122 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { supabaseAdmin } from '../../utils/supabase';
-import toast from '../../utils/toast';
-import { SlotOffer } from './types';
+import React from 'react'
+import { supabase } from '../../utils/supabase'
+import { Player, PlayerDBResponse, transformPlayerFromDB } from '../../types/player'
+import { Game, GameDBResponse, transformGameFromDB } from '../../types/game'
+import { SlotOffer, SlotOfferDBResponse, transformSlotOfferFromDB } from '../../types/slotOffers'
+import { toast } from 'react-hot-toast'
+import { Badge } from '../ui/Badge'
+
+export const SlotOfferBadges = {
+  pending: 'badge-warning',
+  accepted: 'badge-success',
+  declined: 'badge-error',
+  expired: 'badge-neutral'
+} as const
 
 interface AdminSlotOffersProps {
-  slotOffers: SlotOffer[];
-  onUpdate: () => Promise<void>;
+  className?: string
 }
 
-/**
- * AdminSlotOffers component - Displays and manages slot offers for admins
- * Shows detailed information about slot offers and allows admins to take actions on behalf of players
- */
-export const AdminSlotOffers: React.FC<AdminSlotOffersProps> = ({ slotOffers, onUpdate }) => {
-  // Function to handle admin actions on slot offers
-  const handleAdminAction = async (slotOfferId: string, action: 'accept' | 'decline') => {
+export const AdminSlotOffers: React.FC<AdminSlotOffersProps> = ({ className }) => {
+  const [slotOffers, setSlotOffers] = React.useState<SlotOffer[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  const fetchSlotOffers = async () => {
     try {
-      // First, get the slot offer to get the player and game IDs
-      const { data: slotOffer, error: fetchError } = await supabaseAdmin
+      setIsLoading(true)
+      const { data: offersData, error: offersError } = await supabase
         .from('slot_offers')
-        .select('*')
-        .eq('id', slotOfferId)
-        .single();
+        .select(`
+          *,
+          player:player_id (*),
+          game:game_id (*)
+        `)
+        .order('created_at', { ascending: false })
 
-      if (fetchError) throw fetchError;
-      if (!slotOffer) throw new Error('Slot offer not found');
+      if (offersError) throw offersError
 
-      // Update slot offer status
-      const { error: updateError } = await supabaseAdmin
-        .from('slot_offers')
-        .update({
-          status: action === 'accept' ? 'accepted' : 'declined',
-          responded_at: new Date().toISOString()
+      const transformedOffers = await Promise.all(
+        (offersData || []).map(async (offerData: any) => {
+          const player = transformPlayerFromDB(offerData.player as PlayerDBResponse)
+          const game = transformGameFromDB(offerData.game as GameDBResponse)
+          return transformSlotOfferFromDB(offerData as SlotOfferDBResponse, player, game)
         })
-        .eq('id', slotOfferId);
+      )
 
-      if (updateError) throw updateError;
-
-      // If declined, create new slot offer for the next player
-      if (action === 'decline') {
-        console.log('Creating new slot offer after decline');
-        const { data: newOfferData, error: newOfferError } = await supabaseAdmin
-          .rpc('create_slot_offers_for_game', {
-            p_game_id: slotOffer.game_id,
-            p_admin_id: null,
-            p_dropped_out_player_id: slotOffer.player_id
-          });
-
-        if (newOfferError) {
-          console.error('Error creating new slot offer:', newOfferError);
-          throw newOfferError;
-        }
-        console.log('New slot offer created:', newOfferData);
-      }
-
-      // If accepting, update game registration status
-      if (action === 'accept') {
-        // Check if registration exists
-        const { data: existingReg, error: checkError } = await supabaseAdmin
-          .from('game_registrations')
-          .select('id, status')
-          .eq('game_id', slotOffer.game_id)
-          .eq('player_id', slotOffer.player_id)
-          .maybeSingle();
-
-        if (checkError) throw checkError;
-
-        if (existingReg) {
-          // Update existing registration
-          const { error: updateRegError } = await supabaseAdmin
-            .from('game_registrations')
-            .update({ status: 'selected' })
-            .eq('id', existingReg.id);
-
-          if (updateRegError) throw updateRegError;
-        } else {
-          // Create new registration
-          const { error: createRegError } = await supabaseAdmin
-            .from('game_registrations')
-            .insert({
-              game_id: slotOffer.game_id,
-              player_id: slotOffer.player_id,
-              status: 'selected',
-              created_at: new Date().toISOString()
-            });
-
-          if (createRegError) throw createRegError;
-        }
-      }
-
-      toast.success(`Successfully ${action}ed slot offer on behalf of player`);
-      onUpdate();
+      setSlotOffers(transformedOffers)
     } catch (error) {
-      console.error('Error handling admin slot offer action:', error);
-      toast.error('Failed to process slot offer action');
+      console.error('Error fetching slot offers:', error)
+      toast.error('Failed to load slot offers')
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
 
-  // Helper function to format dates
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM d, h:mm a');
-  };
+  React.useEffect(() => {
+    fetchSlotOffers()
 
-  // Helper function to get status badge styling
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      pending: 'badge-warning',
-      accepted: 'badge-success',
-      declined: 'badge-error',
-      voided: 'badge-neutral'
-    };
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('slot-offers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'slot_offers'
+        },
+        () => {
+          fetchSlotOffers()
+        }
+      )
+      .subscribe()
 
-    return badges[status] || badges.pending;
-  };
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  if (isLoading) {
+    return <div>Loading slot offers...</div>
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4">
-        {slotOffers.map((offer) => (
-          <motion.div
-            key={offer.id}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="bg-base-200 p-4 rounded-lg shadow-sm"
-          >
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h3 className="font-semibold text-lg">
-                  {offer.player?.friendly_name}
-                  <span className={`badge ${getStatusBadge(offer.status)} ml-2`}>
-                    {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
-                  </span>
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Game #{offer.game?.game_number} - {formatDate(offer.game?.date)}
-                </p>
-              </div>
-              {offer.status === 'pending' && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleAdminAction(offer.id, 'accept')}
-                    className="btn btn-success btn-sm"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleAdminAction(offer.id, 'decline')}
-                    className="btn btn-error btn-sm"
-                  >
-                    Decline
-                  </button>
+    <div className={className}>
+      <h2 className="text-xl font-bold mb-4">Slot Offers</h2>
+      <div className="space-y-4">
+        {slotOffers.length === 0 ? (
+          <p>No slot offers found</p>
+        ) : (
+          slotOffers.map(offer => (
+            <div
+              key={offer.id}
+              className="card bg-base-200 shadow-xl"
+            >
+              <div className="card-body">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="card-title">
+                      {offer.player?.friendlyName || 'Unknown Player'}
+                    </h3>
+                    <p className="text-sm opacity-70">
+                      Game: {offer.game?.gameNumber || 'Unknown Game'}
+                    </p>
+                    <p className="text-sm opacity-70">
+                      Created: {new Date(offer.createdAt).toLocaleString()}
+                    </p>
+                    <p className="text-sm opacity-70">
+                      Expires: {new Date(offer.expiresAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <Badge variant={SlotOfferBadges[offer.status]}>
+                    {offer.status.toUpperCase()}
+                  </Badge>
                 </div>
-              )}
+              </div>
             </div>
-
-            <div className="text-sm space-y-1 text-gray-600">
-              <p>Offered: {formatDate(offer.offered_at)}</p>
-              {offer.responded_at && (
-                <p>Responded: {formatDate(offer.responded_at)}</p>
-              )}
-              {offer.accepted_at && (
-                <p>Accepted: {formatDate(offer.accepted_at)}</p>
-              )}
-              {offer.rejected_at && (
-                <p>Declined: {formatDate(offer.rejected_at)}</p>
-              )}
-            </div>
-          </motion.div>
-        ))}
-
-        {slotOffers.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No active slot offers found
-          </div>
+          ))
         )}
       </div>
     </div>
-  );
-};
+  )
+}

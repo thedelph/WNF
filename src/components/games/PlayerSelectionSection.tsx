@@ -1,6 +1,6 @@
 import React from 'react';
 import { IconType } from 'react-icons';
-import { ExtendedPlayerData } from '../../types/playerSelection';
+import { ExtendedPlayerData } from '../../types/player';
 import { PlayerListHeader } from './PlayerListHeader';
 import { PlayerList } from './PlayerList';
 
