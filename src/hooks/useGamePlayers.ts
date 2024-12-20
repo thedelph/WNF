@@ -59,6 +59,9 @@ export const useGamePlayers = (gameId: string): UseGamePlayersResult => {
         .order('created_at', { ascending: true })
         .limit(1)
         .single();
+<<<<<<< HEAD
+>>>>>>> parent of 69d0f2c (updates)
+=======
 >>>>>>> parent of 69d0f2c (updates)
 
       // Fetch players in the game
