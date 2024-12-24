@@ -24,7 +24,10 @@ import TeamBalancingOverview from './components/admin/pages/TeamBalancingOvervie
 import Login from './pages/Login'
 import NotificationsPage from './pages/NotificationsPage'
 import { SlotOffersPage } from './pages/admin/SlotOffersPage';
+<<<<<<< HEAD
 import { Dashboard } from "./pages/Dashboard"
+=======
+>>>>>>> parent of 69d0f2c (updates)
 
 const App: React.FC = () => {
   return (
@@ -32,7 +35,10 @@ const App: React.FC = () => {
       <ErrorBoundary>
         <Layout>
           <Routes>
+<<<<<<< HEAD
             <Route path="/" element={<Dashboard />} />
+=======
+>>>>>>> parent of 69d0f2c (updates)
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminPortal />} />
             <Route path="/admin/admins" element={<AdminManagement />} />
