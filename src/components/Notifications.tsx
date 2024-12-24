@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { supabase, supabaseAdmin } from '../utils/supabase';
+import { useEffect, useState } from 'react';
+import { supabaseAdmin } from '../utils/supabase';
 import { useUser } from '../hooks/useUser';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, UserCog } from 'lucide-react';
 import { NotificationButtons } from './notifications/NotificationButtons';
 import { NotificationItem } from './notifications/NotificationItem';
 import { SlotOfferItem } from './notifications/SlotOfferItem';
-import { NotificationHistory } from './notifications/NotificationHistory';
 import { Notification, SlotOffer, AdminRole } from './notifications/types';
 import toast from '../utils/toast';
 

@@ -1,6 +1,7 @@
 import React from "react"
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Outlet, Navigate } from "react-router-dom"
 import Layout from "./components/Layout"
+import StandaloneLayout from "./components/layout/StandaloneLayout"
 import AdminPortal from "./pages/admin/AdminPortal"
 import AdminManagement from "./pages/admin/admins"
 import AdminPermissions from "./pages/admin/permissions"
@@ -10,7 +11,6 @@ import Profile from "./pages/Profile"
 import Players from "./pages/admin/players"
 import EditPlayer from "./pages/admin/EditPlayer"
 import { AuthProvider } from "./context/AuthContext"
-import { supabase } from './utils/supabase'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Toaster } from 'react-hot-toast'
 import HistoricalGames from './pages/admin/history/HistoricalGames'
@@ -24,43 +24,56 @@ import TeamBalancingOverview from './components/admin/pages/TeamBalancingOvervie
 import Login from './pages/Login'
 import NotificationsPage from './pages/NotificationsPage'
 import { SlotOffersPage } from './pages/admin/SlotOffersPage';
-<<<<<<< HEAD
-import { Dashboard } from "./pages/Dashboard"
-=======
->>>>>>> parent of 69d0f2c (updates)
+import Dashboard from './pages/Dashboard'
+import StandaloneDashboard from './pages/StandaloneDashboard'
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <ErrorBoundary>
-        <Layout>
-          <Routes>
-<<<<<<< HEAD
-            <Route path="/" element={<Dashboard />} />
-=======
->>>>>>> parent of 69d0f2c (updates)
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin" element={<AdminPortal />} />
-            <Route path="/admin/admins" element={<AdminManagement />} />
-            <Route path="/admin/permissions" element={<AdminPermissions />} />
-            <Route path="/admin/games" element={<GameManagement />} />
-            <Route path="/admin/players" element={<Players />} />
-            <Route path="/admin/players/:id" element={<EditPlayer />} />
-            <Route path="/games" element={<Game />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/admin/history" element={<HistoricalGames />} />
-            <Route path="/players" element={<PlayerList />} />
-            <Route path="/players/:id" element={<PlayerProfile />} />
-            <Route path="/admin/payments" element={<PaymentDashboard />} />
-            <Route path="/ratings" element={<Ratings />} />
-            <Route path="/admin/ratings" element={<RatingsView />} />
-            <Route path="/admin/teams/:gameId" element={<Teams />} />
-            <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
-            <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
+        <Routes>
+          {/* Redirect root to dashboard */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          
+          {/* Standalone Dashboard Route */}
+            <Route 
+              path="/standalone-dashboard" 
+              element={
+                <StandaloneLayout>
+                  <StandaloneDashboard />
+                </StandaloneLayout>
+              } 
+            />
+            
+            {/* Regular Layout Routes */}
+            <Route element={
+              <Layout>
+                <Outlet />
+              </Layout>
+            }>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={<AdminPortal />} />
+              <Route path="/admin/admins" element={<AdminManagement />} />
+              <Route path="/admin/permissions" element={<AdminPermissions />} />
+              <Route path="/admin/games" element={<GameManagement />} />
+              <Route path="/admin/players" element={<Players />} />
+              <Route path="/admin/players/:id" element={<EditPlayer />} />
+              <Route path="/games" element={<Game />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/admin/history" element={<HistoricalGames />} />
+              <Route path="/players" element={<PlayerList />} />
+              <Route path="/players/:id" element={<PlayerProfile />} />
+              <Route path="/admin/payments" element={<PaymentDashboard />} />
+              <Route path="/ratings" element={<Ratings />} />
+              <Route path="/admin/ratings" element={<RatingsView />} />
+              <Route path="/admin/teams/:gameId" element={<Teams />} />
+              <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
+              <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+            </Route>
           </Routes>
           <Toaster />
-        </Layout>
       </ErrorBoundary>
     </AuthProvider>
   )

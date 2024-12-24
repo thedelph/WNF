@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaUser, FaUserClock } from 'react-icons/fa';
-import { calculatePlayerXP } from '../../utils/calculatePlayerXP';
+import { calculatePlayerXP } from '../../utils/xpCalculations';
 import { useUser } from '../../hooks/useUser';
 import { handlePlayerSelfDropout } from '../../utils/dropoutHandler';
 import { PlayerSelectionResultsProps } from '../../types/playerSelection';
@@ -8,7 +8,6 @@ import { toast } from 'react-hot-toast';
 import { SlotOfferCountdown } from './SlotOfferCountdown';
 import { useGamePlayers } from '../../hooks/useGamePlayers';
 import { PlayerSelectionSection } from './PlayerSelectionSection';
-import { ExtendedPlayerData, PlayerXPStats } from '../../types/player';
 
 /**
  * Main component for displaying player selection results
@@ -59,52 +58,19 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
 
   // Calculate XP values for all players
   const allPlayers = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers];
-  const allXpValues = allPlayers.map(player => {
-    const xpStats: PlayerXPStats = {
-      caps: player.stats?.caps || 0,
-      activeBonuses: player.stats?.activeBonuses || 0,
-      activePenalties: player.stats?.activePenalties || 0,
-      currentStreak: player.stats?.currentStreak || 0,
-      dropoutPenalties: player.stats?.dropoutPenalties || 0
-    };
-    return calculatePlayerXP(xpStats);
-  });
+  const allXpValues = allPlayers.map(player => calculatePlayerXP(player.stats));
   
   // Sort players by XP
   const sortedSelectedPlayers = [...selectedPlayers].sort((a, b) => {
-    const xpStatsA: PlayerXPStats = {
-      caps: a.stats?.caps || 0,
-      activeBonuses: a.stats?.activeBonuses || 0,
-      activePenalties: a.stats?.activePenalties || 0,
-      currentStreak: a.stats?.currentStreak || 0,
-      dropoutPenalties: a.stats?.dropoutPenalties || 0
-    };
-    const xpStatsB: PlayerXPStats = {
-      caps: b.stats?.caps || 0,
-      activeBonuses: b.stats?.activeBonuses || 0,
-      activePenalties: b.stats?.activePenalties || 0,
-      currentStreak: b.stats?.currentStreak || 0,
-      dropoutPenalties: b.stats?.dropoutPenalties || 0
-    };
-    return calculatePlayerXP(xpStatsB) - calculatePlayerXP(xpStatsA);
+    const xpA = calculatePlayerXP(a.stats);
+    const xpB = calculatePlayerXP(b.stats);
+    return xpB - xpA;
   });
 
   const sortedReservePlayers = [...reservePlayers].sort((a, b) => {
-    const xpStatsA: PlayerXPStats = {
-      caps: a.stats?.caps || 0,
-      activeBonuses: a.stats?.activeBonuses || 0,
-      activePenalties: a.stats?.activePenalties || 0,
-      currentStreak: a.stats?.currentStreak || 0,
-      dropoutPenalties: a.stats?.dropoutPenalties || 0
-    };
-    const xpStatsB: PlayerXPStats = {
-      caps: b.stats?.caps || 0,
-      activeBonuses: b.stats?.activeBonuses || 0,
-      activePenalties: b.stats?.activePenalties || 0,
-      currentStreak: b.stats?.currentStreak || 0,
-      dropoutPenalties: b.stats?.dropoutPenalties || 0
-    };
-    return calculatePlayerXP(xpStatsB) - calculatePlayerXP(xpStatsA);
+    const xpA = calculatePlayerXP(a.stats);
+    const xpB = calculatePlayerXP(b.stats);
+    return xpB - xpA;
   });
 
   return (
@@ -134,7 +100,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         isExpanded={showReserves}
         onToggle={() => setShowReserves(!showReserves)}
       >
-        {(player: ExtendedPlayerData) => (
+        {(player) => (
           gameDate && firstDropoutTime && (
             <div className="flex flex-col gap-1">
               <SlotOfferCountdown

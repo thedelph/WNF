@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
 import { LoadingSpinner } from '../LoadingSpinner';
-import type { Player, PlayerRarity } from '../../types/player';
+import { Player } from '../../types/game';
 import PlayerCard from '../PlayerCard';
-import { calculatePlayerXP } from '../../utils/xpCalculations';
-import { PlayerStats, ExtendedPlayerData } from '../../types/player';
+import { calculatePlayerXP as calculateXP } from '../../utils/xpCalculations';
 
 interface SelectedPlayer {
   id: string;
@@ -19,7 +18,7 @@ interface SelectedPlayer {
   max_streak?: number;
   avatar_svg?: string;
   xp?: number;
-  rarity?: PlayerRarity;
+  rarity?: string;
 }
 
 interface GameSelection {
@@ -68,55 +67,10 @@ const calculateRarity = (playerXP: number, allPlayersXP: number[]) => {
   return 'Common';
 };
 
-const calculatePlayerStats = (player: any): Partial<PlayerStats> => ({
-  id: player.id,
-  caps: player.caps || 0,
-  activeBonuses: player.active_bonuses || 0,
-  activePenalties: player.active_penalties || 0,
-  currentStreak: player.current_streak || 0,
-  maxStreak: player.max_streak || 0,
-  dropoutPenalties: player.dropout_penalties || 0,
-  winRate: player.win_rate || 0,
-  wins: player.wins || 0,
-  draws: player.draws || 0,
-  losses: player.losses || 0,
-  gamesPlayed: player.games_played || 0,
-  averageAttack: player.average_attack || 0,
-  averageDefense: player.average_defense || 0,
-  rarity: player.rarity || 'Common',
-  friendlyName: player.friendly_name,
-  avatarSvg: player.avatar_svg || '',
-  hasDeclined: false,
-  hasOffer: false
-})
-
-const transformPlayerData = (player: any): ExtendedPlayerData => ({
-  id: player.id,
-  friendlyName: player.friendly_name,
-  caps: player.caps || 0,
-  activeBonuses: player.active_bonuses || 0,
-  activePenalties: player.active_penalties || 0,
-  currentStreak: player.current_streak || 0,
-  maxStreak: player.max_streak || 0,
-  winRate: player.win_rate || 0,
-  dropoutPenalties: player.dropout_penalties || 0,
-  avatarSvg: player.avatar_svg,
-  rarity: player.rarity || 'Common',
-  gamesPlayed: player.games_played || 0,
-  averageAttack: player.average_attack || 0,
-  averageDefense: player.average_defense || 0,
-  preferredPosition: player.preferred_position || null
-})
-
 export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ gameId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<GameSelection | null>(null);
-
-  const handleError = (error: unknown) => {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
-    setError(errorMessage)
-  }
 
   useEffect(() => {
     const fetchSelectionAndPlayers = async () => {
@@ -170,13 +124,23 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             console.log('Game registrations fetched:', registrations.length);
             
             // Calculate XP for all players first
-            const allPlayersXP = registrations.map(r => calculatePlayerXP(calculatePlayerStats(r.players)));
+            const allPlayersXP = registrations.map(r => calculateXP({
+              caps: r.players.caps || 0,
+              activeBonuses: r.players.active_bonuses || 0,
+              activePenalties: r.players.active_penalties || 0,
+              currentStreak: r.players.current_streak || 0
+            }));
 
             // Map confirmed players with XP and rarity
             selectedPlayers = registrations
               .filter(r => r.status === 'confirmed')
               .map(r => {
-                const playerXP = calculatePlayerXP(calculatePlayerStats(r.players));
+                const playerXP = calculateXP({
+                  caps: r.players.caps || 0,
+                  activeBonuses: r.players.active_bonuses || 0,
+                  activePenalties: r.players.active_penalties || 0,
+                  currentStreak: r.players.current_streak || 0
+                });
                 
                 return {
                   id: r.players.id,
@@ -197,7 +161,12 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             reservePlayers = registrations
               .filter(r => r.status === 'reserve')
               .map(r => {
-                const playerXP = calculatePlayerXP(calculatePlayerStats(r.players));
+                const playerXP = calculateXP({
+                  caps: r.players.caps || 0,
+                  activeBonuses: r.players.active_bonuses || 0,
+                  activePenalties: r.players.active_penalties || 0,
+                  currentStreak: r.players.current_streak || 0
+                });
                 
                 return {
                   id: r.players.id,
@@ -308,13 +277,23 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
 
           // Calculate XP and rarity for all players
           const allPlayers = [...selectedPlayers, ...reservePlayers];
-          const allPlayersXP = allPlayers.map(p => calculatePlayerXP(calculatePlayerStats(p)));
+          const allPlayersXP = allPlayers.map(p => calculateXP({
+            caps: p.caps || 0,
+            activeBonuses: p.active_bonuses || 0,
+            activePenalties: p.active_penalties || 0,
+            currentStreak: p.current_streak || 0
+          }));
 
           console.log('All players XP:', allPlayersXP.sort((a, b) => b - a));
 
           // Update selected players with XP and rarity
           selectedPlayers = selectedPlayers.map(p => {
-            const playerXP = calculatePlayerXP(calculatePlayerStats(p));
+            const playerXP = calculateXP({
+              caps: p.caps || 0,
+              activeBonuses: p.active_bonuses || 0,
+              activePenalties: p.active_penalties || 0,
+              currentStreak: p.current_streak || 0
+            });
 
             const rarity = calculateRarity(playerXP, allPlayersXP);
 
@@ -337,7 +316,12 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
 
           // Update reserve players with XP and rarity
           reservePlayers = reservePlayers.map(p => {
-            const playerXP = calculatePlayerXP(calculatePlayerStats(p));
+            const playerXP = calculateXP({
+              caps: p.caps || 0,
+              activeBonuses: p.active_bonuses || 0,
+              activePenalties: p.active_penalties || 0,
+              currentStreak: p.current_streak || 0
+            });
 
             return {
               ...p,
@@ -378,7 +362,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
 
         setSelection(selection);
       } catch (error) {
-        handleError(error);
+        console.error('Error fetching selection:', error);
+        setError(error.message);
       } finally {
         setIsLoading(false);
       }

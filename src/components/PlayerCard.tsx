@@ -10,19 +10,19 @@ interface PlayerCardProps {
   id: string
   friendlyName: string
   caps: number
-  preferredPosition: string | null
+  preferredPosition: string
   activeBonuses: number
   activePenalties: number
   winRate: number
   currentStreak: number
   maxStreak: number
   rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
-  avatarSvg?: string
+  avatarSvg: string
   isRandomlySelected?: boolean
-  status?: 'selected' | 'reserve' | 'dropped_out'
-  hasSlotOffer?: boolean
-  slotOfferStatus?: 'pending' | 'accepted' | 'declined'
-  children?: React.ReactNode
+  status?: 'selected' | 'reserve' | 'dropped_out';
+  hasSlotOffer?: boolean;
+  slotOfferStatus?: 'pending' | 'accepted' | 'declined';
+  children?: React.ReactNode;
 }
 
 export default function PlayerCard({

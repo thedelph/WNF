@@ -6,6 +6,9 @@ import { useAdmin } from '../../../hooks/useAdmin'
 import { supabaseAdmin } from '../../../utils/supabase'
 import { toast } from 'react-hot-toast'
 import { Game } from '../../../types/game'
+
+type GameOutcome = 'blue_win' | 'orange_win' | 'draw' | null;
+
 import HistoricalGameForm from '../../../components/admin/history/HistoricalGameForm'
 import CSVImport from '../../../components/admin/history/csv/CSVImport'
 import HistoricalGameList from '../../../components/admin/history/list/HistoricalGameList'
@@ -53,7 +56,19 @@ export default function HistoricalGames() {
       const { data: historicalData, error: historicalError } = await supabaseAdmin
         .from('games')
         .select(`
-          *,
+          id,
+          date,
+          status,
+          sequence_number,
+          score_blue,
+          score_orange,
+          outcome,
+          venue:venue_id (
+            id,
+            name,
+            address,
+            google_maps_url
+          ),
           game_registrations (
             id,
             team,

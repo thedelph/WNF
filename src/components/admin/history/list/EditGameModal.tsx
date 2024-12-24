@@ -23,7 +23,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onSaved }) => {
   const [orangePlayers, setOrangePlayers] = useState<Player[]>([])
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([])
   const [isSaving, setIsSaving] = useState(false)
-  const [outcome, setOutcome] = useState<GameOutcome>(game.outcome as GameOutcome || null)
+  const [outcome, setOutcome] = useState<GameOutcome>(game.outcome || null)
 
   // Fetch all players and set initial team assignments
   useEffect(() => {
@@ -140,13 +140,20 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onSaved }) => {
   }
 
   const determineOutcome = (blue: string, orange: string, manualOutcome: GameOutcome): GameOutcome => {
-    if (manualOutcome) return manualOutcome
-    if (blue === '' || orange === '') return null
-    const blueNum = parseInt(blue)
-    const orangeNum = parseInt(orange)
-    if (blueNum > orangeNum) return 'blue_win'
-    if (orangeNum > blueNum) return 'orange_win'
-    return 'draw'
+    // If we have a manual outcome and no scores, use the manual outcome
+    if (manualOutcome && (blue === '' || orange === '')) return manualOutcome
+    
+    // If we have scores, determine outcome from scores
+    if (blue !== '' && orange !== '') {
+      const blueNum = parseInt(blue)
+      const orangeNum = parseInt(orange)
+      if (blueNum > orangeNum) return 'blue_win'
+      if (orangeNum > blueNum) return 'orange_win'
+      return 'draw'
+    }
+    
+    // If we have neither scores nor manual outcome, return null
+    return null
   }
 
   return (
@@ -299,7 +306,6 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onSaved }) => {
               className="select select-bordered w-full"
               value={outcome || ''}
               onChange={(e) => setOutcome(e.target.value as GameOutcome)}
-              disabled={blueScore !== '' || orangeScore !== ''}
             >
               <option value="">Unknown/Use Scores</option>
               <option value="blue_win">Blue Team Won</option>

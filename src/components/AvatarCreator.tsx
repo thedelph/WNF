@@ -18,7 +18,7 @@ const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onCancel, initial
   const [avatarUrl, setAvatarUrl] = useState('');
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         onCancel();
       }
@@ -28,7 +28,7 @@ const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onCancel, initial
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onCancel]);
 
-  const generateAvatar = async () => {
+  const generateAvatar = async (): Promise<string> => {
     try {
       const avatar = createAvatar(avataaars, {
         seed: avatarOptions.seed,
@@ -42,6 +42,7 @@ const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onCancel, initial
     } catch (error) {
       console.error('Error generating avatar:', error);
       toast.error('Failed to generate avatar');
+      throw error; // Throw error to be handled by caller
     }
   };
 
@@ -49,8 +50,8 @@ const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onCancel, initial
     generateAvatar();
   }, [avatarOptions]);
 
-  const handleRandomize = () => {
-    setAvatarOptions(prev => ({
+  const handleRandomize = (): void => {
+    setAvatarOptions((prev: Record<string, any>) => ({
       ...prev,
       seed: Math.random().toString(),
     }));

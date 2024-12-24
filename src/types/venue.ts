@@ -1,20 +1,8 @@
 export interface Venue {
-  id: string
-  name: string
-  address: string
-  googleMapsUrl: string
+  id: string;
+  name: string;
+  address: string;
+  cost: number;
+  created_at?: string;
+  updated_at?: string;
 }
-
-export interface VenueDBResponse {
-  id: string
-  name: string
-  address: string
-  google_maps_url: string
-}
-
-export const transformVenueFromDB = (venue: VenueDBResponse): Venue => ({
-  id: venue.id,
-  name: venue.name,
-  address: venue.address,
-  googleMapsUrl: venue.google_maps_url
-})

@@ -1,65 +1,170 @@
-import React from 'react'
-import { StatsCard } from '../components/dashboard/StatsCard'
-import { useStats } from '../hooks/useStats'
-import { Trophy, Medal, Target, Zap } from 'lucide-react'
-import { calculatePlayerXP } from '../utils/xpCalculations'
-import { PlayerStats } from '../types/player'
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Trophy, 
+  Medal, 
+  Star, 
+  TrendingUp, 
+  Timer, 
+  Crown, 
+  Percent, 
+  Users, 
+  ShirtIcon,
+  Flame,
+  Heart
+} from 'lucide-react';
+import { StatsCard } from '../components/dashboard/StatsCard';
+import { AwardCard } from '../components/dashboard/AwardCard';
+import { YearSelector } from '../components/dashboard/YearSelector';
+import { useStats } from '../hooks/useStats';
 
-interface Stats {
-  playerStats: PlayerStats[]
-  isLoading: boolean
-  error: string | null
-}
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
-export const Dashboard: React.FC = () => {
-  const { playerStats, isLoading, error } = useStats()
+export default function Dashboard() {
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
+  
+  const stats = useStats(selectedYear === 'all' ? undefined : selectedYear);
 
-  if (isLoading) {
-    return <div>Loading...</div>
+  if (stats.loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
   }
 
-  if (error) {
-    return <div>Error: {error}</div>
+  if (stats.error) {
+    return (
+      <div className="alert alert-error">
+        <p>Error loading stats: {stats.error}</p>
+      </div>
+    );
   }
 
-  const totalXP = playerStats.reduce((total, stats) => {
-    return total + calculatePlayerXP(stats)
-  }, 0)
+  console.log('Team Color Frequency - Blue:', stats.teamColorFrequency.blue);
+  console.log('Team Color Frequency - Orange:', stats.teamColorFrequency.orange);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-8">WNF Stats</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total XP"
-          value={totalXP}
-          icon={<Trophy className="w-6 h-6" />}
-          description="Total XP earned across all players"
-          color="teal"
-          stats={playerStats}
+    <div className="container mx-auto px-4 py-8">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-8"
+      >
+        <h1 className="text-4xl font-bold mb-4">WNF Stats</h1>
+        <YearSelector
+          selectedYear={selectedYear}
+          onYearChange={setSelectedYear}
         />
+      </motion.div>
+
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        {/* Lucky Bib Colour */}
         <StatsCard
-          title="Active Players"
-          value={playerStats.length}
-          icon={<Medal className="w-6 h-6" />}
-          description="Number of active players"
-          color="blue"
+          title="Lucky Bib Colour"
+          value={stats.luckyBibColor.color.toUpperCase()}
+          description={`${stats.luckyBibColor.winRate.toFixed(1)}% Win Rate`}
+          color={stats.luckyBibColor.color as 'blue' | 'orange'}
+          icon={<ShirtIcon className="w-6 h-6" />}
         />
-        <StatsCard
-          title="Average Win Rate"
-          value={`${(playerStats.reduce((total, stats) => total + (stats.winRate || 0), 0) / playerStats.length).toFixed(1)}%`}
-          icon={<Target className="w-6 h-6" />}
-          description="Average win rate across all players"
-          color="orange"
-        />
-        <StatsCard
-          title="Total Games"
-          value={playerStats.reduce((total, stats) => total + (stats.caps || 0), 0)}
-          icon={<Zap className="w-6 h-6" />}
-          description="Total games played"
+
+        {/* Top All-Time Streaks */}
+        <AwardCard
+          title="Longest Attendance Streaks"
+          winners={stats.topAttendanceStreaks.map(player => ({
+            name: player.friendlyName,
+            value: `${player.maxStreak} games`,
+            id: player.id
+          }))}
+          icon={<Crown className="w-6 h-6" />}
           color="purple"
         />
-      </div>
+
+        {/* Current Streaks */}
+        <AwardCard
+          title="Current Attendance Streaks"
+          winners={stats.currentStreaks.map(player => ({
+            name: player.friendlyName,
+            value: `${player.currentStreak} games`,
+            id: player.id
+          }))}
+          icon={<Flame className="w-6 h-6" />}
+          color="green"
+        />
+
+        {/* Most Caps */}
+        <AwardCard
+          title="Most Caps"
+          winners={stats.mostCaps.map(player => ({
+            name: player.friendlyName,
+            value: `${player.caps} games`,
+            id: player.id
+          }))}
+          icon={<Trophy className="w-6 h-6" />}
+          color="indigo"
+        />
+
+        {/* Best Win Rates */}
+        <StatsCard
+          title="Best Win Rates"
+          stats={stats.bestWinRates}
+          icon={<Percent className="w-6 h-6" />}
+          description="Stats based on games with known outcomes and even teams only"
+          color="teal"
+        />
+
+        {/* Best Buddies */}
+        <AwardCard
+          title="Best Buddies"
+          winners={stats.bestBuddies.map(buddy => ({
+            id: buddy.id,
+            name: `${buddy.friendlyName} & ${buddy.buddyFriendlyName}`,
+            value: `${buddy.gamesTogether} games`
+          }))}
+          icon={<Heart className="w-6 h-6" />}
+          color="pink"
+          description="Players who have been on the same team most often"
+        />
+
+        {/* Team Color Frequency - Blue */}
+        <AwardCard
+          title="Blue Team Specialists"
+          winners={stats.teamColorFrequency.blue.map(player => ({
+            name: player.friendlyName,
+            value: `${(player.teamFrequency * 100).toFixed(1)}%`,
+            id: player.id
+          }))}
+          description="Players with 10+ caps who play most often on blue team"
+          icon={<Star className="w-6 h-6" />}
+          color="blue"
+        />
+
+        {/* Team Color Frequency - Orange */}
+        <AwardCard
+          title="Orange Team Specialists"
+          winners={stats.teamColorFrequency.orange.map(player => ({
+            name: player.friendlyName,
+            value: `${(player.teamFrequency * 100).toFixed(1)}%`,
+            id: player.id
+          }))}
+          description="Players with 10+ caps who play most often on orange team"
+          icon={<Star className="w-6 h-6" />}
+          color="orange"
+        />
+      </motion.div>
     </div>
-  )
+  );
 }
