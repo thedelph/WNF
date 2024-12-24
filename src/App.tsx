@@ -24,6 +24,7 @@ import TeamBalancingOverview from './components/admin/pages/TeamBalancingOvervie
 import Login from './pages/Login'
 import NotificationsPage from './pages/NotificationsPage'
 import { SlotOffersPage } from './pages/admin/SlotOffersPage';
+import { Dashboard } from "./pages/Dashboard"
 
 const App: React.FC = () => {
   return (
@@ -31,6 +32,7 @@ const App: React.FC = () => {
       <ErrorBoundary>
         <Layout>
           <Routes>
+            <Route path="/" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminPortal />} />
             <Route path="/admin/admins" element={<AdminManagement />} />

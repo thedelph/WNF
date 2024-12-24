@@ -31,6 +31,7 @@ export const useGamePlayers = (gameId: string): UseGamePlayersResult => {
   const [game, setGame] = useState<Game | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [firstDropoutTime, setFirstDropoutTime] = useState<Date | null>(null)
 
   const fetchGameAndPlayers = async () => {
     try {
@@ -45,11 +46,10 @@ export const useGamePlayers = (gameId: string): UseGamePlayersResult => {
 
       if (gameError) throw gameError
 
-<<<<<<< HEAD
       // Transform game data
       const transformedGame = transformGameFromDB(gameData as GameDBResponse)
       setGame(transformedGame)
-=======
+
       // Get first dropout time
       const { data: dropoutData, error: dropoutError } = await supabase
         .from('game_registrations')
@@ -59,10 +59,12 @@ export const useGamePlayers = (gameId: string): UseGamePlayersResult => {
         .order('created_at', { ascending: true })
         .limit(1)
         .single();
-<<<<<<< HEAD
->>>>>>> parent of 69d0f2c (updates)
-=======
->>>>>>> parent of 69d0f2c (updates)
+
+      if (dropoutError) throw dropoutError
+
+      if (dropoutData) {
+        setFirstDropoutTime(new Date(dropoutData.created_at))
+      }
 
       // Fetch players in the game
       const { data: playersData, error: playersError } = await supabase
@@ -102,7 +104,7 @@ export const useGamePlayers = (gameId: string): UseGamePlayersResult => {
     reservePlayers: [], 
     droppedOutPlayers: [], 
     gameDate: null, 
-    firstDropoutTime: null, 
+    firstDropoutTime, 
     refreshPlayers: async () => {}, 
     gameData: null, 
     activeSlotOffers: [] 

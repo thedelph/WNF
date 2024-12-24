@@ -54,35 +54,12 @@ export interface GameDBResponse {
   registration_window_start: string
   registration_window_end: string
   team_announcement_time: string
-<<<<<<< HEAD
   game_number?: number
   score_blue?: number
   score_orange?: number
   outcome?: string
   game_registrations?: GameRegistrationDBResponse[]
   venue?: Venue
-=======
-  teams_announced: boolean
-  venue: {
-    id: string
-    name: string
-    address: string
-    google_maps_url: string
-  }
-  game_registrations: Array<{
-    id: string
-    status: string
-    randomly_selected: boolean
-    registered_player: {
-      id: string
-      friendly_name: string
-      caps: number
-      active_bonuses: number
-      active_penalties: number
-      current_streak: number
-    }
-  }>
->>>>>>> parent of 69d0f2c (updates)
 }
 
 export interface GameRegistrationDBResponse {

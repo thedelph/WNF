@@ -26,13 +26,9 @@ export const Dashboard: React.FC = () => {
     return total + calculatePlayerXP(stats)
   }, 0)
 
-  const averageWinRate = playerStats.length > 0
-    ? (playerStats.reduce((total, stats) => total + (stats.winRate || 0), 0) / playerStats.length)
-    : 0
-
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-8">WNF Stats</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total XP"
@@ -51,7 +47,7 @@ export const Dashboard: React.FC = () => {
         />
         <StatsCard
           title="Average Win Rate"
-          value={`${averageWinRate.toFixed(1)}%`}
+          value={`${(playerStats.reduce((total, stats) => total + (stats.winRate || 0), 0) / playerStats.length).toFixed(1)}%`}
           icon={<Target className="w-6 h-6" />}
           description="Average win rate across all players"
           color="orange"
