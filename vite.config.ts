@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vitejs.dev/config/
+<<<<<<< Updated upstream
 export default defineConfig(({ mode }) => {
   // Load env file based on mode
   const env = loadEnv(mode, process.cwd(), '')
@@ -55,6 +56,30 @@ export default defineConfig(({ mode }) => {
     preview: {
       port: 4173,
       strictPort: true
+=======
+export default defineConfig({
+  plugins: [
+    react({
+      babel: {
+        plugins: [
+          ['@babel/plugin-proposal-decorators', { legacy: true }],
+          ['@babel/plugin-transform-class-properties', { loose: true }]
+        ]
+      }
+    })
+  ],
+  server: {
+    port: 3000,
+    host: true,
+    strictPort: true,
+    watch: {
+      usePolling: true
+    }
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+>>>>>>> Stashed changes
     }
   }
 })

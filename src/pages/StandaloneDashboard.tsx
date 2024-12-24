@@ -81,7 +81,11 @@ const Hero = () => {
   );
 };
 
+<<<<<<< Updated upstream
 export default function StandaloneDashboard() {
+=======
+export const StandaloneDashboard = () => {
+>>>>>>> Stashed changes
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
   const stats = useStats(selectedYear === 'all' ? undefined : selectedYear);
   const { scrollYProgress } = useScroll();
@@ -243,4 +247,8 @@ export default function StandaloneDashboard() {
       </div>
     </div>
   );
+<<<<<<< Updated upstream
 }
+=======
+};
+>>>>>>> Stashed changes
