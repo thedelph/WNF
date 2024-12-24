@@ -21,10 +21,7 @@ const NotificationsPage = () => {
 
   // Fetch notifications function
   const fetchNotifications = async () => {
-    if (!player?.id) {
-      console.log('No player ID available, skipping notifications fetch');
-      return;
-    }
+    if (!player?.id) return;
 
     try {
       // First, fetch notifications
@@ -40,7 +37,7 @@ const NotificationsPage = () => {
         .is('read_at', null)
         .order('created_at', { ascending: false });
 
-      if (!adminRole?.can_manage_games) {
+      if (!player.isAdmin || !showAdminView) {
         query = query.eq('player_id', player.id);
       }
 
@@ -53,7 +50,7 @@ const NotificationsPage = () => {
       }
 
       // Then, fetch active slot offers if user has admin role
-      if (adminRole?.can_manage_games) {
+      if (player.isAdmin) {
         const { data: slotOffersData, error: slotOffersError } = await supabaseAdmin
           .from('slot_offers')
           .select('*, player:players!slot_offers_player_id_fkey(friendly_name)')
@@ -75,6 +72,8 @@ const NotificationsPage = () => {
 
   // Handle dismissing a notification
   const handleDismiss = async (notificationId: string) => {
+    if (!player?.id) return;
+
     try {
       const { error } = await supabaseAdmin
         .from('notifications')
@@ -91,6 +90,8 @@ const NotificationsPage = () => {
 
   // Handle slot offer response
   const handleSlotOffer = async (notificationId: string, gameId: string, accept: boolean) => {
+    if (!player?.id) return;
+
     try {
       // First, update the notification
       const { error: notificationError } = await supabaseAdmin
@@ -125,28 +126,6 @@ const NotificationsPage = () => {
     }
   };
 
-  // Fetch admin role
-  useEffect(() => {
-    const fetchAdminRole = async () => {
-      if (!player?.id) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('admin_roles')
-          .select('*')
-          .eq('player_id', player.id)
-          .single();
-
-        if (error) throw error;
-        setAdminRole(data);
-      } catch (error) {
-        console.error('Error fetching admin role:', error);
-      }
-    };
-
-    fetchAdminRole();
-  }, [player?.id]);
-
   // Set up real-time subscriptions
   useEffect(() => {
     if (!player?.id) return;
@@ -162,6 +141,7 @@ const NotificationsPage = () => {
             event: '*',
             schema: 'public',
             table: 'notifications',
+            ...(player.isAdmin && showAdminView ? {} : { filter: `player_id=eq.${player.id}` })
           },
           () => {
             fetchNotifications();
@@ -193,13 +173,17 @@ const NotificationsPage = () => {
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
     };
-  }, [player?.id, adminRole]);
+  }, [player?.id, showAdminView]);
+
+  if (!player) {
+    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Notifications</h1>
-        {adminRole?.can_manage_games && (
+        {player.isAdmin && (
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowAdminView(!showAdminView)}
@@ -213,7 +197,7 @@ const NotificationsPage = () => {
       </div>
 
       {/* Tabs for admin view */}
-      {adminRole?.can_manage_games && showAdminView && (
+      {player.isAdmin && showAdminView && (
         <div className="tabs tabs-boxed mb-6">
           <button
             className={`tab ${!showAdminView ? 'tab-active' : ''}`}
@@ -231,7 +215,7 @@ const NotificationsPage = () => {
       )}
 
       {/* Show either admin view or regular notifications */}
-      {showAdminView && adminRole?.can_manage_games ? (
+      {showAdminView && player.isAdmin ? (
         <AdminSlotOffers
           slotOffers={activeSlotOffers}
           onUpdate={fetchNotifications}

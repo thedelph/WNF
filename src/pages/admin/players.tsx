@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { FaTrash, FaUserPlus, FaUsers, FaFileImport } from 'react-icons/fa'
+import { FaTrash, FaUserPlus, FaUsers, FaFileImport, FaExchangeAlt } from 'react-icons/fa'
 import { toast, Toaster } from 'react-hot-toast'
 import { supabase, supabaseAdmin } from '../../utils/supabase'
 import { useAdmin } from '../../hooks/useAdmin'
 import CreateTestUserModal from '../../components/admin/modals/CreateTestUserModal'
 import BulkCreateTestUsersModal from '../../components/admin/modals/BulkCreateTestUsersModal'
 import ImportPlayersModal from '../../components/admin/modals/ImportPlayersModal'
+import MergeTestUserModal from '../../components/admin/modals/MergeTestUserModal'
 
 type Player = {
   id: string
@@ -26,6 +27,8 @@ export default function Players() {
   const [showCreateTestUserModal, setShowCreateTestUserModal] = useState(false)
   const [showBulkCreateModal, setShowBulkCreateModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [showMergeModal, setShowMergeModal] = useState(false)
+  const [selectedTestUser, setSelectedTestUser] = useState<Player | null>(null)
   const { isAdmin } = useAdmin()
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set())
 
@@ -232,6 +235,17 @@ export default function Players() {
                       >
                         Edit
                       </Link>
+                      {player.is_test_user && (
+                        <button
+                          className="btn btn-sm btn-primary mr-2"
+                          onClick={() => {
+                            setSelectedTestUser(player);
+                            setShowMergeModal(true);
+                          }}
+                        >
+                          <FaExchangeAlt className="mr-1" /> Merge
+                        </button>
+                      )}
                       <button
                         className="btn btn-sm btn-error"
                         onClick={() => handleDeleteSinglePlayer(player.id)}
@@ -264,6 +278,18 @@ export default function Players() {
         onClose={() => setShowImportModal(false)}
         onPlayersImported={fetchPlayers}
       />
+
+      {selectedTestUser && (
+        <MergeTestUserModal
+          isOpen={showMergeModal}
+          onClose={() => {
+            setShowMergeModal(false);
+            setSelectedTestUser(null);
+          }}
+          onMergeCompleted={fetchPlayers}
+          testUser={selectedTestUser}
+        />
+      )}
     </div>
   )
 }

@@ -33,7 +33,3 @@ export interface SlotOffer {
     game_number: number;
   };
 }
-
-export interface AdminRole {
-  can_manage_games: boolean;
-}

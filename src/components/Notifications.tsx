@@ -6,7 +6,7 @@ import { Bell, UserCog } from 'lucide-react';
 import { NotificationButtons } from './notifications/NotificationButtons';
 import { NotificationItem } from './notifications/NotificationItem';
 import { SlotOfferItem } from './notifications/SlotOfferItem';
-import { Notification, SlotOffer, AdminRole } from './notifications/types';
+import { Notification, SlotOffer } from './notifications/types';
 import toast from '../utils/toast';
 
 export const Notifications = () => {
@@ -14,7 +14,6 @@ export const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [activeSlotOffers, setActiveSlotOffers] = useState<SlotOffer[]>([]);
   const [showAdminView, setShowAdminView] = useState(false);
 
@@ -39,7 +38,8 @@ export const Notifications = () => {
         .is('read_at', null)
         .order('created_at', { ascending: false });
 
-      if (!adminRole?.can_manage_games) {
+      // Only filter by player_id if not an admin
+      if (!player.isAdmin) {
         query = query.eq('player_id', player.id);
       }
 
@@ -73,7 +73,7 @@ export const Notifications = () => {
                 // Ensure slot_offer_id is preserved in metadata
                 notification.metadata = {
                   ...metadata,
-                  slot_offer_id: metadata.slot_offer_id, // Preserve the slot_offer_id
+                  slot_offer_id: metadata.slot_offer_id,
                   game_id: metadata.game_id,
                   action: 'slot_offer',
                   dropped_out_player_id: metadata.dropped_out_player_id
@@ -100,7 +100,7 @@ export const Notifications = () => {
 
   // Fetch active slot offers for admin view
   const fetchActiveSlotOffers = async () => {
-    if (!adminRole?.can_manage_games) return;
+    if (!player?.isAdmin) return;
 
     try {
       console.log('Fetching active slot offers...');
@@ -143,36 +143,6 @@ export const Notifications = () => {
   useEffect(() => {
     if (!player?.id) return;
 
-    // Check admin permissions
-    const checkAdminRole = async () => {
-      try {
-        const { data: adminData, error } = await supabaseAdmin
-          .from('admin_permissions')
-          .select(`
-            id,
-            permission,
-            admin_role:admin_roles!inner (
-              player_id
-            )
-          `)
-          .eq('permission', 'manage_games')
-          .eq('admin_role.player_id', player.id)
-          .single();
-
-        if (error) {
-          setAdminRole(null);
-          return;
-        }
-
-        setAdminRole(adminData ? { can_manage_games: true } : null);
-      } catch (error) {
-        console.error('Error checking admin role:', error);
-        setAdminRole(null);
-      }
-    };
-
-    checkAdminRole();
-
     // Subscribe to notifications
     const notificationChannel = supabaseAdmin
       .channel('notifications-' + player.id)
@@ -182,11 +152,11 @@ export const Notifications = () => {
           event: '*',
           schema: 'public',
           table: 'notifications',
-          ...(adminRole?.can_manage_games ? {} : { filter: `player_id=eq.${player.id}` })
+          ...(player.isAdmin ? {} : { filter: `player_id=eq.${player.id}` })
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            if (adminRole?.can_manage_games || payload.new.player_id === player.id) {
+            if (player.isAdmin || payload.new.player_id === player.id) {
               setNotifications(prev => [payload.new as Notification, ...prev]);
               setUnreadCount(prev => prev + 1);
             }
@@ -227,14 +197,11 @@ export const Notifications = () => {
   useEffect(() => {
     if (player?.id) {
       fetchNotifications();
+      if (player.isAdmin) {
+        fetchActiveSlotOffers();
+      }
     }
-  }, [adminRole, player?.id]);
-
-  useEffect(() => {
-    if (adminRole?.can_manage_games) {
-      fetchActiveSlotOffers();
-    }
-  }, [adminRole]);
+  }, [player]);
 
   // Handler for slot offer actions (accept/decline)
   const handleSlotOffer = async (notificationId: string, gameId: string, accept: boolean) => {
@@ -275,17 +242,17 @@ export const Notifications = () => {
 
       if (fetchError) throw fetchError;
       if (!slotOffer) {
-        throw new Error('Slot offer not found');
+        throw new Error('Slot offer not found or already processed');
       }
 
-      // Update slot offer status
+      // Update slot offer status using the slot_offer_id
       const { error: updateError } = await supabaseAdmin
         .from('slot_offers')
         .update({
           status: accept ? 'accepted' : 'declined',
           responded_at: new Date().toISOString()
         })
-        .eq('id', slotOffer.id);
+        .eq('id', metadata.slot_offer_id);
 
       if (updateError) throw updateError;
 
@@ -382,7 +349,7 @@ export const Notifications = () => {
   return (
     <div className="relative">
       <div className="flex items-center gap-2">
-        {adminRole?.can_manage_games && (
+        {player?.isAdmin && (
           <button
             onClick={() => {
               setShowAdminView(!showAdminView);
@@ -424,7 +391,7 @@ export const Notifications = () => {
                   activeSlotOffers={activeSlotOffers || []}
                   notifications={notifications || []}
                   playerId={player?.id || ''}
-                  isAdmin={!!adminRole?.can_manage_games}
+                  isAdmin={!!player.isAdmin}
                   onClose={() => setShowNotifications(false)}
                   onUpdate={fetchNotifications}
                   onSlotOffersUpdate={fetchActiveSlotOffers}

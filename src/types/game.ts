@@ -73,14 +73,24 @@ export interface Game {
   }>
 }
 
+export interface AdminPermission {
+  permission: string;
+}
+
+export interface AdminRole {
+  id: string;
+  admin_permissions: AdminPermission[];
+}
+
 export interface Player {
-  id: string
-  friendly_name: string
-  caps: number
-  active_bonuses: number
-  active_penalties: number
-  current_streak: number
-  preferred_position?: string
+  id: string;
+  friendly_name: string;
+  caps: number;
+  active_bonuses: number;
+  active_penalties: number;
+  current_streak: number;
+  admin_role?: AdminRole;
+  isAdmin?: boolean;
 }
 
 export const isValidGameStatus = (status: string): status is GameStatus => {

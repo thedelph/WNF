@@ -11,8 +11,27 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      
+      if (error) {
+        if (error.message.includes('Email not confirmed')) {
+          // Get new confirmation email
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: email
+          })
+          
+          if (resendError) {
+            toast.error('Failed to resend verification email. Please try again.')
+          } else {
+            toast.error('Please verify your email address. A new verification email has been sent.')
+          }
+        } else {
+          throw error
+        }
+        return
+      }
+
       toast.success('Logged in successfully!')
       navigate('/')
     } catch (error) {

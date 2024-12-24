@@ -22,10 +22,12 @@ import RatingsView from './pages/admin/ratings'
 import Teams from './pages/admin/Teams'
 import TeamBalancingOverview from './components/admin/pages/TeamBalancingOverview'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import NotificationsPage from './pages/NotificationsPage'
 import { SlotOffersPage } from './pages/admin/SlotOffersPage';
 import Dashboard from './pages/Dashboard'
 import StandaloneDashboard from './pages/StandaloneDashboard'
+import EmailVerification from './pages/EmailVerification'
 
 const App: React.FC = () => {
   return (
@@ -53,6 +55,8 @@ const App: React.FC = () => {
             }>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<EmailVerification />} />
               <Route path="/admin" element={<AdminPortal />} />
               <Route path="/admin/admins" element={<AdminManagement />} />
               <Route path="/admin/permissions" element={<AdminPermissions />} />
