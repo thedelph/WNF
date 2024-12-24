@@ -18,7 +18,6 @@ if (!supabaseServiceRoleKey) {
   console.warn('Warning: Missing VITE_SUPABASE_SERVICE_ROLE_KEY - some admin features may be limited')
 }
 
-<<<<<<< Updated upstream
 // Create Supabase clients with validated URLs
 export const supabase = createClient<Database>(
   supabaseUrl.startsWith('http') ? supabaseUrl : `https://${supabaseUrl}`, 
@@ -42,34 +41,3 @@ export const supabaseAdmin = createClient<Database>(
     }
   }
 )
-=======
-// Create singleton instances
-let supabaseInstance = null
-let supabaseAdminInstance = null
-
-export const supabase = (() => {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    })
-  }
-  return supabaseInstance
-})()
-
-export const supabaseAdmin = (() => {
-  if (!supabaseAdminInstance) {
-    supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: false,
-        detectSessionInUrl: false
-      }
-    })
-  }
-  return supabaseAdminInstance
-})()
->>>>>>> Stashed changes

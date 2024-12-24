@@ -24,19 +24,13 @@ import TeamBalancingOverview from './components/admin/pages/TeamBalancingOvervie
 import Login from './pages/Login'
 import NotificationsPage from './pages/NotificationsPage'
 import { SlotOffersPage } from './pages/admin/SlotOffersPage';
-<<<<<<< Updated upstream
 import Dashboard from './pages/Dashboard'
 import StandaloneDashboard from './pages/StandaloneDashboard'
-=======
-import { Dashboard } from "./pages/Dashboard"
-import { StandaloneDashboard } from "./pages/StandaloneDashboard"
->>>>>>> Stashed changes
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <ErrorBoundary>
-<<<<<<< Updated upstream
         <Routes>
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -78,31 +72,6 @@ const App: React.FC = () => {
               <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
             </Route>
-=======
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin" element={<AdminPortal />} />
-            <Route path="/admin/admins" element={<AdminManagement />} />
-            <Route path="/admin/permissions" element={<AdminPermissions />} />
-            <Route path="/admin/games" element={<GameManagement />} />
-            <Route path="/admin/players" element={<Players />} />
-            <Route path="/admin/players/:id" element={<EditPlayer />} />
-            <Route path="/games" element={<Game />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/admin/history" element={<HistoricalGames />} />
-            <Route path="/players" element={<PlayerList />} />
-            <Route path="/players/:id" element={<PlayerProfile />} />
-            <Route path="/admin/payments" element={<PaymentDashboard />} />
-            <Route path="/ratings" element={<Ratings />} />
-            <Route path="/admin/ratings" element={<RatingsView />} />
-            <Route path="/admin/teams/:gameId" element={<Teams />} />
-            <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
-            <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
-            <Route path="/standalone-dashboard" element={<StandaloneDashboard />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
->>>>>>> Stashed changes
           </Routes>
           <Toaster />
       </ErrorBoundary>

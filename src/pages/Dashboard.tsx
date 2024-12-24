@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-=======
-@ -0,0 +1,170 @@
->>>>>>> Stashed changes
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -171,8 +167,4 @@ export default function Dashboard() {
       </motion.div>
     </div>
   );
-<<<<<<< Updated upstream
 }
-=======
-}
->>>>>>> Stashed changes

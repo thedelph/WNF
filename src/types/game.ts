@@ -47,7 +47,6 @@ export interface Game {
   registration_window_start: string
   registration_window_end: string
   team_announcement_time: string
-<<<<<<< Updated upstream
   teams_announced: boolean
   sequence_number?: number   // WNF sequence number
   score_blue?: number       // Blue team's score
@@ -72,14 +71,6 @@ export interface Game {
       current_streak: number
     }
   }>
-=======
-  game_number?: number
-  score_blue?: number
-  score_orange?: number
-  outcome?: string
-  game_registrations?: GameRegistrationDBResponse[]
-  venue?: Venue
->>>>>>> Stashed changes
 }
 
 export interface Player {
