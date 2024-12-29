@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => {
 
     // Server configuration
     server: {
-      port: 5173, // Force Vite to use port 5173
-      strictPort: true, // Don't try other ports if 5173 is taken
+      port: 5173,
+      strictPort: true,
       hmr: {
         overlay: true
       }
@@ -51,10 +51,11 @@ export default defineConfig(({ mode }) => {
       }
     },
 
-    // Optimize preview
-    preview: {
-      port: 4173,
-      strictPort: true
-    }
+    // Add base URL configuration
+    base: '/',
+
+    // Ensure proper handling of assets
+    publicDir: 'public',
+    assetsInclude: ['**/*.{png,jpg,gif,svg,webp,mp4,webm,ogg,mp3,wav,pdf,doc,docx}']
   }
 })
