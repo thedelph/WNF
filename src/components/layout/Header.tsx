@@ -31,7 +31,9 @@ const Header: React.FC = () => {
     <header className="navbar bg-base-100 shadow-lg">
       <div className="container mx-auto">
         <div className="flex-1">
-          <Link to="/" className="text-xl font-bold">WNF</Link>
+          <Link to="/" className="flex items-center">
+            <img src="/assets/wnf.webp" alt="WNF Logo" className="h-8 w-auto" />
+          </Link>
         </div>
         <div className="flex-none">
           <ul className="menu menu-horizontal px-1 items-center">
