@@ -86,6 +86,11 @@ const Header: React.FC = () => {
         <div className="flex-none hidden lg:block">
           <ul className="menu menu-horizontal px-1 items-center">
             <NavLinks />
+            {user && (
+              <li className="ml-2">
+                <NotificationBell />
+              </li>
+            )}
           </ul>
         </div>
         <div className="flex-none lg:hidden relative" ref={menuRef}>

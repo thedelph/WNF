@@ -232,46 +232,51 @@ export const GameRegistrations: React.FC<Props> = ({
         onClose();
       }}
       title="Game Registrations"
+      className="w-full max-w-[95vw] md:max-w-4xl mx-auto"
     >
-      <div className="mb-4 flex items-center space-x-2">
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search players..."
-        />
+      <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+        <div className="flex-grow">
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search players..."
+            className="w-full"
+          />
+        </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleSelectAll}
-          className="btn btn-outline"
+          className="btn btn-outline text-sm sm:text-base py-2 px-3 sm:py-3 sm:px-4"
         >
           {isSelectAll ? <FaCheckSquare className="mr-2" /> : <FaSquare className="mr-2" />}
           {isSelectAll ? 'Deselect All' : 'Select All'}
         </motion.button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <PlayerSelectionPanel
           title="Available Players"
           players={filteredPlayers}
           selectedPlayerIds={selectedPlayerIds}
           onPlayerSelect={handlePlayerSelect}
+          className="h-[40vh] sm:h-[50vh] lg:h-80"
         />
         <div>
-          <h3 className="font-bold mb-2">Registered Players</h3>
-          <div className="h-80 overflow-y-auto border border-base-300 rounded-lg p-2">
+          <h3 className="font-bold mb-2 text-base sm:text-lg">Registered Players</h3>
+          <div className="h-[40vh] sm:h-[50vh] lg:h-80 overflow-y-auto border border-base-300 rounded-lg p-2">
             <div className="space-y-1">
               {registeredPlayers.map((player) => (
                 <div
                   key={player.id}
-                  className={`flex items-center justify-between p-2 rounded ${
+                  className={`flex items-center justify-between p-2 sm:p-3 rounded text-sm sm:text-base ${
                     player.status === 'selected' ? 'bg-base-200' : ''
                   }`}
                 >
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium">{player.friendly_name}</span>
+                  <div className="flex items-center space-x-2 flex-grow mr-2">
+                    <span className="font-medium truncate">{player.friendly_name}</span>
                     {player.status === 'selected' && (
-                      <span className={`text-xs px-2 py-1 rounded ${
+                      <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
                         player.selection_method === 'random' 
                           ? 'bg-purple-100 text-purple-800' 
                           : 'bg-green-100 text-green-800'
@@ -282,9 +287,10 @@ export const GameRegistrations: React.FC<Props> = ({
                   </div>
                   <button
                     onClick={() => handleUnregister(player.id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 p-2"
+                    aria-label="Unregister player"
                   >
-                    <FaTimes />
+                    <FaTimes className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
               ))}
@@ -298,10 +304,10 @@ export const GameRegistrations: React.FC<Props> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleRegister}
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 px-3 sm:py-3 sm:px-4"
           disabled={selectedPlayerIds.length === 0}
         >
-          Register Selected Players ({selectedPlayerIds.length})
+          Register Selected ({selectedPlayerIds.length})
         </motion.button>
       </div>
     </Modal>

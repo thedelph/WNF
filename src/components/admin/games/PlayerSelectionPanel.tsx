@@ -22,7 +22,7 @@ export const PlayerSelectionPanel: React.FC<PlayerSelectionPanelProps> = ({
 }) => {
   return (
     <div className={className}>
-      <h3 className="font-bold mb-2">{title}</h3>
+      <h3 className="font-bold mb-2 text-base sm:text-lg">{title}</h3>
       <div className="h-80 overflow-y-auto border border-base-300 rounded-lg">
         <AnimatePresence>
           {players.map((player) => (
@@ -31,16 +31,16 @@ export const PlayerSelectionPanel: React.FC<PlayerSelectionPanelProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`flex items-center justify-between p-2 hover:bg-base-200 cursor-pointer ${
+              className={`flex items-center justify-between p-3 sm:p-4 hover:bg-base-200 cursor-pointer text-sm sm:text-base ${
                 selectedPlayerIds.includes(player.id) ? 'bg-primary text-primary-content' : ''
               }`}
               onClick={() => onPlayerSelect(player.id)}
             >
-              <span>{player.friendly_name}</span>
+              <span className="truncate mr-2">{player.friendly_name}</span>
               {selectedPlayerIds.includes(player.id) ? (
-                <FaCheckSquare className="text-primary-content" />
+                <FaCheckSquare className="text-primary-content w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               ) : (
-                <FaSquare className="text-base-content" />
+                <FaSquare className="text-base-content w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               )}
             </motion.div>
           ))}

@@ -9,6 +9,8 @@ import { SlotOfferCountdown } from './SlotOfferCountdown';
 import { useGamePlayers } from '../../hooks/useGamePlayers';
 import { PlayerSelectionSection } from './PlayerSelectionSection';
 import { supabase } from '../../utils/supabase';
+import { ViewToggle } from './views/ViewToggle';
+import { PlayerListView } from './views/PlayerListView';
 
 /**
  * Main component for displaying player selection results
@@ -18,6 +20,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
   const [showSelected, setShowSelected] = useState(true);
   const [showReserves, setShowReserves] = useState(false);
   const [showDroppedOut, setShowDroppedOut] = useState(false);
+  const [view, setView] = useState<'list' | 'card'>('card');
   
   const { player } = useUser();
   const {
@@ -150,48 +153,83 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         </button>
       )}
 
-      <PlayerSelectionSection
-        title="Selected Players"
-        icon={FaUser}
-        players={sortedSelectedPlayers}
-        allXpValues={allXpValues}
-        isExpanded={showSelected}
-        onToggle={() => setShowSelected(!showSelected)}
-      />
+      <ViewToggle view={view} onViewChange={setView} />
 
-      <PlayerSelectionSection
-        title="Reserve Players"
-        icon={FaUserClock}
-        players={sortedReservePlayers}
-        allXpValues={allXpValues}
-        isExpanded={showReserves}
-        onToggle={() => setShowReserves(!showReserves)}
-      >
-        {(player) => (
-          gameDate && firstDropoutTime && (
-            <div className="flex flex-col gap-1">
-              <SlotOfferCountdown
-                player={player}
-                reservePlayers={sortedReservePlayers}
-                gameDate={gameDate}
-                firstDropoutTime={firstDropoutTime}
-                hasActiveOffers={activeSlotOffers?.length > 0}
-                selectedPlayersCount={selectedPlayers.length}
-                maxPlayers={gameData?.max_players ?? 0}
-              />
-            </div>
-          )
-        )}
-      </PlayerSelectionSection>
+      {view === 'card' ? (
+        <>
+          <PlayerSelectionSection
+            title="Selected Players"
+            icon={FaUser}
+            players={sortedSelectedPlayers}
+            allXpValues={allXpValues}
+            isExpanded={showSelected}
+            onToggle={() => setShowSelected(!showSelected)}
+          />
 
-      <PlayerSelectionSection
-        title="Dropped Out Players"
-        icon={FaUser}
-        players={droppedOutPlayers}
-        allXpValues={allXpValues}
-        isExpanded={showDroppedOut}
-        onToggle={() => setShowDroppedOut(!showDroppedOut)}
-      />
+          <PlayerSelectionSection
+            title="Reserve Players"
+            icon={FaUserClock}
+            players={sortedReservePlayers}
+            allXpValues={allXpValues}
+            isExpanded={showReserves}
+            onToggle={() => setShowReserves(!showReserves)}
+          >
+            {(player) => (
+              gameDate && firstDropoutTime && (
+                <div className="flex flex-col gap-1">
+                  <SlotOfferCountdown
+                    player={player}
+                    reservePlayers={sortedReservePlayers}
+                    gameDate={gameDate}
+                    firstDropoutTime={firstDropoutTime}
+                    hasActiveOffers={activeSlotOffers?.length > 0}
+                    selectedPlayersCount={selectedPlayers.length}
+                    maxPlayers={gameData?.max_players ?? 0}
+                  />
+                </div>
+              )
+            )}
+          </PlayerSelectionSection>
+
+          <PlayerSelectionSection
+            title="Dropped Out Players"
+            icon={FaUser}
+            players={droppedOutPlayers}
+            allXpValues={allXpValues}
+            isExpanded={showDroppedOut}
+            onToggle={() => setShowDroppedOut(!showDroppedOut)}
+          />
+        </>
+      ) : (
+        <PlayerListView
+          selectedPlayers={sortedSelectedPlayers}
+          reservePlayers={sortedReservePlayers}
+          droppedOutPlayers={droppedOutPlayers}
+          currentUserId={player?.id}
+          showSelected={showSelected}
+          showReserves={showReserves}
+          showDroppedOut={showDroppedOut}
+          setShowSelected={setShowSelected}
+          setShowReserves={setShowReserves}
+          setShowDroppedOut={setShowDroppedOut}
+        >
+          {(player) => (
+            gameDate && firstDropoutTime && (
+              <div className="flex flex-col gap-1">
+                <SlotOfferCountdown
+                  player={player}
+                  reservePlayers={sortedReservePlayers}
+                  gameDate={gameDate}
+                  firstDropoutTime={firstDropoutTime}
+                  hasActiveOffers={activeSlotOffers?.length > 0}
+                  selectedPlayersCount={selectedPlayers.length}
+                  maxPlayers={gameData?.max_players ?? 0}
+                />
+              </div>
+            )
+          )}
+        </PlayerListView>
+      )}
     </div>
   );
 };

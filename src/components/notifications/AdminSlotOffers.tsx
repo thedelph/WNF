@@ -100,8 +100,16 @@ export const AdminSlotOffers: React.FC<AdminSlotOffersProps> = ({ slotOffers, on
   };
 
   // Helper function to format dates
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM d, h:mm a');
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'No date';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      return format(date, 'MMM d, h:mm a');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
   };
 
   // Helper function to get status badge styling
