@@ -233,15 +233,15 @@ const GameCompletionForm: React.FC<Props> = ({ game, onComplete }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg mb-6"
+      className="bg-white p-6 rounded-lg shadow-lg mb-6"
     >
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-semibold">Complete Game Details</h3>
         <div className="text-right">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600">
             Game #{game.sequence_number || 'N/A'}
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600">
             {format(new Date(game.date), 'EEEE do MMMM yyyy')} at {format(new Date(game.date), 'h:mma')}
           </p>
         </div>
@@ -324,8 +324,8 @@ const GameCompletionForm: React.FC<Props> = ({ game, onComplete }) => {
           <h4 className="font-medium">Team Assignments</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Blue Team */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <h5 className="font-medium text-blue-700 dark:text-blue-300 mb-3">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h5 className="font-medium text-blue-700 mb-3">
                 Blue Team ({players.filter(p => p.team === 'blue').length})
               </h5>
               <div className="space-y-2">
@@ -366,8 +366,8 @@ const GameCompletionForm: React.FC<Props> = ({ game, onComplete }) => {
             </div>
 
             {/* Orange Team */}
-            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-              <h5 className="font-medium text-orange-700 dark:text-orange-300 mb-3">
+            <div className="bg-orange-50 p-4 rounded-lg">
+              <h5 className="font-medium text-orange-700 mb-3">
                 Orange Team ({players.filter(p => p.team === 'orange').length})
               </h5>
               <div className="space-y-2">

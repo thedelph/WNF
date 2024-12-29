@@ -30,7 +30,7 @@ export default {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["light", "dark"],
+    themes: ["light"],
     base: true,
     styled: true,
     utils: true,

@@ -179,17 +179,17 @@ export default function HistoricalGames() {
           )}
 
           <div className="grid grid-cols-1 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-2xl font-semibold mb-4">Add Historical Game</h2>
               <HistoricalGameForm onGameAdded={fetchGames} />
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-2xl font-semibold mb-4">Import Historical Games</h2>
               <CSVImport onGamesImported={fetchGames} />
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-2xl font-semibold mb-4">Historical Games List</h2>
               <HistoricalGameList
                 games={games}
