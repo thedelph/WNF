@@ -16,7 +16,7 @@ export interface SlotOffer {
   id: string;
   game_id: string;
   player_id: string;
-  status: 'pending' | 'accepted' | 'declined';
+  status: 'pending' | 'accepted' | 'declined' | 'expired' | 'voided';
   created_at: string;
   offered_at: string;
   responded_at: string | null;

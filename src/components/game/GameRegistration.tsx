@@ -46,12 +46,17 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
       }
 
       // Check current registration status
-      const { data: existingReg } = await supabase
+      const { data: existingReg, error: regError } = await supabase
         .from('game_registrations')
         .select('id, status')
         .eq('game_id', game.id)
         .eq('player_id', playerProfile.id)
-        .single();
+        .maybeSingle();
+
+      if (regError) {
+        console.error('Error checking registration:', regError);
+        throw regError;
+      }
 
       if (existingReg) {
         // Unregister
@@ -61,7 +66,10 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
           .eq('game_id', game.id)
           .eq('player_id', playerProfile.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error unregistering:', error);
+          throw error;
+        }
       } else {
         // Register
         const { error } = await supabase
@@ -70,10 +78,13 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
             game_id: game.id,
             player_id: playerProfile.id,
             status: 'registered',
-            selection_method: null
+            selection_method: 'merit'
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error registering:', error);
+          throw error;
+        }
       }
 
       // Notify parent component to refresh data

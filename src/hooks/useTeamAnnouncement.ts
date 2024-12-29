@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabaseAdmin } from '../utils/supabase';
 import { balanceTeams } from '../utils/teamBalancing';
@@ -9,44 +9,39 @@ interface UseTeamAnnouncementProps {
 }
 
 export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
+  // All useState hooks first
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [isProcessingAnnouncement, setIsProcessingAnnouncement] = useState(false);
   const [hasAnnouncedTeams, setHasAnnouncedTeams] = useState(false);
   const [errorCount, setErrorCount] = useState(0);
+  const [isTeamAnnouncementTime, setIsTeamAnnouncementTime] = useState(false);
+  
   const MAX_RETRIES = 3;
 
-  useEffect(() => {
-    if (!props?.game) return;
+  // All useCallback hooks next
+  const checkIsTeamAnnouncementTime = useCallback(() => {
+    if (!props?.game) return false;
+    
+    const isAfterAnnouncementTime = currentTime > new Date(props.game.team_announcement_time);
+    const isCorrectStatus = props.game.status === 'players_announced' || props.game.status === 'teams_announced';
+    
+    return isAfterAnnouncementTime && isCorrectStatus;
+  }, [props?.game, currentTime]);
 
-    const checkAnnouncementTime = () => {
-      const now = new Date();
-      const announcementTime = new Date(props.game!.team_announcement_time);
-      
-      // Check if we need to process team announcement
-      const shouldAnnounceTeams = 
-        now > announcementTime && 
-        props.game!.status === 'players_announced' &&
-        !props.game!.teams_announced &&
-        !isProcessingAnnouncement && 
-        !hasAnnouncedTeams &&
-        errorCount < MAX_RETRIES;
+  const handleTeamAnnouncement = useCallback(async () => {
+    if (!props?.game || isProcessingAnnouncement) return;
 
-      if (shouldAnnounceTeams) {
-        handleTeamAnnouncement();
-      }
-    };
+    // Check if teams are already announced to prevent duplicate processing
+    const { data: currentGame } = await supabaseAdmin
+      .from('games')
+      .select('status')
+      .eq('id', props.game.id)
+      .single();
 
-    // Initial check
-    checkAnnouncementTime();
-
-    // Set up polling every 10 seconds
-    const intervalId = setInterval(checkAnnouncementTime, 10000);
-
-    // Cleanup interval on unmount
-    return () => clearInterval(intervalId);
-  }, [props?.game, isProcessingAnnouncement, hasAnnouncedTeams, errorCount]);
-
-  const handleTeamAnnouncement = async () => {
-    if (!props?.game) return;
+    if (currentGame?.status === 'teams_announced') {
+      setHasAnnouncedTeams(true);
+      return;
+    }
 
     setIsProcessingAnnouncement(true);
     
@@ -93,17 +88,6 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
       if (!teams.blueTeam || !teams.orangeTeam) {
         throw new Error(`Invalid team structure: ${JSON.stringify(teams)}`);
       }
-
-      // Transform the balanced teams back into the expected format
-      const transformedPlayers = registrations.map(reg => {
-        const isBlueTeam = teams.blueTeam.includes(reg.players.id);
-        const isOrangeTeam = teams.orangeTeam.includes(reg.players.id);
-        return {
-          player: reg.players,
-          selection_type: 'selected',
-          team: isBlueTeam ? 'blue' : isOrangeTeam ? 'orange' : undefined
-        };
-      });
 
       // Update player registrations with team assignments
       for (const team of ['orange', 'blue'] as const) {
@@ -190,14 +174,53 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
         }
         return newCount;
       });
+      console.error('Error announcing teams:', error);
     } finally {
       setIsProcessingAnnouncement(false);
     }
-  };
+  }, [props, isProcessingAnnouncement, MAX_RETRIES]);
+
+  // All useEffect hooks last
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    setIsTeamAnnouncementTime(checkIsTeamAnnouncementTime());
+  }, [checkIsTeamAnnouncementTime]);
+
+  useEffect(() => {
+    if (!props?.game) return;
+
+    const checkAnnouncementTime = () => {
+      const shouldAnnounceTeams = 
+        isTeamAnnouncementTime && 
+        !isProcessingAnnouncement && 
+        !hasAnnouncedTeams &&
+        errorCount < MAX_RETRIES;
+
+      if (shouldAnnounceTeams) {
+        handleTeamAnnouncement();
+      }
+    };
+
+    // Initial check
+    checkAnnouncementTime();
+
+    // Set up polling every 5 seconds
+    const intervalId = setInterval(checkAnnouncementTime, 5000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
+  }, [props?.game, isProcessingAnnouncement, hasAnnouncedTeams, errorCount, isTeamAnnouncementTime, handleTeamAnnouncement]);
 
   return {
+    isTeamAnnouncementTime,
     isProcessingAnnouncement,
     hasAnnouncedTeams,
-    handleTeamAnnouncement
+    errorCount
   };
 };

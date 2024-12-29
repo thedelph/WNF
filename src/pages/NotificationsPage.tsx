@@ -54,8 +54,8 @@ const NotificationsPage = () => {
         const { data: slotOffersData, error: slotOffersError } = await supabaseAdmin
           .from('slot_offers')
           .select('*, player:players!slot_offers_player_id_fkey(friendly_name)')
-          .is('accepted_at', null)
-          .is('rejected_at', null)
+          .eq('status', 'pending')
+          .not('status', 'in', '("expired","voided")')
           .order('created_at', { ascending: false });
 
         if (slotOffersError) throw slotOffersError;
@@ -85,6 +85,25 @@ const NotificationsPage = () => {
     } catch (error) {
       console.error('Error dismissing notification:', error);
       toast.error('Failed to dismiss notification');
+    }
+  };
+
+  // Handle dismissing all notifications
+  const handleDismissAll = async () => {
+    if (!player?.id) return;
+
+    try {
+      const { error } = await supabaseAdmin
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq(player.isAdmin && showAdminView ? 'read_at' : 'player_id', player.isAdmin && showAdminView ? null : player.id);
+
+      if (error) throw error;
+      await fetchNotifications();
+      toast.success('All notifications dismissed');
+    } catch (error) {
+      console.error('Error dismissing all notifications:', error);
+      toast.error('Failed to dismiss notifications');
     }
   };
 
@@ -183,8 +202,8 @@ const NotificationsPage = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Notifications</h1>
-        {player.isAdmin && (
-          <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4">
+          {player?.isAdmin && (
             <button
               onClick={() => setShowAdminView(!showAdminView)}
               className={`btn btn-sm ${showAdminView ? 'btn-primary' : 'btn-ghost'}`}
@@ -192,8 +211,16 @@ const NotificationsPage = () => {
               <UserCog className="w-4 h-4 mr-2" />
               Admin View
             </button>
-          </div>
-        )}
+          )}
+          {notifications.length > 0 && (
+            <button
+              onClick={handleDismissAll}
+              className="btn btn-sm btn-ghost"
+            >
+              Dismiss All
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs for admin view */}
@@ -239,7 +266,6 @@ const NotificationsPage = () => {
       )}
       {!showAdminView && (
         <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Notification History</h2>
           <NotificationHistory playerId={player?.id} />
         </div>
       )}

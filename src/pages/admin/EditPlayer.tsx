@@ -11,7 +11,6 @@ type Player = {
   xp: number
   attack_rating?: number
   defense_rating?: number
-  preferred_position: string
   is_test_user: boolean
   calculated_caps?: number
   manual_caps_override?: boolean
@@ -87,7 +86,6 @@ const EditPlayer: React.FC = () => {
           friendly_name: player.friendly_name,
           ...(player.xp !== undefined ? { xp: player.xp } : {}),
           caps: useManualOverride ? player.caps : calculatedCaps,
-          preferred_position: player.preferred_position,
           is_test_user: player.is_test_user,
           manual_caps_override: useManualOverride,
           ...(player.attack_rating ? { attack_rating: player.attack_rating } : {}),
@@ -222,28 +220,6 @@ const EditPlayer: React.FC = () => {
             max="10"
             className="input input-bordered w-full"
           />
-        </div>
-        <div className="form-control">
-          <label className="label" htmlFor="preferred_position">
-            <span className="label-text">Preferred Position</span>
-          </label>
-          <select
-            id="preferred_position"
-            name="preferred_position"
-            value={player.preferred_position}
-            onChange={handleChange}
-            required
-            className="select select-bordered w-full"
-          >
-            <option value="GK">GK</option>
-            <option value="LB">LB</option>
-            <option value="CB">CB</option>
-            <option value="RB">RB</option>
-            <option value="RM">RM</option>
-            <option value="CM">CM</option>
-            <option value="LM">LM</option>
-            <option value="ST">ST</option>
-          </select>
         </div>
         <div className="form-control">
           <label className="label cursor-pointer">

@@ -160,24 +160,21 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
               <h3 className="card-title text-primary">
                 WNF #{game.sequence_number || '?'}
               </h3>
-              
-              {/* Missing Score Indicator - only show if we have an outcome but no scores */}
+　　 　 　 　 {/* Missing Score Indicator - only show if we have an outcome but no scores */}
               {game.outcome && (game.score_blue === null || game.score_orange === null) && (
                 <div className="badge badge-ghost gap-1">
                   <FaExclamationTriangle className="w-3 h-3" />
                   Score Not Recorded
                 </div>
               )}
-              
-              {/* Missing Result Indicator - only show if we have no outcome and no scores */}
+　　 　 　 　 {/* Missing Result Indicator - only show if we have no outcome and no scores */}
               {!game.outcome && (game.score_blue === null || game.score_orange === null) && (
                 <div className="badge badge-warning gap-1">
                   <FaExclamationTriangle className="w-3 h-3" />
                   Result Missing
                 </div>
               )}
-              
-              {/* Uneven Teams Indicator */}
+　　 　 　 　 {/* Uneven Teams Indicator */}
               {game.game_registrations && isTeamsUneven(game.game_registrations) && (
                 <div className="badge badge-error gap-1">
                   <FaUsers className="w-3 h-3" />
@@ -188,7 +185,7 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
 
             {/* Date and Time */}
             <p className="text-base-content/80">
-              {formatDate(game.date)} at {formatTime(new Date(game.date).toLocaleTimeString())}
+              {formatDate(game.date)} at {formatTime(game.date)}
             </p>
             
             {/* Venue Information */}

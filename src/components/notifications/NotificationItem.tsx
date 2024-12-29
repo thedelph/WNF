@@ -74,6 +74,19 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
           </button>
         </div>
       )}
+
+      {notification.type === 'payment_request' && notification.action_url && (
+        <div className="flex gap-2 mt-2">
+          <a
+            href={notification.action_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-sm btn-primary flex-1"
+          >
+            Pay Now
+          </a>
+        </div>
+      )}
     </motion.div>
   );
 };

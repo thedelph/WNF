@@ -4,10 +4,10 @@ import { ExtendedPlayerData } from '../../types/playerSelection';
 import PlayerCard from '../PlayerCard';
 import { calculatePlayerXP } from '../../utils/xpCalculations';
 import { calculateRarity } from '../../utils/rarityCalculations';
+import { usePlayerStats } from '../../hooks/usePlayerStats';
 
 interface PlayerListProps {
   players: ExtendedPlayerData[];
-  allXpValues: number[];
   isExpanded: boolean;
   children?: (player: ExtendedPlayerData) => React.ReactNode;
 }
@@ -15,13 +15,15 @@ interface PlayerListProps {
 /**
  * Reusable component for displaying a grid of player cards
  * Handles animation and layout of player cards
+ * Uses global XP values for rarity calculation
  */
 export const PlayerList: React.FC<PlayerListProps> = ({
   players,
-  allXpValues,
   isExpanded,
   children
 }) => {
+  const { allPlayersXP, loading } = usePlayerStats();
+
   return (
     <AnimatePresence>
       {isExpanded && (
@@ -44,15 +46,13 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 winRate={player.win_rate}
                 currentStreak={player.stats.currentStreak}
                 maxStreak={player.max_streak}
-                rarity={calculateRarity(calculatePlayerXP(player.stats), allXpValues)}
+                rarity={!loading ? calculateRarity(calculatePlayerXP(player.stats), allPlayersXP) : 'Common'}
                 avatarSvg={player.avatar_svg}
                 isRandomlySelected={player.isRandomlySelected}
                 hasSlotOffer={player.slotOffers?.some(offer => offer.status === 'pending')}
-                slotOfferStatus={player.has_declined ? 'declined' : player.slotOffers?.find(offer => 
-                  offer.status === 'pending' || offer.status === 'accepted'
-                )?.status}
+                slotOfferStatus={player.has_declined ? 'declined' : player.slotOffers?.find(offer => offer.status === 'pending') ? 'pending' : undefined}
               >
-                {children && children(player)}
+                {children?.(player)}
               </PlayerCard>
             ))}
           </div>

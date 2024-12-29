@@ -15,6 +15,15 @@ export default defineConfig(({ mode }) => {
       'process.env': env
     },
 
+    // Server configuration
+    server: {
+      port: 5173, // Force Vite to use port 5173
+      strictPort: true, // Don't try other ports if 5173 is taken
+      hmr: {
+        overlay: true
+      }
+    },
+
     build: {
       outDir: 'dist',
       sourcemap: true,
@@ -39,15 +48,6 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src')
-      }
-    },
-
-    // Optimize dev server
-    server: {
-      port: 5173,
-      strictPort: true,
-      hmr: {
-        overlay: true
       }
     },
 

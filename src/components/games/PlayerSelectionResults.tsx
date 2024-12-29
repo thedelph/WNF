@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { SlotOfferCountdown } from './SlotOfferCountdown';
 import { useGamePlayers } from '../../hooks/useGamePlayers';
 import { PlayerSelectionSection } from './PlayerSelectionSection';
+import { supabase } from '../../utils/supabase';
 
 /**
  * Main component for displaying player selection results
@@ -31,8 +32,51 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
     activeSlotOffers
   } = useGamePlayers(gameId);
 
-  // Check if the current user has dropped out
+  // Check various player states
   const hasDroppedOut = droppedOutPlayers.some(p => p.id === player?.id);
+  const isRegistered = [...selectedPlayers, ...reservePlayers].some(p => p.id === player?.id);
+  const shouldShowButton = isRegistered || hasDroppedOut;
+  const isRegistrationOpen = gameData?.status === 'open';
+
+  const handleRegistrationToggle = async () => {
+    try {
+      if (!player?.id || !gameId) {
+        toast.error('Unable to process: Missing player or game information');
+        return;
+      }
+
+      const { data: existingReg } = await supabase
+        .from('game_registrations')
+        .select('id')
+        .eq('game_id', gameId)
+        .eq('player_id', player.id)
+        .single();
+
+      if (existingReg) {
+        // Unregister
+        await supabase
+          .from('game_registrations')
+          .delete()
+          .eq('game_id', gameId)
+          .eq('player_id', player.id);
+      } else {
+        // Register
+        await supabase
+          .from('game_registrations')
+          .insert({
+            game_id: gameId,
+            player_id: player.id,
+            status: 'registered'
+          });
+      }
+
+      await refreshPlayers();
+      toast.success(existingReg ? 'Successfully unregistered' : 'Successfully registered');
+    } catch (error) {
+      console.error('Error toggling registration:', error);
+      toast.error('Failed to process registration');
+    }
+  };
 
   const handleDropout = async () => {
     try {
@@ -45,6 +89,27 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
       await refreshPlayers();
     } catch (error) {
       console.error('Error dropping out:', error);
+    }
+  };
+
+  // Determine button properties based on game and player state
+  const getButtonProps = () => {
+    if (isRegistrationOpen) {
+      // During registration window
+      return {
+        onClick: handleRegistrationToggle,
+        className: `btn btn-sm ${isRegistered ? 'btn-error' : 'btn-success'}`,
+        text: isRegistered ? 'UNREGISTER INTEREST' : 'REGISTER INTEREST',
+        show: true
+      };
+    } else {
+      // After registration closes
+      return {
+        onClick: handleDropout,
+        className: `btn btn-sm ${hasDroppedOut ? 'btn-disabled bg-gray-500 text-white cursor-not-allowed' : 'btn-error'}`,
+        text: hasDroppedOut ? 'DROPPED OUT' : 'DROP OUT',
+        show: shouldShowButton
+      };
     }
   };
 
@@ -75,13 +140,15 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
 
   return (
     <div className="space-y-4">
-      <button
-        onClick={handleDropout}
-        className={`btn btn-sm ${hasDroppedOut ? 'btn-disabled bg-gray-500 text-white cursor-not-allowed' : 'btn-error'}`}
-        disabled={hasDroppedOut}
-      >
-        {hasDroppedOut ? 'DROPPED OUT' : 'DROP OUT'}
-      </button>
+      {player?.id && (
+        <button
+          onClick={getButtonProps().onClick}
+          className={getButtonProps().className}
+          style={{ display: getButtonProps().show ? 'block' : 'none' }}
+        >
+          {getButtonProps().text}
+        </button>
+      )}
 
       <PlayerSelectionSection
         title="Selected Players"

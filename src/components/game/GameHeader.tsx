@@ -2,6 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Game } from '../../types/game';
+import CountdownTimer from '../../components/CountdownTimer';
 
 interface GameHeaderProps {
   game: Game;
@@ -11,7 +12,7 @@ interface GameHeaderProps {
 
 /**
  * GameHeader component displays the game title and key statistics
- * Shows game number, date, time, and registration stats
+ * Shows game number, date, time, venue, and registration stats
  */
 export const GameHeader: React.FC<GameHeaderProps> = ({
   game,
@@ -21,9 +22,25 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   // Get the total number of registrations
   const currentlyRegistered = game.game_registrations?.length || 0;
 
-  // Format the date if it exists
+  // Format the date and time
   const formattedDate = game.date ? format(new Date(game.date), 'EEEE, do MMMM yyyy') : '';
-  const formattedTime = game.time ? format(new Date(`2000-01-01T${game.time}`), 'h:mm a') : '';
+  const kickoffTime = game.date ? format(new Date(game.date), '@ h:mmaaa') : '';
+
+  // Determine which countdown to show
+  const now = new Date();
+  let nextEvent = null;
+  let nextEventLabel = '';
+
+  if (game.registration_window_start && new Date(game.registration_window_start) > now) {
+    nextEvent = new Date(game.registration_window_start);
+    nextEventLabel = 'Registration Opens in';
+  } else if (game.registration_window_end && new Date(game.registration_window_end) > now) {
+    nextEvent = new Date(game.registration_window_end);
+    nextEventLabel = 'Registration Closes in';
+  } else if (game.team_announcement_time && new Date(game.team_announcement_time) > now) {
+    nextEvent = new Date(game.team_announcement_time);
+    nextEventLabel = 'Teams Announced in';
+  }
 
   return (
     <motion.div
@@ -31,14 +48,31 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* Game Title and Date */}
+      {/* Game Title, Date, and Venue */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold">WNF #{game.sequence_number || game.game_number || '29'}</h1>
         <div className="text-xl text-gray-600">
-          {formattedDate && <div>{formattedDate}</div>}
-          {formattedTime && <div>{formattedTime}</div>}
+          <div className="flex items-center justify-center space-x-2">
+            <span>{formattedDate}</span>
+            <span>{kickoffTime}</span>
+          </div>
+          {game.venue?.name && (
+            <div className="text-lg text-gray-500 mt-2">
+              {game.venue.name}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Next Event Countdown */}
+      {nextEvent && (
+        <div className="text-center">
+          <div className="bg-info/10 text-info rounded-lg p-4 inline-block">
+            <div className="font-semibold mb-1">{nextEventLabel}</div>
+            <CountdownTimer targetDate={nextEvent} />
+          </div>
+        </div>
+      )}
 
       {/* Game Stats */}
       <div className="grid grid-cols-4 gap-4">

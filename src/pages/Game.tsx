@@ -4,12 +4,15 @@ import { supabase } from '../utils/supabase';
 import { GameDetails } from '../components/game/GameDetails';
 import { GameHeader } from '../components/game/GameHeader';
 import { GameRegistration } from '../components/game/GameRegistration';
-import { GameStatus } from '../components/game/GameStatus';
-import { Game as GameType } from '../types/game';
+import { RegisteredPlayers } from '../components/game/RegisteredPlayers';
+import { PlayerSelectionResults } from '../components/games/PlayerSelectionResults';
+import { TeamSelectionResults } from '../components/games/TeamSelectionResults';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useRegistrationClose } from '../hooks/useRegistrationClose';
 import { useTeamAnnouncement } from '../hooks/useTeamAnnouncement';
 import { useRegistrationOpen } from '../hooks/useRegistrationOpen';
+import { Game as GameType } from '../types/game';
+import { GameStatus } from '../components/game/GameStatus';
 
 const Game = () => {
   const { id } = useParams();
@@ -31,7 +34,7 @@ const Game = () => {
         .from('games')
         .select(`
           *,
-          venues (
+          venue:venues!games_venue_id_fkey (
             id,
             name,
             address,
@@ -131,15 +134,69 @@ const Game = () => {
     onGameUpdated: fetchGameData
   });
 
+  const onGameUpdated = useCallback(async () => {
+    await fetchGameData();
+  }, [fetchGameData]);
+
   const { isTeamAnnouncementTime } = useTeamAnnouncement({
+    game: upcomingGame,
+    onGameUpdated
+  });
+
+  const { isProcessingOpen } = useRegistrationOpen({
     game: upcomingGame,
     onGameUpdated: fetchGameData
   });
 
-  const { isRegistrationOpen, isProcessingOpen } = useRegistrationOpen({
-    game: upcomingGame,
-    onGameUpdated: fetchGameData
-  });
+  // Determine if registration is open based on window times
+  const now = new Date();
+  const isRegistrationOpen = upcomingGame && 
+    now >= new Date(upcomingGame.registration_window_start) &&
+    now < new Date(upcomingGame.registration_window_end);
+
+  // Set up realtime subscription for game updates
+  useEffect(() => {
+    if (!upcomingGame?.id) return;
+
+    // Subscribe to game changes
+    const gameSubscription = supabase
+      .channel(`game-${upcomingGame.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'games',
+          filter: `id=eq.${upcomingGame.id}`
+        },
+        () => {
+          fetchGameData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to registration changes
+    const registrationSubscription = supabase
+      .channel(`game-registrations-${upcomingGame.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'game_registrations',
+          filter: `game_id=eq.${upcomingGame.id}`
+        },
+        () => {
+          fetchGameData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      gameSubscription.unsubscribe();
+      registrationSubscription.unsubscribe();
+    };
+  }, [upcomingGame?.id, fetchGameData]);
 
   useEffect(() => {
     fetchGameData();
@@ -148,12 +205,6 @@ const Game = () => {
   useEffect(() => {
     checkUserRegistration();
   }, [checkUserRegistration, upcomingGame?.game_registrations]);
-
-  useEffect(() => {
-    if (upcomingGame?.status === 'teams_announced' || upcomingGame?.status === 'completed') {
-      fetchGameData();
-    }
-  }, [upcomingGame?.status, fetchGameData]);
 
   if (isLoading) {
     return (
@@ -179,26 +230,36 @@ const Game = () => {
         isRegistrationClosed={isRegistrationClosed}
       />
       
-      <GameRegistration
-        game={upcomingGame}
-        isRegistrationOpen={isRegistrationOpen}
-        isRegistrationClosed={isRegistrationClosed}
-        isUserRegistered={isUserRegistered}
-        isProcessingOpen={isProcessingOpen}
-        isProcessingClose={isProcessingClose}
-        onRegistrationChange={fetchGameData}
-      />
+      {/* Only show GameRegistration and RegisteredPlayers during registration window */}
+      {isRegistrationOpen && (
+        <>
+          <GameRegistration
+            game={upcomingGame}
+            isRegistrationOpen={isRegistrationOpen}
+            isRegistrationClosed={isRegistrationClosed}
+            isUserRegistered={isUserRegistered}
+            isProcessingOpen={isProcessingOpen}
+            isProcessingClose={isProcessingClose}
+            onRegistrationChange={fetchGameData}
+          />
+          <RegisteredPlayers registrations={playerData.registrations} />
+        </>
+      )}
 
-      <GameStatus
-        game={upcomingGame}
-        isLoading={isLoading}
-        isProcessingOpen={isProcessingOpen}
-        isProcessingClose={isProcessingClose}
-        isTeamAnnouncementTime={isTeamAnnouncementTime}
-        registrations={playerData.registrations}
-        selectedPlayers={playerData.selectedPlayers}
-        reservePlayers={playerData.reservePlayers}
-      />
+      {/* Show PlayerSelectionResults after registration closes but before team announcement */}
+      {!isRegistrationOpen && !isTeamAnnouncementTime && upcomingGame.status !== 'teams_announced' && (
+        <PlayerSelectionResults gameId={upcomingGame.id} />
+      )}
+
+      {/* Show TeamSelectionResults after team announcement */}
+      {(isTeamAnnouncementTime || upcomingGame.status === 'teams_announced') && (
+        <TeamSelectionResults 
+          key={`team-selection-${playerData.selectedPlayers.length}`}
+          gameId={upcomingGame.id}
+          selectedPlayers={playerData.selectedPlayers}
+          reservePlayers={playerData.reservePlayers}
+        />
+      )}
     </div>
   );
 };

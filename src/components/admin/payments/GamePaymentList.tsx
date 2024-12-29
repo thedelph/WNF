@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../../../utils/supabase';
+import { supabase, supabaseAdmin } from '../../../utils/supabase';
 import { Game } from '../../../types/game';
 import { toast } from 'react-toastify';
+import PaymentStatusBadge from './PaymentStatusBadge';
 
 interface Props {
   games: Game[];
@@ -30,6 +31,26 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
         .match({ game_id: gameId, player_id: playerId });
 
       if (error) throw error;
+
+      // If marking as paid, send a confirmation notification
+      if (paid) {
+        const { error: notifError } = await supabase
+          .from('notifications')
+          .insert({
+            player_id: playerId,
+            type: 'payment_confirmed',
+            title: 'Payment Confirmed',
+            message: `Your payment for game #${games.find(g => g.id === gameId)?.sequence_number} has been confirmed.`,
+            metadata: {
+              game_id: gameId,
+              action: 'payment_confirmed'
+            }
+          });
+
+        if (notifError) {
+          console.error('Error sending payment confirmation:', notifError);
+        }
+      }
       
       toast.success(`Payment ${paid ? 'marked as paid' : 'unmarked'}`);
       onUpdate();
@@ -41,18 +62,95 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
 
   const handleMarkAllPaid = async (gameId: string) => {
     try {
-      const { error } = await supabase
+      const game = games.find(g => g.id === gameId);
+      if (!game) return;
+
+      const now = new Date().toISOString();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No admin user found');
+
+      // Get the admin player record
+      const { data: adminPlayer } = await supabase
+        .from('players')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!adminPlayer) throw new Error('Admin player record not found');
+
+      // Only update selected players using admin client
+      const { data, error } = await supabaseAdmin
         .from('game_registrations')
         .update({ 
           paid: true,
-          payment_received_date: new Date().toISOString()
+          payment_status: 'admin_verified',
+          payment_received_date: now,
+          payment_verified_at: now,
+          payment_verified_by: adminPlayer.id,  // Use the admin's player ID
+          payment_recipient_id: adminPlayer.id  // Use the admin's player ID
         })
-        .eq('game_id', gameId);
+        .eq('game_id', gameId)
+        .eq('status', 'selected')
+        .select();
+
+      console.log('Update response:', { data, error });
 
       if (error) throw error;
+
+      // Update the local state to reflect the changes
+      const updatedGames = games.map(g => {
+        if (g.id === gameId) {
+          return {
+            ...g,
+            game_registrations: g.game_registrations?.map(reg => {
+              if (reg.status === 'selected') {
+                return {
+                  ...reg,
+                  paid: true,
+                  payment_status: 'admin_verified',
+                  payment_received_date: now,
+                  payment_verified_at: now,
+                  payment_verified_by: adminPlayer.id,
+                  payment_recipient_id: adminPlayer.id
+                };
+              }
+              return reg;
+            })
+          };
+        }
+        return g;
+      });
+
+      // Get selected players for notifications
+      const selectedRegistrations = game.game_registrations?.filter(reg => 
+        reg.status === 'selected'
+      );
+
+      // Send confirmation notifications to selected players only using admin client
+      const notifications = selectedRegistrations?.map(reg => ({
+        player_id: reg.player_id,
+        type: 'payment_confirmed',
+        title: 'Payment Confirmed',
+        message: `Your payment for game #${game.sequence_number} has been confirmed by an admin.`,
+        metadata: {
+          game_id: gameId,
+          action: 'payment_confirmed',
+          verified_by: adminPlayer.id
+        }
+      })) || [];
+
+      if (notifications.length > 0) {
+        const { error: notifError } = await supabaseAdmin
+          .from('notifications')
+          .insert(notifications);
+
+        if (notifError) {
+          console.error('Error sending payment confirmations:', notifError);
+        }
+      }
       
-      toast.success('All players marked as paid');
-      onUpdate();
+      toast.success('All selected players marked as paid');
+      onUpdate();  // Call this to refresh the data from the server
     } catch (error) {
       console.error('Error updating payments:', error);
       toast.error('Failed to update payment status');
@@ -165,22 +263,55 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
                       >
                         <td>{reg.player.friendly_name}</td>
                         <td>
-                          <span className={`badge ${reg.paid ? 'badge-success' : 'badge-error'}`}>
-                            {reg.paid ? 'Paid' : 'Unpaid'}
-                          </span>
+                          <PaymentStatusBadge
+                            paid={reg.paid}
+                            paymentRequired={reg.payment_required}
+                            className="mr-2"
+                          />
                         </td>
                         <td>
                           {reg.payment_received_date 
                             ? new Date(reg.payment_received_date).toLocaleDateString()
                             : '-'}
                         </td>
-                        <td>
+                        <td className="space-x-2">
                           <button
                             className={`btn btn-sm ${reg.paid ? 'btn-error' : 'btn-success'}`}
                             onClick={() => handlePaymentToggle(game.id, reg.player_id, !reg.paid)}
                           >
                             {reg.paid ? 'Mark Unpaid' : 'Mark Paid'}
                           </button>
+                          {!reg.paid && reg.payment_required && (
+                            <button
+                              className="btn btn-sm btn-ghost"
+                              onClick={async () => {
+                                try {
+                                  const { error } = await supabase
+                                    .from('notifications')
+                                    .insert({
+                                      player_id: reg.player_id,
+                                      type: 'payment_reminder',
+                                      title: 'Payment Reminder',
+                                      message: `Reminder: Payment required for game #${game.sequence_number}. Click the Monzo link to pay.`,
+                                      metadata: {
+                                        game_id: game.id,
+                                        payment_link: game.payment_link,
+                                        amount: game.cost_per_person,
+                                        action: 'payment_reminder'
+                                      }
+                                    });
+
+                                  if (error) throw error;
+                                  toast.success('Payment reminder sent');
+                                } catch (error) {
+                                  console.error('Error sending reminder:', error);
+                                  toast.error('Failed to send payment reminder');
+                                }
+                              }}
+                            >
+                              Send Reminder
+                            </button>
+                          )}
                         </td>
                       </motion.tr>
                     ))}

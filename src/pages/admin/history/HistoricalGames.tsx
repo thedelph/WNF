@@ -45,8 +45,9 @@ export default function HistoricalGames() {
             )
           )
         `)
-        .eq('needs_completion', true)
+        .or('status.eq.teams_announced,and(status.eq.completed,completed.eq.false)')
         .gt('created_at', '2023-11-15')
+        .lte('date', new Date().toISOString()) // Only show games where kickoff time has passed
         .order('date', { ascending: false })
 
       if (pendingError) throw pendingError

@@ -1,9 +1,10 @@
 export const GAME_STATUSES = {
   OPEN: 'open',
   UPCOMING: 'upcoming',
-  PLAYERS_ANNOUNCED: 'players_announced',  // After registration closes, players are selected
-  TEAMS_ANNOUNCED: 'teams_announced',      // After team announcement time, teams are balanced
-  COMPLETED: 'completed'
+  PLAYERS_ANNOUNCED: 'players_announced',
+  TEAMS_ANNOUNCED: 'teams_announced',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled'
 } as const;
 
 export type GameStatus = (typeof GAME_STATUSES)[keyof typeof GAME_STATUSES];
@@ -103,3 +104,17 @@ export const ACTIVE_GAME_STATUSES = [
   GAME_STATUSES.PLAYERS_ANNOUNCED,
   GAME_STATUSES.TEAMS_ANNOUNCED,
 ] as const
+
+export type NotificationType = 
+  | 'game_created'
+  | 'game_cancelled'
+  | 'team_announced'
+  | 'game_reminder'
+  | 'payment_request'
+  | 'payment_confirmed'
+  | 'registration_confirmed'
+  | 'registration_removed'
+  | 'bonus_earned'
+  | 'penalty_earned'
+  | 'system_announcement'
+  | 'slot_offer'  // Added this type to match the database

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../../utils/supabase'
 import { toast } from 'react-toastify'
+import { GAME_STATUSES } from '../../../types/game'
 
 const GameCreationForm: React.FC = () => {
   const navigate = useNavigate()
@@ -28,22 +29,41 @@ const GameCreationForm: React.FC = () => {
         return
       }
 
+      const gameData = {
+        date: gameDate.toISOString(),
+        registration_window_start: regStart.toISOString(),
+        registration_window_end: regEnd.toISOString(),
+        status: GAME_STATUSES.OPEN,
+        needs_completion: true,
+        is_historical: false,
+        teams_announced: false,
+        completed: false,
+        random_slots: 2,
+        max_players: 18,
+        score_blue: null,
+        score_orange: null,
+        outcome: null
+      }
+
+      console.log('Attempting to create game with data:', gameData)
+
       const { error } = await supabase
         .from('games')
-        .insert({
-          date: gameDate.toISOString(),
-          registration_window_start: regStart.toISOString(),
-          registration_window_end: regEnd.toISOString(),
-          status: 'upcoming'
-        })
+        .insert(gameData)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error creating game:', error)
+        if (error.details) console.error('Error details:', error.details)
+        if (error.hint) console.error('Error hint:', error.hint)
+        toast.error(`Failed to create game: ${error.message || 'Unknown error'}`)
+        return
+      }
 
       toast.success('Game created successfully!')
       navigate('/game')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating game:', error)
-      toast.error('Failed to create game')
+      toast.error(`Failed to create game: ${error.message || 'Unknown error'}`)
     }
   }
 

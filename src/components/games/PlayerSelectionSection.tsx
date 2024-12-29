@@ -1,14 +1,13 @@
 import React from 'react';
-import { IconType } from 'react-icons';
-import { ExtendedPlayerData } from '../../types/playerSelection';
 import { PlayerListHeader } from './PlayerListHeader';
 import { PlayerList } from './PlayerList';
+import { ExtendedPlayerData } from '../../types/playerSelection';
+import { IconType } from 'react-icons';
 
 interface PlayerSelectionSectionProps {
   title: string;
   icon: IconType;
   players: ExtendedPlayerData[];
-  allXpValues: number[];
   isExpanded: boolean;
   onToggle: () => void;
   children?: (player: ExtendedPlayerData) => React.ReactNode;
@@ -22,7 +21,6 @@ export const PlayerSelectionSection: React.FC<PlayerSelectionSectionProps> = ({
   title,
   icon,
   players,
-  allXpValues,
   isExpanded,
   onToggle,
   children
@@ -40,7 +38,6 @@ export const PlayerSelectionSection: React.FC<PlayerSelectionSectionProps> = ({
       />
       <PlayerList
         players={players}
-        allXpValues={allXpValues}
         isExpanded={isExpanded}
       >
         {children}

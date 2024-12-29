@@ -18,24 +18,55 @@ const PaymentDashboard: React.FC = () => {
 
   const fetchGames = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      // First fetch games with venue info
+      const { data: gamesData, error: gamesError } = await supabase
         .from('games')
         .select(`
           *,
-          game_registrations (
-            *,
-            player:players (*),
-            paid_by:players (*),
-            payment_recipient:players (*)
-          ),
           venue:venues (*)
         `)
         .order('date', { ascending: false });
 
-      if (error) throw error;
-      setGames(data || []);
-    } catch (error) {
+      if (gamesError) throw gamesError;
+
+      // Then fetch all game registrations with player info
+      const { data: registrationsData, error: regsError } = await supabase
+        .from('game_registrations')
+        .select(`
+          *,
+          player:players!game_registrations_player_id_fkey (
+            id,
+            friendly_name
+          ),
+          paid_by:players!game_registrations_paid_by_player_id_fkey (
+            id,
+            friendly_name
+          ),
+          payment_recipient:players!game_registrations_payment_recipient_id_fkey (
+            id,
+            friendly_name
+          ),
+          payment_verifier:players!game_registrations_payment_verified_by_fkey (
+            id,
+            friendly_name
+          )
+        `)
+        .in('game_id', gamesData?.map(game => game.id) || []);
+
+      if (regsError) throw regsError;
+
+      // Combine the data
+      const gamesWithRegistrations = gamesData?.map(game => ({
+        ...game,
+        game_registrations: registrationsData?.filter(reg => reg.game_id === game.id) || []
+      })) || [];
+
+      setGames(gamesWithRegistrations);
+    } catch (error: any) {
       console.error('Error fetching games:', error);
+      toast.error(error.message || 'Failed to fetch games data');
     } finally {
       setLoading(false);
     }

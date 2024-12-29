@@ -3,6 +3,7 @@ import { FaUser } from 'react-icons/fa';
 import { calculatePlayerXP } from '../../utils/xpCalculations';
 import { calculateRarity } from '../../utils/rarityCalculations';
 import PlayerCard from '../PlayerCard';
+import { usePlayerStats } from '../../hooks/usePlayerStats';
 
 interface GameRegistration {
   id: string;
@@ -27,20 +28,7 @@ interface RegisteredPlayersProps {
 }
 
 export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrations }) => {
-  const getCalculatedXP = (registration: GameRegistration): number => {
-    if (!registration?.player) {
-      return 0;
-    }
-    
-    const stats = {
-      caps: registration.player.caps || 0,
-      activeBonuses: registration.player.active_bonuses || 0,
-      activePenalties: registration.player.active_penalties || 0,
-      currentStreak: registration.player.current_streak || 0
-    };
-    
-    return calculatePlayerXP(stats);
-  };
+  const { allPlayersXP, loading } = usePlayerStats();
 
   // Filter out any invalid registrations and sort by XP
   const validRegistrations = (registrations || []).filter(reg => {
@@ -48,12 +36,21 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
     return isValid;
   });
 
-  const sortedRegistrations = [...validRegistrations].sort(
-    (a, b) => getCalculatedXP(b) - getCalculatedXP(a)
-  );
-
-  // Calculate rarity based on XP distribution
-  const allXPValues = sortedRegistrations.map(r => getCalculatedXP(r));
+  const sortedRegistrations = [...validRegistrations].sort((a, b) => {
+    const aXP = calculatePlayerXP({
+      caps: a.player.caps || 0,
+      activeBonuses: a.player.active_bonuses || 0,
+      activePenalties: a.player.active_penalties || 0,
+      currentStreak: a.player.current_streak || 0
+    });
+    const bXP = calculatePlayerXP({
+      caps: b.player.caps || 0,
+      activeBonuses: b.player.active_bonuses || 0,
+      activePenalties: b.player.active_penalties || 0,
+      currentStreak: b.player.current_streak || 0
+    });
+    return bXP - aXP;
+  });
 
   if (!sortedRegistrations.length) {
     return (
@@ -71,8 +68,15 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {sortedRegistrations.map((registration) => {
-          if (!registration?.player) return null;
-          
+          const playerStats = {
+            caps: registration.player.caps || 0,
+            activeBonuses: registration.player.active_bonuses || 0,
+            activePenalties: registration.player.active_penalties || 0,
+            currentStreak: registration.player.current_streak || 0
+          };
+
+          const playerXP = calculatePlayerXP(playerStats);
+
           return (
             <div key={registration.id} className="relative">
               {registration.randomly_selected && (
@@ -90,8 +94,9 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
                 winRate={registration.player.win_rate}
                 currentStreak={registration.player.current_streak}
                 maxStreak={registration.player.max_streak}
-                rarity={calculateRarity(getCalculatedXP(registration), allXPValues)}
+                rarity={!loading && allPlayersXP.length > 0 ? calculateRarity(playerXP, allPlayersXP) : 'Common'}
                 avatarSvg={registration.player.avatar_svg}
+                isRandomlySelected={registration.randomly_selected}
               />
             </div>
           );
