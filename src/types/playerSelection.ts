@@ -8,6 +8,14 @@ export interface Player {
   stats?: PlayerStats;
 }
 
+export interface PlayerStats {
+  caps: number;
+  activeBonuses: number;
+  activePenalties: number;
+  currentStreak: number;
+  gameSequences?: string[];
+}
+
 export interface ExtendedPlayerData {
   id: string;
   friendly_name: string;
@@ -17,6 +25,10 @@ export interface ExtendedPlayerData {
   stats: PlayerStats;
   isRandomlySelected: boolean;
   selectionMethod: string;
+  slotOffers?: Array<{
+    status: 'pending' | 'accepted' | 'declined';
+  }>;
+  has_declined?: boolean;
 }
 
 export interface PlayerSelectionResultsProps {

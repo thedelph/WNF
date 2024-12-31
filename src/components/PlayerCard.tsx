@@ -22,6 +22,7 @@ interface PlayerCardProps {
   status?: 'selected' | 'reserve' | 'dropped_out';
   hasSlotOffer?: boolean;
   slotOfferStatus?: 'pending' | 'accepted' | 'declined';
+  gameSequences?: number[]
   children?: React.ReactNode;
 }
 
@@ -41,6 +42,7 @@ export default function PlayerCard({
   status,
   hasSlotOffer,
   slotOfferStatus,
+  gameSequences,
   children
 }: PlayerCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -67,7 +69,8 @@ export default function PlayerCard({
     activeBonuses,
     activePenalties,
     currentStreak,
-    dropoutPenalties
+    dropoutPenalties,
+    gameSequences
   });
   const streakModifier = currentStreak * 0.1;
   const bonusModifier = activeBonuses * 0.1;

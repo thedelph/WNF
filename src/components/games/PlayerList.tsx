@@ -34,27 +34,39 @@ export const PlayerList: React.FC<PlayerListProps> = ({
           className="overflow-hidden"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {players.map((player) => (
-              <PlayerCard
-                key={player.id}
-                id={player.id}
-                friendlyName={player.friendly_name}
-                caps={player.stats.caps}
-                preferredPosition={player.preferredPosition}
-                activeBonuses={player.stats.activeBonuses}
-                activePenalties={player.stats.activePenalties}
-                winRate={player.win_rate}
-                currentStreak={player.stats.currentStreak}
-                maxStreak={player.max_streak}
-                rarity={!loading ? calculateRarity(calculatePlayerXP(player.stats), allPlayersXP) : 'Common'}
-                avatarSvg={player.avatar_svg}
-                isRandomlySelected={player.isRandomlySelected}
-                hasSlotOffer={player.slotOffers?.some(offer => offer.status === 'pending')}
-                slotOfferStatus={player.has_declined ? 'declined' : player.slotOffers?.find(offer => offer.status === 'pending') ? 'pending' : undefined}
-              >
-                {children?.(player)}
-              </PlayerCard>
-            ))}
+            {players.map((player) => {
+              // Calculate XP once for both rarity and display
+              const playerXP = calculatePlayerXP({
+                caps: player.stats.caps,
+                activeBonuses: player.stats.activeBonuses,
+                activePenalties: player.stats.activePenalties,
+                currentStreak: player.stats.currentStreak,
+                gameSequences: player.stats.gameSequences
+              });
+
+              return (
+                <PlayerCard
+                  key={player.id}
+                  id={player.id}
+                  friendlyName={player.friendly_name}
+                  caps={player.stats.caps}
+                  preferredPosition={player.preferredPosition}
+                  activeBonuses={player.stats.activeBonuses}
+                  activePenalties={player.stats.activePenalties}
+                  winRate={player.win_rate}
+                  currentStreak={player.stats.currentStreak}
+                  maxStreak={player.max_streak}
+                  rarity={!loading ? calculateRarity(playerXP, allPlayersXP) : 'Common'}
+                  avatarSvg={player.avatar_svg}
+                  isRandomlySelected={player.isRandomlySelected}
+                  hasSlotOffer={player.slotOffers?.some(offer => offer.status === 'pending')}
+                  slotOfferStatus={player.has_declined ? 'declined' : player.slotOffers?.find(offer => offer.status === 'pending') ? 'pending' : undefined}
+                  gameSequences={player.stats.gameSequences}
+                >
+                  {children?.(player)}
+                </PlayerCard>
+              );
+            })}
           </div>
         </motion.div>
       )}

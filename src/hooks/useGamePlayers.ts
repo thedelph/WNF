@@ -56,30 +56,47 @@ export const useGamePlayers = (gameId: string) => {
       if (slotOffersError) throw slotOffersError;
       setActiveSlotOffers(slotOffers?.filter(offer => offer.status === 'pending') || []);
 
-      // Fetch registrations
-      const { data: registrations, error } = await supabase
-        .from('game_registrations')
-        .select(`
-          player_id,
-          status,
-          created_at,
-          selection_method,
-          players!game_registrations_player_id_fkey (
-            id,
-            friendly_name,
-            caps,
-            active_bonuses,
-            active_penalties,
-            current_streak,
-            max_streak,
-            win_rate,
-            avatar_svg
-          )
-        `)
-        .eq('game_id', gameId)
-        .order('created_at', { ascending: true });
+      // Fetch registrations and game sequences in parallel
+      const [registrationsResponse] = await Promise.all([
+        supabase
+          .from('game_registrations')
+          .select(`
+            player_id,
+            status,
+            created_at,
+            selection_method,
+            players!game_registrations_player_id_fkey (
+              id,
+              friendly_name,
+              caps,
+              active_bonuses,
+              active_penalties,
+              current_streak,
+              max_streak,
+              win_rate,
+              avatar_svg
+            )
+          `)
+          .eq('game_id', gameId)
+          .order('created_at', { ascending: true })
+      ]);
 
-      if (error) throw error;
+      if (registrationsResponse.error) throw registrationsResponse.error;
+
+      const registrations = registrationsResponse.data;
+
+      // Try to get game sequences, but don't fail if the function doesn't exist yet
+      let gameSequences = [];
+      try {
+        const { data: sequences, error: seqError } = await supabase.rpc('get_player_game_sequences');
+        if (!seqError) {
+          gameSequences = sequences;
+        } else {
+          console.warn('Game sequences not available:', seqError);
+        }
+      } catch (err) {
+        console.warn('Game sequences not available:', err);
+      }
 
       const selected: ExtendedPlayerData[] = [];
       const reserves: ExtendedPlayerData[] = [];
@@ -93,6 +110,10 @@ export const useGamePlayers = (gameId: string) => {
           offer => offer.player_id === player.id
         ) || [];
 
+        const playerSequences = gameSequences.find(
+          seq => seq?.player_id === player.id
+        )?.game_sequences || [];
+
         const playerData: ExtendedPlayerData = {
           id: player.id,
           friendly_name: player.friendly_name,
@@ -104,15 +125,12 @@ export const useGamePlayers = (gameId: string) => {
             activeBonuses: player.active_bonuses || 0,
             activePenalties: player.active_penalties || 0,
             currentStreak: player.current_streak || 0,
-            dropoutPenalties: 0
+            gameSequences: playerSequences
           },
           isRandomlySelected: reg.selection_method === 'random',
-          selectionMethod: reg.selection_method || 'merit',
-          preferredPosition: '',
+          selectionMethod: reg.selection_method || '',
           slotOffers: playerSlotOffers,
-          has_declined: slotOffers?.some(
-            offer => offer.player_id === player.id && offer.status === 'declined'
-          ) || false
+          has_declined: playerSlotOffers.some(offer => offer.status === 'declined')
         };
 
         if (reg.status === 'selected') {

@@ -46,25 +46,37 @@ export default function PlayerCardGrid() {
     try {
       setLoading(true);
       
-      // First get all players
-      const { data: playersData, error: playersError } = await supabase
-        .from('players')
-        .select('*');
+      // First get all players and game sequences in parallel
+      const [playersResponse, gameRegsResponse] = await Promise.all([
+        supabase.from('players').select('*'),
+        supabase.from('game_registrations')
+          .select(`
+            player_id,
+            team,
+            games (
+              outcome
+            )
+          `)
+      ]);
       
-      if (playersError) throw playersError;
+      if (playersResponse.error) throw playersResponse.error;
+      if (gameRegsResponse.error) throw gameRegsResponse.error;
 
-      // Get game registrations for win rate calculations
-      const { data: gameRegs, error: gameRegsError } = await supabase
-        .from('game_registrations')
-        .select(`
-          player_id,
-          team,
-          games (
-            outcome
-          )
-        `);
+      const playersData = playersResponse.data;
+      const gameRegs = gameRegsResponse.data;
 
-      if (gameRegsError) throw gameRegsError;
+      // Try to get game sequences, but don't fail if the function doesn't exist yet
+      let gameSequences = [];
+      try {
+        const { data: sequences, error: seqError } = await supabase.rpc('get_player_game_sequences');
+        if (!seqError) {
+          gameSequences = sequences;
+        } else {
+          console.warn('Game sequences not available:', seqError);
+        }
+      } catch (err) {
+        console.warn('Game sequences not available:', err);
+      }
 
       // Calculate win rates for each player
       const winRates = new Map();
@@ -86,11 +98,16 @@ export default function PlayerCardGrid() {
       });
 
       const playersWithXP = playersData.map(player => {
+        const playerSequences = gameSequences.find(
+          seq => seq?.player_id === player.id
+        )?.game_sequences || [];
+
         const stats = {
           caps: player.caps || 0,
           activeBonuses: player.active_bonuses || 0,
           activePenalties: player.active_penalties || 0,
-          currentStreak: player.current_streak || 0
+          currentStreak: player.current_streak || 0,
+          gameSequences: playerSequences
         };
 
         const xp = calculatePlayerXP(stats);
