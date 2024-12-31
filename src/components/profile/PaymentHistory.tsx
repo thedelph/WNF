@@ -45,7 +45,6 @@ const PaymentHistory = () => {
         `)
         .eq('player_id', player?.id)
         .eq('status', 'selected')
-        .eq('selected', true)
         .order('created_at', { ascending: false })
         .limit(10)
 
@@ -115,7 +114,7 @@ const PaymentHistory = () => {
                   />
                 </td>
                 <td>
-                  {game.payment_link && (
+                  {game.payment_link && game.payment_status !== 'admin_verified' && (
                     <a 
                       href={game.payment_link}
                       target="_blank"

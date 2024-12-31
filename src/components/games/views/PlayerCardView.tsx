@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import PlayerCard from '../../PlayerCard';
-import { SelectedPlayer } from '../../../types/game';
+import { ExtendedPlayerData } from '../../../types/playerSelection';
 
 interface PlayerCardViewProps {
-  players: SelectedPlayer[];
+  players: ExtendedPlayerData[];
   title: string;
 }
 
@@ -61,15 +61,16 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
                     <PlayerCard
                       id={player.id}
                       friendlyName={player.friendly_name}
-                      caps={player.caps || 0}
+                      caps={player.stats.caps}
                       preferredPosition=""
-                      activeBonuses={player.active_bonuses || 0}
-                      activePenalties={player.active_penalties || 0}
-                      winRate={player.win_rate || 0}
-                      currentStreak={player.current_streak || 0}
-                      maxStreak={player.max_streak || 0}
-                      rarity={player.rarity as any}
-                      avatarSvg={player.avatar_svg || ''}
+                      activeBonuses={player.stats.activeBonuses}
+                      activePenalties={player.stats.activePenalties}
+                      winRate={player.win_rate}
+                      currentStreak={player.stats.currentStreak}
+                      maxStreak={player.max_streak}
+                      rarity="Common"
+                      avatarSvg={player.avatar_svg}
+                      isRandomlySelected={player.isRandomlySelected}
                     />
                   </motion.div>
                 ))}

@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast'
 import { calculatePlayerXP } from '../utils/xpCalculations'
 import { useAuth } from '../context/AuthContext'
 import StarRating from '../components/StarRating'
+import XPBreakdown from '../components/profile/XPBreakdown'
 
 interface GameHistory {
   game_id: string
@@ -85,7 +86,7 @@ export default function PlayerProfile() {
     }
 
     if (filters.team) {
-      filteredGames = filteredGames.filter(game => 
+      filteredGames = filteredGames.filter(game =>
         game.team && game.team.toLowerCase() === filters.team.toLowerCase()
       );
     }
@@ -294,7 +295,7 @@ export default function PlayerProfile() {
           }))
 
         // Calculate win rate
-        const gamesWithKnownOutcome = processedGames.filter(game => 
+        const gamesWithKnownOutcome = processedGames.filter(game =>
           game.games?.outcome !== null
         );
         
@@ -398,13 +399,6 @@ export default function PlayerProfile() {
           activePenalties: player.active_penalties ?? 0,
           currentStreak: player.current_streak ?? 0
         });
-        console.log('XP Calculation:', {
-          caps: player.caps,
-          activeBonuses: player.active_bonuses,
-          activePenalties: player.active_penalties,
-          currentStreak: player.current_streak,
-          calculatedXP: xpValue
-        });
         return xpValue.toString();
       })()
     },
@@ -465,6 +459,19 @@ export default function PlayerProfile() {
           <div key={index} className="bg-base-100 rounded-lg p-4 shadow-lg">
             <h2 className="text-2xl font-bold mb-2">{stat.label}</h2>
             <p className="text-xl">{stat.value}</p>
+            {stat.label === 'XP' && (
+              <div className="stats shadow">
+                <div className="stat">
+                  <XPBreakdown stats={{
+                    caps: player.caps || 0,
+                    activeBonuses: player.active_bonuses || 0,
+                    activePenalties: player.active_penalties || 0,
+                    currentStreak: player.current_streak || 0,
+                    gameSequences: player.game_sequences
+                  }} />
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -57,7 +57,7 @@ export const useGamePlayers = (gameId: string) => {
       setActiveSlotOffers(slotOffers?.filter(offer => offer.status === 'pending') || []);
 
       // Fetch registrations and game sequences in parallel
-      const [registrationsResponse] = await Promise.all([
+      const [registrationsResponse, gameRegsResponse] = await Promise.all([
         supabase
           .from('game_registrations')
           .select(`
@@ -73,17 +73,46 @@ export const useGamePlayers = (gameId: string) => {
               active_penalties,
               current_streak,
               max_streak,
-              win_rate,
               avatar_svg
             )
           `)
           .eq('game_id', gameId)
-          .order('created_at', { ascending: true })
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('game_registrations')
+          .select(`
+            player_id,
+            team,
+            games (
+              outcome
+            )
+          `)
       ]);
 
       if (registrationsResponse.error) throw registrationsResponse.error;
+      if (gameRegsResponse.error) throw gameRegsResponse.error;
 
       const registrations = registrationsResponse.data;
+      const gameRegs = gameRegsResponse.data;
+
+      // Calculate win rates for each player
+      const winRates = new Map();
+      gameRegs.forEach(reg => {
+        if (!reg.games?.outcome) return;
+        
+        const playerId = reg.player_id;
+        if (!winRates.has(playerId)) {
+          winRates.set(playerId, { wins: 0, total: 0 });
+        }
+        
+        const stats = winRates.get(playerId);
+        const team = reg.team?.toLowerCase();
+        const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
+                     (team === 'orange' && reg.games.outcome === 'orange_win');
+        
+        if (isWin) stats.wins++;
+        stats.total++;
+      });
 
       // Try to get game sequences, but don't fail if the function doesn't exist yet
       let gameSequences = [];
@@ -114,10 +143,15 @@ export const useGamePlayers = (gameId: string) => {
           seq => seq?.player_id === player.id
         )?.game_sequences || [];
 
+        const playerStats = winRates.get(player.id) || { wins: 0, total: 0 };
+        const winRate = playerStats.total > 0 
+          ? Number(((playerStats.wins / playerStats.total) * 100).toFixed(1))
+          : 0;
+
         const playerData: ExtendedPlayerData = {
           id: player.id,
           friendly_name: player.friendly_name,
-          win_rate: player.win_rate || 0,
+          win_rate: winRate,
           max_streak: player.max_streak || 0,
           avatar_svg: player.avatar_svg || '',
           stats: {

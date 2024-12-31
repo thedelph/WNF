@@ -9,6 +9,7 @@ import { toast } from 'react-toastify'
 import AvatarCreator from '../components/AvatarCreator'
 import { calculatePlayerXP } from '../utils/xpCalculations'
 import PaymentHistory from '../components/profile/PaymentHistory'
+import XPBreakdown from '../components/profile/XPBreakdown'
 
 interface PlayerProfile {
   id: string
@@ -37,19 +38,64 @@ export default function Component() {
     const fetchProfile = async () => {
       try {
         console.log('🔄 Fetching profile data...')
-        const { data, error } = await supabase
-          .from('players')
-          .select('*')
-          .eq('user_id', user!.id)
-          .single()
+        
+        // Fetch player data and game registrations in parallel
+        const [profileResponse, gameRegsResponse] = await Promise.all([
+          supabase
+            .from('players')
+            .select('*')
+            .eq('user_id', user!.id)
+            .single(),
+          supabase
+            .from('game_registrations')
+            .select(`
+              player_id,
+              team,
+              games (
+                outcome
+              )
+            `)
+        ]);
 
-        if (error) {
-          console.error('❌ Profile fetch error:', error)
-          throw error
+        if (profileResponse.error) {
+          console.error('❌ Profile fetch error:', profileResponse.error)
+          throw profileResponse.error
         }
 
-        console.log('✅ Full profile data:', data)
-        setProfile(data)
+        if (gameRegsResponse.error) {
+          console.error('❌ Game registrations fetch error:', gameRegsResponse.error)
+          throw gameRegsResponse.error
+        }
+
+        const profileData = profileResponse.data;
+        const gameRegs = gameRegsResponse.data;
+
+        // Calculate win rate
+        let wins = 0;
+        let totalGames = 0;
+        gameRegs.forEach(reg => {
+          if (!reg.games?.outcome || reg.player_id !== profileData.id) return;
+          
+          const team = reg.team?.toLowerCase();
+          const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
+                       (team === 'orange' && reg.games.outcome === 'orange_win');
+          
+          if (isWin) wins++;
+          totalGames++;
+        });
+
+        const winRate = totalGames > 0 
+          ? Number((wins / totalGames * 100).toFixed(1))
+          : 0;
+
+        // Update profile data with calculated win rate
+        const profileWithWinRate = {
+          ...profileData,
+          win_rate: winRate
+        };
+
+        console.log('✅ Full profile data:', profileWithWinRate)
+        setProfile(profileWithWinRate)
       } catch (error) {
         console.error('❌ Error in profile fetch:', error)
       } finally {
@@ -208,20 +254,28 @@ export default function Component() {
                   </div>
                 </div>
 
+                <div className="stats shadow">
+                  <div className="stat">
+                    <div className="stat-title">XP</div>
+                    <div className="stat-value text-primary">{profile.xp}</div>
+                    <XPBreakdown stats={{
+                      caps: profile.caps,
+                      activeBonuses: profile.active_bonuses,
+                      activePenalties: profile.active_penalties,
+                      currentStreak: profile.current_streak,
+                      gameSequences: profile.game_sequences
+                    }} />
+                  </div>
+                </div>
+
                 <div>
                   <h3 className="text-xl font-semibold mb-4">Stats</h3>
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { 
-                        label: 'XP', 
-                        value: calculatePlayerXP({
-                          caps: profile.caps ?? 0,
-                          activeBonuses: profile.active_bonuses ?? 0,
-                          activePenalties: profile.active_penalties ?? 0,
-                          currentStreak: profile.current_streak ?? 0
-                        }).toString()
+                        label: 'Caps', 
+                        value: profile.caps 
                       },
-                      { label: 'Caps', value: profile.caps },
                       { label: 'Win Rate', value: `${profile.win_rate}%` },
                       { label: 'Active Bonuses', value: profile.active_bonuses },
                       { label: 'Active Penalties', value: profile.active_penalties },
@@ -236,7 +290,6 @@ export default function Component() {
                   </div>
                 </div>
               </motion.div>
-              
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
