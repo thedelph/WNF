@@ -4,21 +4,24 @@ import { supabase } from '../../utils/supabase';
 interface YearSelectorProps {
   selectedYear: number | 'all';
   onYearChange: (year: number | 'all') => void;
+  onYearsLoaded?: (years: number[]) => void;
 }
 
-export const YearSelector = ({ selectedYear, onYearChange }: YearSelectorProps) => {
+export const YearSelector = ({ selectedYear, onYearChange, onYearsLoaded }: YearSelectorProps) => {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchYears = async () => {
       const { data: years, error } = await supabase.rpc('get_game_years');
       if (!error && years) {
-        setAvailableYears(years.map(y => y.year));
+        const yearsList = years.map(y => y.year);
+        setAvailableYears(yearsList);
+        onYearsLoaded?.(yearsList);
       }
     };
 
     fetchYears();
-  }, []);
+  }, [onYearsLoaded]);
 
   return (
     <div className="flex justify-center gap-2 mb-4">

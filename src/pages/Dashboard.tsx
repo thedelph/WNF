@@ -30,8 +30,13 @@ const containerVariants = {
 
 export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   
-  const stats = useStats(selectedYear === 'all' ? undefined : selectedYear);
+  const stats = useStats(selectedYear === 'all' ? undefined : selectedYear, availableYears);
+
+  const handleYearChange = (year: number | 'all') => {
+    setSelectedYear(year);
+  };
 
   if (stats.loading) {
     return (
@@ -49,9 +54,6 @@ export default function Dashboard() {
     );
   }
 
-  console.log('Team Color Frequency - Blue:', stats.teamColorFrequency.blue);
-  console.log('Team Color Frequency - Orange:', stats.teamColorFrequency.orange);
-
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div
@@ -62,7 +64,8 @@ export default function Dashboard() {
         <h1 className="text-4xl font-bold mb-4">WNF Stats</h1>
         <YearSelector
           selectedYear={selectedYear}
-          onYearChange={setSelectedYear}
+          onYearChange={handleYearChange}
+          onYearsLoaded={setAvailableYears}
         />
       </motion.div>
 

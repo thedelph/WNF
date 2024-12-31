@@ -48,7 +48,7 @@ interface Stats {
   error: string | null;
 }
 
-export const useStats = (year?: number) => {
+export const useStats = (year?: number, availableYears?: number[]) => {
   const [stats, setStats] = useState<Stats>({
     luckyBibColor: { color: 'blue', winRate: 0 },
     topAttendanceStreaks: [],
@@ -84,10 +84,7 @@ export const useStats = (year?: number) => {
             target_year: year || null 
           });
 
-        if (statsError) {
-          console.error('Stats error:', statsError);
-          throw statsError;
-        }
+        if (statsError) throw statsError;
 
         // Fetch player caps (includes all games)
         const { data: playerCaps, error: capsError } = await supabase
@@ -95,10 +92,7 @@ export const useStats = (year?: number) => {
             target_year: year || null
           });
 
-        if (capsError) {
-          console.error('Caps error:', capsError);
-          throw capsError;
-        }
+        if (capsError) throw capsError;
 
         // Fetch attendance streaks
         const { data: streakStats, error: streakError } = await supabase
@@ -106,12 +100,7 @@ export const useStats = (year?: number) => {
             target_year: year || null
           });
 
-        if (streakError) {
-          console.error('Streak error:', streakError);
-          throw streakError;
-        }
-
-        console.log('Raw streak stats:', streakStats);
+        if (streakError) throw streakError;
 
         // Create a map of player streaks
         const streakMap = new Map(
@@ -120,8 +109,6 @@ export const useStats = (year?: number) => {
             max_streak: Number(s.max_streak) 
           }]) || []
         );
-
-        console.log('Streak map:', Object.fromEntries(streakMap));
 
         // Create a map of player caps
         const capsMap = new Map(
@@ -175,8 +162,6 @@ export const useStats = (year?: number) => {
 
         if (teamColorError) throw teamColorError;
 
-        console.log('Team color stats:', teamColorStats);
-
         // Transform team color stats
         const transformedTeamColorStats = teamColorStats?.map(p => ({
           id: p.id,
@@ -217,13 +202,16 @@ export const useStats = (year?: number) => {
             const sorted = allPlayers
               .filter(p => p.maxStreak > 0)
               .sort((a, b) => b.maxStreak - a.maxStreak);
-            console.log('Top attendance streaks before threshold:', sorted);
             const threshold = sorted[2]?.maxStreak || 0;
             const result = sorted.filter(p => p.maxStreak >= threshold);
-            console.log('Top attendance streaks after threshold:', result);
             return result;
           })(),
           currentStreaks: (() => {
+            // Only show current streaks for ALL TIME or latest year
+            if (year !== undefined && year !== Math.max(...availableYears)) {
+              return [];
+            }
+            
             // Filter out players with no current streak
             const sorted = allPlayers
               .filter(p => p.currentStreak > 0)
@@ -240,12 +228,6 @@ export const useStats = (year?: number) => {
             
             // Include all players that meet or exceed the threshold
             const result = sorted.filter(p => p.currentStreak >= threshold);
-            
-            console.log('Current streaks calculation:', {
-              allPlayers: sorted,
-              threshold,
-              result
-            });
             
             return result;
           })(),
@@ -293,7 +275,7 @@ export const useStats = (year?: number) => {
     };
 
     fetchStats();
-  }, [year]);
+  }, [year, availableYears]);
 
   return stats;
 };
