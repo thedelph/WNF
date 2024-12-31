@@ -182,7 +182,7 @@ export default function XPBreakdown({ stats }: XPBreakdownProps) {
                     <div className="card-body p-3">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h5 className="font-medium">Win Streak Bonus</h5>
+                          <h5 className="font-medium">Attendance Streak Bonus</h5>
                           <p className="text-sm opacity-70">Current streak: {stats.currentStreak}</p>
                         </div>
                         <div className="text-right">
