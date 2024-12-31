@@ -37,8 +37,6 @@ export default function Component() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        console.log('🔄 Fetching profile data...')
-        
         // Fetch player data and game registrations in parallel
         const [profileResponse, gameRegsResponse] = await Promise.all([
           supabase
@@ -57,15 +55,8 @@ export default function Component() {
             `)
         ]);
 
-        if (profileResponse.error) {
-          console.error('❌ Profile fetch error:', profileResponse.error)
-          throw profileResponse.error
-        }
-
-        if (gameRegsResponse.error) {
-          console.error('❌ Game registrations fetch error:', gameRegsResponse.error)
-          throw gameRegsResponse.error
-        }
+        if (profileResponse.error) throw profileResponse.error
+        if (gameRegsResponse.error) throw gameRegsResponse.error
 
         const profileData = profileResponse.data;
         const gameRegs = gameRegsResponse.data;
@@ -94,10 +85,10 @@ export default function Component() {
           win_rate: winRate
         };
 
-        console.log('✅ Full profile data:', profileWithWinRate)
         setProfile(profileWithWinRate)
       } catch (error) {
-        console.error('❌ Error in profile fetch:', error)
+        setLoading(false)
+        toast.error('Failed to load profile data')
       } finally {
         setLoading(false)
       }
@@ -141,7 +132,6 @@ export default function Component() {
       setIsEditing(false)
     } catch (error) {
       toast.error('Error updating profile')
-      console.error('Error updating profile:', error)
     }
   }
 
@@ -167,7 +157,6 @@ export default function Component() {
       toast.success('Avatar updated successfully!')
     } catch (error) {
       toast.error('Error updating avatar')
-      console.error('Error updating avatar:', error)
     }
   }
 
