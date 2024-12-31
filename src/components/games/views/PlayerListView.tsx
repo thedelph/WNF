@@ -4,6 +4,10 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { SelectedPlayer } from '../../../types/game';
 import { calculatePlayerXP } from '../../../utils/xpCalculations';
 import { FaUser, FaUserClock } from 'react-icons/fa';
+import { useAdminPermissions } from '../../../hooks/useAdminPermissions';
+import { handlePlayerDropoutAndOffers } from '../../../utils/dropout';
+import { toast } from 'react-hot-toast';
+import { useUser } from '../../../hooks/useUser';
 
 interface PlayerListViewProps {
   selectedPlayers: SelectedPlayer[];
@@ -16,6 +20,8 @@ interface PlayerListViewProps {
   setShowSelected: (show: boolean) => void;
   setShowReserves: (show: boolean) => void;
   setShowDroppedOut: (show: boolean) => void;
+  gameId: string;
+  onPlayerDropout?: () => void;
   children?: (player: SelectedPlayer) => React.ReactNode;
 }
 
@@ -33,6 +39,8 @@ interface PlayerSectionProps {
   isExpanded: boolean;
   onToggle: () => void;
   currentUserId?: string;
+  gameId: string;
+  onPlayerDropout?: () => void;
   children?: (player: any) => React.ReactNode;
 }
 
@@ -46,14 +54,46 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
   isExpanded,
   onToggle,
   currentUserId,
+  gameId,
+  onPlayerDropout,
   children
 }) => {
+  const { player } = useUser();
+  const { isAdmin } = useAdminPermissions(player?.id);
+
   // Sort players by XP
   const sortedPlayers = [...players].sort((a, b) => {
     const xpA = calculatePlayerXP(a.stats);
     const xpB = calculatePlayerXP(b.stats);
     return xpB - xpA;
   });
+
+  const handleAdminDropout = async (playerId: string) => {
+    try {
+      if (!player?.id) {
+        toast.error('Admin not found');
+        return;
+      }
+
+      const result = await handlePlayerDropoutAndOffers(
+        gameId,
+        playerId,
+        new Date()
+      );
+
+      if (result.success) {
+        toast.success('Player has been dropped out successfully');
+        if (onPlayerDropout) {
+          onPlayerDropout();
+        }
+      } else {
+        toast.error(result.error || 'Failed to drop out player');
+      }
+    } catch (error) {
+      console.error('Error in admin dropout:', error);
+      toast.error('Failed to drop out player');
+    }
+  };
 
   return (
     <div className="w-full">
@@ -113,6 +153,15 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
                         )}
                         {children && children(player)}
                       </span>
+                      {isAdmin && player.id !== currentUserId && (
+                        <button
+                          onClick={() => handleAdminDropout(player.id)}
+                          className="btn btn-error btn-xs"
+                          title="Drop out this player"
+                        >
+                          Drop Out
+                        </button>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">
@@ -144,6 +193,8 @@ export const PlayerListView: React.FC<PlayerListViewProps> = ({
   setShowSelected,
   setShowReserves,
   setShowDroppedOut,
+  gameId,
+  onPlayerDropout,
   children
 }) => {
   return (
@@ -155,6 +206,8 @@ export const PlayerListView: React.FC<PlayerListViewProps> = ({
         isExpanded={showSelected}
         onToggle={() => setShowSelected(!showSelected)}
         currentUserId={currentUserId}
+        gameId={gameId}
+        onPlayerDropout={onPlayerDropout}
       />
       
       <PlayerSection
@@ -164,6 +217,8 @@ export const PlayerListView: React.FC<PlayerListViewProps> = ({
         isExpanded={showReserves}
         onToggle={() => setShowReserves(!showReserves)}
         currentUserId={currentUserId}
+        gameId={gameId}
+        onPlayerDropout={onPlayerDropout}
         children={children}
       />
       
@@ -174,6 +229,8 @@ export const PlayerListView: React.FC<PlayerListViewProps> = ({
         isExpanded={showDroppedOut}
         onToggle={() => setShowDroppedOut(!showDroppedOut)}
         currentUserId={currentUserId}
+        gameId={gameId}
+        onPlayerDropout={onPlayerDropout}
       />
     </div>
   );

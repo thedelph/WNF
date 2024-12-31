@@ -156,7 +156,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
       <ViewToggle view={view} onViewChange={setView} />
 
       {view === 'card' ? (
-        <>
+        <div className="space-y-8">
           <PlayerSelectionSection
             title="Selected Players"
             icon={FaUser}
@@ -199,7 +199,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             isExpanded={showDroppedOut}
             onToggle={() => setShowDroppedOut(!showDroppedOut)}
           />
-        </>
+        </div>
       ) : (
         <PlayerListView
           selectedPlayers={sortedSelectedPlayers}
@@ -212,6 +212,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
           setShowSelected={setShowSelected}
           setShowReserves={setShowReserves}
           setShowDroppedOut={setShowDroppedOut}
+          gameId={gameId}
+          onPlayerDropout={refreshPlayers}
         >
           {(player) => (
             gameDate && firstDropoutTime && (
