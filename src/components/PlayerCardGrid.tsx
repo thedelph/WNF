@@ -17,7 +17,7 @@ interface Player {
   winRate: number
   currentStreak: number
   maxStreak: number
-  rarity?: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
+  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
   avatarSvg?: string
   gameSequences: number[]
 }
@@ -295,10 +295,10 @@ export default function PlayerCardGrid() {
               onChange={(e) => setFilters(prev => ({ ...prev, rarity: e.target.value }))}
             >
               <option value="">All Rarities</option>
-              <option value="Common">Common</option>
-              <option value="Uncommon">Uncommon</option>
-              <option value="Rare">Rare</option>
-              <option value="Epic">Epic</option>
+              <option value="Amateur">Amateur</option>
+              <option value="Semi Pro">Semi Pro</option>
+              <option value="Professional">Professional</option>
+              <option value="World Class">World Class</option>
               <option value="Legendary">Legendary</option>
             </select>
           </div>
