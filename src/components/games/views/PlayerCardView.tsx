@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import PlayerCard from '../../PlayerCard';
 import { ExtendedPlayerData } from '../../../types/playerSelection';
+import { calculatePlayerXP } from '../../../utils/xpCalculations';
+import { supabase } from '../../../utils/supabase';
 
 interface PlayerCardViewProps {
   players: ExtendedPlayerData[];
@@ -15,6 +17,24 @@ interface PlayerCardViewProps {
  */
 export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [latestSequence, setLatestSequence] = useState(0);
+  
+  // Get latest game sequence
+  useEffect(() => {
+    const fetchLatestSequence = async () => {
+      const { data, error } = await supabase
+        .from('games')
+        .select('sequence_number')
+        .order('sequence_number', { ascending: false })
+        .limit(1);
+
+      if (!error && data?.length) {
+        setLatestSequence(Number(data[0].sequence_number));
+      }
+    };
+
+    fetchLatestSequence();
+  }, []);
   
   // Sort players alphabetically by friendly name
   const sortedPlayers = [...players].sort((a, b) => 
@@ -51,29 +71,43 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
           >
             <div className="bg-base-200 rounded-b-lg p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {sortedPlayers.map((player) => (
-                  <motion.div
-                    key={player.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <PlayerCard
-                      id={player.id}
-                      friendlyName={player.friendly_name}
-                      caps={player.stats.caps}
-                      preferredPosition=""
-                      activeBonuses={player.stats.activeBonuses}
-                      activePenalties={player.stats.activePenalties}
-                      winRate={player.win_rate}
-                      currentStreak={player.stats.currentStreak}
-                      maxStreak={player.max_streak}
-                      rarity="Common"
-                      avatarSvg={player.avatar_svg}
-                      isRandomlySelected={player.isRandomlySelected}
-                    />
-                  </motion.div>
-                ))}
+                {sortedPlayers.map((player) => {
+                  // Calculate XP with complete stats
+                  const xp = calculatePlayerXP({
+                    caps: player.stats.caps,
+                    activeBonuses: player.stats.activeBonuses,
+                    activePenalties: player.stats.activePenalties,
+                    currentStreak: player.stats.currentStreak,
+                    gameSequences: player.stats.gameSequences,
+                    latestSequence
+                  });
+
+                  return (
+                    <motion.div
+                      key={player.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <PlayerCard
+                        id={player.id}
+                        friendlyName={player.friendly_name}
+                        xp={xp}
+                        caps={player.stats.caps}
+                        preferredPosition=""
+                        activeBonuses={player.stats.activeBonuses}
+                        activePenalties={player.stats.activePenalties}
+                        winRate={player.win_rate}
+                        currentStreak={player.stats.currentStreak}
+                        maxStreak={player.max_streak}
+                        rarity={player.rarity}
+                        avatarSvg={player.avatar_svg}
+                        isRandomlySelected={player.isRandomlySelected}
+                        gameSequences={player.stats.gameSequences}
+                      />
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           </motion.div>

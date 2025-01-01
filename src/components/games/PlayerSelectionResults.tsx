@@ -126,20 +126,21 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
 
   // Calculate XP values for all players
   const allPlayers = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers];
-  const allXpValues = allPlayers.map(player => calculatePlayerXP(player.stats));
+  const allXpValues = allPlayers.map(player => player.xp);
+
+  // Debug log for Daniel
+  const daniel = allPlayers.find(p => p.friendly_name === 'Daniel');
+  if (daniel) {
+    console.log('Daniel XP in PlayerSelectionResults render:', {
+      xp: daniel.xp,
+      stats: daniel.stats,
+      isLoading
+    });
+  }
   
   // Sort players by XP
-  const sortedSelectedPlayers = [...selectedPlayers].sort((a, b) => {
-    const xpA = calculatePlayerXP(a.stats);
-    const xpB = calculatePlayerXP(b.stats);
-    return xpB - xpA;
-  });
-
-  const sortedReservePlayers = [...reservePlayers].sort((a, b) => {
-    const xpA = calculatePlayerXP(a.stats);
-    const xpB = calculatePlayerXP(b.stats);
-    return xpB - xpA;
-  });
+  const sortedSelectedPlayers = [...selectedPlayers].sort((a, b) => b.xp - a.xp);
+  const sortedReservePlayers = [...reservePlayers].sort((a, b) => b.xp - a.xp);
 
   return (
     <div className="space-y-4">

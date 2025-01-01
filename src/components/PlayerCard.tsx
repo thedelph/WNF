@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Trophy, Star, Medal, CircleOff, CircleDot, Sparkles } from 'lucide-react'
-import { calculatePlayerXP } from '../utils/xpCalculations';
 import { usePlayerPenalties } from '../hooks/usePlayerPenalties';
 import { useUser } from '../hooks/useUser';
 
 interface PlayerCardProps {
   id: string
   friendlyName: string
+  xp: number
   caps: number
   preferredPosition: string
   activeBonuses: number
@@ -16,7 +16,7 @@ interface PlayerCardProps {
   winRate: number
   currentStreak: number
   maxStreak: number
-  rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
+  rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
   avatarSvg: string
   isRandomlySelected?: boolean
   status?: 'selected' | 'reserve' | 'dropped_out';
@@ -29,6 +29,7 @@ interface PlayerCardProps {
 export default function PlayerCard({
   id,
   friendlyName,
+  xp,
   caps,
   preferredPosition,
   activeBonuses,
@@ -49,29 +50,33 @@ export default function PlayerCard({
   const { dropoutPenalties } = usePlayerPenalties(id);
   const { player } = useUser();
 
+  // Debug log for Daniel
+  if (friendlyName === 'Daniel') {
+    console.log('Daniel XP in PlayerCard render:', {
+      xp,
+      caps,
+      activeBonuses,
+      activePenalties,
+      currentStreak,
+      gameSequences
+    });
+  }
+
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
       case 'Legendary':
         return 'bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 shadow-lg shadow-yellow-500/50 animate-gradient-xy'
-      case 'Epic':
+      case 'World Class':
         return 'bg-gradient-to-br from-purple-300 via-purple-600 to-fuchsia-600 shadow-lg shadow-purple-500/50 animate-gradient-xy'
-      case 'Rare':
+      case 'Professional':
         return 'bg-gradient-to-br from-blue-300 via-blue-500 to-cyan-600 shadow-lg shadow-blue-500/50 animate-gradient-xy'
-      case 'Uncommon':
+      case 'Semi Pro':
         return 'bg-gradient-to-br from-green-300 via-green-500 to-emerald-600 shadow-lg shadow-green-500/50 animate-gradient-xy'
       default:
         return 'bg-gradient-to-br from-slate-300 via-slate-400 to-zinc-600 shadow-lg shadow-slate-500/50'
     }
   }
 
-  const calculatedXP = calculatePlayerXP({
-    caps,
-    activeBonuses,
-    activePenalties,
-    currentStreak,
-    dropoutPenalties,
-    gameSequences
-  });
   const streakModifier = currentStreak * 0.1;
   const bonusModifier = activeBonuses * 0.1;
   const penaltyModifier = activePenalties * -0.1;
@@ -175,7 +180,7 @@ export default function PlayerCard({
                     <Sparkles className="w-5 h-5" />
                     <span className="text-sm font-bold">XP</span>
                   </div>
-                  <span className="text-3xl font-bold">{calculatedXP}</span>
+                  <span className="text-3xl font-bold">{xp}</span>
                 </div>
               </div>
             </div>

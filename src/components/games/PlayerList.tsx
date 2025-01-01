@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 import PlayerCard from '../PlayerCard';
 import { calculatePlayerXP } from '../../utils/xpCalculations';
 import { calculateRarity } from '../../utils/rarityCalculations';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
+import { supabase } from '../../utils/supabase';
 
 interface PlayerListProps {
   players: ExtendedPlayerData[];
@@ -23,6 +24,31 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   children
 }) => {
   const { allPlayersXP, loading } = usePlayerStats();
+  const [latestSequence, setLatestSequence] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Get latest game sequence
+  useEffect(() => {
+    const fetchLatestSequence = async () => {
+      const { data, error } = await supabase
+        .from('games')
+        .select('sequence_number')
+        .order('sequence_number', { ascending: false })
+        .limit(1);
+
+      if (!error && data?.length) {
+        setLatestSequence(Number(data[0].sequence_number));
+      }
+      setIsLoading(false);
+    };
+
+    fetchLatestSequence();
+  }, []);
+
+  // Don't render until we have the latest sequence
+  if (isLoading || latestSequence === null) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
@@ -41,8 +67,21 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 activeBonuses: player.stats.activeBonuses,
                 activePenalties: player.stats.activePenalties,
                 currentStreak: player.stats.currentStreak,
-                gameSequences: player.stats.gameSequences
+                gameSequences: player.stats.gameSequences,
+                latestSequence
               });
+
+              console.log('DEBUG PlayerList XP calc:', {
+                playerId: player.id,
+                gameSequences: player.stats.gameSequences,
+                latestSequence,
+                playerXP
+              });
+
+              // Default to Common rarity while loading or if no XP data
+              const rarity = loading || !allPlayersXP?.length 
+                ? 'Common'
+                : calculateRarity(playerXP, allPlayersXP);
 
               return (
                 <PlayerCard
@@ -56,7 +95,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                   winRate={player.win_rate || 0}
                   currentStreak={player.stats.currentStreak}
                   maxStreak={player.max_streak}
-                  rarity={!loading ? calculateRarity(playerXP, allPlayersXP) : 'Common'}
+                  rarity={rarity}
+                  xp={playerXP}
                   avatarSvg={player.avatar_svg}
                   isRandomlySelected={player.isRandomlySelected}
                   hasSlotOffer={player.slotOffers?.some(offer => offer.status === 'pending')}

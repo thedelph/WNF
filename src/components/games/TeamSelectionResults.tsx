@@ -49,6 +49,62 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
           .eq('game_id', gameId)
           .single();
 
+        // Get latest sequence number
+        const { data: latestSequenceData } = await supabase
+          .from('games')
+          .select('sequence_number')
+          .order('sequence_number', { ascending: false })
+          .limit(1);
+
+        const latestSequence = Number(latestSequenceData?.[0]?.sequence_number || 0);
+
+        // Get all game registrations with their sequence numbers
+        const { data: gameRegs, error: gameRegsError } = await supabase
+          .from('game_registrations')
+          .select(`
+            player_id,
+            team,
+            games!inner (
+              outcome,
+              sequence_number
+            )
+          `)
+          .order('games(sequence_number)', { ascending: false });
+
+        if (gameRegsError) throw gameRegsError;
+
+        // Group sequences by player
+        const playerSequences = gameRegs.reduce((acc, reg) => {
+          if (!reg.games?.sequence_number) return acc;
+          
+          const playerId = reg.player_id;
+          if (!acc[playerId]) {
+            acc[playerId] = {
+              sequences: [],
+              wins: 0,
+              total: 0
+            };
+          }
+          
+          // Add sequence number if not already present
+          const sequence = Number(reg.games.sequence_number);
+          if (!acc[playerId].sequences.includes(sequence)) {
+            acc[playerId].sequences.push(sequence);
+          }
+          
+          // Calculate wins
+          if (reg.games.outcome && reg.team) {
+            const team = reg.team.toLowerCase();
+            const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
+                         (team === 'orange' && reg.games.outcome === 'orange_win');
+            
+            if (isWin) acc[playerId].wins++;
+            acc[playerId].total++;
+          }
+          
+          return acc;
+        }, {} as Record<string, { sequences: number[], wins: number, total: number }>);
+
         // Get all registrations regardless of balanced teams status
         const { data: registrations, error: registrationError } = await supabase
           .from('game_registrations')
@@ -79,22 +135,30 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         }
 
         // Calculate XP for all players
-        const allPlayersXP = registrations.map(r => calculateXP({
-          caps: r.players.caps || 0,
-          activeBonuses: r.players.active_bonuses || 0,
-          activePenalties: r.players.active_penalties || 0,
-          currentStreak: r.players.current_streak || 0
-        }));
+        const allPlayersXP = registrations.map(r => {
+          const playerData = playerSequences[r.player_id] || { sequences: [], wins: 0, total: 0 };
+          return calculateXP({
+            caps: r.players.caps || 0,
+            activeBonuses: r.players.active_bonuses || 0,
+            activePenalties: r.players.active_penalties || 0,
+            currentStreak: r.players.current_streak || 0,
+            gameSequences: playerData.sequences,
+            latestSequence
+          });
+        });
 
         // Process selected players
         let selectedPlayers = registrations
           .filter(r => r.status === 'selected')
           .map(r => {
+            const playerData = playerSequences[r.player_id] || { sequences: [], wins: 0, total: 0 };
             const playerXP = calculateXP({
               caps: r.players.caps || 0,
               activeBonuses: r.players.active_bonuses || 0,
               activePenalties: r.players.active_penalties || 0,
-              currentStreak: r.players.current_streak || 0
+              currentStreak: r.players.current_streak || 0,
+              gameSequences: playerData.sequences,
+              latestSequence
             });
 
             // If we have balanced teams from database, use those assignments
@@ -112,11 +176,16 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               id: r.players.id,
               friendly_name: r.players.friendly_name,
               team,
-              caps: r.players.caps || 0,
-              active_bonuses: r.players.active_bonuses || 0,
-              active_penalties: r.players.active_penalties || 0,
+              stats: {
+                caps: r.players.caps || 0,
+                activeBonuses: r.players.active_bonuses || 0,
+                activePenalties: r.players.active_penalties || 0,
+                currentStreak: r.players.current_streak || 0,
+                gameSequences: playerData.sequences,
+                latestSequence
+              },
               win_rate: r.players.win_rate || 0,
-              current_streak: r.players.current_streak || 0,
+              max_streak: r.players.current_streak || 0,
               avatar_svg: r.players.avatar_svg,
               xp: playerXP,
               rarity: calculateRarity(playerXP, allPlayersXP),
@@ -129,21 +198,29 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         const reservePlayers = registrations
           .filter(r => r.status === 'reserve')
           .map(r => {
+            const playerData = playerSequences[r.player_id] || { sequences: [], wins: 0, total: 0 };
             const playerXP = calculateXP({
               caps: r.players.caps || 0,
               activeBonuses: r.players.active_bonuses || 0,
               activePenalties: r.players.active_penalties || 0,
-              currentStreak: r.players.current_streak || 0
+              currentStreak: r.players.current_streak || 0,
+              gameSequences: playerData.sequences,
+              latestSequence
             });
             
             return {
               id: r.players.id,
               friendly_name: r.players.friendly_name,
-              caps: r.players.caps || 0,
-              active_bonuses: r.players.active_bonuses || 0,
-              active_penalties: r.players.active_penalties || 0,
+              stats: {
+                caps: r.players.caps || 0,
+                activeBonuses: r.players.active_bonuses || 0,
+                activePenalties: r.players.active_penalties || 0,
+                currentStreak: r.players.current_streak || 0,
+                gameSequences: playerData.sequences,
+                latestSequence
+              },
               win_rate: r.players.win_rate || 0,
-              current_streak: r.players.current_streak || 0,
+              max_streak: r.players.current_streak || 0,
               avatar_svg: r.players.avatar_svg,
               xp: playerXP,
               rarity: calculateRarity(playerXP, allPlayersXP),

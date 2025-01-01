@@ -25,65 +25,81 @@ export const usePlayerStats = () => {
       try {
         setLoading(true);
         
-        // Fetch player stats and game sequences in parallel
-        const [statsResponse] = await Promise.all([
-          supabase
-            .from('players')
-            .select(`
-              id,
-              caps,
-              active_bonuses,
-              active_penalties,
-              current_streak
-            `)
-        ]);
+        // Get latest game sequence
+        const latestSequenceResponse = await supabase
+          .from('games')
+          .select('sequence_number')
+          .order('sequence_number', { ascending: false })
+          .limit(1);
+
+        if (latestSequenceResponse.error) throw latestSequenceResponse.error;
+        const latestSequence = Number(latestSequenceResponse.data[0]?.sequence_number || 0);
+
+        // Get game registrations with sequences
+        const gameRegsResponse = await supabase
+          .from('game_registrations')
+          .select(`
+            player_id,
+            games!inner (
+              outcome,
+              sequence_number
+            )
+          `)
+          .order('games(sequence_number)', { ascending: false });
+
+        if (gameRegsResponse.error) throw gameRegsResponse.error;
+
+        // Group game sequences by player
+        const playerSequences: { [key: string]: number[] } = {};
+        gameRegsResponse.data.forEach(reg => {
+          if (!reg.games?.sequence_number) return;
+          
+          if (!playerSequences[reg.player_id]) {
+            playerSequences[reg.player_id] = [];
+          }
+          playerSequences[reg.player_id].push(Number(reg.games.sequence_number));
+        });
+
+        // Get all player stats
+        const statsResponse = await supabase
+          .from('players')
+          .select(`
+            id,
+            caps,
+            active_bonuses,
+            active_penalties,
+            current_streak
+          `);
 
         if (statsResponse.error) throw statsResponse.error;
 
-        // Try to get game sequences, but don't fail if the function doesn't exist yet
-        let gameSequences = [];
-        try {
-          const { data: sequences, error: seqError } = await supabase.rpc('get_player_game_sequences');
-          if (!seqError) {
-            gameSequences = sequences;
-          } else {
-            console.warn('Game sequences not available:', seqError);
-          }
-        } catch (err) {
-          console.warn('Game sequences not available:', err);
-        }
-
-        // Merge the data
-        const playersWithSequences = statsResponse.data.map(player => ({
-          ...player,
-          game_sequences: gameSequences.find(
-            seq => seq?.player_id === player.id
-          )?.game_sequences || []
-        }));
-
-        // Calculate XP for each player with the new game sequences data
-        const xpValues = playersWithSequences.map((player) => 
-          calculatePlayerXP({
+        // Calculate XP for each player
+        const xpValues = statsResponse.data.map(player => {
+          const stats = {
             caps: player.caps || 0,
             activeBonuses: player.active_bonuses || 0,
             activePenalties: player.active_penalties || 0,
             currentStreak: player.current_streak || 0,
-            gameSequences: player.game_sequences
-          })
-        );
+            gameSequences: playerSequences[player.id] || [],
+            latestSequence
+          };
+
+          return calculatePlayerXP(stats);
+        });
 
         setAllPlayersXP(xpValues);
         setError(null);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching player stats:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError(err.message);
+        setAllPlayersXP([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchAllPlayersXP();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   return { allPlayersXP, loading, error };
 };

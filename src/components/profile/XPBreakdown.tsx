@@ -8,42 +8,82 @@ interface XPBreakdownProps {
     activeBonuses: number;
     activePenalties: number;
     currentStreak: number;
-    dropoutPenalties?: number;
-    gameSequences?: string[];
+    gameSequences?: number[];
+    latestSequence?: number;
   };
+  showTotal?: boolean;
 }
 
-export default function XPBreakdown({ stats }: XPBreakdownProps) {
+export default function XPBreakdown({ 
+  stats,
+  showTotal = true 
+}: XPBreakdownProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Calculate base XP for each game tier
-  const gameSequences = stats.gameSequences?.map(seq => parseInt(seq)) || Array.from({ length: stats.caps }, (_, i) => i + 1);
-  const gameBreakdown = gameSequences.reduce((acc, _, index) => {
-    if (index === 0) acc.last += 20;        // Last game: 20 points
-    else if (index < 3) acc.recent += 18;    // Games 2-3: 18 points
-    else if (index < 5) acc.newer += 16;     // Games 4-5: 16 points
-    else if (index < 10) acc.mid += 14;      // Games 6-10: 14 points
-    else if (index < 20) acc.older += 12;    // Games 11-20: 12 points
-    else acc.oldest += 10;                   // Games 20+: 10 points
-    return acc;
-  }, { last: 0, recent: 0, newer: 0, mid: 0, older: 0, oldest: 0 });
+  // Ensure we have arrays of numbers and use the passed in latestSequence
+  const sequences = stats.gameSequences || [];
+  const latestSequence = stats.latestSequence || 0;
 
-  // Calculate game counts for each tier
+  // Calculate XP breakdown
+  const xpBreakdown = calculatePlayerXP({
+    caps: stats.caps,
+    activeBonuses: stats.activeBonuses,
+    activePenalties: stats.activePenalties,
+    currentStreak: stats.currentStreak,
+    gameSequences: sequences,
+    latestSequence
+  });
+
+  // Sort sequences by how many games ago they are
+  const sortedSequences = [...sequences].sort((a, b) => b - a);
+  const gameCategories = sortedSequences.reduce((acc, sequence) => {
+    const gamesAgo = latestSequence - sequence;
+    
+    if (sequence === latestSequence) {
+      acc.current.push(sequence);
+    } else if (gamesAgo <= 2) {
+      acc.recent.push(sequence);
+    } else if (gamesAgo <= 4) {
+      acc.newer.push(sequence);
+    } else if (gamesAgo <= 9) {
+      acc.mid.push(sequence);
+    } else if (gamesAgo <= 19) {
+      acc.older.push(sequence);
+    } else {
+      acc.oldest.push(sequence);
+    }
+    
+    return acc;
+  }, {
+    current: [] as number[],
+    recent: [] as number[],
+    newer: [] as number[],
+    mid: [] as number[],
+    older: [] as number[],
+    oldest: [] as number[]
+  });
+
   const gameCounts = {
-    last: gameBreakdown.last > 0 ? 1 : 0,
-    recent: Math.ceil(gameBreakdown.recent / 18),
-    newer: Math.ceil(gameBreakdown.newer / 16),
-    mid: Math.ceil(gameBreakdown.mid / 14),
-    older: Math.ceil(gameBreakdown.older / 12),
-    oldest: Math.ceil(gameBreakdown.oldest / 10)
+    current: gameCategories.current.length,
+    recent: gameCategories.recent.length,
+    newer: gameCategories.newer.length,
+    mid: gameCategories.mid.length,
+    older: gameCategories.older.length,
+    oldest: gameCategories.oldest.length
   };
 
-  const baseXP = Object.values(gameBreakdown).reduce((a, b) => a + b, 0);
+  const categoryXP = {
+    current: gameCounts.current * 20,
+    recent: gameCounts.recent * 18,
+    newer: gameCounts.newer * 16,
+    mid: gameCounts.mid * 14,
+    older: gameCounts.older * 12,
+    oldest: gameCounts.oldest * 10
+  };
+
+  const baseXP = Object.values(categoryXP).reduce((sum, xp) => sum + xp, 0);
   const streakMultiplier = 1 + (stats.currentStreak * 0.1);
-  const bonusXP = stats.activeBonuses * 100;
-  const penaltyXP = stats.activePenalties * 100;
-  const dropoutXP = (stats.dropoutPenalties || 0) * 50;
-  const totalXP = Math.max(0, Math.round((baseXP * streakMultiplier) + bonusXP - penaltyXP - dropoutXP));
+  const totalXP = Math.round(baseXP * streakMultiplier);
 
   return (
     <div className="mt-4">
@@ -67,193 +107,167 @@ export default function XPBreakdown({ stats }: XPBreakdownProps) {
             <div className="mt-4 p-4 bg-base-200 rounded-lg shadow-lg">
               <h3 className="text-lg font-semibold mb-4">How Your XP is Calculated</h3>
               
-              {/* Base XP from Games */}
-              <div className="space-y-4 mb-6">
-                <h4 className="font-medium text-primary border-b border-base-300 pb-2">
-                  Game Points ({baseXP} Total Base XP)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {gameBreakdown.last > 0 && (
-                    <div className="card bg-base-100 shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Most Recent Game</h5>
-                            <p className="text-sm opacity-70">20 XP per game</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">{gameBreakdown.last} XP</div>
-                            <div className="text-xs opacity-70">{gameCounts.last} game</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {gameBreakdown.recent > 0 && (
-                    <div className="card bg-base-100 shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Games 2-3</h5>
-                            <p className="text-sm opacity-70">18 XP per game</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">{gameBreakdown.recent} XP</div>
-                            <div className="text-xs opacity-70">{gameCounts.recent} games</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {gameBreakdown.newer > 0 && (
-                    <div className="card bg-base-100 shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Games 4-5</h5>
-                            <p className="text-sm opacity-70">16 XP per game</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">{gameBreakdown.newer} XP</div>
-                            <div className="text-xs opacity-70">{gameCounts.newer} games</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {gameBreakdown.mid > 0 && (
-                    <div className="card bg-base-100 shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Games 6-10</h5>
-                            <p className="text-sm opacity-70">14 XP per game</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">{gameBreakdown.mid} XP</div>
-                            <div className="text-xs opacity-70">{gameCounts.mid} games</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {gameBreakdown.older > 0 && (
-                    <div className="card bg-base-100 shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Games 11-20</h5>
-                            <p className="text-sm opacity-70">12 XP per game</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">{gameBreakdown.older} XP</div>
-                            <div className="text-xs opacity-70">{gameCounts.older} games</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {gameBreakdown.oldest > 0 && (
-                    <div className="card bg-base-100 shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Games 20+</h5>
-                            <p className="text-sm opacity-70">10 XP per game</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">{gameBreakdown.oldest} XP</div>
-                            <div className="text-xs opacity-70">{gameCounts.oldest} games</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+              <div className="space-y-4">
+                <div className="text-sm opacity-70 mb-4">
+                  <p>XP is calculated based on how recently you played:</p>
+                  <ul className="list-disc list-inside space-y-1 mt-2">
+                    <li>Most Recent Game: 20 XP</li>
+                    <li>1-2 Games Ago: 18 XP</li>
+                    <li>3-4 Games Ago: 16 XP</li>
+                    <li>5-9 Games Ago: 14 XP</li>
+                    <li>10-19 Games Ago: 12 XP</li>
+                    <li>20+ Games Ago: 10 XP</li>
+                  </ul>
                 </div>
-              </div>
 
-              {/* Multipliers and Modifiers */}
-              <div className="space-y-4 mb-6">
-                <h4 className="font-medium text-primary border-b border-base-300 pb-2">
-                  Bonuses & Penalties
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Base XP from Games */}
+                <div className="space-y-4 mb-6">
+                  <h4 className="font-medium text-primary border-b border-base-300 pb-2">
+                    Game Points ({baseXP} Total Base XP)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {gameCounts.current > 0 && (
+                      <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-medium">Most Recent Game</h5>
+                              <p className="text-sm opacity-70">20 XP per game</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-lg">{categoryXP.current} XP</div>
+                              <div className="text-xs opacity-70">{gameCounts.current} game{gameCounts.current !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {gameCounts.recent > 0 && (
+                      <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-medium">1-2 Games Ago</h5>
+                              <p className="text-sm opacity-70">18 XP per game</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-lg">{categoryXP.recent} XP</div>
+                              <div className="text-xs opacity-70">{gameCounts.recent} game{gameCounts.recent !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {gameCounts.newer > 0 && (
+                      <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-medium">3-4 Games Ago</h5>
+                              <p className="text-sm opacity-70">16 XP per game</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-lg">{categoryXP.newer} XP</div>
+                              <div className="text-xs opacity-70">{gameCounts.newer} game{gameCounts.newer !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {gameCounts.mid > 0 && (
+                      <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-medium">5-9 Games Ago</h5>
+                              <p className="text-sm opacity-70">14 XP per game</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-lg">{categoryXP.mid} XP</div>
+                              <div className="text-xs opacity-70">{gameCounts.mid} game{gameCounts.mid !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {gameCounts.older > 0 && (
+                      <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-medium">10-19 Games Ago</h5>
+                              <p className="text-sm opacity-70">12 XP per game</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-lg">{categoryXP.older} XP</div>
+                              <div className="text-xs opacity-70">{gameCounts.older} game{gameCounts.older !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {gameCounts.oldest > 0 && (
+                      <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-medium">20+ Games Ago</h5>
+                              <p className="text-sm opacity-70">10 XP per game</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-lg">{categoryXP.oldest} XP</div>
+                              <div className="text-xs opacity-70">{gameCounts.oldest} game{gameCounts.oldest !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Streak Multiplier */}
+                <div>
+                  <h4 className="font-medium text-primary border-b border-base-300 pb-2 mb-4">
+                    Streak Multiplier
+                  </h4>
                   <div className="card bg-base-100 shadow-sm">
                     <div className="card-body p-3">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h5 className="font-medium">Attendance Streak Bonus</h5>
-                          <p className="text-sm opacity-70">Current streak: {stats.currentStreak}</p>
+                          <h5 className="font-medium">Current Streak: {stats.currentStreak}</h5>
+                          <p className="text-sm opacity-70">+10% XP per streak level</p>
                         </div>
                         <div className="text-right">
-                          <div className="font-mono text-lg">×{streakMultiplier.toFixed(1)}</div>
-                          <div className="text-xs opacity-70">multiplier</div>
+                          <div className="font-mono text-lg">{(streakMultiplier * 100 - 100).toFixed(0)}% Bonus</div>
+                          <div className="text-xs opacity-70">{streakMultiplier.toFixed(1)}x Multiplier</div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  {bonusXP > 0 && (
-                    <div className="card bg-success text-success-content shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Active Bonuses</h5>
-                            <p className="text-sm opacity-70">{stats.activeBonuses} active</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">+{bonusXP}</div>
-                            <div className="text-xs opacity-70">bonus XP</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {penaltyXP > 0 && (
-                    <div className="card bg-error text-error-content shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Active Penalties</h5>
-                            <p className="text-sm opacity-70">{stats.activePenalties} active</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">-{penaltyXP}</div>
-                            <div className="text-xs opacity-70">penalty XP</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {dropoutXP > 0 && (
-                    <div className="card bg-error text-error-content shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Dropout Penalties</h5>
-                            <p className="text-sm opacity-70">{stats.dropoutPenalties} penalties</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg">-{dropoutXP}</div>
-                            <div className="text-xs opacity-70">penalty XP</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* Final Calculation */}
-              <div className="card bg-primary text-primary-content">
-                <div className="card-body p-4">
-                  <h3 className="card-title">Total XP: {totalXP}</h3>
-                  <p className="text-sm opacity-90">
-                    Base {baseXP} × {streakMultiplier.toFixed(1)} streak multiplier
-                    {bonusXP > 0 ? ` + ${bonusXP} bonus` : ''}
-                    {penaltyXP > 0 ? ` - ${penaltyXP} penalties` : ''}
-                    {dropoutXP > 0 ? ` - ${dropoutXP} dropout penalties` : ''}
-                  </p>
-                </div>
+                {/* Total XP */}
+                {showTotal && (
+                  <div>
+                    <h4 className="font-medium text-primary border-b border-base-300 pb-2 mb-4">
+                      Total XP
+                    </h4>
+                    <div className="card bg-base-100 shadow-sm">
+                      <div className="card-body p-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h5 className="font-medium">Final XP</h5>
+                            <p className="text-sm opacity-70">Base XP × Streak Multiplier</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-mono text-2xl">{totalXP} XP</div>
+                            <div className="text-xs opacity-70">{baseXP} × {streakMultiplier.toFixed(1)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

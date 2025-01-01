@@ -18,6 +18,7 @@ interface PlayerWithXP {
     activeBonuses: number;
     activePenalties: number;
     currentStreak: number;
+    gameSequences: number[];
   };
 }
 
@@ -33,6 +34,7 @@ export interface PlayerSelectionResult {
       activeBonuses: number;
       activePenalties: number;
       currentStreak: number;
+      gameSequences: number[];
     };
   }>;
   reservePlayers: Array<{
@@ -45,6 +47,7 @@ export interface PlayerSelectionResult {
       activeBonuses: number;
       activePenalties: number;
       currentStreak: number;
+      gameSequences: number[];
     };
   }>;
   debug: SelectionDebugInfo;
@@ -70,7 +73,34 @@ export const handlePlayerSelection = async ({
   const selectionNotes: string[] = [];
 
   try {
-    // Fetch all registrations
+    // Get game sequences for all players
+    const { data: gameRegsData, error: gameRegsError } = await supabaseAdmin
+      .from('game_registrations')
+      .select(`
+        player_id,
+        games!inner (
+          outcome,
+          sequence_number
+        )
+      `)
+      .order('games(sequence_number)', { ascending: false });
+
+    if (gameRegsError) {
+      throw gameRegsError;
+    }
+
+    // Group game sequences by player
+    const playerSequences: { [key: string]: number[] } = {};
+    gameRegsData.forEach(reg => {
+      if (!reg.games?.sequence_number) return;
+      
+      if (!playerSequences[reg.player_id]) {
+        playerSequences[reg.player_id] = [];
+      }
+      playerSequences[reg.player_id].push(Number(reg.games.sequence_number));
+    });
+
+    // Fetch all registrations with player stats
     const { data: registrations, error: fetchError } = await supabaseAdmin
       .from('game_registrations')
       .select(`
@@ -91,17 +121,34 @@ export const handlePlayerSelection = async ({
       throw fetchError;
     }
 
+    // Get latest game sequence
+    const { data: latestGameData, error: latestGameError } = await supabaseAdmin
+      .from('games')
+      .select('sequence_number')
+      .order('sequence_number', { ascending: false })
+      .limit(1);
+
+    if (latestGameError) {
+      throw latestGameError;
+    }
+
+    const latestSequence = latestGameData?.[0]?.sequence_number || 0;
+
     // Calculate XP for each player
     const playersWithXP: PlayerWithXP[] = registrations.map(reg => {
       const stats = {
         caps: reg.player.caps,
         activeBonuses: reg.player.active_bonuses,
         activePenalties: reg.player.active_penalties,
-        currentStreak: reg.player.current_streak
+        currentStreak: reg.player.current_streak,
+        gameSequences: playerSequences[reg.player_id] || []
       };
       
-      // Calculate XP using the same formula as the display
-      const calculatedXP = calculatePlayerXP(stats);
+      // Calculate XP using the complete formula
+      const calculatedXP = calculatePlayerXP({
+        ...stats,
+        latestSequence
+      });
       
       return {
         id: reg.id,

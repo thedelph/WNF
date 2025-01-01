@@ -18,6 +18,8 @@ interface Player {
   currentStreak: number
   maxStreak: number
   rarity?: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary'
+  avatarSvg?: string
+  gameSequences: number[]
 }
 
 export default function PlayerCardGrid() {
@@ -46,74 +48,80 @@ export default function PlayerCardGrid() {
     try {
       setLoading(true);
       
-      // First get all players and game sequences in parallel
-      const [playersResponse, gameRegsResponse] = await Promise.all([
-        supabase.from('players').select('*'),
-        supabase.from('game_registrations')
-          .select(`
-            player_id,
-            team,
-            games (
-              outcome
-            )
-          `)
-      ]);
-      
+      // First get all players
+      const playersResponse = await supabase.from('players').select('*');
       if (playersResponse.error) throw playersResponse.error;
-      if (gameRegsResponse.error) throw gameRegsResponse.error;
-
       const playersData = playersResponse.data;
-      const gameRegs = gameRegsResponse.data;
 
-      // Try to get game sequences, but don't fail if the function doesn't exist yet
-      let gameSequences = [];
-      try {
-        const { data: sequences, error: seqError } = await supabase.rpc('get_player_game_sequences');
-        if (!seqError) {
-          gameSequences = sequences;
-        } else {
-          console.warn('Game sequences not available:', seqError);
-        }
-      } catch (err) {
-        console.warn('Game sequences not available:', err);
-      }
+      // Get latest sequence number
+      const latestSequenceResponse = await supabase
+        .from('games')
+        .select('sequence_number')
+        .order('sequence_number', { ascending: false })
+        .limit(1);
 
-      // Calculate win rates for each player
-      const winRates = new Map();
-      gameRegs.forEach(reg => {
-        if (!reg.games?.outcome) return;
+      if (latestSequenceResponse.error) throw latestSequenceResponse.error;
+      const latestSequence = Number(latestSequenceResponse.data[0]?.sequence_number || 0);
+
+      // Get all game registrations with their sequence numbers
+      const { data: gameRegs, error: gameRegsError } = await supabase
+        .from('game_registrations')
+        .select(`
+          player_id,
+          team,
+          games!inner (
+            outcome,
+            sequence_number
+          )
+        `)
+        .order('games(sequence_number)', { ascending: false });
+
+      if (gameRegsError) throw gameRegsError;
+
+      // Group sequences by player
+      const playerSequences = gameRegs.reduce((acc, reg) => {
+        if (!reg.games?.sequence_number) return acc;
         
         const playerId = reg.player_id;
-        if (!winRates.has(playerId)) {
-          winRates.set(playerId, { wins: 0, total: 0 });
+        if (!acc[playerId]) {
+          acc[playerId] = {
+            sequences: [],
+            wins: 0,
+            total: 0
+          };
         }
         
-        const stats = winRates.get(playerId);
-        const team = reg.team.toLowerCase();
-        const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
-                     (team === 'orange' && reg.games.outcome === 'orange_win');
+        // Add sequence number
+        acc[playerId].sequences.push(Number(reg.games.sequence_number));
         
-        if (isWin) stats.wins++;
-        stats.total++;
-      });
+        // Calculate wins
+        if (reg.games.outcome) {
+          const team = reg.team.toLowerCase();
+          const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
+                       (team === 'orange' && reg.games.outcome === 'orange_win');
+          
+          if (isWin) acc[playerId].wins++;
+          acc[playerId].total++;
+        }
+        
+        return acc;
+      }, {});
 
+      // First calculate XP for all players
       const playersWithXP = playersData.map(player => {
-        const playerSequences = gameSequences.find(
-          seq => seq?.player_id === player.id
-        )?.game_sequences || [];
-
+        const playerData = playerSequences[player.id] || { sequences: [], wins: 0, total: 0 };
         const stats = {
           caps: player.caps || 0,
           activeBonuses: player.active_bonuses || 0,
           activePenalties: player.active_penalties || 0,
           currentStreak: player.current_streak || 0,
-          gameSequences: playerSequences
+          gameSequences: playerData.sequences,
+          latestSequence
         };
 
         const xp = calculatePlayerXP(stats);
-        const playerStats = winRates.get(player.id) || { wins: 0, total: 0 };
-        const winRate = playerStats.total > 0 
-          ? Number(((playerStats.wins / playerStats.total) * 100).toFixed(1))
+        const winRate = playerData.total > 0 
+          ? Number(((playerData.wins / playerData.total) * 100).toFixed(1))
           : 0;
 
         return {
@@ -126,24 +134,24 @@ export default function PlayerCardGrid() {
           winRate,
           currentStreak: player.current_streak || 0,
           maxStreak: player.max_streak || 0,
-          avatarSvg: player.avatar_svg || '',
-          xp
+          xp,
+          gameSequences: playerData.sequences,
+          avatarSvg: player.avatar_svg || ''
         };
       });
 
-      const allXPValues = playersWithXP.map(p => p.xp).sort((a,b) => b-a);
-      
-      const playersWithRarity = playersWithXP.map(player => {
-        const rarity = calculateRarity(player.xp, allXPValues);
-        return {
-          ...player,
-          rarity
-        };
-      });
+      // Get all XP values for rarity calculation
+      const allXP = playersWithXP.map(player => player.xp);
 
-      setPlayers(playersWithRarity);
+      // Add rarity to each player
+      const finalPlayers = playersWithXP.map(player => ({
+        ...player,
+        rarity: calculateRarity(player.xp, allXP)
+      }));
+
+      setPlayers(finalPlayers);
     } catch (error) {
-      console.error('DEBUG: Error in fetchPlayers:', error);
+      console.error('Error fetching players:', error);
       toast.error('Error fetching players');
     } finally {
       setLoading(false);

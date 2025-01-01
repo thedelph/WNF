@@ -4,33 +4,80 @@ export interface PlayerStats {
   activePenalties: number;
   currentStreak: number;
   dropoutPenalties: number;
-  gameSequences?: string[]; // Array of game sequence numbers, ordered by most recent first
+  gameSequences?: number[]; // Array of game sequence numbers, ordered by most recent first
+  latestSequence?: number;  // The most recent game sequence number
 }
 
 /**
- * Calculates weighted XP based on game recency
- * Most recent games are worth more points:
- * - Last game: 20 points
- * - Games 2-3: 18 points
- * - Games 4-5: 16 points
- * - Games 6-10: 14 points
- * - Games 11-20: 12 points
- * - Games 20+: 10 points
+ * Calculates weighted XP based on game recency and participation
+ * Points are awarded based on how many games ago from the latest game:
+ * - Last game (0 games ago): 20 points
+ * - Games 2-3 ago: 18 points
+ * - Games 4-5 ago: 16 points
+ * - Games 6-10 ago: 14 points
+ * - Games 11-20 ago: 12 points
+ * - Games 20+ ago: 10 points
+ * 
+ * @param gameSequences Array of game sequence numbers where player participated
+ * @param caps Total number of games played by player
+ * @param latestSequence The most recent game sequence number
  */
-const calculateWeightedBaseXP = (gameSequences: number[] = [], caps: number): number => {
-  // If no game sequences but has caps, create a sequence based on caps
-  if (gameSequences.length === 0 && caps > 0) {
-    gameSequences = Array.from({ length: caps }, (_, i) => i + 1);
-  }
+const calculateWeightedBaseXP = (
+  gameSequences: number[] = [], 
+  caps: number,
+  latestSequence: number
+): number => {
+  // Sort sequences in descending order and filter out null/undefined/NaN
+  const sortedSequences = [...gameSequences]
+    .filter(seq => seq != null && !isNaN(seq))
+    .map(Number)
+    .sort((a, b) => b - a);
 
-  return gameSequences.reduce((total, _, index) => {
-    if (index === 0) return total + 20; // Last game
-    if (index < 3) return total + 18;   // Games 2-3
-    if (index < 5) return total + 16;   // Games 4-5
-    if (index < 10) return total + 14;  // Games 6-10
-    if (index < 20) return total + 12;  // Games 11-20
-    return total + 10;                  // Games 20+
-  }, 0);
+  // Group sequences by category
+  const gameCategories = {
+    current: 0,
+    recent: 0,
+    newer: 0,
+    mid: 0,
+    older: 0,
+    oldest: 0
+  };
+
+  // Count games in each category
+  sortedSequences.forEach(sequence => {
+    const gamesAgo = latestSequence - sequence;
+    
+    if (sequence === latestSequence) {
+      gameCategories.current++;
+    }
+    else if (gamesAgo <= 2) {
+      gameCategories.recent++;
+    }
+    else if (gamesAgo <= 4) {
+      gameCategories.newer++;
+    }
+    else if (gamesAgo <= 9) {
+      gameCategories.mid++;
+    }
+    else if (gamesAgo <= 19) {
+      gameCategories.older++;
+    }
+    else {
+      gameCategories.oldest++;
+    }
+  });
+
+  // Calculate XP for each category
+  const categoryXP = {
+    current: gameCategories.current * 20,
+    recent: gameCategories.recent * 18,
+    newer: gameCategories.newer * 16,
+    mid: gameCategories.mid * 14,
+    older: gameCategories.older * 12,
+    oldest: gameCategories.oldest * 10
+  };
+  
+  return Object.values(categoryXP).reduce((sum, xp) => sum + xp, 0);
 };
 
 export const calculatePlayerXP = ({
@@ -39,25 +86,27 @@ export const calculatePlayerXP = ({
   activePenalties = 0,
   currentStreak = 0,
   dropoutPenalties = 0,
-  gameSequences = []
+  gameSequences = [],
+  latestSequence = 0
 }: PlayerStats): number => {
   // Calculate base XP using weighted game points
   const baseXP = calculateWeightedBaseXP(
-    gameSequences.map(seq => parseInt(seq)),
-    caps
+    gameSequences,
+    caps,
+    latestSequence
   );
   
   // Calculate streak multiplier (10% bonus per streak level)
-  const streakMultiplier = 1 + (currentStreak * 0.1);
-  
-  // Apply bonuses and penalties
-  const bonusXP = activeBonuses * 100;
-  const penaltyXP = activePenalties * 100;
-  const dropoutXP = dropoutPenalties * 50;
-  
+  const streakMultiplier = Math.max(1, 1 + (currentStreak * 0.1));
+
+  // Future implementations:
+  // const bonusXP = activeBonuses * 100;
+  // const penaltyXP = activePenalties * 100;
+  // const dropoutXP = dropoutPenalties * 50;
+
   // Calculate final XP with streak multiplier
-  const totalXP = (baseXP * streakMultiplier) + bonusXP - penaltyXP - dropoutXP;
-  
-  // Ensure XP doesn't go below 0 and round
-  return Math.max(0, Math.round(totalXP));
+  const totalXP = Math.round(baseXP * streakMultiplier);
+  // Future: const totalXP = Math.max(0, Math.round((baseXP * streakMultiplier) + bonusXP - penaltyXP - dropoutXP));
+
+  return Math.max(0, totalXP);
 };
