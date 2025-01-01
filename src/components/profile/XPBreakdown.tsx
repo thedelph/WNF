@@ -35,11 +35,14 @@ export default function XPBreakdown({
   });
 
   // Sort sequences by how many games ago they are
-  const sortedSequences = [...sequences].sort((a, b) => b - a);
+  const sortedSequences = [...sequences]
+    .filter(seq => seq <= latestSequence) // Only include historical games
+    .sort((a, b) => b - a);
+    
   const gameCategories = sortedSequences.reduce((acc, sequence) => {
     const gamesAgo = latestSequence - sequence;
     
-    if (sequence === latestSequence) {
+    if (gamesAgo === 0) {
       acc.current.push(sequence);
     } else if (gamesAgo <= 2) {
       acc.recent.push(sequence);
@@ -109,9 +112,9 @@ export default function XPBreakdown({
               
               <div className="space-y-4">
                 <div className="text-sm opacity-70 mb-4">
-                  <p>XP is calculated based on how recently you played:</p>
+                  <p>XP is calculated based on how recently you played in historical games:</p>
                   <ul className="list-disc list-inside space-y-1 mt-2">
-                    <li>Most Recent Game: 20 XP</li>
+                    <li>Most Recent Historical Game: 20 XP</li>
                     <li>1-2 Games Ago: 18 XP</li>
                     <li>3-4 Games Ago: 16 XP</li>
                     <li>5-9 Games Ago: 14 XP</li>

@@ -20,16 +20,20 @@ export interface PlayerStats {
  * 
  * @param gameSequences Array of game sequence numbers where player participated
  * @param caps Total number of games played by player
- * @param latestSequence The most recent game sequence number
+ * @param latestSequence The most recent historical game sequence number
  */
 const calculateWeightedBaseXP = (
   gameSequences: number[] = [], 
   caps: number,
   latestSequence: number
 ): number => {
-  // Sort sequences in descending order and filter out null/undefined/NaN
+  // Sort sequences in descending order and filter out null/undefined/NaN and future games
   const sortedSequences = [...gameSequences]
-    .filter(seq => seq != null && !isNaN(seq))
+    .filter(seq => 
+      seq != null && 
+      !isNaN(seq) && 
+      seq <= latestSequence // Only include games up to the latest sequence
+    )
     .map(Number)
     .sort((a, b) => b - a);
 
@@ -47,6 +51,7 @@ const calculateWeightedBaseXP = (
   sortedSequences.forEach(sequence => {
     const gamesAgo = latestSequence - sequence;
     
+    // Player must have participated in the exact latest historical game to get 20 points
     if (sequence === latestSequence) {
       gameCategories.current++;
     }

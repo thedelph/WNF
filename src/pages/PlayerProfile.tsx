@@ -112,10 +112,11 @@ export default function PlayerProfileNew() {
   useEffect(() => {
     const fetchPlayerData = async () => {
       try {
-        // Get latest game sequence first
+        // Get latest historical game sequence first
         const { data: latestSequenceData, error: sequenceError } = await supabase
           .from('games')
           .select('sequence_number')
+          .eq('is_historical', true)
           .order('sequence_number', { ascending: false })
           .limit(1);
 
@@ -171,7 +172,7 @@ export default function PlayerProfileNew() {
           }
         }
 
-        // Fetch game registrations with sequence numbers
+        // Fetch game registrations with sequence numbers for historical games
         const { data: gamesData, error: gamesError } = await supabase
           .from('game_registrations')
           .select(`
@@ -183,10 +184,12 @@ export default function PlayerProfileNew() {
               outcome,
               score_blue,
               score_orange,
-              sequence_number
+              sequence_number,
+              is_historical
             )
           `)
           .eq('player_id', id)
+          .eq('games.is_historical', true)
           .order('games(sequence_number)', { ascending: false });
 
         if (gamesError) {

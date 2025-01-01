@@ -199,39 +199,47 @@ export const PlayerListView: React.FC<PlayerListViewProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <PlayerSection
-        title="Selected Players"
-        players={selectedPlayers}
-        icon={FaUser}
-        isExpanded={showSelected}
-        onToggle={() => setShowSelected(!showSelected)}
-        currentUserId={currentUserId}
-        gameId={gameId}
-        onPlayerDropout={onPlayerDropout}
-      />
-      
-      <PlayerSection
-        title="Reserve Players"
-        players={reservePlayers}
-        icon={FaUserClock}
-        isExpanded={showReserves}
-        onToggle={() => setShowReserves(!showReserves)}
-        currentUserId={currentUserId}
-        gameId={gameId}
-        onPlayerDropout={onPlayerDropout}
-        children={children}
-      />
-      
-      <PlayerSection
-        title="Dropped Out Players"
-        players={droppedOutPlayers}
-        icon={FaUser}
-        isExpanded={showDroppedOut}
-        onToggle={() => setShowDroppedOut(!showDroppedOut)}
-        currentUserId={currentUserId}
-        gameId={gameId}
-        onPlayerDropout={onPlayerDropout}
-      />
+      {selectedPlayers.length > 0 && (
+        <PlayerSection
+          title={selectedPlayers[0]?.team === 'blue' ? 'Blue Team' : 'Orange Team'}
+          players={selectedPlayers}
+          icon={FaUser}
+          isExpanded={showSelected}
+          onToggle={() => setShowSelected(!showSelected)}
+          currentUserId={currentUserId}
+          gameId={gameId}
+          onPlayerDropout={onPlayerDropout}
+          children={children}
+        />
+      )}
+
+      {reservePlayers.length > 0 && (
+        <PlayerSection
+          title="Reserve Players"
+          players={reservePlayers}
+          icon={FaUserClock}
+          isExpanded={showReserves}
+          onToggle={() => setShowReserves(!showReserves)}
+          currentUserId={currentUserId}
+          gameId={gameId}
+          onPlayerDropout={onPlayerDropout}
+          children={children}
+        />
+      )}
+
+      {droppedOutPlayers.length > 0 && (
+        <PlayerSection
+          title="Dropped Out"
+          players={droppedOutPlayers}
+          icon={FaUserClock}
+          isExpanded={showDroppedOut}
+          onToggle={() => setShowDroppedOut(!showDroppedOut)}
+          currentUserId={currentUserId}
+          gameId={gameId}
+          onPlayerDropout={onPlayerDropout}
+          children={children}
+        />
+      )}
     </div>
   );
 };

@@ -4,12 +4,12 @@ import { ExtendedPlayerData } from '../../types/playerSelection';
 import PlayerCard from '../PlayerCard';
 import { calculatePlayerXP } from '../../utils/xpCalculations';
 import { calculateRarity } from '../../utils/rarityCalculations';
-import { usePlayerStats } from '../../hooks/usePlayerStats';
 import { supabase } from '../../utils/supabase';
 
 interface PlayerListProps {
   players: ExtendedPlayerData[];
   isExpanded: boolean;
+  allXpValues: number[];
   children?: (player: ExtendedPlayerData) => React.ReactNode;
 }
 
@@ -21,18 +21,19 @@ interface PlayerListProps {
 export const PlayerList: React.FC<PlayerListProps> = ({
   players,
   isExpanded,
+  allXpValues,
   children
 }) => {
-  const { allPlayersXP, loading } = usePlayerStats();
   const [latestSequence, setLatestSequence] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get latest game sequence
+  // Get latest historical game sequence
   useEffect(() => {
     const fetchLatestSequence = async () => {
       const { data, error } = await supabase
         .from('games')
         .select('sequence_number')
+        .eq('is_historical', true)
         .order('sequence_number', { ascending: false })
         .limit(1);
 
@@ -71,10 +72,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 latestSequence
               });
 
-              // Default to Common rarity while loading or if no XP data
-              const rarity = loading || !allPlayersXP?.length 
-                ? 'Common'
-                : calculateRarity(playerXP, allPlayersXP);
+              // Use allXpValues prop for rarity calculation
+              const rarity = calculateRarity(playerXP, allXpValues);
 
               return (
                 <PlayerCard

@@ -53,17 +53,18 @@ export default function PlayerCardGrid() {
       if (playersResponse.error) throw playersResponse.error;
       const playersData = playersResponse.data;
 
-      // Get latest sequence number
+      // Get latest historical sequence number
       const latestSequenceResponse = await supabase
         .from('games')
         .select('sequence_number')
+        .eq('is_historical', true)
         .order('sequence_number', { ascending: false })
         .limit(1);
 
       if (latestSequenceResponse.error) throw latestSequenceResponse.error;
       const latestSequence = Number(latestSequenceResponse.data[0]?.sequence_number || 0);
 
-      // Get all game registrations with their sequence numbers
+      // Get all game registrations with their sequence numbers for historical games only
       const { data: gameRegs, error: gameRegsError } = await supabase
         .from('game_registrations')
         .select(`
@@ -74,6 +75,7 @@ export default function PlayerCardGrid() {
             sequence_number
           )
         `)
+        .eq('games.is_historical', true)
         .order('games(sequence_number)', { ascending: false });
 
       if (gameRegsError) throw gameRegsError;

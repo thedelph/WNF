@@ -27,6 +27,7 @@ export const useGamePlayers = (gameId: string) => {
         dropoutResponse,
         slotOffersResponse,
         registrationsResponse,
+        latestSequenceResponse,
         gameRegsResponse
       ] = await Promise.all([
         // Game data
@@ -75,7 +76,15 @@ export const useGamePlayers = (gameId: string) => {
           .eq('game_id', gameId)
           .order('created_at', { ascending: true }),
           
-        // Game sequences
+        // Get latest historical sequence number
+        supabase
+          .from('games')
+          .select('sequence_number')
+          .eq('is_historical', true)
+          .order('sequence_number', { ascending: false })
+          .limit(1),
+
+        // Game sequences for historical games only
         supabase
           .from('game_registrations')
           .select(`
@@ -86,6 +95,7 @@ export const useGamePlayers = (gameId: string) => {
               sequence_number
             )
           `)
+          .eq('games.is_historical', true)
           .order('games(sequence_number)', { ascending: false })
       ]);
 
@@ -94,12 +104,19 @@ export const useGamePlayers = (gameId: string) => {
       if (registrationsResponse.error) throw registrationsResponse.error;
       if (gameRegsResponse.error) throw gameRegsResponse.error;
       if (slotOffersResponse.error) throw slotOffersResponse.error;
+      if (latestSequenceResponse.error) throw latestSequenceResponse.error;
 
       // Extract data
       const gameData = gameDataResponse.data;
       const registrations = registrationsResponse.data;
       const gameRegs = gameRegsResponse.data;
-      const slotOffers = slotOffersResponse.data;
+      const latestSequence = Number(latestSequenceResponse.data[0]?.sequence_number || 0);
+
+      if (!gameData) {
+        console.error('No game data found');
+        setIsLoading(false);
+        return;
+      }
 
       // Set game data
       setGameData(gameData);
@@ -111,14 +128,19 @@ export const useGamePlayers = (gameId: string) => {
       }
 
       // Set active slot offers
-      setActiveSlotOffers(slotOffers?.filter(offer => offer.status === 'pending') || []);
+      setActiveSlotOffers(slotOffersResponse.data?.filter(offer => offer.status === 'pending') || []);
 
       if (!registrations || registrations.length === 0) {
         setIsLoading(false);
         return;
       }
 
-      // Calculate win rates and group sequences by player
+      // Process players
+      const selected: ExtendedPlayerData[] = [];
+      const reserves: ExtendedPlayerData[] = [];
+      const droppedOut: ExtendedPlayerData[] = [];
+
+      // Group sequences by player
       const playerSequences = gameRegs.reduce((acc, reg) => {
         if (!reg.games?.sequence_number) return acc;
         
@@ -135,31 +157,26 @@ export const useGamePlayers = (gameId: string) => {
         const sequence = Number(reg.games.sequence_number);
         if (!acc[playerId].sequences.includes(sequence)) {
           acc[playerId].sequences.push(sequence);
-        }
-        
-        // Calculate wins
-        if (reg.games.outcome && reg.team) {
-          const team = reg.team.toLowerCase();
-          const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
-                       (team === 'orange' && reg.games.outcome === 'orange_win');
           
-          if (isWin) acc[playerId].wins++;
-          acc[playerId].total++;
+          // Only count games with outcomes for win rate
+          if (reg.games.outcome) {
+            const team = reg.team.toLowerCase();
+            const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
+                         (team === 'orange' && reg.games.outcome === 'orange_win');
+            
+            if (isWin) acc[playerId].wins++;
+            acc[playerId].total++;
+          }
         }
         
         return acc;
       }, {} as Record<string, { sequences: number[], wins: number, total: number }>);
 
-      // Process players
-      const selected: ExtendedPlayerData[] = [];
-      const reserves: ExtendedPlayerData[] = [];
-      const droppedOut: ExtendedPlayerData[] = [];
-
       registrations?.forEach(reg => {
         const player = reg.players;
         if (!player) return;
 
-        const playerSlotOffers = slotOffers?.filter(
+        const playerSlotOffers = slotOffersResponse.data?.filter(
           offer => offer.player_id === player.id
         ) || [];
 
@@ -173,8 +190,8 @@ export const useGamePlayers = (gameId: string) => {
           activeBonuses: player.active_bonuses || 0,
           activePenalties: player.active_penalties || 0,
           currentStreak: player.current_streak || 0,
-          gameSequences: playerData.sequences,
-          latestSequence: gameData.sequence_number
+          gameSequences: playerData.sequences.sort((a, b) => b - a),
+          latestSequence
         };
 
         const xp = calculatePlayerXP(stats);
@@ -185,7 +202,7 @@ export const useGamePlayers = (gameId: string) => {
             xp,
             stats,
             playerData,
-            latestSequence: gameData.sequence_number
+            latestSequence
           });
         }
 

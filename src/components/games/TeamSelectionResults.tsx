@@ -36,6 +36,9 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<GameSelection | null>(null);
   const [view, setView] = useState<'list' | 'card'>('card');
+  const [showBlueTeam, setShowBlueTeam] = useState(true);
+  const [showOrangeTeam, setShowOrangeTeam] = useState(true);
+  const [showReserves, setShowReserves] = useState(true);
 
   useEffect(() => {
     const fetchSelectionAndPlayers = async () => {
@@ -49,16 +52,54 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
           .eq('game_id', gameId)
           .single();
 
-        // Get latest sequence number
+        console.log('Balanced Teams Data:', balancedTeams);
+
+        // Get all registrations with selection method
+        const { data: registrations, error: registrationError } = await supabase
+          .from('game_registrations')
+          .select(`
+            player_id,
+            status,
+            team,
+            selection_method,
+            players!game_registrations_player_id_fkey (
+              id,
+              friendly_name,
+              caps,
+              active_bonuses,
+              active_penalties,
+              win_rate,
+              current_streak,
+              avatar_svg,
+              attack_rating,
+              defense_rating
+            )
+          `)
+          .eq('game_id', gameId);
+
+        if (registrationError) {
+          console.error('Registration Error:', registrationError);
+          throw registrationError;
+        }
+
+        if (!registrations || registrations.length === 0) {
+          setError('No players found for this game');
+          return;
+        }
+
+        console.log('Registrations with selection method:', registrations);
+
+        // Get latest historical sequence number
         const { data: latestSequenceData } = await supabase
           .from('games')
           .select('sequence_number')
+          .eq('is_historical', true)
           .order('sequence_number', { ascending: false })
           .limit(1);
 
         const latestSequence = Number(latestSequenceData?.[0]?.sequence_number || 0);
 
-        // Get all game registrations with their sequence numbers
+        // Get all historical game registrations with their sequence numbers
         const { data: gameRegs, error: gameRegsError } = await supabase
           .from('game_registrations')
           .select(`
@@ -69,6 +110,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               sequence_number
             )
           `)
+          .eq('games.is_historical', true)
           .order('games(sequence_number)', { ascending: false });
 
         if (gameRegsError) throw gameRegsError;
@@ -105,35 +147,6 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
           return acc;
         }, {} as Record<string, { sequences: number[], wins: number, total: number }>);
 
-        // Get all registrations regardless of balanced teams status
-        const { data: registrations, error: registrationError } = await supabase
-          .from('game_registrations')
-          .select(`
-            player_id,
-            status,
-            team,
-            players!game_registrations_player_id_fkey (
-              id,
-              friendly_name,
-              caps,
-              active_bonuses,
-              active_penalties,
-              win_rate,
-              current_streak,
-              avatar_svg,
-              attack_rating,
-              defense_rating
-            )
-          `)
-          .eq('game_id', gameId);
-
-        if (registrationError) throw registrationError;
-
-        if (!registrations || registrations.length === 0) {
-          setError('No players found for this game');
-          return;
-        }
-
         // Calculate XP for all players
         const allPlayersXP = registrations.map(r => {
           const playerData = playerSequences[r.player_id] || { sequences: [], wins: 0, total: 0 };
@@ -163,6 +176,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
 
             // If we have balanced teams from database, use those assignments
             let team = r.team;
+            const isRandomlySelected = r.selection_method === 'random';
+            
             if (balancedTeams?.team_assignments?.teams) {
               const teamAssignment = balancedTeams.team_assignments.teams.find(
                 t => t.player_id === r.player_id
@@ -172,10 +187,13 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               }
             }
             
+            console.log('Player:', r.players.friendly_name, 'Random:', isRandomlySelected);
+            
             return {
               id: r.players.id,
               friendly_name: r.players.friendly_name,
               team,
+              isRandomlySelected,
               stats: {
                 caps: r.players.caps || 0,
                 activeBonuses: r.players.active_bonuses || 0,
@@ -264,25 +282,51 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {view === 'list' ? (
           <>
-            <PlayerListView 
-              players={selection.selected_players.filter(p => p.team === 'blue')}
-              title="Blue Team"
-            />
-            <PlayerListView 
-              players={selection.selected_players.filter(p => p.team === 'orange')}
-              title="Orange Team"
-            />
+            <div className="card bg-blue-100 border-2 border-blue-300 shadow-lg p-4">
+              <PlayerListView 
+                selectedPlayers={selection.selected_players.filter(p => p.team === 'blue')}
+                reservePlayers={[]}
+                droppedOutPlayers={[]}
+                currentUserId={undefined}
+                showSelected={showBlueTeam}
+                showReserves={false}
+                showDroppedOut={false}
+                setShowSelected={setShowBlueTeam}
+                setShowReserves={() => {}}
+                setShowDroppedOut={() => {}}
+                gameId={gameId}
+              />
+            </div>
+            <div className="card bg-orange-100 border-2 border-orange-300 shadow-lg p-4">
+              <PlayerListView 
+                selectedPlayers={selection.selected_players.filter(p => p.team === 'orange')}
+                reservePlayers={[]}
+                droppedOutPlayers={[]}
+                currentUserId={undefined}
+                showSelected={showOrangeTeam}
+                showReserves={false}
+                showDroppedOut={false}
+                setShowSelected={setShowOrangeTeam}
+                setShowReserves={() => {}}
+                setShowDroppedOut={() => {}}
+                gameId={gameId}
+              />
+            </div>
           </>
         ) : (
           <>
-            <PlayerCardView 
-              players={selection.selected_players.filter(p => p.team === 'blue')}
-              title="Blue Team"
-            />
-            <PlayerCardView 
-              players={selection.selected_players.filter(p => p.team === 'orange')}
-              title="Orange Team"
-            />
+            <div className="card bg-blue-100 border-2 border-blue-300 shadow-lg p-4">
+              <PlayerCardView 
+                players={selection.selected_players.filter(p => p.team === 'blue')}
+                title="Blue Team"
+              />
+            </div>
+            <div className="card bg-orange-100 border-2 border-orange-300 shadow-lg p-4">
+              <PlayerCardView 
+                players={selection.selected_players.filter(p => p.team === 'orange')}
+                title="Orange Team"
+              />
+            </div>
           </>
         )}
       </div>
@@ -290,15 +334,28 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
       {selection.reserve_players.length > 0 && (
         <div className="mt-8">
           {view === 'list' ? (
-            <PlayerListView 
-              players={selection.reserve_players}
-              title="Reserve Players"
-            />
+            <div className="card bg-gray-100 border-2 border-gray-300 shadow-lg p-4">
+              <PlayerListView 
+                selectedPlayers={[]}
+                reservePlayers={selection.reserve_players}
+                droppedOutPlayers={[]}
+                currentUserId={undefined}
+                showSelected={false}
+                showReserves={showReserves}
+                showDroppedOut={false}
+                setShowSelected={() => {}}
+                setShowReserves={setShowReserves}
+                setShowDroppedOut={() => {}}
+                gameId={gameId}
+              />
+            </div>
           ) : (
-            <PlayerCardView 
-              players={selection.reserve_players}
-              title="Reserve Players"
-            />
+            <div className="card bg-gray-100 border-2 border-gray-300 shadow-lg p-4">
+              <PlayerCardView 
+                players={selection.reserve_players}
+                title="Reserve Players"
+              />
+            </div>
           )}
         </div>
       )}

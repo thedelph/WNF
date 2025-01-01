@@ -8,6 +8,7 @@ interface PlayerSelectionSectionProps {
   title: string;
   icon: IconType;
   players: ExtendedPlayerData[];
+  allXpValues: number[];
   isExpanded: boolean;
   onToggle: () => void;
   children?: (player: ExtendedPlayerData) => React.ReactNode;
@@ -21,6 +22,7 @@ export const PlayerSelectionSection: React.FC<PlayerSelectionSectionProps> = ({
   title,
   icon,
   players,
+  allXpValues,
   isExpanded,
   onToggle,
   children
@@ -39,6 +41,7 @@ export const PlayerSelectionSection: React.FC<PlayerSelectionSectionProps> = ({
       <PlayerList
         players={players}
         isExpanded={isExpanded}
+        allXpValues={allXpValues}
       >
         {children}
       </PlayerList>

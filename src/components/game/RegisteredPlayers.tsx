@@ -29,7 +29,7 @@ interface RegisteredPlayersProps {
 }
 
 export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrations }) => {
-  const { allPlayersXP, loading } = usePlayerStats();
+  const { loading } = usePlayerStats();
   const [latestSequence, setLatestSequence] = React.useState(0);
   const [playerGameData, setPlayerGameData] = React.useState<Record<string, { sequences: number[], wins: number, total: number }>>({});
 
@@ -37,10 +37,11 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
   React.useEffect(() => {
     const fetchGameData = async () => {
       try {
-        // Get latest sequence number
+        // Get latest historical sequence number
         const { data: latestGameData, error: latestGameError } = await supabase
           .from('games')
           .select('sequence_number')
+          .eq('is_historical', true)
           .order('sequence_number', { ascending: false })
           .limit(1)
           .single();
@@ -49,7 +50,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
         const latestSeq = Number(latestGameData?.sequence_number || 0);
         setLatestSequence(latestSeq);
 
-        // Get all game registrations with sequences
+        // Get all historical game registrations with sequences
         const { data: gameRegs, error: gameRegsError } = await supabase
           .from('game_registrations')
           .select(`
@@ -60,6 +61,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
               sequence_number
             )
           `)
+          .eq('games.is_historical', true)
           .order('games(sequence_number)', { ascending: false });
 
         if (gameRegsError) throw gameRegsError;
@@ -138,6 +140,20 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
     return bXP - aXP;
   });
 
+  // Calculate all players' XP for rarity calculation
+  const allXpValues = sortedRegistrations.map(registration => {
+    const playerData = playerGameData[registration.player.id] || { sequences: [], wins: 0, total: 0 };
+    const stats = {
+      caps: registration.player.caps || 0,
+      activeBonuses: registration.player.active_bonuses || 0,
+      activePenalties: registration.player.active_penalties || 0,
+      currentStreak: registration.player.current_streak || 0,
+      gameSequences: playerData.sequences,
+      latestSequence
+    };
+    return calculatePlayerXP(stats);
+  });
+
   if (loading || !latestSequence) {
     return <div>Loading...</div>;
   }
@@ -163,8 +179,8 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
           ? Number(((playerData.wins / playerData.total) * 100).toFixed(1))
           : 0;
 
-        // Calculate rarity based on all players' XP
-        const rarity = calculateRarity(playerXP, allPlayersXP ? Object.values(allPlayersXP) : []);
+        // Calculate rarity using the local allXpValues
+        const rarity = calculateRarity(playerXP, allXpValues);
         
         return (
           <PlayerCard
