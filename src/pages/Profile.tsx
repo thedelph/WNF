@@ -49,11 +49,6 @@ export default function Component() {
         if (profileResponse.error) throw profileResponse.error;
         const profileData = profileResponse.data;
         
-        console.log('DEBUG Profile fetch:', {
-          userId: user!.id,
-          profileData
-        });
-
         // Then get game registrations and latest sequence in parallel
         const [gameRegsResponse, latestSequenceResponse] = await Promise.all([
           supabase
@@ -75,17 +70,6 @@ export default function Component() {
             .limit(1)
         ]);
 
-        console.log('DEBUG Game registrations query:', {
-          playerId: profileData.id,
-          error: gameRegsResponse.error,
-          data: gameRegsResponse.data
-        });
-
-        console.log('DEBUG Latest sequence query:', {
-          error: latestSequenceResponse.error,
-          data: latestSequenceResponse.data
-        });
-
         if (gameRegsResponse.error) throw gameRegsResponse.error;
         if (latestSequenceResponse.error) throw latestSequenceResponse.error;
 
@@ -98,19 +82,6 @@ export default function Component() {
           .map(reg => Number(reg.games.sequence_number))
           .filter(seq => !isNaN(seq))
           .sort((a, b) => b - a); // Sort in descending order
-
-        console.log('DEBUG Profile game data:', {
-          playerId: profileData.id,
-          totalGames: gameRegs.length,
-          gamesWithSequence: gameRegs.filter(reg => reg.games?.sequence_number != null).length,
-          rawGameRegs: gameRegs.map(reg => ({
-            gameId: reg.game_id,
-            sequence: reg.games?.sequence_number,
-            parsedSequence: Number(reg.games?.sequence_number)
-          })),
-          gameSequences,
-          latestSequence
-        });
 
         // Calculate win rate
         let wins = 0;
@@ -138,7 +109,6 @@ export default function Component() {
           latest_sequence: latestSequence
         };
 
-        console.log('DEBUG Final profile data:', profileWithData);
         setProfile(profileWithData);
       } catch (error) {
         setLoading(false)
@@ -235,10 +205,8 @@ export default function Component() {
             gameSequences: profile.game_sequences || [],
             latestSequence: profile.latest_sequence || 0
           });
-          console.log('DEBUG XP calculation:', xpValue);
           return xpValue.toLocaleString();
         } catch (error) {
-          console.error('Error calculating XP:', error);
           return '0';
         }
       })()

@@ -71,13 +71,6 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 latestSequence
               });
 
-              console.log('DEBUG PlayerList XP calc:', {
-                playerId: player.id,
-                gameSequences: player.stats.gameSequences,
-                latestSequence,
-                playerXP
-              });
-
               // Default to Common rarity while loading or if no XP data
               const rarity = loading || !allPlayersXP?.length 
                 ? 'Common'

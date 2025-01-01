@@ -101,7 +101,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrati
 
         setPlayerGameData(gameData);
       } catch (error) {
-        console.error('Error fetching game data:', error);
+        // Error handled silently
       }
     };
 

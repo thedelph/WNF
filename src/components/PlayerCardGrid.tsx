@@ -151,7 +151,6 @@ export default function PlayerCardGrid() {
 
       setPlayers(finalPlayers);
     } catch (error) {
-      console.error('Error fetching players:', error);
       toast.error('Error fetching players');
     } finally {
       setLoading(false);

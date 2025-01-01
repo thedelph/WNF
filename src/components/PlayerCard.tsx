@@ -50,18 +50,6 @@ export default function PlayerCard({
   const { dropoutPenalties } = usePlayerPenalties(id);
   const { player } = useUser();
 
-  // Debug log for Daniel
-  if (friendlyName === 'Daniel') {
-    console.log('Daniel XP in PlayerCard render:', {
-      xp,
-      caps,
-      activeBonuses,
-      activePenalties,
-      currentStreak,
-      gameSequences
-    });
-  }
-
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
       case 'Legendary':
