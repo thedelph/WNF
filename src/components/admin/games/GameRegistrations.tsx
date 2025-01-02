@@ -1,99 +1,144 @@
-import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { GameRegistration } from '../../../types/game'
-import { FaUserPlus, FaUserMinus, FaTimes, FaCheckSquare, FaSquare } from 'react-icons/fa'
-import { supabaseAdmin } from '../../../utils/supabase'
-import { toast } from 'react-hot-toast'
-import { calculatePlayerXP } from '../../../utils/xpCalculations'
-import { Modal } from '../../common/modals/Modal'
-import { SearchBar } from '../../common/inputs/SearchBar'
-import { PlayerSelectionPanel } from './PlayerSelectionPanel'
+import React from 'react';
+import { motion } from 'framer-motion';
+import { supabase, supabaseAdmin } from '../../../utils/supabase';
+import { calculateRarity } from '../../../utils/rarityCalculations';
+import PlayerCard from '../../PlayerCard';
+import { ExtendedPlayerData } from '../../../types/playerSelection';
+import { Modal } from '../../common/modals/Modal';
+import { SearchBar } from '../../common/inputs/SearchBar';
+import { PlayerSelectionPanel } from './PlayerSelectionPanel';
+import { FaCheckSquare, FaSquare, FaTimes } from 'react-icons/fa';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../../../hooks/useAuth';
 
-interface Props {
-  gameId: string
-  onClose: () => void
+interface GameRegistrationsProps {
+  gameId: string;
+  onClose: () => void;
 }
 
-interface PlayerWithXP extends GameRegistration {
-  xp: number;
-  friendly_name: string;
-  isRandomlySelected?: boolean;
-}
-
-/**
- * Component for managing game registrations
- * Allows adding and removing players from a game
- */
-export const GameRegistrations: React.FC<Props> = ({
+export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
   gameId,
   onClose,
 }) => {
-  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isSelectAll, setIsSelectAll] = useState(false)
-  const [filteredPlayers, setFilteredPlayers] = useState<Array<{ id: string; friendly_name: string }>>([])
-  const [isOpen, setIsOpen] = useState(true)
-  const [registrations, setRegistrations] = useState<GameRegistration[]>([])
-  const [players, setPlayers] = useState<Array<{ id: string; friendly_name: string }>>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { session } = useAuth();
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [registrations, setRegistrations] = React.useState<ExtendedPlayerData[]>([]);
+  const [selectedPlayerIds, setSelectedPlayerIds] = React.useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [isSelectAll, setIsSelectAll] = React.useState(false);
+  const [filteredPlayers, setFilteredPlayers] = React.useState<Array<{ id: string; friendly_name: string }>>([]);
+  const [isOpen, setIsOpen] = React.useState(true);
+  const [players, setPlayers] = React.useState<Array<{ id: string; friendly_name: string }>>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  // Fetch registrations and players when component mounts
-  useEffect(() => {
-    fetchRegistrations()
-    fetchPlayers()
-  }, [gameId])
-
+  // Function to fetch registrations
   const fetchRegistrations = async () => {
     try {
-      const { data, error } = await supabaseAdmin
+      setLoading(true);
+      setError(null);
+
+      // First, get the registrations for this game
+      const { data: registrationData, error: registrationError } = await supabase
         .from('game_registrations')
         .select(`
           id,
           game_id,
-          player:players!game_registrations_player_id_fkey(
+          player_id,
+          status,
+          selection_method,
+          team,
+          player_stats!game_registrations_player_id_fkey (
             id,
             friendly_name,
+            xp,
             caps,
             active_bonuses,
             active_penalties,
-            current_streak
-          ),
-          status,
-          selection_method,
-          team
+            win_rate,
+            current_streak,
+            max_streak,
+            avatar_svg
+          )
         `)
         .eq('game_id', gameId)
+        .eq('status', 'registered');
 
-      if (error) throw error
-      setRegistrations(data || [])
-    } catch (error) {
-      console.error('Error fetching registrations:', error)
-      toast.error('Failed to fetch registrations')
+      if (registrationError) throw registrationError;
+
+      // Calculate rarity based on all players' XP
+      const { data: allXPData, error: xpError } = await supabase
+        .from('player_stats')
+        .select('xp');
+
+      if (xpError) throw xpError;
+
+      const allXP = allXPData.map(p => p.xp || 0);
+
+      // Transform and enrich the data
+      const enrichedRegistrations = registrationData.map(registration => {
+        const playerStats = registration.player_stats;
+        return {
+          id: playerStats.id,
+          friendly_name: playerStats.friendly_name,
+          xp: playerStats.xp || 0,
+          caps: playerStats.caps || 0,
+          preferred_position: '', // Set empty string as default since we don't use this
+          active_bonuses: playerStats.active_bonuses || 0,
+          active_penalties: playerStats.active_penalties || 0,
+          win_rate: playerStats.win_rate || 0,
+          current_streak: playerStats.current_streak || 0,
+          max_streak: playerStats.max_streak || 0,
+          avatar_svg: playerStats.avatar_svg || '',
+          rarity: calculateRarity(playerStats.xp || 0, allXP),
+          team: registration.team,
+          isRandomlySelected: registration.selection_method === 'random'
+        };
+      });
+
+      setRegistrations(enrichedRegistrations);
+    } catch (err) {
+      console.error('Error fetching registrations:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while fetching registrations');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  const fetchPlayers = async () => {
-    try {
-      const { data, error } = await supabaseAdmin
-        .from('players')
-        .select('id, friendly_name')
-        .order('friendly_name')
-
-      if (error) throw error
-      setPlayers(data || [])
-      setIsLoading(false)
-    } catch (error) {
-      console.error('Error fetching players:', error)
-      toast.error('Failed to fetch players')
-      setIsLoading(false)
+  React.useEffect(() => {
+    if (gameId) {
+      fetchRegistrations();
+      // Refresh registrations every 30 seconds
+      const interval = setInterval(fetchRegistrations, 30000);
+      return () => clearInterval(interval);
     }
-  }
+  }, [gameId]);
 
-  // Filter available players whenever registrations or players change
-  useEffect(() => {
+  React.useEffect(() => {
+    const fetchPlayers = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('players')
+          .select('id, friendly_name')
+          .order('friendly_name');
+
+        if (error) throw error;
+        setPlayers(data || []);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching players:', error);
+        setIsLoading(false);
+      }
+    };
+    fetchPlayers();
+  }, []);
+
+  React.useEffect(() => {
+    // Filter available players whenever registrations or players change
     // Filter out already registered players by their IDs
-    const registeredPlayerIds = registrations.map(reg => reg.player?.id);
-    const availablePlayers = players.filter(player => 
+    const registeredPlayerIds = registrations.map(reg => reg.id);
+    const availablePlayers = players.filter(player =>
       !registeredPlayerIds.includes(player.id)
     );
 
@@ -108,7 +153,7 @@ export const GameRegistrations: React.FC<Props> = ({
   }, [players, registrations, searchTerm]);
 
   const handlePlayerSelect = (id: string) => {
-    setSelectedPlayerIds(prev => 
+    setSelectedPlayerIds(prev =>
       prev.includes(id) ? prev.filter(playerId => playerId !== id) : [...prev, id]
     )
   }
@@ -124,6 +169,11 @@ export const GameRegistrations: React.FC<Props> = ({
 
   const handleRegister = async () => {
     try {
+      if (!session) {
+        toast.error('You must be logged in to register players');
+        return;
+      }
+
       if (selectedPlayerIds.length === 0) {
         toast.error('No players selected');
         return;
@@ -156,8 +206,8 @@ export const GameRegistrations: React.FC<Props> = ({
         return;
       }
 
-      // Insert only new registrations
-      const { data, error } = await supabaseAdmin
+      // Insert only new registrations using admin client
+      const { error: insertError } = await supabaseAdmin
         .from('game_registrations')
         .insert(
           newPlayerIds.map(playerId => ({
@@ -168,10 +218,9 @@ export const GameRegistrations: React.FC<Props> = ({
             team: null,
             created_at: new Date().toISOString()
           }))
-        )
-        .select();
+        );
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast.success(`${newPlayerIds.length} player(s) registered successfully!`);
       fetchRegistrations(); // Refresh registrations
@@ -185,6 +234,11 @@ export const GameRegistrations: React.FC<Props> = ({
 
   const handleUnregister = async (registrationId: string) => {
     try {
+      if (!session) {
+        toast.error('You must be logged in to unregister players');
+        return;
+      }
+
       const { error } = await supabaseAdmin
         .from('game_registrations')
         .delete()
@@ -200,30 +254,6 @@ export const GameRegistrations: React.FC<Props> = ({
     }
   }
 
-  // Calculate XP for registered players
-  const registeredPlayers = registrations.map(reg => ({
-    id: reg.id,
-    friendly_name: reg.player?.friendly_name || '',
-    xp: calculatePlayerXP({
-      caps: reg.player?.caps || 0,
-      activeBonuses: reg.player?.active_bonuses || 0,
-      activePenalties: reg.player?.active_penalties || 0,
-      currentStreak: reg.player?.current_streak || 0
-    }),
-    status: reg.status,
-    selection_method: reg.selection_method
-  })).sort((a, b) => b.xp - a.xp);
-
-  if (isLoading) {
-    return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Game Registrations">
-        <div className="flex justify-center items-center p-8">
-          <span className="loading loading-spinner loading-lg"></span>
-        </div>
-      </Modal>
-    );
-  }
-
   return (
     <Modal
       isOpen={isOpen}
@@ -234,82 +264,166 @@ export const GameRegistrations: React.FC<Props> = ({
       title="Game Registrations"
       className="w-full max-w-[95vw] md:max-w-4xl mx-auto"
     >
-      <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-        <div className="flex-grow">
-          <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Search players..."
-            className="w-full"
-          />
+      {loading && (
+        <div className="flex justify-center items-center h-64">
+          <div className="loading loading-spinner loading-lg"></div>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleSelectAll}
-          className="btn btn-outline text-sm sm:text-base py-2 px-3 sm:py-3 sm:px-4"
-        >
-          {isSelectAll ? <FaCheckSquare className="mr-2" /> : <FaSquare className="mr-2" />}
-          {isSelectAll ? 'Deselect All' : 'Select All'}
-        </motion.button>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <PlayerSelectionPanel
-          title="Available Players"
-          players={filteredPlayers}
-          selectedPlayerIds={selectedPlayerIds}
-          onPlayerSelect={handlePlayerSelect}
-          className="h-[40vh] sm:h-[50vh] lg:h-80"
-        />
-        <div>
-          <h3 className="font-bold mb-2 text-base sm:text-lg">Registered Players</h3>
-          <div className="h-[40vh] sm:h-[50vh] lg:h-80 overflow-y-auto border border-base-300 rounded-lg p-2">
-            <div className="space-y-1">
-              {registeredPlayers.map((player) => (
-                <div
-                  key={player.id}
-                  className={`flex items-center justify-between p-2 sm:p-3 rounded text-sm sm:text-base ${
-                    player.status === 'selected' ? 'bg-base-200' : ''
-                  }`}
-                >
-                  <div className="flex items-center space-x-2 flex-grow mr-2">
-                    <span className="font-medium truncate">{player.friendly_name}</span>
-                    {player.status === 'selected' && (
-                      <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
-                        player.selection_method === 'random' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {player.selection_method === 'random' ? 'Random' : 'Merit'}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleUnregister(player.id)}
-                    className="text-red-500 hover:text-red-700 p-2"
-                    aria-label="Unregister player"
-                  >
-                    <FaTimes className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
+      {error && (
+        <div className="text-center text-error p-4">
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!session && (
+        <div className="text-center text-error p-4">
+          <p>You must be logged in to manage registrations</p>
+        </div>
+      )}
+
+      {!loading && !error && session && (
+        <div className="space-y-6">
+          <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+            <div className="flex-grow">
+              <SearchBar
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Search players..."
+                className="w-full"
+              />
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSelectAll}
+              className="btn btn-outline text-sm sm:text-base py-2 px-3 sm:py-3 sm:px-4"
+            >
+              {isSelectAll ? <FaCheckSquare className="mr-2" /> : <FaSquare className="mr-2" />}
+              {isSelectAll ? 'Deselect All' : 'Select All'}
+            </motion.button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <PlayerSelectionPanel
+              title="Available Players"
+              players={filteredPlayers}
+              selectedPlayerIds={selectedPlayerIds}
+              onPlayerSelect={handlePlayerSelect}
+              className="h-[40vh] sm:h-[50vh] lg:h-80"
+            />
+            <div>
+              <h3 className="font-bold mb-2 text-base sm:text-lg">Registered Players</h3>
+              <div className="h-[40vh] sm:h-[50vh] lg:h-80 overflow-y-auto border border-base-300 rounded-lg p-2">
+                <div className="space-y-1">
+                  {registrations.map((player) => (
+                    <div
+                      key={player.id}
+                      className={`flex items-center justify-between p-2 sm:p-3 rounded text-sm sm:text-base ${
+                        player.status === 'selected' ? 'bg-base-200' : ''
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 flex-grow mr-2">
+                        <span className="font-medium truncate">{player.friendly_name}</span>
+                        {player.status === 'selected' && (
+                          <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
+                            player.selection_method === 'random'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {player.selection_method === 'random' ? 'Random' : 'Merit'}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleUnregister(player.id)}
+                        className="text-red-500 hover:text-red-700 p-2"
+                        aria-label="Unregister player"
+                      >
+                        <FaTimes className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="flex justify-end">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleRegister}
-          className="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 px-3 sm:py-3 sm:px-4"
-          disabled={selectedPlayerIds.length === 0}
-        >
-          Register Selected ({selectedPlayerIds.length})
-        </motion.button>
-      </div>
+          <div className="flex justify-end">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRegister}
+              className="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 px-3 sm:py-3 sm:px-4"
+              disabled={selectedPlayerIds.length === 0}
+            >
+              Register Selected ({selectedPlayerIds.length})
+            </motion.button>
+          </div>
+
+          <div className="space-y-8">
+            {/* Unassigned Players */}
+            {registrations.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-4"
+              >
+                <h3 className="text-xl font-bold">Unassigned Players ({registrations.length})</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {registrations.map(player => (
+                    <PlayerCard key={player.id} {...player} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Teams */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Blue Team */}
+              {registrations.filter(player => player.team === 'blue').length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className="space-y-4"
+                >
+                  <h3 className="text-xl font-bold text-blue-500">Blue Team ({registrations.filter(player => player.team === 'blue').length})</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {registrations.filter(player => player.team === 'blue').map(player => (
+                      <PlayerCard key={player.id} {...player} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Orange Team */}
+              {registrations.filter(player => player.team === 'orange').length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                  className="space-y-4"
+                >
+                  <h3 className="text-xl font-bold text-orange-500">Orange Team ({registrations.filter(player => player.team === 'orange').length})</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {registrations.filter(player => player.team === 'orange').map(player => (
+                      <PlayerCard key={player.id} {...player} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </div>
+
+          {registrations.length === 0 && (
+            <div className="col-span-3 text-center py-8">
+              <p className="text-gray-500">No registrations found</p>
+            </div>
+          )}
+        </div>
+      )}
     </Modal>
-  )
-}
+  );
+};

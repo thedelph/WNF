@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { ExtendedPlayerData } from '../types/playerSelection';
-import { calculatePlayerXP } from '../utils/xpCalculations';
 
 /**
  * Custom hook to manage game players data and state
@@ -11,289 +10,184 @@ export const useGamePlayers = (gameId: string) => {
   const [selectedPlayers, setSelectedPlayers] = useState<ExtendedPlayerData[]>([]);
   const [reservePlayers, setReservePlayers] = useState<ExtendedPlayerData[]>([]);
   const [droppedOutPlayers, setDroppedOutPlayers] = useState<ExtendedPlayerData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [gameDate, setGameDate] = useState<Date | null>(null);
-  const [firstDropoutTime, setFirstDropoutTime] = useState<Date | null>(null);
-  const [gameData, setGameData] = useState<any>(null);
   const [activeSlotOffers, setActiveSlotOffers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [gameData, setGameData] = useState<any>(null);
+  const [firstDropoutTime, setFirstDropoutTime] = useState<Date | null>(null);
+  const [gameDate, setGameDate] = useState<Date | null>(null);
 
   const fetchGamePlayers = async () => {
     try {
       setIsLoading(true);
+      setError(null);
 
-      // Fetch all data in parallel
-      const [
-        gameDataResponse,
-        dropoutResponse,
-        slotOffersResponse,
-        registrationsResponse,
-        latestSequenceResponse,
-        gameRegsResponse
-      ] = await Promise.all([
-        // Game data
-        supabase
-          .from('games')
-          .select('*')
-          .eq('id', gameId)
-          .single(),
-          
-        // First dropout time  
-        supabase
-          .from('game_registrations')
-          .select('created_at')
-          .eq('game_id', gameId)
-          .eq('status', 'dropped_out')
-          .order('created_at', { ascending: true })
-          .limit(1)
-          .maybeSingle(),
-          
-        // Slot offers
-        supabase
-          .from('slot_offers')
-          .select('*')
-          .eq('game_id', gameId)
-          .in('status', ['pending', 'declined']),
-          
-        // Player registrations
-        supabase
-          .from('game_registrations')
-          .select(`
-            player_id,
-            status,
-            created_at,
-            selection_method,
-            players!game_registrations_player_id_fkey (
-              id,
-              friendly_name,
-              caps,
-              active_bonuses,
-              active_penalties,
-              current_streak,
-              max_streak,
-              avatar_svg
-            )
-          `)
-          .eq('game_id', gameId)
-          .order('created_at', { ascending: true }),
-          
-        // Get latest historical sequence number
-        supabase
-          .from('games')
-          .select('sequence_number')
-          .eq('is_historical', true)
-          .order('sequence_number', { ascending: false })
-          .limit(1),
+      // Get game data first to check status
+      const { data: gameDataResponse, error: gameError } = await supabase
+        .from('games')
+        .select('*')
+        .eq('id', gameId)
+        .single();
 
-        // Game sequences for historical games only
-        supabase
-          .from('game_registrations')
-          .select(`
-            player_id,
-            team,
-            games!inner (
-              outcome,
-              sequence_number
-            )
-          `)
-          .eq('games.is_historical', true)
-          .order('games(sequence_number)', { ascending: false })
-      ]);
+      if (gameError) throw gameError;
+      setGameData(gameDataResponse);
+      setGameDate(gameDataResponse?.date ? new Date(gameDataResponse.date) : null);
 
-      // Handle errors
-      if (gameDataResponse.error) throw gameDataResponse.error;
-      if (registrationsResponse.error) throw registrationsResponse.error;
-      if (gameRegsResponse.error) throw gameRegsResponse.error;
-      if (slotOffersResponse.error) throw slotOffersResponse.error;
-      if (latestSequenceResponse.error) throw latestSequenceResponse.error;
+      // Get all registrations for this game with player stats
+      const { data: registrations, error: regError } = await supabase
+        .from('game_registrations')
+        .select(`
+          id,
+          status,
+          selection_method,
+          game_id,
+          player:players!game_registrations_player_id_fkey (
+            id,
+            friendly_name,
+            avatar_svg
+          ),
+          player_stats!game_registrations_player_id_fkey (
+            caps,
+            active_bonuses,
+            active_penalties,
+            current_streak,
+            max_streak,
+            win_rate,
+            xp
+          )
+        `)
+        .eq('game_id', gameId);
 
-      // Extract data
-      const gameData = gameDataResponse.data;
-      const registrations = registrationsResponse.data;
-      const gameRegs = gameRegsResponse.data;
-      const latestSequence = Number(latestSequenceResponse.data[0]?.sequence_number || 0);
+      if (regError) throw regError;
 
-      if (!gameData) {
-        console.error('No game data found');
-        setIsLoading(false);
-        return;
-      }
+      // Get active slot offers for this game
+      const { data: slotOffers, error: slotError } = await supabase
+        .from('slot_offers')
+        .select('*')
+        .eq('game_id', gameId)
+        .in('status', ['pending', 'accepted']);
 
-      // Set game data
-      setGameData(gameData);
-      setGameDate(new Date(gameData.date));
+      if (slotError) throw slotError;
 
-      // Set first dropout time if exists
-      if (!dropoutResponse.error && dropoutResponse.data) {
-        setFirstDropoutTime(new Date(dropoutResponse.data.created_at));
-      }
+      // Get slot offer times for all reserve players
+      const { data: offerTimes, error: offerTimesError } = await supabase
+        .rpc('calculate_slot_offer_times', {
+          p_game_id: gameId,
+          p_num_players: registrations.filter(r => r.status === 'reserve').length
+        });
 
-      // Set active slot offers
-      setActiveSlotOffers(slotOffersResponse.data?.filter(offer => offer.status === 'pending') || []);
+      if (offerTimesError) throw offerTimesError;
 
-      if (!registrations || registrations.length === 0) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Process players
-      const selected: ExtendedPlayerData[] = [];
-      const reserves: ExtendedPlayerData[] = [];
-      const droppedOut: ExtendedPlayerData[] = [];
-
-      // Group sequences by player
-      const playerSequences = gameRegs.reduce((acc, reg) => {
-        if (!reg.games?.sequence_number) return acc;
-        
-        const playerId = reg.player_id;
-        if (!acc[playerId]) {
-          acc[playerId] = {
-            sequences: [],
-            wins: 0,
-            total: 0
-          };
+      // Create a map of slot offers by player ID
+      const slotOffersByPlayer = slotOffers?.reduce((acc, offer) => {
+        if (!acc[offer.player_id]) {
+          acc[offer.player_id] = [];
         }
-        
-        // Add sequence number if not already present
-        const sequence = Number(reg.games.sequence_number);
-        if (!acc[playerId].sequences.includes(sequence)) {
-          acc[playerId].sequences.push(sequence);
-          
-          // Only count games with outcomes for win rate
-          if (reg.games.outcome) {
-            const team = reg.team.toLowerCase();
-            const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
-                         (team === 'orange' && reg.games.outcome === 'orange_win');
-            
-            if (isWin) acc[playerId].wins++;
-            acc[playerId].total++;
-          }
-        }
-        
+        acc[offer.player_id].push(offer);
         return acc;
-      }, {} as Record<string, { sequences: number[], wins: number, total: number }>);
+      }, {} as Record<string, any[]>) || {};
 
-      registrations?.forEach(reg => {
-        const player = reg.players;
-        if (!player) return;
+      // Create a map of offer times by rank
+      const offerTimesByRank = offerTimes?.reduce((acc, time) => {
+        acc[time.player_rank] = time;
+        return acc;
+      }, {} as Record<number, any>) || {};
 
-        const playerSlotOffers = slotOffersResponse.data?.filter(
-          offer => offer.player_id === player.id
-        ) || [];
-
-        const playerData = playerSequences[player.id] || { sequences: [], wins: 0, total: 0 };
-        const winRate = playerData.total > 0 
-          ? Number(((playerData.wins / playerData.total) * 100).toFixed(1))
-          : 0;
-
-        const stats = {
-          caps: player.caps || 0,
-          activeBonuses: player.active_bonuses || 0,
-          activePenalties: player.active_penalties || 0,
-          currentStreak: player.current_streak || 0,
-          gameSequences: playerData.sequences.sort((a, b) => b - a),
-          latestSequence
-        };
-
-        const xp = calculatePlayerXP(stats);
+      // Transform players
+      const transformedPlayers = registrations.map((reg, index) => {
+        const playerSlotOffers = slotOffersByPlayer[reg.player.id] || [];
+        const latestOffer = playerSlotOffers[0];
+        const isReserve = reg.status === 'reserve';
         
-        // Debug log for Daniel
-        if (player.friendly_name === 'Daniel') {
-          console.log('Daniel XP calculation in useGamePlayers:', {
-            xp,
-            stats,
-            playerData,
-            latestSequence
-          });
-        }
+        // For reserve players, get their rank based on XP
+        const reserveRank = isReserve ? 
+          registrations
+            .filter(r => r.status === 'reserve')
+            .sort((a, b) => (b.player_stats.xp || 0) - (a.player_stats.xp || 0))
+            .findIndex(r => r.player.id === reg.player.id) + 1 
+          : null;
 
-        const playerExtendedData: ExtendedPlayerData = {
-          id: player.id,
-          friendly_name: player.friendly_name,
-          win_rate: winRate,
-          max_streak: player.max_streak || 0,
-          avatar_svg: player.avatar_svg || '',
-          stats,
-          xp,
+        // Get offer times based on their rank
+        const offerTimes = reserveRank ? offerTimesByRank[reserveRank] : null;
+
+        return {
+          id: reg.player.id,
+          friendly_name: reg.player.friendly_name,
+          avatar_svg: reg.player.avatar_svg,
+          caps: reg.player_stats.caps,
+          active_bonuses: reg.player_stats.active_bonuses,
+          active_penalties: reg.player_stats.active_penalties,
+          current_streak: reg.player_stats.current_streak,
+          max_streak: reg.player_stats.max_streak,
+          win_rate: reg.player_stats.win_rate,
+          xp: reg.player_stats.xp,
+          status: reg.status,
+          selection_method: reg.selection_method,
           isRandomlySelected: reg.selection_method === 'random',
-          selectionMethod: reg.selection_method || '',
+          // Only set hasSlotOffer if there's an actual offer
+          hasSlotOffer: !!latestOffer,
+          slotOfferStatus: latestOffer?.status,
+          slotOfferExpiresAt: latestOffer?.expires_at,
+          slotOfferAvailableAt: latestOffer?.available_at,
           slotOffers: playerSlotOffers,
-          has_declined: playerSlotOffers.some(offer => offer.status === 'declined')
+          // Store potential offer times separately
+          potentialOfferTimes: isReserve ? offerTimes : null
         };
-
-        if (reg.status === 'selected') {
-          selected.push(playerExtendedData);
-        } else if (reg.status === 'reserve') {
-          reserves.push(playerExtendedData);
-        } else if (reg.status === 'dropped_out') {
-          droppedOut.push(playerExtendedData);
-        }
       });
 
-      // Set all state at once
-      setSelectedPlayers(selected);
-      setReservePlayers(reserves);
-      setDroppedOutPlayers(droppedOut);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching players:', error);
+      // Sort players by XP
+      const sortedPlayers = [...transformedPlayers].sort((a, b) => (b.xp || 0) - (a.xp || 0));
+
+      // Get players by their current status in the database
+      const selectedPlayers = sortedPlayers.filter(p => p.status === 'selected');
+      const reservePlayers = sortedPlayers.filter(p => p.status === 'reserve');
+      const droppedOutPlayers = sortedPlayers.filter(p => p.status === 'dropped_out');
+
+      // Update game_selections
+      const { error: updateError } = await supabase
+        .from('game_selections')
+        .upsert({
+          game_id: gameId,
+          selected_players: selectedPlayers.map(p => p.id),
+          reserve_players: reservePlayers.map(p => p.id),
+          selection_metadata: {
+            timestamp: new Date().toISOString()
+          }
+        });
+
+      if (updateError) {
+        console.error('Failed to update game_selections:', updateError);
+      }
+
+      setSelectedPlayers(selectedPlayers);
+      setReservePlayers(reservePlayers);
+      setDroppedOutPlayers(droppedOutPlayers);
+      setActiveSlotOffers(slotOffers || []);
+
+    } catch (err) {
+      console.error('Error fetching game players:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch game players'));
+    } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGamePlayers();
-
-    // Set up real-time subscriptions for slot offers and game registrations
-    const channels = [
-      supabase
-        .channel('slot-offers-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'slot_offers',
-            filter: `game_id=eq.${gameId}`
-          },
-          (payload) => {
-            console.log('Slot offer change detected:', payload);
-            fetchGamePlayers();
-          }
-        ),
-      supabase
-        .channel('game-registrations-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'game_registrations',
-            filter: `game_id=eq.${gameId}`
-          },
-          (payload) => {
-            console.log('Game registration change detected:', payload);
-            fetchGamePlayers();
-          }
-        )
-    ];
-
-    // Subscribe to all channels
-    channels.forEach(channel => channel.subscribe());
-
-    return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
-    };
+    if (gameId) {
+      fetchGamePlayers();
+    }
   }, [gameId]);
 
   return {
     selectedPlayers,
     reservePlayers,
     droppedOutPlayers,
+    activeSlotOffers,
     isLoading,
+    error,
+    gameData,
     gameDate,
     firstDropoutTime,
-    refreshPlayers: fetchGamePlayers,
-    gameData,
-    activeSlotOffers
+    refreshPlayers: fetchGamePlayers
   };
 };

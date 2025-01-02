@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ExtendedPlayerData } from '../../types/playerSelection';
+import React from 'react';
+import { motion } from 'framer-motion';
 import PlayerCard from '../PlayerCard';
-import { calculatePlayerXP } from '../../utils/xpCalculations';
 import { calculateRarity } from '../../utils/rarityCalculations';
-import { supabase } from '../../utils/supabase';
+import { ExtendedPlayerData } from '../../types/playerSelection';
 
 interface PlayerListProps {
   players: ExtendedPlayerData[];
   isExpanded: boolean;
   allXpValues: number[];
-  children?: (player: ExtendedPlayerData) => React.ReactNode;
+  children?: React.ReactNode;
+  renderPlayerExtra?: (player: ExtendedPlayerData) => React.ReactNode;
 }
 
 /**
@@ -22,86 +21,49 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   players,
   isExpanded,
   allXpValues,
-  children
+  children,
+  renderPlayerExtra
 }) => {
-  const [latestSequence, setLatestSequence] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Get latest historical game sequence
-  useEffect(() => {
-    const fetchLatestSequence = async () => {
-      const { data, error } = await supabase
-        .from('games')
-        .select('sequence_number')
-        .eq('is_historical', true)
-        .order('sequence_number', { ascending: false })
-        .limit(1);
-
-      if (!error && data?.length) {
-        setLatestSequence(Number(data[0].sequence_number));
-      }
-      setIsLoading(false);
-    };
-
-    fetchLatestSequence();
-  }, []);
-
-  // Don't render until we have the latest sequence
-  if (isLoading || latestSequence === null) {
-    return null;
-  }
+  // Sort players by XP in descending order
+  const sortedPlayers = [...players].sort((a, b) =>
+    (b.xp || 0) - (a.xp || 0)
+  );
 
   return (
-    <AnimatePresence>
-      {isExpanded && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          className="overflow-hidden"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {players.map((player) => {
-              // Calculate XP once for both rarity and display
-              const playerXP = calculatePlayerXP({
-                caps: player.stats.caps,
-                activeBonuses: player.stats.activeBonuses,
-                activePenalties: player.stats.activePenalties,
-                currentStreak: player.stats.currentStreak,
-                gameSequences: player.stats.gameSequences,
-                latestSequence
-              });
+    <motion.div
+      initial={false}
+      animate={{ height: isExpanded ? 'auto' : 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden"
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 p-4 justify-items-center sm:justify-items-stretch">
+        {sortedPlayers.map((player) => {
+          // Calculate rarity for each player
+          const rarity = calculateRarity(player.xp || 0, allXpValues);
 
-              // Use allXpValues prop for rarity calculation
-              const rarity = calculateRarity(playerXP, allXpValues);
-
-              return (
+          return (
+            <motion.div
+              key={player.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex flex-col gap-2">
+                {/* Render PlayerCard with player data and rarity */}
                 <PlayerCard
-                  key={player.id}
-                  id={player.id}
+                  {...player}
                   friendlyName={player.friendly_name}
-                  caps={player.stats.caps}
-                  preferredPosition={player.preferredPosition}
-                  activeBonuses={player.stats.activeBonuses}
-                  activePenalties={player.stats.activePenalties}
-                  winRate={player.win_rate || 0}
-                  currentStreak={player.stats.currentStreak}
-                  maxStreak={player.max_streak}
                   rarity={rarity}
-                  xp={playerXP}
-                  avatarSvg={player.avatar_svg}
-                  isRandomlySelected={player.isRandomlySelected}
-                  hasSlotOffer={player.slotOffers?.some(offer => offer.status === 'pending')}
-                  slotOfferStatus={player.has_declined ? 'declined' : player.slotOffers?.find(offer => offer.status === 'pending') ? 'pending' : undefined}
-                  gameSequences={player.stats.gameSequences}
-                >
-                  {children?.(player)}
-                </PlayerCard>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                />
+                {/* Render extra content if provided */}
+                {renderPlayerExtra && renderPlayerExtra(player)}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+      {/* Render children if provided */}
+      {children}
+    </motion.div>
   );
 };

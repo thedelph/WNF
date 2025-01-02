@@ -1,4 +1,23 @@
-import { PlayerStats } from '../utils/xpCalculations';
+export interface PlayerStats {
+  id: string;
+  friendly_name: string;
+  preferred_position: string | null;
+  caps: number;
+  active_bonuses: number;
+  active_penalties: number;
+  current_streak: number;
+  max_streak: number;
+  win_rate: number;
+  xp: number;
+  avatar_svg?: string;
+  game_sequences?: number[];
+  latest_sequence?: number;
+  my_rating?: {
+    attack_rating: number;
+    defense_rating: number;
+  } | null;
+  games_played_together?: number;
+}
 
 export interface Player {
   id: string;
@@ -8,31 +27,22 @@ export interface Player {
   stats?: PlayerStats;
 }
 
-export interface PlayerStats {
-  caps: number;
-  activeBonuses: number;
-  activePenalties: number;
-  currentStreak: number;
-  gameSequences?: string[];
-}
-
-export interface ExtendedPlayerData {
-  id: string;
-  friendly_name: string;
-  win_rate: number;
-  max_streak: number;
-  avatar_svg: string;
-  stats: PlayerStats;
-  isRandomlySelected: boolean;
-  selectionMethod: string;
-  slotOffers?: Array<{
-    status: 'pending' | 'accepted' | 'declined';
-  }>;
-  has_declined?: boolean;
+export interface ExtendedPlayerData extends PlayerStats {
+  isRandomlySelected?: boolean;
+  hasSlotOffer?: boolean;
+  slotOfferStatus?: 'pending' | 'declined';
+  slotOfferExpiresAt?: string; // When exclusive access ends
+  slotOfferAvailableAt?: string; // When the offer became available
+  slotOffers?: {
+    status: string;
+    expires_at?: string;
+    available_at?: string;
+  }[];
 }
 
 export interface PlayerSelectionResultsProps {
-  gameId: string;
+  selectedPlayers: ExtendedPlayerData[];
+  onClose: () => void;
 }
 
 export interface ReservePlayer {

@@ -1,54 +1,80 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
-import { Game } from '../../types/game';
-import { format } from 'date-fns';
-import { calculatePlayerXP } from '../../utils/xpCalculations';
+import { motion } from 'framer-motion';
+import { supabase } from '../../utils/supabase';
 import { calculateRarity } from '../../utils/rarityCalculations';
 import PlayerCard from '../PlayerCard';
-import { motion } from 'framer-motion';
-import CountdownTimer from '../CountdownTimer';
-import { useRegistrationClose } from '../../hooks/useRegistrationClose';
 import { RegisteredPlayers } from './RegisteredPlayers';
-import { PlayerSelectionResults } from '../games/PlayerSelectionResults';
-import { TeamSelectionResults } from '../games/TeamSelectionResults';
+import { ExtendedPlayerData } from '../../types/playerSelection';
+import { CountdownTimer } from '../common/CountdownTimer';
+import { format } from 'date-fns';
 
-interface Props {
-  game: Game;
-  isRegistrationClosed: boolean;
+interface GameDetailsProps {
+  game: {
+    id: string;
+    date: string;
+    status: string;
+    outcome?: string;
+    notes?: string;
+    max_players: number;
+    random_slots: number;
+    registration_window_start: string;
+    registration_window_end: string;
+    team_announcement_time?: string;
+    venue?: {
+      name: string;
+      google_maps_url?: string;
+    };
+    game_registrations?: any[];
+  };
   isUserRegistered: boolean;
+  isRegistrationClosed: boolean;
   handleRegistration: () => Promise<void>;
-  handlePlayerSelection: (params: {
-    gameId: number;
-    maxPlayers: number;
-    randomSlots: number;
-  }) => Promise<{
-    selectedPlayers: any[];
-    reservePlayers: any[];
-  }>;
-  handleGameUpdate: () => Promise<void>;
   children?: React.ReactNode;
 }
 
-export const GameDetails: React.FC<Props> = ({
-  game,
-  isRegistrationClosed,
+export const GameDetails: React.FC<GameDetailsProps> = ({ 
+  game, 
   isUserRegistered,
+  isRegistrationClosed,
   handleRegistration,
-  handlePlayerSelection,
-  handleGameUpdate,
   children
 }) => {
   const [isRegistering, setIsRegistering] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [playerStats, setPlayerStats] = useState<Record<string, { xp: number }>>({});
 
-  // Use the registration close hook
-  useRegistrationClose({
-    game,
-    onGameUpdated: async () => {
-      // Notify parent to refresh data instead of reloading page
-      if (handleGameUpdate) {
-        await handleGameUpdate();
+  useEffect(() => {
+    const fetchPlayerStats = async () => {
+      try {
+        setLoading(true);
+        
+        // Get player stats for all players
+        const { data: statsData, error: statsError } = await supabase
+          .from('player_stats')
+          .select('id, xp')
+          .in('id', game.game_registrations?.map(player => player.id) || []);
+
+        if (statsError) throw statsError;
+
+        // Transform into a lookup object
+        const statsLookup = statsData.reduce((acc, player) => {
+          acc[player.id] = { xp: player.xp || 0 };
+          return acc;
+        }, {} as Record<string, { xp: number }>);
+
+        setPlayerStats(statsLookup);
+      } catch (error) {
+        console.error('Error fetching player stats:', error);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (game.game_registrations?.length > 0) {
+      fetchPlayerStats();
     }
-  });
+  }, [game.game_registrations]);
 
   const handleRegisterClick = async () => {
     try {
@@ -60,6 +86,21 @@ export const GameDetails: React.FC<Props> = ({
       setIsRegistering(false);
     }
   };
+
+  // Group players by team
+  const blueTeam = game.game_registrations?.filter(p => p.team === 'blue') || [];
+  const orangeTeam = game.game_registrations?.filter(p => p.team === 'orange') || [];
+
+  // Calculate rarity based on all players' XP
+  const allXP = Object.values(playerStats).map(stats => stats.xp);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -88,30 +129,6 @@ export const GameDetails: React.FC<Props> = ({
               </p>
             )}
           </div>
-
-          {/* Registration button */}
-          {game.status === 'open' && !isRegistrationClosed && (
-            <button
-              onClick={handleRegisterClick}
-              disabled={isRegistering}
-              className={`btn ${
-                isUserRegistered ? 'btn-error' : 'btn-success'
-              } ${isRegistering ? 'loading' : ''}`}
-            >
-              {isRegistering ? (
-                'Processing...'
-              ) : isUserRegistered ? (
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Unregister Interest
-                </span>
-              ) : (
-                'Register Interest'
-              )}
-            </button>
-          )}
         </div>
 
         {/* Game configuration details */}
@@ -173,7 +190,7 @@ export const GameDetails: React.FC<Props> = ({
             </div>
           )}
 
-          {game.status === 'players_announced' && (
+          {game.status === 'players_announced' && game.team_announcement_time && (
             <div className="bg-base-200 rounded-lg p-4">
               <h3 className="text-lg font-semibold mb-2">Team Announcement</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -203,6 +220,80 @@ export const GameDetails: React.FC<Props> = ({
                 </div>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Teams */}
+        <div className="mt-8 space-y-8">
+          {/* Registered Players */}
+          <div>
+            <h3 className="text-xl font-bold mb-4">Registered Players</h3>
+            <RegisteredPlayers 
+              registrations={game.game_registrations?.map(reg => ({
+                player: reg,
+                status: reg.status || 'registered',
+                created_at: reg.created_at
+              })) || []}
+              isUserRegistered={isUserRegistered}
+              isRegistrationClosed={isRegistrationClosed}
+              onRegister={handleRegisterClick}
+              isRegistering={isRegistering}
+              gameStatus={game.status}
+            />
+          </div>
+
+          {/* Blue Team */}
+          {blueTeam.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+            >
+              <h3 className="text-xl font-bold text-blue-500">Blue Team</h3>
+              <div className="grid grid-cols-1 gap-4">
+                {blueTeam.map((player) => {
+                  const playerXP = playerStats[player.id]?.xp || 0;
+                  const rarity = calculateRarity(playerXP, allXP);
+
+                  return (
+                    <PlayerCard
+                      key={player.id}
+                      {...player}
+                      xp={playerXP}
+                      rarity={rarity}
+                    />
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Orange Team */}
+          {orangeTeam.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="space-y-4"
+            >
+              <h3 className="text-xl font-bold text-orange-500">Orange Team</h3>
+              <div className="grid grid-cols-1 gap-4">
+                {orangeTeam.map((player) => {
+                  const playerXP = playerStats[player.id]?.xp || 0;
+                  const rarity = calculateRarity(playerXP, allXP);
+
+                  return (
+                    <PlayerCard
+                      key={player.id}
+                      {...player}
+                      xp={playerXP}
+                      rarity={rarity}
+                    />
+                  );
+                })}
+              </div>
+            </motion.div>
           )}
         </div>
 

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import PlayerCard from './PlayerCard'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
-import { calculatePlayerXP } from '../utils/xpCalculations'
 import { calculateRarity } from '../utils/rarityCalculations'
 
 interface Player {
@@ -19,7 +18,6 @@ interface Player {
   maxStreak: number
   rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
   avatarSvg?: string
-  gameSequences: number[]
 }
 
 export default function PlayerCardGrid() {
@@ -48,112 +46,34 @@ export default function PlayerCardGrid() {
     try {
       setLoading(true);
       
-      // First get all players
-      const playersResponse = await supabase.from('players').select('*');
-      if (playersResponse.error) throw playersResponse.error;
-      const playersData = playersResponse.data;
+      // Get all players with their XP directly from player_stats view
+      const { data: playersData, error } = await supabase
+        .from('player_stats')
+        .select('*')
+        .order('xp', { ascending: false });
 
-      // Get latest historical sequence number
-      const latestSequenceResponse = await supabase
-        .from('games')
-        .select('sequence_number')
-        .eq('is_historical', true)
-        .order('sequence_number', { ascending: false })
-        .limit(1);
+      if (error) throw error;
 
-      if (latestSequenceResponse.error) throw latestSequenceResponse.error;
-      const latestSequence = Number(latestSequenceResponse.data[0]?.sequence_number || 0);
-
-      // Get all game registrations with their sequence numbers for historical games only
-      const { data: gameRegs, error: gameRegsError } = await supabase
-        .from('game_registrations')
-        .select(`
-          player_id,
-          team,
-          games!inner (
-            outcome,
-            sequence_number
-          )
-        `)
-        .eq('games.is_historical', true)
-        .order('games(sequence_number)', { ascending: false });
-
-      if (gameRegsError) throw gameRegsError;
-
-      // Group sequences by player
-      const playerSequences = gameRegs.reduce((acc, reg) => {
-        if (!reg.games?.sequence_number) return acc;
-        
-        const playerId = reg.player_id;
-        if (!acc[playerId]) {
-          acc[playerId] = {
-            sequences: [],
-            wins: 0,
-            total: 0
-          };
-        }
-        
-        // Add sequence number
-        acc[playerId].sequences.push(Number(reg.games.sequence_number));
-        
-        // Calculate wins
-        if (reg.games.outcome) {
-          const team = reg.team.toLowerCase();
-          const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
-                       (team === 'orange' && reg.games.outcome === 'orange_win');
-          
-          if (isWin) acc[playerId].wins++;
-          acc[playerId].total++;
-        }
-        
-        return acc;
-      }, {});
-
-      // First calculate XP for all players
-      const playersWithXP = playersData.map(player => {
-        const playerData = playerSequences[player.id] || { sequences: [], wins: 0, total: 0 };
-        const stats = {
-          caps: player.caps || 0,
-          activeBonuses: player.active_bonuses || 0,
-          activePenalties: player.active_penalties || 0,
-          currentStreak: player.current_streak || 0,
-          gameSequences: playerData.sequences,
-          latestSequence
-        };
-
-        const xp = calculatePlayerXP(stats);
-        const winRate = playerData.total > 0 
-          ? Number(((playerData.wins / playerData.total) * 100).toFixed(1))
-          : 0;
-
-        return {
-          id: player.id,
-          friendlyName: player.friendly_name,
-          caps: player.caps || 0,
-          preferredPosition: player.preferred_position || '',
-          activeBonuses: player.active_bonuses || 0,
-          activePenalties: player.active_penalties || 0,
-          winRate,
-          currentStreak: player.current_streak || 0,
-          maxStreak: player.max_streak || 0,
-          xp,
-          gameSequences: playerData.sequences,
-          avatarSvg: player.avatar_svg || ''
-        };
-      });
-
-      // Get all XP values for rarity calculation
-      const allXP = playersWithXP.map(player => player.xp);
-
-      // Add rarity to each player
-      const finalPlayers = playersWithXP.map(player => ({
-        ...player,
-        rarity: calculateRarity(player.xp, allXP)
+      // Transform the data to match our Player interface
+      const playersWithRarity = playersData.map(player => ({
+        id: player.id,
+        friendlyName: player.friendly_name,
+        caps: player.caps || 0,
+        preferredPosition: player.preferred_position || '',
+        activeBonuses: player.active_bonuses || 0,
+        activePenalties: player.active_penalties || 0,
+        winRate: player.win_rate || 0,
+        currentStreak: player.current_streak || 0,
+        maxStreak: player.max_streak || 0,
+        xp: player.xp || 0,
+        avatarSvg: player.avatar_svg || '',
+        rarity: calculateRarity(player.xp || 0, playersData.map(p => p.xp || 0))
       }));
 
-      setPlayers(finalPlayers);
+      setPlayers(playersWithRarity);
     } catch (error) {
-      toast.error('Error fetching players');
+      console.error('Error fetching players:', error);
+      toast.error('Failed to load players');
     } finally {
       setLoading(false);
     }
@@ -347,7 +267,7 @@ export default function PlayerCardGrid() {
         </div>
       ) : (
         <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6 justify-items-center sm:justify-items-stretch"
           layout
         >
           <AnimatePresence>

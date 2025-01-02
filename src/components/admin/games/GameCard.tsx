@@ -2,7 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Game } from '../../../types/game';
 import { format } from 'date-fns';
-import { FaUser, FaUserClock } from 'react-icons/fa';
+import { FaUser, FaUserClock, FaWhatsapp } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 interface Props {
   game: Game;
@@ -19,6 +20,42 @@ export const GameCard: React.FC<Props> = ({
 }) => {
   const formatDate = (date: string) => {
     return format(new Date(date), 'PPP p');
+  };
+
+  const formatWhatsAppDate = (date: string) => {
+    return format(new Date(date), 'EEEE do MMMM');
+  };
+
+  const formatWhatsAppTime = (date: string) => {
+    return format(new Date(date), 'h:mmaaa').toLowerCase();
+  };
+
+  const handleWhatsAppShare = async () => {
+    const gameDate = new Date(game.date);
+    const endTime = new Date(gameDate);
+    endTime.setHours(endTime.getHours() + 1);
+
+    // Calculate price per person
+    const pricePerPerson = game.pitch_cost ? `(£${(game.pitch_cost / game.max_players).toFixed(2)} pp)` : '';
+
+    const message = `📅${formatWhatsAppDate(game.date)}
+⌚${formatWhatsAppTime(game.date)} - ${formatWhatsAppTime(endTime.toISOString())}
+
+📢 WNF #${game.sequence_number || '?'}
+📌${game.venue?.name}
+${game.venue?.google_maps_url || ''}
+
+⚽${game.max_players} players / ${game.max_players / 2}-a-side ${pricePerPerson}
+Register your interest by reacting with a thumbs up
+Registration closes ${formatWhatsAppDate(game.registration_window_end)} at ${formatWhatsAppTime(game.registration_window_end)}`;
+
+    try {
+      await navigator.clipboard.writeText(message);
+      toast.success('WhatsApp message copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy message:', err);
+      toast.error('Failed to copy message to clipboard');
+    }
   };
 
   return (
@@ -43,6 +80,13 @@ export const GameCard: React.FC<Props> = ({
         </div>
 
         <div className="card-actions justify-end mt-4">
+          <button
+            className="btn btn-sm btn-success"
+            aria-label="Share on WhatsApp"
+            onClick={handleWhatsAppShare}
+          >
+            <FaWhatsapp className="text-lg" />
+          </button>
           <button
             className="btn btn-sm btn-primary"
             onClick={() => onViewRegistrations(game.id)}

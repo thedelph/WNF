@@ -1,7 +1,8 @@
 import React from 'react';
-import { supabase } from '../../utils/supabase';
 import { Game } from '../../types/game';
 import { LoadingSpinner } from '../LoadingSpinner';
+import { useAuth } from '../../context/AuthContext';
+import { useGameRegistration } from '../../hooks/useGameRegistration';
 
 interface GameRegistrationProps {
   game: Game;
@@ -22,84 +23,17 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
   isProcessingClose,
   onRegistrationChange
 }) => {
-  // Handle player registration/unregistration
-  const handleRegistration = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !game) return;
+  const { session } = useAuth();
+  const { isRegistering, handleRegistration } = useGameRegistration({
+    gameId: game.id,
+    isUserRegistered,
+    onRegistrationChange
+  });
 
-      // Get player profile
-      const { data: playerProfile, error: profileError } = await supabase
-        .from('players')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching player profile:', profileError);
-        throw profileError;
-      }
-
-      if (!playerProfile) {
-        console.error('No player profile found');
-        return;
-      }
-
-      // Check current registration status
-      const { data: existingReg, error: regError } = await supabase
-        .from('game_registrations')
-        .select('id, status')
-        .eq('game_id', game.id)
-        .eq('player_id', playerProfile.id)
-        .maybeSingle();
-
-      if (regError) {
-        console.error('Error checking registration:', regError);
-        throw regError;
-      }
-
-      if (existingReg) {
-        // Unregister
-        const { error } = await supabase
-          .from('game_registrations')
-          .delete()
-          .eq('game_id', game.id)
-          .eq('player_id', playerProfile.id);
-
-        if (error) {
-          console.error('Error unregistering:', error);
-          throw error;
-        }
-      } else {
-        // Register
-        const { error } = await supabase
-          .from('game_registrations')
-          .insert({
-            game_id: game.id,
-            player_id: playerProfile.id,
-            status: 'registered',
-            selection_method: 'merit'
-          });
-
-        if (error) {
-          console.error('Error registering:', error);
-          throw error;
-        }
-      }
-
-      // Notify parent component to refresh data
-      await onRegistrationChange();
-    } catch (error) {
-      console.error('Error handling registration:', error);
-      throw error;
-    }
-  };
-
-  if (isProcessingOpen || isProcessingClose) {
-    return <LoadingSpinner />;
+  if (!session?.user || isProcessingOpen || isProcessingClose) {
+    return null;
   }
 
-  // Only show registration button when registration is open and not closed
   if (!isRegistrationOpen || isRegistrationClosed) {
     return null;
   }
@@ -108,9 +42,23 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
     <div className="flex justify-center my-4">
       <button
         onClick={handleRegistration}
-        className={`btn ${isUserRegistered ? 'btn-error' : 'btn-primary'} w-48`}
+        disabled={isRegistering}
+        className={`btn w-48 ${
+          isUserRegistered ? 'btn-error' : 'btn-success'
+        } ${isRegistering ? 'loading' : ''}`}
       >
-        {isUserRegistered ? 'Unregister' : 'Register Interest'}
+        {isRegistering ? (
+          'Processing...'
+        ) : isUserRegistered ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            Unregister Interest
+          </span>
+        ) : (
+          'Register Interest'
+        )}
       </button>
     </div>
   );

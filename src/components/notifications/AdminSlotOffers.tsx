@@ -18,78 +18,15 @@ export const AdminSlotOffers: React.FC<AdminSlotOffersProps> = ({ slotOffers, on
   // Function to handle admin actions on slot offers
   const handleAdminAction = async (slotOfferId: string, action: 'accept' | 'decline') => {
     try {
-      // First, get the slot offer to get the player and game IDs
-      const { data: slotOffer, error: fetchError } = await supabaseAdmin
-        .from('slot_offers')
-        .select('*')
-        .eq('id', slotOfferId)
-        .single();
+      // Call the RPC function to handle the slot offer action
+      const { error } = await supabaseAdmin
+        .rpc('handle_admin_slot_offer_action', {
+          p_slot_offer_id: slotOfferId,
+          p_action: action,
+          p_admin_id: null // We can add admin tracking later if needed
+        });
 
-      if (fetchError) throw fetchError;
-      if (!slotOffer) throw new Error('Slot offer not found');
-
-      // Update slot offer status
-      const { error: updateError } = await supabaseAdmin
-        .from('slot_offers')
-        .update({
-          status: action === 'accept' ? 'accepted' : 'declined',
-          responded_at: new Date().toISOString()
-        })
-        .eq('id', slotOfferId);
-
-      if (updateError) throw updateError;
-
-      // If declined, create new slot offer for the next player
-      if (action === 'decline') {
-        console.log('Creating new slot offer after decline');
-        const { data: newOfferData, error: newOfferError } = await supabaseAdmin
-          .rpc('create_slot_offers_for_game', {
-            p_game_id: slotOffer.game_id,
-            p_admin_id: null,
-            p_dropped_out_player_id: slotOffer.player_id
-          });
-
-        if (newOfferError) {
-          console.error('Error creating new slot offer:', newOfferError);
-          throw newOfferError;
-        }
-        console.log('New slot offer created:', newOfferData);
-      }
-
-      // If accepting, update game registration status
-      if (action === 'accept') {
-        // Check if registration exists
-        const { data: existingReg, error: checkError } = await supabaseAdmin
-          .from('game_registrations')
-          .select('id, status')
-          .eq('game_id', slotOffer.game_id)
-          .eq('player_id', slotOffer.player_id)
-          .maybeSingle();
-
-        if (checkError) throw checkError;
-
-        if (existingReg) {
-          // Update existing registration
-          const { error: updateRegError } = await supabaseAdmin
-            .from('game_registrations')
-            .update({ status: 'selected' })
-            .eq('id', existingReg.id);
-
-          if (updateRegError) throw updateRegError;
-        } else {
-          // Create new registration
-          const { error: createRegError } = await supabaseAdmin
-            .from('game_registrations')
-            .insert({
-              game_id: slotOffer.game_id,
-              player_id: slotOffer.player_id,
-              status: 'selected',
-              created_at: new Date().toISOString()
-            });
-
-          if (createRegError) throw createRegError;
-        }
-      }
+      if (error) throw error;
 
       toast.success(`Successfully ${action}ed slot offer on behalf of player`);
       onUpdate();

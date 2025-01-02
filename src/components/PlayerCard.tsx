@@ -22,6 +22,12 @@ interface PlayerCardProps {
   status?: 'selected' | 'reserve' | 'dropped_out';
   hasSlotOffer?: boolean;
   slotOfferStatus?: 'pending' | 'accepted' | 'declined';
+  slotOfferExpiresAt?: string;
+  slotOfferAvailableAt?: string;
+  potentialOfferTimes?: {
+    available_time: string;
+    next_player_access_time: string;
+  } | null;
   gameSequences?: number[]
   children?: React.ReactNode;
 }
@@ -43,6 +49,9 @@ export default function PlayerCard({
   status,
   hasSlotOffer,
   slotOfferStatus,
+  slotOfferExpiresAt,
+  slotOfferAvailableAt,
+  potentialOfferTimes,
   gameSequences,
   children
 }: PlayerCardProps) {
@@ -72,46 +81,95 @@ export default function PlayerCard({
   const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
 
   const getStatusBadge = () => {
-    if (!status || status === 'reserve') return null;
-
-    const badges = {
-      selected: 'badge-success',
-      dropped_out: 'badge-error'
-    };
+    if (!status || status !== 'dropped_out') return null;
 
     return (
-      <div className={`badge ${badges[status]} badge-sm`}>
-        {status.replace('_', ' ')}
+      <div className="badge badge-error badge-sm">
+        Dropped Out
       </div>
     );
   };
 
+  const getSlotOfferStatus = () => {
+    // Only proceed if there's an actual slot offer
+    if (!hasSlotOffer || !slotOfferAvailableAt) return null;
+    
+    const now = new Date();
+    const availableTime = new Date(slotOfferAvailableAt);
+    const nextAccessTime = slotOfferExpiresAt ? new Date(slotOfferExpiresAt) : null;
+    
+    // Not yet available to this player
+    if (now < availableTime) {
+      return {
+        hasAccess: false,
+        timeUntilAccess: formatTimeRemaining(availableTime)
+      };
+    }
+
+    const timeUntilNextAccess = nextAccessTime ? formatTimeRemaining(nextAccessTime) : null;
+    
+    return {
+      hasAccess: true,
+      timeUntilNextAccess,
+      isFirstAccess: now < (nextAccessTime || now)
+    };
+  };
+
   const getSlotOfferBadge = () => {
-    if (slotOfferStatus === 'declined') {
+    // Only show badges if there's an actual slot offer
+    if (!hasSlotOffer) return null;
+
+    const offerStatus = getSlotOfferStatus();
+    if (!offerStatus) return null;
+
+    if (!offerStatus.hasAccess) {
       return (
-        <div className="badge badge-error badge-sm">
-          DECLINED
+        <div className="badge badge-neutral badge-sm flex gap-1 items-center">
+          <span>Available in</span>
+          {offerStatus.timeUntilAccess && (
+            <span className="text-xs">
+              {offerStatus.timeUntilAccess}
+            </span>
+          )}
         </div>
       );
     }
 
-    if (!hasSlotOffer && slotOfferStatus !== 'accepted') return null;
-
-    const badges = {
-      pending: 'badge-info',
-      accepted: 'badge-success'
-    };
-
-    const labels = {
-      pending: 'Slot Offered',
-      accepted: 'Slot Accepted',
-    };
-
     return (
-      <div className={`badge ${badges[slotOfferStatus || 'pending']} badge-sm`}>
-        {labels[slotOfferStatus || 'pending']}
+      <div className="badge badge-info badge-sm flex gap-1 items-center">
+        {offerStatus.isFirstAccess ? (
+          <>
+            <span>First Access</span>
+            {offerStatus.timeUntilNextAccess && (
+              <span className="text-xs opacity-80">
+                ({offerStatus.timeUntilNextAccess})
+              </span>
+            )}
+          </>
+        ) : (
+          <span>Slot Available</span>
+        )}
       </div>
     );
+  };
+
+  const formatTimeRemaining = (targetTime: Date) => {
+    const now = new Date();
+    const diff = targetTime.getTime() - now.getTime();
+    
+    if (diff <= 0) return null;
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (days > 0) {
+      return `${days}d ${hours}h`;
+    }
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
   };
 
   return (
@@ -137,13 +195,13 @@ export default function PlayerCard({
           <div className="card-body p-4">
             <div className="flex justify-between items-center mb-2">
               <h2 className="card-title text-xl">{friendlyName}</h2>
-              {isRandomlySelected && (
-                <div className="badge badge-secondary">Random Pick</div>
-              )}
             </div>
             
             {/* Status badges */}
             <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
+              {isRandomlySelected && (
+                <div className="badge badge-secondary badge-sm">Random Pick</div>
+              )}
               {getStatusBadge()}
               {getSlotOfferBadge()}
               {children}

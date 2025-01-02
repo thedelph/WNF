@@ -7,9 +7,9 @@ import { supabase } from '../utils/supabase'
 import { motion } from 'framer-motion'
 import { toast } from 'react-toastify'
 import AvatarCreator from '../components/AvatarCreator'
-import { calculatePlayerXP } from '../utils/xpCalculations'
 import PaymentHistory from '../components/profile/PaymentHistory'
 import XPBreakdown from '../components/profile/XPBreakdown'
+import StatsGrid from '../components/profile/StatsGrid'
 
 interface PlayerProfile {
   id: string
@@ -28,10 +28,15 @@ interface PlayerProfile {
   latest_sequence: number
 }
 
+interface ExtendedPlayerData extends PlayerProfile {
+  rarity: number
+}
+
 export default function Component() {
   const { user } = useAuth()
-  const [profile, setProfile] = useState<PlayerProfile | null>(null)
+  const [profile, setProfile] = useState<ExtendedPlayerData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [friendlyName, setFriendlyName] = useState('')
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
@@ -39,80 +44,51 @@ export default function Component() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        setLoading(true)
+        setError(null)
+
         // First get the player profile
-        const profileResponse = await supabase
-          .from('players')
-          .select('*')
+        const { data: profileData, error: profileError } = await supabase
+          .from('player_stats')
+          .select(`
+            id,
+            user_id,
+            friendly_name,
+            xp,
+            caps,
+            active_bonuses,
+            active_penalties,
+            win_rate,
+            current_streak,
+            max_streak,
+            avatar_svg,
+            avatar_options,
+            game_sequences,
+            latest_sequence
+          `)
           .eq('user_id', user!.id)
-          .single();
+          .single()
 
-        if (profileResponse.error) throw profileResponse.error;
-        const profileData = profileResponse.data;
-        
-        // Then get game registrations and latest sequence in parallel
-        const [gameRegsResponse, latestSequenceResponse] = await Promise.all([
-          supabase
-            .from('game_registrations')
-            .select(`
-              player_id,
-              team,
-              games!inner (
-                outcome,
-                sequence_number
-              )
-            `)
-            .eq('player_id', profileData.id)
-            .order('games(sequence_number)', { ascending: false }),
-          supabase
-            .from('games')
-            .select('sequence_number')
-            .order('sequence_number', { ascending: false })
-            .limit(1)
-        ]);
+        if (profileError) throw profileError
+        if (!profileData) throw new Error('Player not found')
 
-        if (gameRegsResponse.error) throw gameRegsResponse.error;
-        if (latestSequenceResponse.error) throw latestSequenceResponse.error;
+        // Calculate rarity based on all players' XP
+        const { data: allXPData, error: xpError } = await supabase
+          .from('player_stats')
+          .select('xp')
 
-        const gameRegs = gameRegsResponse.data;
-        const latestSequence = Number(latestSequenceResponse.data[0]?.sequence_number || 0);
+        if (xpError) throw xpError
 
-        // Get game sequences for the player
-        const gameSequences = gameRegs
-          .filter(reg => reg.games?.sequence_number != null)
-          .map(reg => Number(reg.games.sequence_number))
-          .filter(seq => !isNaN(seq))
-          .sort((a, b) => b - a); // Sort in descending order
+        const allXP = allXPData.map(p => p.xp || 0)
+        const rarity = calculateRarity(profileData.xp, allXP)
 
-        // Calculate win rate
-        let wins = 0;
-        let totalGames = 0;
-        gameRegs.forEach(reg => {
-          if (!reg.games?.outcome) return;
-          
-          const team = reg.team?.toLowerCase();
-          const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
-                       (team === 'orange' && reg.games.outcome === 'orange_win');
-          
-          if (isWin) wins++;
-          totalGames++;
-        });
-
-        const winRate = totalGames > 0 
-          ? Number((wins / totalGames * 100).toFixed(1))
-          : 0;
-
-        // Update profile data with calculated win rate and game sequences
-        const profileWithData = {
+        setProfile({
           ...profileData,
-          win_rate: winRate,
-          game_sequences: gameSequences,
-          latest_sequence: latestSequence
-        };
-
-        setProfile(profileWithData);
-      } catch (error) {
-        setLoading(false)
-        toast.error('Failed to load profile data')
+          rarity
+        })
+      } catch (err) {
+        console.error('Error fetching player data:', err)
+        setError(err instanceof Error ? err.message : 'An error occurred while fetching player data')
       } finally {
         setLoading(false)
       }
@@ -185,31 +161,26 @@ export default function Component() {
   }
 
   if (loading) {
-    return <div>Loading...</div>
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    )
   }
 
-  if (!profile) {
-    return <div>Error loading profile</div>
+  if (error || !profile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-2xl font-bold text-error mb-4">Error</h1>
+        <p className="text-gray-600">{error || 'Player not found'}</p>
+      </div>
+    )
   }
 
   const stats = [
     { 
       label: 'XP', 
-      value: (() => {
-        try {
-          const xpValue = calculatePlayerXP({
-            caps: profile.caps ?? 0,
-            activeBonuses: profile.active_bonuses ?? 0,
-            activePenalties: profile.active_penalties ?? 0,
-            currentStreak: profile.current_streak ?? 0,
-            gameSequences: profile.game_sequences || [],
-            latestSequence: profile.latest_sequence || 0
-          });
-          return xpValue.toLocaleString();
-        } catch (error) {
-          return '0';
-        }
-      })()
+      value: profile.xp.toLocaleString()
     },
     {
       label: 'Caps',

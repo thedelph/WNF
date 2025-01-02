@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        '3xl': '1920px',
+      },
       animation: {
         'flip': 'flip 0.6s ease-in-out',
         'gradient-xy': 'gradient-xy 3s ease infinite',

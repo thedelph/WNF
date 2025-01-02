@@ -1,5 +1,23 @@
 import React from 'react';
-import { TeamAssignment } from './types';
+import { motion } from 'framer-motion';
+import { calculateRarity } from '../../../utils/rarityCalculations';
+import { ExtendedPlayerData } from '../../../types/playerSelection';
+
+interface TeamAssignment {
+  player_id: string;
+  team: 'blue' | 'orange';
+  friendly_name: string;
+  attack_rating: number;
+  defense_rating: number;
+  xp: number;
+  caps: number;
+  active_bonuses: number;
+  active_penalties: number;
+  current_streak: number;
+  max_streak: number;
+  win_rate: number;
+  avatar_svg?: string;
+}
 
 interface TeamListProps {
   teamId: 'blue' | 'orange';
@@ -76,16 +94,18 @@ export function TeamList({ teamId, team, title, selectedPlayer, swapRankings, on
         {title} ({team.length})
       </h3>
       <div className="space-y-2">
-        {team.map((player) => (
-          <PlayerCard
-            key={player.player_id}
-            player={player}
-            teamId={teamId}
-            isSelected={selectedPlayer === player.player_id}
-            swapRank={swapRankings ? swapRankings[player.player_id] ?? null : null}
-            onSelect={() => onPlayerSelect(player.player_id)}
-          />
-        ))}
+        {team
+          .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
+          .map((player) => (
+            <PlayerCard
+              key={player.player_id}
+              player={player}
+              teamId={teamId}
+              isSelected={selectedPlayer === player.player_id}
+              swapRank={swapRankings ? swapRankings[player.player_id] ?? null : null}
+              onSelect={() => onPlayerSelect(player.player_id)}
+            />
+          ))}
       </div>
     </div>
   );

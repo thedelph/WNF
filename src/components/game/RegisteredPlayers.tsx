@@ -1,207 +1,123 @@
 import React from 'react';
-import { FaUser } from 'react-icons/fa';
-import { calculateRarity } from '../../utils/rarityCalculations';
-import { calculatePlayerXP } from '../../utils/xpCalculations';
-import PlayerCard from '../PlayerCard';
-import { usePlayerStats } from '../../hooks/usePlayerStats';
+import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
+import { calculateRarity } from '../../utils/rarityCalculations';
+import PlayerCard from '../PlayerCard';
+import { ExtendedPlayerData } from '../../types/playerSelection';
+import { useGlobalXP } from '../../hooks/useGlobalXP';
 
-interface GameRegistration {
-  id: string;
+interface Registration {
+  player: ExtendedPlayerData;
   status: string;
-  randomly_selected: boolean;
-  player: {
-    id: string;
-    friendly_name: string;
-    preferred_position: string;
-    caps: number;
-    active_bonuses: number;
-    active_penalties: number;
-    current_streak: number;
-    win_rate: number;
-    max_streak: number;
-    avatar_svg: string;
-  };
+  created_at: string;
 }
 
 interface RegisteredPlayersProps {
-  registrations: GameRegistration[];
+  registrations: Registration[];
 }
 
-export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({ registrations }) => {
-  const { loading } = usePlayerStats();
-  const [latestSequence, setLatestSequence] = React.useState(0);
-  const [playerGameData, setPlayerGameData] = React.useState<Record<string, { sequences: number[], wins: number, total: number }>>({});
+export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
+  registrations
+}) => {
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [playerStats, setPlayerStats] = React.useState<Record<string, { xp: number }>>({});
+  const { xpValues: globalXpValues, loading: globalXpLoading, error: globalXpError } = useGlobalXP();
 
-  // Fetch latest sequence number and player sequences
+  // Fetch player stats
   React.useEffect(() => {
-    const fetchGameData = async () => {
+    const fetchPlayerStats = async () => {
       try {
-        // Get latest historical sequence number
-        const { data: latestGameData, error: latestGameError } = await supabase
-          .from('games')
-          .select('sequence_number')
-          .eq('is_historical', true)
-          .order('sequence_number', { ascending: false })
-          .limit(1)
-          .single();
+        setLoading(true);
+        setError(null);
+        
+        // Get player stats for all registered players
+        const playerIds = registrations.map(reg => reg.player.id);
+        const { data: statsData, error: statsError } = await supabase
+          .from('player_stats')
+          .select('id, xp')
+          .in('id', playerIds);
 
-        if (latestGameError) throw latestGameError;
-        const latestSeq = Number(latestGameData?.sequence_number || 0);
-        setLatestSequence(latestSeq);
+        if (statsError) throw statsError;
 
-        // Get all historical game registrations with sequences
-        const { data: gameRegs, error: gameRegsError } = await supabase
-          .from('game_registrations')
-          .select(`
-            player_id,
-            team,
-            games!inner (
-              outcome,
-              sequence_number
-            )
-          `)
-          .eq('games.is_historical', true)
-          .order('games(sequence_number)', { ascending: false });
-
-        if (gameRegsError) throw gameRegsError;
-
-        // Group sequences by player
-        const gameData = gameRegs.reduce((acc, reg) => {
-          if (!reg.games?.sequence_number) return acc;
-          
-          const playerId = reg.player_id;
-          if (!acc[playerId]) {
-            acc[playerId] = {
-              sequences: [],
-              wins: 0,
-              total: 0
-            };
-          }
-          
-          // Add sequence number if not already present
-          const sequence = Number(reg.games.sequence_number);
-          if (!acc[playerId].sequences.includes(sequence)) {
-            acc[playerId].sequences.push(sequence);
-          }
-          
-          // Sort sequences in descending order (most recent first)
-          acc[playerId].sequences.sort((a, b) => b - a);
-
-          // Calculate wins if outcome exists
-          if (reg.games.outcome && reg.team) {
-            const team = reg.team.toLowerCase();
-            const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
-                         (team === 'orange' && reg.games.outcome === 'orange_win');
-            
-            if (isWin) acc[playerId].wins++;
-            acc[playerId].total++;
-          }
-          
+        // Transform into a lookup object
+        const statsLookup = statsData.reduce((acc, player) => {
+          acc[player.id] = { xp: player.xp || 0 };
           return acc;
-        }, {} as Record<string, { sequences: number[], wins: number, total: number }>);
+        }, {} as Record<string, { xp: number }>);
 
-        setPlayerGameData(gameData);
+        setPlayerStats(statsLookup);
       } catch (error) {
-        // Error handled silently
+        console.error('Error fetching player stats:', error);
+        setError(error instanceof Error ? error.message : 'An error occurred while fetching player stats');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchGameData();
-  }, []);
+    if (registrations.length > 0) {
+      fetchPlayerStats();
+    } else {
+      setLoading(false);
+    }
+  }, [registrations]);
 
-  // Filter out any invalid registrations and sort by XP
-  const validRegistrations = (registrations || []).filter(reg => {
-    const isValid = reg && reg.player && reg.id;
-    return isValid;
-  });
+  if (loading || globalXpLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
 
-  const sortedRegistrations = [...validRegistrations].sort((a, b) => {
-    const aStats = {
-      caps: a.player.caps || 0,
-      activeBonuses: a.player.active_bonuses || 0,
-      activePenalties: a.player.active_penalties || 0,
-      currentStreak: a.player.current_streak || 0,
-      gameSequences: playerGameData[a.player.id]?.sequences || [],
-      latestSequence
-    };
+  if (error || globalXpError) {
+    return (
+      <div className="text-center text-error p-4">
+        <p>{error || globalXpError}</p>
+      </div>
+    );
+  }
 
-    const bStats = {
-      caps: b.player.caps || 0,
-      activeBonuses: b.player.active_bonuses || 0,
-      activePenalties: b.player.active_penalties || 0,
-      currentStreak: b.player.current_streak || 0,
-      gameSequences: playerGameData[b.player.id]?.sequences || [],
-      latestSequence
-    };
-
-    const aXP = calculatePlayerXP(aStats);
-    const bXP = calculatePlayerXP(bStats);
+  // Sort registrations by XP in descending order
+  const sortedRegistrations = [...registrations].sort((a, b) => {
+    const aXP = playerStats[a.player.id]?.xp || 0;
+    const bXP = playerStats[b.player.id]?.xp || 0;
     return bXP - aXP;
   });
 
-  // Calculate all players' XP for rarity calculation
-  const allXpValues = sortedRegistrations.map(registration => {
-    const playerData = playerGameData[registration.player.id] || { sequences: [], wins: 0, total: 0 };
-    const stats = {
-      caps: registration.player.caps || 0,
-      activeBonuses: registration.player.active_bonuses || 0,
-      activePenalties: registration.player.active_penalties || 0,
-      currentStreak: registration.player.current_streak || 0,
-      gameSequences: playerData.sequences,
-      latestSequence
-    };
-    return calculatePlayerXP(stats);
-  });
-
-  if (loading || !latestSequence) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {sortedRegistrations.map((registration) => {
-        const playerData = playerGameData[registration.player.id] || { sequences: [], wins: 0, total: 0 };
-        
-        // Calculate XP using the same method as XPBreakdown
-        const stats = {
-          caps: registration.player.caps || 0,
-          activeBonuses: registration.player.active_bonuses || 0,
-          activePenalties: registration.player.active_penalties || 0,
-          currentStreak: registration.player.current_streak || 0,
-          gameSequences: playerData.sequences,
-          latestSequence
-        };
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 justify-items-center sm:justify-items-stretch">
+        {sortedRegistrations.map((registration) => {
+          const playerXP = playerStats[registration.player.id]?.xp || 0;
+          const rarity = calculateRarity(playerXP, globalXpValues);
 
-        // Calculate XP and win rate
-        const playerXP = calculatePlayerXP(stats);
-        const winRate = playerData.total > 0 
-          ? Number(((playerData.wins / playerData.total) * 100).toFixed(1))
-          : 0;
-
-        // Calculate rarity using the local allXpValues
-        const rarity = calculateRarity(playerXP, allXpValues);
-        
-        return (
-          <PlayerCard
-            key={registration.id}
-            id={registration.player.id}
-            friendlyName={registration.player.friendly_name}
-            xp={playerXP}
-            caps={registration.player.caps || 0}
-            preferredPosition={registration.player.preferred_position || ''}
-            activeBonuses={registration.player.active_bonuses || 0}
-            activePenalties={registration.player.active_penalties || 0}
-            winRate={winRate}
-            currentStreak={registration.player.current_streak || 0}
-            maxStreak={registration.player.max_streak || 0}
-            rarity={rarity}
-            avatarSvg={registration.player.avatar_svg || ''}
-            isRandomlySelected={registration.randomly_selected}
-            gameSequences={playerData.sequences}
-          />
-        );
-      })}
+          return (
+            <motion.div
+              key={registration.player.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <PlayerCard
+                id={registration.player.id}
+                friendlyName={registration.player.friendly_name}
+                xp={playerXP}
+                caps={registration.player.caps}
+                preferredPosition={registration.player.preferred_position || ''}
+                activeBonuses={registration.player.active_bonuses}
+                activePenalties={registration.player.active_penalties}
+                winRate={registration.player.win_rate}
+                currentStreak={registration.player.current_streak}
+                maxStreak={registration.player.max_streak}
+                rarity={rarity}
+                avatarSvg={registration.player.avatar_svg || ''}
+                status={registration.status === 'reserve' ? 'reserve' : undefined}
+              />
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -112,18 +112,9 @@ export default function PlayerProfileNew() {
   useEffect(() => {
     const fetchPlayerData = async () => {
       try {
-        // Get latest historical game sequence first
-        const { data: latestSequenceData, error: sequenceError } = await supabase
-          .from('games')
-          .select('sequence_number')
-          .eq('is_historical', true)
-          .order('sequence_number', { ascending: false })
-          .limit(1);
-
-        if (sequenceError) throw sequenceError;
-        const latestSequence = Number(latestSequenceData[0]?.sequence_number || 0);
-
-        // Fetch player data
+        setLoading(true);
+        
+        // Get player stats from the updated player_stats view that includes XP
         const { data: playerData, error: playerError } = await supabase
           .from('player_stats')
           .select('*')
@@ -132,125 +123,49 @@ export default function PlayerProfileNew() {
 
         if (playerError) throw playerError;
 
-        // If user is logged in, get games played together and rating
-        if (user?.id) {
-          // First get the current player's ID from the players table
-          const { data: currentPlayer } = await supabase
-            .from('players')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-          if (currentPlayer) {
-            // Get games played together
-            const { data: gamesCount, error: gamesCountError } = await supabase
-              .rpc('get_players_with_game_count', {
-                current_player_id: currentPlayer.id
-              });
-
-            if (gamesCountError) {
-              console.error('Error fetching games count:', gamesCountError);
-            } else if (Array.isArray(gamesCount)) {
-              // Find the games count for the specific player we're viewing
-              const playerGameCount = gamesCount.find((p: any) => p.id === id);
-              playerData.games_played_together = playerGameCount?.games_played || 0;
-            }
-
-            // Get rating if exists
-            const { data: myRating, error: ratingError } = await supabase
-              .from('player_ratings')
-              .select('attack_rating, defense_rating')
-              .eq('rater_id', currentPlayer.id)
-              .eq('rated_player_id', id)
-              .maybeSingle();
-
-            if (ratingError) {
-              console.error('Error fetching player rating:', ratingError);
-            }
-
-            playerData.my_rating = myRating || null;
-          }
-        }
-
-        // Fetch game registrations with sequence numbers for historical games
-        const { data: gamesData, error: gamesError } = await supabase
+        // Get game history
+        const { data: gameData, error: gameError } = await supabase
           .from('game_registrations')
           .select(`
-            game_id,
             team,
-            paid,
-            games!inner (
+            games (
+              id,
               date,
-              outcome,
-              score_blue,
-              score_orange,
               sequence_number,
+              outcome,
               is_historical
             )
           `)
           .eq('player_id', id)
-          .eq('games.is_historical', true)
-          .order('games(sequence_number)', { ascending: false });
+          .order('games(date)', { ascending: false });
 
-        if (gamesError) {
-          console.error('Games fetch error:', gamesError);
-          throw gamesError;
-        }
+        if (gameError) throw gameError;
 
-        // Get game sequences for XP calculation
-        const gameSequences = gamesData
-          .filter(game => game.games?.sequence_number != null)
-          .map(game => Number(game.games.sequence_number))
-          .filter(seq => !isNaN(seq))
-          .sort((a, b) => b - a);
-
-        // Transform the data to match the GameHistory interface
-        const processedGames: GameHistory[] = gamesData
-          .filter(game => game && game.games)
-          .map(game => ({
-            game_id: game.game_id,
-            team: game.team,
-            paid: game.paid,
-            games: {
-              date: game.games?.date || '',
-              outcome: game.games?.outcome || null,
-              score_blue: game.games?.score_blue || 0,
-              score_orange: game.games?.score_orange || 0
-            },
-            date: game.games?.date || '',
-            outcome: game.games?.outcome || null,
-            score_blue: game.games?.score_blue || 0,
-            score_orange: game.games?.score_orange || 0
-          }));
-
-        // Calculate win rate
-        const gamesWithKnownOutcome = processedGames.filter(game =>
-          game.games?.outcome !== null
-        );
-        
-        const wins = gamesWithKnownOutcome.filter(game => {
-          const team = game.team.toLowerCase();
-          return (team === 'blue' && game.games.outcome === 'blue_win') ||
-                 (team === 'orange' && game.games.outcome === 'orange_win');
-        });
-
-        const winRate = gamesWithKnownOutcome.length > 0 
-          ? Number(((wins.length / gamesWithKnownOutcome.length) * 100).toFixed(1))
-          : 0;
-
-        // Update player data with calculated win rate and sequences
-        const updatedPlayerData = {
-          ...playerData,
-          win_rate: winRate,
-          game_sequences: gameSequences,
-          latest_sequence: latestSequence
+        // Transform player data
+        const playerStats: PlayerStats = {
+          id: playerData.id,
+          friendly_name: playerData.friendly_name,
+          preferred_position: playerData.preferred_position,
+          avatar_svg: playerData.avatar_svg,
+          caps: playerData.caps || 0,
+          active_bonuses: playerData.active_bonuses || 0,
+          active_penalties: playerData.active_penalties || 0,
+          current_streak: playerData.current_streak || 0,
+          max_streak: playerData.max_streak || 0,
+          xp: playerData.xp || 0,
+          win_rate: playerData.win_rate || 0,
+          game_sequences: gameData
+            ?.filter(reg => reg.games?.is_historical)
+            .map(reg => reg.games?.sequence_number)
+            .filter(Boolean) || []
         };
 
-        setPlayer(updatedPlayerData);
-        setGames(processedGames);
+        setPlayer(playerStats);
+        setGames(gameData || []);
+
       } catch (error) {
         console.error('Error fetching player data:', error);
-        toast.error('Failed to load player profile');
+        toast.error('Failed to load player data');
       } finally {
         setLoading(false);
       }
@@ -259,7 +174,7 @@ export default function PlayerProfileNew() {
     if (id) {
       fetchPlayerData();
     }
-  }, [id, user?.id]);
+  }, [id]);
 
   const handleRatingSubmit = async () => {
     if (!user?.id || !id) return;
@@ -355,7 +270,7 @@ export default function PlayerProfileNew() {
           activePenalties: player.active_penalties || 0,
           currentStreak: player.current_streak || 0,
           gameSequences: player.game_sequences,
-          latestSequence: player.latest_sequence
+          latestSequence: Math.max(...player.game_sequences)
         }} />
       </motion.div>
 

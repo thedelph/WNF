@@ -59,18 +59,26 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
 
       const result = await handlePlayerSelection({
         gameId: id,
-        maxPlayers: max_players,
+        xpSlots: max_players - random_slots, // Calculate merit slots
         randomSlots: random_slots
       });
 
-      // Store selection results
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to select players');
+      }
+
+      // Store selection results - transform player objects to arrays of IDs
       const { error: selectionError } = await supabaseAdmin
         .from('game_selections')
         .insert({
           game_id: id,
-          selected_players: result.selectedPlayers,
-          reserve_players: result.reservePlayers,
-          selection_metadata: result.debug
+          selected_players: result.selectedPlayers.map(p => p.id),
+          reserve_players: result.nonSelectedPlayerIds,
+          selection_metadata: {
+            merit_selected: result.selectedPlayers.filter(p => p.selection_method === 'merit').map(p => p.id),
+            random_selected: result.selectedPlayers.filter(p => p.selection_method === 'random').map(p => p.id),
+            timestamp: new Date().toISOString()
+          }
         });
 
       if (selectionError) throw selectionError;

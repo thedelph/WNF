@@ -22,6 +22,8 @@ export const useSlotOffers = () => {
           player_id,
           status,
           offered_at,
+          expires_at,
+          available_at,
           responded_at,
           player:players!slot_offers_player_id_fkey (
             id,

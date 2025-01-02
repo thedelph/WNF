@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { calculateRarity } from '../../../utils/rarityCalculations';
 import PlayerCard from '../../PlayerCard';
 import { ExtendedPlayerData } from '../../../types/playerSelection';
-import { calculatePlayerXP } from '../../../utils/xpCalculations';
 import { supabase } from '../../../utils/supabase';
 
 interface PlayerCardViewProps {
   players: ExtendedPlayerData[];
-  title: string;
+  title?: string;
 }
 
 /**
@@ -18,28 +18,58 @@ interface PlayerCardViewProps {
 export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [latestSequence, setLatestSequence] = useState(0);
-  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Get latest game sequence
   useEffect(() => {
     const fetchLatestSequence = async () => {
-      const { data, error } = await supabase
-        .from('games')
-        .select('sequence_number')
-        .order('sequence_number', { ascending: false })
-        .limit(1);
+      try {
+        const { data, error } = await supabase
+          .from('games')
+          .select('sequence_number')
+          .order('sequence_number', { ascending: false })
+          .limit(1);
 
-      if (!error && data?.length) {
-        setLatestSequence(Number(data[0].sequence_number));
+        if (error) throw error;
+
+        if (data?.length) {
+          setLatestSequence(Number(data[0].sequence_number));
+        }
+      } catch (err) {
+        setError('Failed to fetch latest game sequence');
+        console.error('Error fetching sequence:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchLatestSequence();
   }, []);
-  
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-error p-4">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   // Sort players alphabetically by friendly name
-  const sortedPlayers = [...players].sort((a, b) => 
+  const sortedPlayers = [...players].sort((a, b) =>
     a.friendly_name.localeCompare(b.friendly_name)
   );
+
+  // Calculate rarity based on all players' XP
+  const allXpValues = sortedPlayers.map(player => player.xp);
 
   return (
     <div className="w-full">
@@ -59,7 +89,7 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
           <ChevronDown className="w-5 h-5" />
         )}
       </button>
-      
+
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -72,38 +102,29 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
             <div className="bg-base-200 rounded-b-lg p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {sortedPlayers.map((player) => {
-                  // Calculate XP with complete stats
-                  const xp = calculatePlayerXP({
-                    caps: player.stats.caps,
-                    activeBonuses: player.stats.activeBonuses,
-                    activePenalties: player.stats.activePenalties,
-                    currentStreak: player.stats.currentStreak,
-                    gameSequences: player.stats.gameSequences,
-                    latestSequence
-                  });
-
+                  const rarity = calculateRarity(player.xp, allXpValues);
                   return (
                     <motion.div
                       key={player.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
                     >
                       <PlayerCard
                         id={player.id}
                         friendlyName={player.friendly_name}
-                        xp={xp}
-                        caps={player.stats.caps}
-                        preferredPosition=""
-                        activeBonuses={player.stats.activeBonuses}
-                        activePenalties={player.stats.activePenalties}
+                        xp={player.xp}
+                        caps={player.caps}
+                        preferredPosition={player.preferred_position || ''}
+                        activeBonuses={player.active_bonuses}
+                        activePenalties={player.active_penalties}
                         winRate={player.win_rate}
-                        currentStreak={player.stats.currentStreak}
+                        currentStreak={player.current_streak}
                         maxStreak={player.max_streak}
-                        rarity={player.rarity}
-                        avatarSvg={player.avatar_svg}
+                        rarity={rarity}
+                        avatarSvg={player.avatar_svg || ''}
                         isRandomlySelected={player.isRandomlySelected}
-                        gameSequences={player.stats.gameSequences}
+                        hasSlotOffer={player.hasSlotOffer}
                       />
                     </motion.div>
                   );

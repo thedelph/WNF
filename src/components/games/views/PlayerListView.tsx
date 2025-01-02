@@ -1,29 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { SelectedPlayer } from '../../../types/game';
-import { calculatePlayerXP } from '../../../utils/xpCalculations';
-import { FaUser, FaUserClock } from 'react-icons/fa';
+import { FaUser, FaUserClock, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { useAdminPermissions } from '../../../hooks/useAdminPermissions';
 import { handlePlayerDropoutAndOffers } from '../../../utils/dropout';
 import { toast } from 'react-hot-toast';
 import { useUser } from '../../../hooks/useUser';
-
-interface PlayerListViewProps {
-  selectedPlayers: SelectedPlayer[];
-  reservePlayers: SelectedPlayer[];
-  droppedOutPlayers: SelectedPlayer[];
-  currentUserId?: string;
-  showSelected: boolean;
-  showReserves: boolean;
-  showDroppedOut: boolean;
-  setShowSelected: (show: boolean) => void;
-  setShowReserves: (show: boolean) => void;
-  setShowDroppedOut: (show: boolean) => void;
-  gameId: string;
-  onPlayerDropout?: () => void;
-  children?: (player: SelectedPlayer) => React.ReactNode;
-}
 
 interface PlayerSectionProps {
   title: string;
@@ -31,90 +12,71 @@ interface PlayerSectionProps {
     id: string;
     friendly_name: string;
     avatar_svg?: string;
-    stats: any;
+    xp: number;
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
   }[];
   icon: React.ComponentType;
   isExpanded: boolean;
   onToggle: () => void;
-  currentUserId?: string;
-  gameId: string;
-  onPlayerDropout?: () => void;
-  children?: (player: any) => React.ReactNode;
+  allXpValues: number[];
 }
 
-/**
- * PlayerSection component displays a collapsible section of players in list format
- */
+interface PlayerListViewProps {
+  selectedPlayers: {
+    id: string;
+    friendly_name: string;
+    avatar_svg?: string;
+    xp: number;
+    isRandomlySelected?: boolean;
+    has_slot_offer?: boolean;
+  }[];
+  reservePlayers: {
+    id: string;
+    friendly_name: string;
+    avatar_svg?: string;
+    xp: number;
+    isRandomlySelected?: boolean;
+    has_slot_offer?: boolean;
+  }[];
+  droppedOutPlayers: {
+    id: string;
+    friendly_name: string;
+    avatar_svg?: string;
+    xp: number;
+    isRandomlySelected?: boolean;
+    has_slot_offer?: boolean;
+  }[];
+  playerStats: Record<string, { xp: number }>;
+}
+
 const PlayerSection: React.FC<PlayerSectionProps> = ({
   title,
   players,
   icon: Icon,
   isExpanded,
   onToggle,
-  currentUserId,
-  gameId,
-  onPlayerDropout,
-  children
+  allXpValues
 }) => {
-  const { player } = useUser();
-  const { isAdmin } = useAdminPermissions(player?.id);
-
-  // Sort players by XP
-  const sortedPlayers = [...players].sort((a, b) => {
-    const xpA = calculatePlayerXP(a.stats);
-    const xpB = calculatePlayerXP(b.stats);
-    return xpB - xpA;
-  });
-
-  const handleAdminDropout = async (playerId: string) => {
-    try {
-      if (!player?.id) {
-        toast.error('Admin not found');
-        return;
-      }
-
-      const result = await handlePlayerDropoutAndOffers(
-        gameId,
-        playerId,
-        new Date()
-      );
-
-      if (result.success) {
-        toast.success('Player has been dropped out successfully');
-        if (onPlayerDropout) {
-          onPlayerDropout();
-        }
-      } else {
-        toast.error(result.error || 'Failed to drop out player');
-      }
-    } catch (error) {
-      console.error('Error in admin dropout:', error);
-      toast.error('Failed to drop out player');
-    }
-  };
+  if (players.length === 0) return null;
 
   return (
-    <div className="w-full">
+    <div>
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 bg-base-200 rounded-t-lg hover:bg-base-300 transition-colors"
+        className="btn btn-ghost btn-sm w-full flex justify-between items-center"
       >
-        <div className="flex items-center gap-2">
-          <Icon className="w-5 h-5" />
-          <h3 className="text-xl font-semibold">{title}</h3>
-          <span className="text-sm text-base-content/60">
-            ({players.length} {players.length === 1 ? 'player' : 'players'})
-          </span>
-        </div>
+        <span className="flex items-center gap-2">
+          <Icon className="h-5 w-5" />
+          {title} ({players.length})
+        </span>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5" />
+          <FaChevronDown className="h-4 w-4" />
         ) : (
-          <ChevronDown className="w-5 h-5" />
+          <FaChevronRight className="h-4 w-4" />
         )}
       </button>
-      
+
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -122,56 +84,23 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            className="mt-4 space-y-2 overflow-hidden"
           >
-            <div className="bg-base-200 rounded-b-lg p-4">
-              <ul className="space-y-2">
-                {sortedPlayers.map((player) => (
-                  <motion.li
-                    key={player.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between p-3 rounded-lg bg-base-300 hover:bg-base-300/80 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium flex items-center gap-2">
-                        {player.friendly_name}
-                        {player.id === currentUserId && (
-                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-primary text-primary-content">
-                            You
-                          </span>
-                        )}
-                        {player.isRandomlySelected && (
-                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-secondary text-secondary-content">
-                            Random Pick
-                          </span>
-                        )}
-                        {player.has_slot_offer && (
-                          <span className="badge badge-sm badge-info">
-                            Slot Offered
-                          </span>
-                        )}
-                        {children && children(player)}
-                      </span>
-                      {isAdmin && player.id !== currentUserId && (
-                        <button
-                          onClick={() => handleAdminDropout(player.id)}
-                          className="btn btn-error btn-xs"
-                          title="Drop out this player"
-                        >
-                          Drop Out
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        XP: {calculatePlayerXP(player.stats)}
-                      </span>
-                    </div>
-                  </motion.li>
-                ))}
-              </ul>
-            </div>
+            {players.map((player) => (
+              <div
+                key={player.id}
+                className="flex items-center justify-between rounded-lg bg-base-300 p-3"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-medium">{player.friendly_name}</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-sm">
+                    {player.xp} XP
+                  </span>
+                </div>
+              </div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -180,64 +109,49 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
 };
 
 /**
- * PlayerListView component displays all player sections in a list format
+ * List view component for displaying players in a more compact format
+ * Shows selected, reserve, and dropped out players with their stats
  */
 export const PlayerListView: React.FC<PlayerListViewProps> = ({
   selectedPlayers,
   reservePlayers,
   droppedOutPlayers,
-  currentUserId,
-  showSelected,
-  showReserves,
-  showDroppedOut,
-  setShowSelected,
-  setShowReserves,
-  setShowDroppedOut,
-  gameId,
-  onPlayerDropout,
-  children
+  playerStats
 }) => {
+  const [showSelected, setShowSelected] = React.useState(true);
+  const [showReserves, setShowReserves] = React.useState(true);
+  const [showDroppedOut, setShowDroppedOut] = React.useState(false);
+
   return (
     <div className="space-y-4">
       {selectedPlayers.length > 0 && (
         <PlayerSection
-          title={selectedPlayers[0]?.team === 'blue' ? 'Blue Team' : 'Orange Team'}
+          title="Selected players"
           players={selectedPlayers}
           icon={FaUser}
           isExpanded={showSelected}
           onToggle={() => setShowSelected(!showSelected)}
-          currentUserId={currentUserId}
-          gameId={gameId}
-          onPlayerDropout={onPlayerDropout}
-          children={children}
+          allXpValues={[]}
         />
       )}
-
       {reservePlayers.length > 0 && (
         <PlayerSection
-          title="Reserve Players"
+          title="Reserve players"
           players={reservePlayers}
           icon={FaUserClock}
           isExpanded={showReserves}
           onToggle={() => setShowReserves(!showReserves)}
-          currentUserId={currentUserId}
-          gameId={gameId}
-          onPlayerDropout={onPlayerDropout}
-          children={children}
+          allXpValues={[]}
         />
       )}
-
       {droppedOutPlayers.length > 0 && (
         <PlayerSection
-          title="Dropped Out"
+          title="Dropped out players"
           players={droppedOutPlayers}
           icon={FaUserClock}
           isExpanded={showDroppedOut}
           onToggle={() => setShowDroppedOut(!showDroppedOut)}
-          currentUserId={currentUserId}
-          gameId={gameId}
-          onPlayerDropout={onPlayerDropout}
-          children={children}
+          allXpValues={[]}
         />
       )}
     </div>

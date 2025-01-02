@@ -1,5 +1,4 @@
 import { PlayerStats } from '../../types/player';
-import { calculatePlayerXP } from '../../utils/xpCalculations';
 
 interface StatsGridProps {
   player: PlayerStats;
@@ -9,17 +8,7 @@ export const StatsGrid = ({ player }: StatsGridProps) => {
   const stats = [
     { 
       label: 'XP', 
-      value: (() => {
-        const xpValue = calculatePlayerXP({
-          caps: player.caps ?? 0,
-          activeBonuses: player.active_bonuses ?? 0,
-          activePenalties: player.active_penalties ?? 0,
-          currentStreak: player.current_streak ?? 0,
-          gameSequences: player.game_sequences || [],
-          latestSequence: player.latest_sequence || 0
-        });
-        return xpValue.toLocaleString();
-      })()
+      value: (player.xp ?? 0).toLocaleString()
     },
     { label: 'Caps', value: player.caps ?? 'N/A' },
     { label: 'Win Rate', value: player.win_rate ? `${player.win_rate}%` : 'N/A' },

@@ -51,13 +51,15 @@ export const useTeamBalancing = () => {
         .eq('game_id', nextGame.id)
         .maybeSingle();
 
+      console.log('Assignment data:', assignmentData);
+
       if (assignmentError) {
         console.error('Error fetching assignments:', assignmentError);
         toast.error('Error loading team assignments');
       }
 
       if (assignmentData?.team_assignments?.teams) {
-        // Use existing assignments
+        console.log('Setting teams:', assignmentData.team_assignments.teams);
         setAssignments(assignmentData.team_assignments.teams);
       } else {
         // Fetch all registered players if no assignments exist
