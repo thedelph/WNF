@@ -58,6 +58,7 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
   onToggle,
   allXpValues
 }) => {
+  const { player: currentPlayer } = useUser();
   if (players.length === 0) return null;
 
   return (
@@ -93,6 +94,12 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{player.friendly_name}</span>
+                  {player.id === currentPlayer?.id && (
+                    <div className="badge badge-neutral badge-sm">You</div>
+                  )}
+                  {player.isRandomlySelected && (
+                    <div className="badge badge-secondary badge-sm">Random Pick</div>
+                  )}
                 </div>
                 <div className="flex items-center">
                   <span className="text-sm">
