@@ -91,7 +91,11 @@ export default function PlayerCard({
   };
 
   const getSlotOfferStatus = () => {
-    const now = new Date('2025-01-02T23:10:18Z'); // Using provided time
+    const now = new Date('2025-01-02T23:12:20Z'); // Using provided time
+
+    // Check if any slot has been accepted
+    const hasAcceptedOffer = slotOfferStatus === 'accepted';
+    if (hasAcceptedOffer) return null;
 
     // If the offer was declined, show declined status
     if (slotOfferStatus === 'declined') {
@@ -121,7 +125,8 @@ export default function PlayerCard({
     }
 
     // For players with no current offer but have potential times
-    if (potentialOfferTimes) {
+    // Only show if no slot has been accepted yet
+    if (potentialOfferTimes && !hasAcceptedOffer) {
       const availableTime = new Date(potentialOfferTimes.available_time);
       const nextAccessTime = new Date(potentialOfferTimes.next_player_access_time);
       

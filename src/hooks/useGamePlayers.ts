@@ -60,7 +60,7 @@ export const useGamePlayers = (gameId: string) => {
 
       if (regError) throw regError;
 
-      // Get all slot offers for this game (including declined ones)
+      // Get all slot offers for this game (including declined and accepted ones)
       const { data: slotOffers, error: slotError } = await supabase
         .from('slot_offers')
         .select('*')
@@ -69,12 +69,15 @@ export const useGamePlayers = (gameId: string) => {
 
       if (slotError) throw slotError;
 
-      // Get slot offer times for all reserve players
-      const { data: offerTimes, error: offerTimesError } = await supabase
+      // Check if any slot has been accepted
+      const hasAcceptedSlot = slotOffers?.some(offer => offer.status === 'accepted');
+
+      // Get slot offer times for all reserve players (only if no slot has been accepted)
+      const { data: offerTimes, error: offerTimesError } = !hasAcceptedSlot ? await supabase
         .rpc('calculate_slot_offer_times', {
           p_game_id: gameId,
           p_num_players: registrations.filter(r => r.status === 'reserve').length
-        });
+        }) : { data: null, error: null };
 
       if (offerTimesError) throw offerTimesError;
 
