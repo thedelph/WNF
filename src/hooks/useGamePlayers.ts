@@ -60,12 +60,12 @@ export const useGamePlayers = (gameId: string) => {
 
       if (regError) throw regError;
 
-      // Get active slot offers for this game
+      // Get all slot offers for this game (including declined ones)
       const { data: slotOffers, error: slotError } = await supabase
         .from('slot_offers')
         .select('*')
         .eq('game_id', gameId)
-        .in('status', ['pending', 'accepted']);
+        .order('created_at', { ascending: false });  // Get most recent first
 
       if (slotError) throw slotError;
 

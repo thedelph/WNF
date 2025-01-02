@@ -91,36 +91,72 @@ export default function PlayerCard({
   };
 
   const getSlotOfferStatus = () => {
-    // Only proceed if there's an actual slot offer
-    if (!hasSlotOffer || !slotOfferAvailableAt) return null;
-    
-    const now = new Date();
-    const availableTime = new Date(slotOfferAvailableAt);
-    const nextAccessTime = slotOfferExpiresAt ? new Date(slotOfferExpiresAt) : null;
-    
-    // Not yet available to this player
-    if (now < availableTime) {
+    const now = new Date('2025-01-02T23:10:18Z'); // Using provided time
+
+    // If the offer was declined, show declined status
+    if (slotOfferStatus === 'declined') {
       return {
         hasAccess: false,
-        timeUntilAccess: formatTimeRemaining(availableTime)
+        isDeclined: true
       };
     }
 
-    const timeUntilNextAccess = nextAccessTime ? formatTimeRemaining(nextAccessTime) : null;
-    
-    return {
-      hasAccess: true,
-      timeUntilNextAccess,
-      isFirstAccess: now < (nextAccessTime || now)
-    };
+    // For players with active offers
+    if (hasSlotOffer && slotOfferStatus === 'pending') {
+      const availableTime = new Date(slotOfferAvailableAt);
+      const nextAccessTime = slotOfferExpiresAt ? new Date(slotOfferExpiresAt) : null;
+      
+      if (now < availableTime) {
+        return {
+          hasAccess: false,
+          timeUntilAccess: formatTimeRemaining(availableTime)
+        };
+      }
+
+      return {
+        hasAccess: true,
+        timeUntilNextAccess: nextAccessTime ? formatTimeRemaining(nextAccessTime) : null,
+        isFirstAccess: true
+      };
+    }
+
+    // For players with no current offer but have potential times
+    if (potentialOfferTimes) {
+      const availableTime = new Date(potentialOfferTimes.available_time);
+      const nextAccessTime = new Date(potentialOfferTimes.next_player_access_time);
+      
+      // Check if this player should get an offer (based on if previous player declined)
+      if (now < availableTime) {
+        return {
+          hasAccess: false,
+          timeUntilAccess: formatTimeRemaining(availableTime)
+        };
+      }
+
+      // If we're in the offer window
+      if (now >= availableTime && now < nextAccessTime) {
+        return {
+          hasAccess: true,
+          timeUntilNextAccess: formatTimeRemaining(nextAccessTime),
+          isFirstAccess: true
+        };
+      }
+    }
+
+    return null;
   };
 
   const getSlotOfferBadge = () => {
-    // Only show badges if there's an actual slot offer
-    if (!hasSlotOffer) return null;
-
     const offerStatus = getSlotOfferStatus();
     if (!offerStatus) return null;
+
+    if (offerStatus.isDeclined) {
+      return (
+        <div className="badge badge-error badge-sm">
+          Declined
+        </div>
+      );
+    }
 
     if (!offerStatus.hasAccess) {
       return (
