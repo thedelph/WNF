@@ -24,13 +24,18 @@ interface PlayerProfile {
   max_streak: number
   avatar_svg: string | null
   avatar_options: any
-  game_sequences: number[]
-  latest_sequence: number
 }
 
 interface ExtendedPlayerData extends PlayerProfile {
   rarity: number
 }
+
+// Calculate rarity percentile based on player's XP compared to all players
+const calculateRarity = (playerXP: number, allXP: number[]): number => {
+  const totalPlayers = allXP.length;
+  const playersBelow = allXP.filter(xp => xp < playerXP).length;
+  return Math.round((playersBelow / totalPlayers) * 100);
+};
 
 export default function Component() {
   const { user } = useAuth()
@@ -62,9 +67,7 @@ export default function Component() {
             current_streak,
             max_streak,
             avatar_svg,
-            avatar_options,
-            game_sequences,
-            latest_sequence
+            avatar_options
           `)
           .eq('user_id', user!.id)
           .single()
@@ -291,9 +294,7 @@ export default function Component() {
                       caps: profile.caps || 0,
                       activeBonuses: profile.active_bonuses || 0,
                       activePenalties: profile.active_penalties || 0,
-                      currentStreak: profile.current_streak || 0,
-                      gameSequences: profile.game_sequences,
-                      latestSequence: profile.latest_sequence
+                      currentStreak: profile.current_streak || 0
                     }} 
                     showTotal={false}
                   />

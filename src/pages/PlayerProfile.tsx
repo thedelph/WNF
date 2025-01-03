@@ -270,7 +270,8 @@ export default function PlayerProfileNew() {
           activePenalties: player.active_penalties || 0,
           currentStreak: player.current_streak || 0,
           gameSequences: player.game_sequences,
-          latestSequence: Math.max(...player.game_sequences)
+          latestSequence: Math.max(...player.game_sequences),
+          xp: player.xp || 0
         }} />
       </motion.div>
 

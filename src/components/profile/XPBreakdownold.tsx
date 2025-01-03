@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { calculatePlayerXP } from '../../utils/xpCalculations';
 
 interface XPBreakdownProps {
   stats: {
@@ -7,7 +8,6 @@ interface XPBreakdownProps {
     activeBonuses: number;
     activePenalties: number;
     currentStreak: number;
-    xp: number;
     gameSequences?: number[];
     latestSequence?: number;
   };
@@ -23,6 +23,16 @@ export default function XPBreakdown({
   // Ensure we have arrays of numbers and use the passed in latestSequence
   const sequences = stats.gameSequences || [];
   const latestSequence = stats.latestSequence || 0;
+
+  // Calculate XP breakdown
+  const xpBreakdown = calculatePlayerXP({
+    caps: stats.caps,
+    activeBonuses: stats.activeBonuses,
+    activePenalties: stats.activePenalties,
+    currentStreak: stats.currentStreak,
+    gameSequences: sequences,
+    latestSequence
+  });
 
   // Sort sequences by how many games ago they are
   const sortedSequences = [...sequences]
@@ -76,6 +86,7 @@ export default function XPBreakdown({
 
   const baseXP = Object.values(categoryXP).reduce((sum, xp) => sum + xp, 0);
   const streakMultiplier = 1 + (stats.currentStreak * 0.1);
+  const totalXP = Math.round(baseXP * streakMultiplier);
 
   return (
     <div className="mt-4">
@@ -249,14 +260,11 @@ export default function XPBreakdown({
                         <div className="flex justify-between items-center">
                           <div>
                             <h5 className="font-medium">Final XP</h5>
-                            <p className="text-sm opacity-70">Database XP</p>
+                            <p className="text-sm opacity-70">Base XP × Streak Multiplier</p>
                           </div>
                           <div className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <span className="text-2xl">{stats.xp}</span>
-                              <span className="text-2xl">XP</span>
-                            </div>
-                            <div className="text-xs opacity-70">{baseXP} × 2.2</div>
+                            <div className="font-mono text-2xl">{totalXP} XP</div>
+                            <div className="text-xs opacity-70">{baseXP} × {streakMultiplier.toFixed(1)}</div>
                           </div>
                         </div>
                       </div>
