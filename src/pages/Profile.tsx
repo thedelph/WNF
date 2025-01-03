@@ -54,7 +54,19 @@ export default function Component() {
         setLoading(true)
         setError(null)
 
-        // First get the player profile
+        // First get the latest sequence number from completed games
+        const { data: latestSeqData, error: latestSeqError } = await supabase
+          .from('games')
+          .select('sequence_number')
+          .eq('completed', true)
+          .order('sequence_number', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestSeqError) throw latestSeqError;
+        setLatestSequence(latestSeqData?.sequence_number || 0);
+
+        // Get player stats from the updated player_stats view that includes XP
         const { data: profileData, error: profileError } = await supabase
           .from('player_stats')
           .select(`
@@ -76,18 +88,6 @@ export default function Component() {
 
         if (profileError) throw profileError
         if (!profileData) throw new Error('Player not found')
-
-        // Get the latest sequence number from completed games
-        const { data: latestSeqData, error: latestSeqError } = await supabase
-          .from('games')
-          .select('sequence_number')
-          .eq('completed', true)
-          .order('sequence_number', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (latestSeqError) throw latestSeqError;
-        setLatestSequence(latestSeqData?.sequence_number || 0);
 
         // Get game sequences for the player
         const { data: gameData, error: gameError } = await supabase

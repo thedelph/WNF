@@ -24,18 +24,13 @@ export default function XPBreakdown({
   const sequences = stats.gameSequences || [];
   const latestSequence = stats.latestSequence || 0;
 
-  // Sort sequences by how many games ago they are
+  // Sort sequences by how many games ago they are, excluding only future games
   const sortedSequences = [...sequences]
-    .filter(seq => seq <= latestSequence) // Only include historical games
+    .filter(seq => seq <= latestSequence) // Only exclude future games
     .sort((a, b) => b - a);
     
-  // Get historical games only, sorted by sequence number
-  const historicalSequences = sortedSequences
-    .filter(seq => seq < latestSequence) // Exclude current/future games
-    .sort((a, b) => b - a);
-
   // Calculate XP based on difference from latest sequence number
-  const gameCategories = historicalSequences.reduce((acc, sequence) => {
+  const gameCategories = sortedSequences.reduce((acc, sequence) => {
     // Calculate XP based on how many games ago relative to latest sequence
     const gamesAgo = latestSequence - sequence;
 
@@ -50,7 +45,7 @@ export default function XPBreakdown({
     } else if (gamesAgo >= 1) {
       acc.recent.push(sequence);  // 1-2 games ago: 18 XP
     } else {
-      acc.current.push(sequence); // Current game: 20 XP
+      acc.current.push(sequence); // Current game (0 games ago): 20 XP
     }
     return acc;
   }, {
