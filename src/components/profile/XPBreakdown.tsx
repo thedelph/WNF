@@ -252,7 +252,7 @@ export default function XPBreakdown({
                         <div className="flex justify-between items-center">
                           <div>
                             <h5 className="font-medium">Final XP</h5>
-                            <p className="text-sm opacity-70">Database XP</p>
+                            <p className="text-sm opacity-70">Including Bonuses/Penalties</p>
                           </div>
                           <div className="text-right">
                             <div className="flex items-center justify-end gap-1">
