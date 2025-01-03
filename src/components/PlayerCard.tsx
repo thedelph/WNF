@@ -91,7 +91,7 @@ export default function PlayerCard({
   };
 
   const getSlotOfferStatus = () => {
-    const now = new Date('2025-01-02T23:12:20Z'); // Using provided time
+    const now = new Date(); // Use current time
 
     // Check if any slot has been accepted
     const hasAcceptedOffer = slotOfferStatus === 'accepted';
@@ -178,18 +178,7 @@ export default function PlayerCard({
 
     return (
       <div className="badge badge-info badge-sm flex gap-1 items-center">
-        {offerStatus.isFirstAccess ? (
-          <>
-            <span>First Access</span>
-            {offerStatus.timeUntilNextAccess && (
-              <span className="text-xs opacity-80">
-                ({offerStatus.timeUntilNextAccess})
-              </span>
-            )}
-          </>
-        ) : (
-          <span>Slot Available</span>
-        )}
+        <span>Available Now</span>
       </div>
     );
   };
