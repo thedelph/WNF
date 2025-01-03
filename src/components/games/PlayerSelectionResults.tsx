@@ -227,7 +227,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               currentStreak: playerStats[player.id]?.current_streak || 0,
               maxStreak: playerStats[player.id]?.max_streak || 0,
               preferredPosition: '',
-              rarity: calculateRarity(player.xp || 0, globalXpValues)
+              rarity: calculateRarity(player.xp || 0, globalXpValues),
+              hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
             allXpValues={Object.values(playerStats).map(stat => stat.xp)}
             isExpanded={showSelected}
@@ -268,7 +269,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               slotOfferExpiresAt: player.slotOffers?.[0]?.expires_at || player.potentialOfferTimes?.next_player_access_time,
               hasSlotOffer: player.hasSlotOffer || (player.potentialOfferTimes !== null),
               slotOfferStatus: player.slotOffers?.[0]?.status || null,
-              declinedAt: player.slotOffers?.[0]?.declined_at || null
+              declinedAt: player.slotOffers?.[0]?.declined_at || null,
+              hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
             allXpValues={Object.values(playerStats).map(stat => stat.xp)}
             isExpanded={showReserves}
@@ -303,7 +305,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               currentStreak: playerStats[player.id]?.current_streak || 0,
               maxStreak: playerStats[player.id]?.max_streak || 0,
               preferredPosition: '',
-              rarity: calculateRarity(player.xp || 0, globalXpValues)
+              rarity: calculateRarity(player.xp || 0, globalXpValues),
+              hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
             allXpValues={Object.values(playerStats).map(stat => stat.xp)}
             isExpanded={showDroppedOut}

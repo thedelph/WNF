@@ -146,22 +146,6 @@ export const useGamePlayers = (gameId: string) => {
       const reservePlayers = sortedPlayers.filter(p => p.status === 'reserve');
       const droppedOutPlayers = sortedPlayers.filter(p => p.status === 'dropped_out');
 
-      // Update game_selections
-      const { error: updateError } = await supabase
-        .from('game_selections')
-        .upsert({
-          game_id: gameId,
-          selected_players: selectedPlayers.map(p => p.id),
-          reserve_players: reservePlayers.map(p => p.id),
-          selection_metadata: {
-            timestamp: new Date().toISOString()
-          }
-        });
-
-      if (updateError) {
-        console.error('Failed to update game_selections:', updateError);
-      }
-
       setSelectedPlayers(selectedPlayers);
       setReservePlayers(reservePlayers);
       setDroppedOutPlayers(droppedOutPlayers);

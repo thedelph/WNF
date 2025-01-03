@@ -28,7 +28,7 @@ interface PlayerCardProps {
     available_time: string;
     next_player_access_time: string;
   } | null;
-  gameSequences?: number[]
+  hasActiveSlotOffers?: boolean;
   children?: React.ReactNode;
 }
 
@@ -52,7 +52,7 @@ export default function PlayerCard({
   slotOfferExpiresAt,
   slotOfferAvailableAt,
   potentialOfferTimes,
-  gameSequences,
+  hasActiveSlotOffers,
   children
 }: PlayerCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -152,6 +152,8 @@ export default function PlayerCard({
   };
 
   const getSlotOfferBadge = () => {
+    if (!hasActiveSlotOffers) return null;
+    
     const offerStatus = getSlotOfferStatus();
     if (!offerStatus) return null;
 
