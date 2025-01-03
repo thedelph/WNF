@@ -29,23 +29,29 @@ export default function XPBreakdown({
     .filter(seq => seq <= latestSequence) // Only include historical games
     .sort((a, b) => b - a);
     
-  const gameCategories = sortedSequences.reduce((acc, sequence) => {
+  // Get historical games only, sorted by sequence number
+  const historicalSequences = sortedSequences
+    .filter(seq => seq < latestSequence) // Exclude current/future games
+    .sort((a, b) => b - a);
+
+  // Calculate XP based on difference from latest sequence number
+  const gameCategories = historicalSequences.reduce((acc, sequence) => {
+    // Calculate XP based on how many games ago relative to latest sequence
     const gamesAgo = latestSequence - sequence;
-    
-    if (gamesAgo === 0) {
-      acc.current.push(sequence);
-    } else if (gamesAgo <= 2) {
-      acc.recent.push(sequence);
-    } else if (gamesAgo <= 4) {
-      acc.newer.push(sequence);
-    } else if (gamesAgo <= 9) {
-      acc.mid.push(sequence);
-    } else if (gamesAgo <= 19) {
-      acc.older.push(sequence);
+
+    if (gamesAgo >= 20) {
+      acc.oldest.push(sequence);  // 20+ games ago: 10 XP
+    } else if (gamesAgo >= 10) {
+      acc.older.push(sequence);   // 10-19 games ago: 12 XP
+    } else if (gamesAgo >= 5) {
+      acc.mid.push(sequence);     // 5-9 games ago: 14 XP
+    } else if (gamesAgo >= 3) {
+      acc.newer.push(sequence);   // 3-4 games ago: 16 XP
+    } else if (gamesAgo >= 1) {
+      acc.recent.push(sequence);  // 1-2 games ago: 18 XP
     } else {
-      acc.oldest.push(sequence);
+      acc.current.push(sequence); // Current game: 20 XP
     }
-    
     return acc;
   }, {
     current: [] as number[],
@@ -65,16 +71,18 @@ export default function XPBreakdown({
     oldest: gameCategories.oldest.length
   };
 
+  // Calculate XP for each category
   const categoryXP = {
-    current: gameCounts.current * 20,
-    recent: gameCounts.recent * 18,
-    newer: gameCounts.newer * 16,
-    mid: gameCounts.mid * 14,
-    older: gameCounts.older * 12,
-    oldest: gameCounts.oldest * 10
+    current: gameCounts.current * 20,  // Most recent game
+    recent: gameCounts.recent * 18,    // 1-2 games ago
+    newer: gameCounts.newer * 16,      // 3-4 games ago
+    mid: gameCounts.mid * 14,          // 5-9 games ago
+    older: gameCounts.older * 12,      // 10-19 games ago
+    oldest: gameCounts.oldest * 10     // 20+ games ago
   };
 
   const baseXP = Object.values(categoryXP).reduce((sum, xp) => sum + xp, 0);
+
   const streakMultiplier = 1 + (stats.currentStreak * 0.1);
 
   return (

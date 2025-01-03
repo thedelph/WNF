@@ -22,6 +22,7 @@ export default function PlayerProfileNew() {
   const [player, setPlayer] = useState<PlayerStats | null>(null);
   const [games, setGames] = useState<GameHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [latestSequence, setLatestSequence] = useState<number>(0);
   const { user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratings, setRatings] = useState<{ attack: number; defense: number }>({
@@ -114,6 +115,18 @@ export default function PlayerProfileNew() {
       try {
         setLoading(true);
         
+        // Get the latest sequence number from completed games
+        const { data: latestSeqData, error: latestSeqError } = await supabase
+          .from('games')
+          .select('sequence_number')
+          .eq('completed', true)
+          .order('sequence_number', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestSeqError) throw latestSeqError;
+        setLatestSequence(latestSeqData?.sequence_number || 0);
+
         // Get player stats from the updated player_stats view that includes XP
         const { data: playerData, error: playerError } = await supabase
           .from('player_stats')
@@ -270,7 +283,7 @@ export default function PlayerProfileNew() {
           activePenalties: player.active_penalties || 0,
           currentStreak: player.current_streak || 0,
           gameSequences: player.game_sequences,
-          latestSequence: Math.max(...player.game_sequences),
+          latestSequence: latestSequence,
           xp: player.xp || 0
         }} />
       </motion.div>

@@ -461,7 +461,7 @@
           "table_name": "balanced_team_assignments",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "64 kB",
+          "total_size": "72 kB",
           "estimated_rows": 0,
           "storage_parameters": null,
           "replica_identity": "d",
@@ -707,8 +707,8 @@
           "table_name": "debug_logs",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "64 kB",
-          "estimated_rows": 45,
+          "total_size": "88 kB",
+          "estimated_rows": 115,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -724,11 +724,11 @@
               "generation_expression": null,
               "numeric_precision": 64,
               "numeric_scale": 0,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{5,6,7,8,9,10,11,12,14,15,16,17,18,19,20,22,23,24,25,26,27,28,30,31,32,33,34,35,36,38,39,40,41,42,43,44,46,47,48,49,50,51,52,54,55,56,57,58,59,60,62,63,64,65,66,67,68,69,71,72,73,74,75,76,77,79,80,81,82,83,84,85,87,88,89,90,91,92,93,95,96,97,98,99,100,101,103,104,105,106,107,108,109,111,112,113,114,115,116,117,119}",
+              "correlation": "0.998722"
             },
             {
               "name": "timestamp",
@@ -742,11 +742,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "n_distinct": -0.356522,
+              "most_common_values": "{\"2025-01-02 15:14:14.337078+00\",\"2025-01-02 15:18:15.546757+00\",\"2025-01-02 15:18:16.869623+00\",\"2025-01-02 15:18:17.970305+00\",\"2025-01-02 15:18:18.980269+00\",\"2025-01-02 15:18:20.027689+00\",\"2025-01-02 15:18:21.649237+00\",\"2025-01-02 15:18:22.730401+00\",\"2025-01-02 15:40:19.842389+00\",\"2025-01-02 15:40:23.29404+00\",\"2025-01-02 15:40:24.65288+00\",\"2025-01-02 15:40:25.429094+00\",\"2025-01-02 22:38:45.491314+00\",\"2025-01-02 23:03:35.712696+00\",\"2025-01-02 23:03:37.330882+00\",\"2025-01-03 08:58:53.539949+00\",\"2025-01-03 09:34:20.546438+00\",\"2025-01-03 09:59:20.326334+00\",\"2025-01-03 10:09:21.411376+00\",\"2025-01-03 10:09:35.797018+00\",\"2025-01-03 10:12:24.199881+00\",\"2025-01-03 10:15:27.467421+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\",\"2025-01-03 10:34:13.349289+00\",\"2025-01-03 10:34:13.989462+00\",\"2025-01-03 10:34:14.706943+00\",\"2025-01-03 10:34:15.277838+00\",\"2025-01-03 10:34:15.884391+00\",\"2025-01-03 10:34:17.020039+00\",\"2025-01-03 10:34:17.553629+00\",\"2025-01-03 10:34:18.119134+00\",\"2025-01-02 15:18:23.625467+00\",\"2025-01-02 15:40:26.521546+00\",\"2025-01-02 22:38:48.389543+00\",\"2025-01-02 23:11:44.398368+00\",\"2025-01-03 10:34:19.182665+00\"}",
+              "most_common_frequencies": "{0.0521739,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.026087,0.0173913,0.0173913,0.0173913,0.0173913,0.0173913}",
+              "histogram_bounds": "{\"2025-01-02 15:21:01.76556+00\",\"2025-01-02 15:22:16.274009+00\",\"2025-01-03 00:00:00.078988+00\"}",
+              "correlation": "0.998722"
             },
             {
               "name": "event_type",
@@ -760,11 +760,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "n_distinct": 6,
+              "most_common_values": "{game_stats,slot_offer_response,player_selection,maintenance}",
+              "most_common_frequencies": "{0.330435,0.330435,0.295652,0.026087}",
+              "histogram_bounds": "{created_offers,next_players}",
+              "correlation": "0.32873"
             },
             {
               "name": "message",
@@ -778,11 +778,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "n_distinct": 6,
+              "most_common_values": "{\"Game statistics\",\"Processing slot offer response\",\"Selected next player based on player_stats XP\",\"Cleaned up old debug logs\"}",
+              "most_common_frequencies": "{0.330435,0.330435,0.295652,0.026087}",
+              "histogram_bounds": "{\"Created new slot offers\",\"Found next eligible players\"}",
+              "correlation": "0.338941"
             },
             {
               "name": "details",
@@ -796,11 +796,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "n_distinct": -0.8,
+              "most_common_values": "{\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"152c312b-7d2e-4626-a473-c8eea69215f9\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"6e558290-b025-48c5-ba5f-2f0b77b7d036\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"c8cfbdb7-ffa8-4183-b24e-233b2c3b4c7e\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\"}",
+              "most_common_frequencies": "{0.0695652,0.0608696,0.0347826,0.0347826,0.026087,0.0173913,0.0173913}",
+              "histogram_bounds": "{\"{\\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\", \\\"players\\\": [\\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"]}\",\"{\\\"cleanup_time\\\": \\\"2025-01-02 15:21:01.76556+00\\\", \\\"deleted_count\\\": 0, \\\"retention_hours\\\": 24}\",\"{\\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\", \\\"next_players\\\": [\\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"], \\\"hours_until_game\\\": 149.7626841450000000}\",\"{\\\"cleanup_time\\\": \\\"2025-01-02 15:22:16.274009+00\\\", \\\"deleted_count\\\": 0, \\\"remaining_logs\\\": 30, \\\"retention_hours\\\": 24}\",\"{\\\"cleanup_time\\\": \\\"2025-01-03 00:00:00.078988+00\\\", \\\"deleted_count\\\": 0, \\\"remaining_logs\\\": 58, \\\"retention_hours\\\": 24}\",\"{\\\"game_id\\\": \\\"152c312b-7d2e-4626-a473-c8eea69215f9\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"152c312b-7d2e-4626-a473-c8eea69215f9\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"152c312b-7d2e-4626-a473-c8eea69215f9\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"accepted\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"accepted\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"accepted\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"6e558290-b025-48c5-ba5f-2f0b77b7d036\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"6e558290-b025-48c5-ba5f-2f0b77b7d036\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"a9f3d983-31d3-4695-91f3-74d6d50c58e5\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"a9f3d983-31d3-4695-91f3-74d6d50c58e5\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"accepted\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"c8cfbdb7-ffa8-4183-b24e-233b2c3b4c7e\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"c8cfbdb7-ffa8-4183-b24e-233b2c3b4c7e\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"accepted\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"c8cfbdb7-ffa8-4183-b24e-233b2c3b4c7e\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"f6ebcbe1-24b9-4776-bb09-d5a76bb05c6a\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"152c312b-7d2e-4626-a473-c8eea69215f9\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"152c312b-7d2e-4626-a473-c8eea69215f9\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"152c312b-7d2e-4626-a473-c8eea69215f9\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"6e558290-b025-48c5-ba5f-2f0b77b7d036\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"c8cfbdb7-ffa8-4183-b24e-233b2c3b4c7e\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"6e558290-b025-48c5-ba5f-2f0b77b7d036\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"a9f3d983-31d3-4695-91f3-74d6d50c58e5\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"c8cfbdb7-ffa8-4183-b24e-233b2c3b4c7e\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"f6ebcbe1-24b9-4776-bb09-d5a76bb05c6a\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"game_id\\\": \\\"2d63b2db-43d5-4fb3-b139-b01b2270da03\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 18, \\\"active_selected\\\": 17}\",\"{\\\"game_id\\\": \\\"62997c8a-a75f-47b1-8129-615e3728ec35\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 18, \\\"active_selected\\\": 17}\",\"{\\\"game_id\\\": \\\"62d7e722-89ce-48b0-b5bd-4c22fd7fb94e\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 18, \\\"active_selected\\\": 17}\",\"{\\\"game_id\\\": \\\"a9f3d983-31d3-4695-91f3-74d6d50c58e5\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"a9f3d983-31d3-4695-91f3-74d6d50c58e5\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 18, \\\"active_selected\\\": 17}\",\"{\\\"game_id\\\": \\\"c8cfbdb7-ffa8-4183-b24e-233b2c3b4c7e\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 18, \\\"active_selected\\\": 17}\",\"{\\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"f6ebcbe1-24b9-4776-bb09-d5a76bb05c6a\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\"}",
+              "correlation": "-0.0511087"
             }
           ],
           "constraints": [
@@ -1059,8 +1059,8 @@
           "table_name": "game_registrations",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "296 kB",
-          "estimated_rows": 529,
+          "total_size": "264 kB",
+          "estimated_rows": 493,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1079,8 +1079,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{0042f36b-c3ba-4f90-a15f-1f541d0a0712,015d4b4d-48f1-4de1-b776-64b4747db012,03c9d259-85df-4550-acef-c2746ef37c7f,05962d7c-b2a4-40b9-8b26-f9f71060bb8d,0a24b15c-1ea7-4869-a5e1-47c0365772a3,0ddfef69-5d0e-4d9a-8bc7-6b833ac7b196,0e729b8c-cb00-48a7-81b0-8d78430a0bd4,0f880048-3cc3-4efa-b248-b8112754e930,12d4f01c-2795-4689-bb73-5a295dcf864b,1402e38d-51a3-47ee-ac40-61bc2e25d7bf,18259c2a-e7bf-4fd3-bb66-10c4bde61525,1b9e6e0e-a2cd-4bd1-9186-3574d82468ed,1df68000-6560-4a17-8b54-a256bd77d3cd,2055f7b3-adb9-44d0-831a-8532e6ca2ebe,241ad41a-7656-44dd-bd56-089a47cd991d,27a7bc9b-12e3-4c27-9a04-405d697c397c,2a43c0b7-afd9-4fdb-ab0c-626638df8b21,2c7d420b-4eac-4e48-b43a-d6e5a18537bb,2e21a9ab-8ef7-4068-b6b3-a28fa36f990f,2f0892d0-09c5-4d25-954f-e86e9dd6f50d,30238cdd-332f-49ec-947f-e304bbf9da3b,35f2d701-cd39-484a-815a-9d0d8ff88597,3851e969-73a7-4d3b-ae65-167c999f27f4,3a372363-504e-4adb-90de-78c3d6e336e7,3bcde45e-1fbf-461f-a815-74f8c54b53fb,3de445b6-a583-4eea-a7e5-dd0e35d7532e,407f1ff5-778f-49a7-8bc4-e557974d31a3,43cf6b9c-27ed-4e9c-af18-9f9d921a53b9,477bf58e-f0d7-432d-b799-a95e513d5a08,4a07f894-171e-42c6-b659-1afd3eda0452,4b68be04-b100-47da-ab23-e9d5a46ecbcc,50115e67-dee0-4e89-b7ac-dc7b6a9a94c4,51389763-3e54-4b2f-b31d-6bc398103b5a,54b7355a-d76b-411c-bf2d-64cc3bb28b7d,5b164d4a-9b3d-4537-b990-a73ae04cb9fd,5dd8903f-97b6-4222-a0c2-d59b68653c24,60a95b32-0a45-4d77-b019-77ebcacdd4f4,63dfccf1-6da3-4824-9601-3f78f3e799dd,66ab85af-f99b-4b42-81ef-506534ee7f8e,6964496d-b8fc-4561-a3fd-1ed734dd833d,6c9b1b2c-65f6-4050-9cdd-566e1a7d2e91,6fd2cb53-fc2c-4d62-80ae-cc516cf00424,72536b5f-9007-4eed-9c72-0d8bc4630b3f,74131140-f8f2-402c-ba35-c935b3de5847,767a66ea-8b66-48fb-9c44-ad483a4c8b44,77c2919e-adc9-4330-9f9e-fc1e78f9f8a3,796b9260-54fd-4b89-afa2-b0d977b6b81c,7af8f7bf-e31f-478b-bf8b-6a36eb8dc20a,7e23a7f9-c163-4470-bfc5-bf5e4b708f29,814e239a-1509-48c9-b3b3-611fd560f364,82c86742-3826-4200-8092-ff192f955f1f,85a16e44-1a85-4337-842b-3674cbf3ac81,889ea826-196c-413e-9f4e-b592f3524596,8ce0caf0-5a19-48cb-9479-32668edec2e8,906d5ae8-ceff-4e65-b1ad-947ffa419ea8,91be19f7-654d-4be5-971d-862acc0d587b,94c71e0f-e9b6-4b28-ab11-394be6c72abc,97c6d7c1-625a-435e-9076-54bb3bb4358b,99ced21e-a257-4061-84e3-4ac58199dacc,9b547f80-6fad-48ae-aecd-f77d509e544e,9de91aa0-afce-4efe-b523-8506553effef,a0f5df8f-cd23-4c22-b34c-f1cc61786630,a3e0aa52-9399-4f72-891e-3443afc31a51,a478431a-937f-4548-aa16-08d0420ac979,a695be22-c2cd-4f68-a4ed-106efcae380a,a9e89631-063f-403d-b5d7-e23ca965b9e1,ac65d147-01ae-4b9b-a760-c387dc3f9ef9,af1af095-d06f-4f37-9275-177a798188a7,b19eaea6-b440-4a28-9be3-d60510a8b0c3,b3d5e656-ef8b-4d6a-a429-958fe297f1f0,b667aae7-b802-4244-bb32-e84a599f9212,b939e34e-937f-49c1-adb1-9ccebef04a1d,ba4cf99a-3e5c-4de7-82bb-c011b8948d36,bb82794d-6d3a-44a1-9153-9cd986693baf,be78baea-9b37-4726-9813-decf6e99ece3,c0ce95c4-3c77-4ff5-9c7c-6400d7eca7b3,c21d4322-8825-4566-9117-2fddc082b200,c3de9747-4825-4f75-b39b-d084fbfee969,c4a4987b-df6a-4f7c-9649-65854fa00d91,c975d91b-2bab-4b3e-af5a-ace60b218065,cb03b14a-0836-4552-bbfc-5b130320f004,cd3c996f-6345-49d1-a01a-1edc106a1e1a,d101c82b-4321-4021-8a80-1821676f1bfc,d3198135-88c1-4666-9521-01096fa65139,d6592ecb-6c58-47eb-a085-054cbce9955d,d90d5be8-e518-483c-8b89-b06819134d02,deafea4a-6033-422d-b98f-c170be3b44e9,dfdab5a3-db42-445e-a081-6c5c14fe49b7,e3df76ce-6bda-4fb3-a93a-96cd2a25ef49,e6bd586a-10fc-44ab-a56d-d2e71e6a9fc1,e9594811-7a16-474e-a96e-1905d960a9bc,eac13abe-f95d-46d0-8234-331f1490093a,ecab990d-4825-48bd-ba67-df19b8aa12ff,ee79e5f5-6308-4033-9aa7-457359b5d2ae,f165da46-9b8c-4357-ad9c-346c328f6b56,f2ea22ca-3885-45c3-929b-816e324c8fe2,f4dccde9-d5e5-46db-beaf-1aba2bec6985,f94676ce-726f-4970-9f93-2b78bb271328,fb86ccd8-bd4a-497c-b214-502db104c014,fe12e876-b471-4c60-a76d-af177fa2fece,ffcbd257-7be5-4773-b631-994a0f4057ee}",
-              "correlation": "-0.00136775"
+              "histogram_bounds": "{0042f36b-c3ba-4f90-a15f-1f541d0a0712,0129f2da-e93c-4c93-99cf-a517cdfe3de4,0319cb6b-3640-4940-b4b5-17fe49283ea2,053f8020-f766-4453-840a-e227ccebf618,069a3b21-20df-4c69-846d-8a85c584419b,0c399c56-a995-493c-87bd-d7012dcd3e8b,0e1fc460-62d7-4eaf-b60f-725d9b733bcf,0f5bd942-5e42-43e1-8cc6-39a5d60ff807,101a35a6-c176-42f5-ae5e-157cbbc16403,132b189d-0631-41f1-9cef-e8fc8a465029,14a123e3-f726-4644-8812-9e2bf213de8b,192dc160-dd36-4fc6-9d47-c8123e5ad6f8,1bb669b8-fd13-4f75-9210-9fb69a297f92,200d2ddd-aab4-4e65-9a0c-c7b2ddbd87e9,23fb027e-2e23-4ee1-a210-742f941023ba,27a7bc9b-12e3-4c27-9a04-405d697c397c,2a43c0b7-afd9-4fdb-ab0c-626638df8b21,2c7d420b-4eac-4e48-b43a-d6e5a18537bb,2d3cbf3a-36cc-4ec3-a80e-4a357024c91c,2f0a6313-34f3-49cb-a60a-88280351bf61,30238cdd-332f-49ec-947f-e304bbf9da3b,35f2d701-cd39-484a-815a-9d0d8ff88597,391c185f-a0a5-4ef4-9621-cabd7b82239f,3b04fb27-9160-4a92-bcf9-a2b16a5cec7a,3ca42b24-35b7-43b4-aaee-3f8055969f15,3e9e4749-ddb2-4eb2-862b-5b139f3b7f39,40fb4012-2135-421c-be1e-57a4bdfaf81a,45178ce0-9969-42b8-aaaf-023683621422,493c10e0-2b80-429d-96e2-0dc9a734e16a,4a11e64b-3ccb-46c6-a031-4eebeeefea3b,4d0ab613-cf27-4205-b162-af0e15f0a791,505772ee-90bc-4039-a610-902358da5e00,51e4dc4e-74c3-48fe-80ea-6ac20d7d4013,55b93fa9-7f7e-4212-a755-0f5bee54f3be,5b8048bb-1f0f-433e-8a79-945bdc99aac2,5dd8903f-97b6-4222-a0c2-d59b68653c24,609a9f75-f399-4bda-83bc-469f2088f6c9,63d28813-e427-4945-99f3-966cbfded94e,65e4cddc-4a48-4859-9a68-4b217fe57299,6853ecc0-9112-4dff-ad29-a85ecd9c97d1,6a80e21c-02a6-4fef-92e5-a2792e9f523b,6ceafaf5-e38d-4c8d-8107-9b815040973f,71934db0-1b03-4497-b118-77a01fa84d86,72d49315-8645-4397-b448-f9e8c66e2803,752385ff-3a8c-4c46-89d6-cbc431a5fdf2,76800d68-249b-4a6a-ba94-56c4f8c0eeae,780becda-cfcc-413d-b029-7f7d4f7e10ed,798b8b5d-2fa6-470a-b78f-6a896219af43,7affa6ce-b927-4aae-9ed4-f0396d2406a4,7e3105f3-0f92-4cdb-8075-63302aa7e59a,81bf3b3c-2c46-4181-adc0-f9a432a565ae,82c86742-3826-4200-8092-ff192f955f1f,85f57720-9118-4ed4-bc65-6c1e4977a272,8ba316d4-5691-457e-9608-04b2f05cb986,8e16da2c-53ca-4c40-8970-a538ea08243c,906d5ae8-ceff-4e65-b1ad-947ffa419ea8,91be19f7-654d-4be5-971d-862acc0d587b,96558425-c11d-469c-be8f-dc022f854867,995e8c3e-9b36-4266-b366-01b7855e1a5d,9b347117-8f19-4310-b256-dfaaabebaeec,9de91aa0-afce-4efe-b523-8506553effef,a0a5b8ae-687e-4a7c-89d8-80dae66d065e,a3e0aa52-9399-4f72-891e-3443afc31a51,a478431a-937f-4548-aa16-08d0420ac979,a695be22-c2cd-4f68-a4ed-106efcae380a,a91ffbd0-797c-4b93-86f4-6d37db378c96,ab6bae68-d43c-4151-990b-bacf0b3ac47c,af11367e-2702-4c7e-9c5a-ea1ac3d16277,b19eaea6-b440-4a28-9be3-d60510a8b0c3,b471d2d6-8419-443d-9678-4f910a74e8a8,b84dcf94-ee08-4ee7-952a-08322cc7eb8a,ba1877db-bbc4-46e2-b373-26cadc003de0,ba6c9de4-5ce2-42b7-82c6-9d1d9deee4b7,bd2712cb-847e-4f6c-b1fa-8be4faa8a2e8,be8ee7cd-d5db-4a69-9791-e259375bba99,c0ce95c4-3c77-4ff5-9c7c-6400d7eca7b3,c21d4322-8825-4566-9117-2fddc082b200,c3de9747-4825-4f75-b39b-d084fbfee969,c6d1484e-ba5a-4992-9616-1775332281f9,ca6f6a19-d2dd-4c08-8671-0abd8345f1fc,cbd18839-cea4-49c1-9d58-557afafc1bef,cde4ee50-360b-49ed-af56-b5803392bdaf,d20c24af-1063-460a-b098-287271249322,d575a153-6211-47bd-b87c-07d30c63e498,d90d5be8-e518-483c-8b89-b06819134d02,dd392c4a-89b2-4a8d-851f-f81f4102d132,df514aff-604e-44b8-b23e-2f2d123601a4,e3d82932-5cf5-41ba-97d1-b91b1bbf4883,e62af1de-0bf8-41fe-968c-23f26a743f25,e7f6e235-6dec-4314-8b4b-cb52963c63a9,ea389ee5-796e-4133-be03-34f0eb7631d3,eb00f09c-8504-4749-b25b-78485c907565,ee064f01-51d5-4d1d-8e9f-140680ce8beb,ef42bc49-4ff5-42e7-98bb-c02dbff8b10e,f1b00051-9fa5-4ab7-84ce-6428b8766da9,f3b81a0c-2407-43d2-966c-090afe6c671f,f6c6a273-b1a6-4a7b-b472-a7eef3b9bcf3,f94676ce-726f-4970-9f93-2b78bb271328,fcf6dc69-fe60-4166-af79-414a152ceabc,fe307a74-6208-4ac6-aef0-8bd2dcf3abe0,ffcbd257-7be5-4773-b631-994a0f4057ee}",
+              "correlation": "-0.00528454"
             },
             {
               "name": "game_id",
@@ -1094,11 +1094,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 29,
-              "most_common_values": "{7ea4ba48-babf-4271-82f0-eb4990c9f9d3,9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
-              "most_common_frequencies": "{0.102079,0.0415879,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0321361,0.0302457,0.0302457,0.0302457,0.0302457,0.0302457,0.0302457,0.0226843,0.0226843,0.0189036}",
+              "n_distinct": 28,
+              "most_common_values": "{9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
+              "most_common_frequencies": "{0.0463158,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0357895,0.0336842,0.0336842,0.0336842,0.0336842,0.0336842,0.0336842,0.0252632,0.0252632,0.0210526}",
               "histogram_bounds": null,
-              "correlation": "-0.109654"
+              "correlation": "-0.24081"
             },
             {
               "name": "player_id",
@@ -1112,11 +1112,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.102079,
-              "most_common_values": "{2711aec5-829a-4569-a85f-ecf8c89f123d,1db2da77-3c88-4bda-989b-349b4cab6604,876113b5-d7c3-41bc-ab69-4b6859f864a5,904a7c17-c8cc-4aff-958d-7788dea001dc,35905fe4-5532-4513-9f58-de3c28942e1a,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,81c9ec8f-7b81-4263-879e-b2088aefaca8,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,5c0e1219-9355-4078-b76d-a63ec320969c,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,3a712b45-cd7e-4e66-a6dd-133255be5895,84c631df-a046-41e9-a10c-4a77561e6c08,8ad90589-7135-461f-b61d-272cbf3f6d04,be32d4f4-d8a2-4ac4-8fb2-21879753581c,b2466431-ede1-4eaa-a86e-ad0c7128b125,5d401fa5-157f-445f-9f06-def9de2ae6ce,32f8ab9b-1259-4764-b463-aa2e70ca8c74,a950fdd0-847e-4f4d-96f5-9064719c8953,dd6651f8-9203-4efb-92ca-e2b6f8230f97,05bb40f8-d63f-4469-9a35-e466d1f2f1da,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,18ebd05e-2357-44c6-a49d-d280ceed7784,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,78ba8339-270a-4d10-b7f6-f10999568948,9082191f-69ff-469f-baa6-46cc918346ae,d31a40f9-1972-43e9-9864-277110c9e958,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,75e00430-067e-44af-b498-84b28edd51be,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,c83d54c5-3468-4fde-b2b6-220034bb7480,d3920bbc-a281-4b97-bc88-96315e38d3ba,0bfd9afb-285d-474b-86cc-c91ab64c5622,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,33443732-814b-4407-bbf0-8b30b57ef390,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,767cc150-1746-4d71-a8db-b9771f2f7770,813eac3e-b880-4988-823f-a345c5d6ed87,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
-              "most_common_frequencies": "{0.0491493,0.047259,0.047259,0.047259,0.0453686,0.0453686,0.0434783,0.0415879,0.0415879,0.0396975,0.0396975,0.0378072,0.0340265,0.0321361,0.0321361,0.0302457,0.0283554,0.026465,0.026465,0.026465,0.0245747,0.0245747,0.0132325,0.0132325,0.0113422,0.0094518,0.0094518,0.00756144,0.00756144,0.00756144,0.00756144,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072}",
-              "histogram_bounds": null,
-              "correlation": "0.0826701"
+              "n_distinct": -0.113684,
+              "most_common_values": "{2711aec5-829a-4569-a85f-ecf8c89f123d,1db2da77-3c88-4bda-989b-349b4cab6604,876113b5-d7c3-41bc-ab69-4b6859f864a5,904a7c17-c8cc-4aff-958d-7788dea001dc,35905fe4-5532-4513-9f58-de3c28942e1a,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,81c9ec8f-7b81-4263-879e-b2088aefaca8,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,5c0e1219-9355-4078-b76d-a63ec320969c,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,3a712b45-cd7e-4e66-a6dd-133255be5895,84c631df-a046-41e9-a10c-4a77561e6c08,8ad90589-7135-461f-b61d-272cbf3f6d04,be32d4f4-d8a2-4ac4-8fb2-21879753581c,b2466431-ede1-4eaa-a86e-ad0c7128b125,5d401fa5-157f-445f-9f06-def9de2ae6ce,32f8ab9b-1259-4764-b463-aa2e70ca8c74,a950fdd0-847e-4f4d-96f5-9064719c8953,dd6651f8-9203-4efb-92ca-e2b6f8230f97,05bb40f8-d63f-4469-9a35-e466d1f2f1da,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,18ebd05e-2357-44c6-a49d-d280ceed7784,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,78ba8339-270a-4d10-b7f6-f10999568948,9082191f-69ff-469f-baa6-46cc918346ae,d31a40f9-1972-43e9-9864-277110c9e958,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,75e00430-067e-44af-b498-84b28edd51be,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,c83d54c5-3468-4fde-b2b6-220034bb7480,d3920bbc-a281-4b97-bc88-96315e38d3ba}",
+              "most_common_frequencies": "{0.0526316,0.0505263,0.0505263,0.0505263,0.0484211,0.0484211,0.0463158,0.0442105,0.0442105,0.0421053,0.0421053,0.04,0.0357895,0.0336842,0.0336842,0.0315789,0.0294737,0.0273684,0.0273684,0.0273684,0.0252632,0.0252632,0.0126316,0.0126316,0.0105263,0.00842105,0.00842105,0.00631579,0.00631579,0.00631579,0.00631579,0.00421053,0.00421053,0.00421053,0.00421053,0.00421053,0.00421053,0.00421053,0.00421053}",
+              "histogram_bounds": "{0bfd9afb-285d-474b-86cc-c91ab64c5622,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,33443732-814b-4407-bbf0-8b30b57ef390,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,767cc150-1746-4d71-a8db-b9771f2f7770,813eac3e-b880-4988-823f-a345c5d6ed87,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
+              "correlation": "0.0797789"
             },
             {
               "name": "status",
@@ -1130,11 +1130,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 2,
-              "most_common_values": "{selected,reserve}",
-              "most_common_frequencies": "{0.931947,0.0680529}",
+              "n_distinct": 1,
+              "most_common_values": "{selected}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": "0.623639"
+              "correlation": "1"
             },
             {
               "name": "team",
@@ -1150,7 +1150,7 @@
               "numeric_scale": null,
               "n_distinct": 2,
               "most_common_values": "{orange,blue}",
-              "most_common_frequencies": "{0.449905,0.448015}",
+              "most_common_frequencies": "{0.501053,0.498947}",
               "histogram_bounds": null,
               "correlation": "0.572075"
             },
@@ -1166,11 +1166,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 2,
-              "most_common_values": "{t,f}",
-              "most_common_frequencies": "{0.897921,0.102079}",
+              "n_distinct": 1,
+              "most_common_values": "{t}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": "0.450043"
+              "correlation": "1"
             },
             {
               "name": "created_at",
@@ -1184,11 +1184,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.10775,
-              "most_common_values": "{\"2025-01-02 15:52:54.624+00\",\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-12-19 13:43:26.197049+00\",\"2024-12-19 13:43:26.287209+00\",\"2024-12-19 15:03:42.562721+00\",\"2024-12-19 15:03:42.638915+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
-              "most_common_frequencies": "{0.102079,0.020794,0.020794,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0113422,0.0113422,0.0113422,0.0113422,0.0094518,0.0094518}",
+              "n_distinct": -0.117895,
+              "most_common_values": "{\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-12-19 13:43:26.197049+00\",\"2024-12-19 13:43:26.287209+00\",\"2024-12-19 15:03:42.562721+00\",\"2024-12-19 15:03:42.638915+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
+              "most_common_frequencies": "{0.0231579,0.0231579,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0126316,0.0126316,0.0126316,0.0126316,0.0105263,0.0105263}",
               "histogram_bounds": null,
-              "correlation": "0.421695"
+              "correlation": "0.201191"
             },
             {
               "name": "paid_by_player_id",
@@ -1240,7 +1240,7 @@
               "numeric_scale": null,
               "n_distinct": 1,
               "most_common_values": "{\"2024-12-29 00:03:01.41468+00\"}",
-              "most_common_frequencies": "{0.897921}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
             },
@@ -1256,11 +1256,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 3,
-              "most_common_values": "{merit,none,random}",
-              "most_common_frequencies": "{0.860113,0.136106,0.00378072}",
+              "n_distinct": 2,
+              "most_common_values": "{merit,none}",
+              "most_common_frequencies": "{0.924211,0.0757895}",
               "histogram_bounds": null,
-              "correlation": "0.872184"
+              "correlation": "0.842196"
             },
             {
               "name": "payment_status",
@@ -1276,7 +1276,7 @@
               "numeric_scale": null,
               "n_distinct": 1,
               "most_common_values": "{admin_verified}",
-              "most_common_frequencies": "{0.897921}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
             },
@@ -1294,7 +1294,7 @@
               "numeric_scale": null,
               "n_distinct": 1,
               "most_common_values": "{\"2024-12-29 00:03:01.41468+00\"}",
-              "most_common_frequencies": "{0.897921}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
             },
@@ -1649,8 +1649,8 @@
           "table_name": "game_selections",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "264 kB",
-          "estimated_rows": 7,
+          "total_size": "144 kB",
+          "estimated_rows": 0,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1669,8 +1669,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{02bb4c69-a503-4082-9ac8-4de6f884ec20,1d83f971-3e42-4c25-a817-0e639357a4bb,99a65425-5ca2-408e-93fc-ade4122e3392}",
-              "correlation": "-0.5"
+              "histogram_bounds": null,
+              "correlation": null
             },
             {
               "name": "game_id",
@@ -1684,11 +1684,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.333333,
-              "most_common_values": "{7ea4ba48-babf-4271-82f0-eb4990c9f9d3}",
-              "most_common_frequencies": "{1}",
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
               "histogram_bounds": null,
-              "correlation": "1"
+              "correlation": null
             },
             {
               "name": "selected_players",
@@ -1702,11 +1702,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.666667,
-              "most_common_values": "{[]}",
-              "most_common_frequencies": "{0.666667}",
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
               "histogram_bounds": null,
-              "correlation": "1"
+              "correlation": null
             },
             {
               "name": "reserve_players",
@@ -1720,11 +1720,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.666667,
-              "most_common_values": "{[]}",
-              "most_common_frequencies": "{0.666667}",
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
               "histogram_bounds": null,
-              "correlation": "1"
+              "correlation": null
             },
             {
               "name": "selection_metadata",
@@ -1741,8 +1741,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"{\\\"timestamp\\\": \\\"2025-01-02T15:53:00.840Z\\\"}\",\"{\\\"timestamp\\\": \\\"2025-01-02T15:53:00.913Z\\\"}\",\"{\\\"timestamp\\\": \\\"2025-01-02T15:53:07.403Z\\\", \\\"merit_selected\\\": [\\\"2711aec5-829a-4569-a85f-ecf8c89f123d\\\", \\\"1db2da77-3c88-4bda-989b-349b4cab6604\\\", \\\"8af191dc-5e8f-4fe9-a5f0-97fe316b0004\\\", \\\"8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd\\\", \\\"35905fe4-5532-4513-9f58-de3c28942e1a\\\", \\\"876113b5-d7c3-41bc-ab69-4b6859f864a5\\\", \\\"904a7c17-c8cc-4aff-958d-7788dea001dc\\\", \\\"3a712b45-cd7e-4e66-a6dd-133255be5895\\\", \\\"fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5\\\", \\\"489fd3c5-73e4-4be9-9058-3fcb04dcad5d\\\", \\\"81c9ec8f-7b81-4263-879e-b2088aefaca8\\\", \\\"84c631df-a046-41e9-a10c-4a77561e6c08\\\", \\\"5c0e1219-9355-4078-b76d-a63ec320969c\\\", \\\"dd6651f8-9203-4efb-92ca-e2b6f8230f97\\\", \\\"5d401fa5-157f-445f-9f06-def9de2ae6ce\\\", \\\"32f8ab9b-1259-4764-b463-aa2e70ca8c74\\\"], \\\"random_selected\\\": [\\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"6e34ce3e-bbcd-4ba7-812e-32b0c39192fb\\\"]}\"}",
-              "correlation": "1"
+              "histogram_bounds": null,
+              "correlation": null
             },
             {
               "name": "created_at",
@@ -1759,8 +1759,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-02 15:52:57.925697+00\",\"2025-01-02 15:52:57.964113+00\",\"2025-01-02 15:53:04.450914+00\"}",
-              "correlation": "1"
+              "histogram_bounds": null,
+              "correlation": null
             }
           ],
           "constraints": [
@@ -1870,6 +1870,16 @@
               "command": "SELECT",
               "definition": "true",
               "with_check": null
+            },
+            {
+              "name": "Enable update for authenticated users only",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "UPDATE",
+              "definition": "(auth.role() = 'authenticated'::text)",
+              "with_check": "(auth.role() = 'authenticated'::text)"
             }
           ]
         },
@@ -1897,8 +1907,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{08a33fb7-7677-41c2-8baa-0375c1f4d9c2,11cbf31e-b275-4fee-a5f6-d9468caf3d10,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,37725ca3-8857-411d-8e38-4135d9317bad,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,4cc10211-be50-4611-bc85-d59d16399a6b,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,54bc6b11-ea09-42d0-9f56-dd38809c669e,57fea9a1-765e-406c-b182-883d2720d99c,5aa66610-9141-478c-804f-97191da0198f,68e251b3-a23a-4a31-886a-07f171067de0,7ea4ba48-babf-4271-82f0-eb4990c9f9d3,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,9030ab33-efb9-4763-9fd3-e30c87b6b20d,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,ea863f1a-b7da-4169-aae6-04c33f3dbce4,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903}",
-              "correlation": "-0.0472906"
+              "histogram_bounds": "{08a33fb7-7677-41c2-8baa-0375c1f4d9c2,11cbf31e-b275-4fee-a5f6-d9468caf3d10,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,37725ca3-8857-411d-8e38-4135d9317bad,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,4cc10211-be50-4611-bc85-d59d16399a6b,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,54bc6b11-ea09-42d0-9f56-dd38809c669e,57fea9a1-765e-406c-b182-883d2720d99c,5aa66610-9141-478c-804f-97191da0198f,68e251b3-a23a-4a31-886a-07f171067de0,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,874a4934-15ef-4f14-8ba6-125bb259e478,9030ab33-efb9-4763-9fd3-e30c87b6b20d,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,ea863f1a-b7da-4169-aae6-04c33f3dbce4,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903}",
+              "correlation": "-0.0423645"
             },
             {
               "name": "date",
@@ -1933,7 +1943,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 00:00:00+00\",\"2024-06-19 00:00:00+00\",\"2024-06-26 00:00:00+00\",\"2024-07-03 00:00:00+00\",\"2024-07-11 00:00:00+00\",\"2024-07-17 00:00:00+00\",\"2024-07-24 00:00:00+00\",\"2024-07-31 00:00:00+00\",\"2024-08-07 00:00:00+00\",\"2024-08-14 00:00:00+00\",\"2024-08-21 00:00:00+00\",\"2024-08-28 00:00:00+00\",\"2024-09-04 00:00:00+00\",\"2024-09-11 00:00:00+00\",\"2024-09-18 00:00:00+00\",\"2024-09-25 00:00:00+00\",\"2024-10-02 00:00:00+00\",\"2024-10-09 00:00:00+00\",\"2024-10-16 00:00:00+00\",\"2024-10-23 00:00:00+00\",\"2024-10-30 00:00:00+00\",\"2024-11-06 00:00:00+00\",\"2024-11-13 00:00:00+00\",\"2024-11-20 00:00:00+00\",\"2024-11-27 00:00:00+00\",\"2024-12-04 00:00:00+00\",\"2024-12-11 00:00:00+00\",\"2024-12-18 00:00:00+00\",\"2025-01-02 15:52:00+00\"}",
+              "histogram_bounds": "{\"2024-05-15 00:00:00+00\",\"2024-06-19 00:00:00+00\",\"2024-06-26 00:00:00+00\",\"2024-07-03 00:00:00+00\",\"2024-07-11 00:00:00+00\",\"2024-07-17 00:00:00+00\",\"2024-07-24 00:00:00+00\",\"2024-07-31 00:00:00+00\",\"2024-08-07 00:00:00+00\",\"2024-08-14 00:00:00+00\",\"2024-08-21 00:00:00+00\",\"2024-08-28 00:00:00+00\",\"2024-09-04 00:00:00+00\",\"2024-09-11 00:00:00+00\",\"2024-09-18 00:00:00+00\",\"2024-09-25 00:00:00+00\",\"2024-10-02 00:00:00+00\",\"2024-10-09 00:00:00+00\",\"2024-10-16 00:00:00+00\",\"2024-10-23 00:00:00+00\",\"2024-10-30 00:00:00+00\",\"2024-11-06 00:00:00+00\",\"2024-11-13 00:00:00+00\",\"2024-11-20 00:00:00+00\",\"2024-11-27 00:00:00+00\",\"2024-12-04 00:00:00+00\",\"2024-12-11 00:00:00+00\",\"2024-12-18 00:00:00+00\",\"2025-01-03 10:34:00+00\"}",
               "correlation": "0.477833"
             },
             {
@@ -1951,7 +1961,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 23:59:58.999+00\",\"2024-06-19 23:59:59.998+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:58.999+00\",\"2024-08-14 23:59:58.999+00\",\"2024-08-21 23:59:58.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:58.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:58.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-02 15:53:00+00\"}",
+              "histogram_bounds": "{\"2024-05-15 23:59:58.999+00\",\"2024-06-19 23:59:59.998+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:58.999+00\",\"2024-08-14 23:59:58.999+00\",\"2024-08-21 23:59:58.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:58.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:58.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-04 10:35:00+00\"}",
               "correlation": "0.477833"
             },
             {
@@ -2023,7 +2033,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-11-11 16:53:47.616288+00\",\"2024-11-11 17:07:30.469444+00\",\"2024-11-11 17:18:03.706994+00\",\"2024-11-11 17:23:18.801122+00\",\"2024-11-11 17:26:09.716193+00\",\"2024-11-11 17:29:00.311676+00\",\"2024-11-11 17:32:33.308869+00\",\"2024-11-15 10:49:58.900155+00\",\"2024-11-15 11:09:28.864134+00\",\"2024-11-15 15:00:38.640031+00\",\"2024-11-15 15:17:51.610432+00\",\"2024-11-15 15:21:30.654751+00\",\"2024-11-15 15:26:50.629529+00\",\"2024-11-15 15:32:28.341681+00\",\"2024-11-15 15:36:14.706985+00\",\"2024-11-15 15:38:46.514516+00\",\"2024-11-15 15:41:05.888517+00\",\"2024-11-15 15:45:17.834528+00\",\"2024-11-15 15:48:49.234186+00\",\"2024-11-15 15:51:48.290128+00\",\"2024-11-15 15:57:50.931802+00\",\"2024-11-15 16:06:28.837439+00\",\"2024-11-15 23:40:49.13482+00\",\"2024-11-20 23:47:31.604513+00\",\"2024-11-28 09:22:39.728864+00\",\"2024-12-05 15:13:54.593481+00\",\"2024-12-16 09:51:53.452089+00\",\"2024-12-19 13:43:26.083004+00\",\"2025-01-02 15:52:49.012485+00\"}",
+              "histogram_bounds": "{\"2024-11-11 16:53:47.616288+00\",\"2024-11-11 17:07:30.469444+00\",\"2024-11-11 17:18:03.706994+00\",\"2024-11-11 17:23:18.801122+00\",\"2024-11-11 17:26:09.716193+00\",\"2024-11-11 17:29:00.311676+00\",\"2024-11-11 17:32:33.308869+00\",\"2024-11-15 10:49:58.900155+00\",\"2024-11-15 11:09:28.864134+00\",\"2024-11-15 15:00:38.640031+00\",\"2024-11-15 15:17:51.610432+00\",\"2024-11-15 15:21:30.654751+00\",\"2024-11-15 15:26:50.629529+00\",\"2024-11-15 15:32:28.341681+00\",\"2024-11-15 15:36:14.706985+00\",\"2024-11-15 15:38:46.514516+00\",\"2024-11-15 15:41:05.888517+00\",\"2024-11-15 15:45:17.834528+00\",\"2024-11-15 15:48:49.234186+00\",\"2024-11-15 15:51:48.290128+00\",\"2024-11-15 15:57:50.931802+00\",\"2024-11-15 16:06:28.837439+00\",\"2024-11-15 23:40:49.13482+00\",\"2024-11-20 23:47:31.604513+00\",\"2024-11-28 09:22:39.728864+00\",\"2024-12-05 15:13:54.593481+00\",\"2024-12-16 09:51:53.452089+00\",\"2024-12-19 13:43:26.083004+00\",\"2025-01-03 10:34:53.965929+00\"}",
               "correlation": "0.412808"
             },
             {
@@ -2236,11 +2246,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 2,
+              "n_distinct": 1,
               "most_common_values": "{open}",
-              "most_common_frequencies": "{0.965517}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": "0.933005"
+              "correlation": "1"
             }
           ],
           "constraints": [
@@ -2580,8 +2590,8 @@
           "table_name": "notifications",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "48 kB",
-          "estimated_rows": 3,
+          "total_size": "64 kB",
+          "estimated_rows": 1,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -2600,8 +2610,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{41e1a2e4-e69d-4760-ad03-a5b5b4e2cf46,5fa14baa-0d78-41c3-8e9e-972ecaa34837,984f919e-09c9-45d3-9046-ef706db4f200,ad429bf5-106d-4290-8a9c-f96c070506ef}",
-              "correlation": "-0.2"
+              "histogram_bounds": "{10f6a452-2dbf-4570-8b2b-798c667101f3,87e5796c-6716-439b-acfd-f23d3ab4cc92,ed49186f-6052-41f2-8b1c-014fb52a759f}",
+              "correlation": "0.5"
             },
             {
               "name": "player_id",
@@ -2615,11 +2625,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.75,
-              "most_common_values": "{904a7c17-c8cc-4aff-958d-7788dea001dc}",
-              "most_common_frequencies": "{0.5}",
-              "histogram_bounds": "{32f8ab9b-1259-4764-b463-aa2e70ca8c74,b2466431-ede1-4eaa-a86e-ad0c7128b125}",
-              "correlation": "0.8"
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": "{8ad90589-7135-461f-b61d-272cbf3f6d04,904a7c17-c8cc-4aff-958d-7788dea001dc,b2466431-ede1-4eaa-a86e-ad0c7128b125}",
+              "correlation": "-0.5"
             },
             {
               "name": "type",
@@ -2633,11 +2643,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.5,
-              "most_common_values": "{slot_offer,system_announcement}",
-              "most_common_frequencies": "{0.5,0.5}",
+              "n_distinct": -0.666667,
+              "most_common_values": "{slot_offer}",
+              "most_common_frequencies": "{0.666667}",
               "histogram_bounds": null,
-              "correlation": "0.8"
+              "correlation": "1"
             },
             {
               "name": "message",
@@ -2654,8 +2664,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"A spot has opened up in a game on 08/01/2025. You have exclusive access until 16:32!\",\"A spot has opened up in a game on 08/01/2025. You have exclusive access until 16:33!\",\"Created slot offer for Justin (highest XP reserve player) for game on 08/01/2025\",\"Created slot offer for Tom K (highest XP reserve player) for game on 08/01/2025\"}",
-              "correlation": "0.8"
+              "histogram_bounds": "{\"A spot has opened up in a game on 08/01/2025. You have exclusive access until 13:07!\",\"A spot has opened up in WNF #29. Would you like to play?\",\"Created slot offer for Alex E (highest XP reserve player) for game on 08/01/2025\"}",
+              "correlation": "0.5"
             },
             {
               "name": "action_url",
@@ -2687,9 +2697,9 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.5,
-              "most_common_values": "{\"2025-01-02 12:54:16.311383+00\",\"2025-01-02 12:55:02.597227+00\"}",
-              "most_common_frequencies": "{0.5,0.5}",
+              "n_distinct": -0.666667,
+              "most_common_values": "{\"2025-01-03 10:09:08.68818+00\"}",
+              "most_common_frequencies": "{0.666667}",
               "histogram_bounds": null,
               "correlation": "1"
             },
@@ -2741,11 +2751,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.75,
-              "most_common_values": "{\"{\\\"action\\\": \\\"slot_offers_created\\\", \\\"game_id\\\": \\\"0f1e67b6-f9b3-4a02-b26d-08879271df34\\\"}\"}",
-              "most_common_frequencies": "{0.5}",
-              "histogram_bounds": "{\"{\\\"game_id\\\": \\\"0f1e67b6-f9b3-4a02-b26d-08879271df34\\\", \\\"slot_offer_id\\\": \\\"39522bc2-f474-4a2e-baa9-e332ac425695\\\", \\\"exclusive_until\\\": \\\"2025-01-02T16:32:47.524956+00:00\\\"}\",\"{\\\"game_id\\\": \\\"0f1e67b6-f9b3-4a02-b26d-08879271df34\\\", \\\"slot_offer_id\\\": \\\"64675928-e6cf-4fab-bf8a-0d670abccde8\\\", \\\"exclusive_until\\\": \\\"2025-01-02T16:33:32.525082+00:00\\\"}\"}",
-              "correlation": "0"
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": "{\"{\\\"action\\\": \\\"new_slot_offer\\\", \\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\"}\",\"{\\\"action\\\": \\\"slot_offers_created\\\", \\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\"}\",\"{\\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"slot_offer_id\\\": \\\"3435c48d-84c9-40d3-a246-ec87f5e23d25\\\", \\\"exclusive_until\\\": \\\"2025-01-03T13:07:18.183095+00:00\\\"}\"}",
+              "correlation": "0.5"
             },
             {
               "name": "title",
@@ -2759,11 +2769,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.5,
-              "most_common_values": "{\"Exclusive Game Slot Available!\",\"Slot Offer Created\"}",
-              "most_common_frequencies": "{0.5,0.5}",
-              "histogram_bounds": null,
-              "correlation": "0.8"
+              "n_distinct": -0.666667,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": "{\"Exclusive Game Slot Available!\",\"Slot Offer Created\"}",
+              "correlation": "1"
             },
             {
               "name": "icon",
@@ -2795,11 +2805,11 @@
               "generation_expression": null,
               "numeric_precision": 16,
               "numeric_scale": 0,
-              "n_distinct": -0.5,
-              "most_common_values": "{1,2}",
-              "most_common_frequencies": "{0.5,0.5}",
-              "histogram_bounds": null,
-              "correlation": "0"
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": "{0,1,2}",
+              "correlation": "0.5"
             }
           ],
           "constraints": [
@@ -4485,7 +4495,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,1db2da77-3c88-4bda-989b-349b4cab6604,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,35905fe4-5532-4513-9f58-de3c28942e1a,3a712b45-cd7e-4e66-a6dd-133255be5895,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
-              "correlation": "-0.0639222"
+              "correlation": "-0.0727654"
             },
             {
               "name": "xp",
@@ -4503,7 +4513,7 @@
               "most_common_values": "{12,10,20,14,26,34,40}",
               "most_common_frequencies": "{0.111111,0.0925926,0.0555556,0.037037,0.037037,0.037037,0.037037}",
               "histogram_bounds": "{16,18,22,24,30,46,68,76,86,112,165,174,180,188,192,202,218,223,239,240,244,274,312,326,344,360,403,409,417,456,562,717}",
-              "correlation": "0.272804"
+              "correlation": "-0.581704"
             },
             {
               "name": "last_calculated",
@@ -4518,10 +4528,10 @@
               "numeric_precision": null,
               "numeric_scale": null,
               "n_distinct": -0.351852,
-              "most_common_values": "{\"2025-01-02 15:53:04.374032+00\"}",
+              "most_common_values": "{\"2025-01-03 10:33:02.15805+00\"}",
               "most_common_frequencies": "{0.666667}",
-              "histogram_bounds": "{\"2025-01-02 15:53:04.325714+00\",\"2025-01-02 15:53:04.325898+00\",\"2025-01-02 15:53:04.328199+00\",\"2025-01-02 15:53:04.330869+00\",\"2025-01-02 15:53:04.336178+00\",\"2025-01-02 15:53:04.337945+00\",\"2025-01-02 15:53:04.34379+00\",\"2025-01-02 15:53:04.344391+00\",\"2025-01-02 15:53:04.345627+00\",\"2025-01-02 15:53:04.346382+00\",\"2025-01-02 15:53:04.347254+00\",\"2025-01-02 15:53:04.35868+00\",\"2025-01-02 15:53:04.364029+00\",\"2025-01-02 15:53:04.365732+00\",\"2025-01-02 15:53:04.36884+00\",\"2025-01-02 15:53:04.369451+00\",\"2025-01-02 15:53:04.374555+00\",\"2025-01-02 15:53:04.375265+00\"}",
-              "correlation": "0.150372"
+              "histogram_bounds": "{\"2025-01-03 10:33:02.097259+00\",\"2025-01-03 10:33:02.101348+00\",\"2025-01-03 10:33:02.109047+00\",\"2025-01-03 10:33:02.109297+00\",\"2025-01-03 10:33:02.111238+00\",\"2025-01-03 10:33:02.118331+00\",\"2025-01-03 10:33:02.127103+00\",\"2025-01-03 10:33:02.127191+00\",\"2025-01-03 10:33:02.128716+00\",\"2025-01-03 10:33:02.129343+00\",\"2025-01-03 10:33:02.131741+00\",\"2025-01-03 10:33:02.138778+00\",\"2025-01-03 10:33:02.144679+00\",\"2025-01-03 10:33:02.145692+00\",\"2025-01-03 10:33:02.146536+00\",\"2025-01-03 10:33:02.146956+00\",\"2025-01-03 10:33:02.166786+00\",\"2025-01-03 10:33:02.170284+00\"}",
+              "correlation": "0.955479"
             }
           ],
           "constraints": [
@@ -4618,7 +4628,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,1db2da77-3c88-4bda-989b-349b4cab6604,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,35905fe4-5532-4513-9f58-de3c28942e1a,3a712b45-cd7e-4e66-a6dd-133255be5895,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
-              "correlation": "0.137107"
+              "correlation": "0.0910616"
             },
             {
               "name": "user_id",
@@ -4636,7 +4646,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{1013107b-535e-45a9-9fc8-f54faa410585,a4c15f00-d500-4ae3-b9f2-b8808f7f737c}",
-              "correlation": "-1"
+              "correlation": "1"
             },
             {
               "name": "friendly_name",
@@ -4654,7 +4664,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{\"Adrian P\",\"Alex E\",\"Anthony B\",\"Ben W\",Boyle,Callum,Calvin,Carlton,\"Chris F\",\"Chris H\",Colin,Craig,Daniel,Danion,\"Darren C\",\"Darren W\",Dave,Dilon,Dom,Ethan,Faz,\"Gaz G\",\"Jack G\",\"Jack M\",\"James H\",Joe,Johnny,Justin,Kaci,Ken,Kieran,Kyle,\"Lee M\",\"Lee S\",Lewis,Maddocks,Matty,\"Mike B\",\"Mike M\",Paul,Pete,\"Phil J\",\"Phil R\",\"Phil V\",\"Ryan J\",\"Ryan L\",Sam,\"Scott J\",Simon,Stephen,\"Tom Ip\",\"Tom K\",Twiggy,Zhao}",
-              "correlation": "0.24879"
+              "correlation": "-0.000724223"
             },
             {
               "name": "caps",
@@ -4672,7 +4682,7 @@
               "most_common_values": "{1,2,3,13,24,4,6,12,16,20,21,23}",
               "most_common_frequencies": "{0.277778,0.148148,0.0740741,0.0555556,0.0555556,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037}",
               "histogram_bounds": "{5,14,15,17,19,22,25}",
-              "correlation": "0.243453"
+              "correlation": "0.16295"
             },
             {
               "name": "win_rate",
@@ -4744,7 +4754,7 @@
               "most_common_values": "{\"2024-11-11 15:52:58.97872+00\"}",
               "most_common_frequencies": "{0.87037}",
               "histogram_bounds": "{\"2024-11-08 00:21:14.457969+00\",\"2024-11-11 15:46:24.694242+00\",\"2024-11-15 15:58:08.358688+00\",\"2024-11-15 15:59:47.248446+00\",\"2024-11-20 23:45:39.998846+00\",\"2024-12-05 15:12:14.368105+00\",\"2024-12-24 16:53:39.142845+00\"}",
-              "correlation": "0.78624"
+              "correlation": "0.689499"
             },
             {
               "name": "is_admin",
@@ -4762,7 +4772,7 @@
               "most_common_values": "{f}",
               "most_common_frequencies": "{0.981481}",
               "histogram_bounds": null,
-              "correlation": "0.978959"
+              "correlation": "0.999543"
             },
             {
               "name": "is_super_admin",
@@ -4780,7 +4790,7 @@
               "most_common_values": "{f}",
               "most_common_frequencies": "{0.981481}",
               "histogram_bounds": null,
-              "correlation": "0.978959"
+              "correlation": "0.999543"
             },
             {
               "name": "avatar_svg",
@@ -4834,7 +4844,7 @@
               "most_common_values": "{0,6.0000000000000000,7.0000000000000000,5.0000000000000000,1.00000000000000000000}",
               "most_common_frequencies": "{0.574074,0.111111,0.111111,0.0740741,0.037037}",
               "histogram_bounds": "{2.0000000000000000,3.0000000000000000,8.0000000000000000,9.0000000000000000,9.5000000000000000}",
-              "correlation": "0.553116"
+              "correlation": "0.536497"
             },
             {
               "name": "defense_rating",
@@ -4852,7 +4862,7 @@
               "most_common_values": "{0,4.0000000000000000,7.0000000000000000,5.0000000000000000,6.0000000000000000,8.0000000000000000}",
               "most_common_frequencies": "{0.574074,0.0925926,0.0925926,0.0740741,0.0555556,0.0555556}",
               "histogram_bounds": "{1.00000000000000000000,6.5000000000000000,9.0000000000000000}",
-              "correlation": "0.501658"
+              "correlation": "0.480236"
             },
             {
               "name": "is_test_user",
@@ -4870,7 +4880,7 @@
               "most_common_values": "{t}",
               "most_common_frequencies": "{0.981481}",
               "histogram_bounds": null,
-              "correlation": "0.964551"
+              "correlation": "0.902802"
             },
             {
               "name": "manual_caps_override",
@@ -4906,7 +4916,7 @@
               "most_common_values": "{0,2,3,1,4}",
               "most_common_frequencies": "{0.666667,0.0925926,0.0740741,0.0555556,0.0555556}",
               "histogram_bounds": "{7,8,12}",
-              "correlation": "0.57187"
+              "correlation": "0.430837"
             },
             {
               "name": "max_streak",
@@ -4924,7 +4934,7 @@
               "most_common_values": "{1,2,3,4,5,6,11,8,12,13}",
               "most_common_frequencies": "{0.462963,0.0740741,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.037037,0.037037,0.037037}",
               "histogram_bounds": "{7,9,10,16}",
-              "correlation": "0.37854"
+              "correlation": "0.33036"
             },
             {
               "name": "average_attack_rating",
@@ -5194,7 +5204,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "72 kB",
-          "estimated_rows": 1,
+          "estimated_rows": 0,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -5213,8 +5223,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{3645894b-cadc-4b3d-bc77-5410abf762ab,5e3f80ca-8d74-4bf5-b6a4-532516d53cdd,8ada8124-62e7-4f76-ae26-8422743f6460,c3c456d2-29b7-49b4-9c35-69eddc84367c}",
+              "correlation": "0"
             },
             {
               "name": "game_id",
@@ -5228,11 +5238,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -1,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": -0.25,
+              "most_common_values": "{152c312b-7d2e-4626-a473-c8eea69215f9}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             },
             {
               "name": "player_id",
@@ -5249,8 +5259,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,8ad90589-7135-461f-b61d-272cbf3f6d04,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125}",
+              "correlation": "-0.4"
             },
             {
               "name": "status",
@@ -5264,11 +5274,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -1,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": -0.5,
+              "most_common_values": "{declined}",
+              "most_common_frequencies": "{0.75}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "0.4"
             },
             {
               "name": "offered_at",
@@ -5285,8 +5295,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{\"2025-01-03 10:23:17.827419+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
+              "correlation": "0.8"
             },
             {
               "name": "responded_at",
@@ -5300,11 +5310,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -1,
+              "n_distinct": -0.75,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
+              "correlation": "1"
             },
             {
               "name": "created_at",
@@ -5321,8 +5331,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{\"2025-01-03 10:23:17.827419+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
+              "correlation": "0.8"
             },
             {
               "name": "updated_at",
@@ -5339,8 +5349,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{\"2025-01-03 10:23:17.827419+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
+              "correlation": "0.8"
             },
             {
               "name": "expires_at",
@@ -5357,8 +5367,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{\"2025-01-03 11:25:17.890258+00\",\"2025-01-03 11:30:09.619996+00\",\"2025-01-03 11:30:41.466293+00\",\"2025-01-03 13:21:04.372624+00\"}",
+              "correlation": "-0.4"
             },
             {
               "name": "available_at",
@@ -5375,8 +5385,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{\"2025-01-03 10:23:17.827419+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
+              "correlation": "0.8"
             },
             {
               "name": "rank",
@@ -5390,7 +5400,7 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -1,
+              "n_distinct": -0.25,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -5426,11 +5436,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -1,
+              "n_distinct": -0.75,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
+              "correlation": "1"
             }
           ],
           "constraints": [
@@ -5684,6 +5694,16 @@
               "command": "ALL",
               "definition": "(EXISTS ( SELECT 1\n   FROM ((admin_permissions ap\n     JOIN admin_roles ar ON ((ap.admin_role_id = ar.id)))\n     JOIN players p ON ((p.id = ar.player_id)))\n  WHERE ((p.user_id = auth.uid()) AND (ap.permission = 'manage_games'::text))))",
               "with_check": "(EXISTS ( SELECT 1\n   FROM ((admin_permissions ap\n     JOIN admin_roles ar ON ((ap.admin_role_id = ar.id)))\n     JOIN players p ON ((p.id = ar.player_id)))\n  WHERE ((p.user_id = auth.uid()) AND (ap.permission = 'manage_games'::text))))"
+            },
+            {
+              "name": "Anyone can view all slot offers",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "public"
+              ],
+              "command": "SELECT",
+              "definition": "true",
+              "with_check": null
             },
             {
               "name": "Players can update their own slot offers",
@@ -7053,17 +7073,6 @@
           "definition": "CREATE OR REPLACE FUNCTION public.calculate_balanced_teams(input_game_id uuid)\n RETURNS TABLE(team text, player_id uuid, friendly_name text, attack_rating numeric, defense_rating numeric, experience_factor numeric)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n    total_players integer;\r\n    players_per_team integer;\r\nBEGIN\r\n    -- Get total number of confirmed players\r\n    SELECT COUNT(*) INTO total_players\r\n    FROM public.game_registrations gp\r\n    WHERE gp.game_id = input_game_id AND gp.status = 'confirmed';\r\n\r\n    -- Calculate players per team\r\n    players_per_team := total_players / 2;\r\n\r\n    RETURN QUERY\r\n    WITH player_stats AS (\r\n        SELECT \r\n            gp.player_id,\r\n            p.friendly_name,\r\n            COALESCE(ps.attack_rating, 0) as attack_rating,\r\n            COALESCE(ps.defense_rating, 0) as defense_rating,\r\n            -- Calculate experience factor based on caps and streaks\r\n            (COALESCE(ps.caps, 0) * 0.1 + COALESCE(ps.current_streak, 0) * 0.05) as experience_factor,\r\n            -- Calculate weighted total rating\r\n            (COALESCE(ps.attack_rating, 0) + COALESCE(ps.defense_rating, 0)) * \r\n            (1 + (COALESCE(ps.active_bonuses, 0) * 0.1) - (COALESCE(ps.active_penalties, 0) * 0.1)) as weighted_rating\r\n        FROM public.game_registrations gp\r\n        JOIN public.players p ON p.id = gp.player_id\r\n        LEFT JOIN public.player_stats ps ON ps.id = gp.player_id\r\n        WHERE gp.game_id = input_game_id AND gp.status = 'confirmed'\r\n    ),\r\n    ranked_players AS (\r\n        SELECT \r\n            *,\r\n            ROW_NUMBER() OVER (\r\n                ORDER BY weighted_rating DESC\r\n            ) as rank\r\n        FROM player_stats\r\n    ),\r\n    team_assignments AS (\r\n        SELECT \r\n            CASE \r\n                -- Zigzag pattern for more balanced distribution\r\n                WHEN rank % 4 IN (1, 4) THEN 'blue'\r\n                ELSE 'orange'\r\n            END as team,\r\n            player_id,\r\n            friendly_name,\r\n            attack_rating,\r\n            defense_rating,\r\n            experience_factor\r\n        FROM ranked_players\r\n    )\r\n    SELECT \r\n        ta.team,\r\n        ta.player_id,\r\n        ta.friendly_name,\r\n        ta.attack_rating,\r\n        ta.defense_rating,\r\n        ta.experience_factor\r\n    FROM team_assignments ta\r\n    ORDER BY ta.team, (ta.attack_rating + ta.defense_rating) DESC;\r\nEND;\r\n$function$\n"
         },
         {
-          "name": "calculate_slot_offer_times",
-          "arguments": "p_game_id uuid, p_num_players integer",
-          "return_type": "TABLE(player_rank integer, available_time timestamp with time zone, expire_time timestamp with time zone)",
-          "description": null,
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": false,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.calculate_slot_offer_times(p_game_id uuid, p_num_players integer)\n RETURNS TABLE(player_rank integer, available_time timestamp with time zone, expire_time timestamp with time zone)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_game_date timestamp with time zone;\r\n    v_total_time_until_game interval;\r\n    v_interval_per_player interval;\r\nBEGIN\r\n    -- Get game date and set it to 00:01 of that day\r\n    SELECT date_trunc('day', date) + interval '1 minute' \r\n    INTO v_game_date \r\n    FROM games \r\n    WHERE id = p_game_id;\r\n\r\n    -- Calculate total time until game (from now until 00:01 on game day)\r\n    v_total_time_until_game := v_game_date - CURRENT_TIMESTAMP;\r\n    \r\n    -- Calculate interval between each offer\r\n    -- Add 1 minute buffer to ensure last player gets some time\r\n    v_interval_per_player := v_total_time_until_game / (p_num_players + 1);\r\n\r\n    -- Return time slots for each rank\r\n    RETURN QUERY\r\n    SELECT \r\n        generate_series as player_rank,\r\n        CURRENT_TIMESTAMP + (generate_series - 1) * v_interval_per_player as available_time,\r\n        CASE \r\n            WHEN generate_series = p_num_players THEN v_game_date -- Last player's offer expires at game time\r\n            ELSE CURRENT_TIMESTAMP + generate_series * v_interval_per_player -- Others expire when next offer becomes available\r\n        END as expire_time\r\n    FROM generate_series(1, p_num_players);\r\nEND;\r\n$function$\n"
-        },
-        {
           "name": "create_game",
           "arguments": "p_date timestamp with time zone, p_reg_start timestamp with time zone, p_reg_end timestamp with time zone, p_max_players integer DEFAULT 18, p_random_slots integer DEFAULT 2",
           "return_type": "uuid",
@@ -7106,17 +7115,6 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.create_next_slot_offer(p_game_id uuid, p_previous_rank integer)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_game record;\r\n    v_next_player record;\r\n    v_slot_offer_id UUID;\r\n    v_player_count integer;\r\n    v_time_slots record;\r\nBEGIN\r\n    -- Get game details\r\n    SELECT * INTO v_game FROM games WHERE id = p_game_id;\r\n    IF NOT FOUND THEN\r\n        RAISE EXCEPTION 'Game not found';\r\n    END IF;\r\n\r\n    -- Get count of remaining eligible players\r\n    SELECT COUNT(*) INTO v_player_count\r\n    FROM players p\r\n    JOIN game_registrations gr ON gr.player_id = p.id\r\n    WHERE gr.game_id = p_game_id\r\n    AND gr.status = 'reserve'\r\n    AND NOT EXISTS (\r\n        SELECT 1 FROM slot_offers so\r\n        WHERE so.game_id = p_game_id\r\n        AND so.player_id = p.id\r\n        AND so.status = 'rejected'\r\n    );\r\n\r\n    -- Recalculate time slots with remaining players\r\n    SELECT * INTO v_time_slots\r\n    FROM calculate_slot_offer_times(p_game_id, v_player_count)\r\n    WHERE player_rank = 1;\r\n\r\n    -- Get next eligible player by XP\r\n    WITH RankedPlayers AS (\r\n        SELECT \r\n            p.id as player_id,\r\n            p.friendly_name,\r\n            ps.xp,\r\n            ROW_NUMBER() OVER (ORDER BY ps.xp DESC) as rank\r\n        FROM players p\r\n        JOIN game_registrations gr ON gr.player_id = p.id\r\n        JOIN player_stats ps ON ps.player_id = p.id\r\n        WHERE gr.game_id = p_game_id\r\n        AND gr.status = 'reserve'\r\n        AND NOT EXISTS (\r\n            SELECT 1 FROM slot_offers so\r\n            WHERE so.game_id = p_game_id\r\n            AND so.player_id = p.id\r\n            AND so.status = 'rejected'\r\n        )\r\n    )\r\n    SELECT * INTO v_next_player\r\n    FROM RankedPlayers\r\n    WHERE rank = 1;\r\n\r\n    -- Create slot offer for next player\r\n    INSERT INTO slot_offers (\r\n        game_id,\r\n        player_id,\r\n        status,\r\n        rank,\r\n        available_at,\r\n        expires_at\r\n    ) VALUES (\r\n        p_game_id,\r\n        v_next_player.player_id,\r\n        'pending',\r\n        p_previous_rank + 1,\r\n        v_time_slots.available_time,\r\n        v_time_slots.expire_time\r\n    ) RETURNING id INTO v_slot_offer_id;\r\n\r\n    -- Create notification for the next player\r\n    INSERT INTO notifications (\r\n        player_id,\r\n        type,\r\n        message,\r\n        metadata,\r\n        title,\r\n        priority\r\n    ) VALUES (\r\n        v_next_player.player_id,\r\n        'slot_offer',\r\n        format('A spot has opened up in a game on %s. You have exclusive access until %s!',\r\n               to_char(v_game.date, 'DD/MM/YYYY'),\r\n               to_char(v_time_slots.expire_time, 'HH24:MI')),\r\n        jsonb_build_object(\r\n            'game_id', p_game_id,\r\n            'slot_offer_id', v_slot_offer_id,\r\n            'exclusive_until', v_time_slots.expire_time\r\n        ),\r\n        'Exclusive Game Slot Available!',\r\n        2\r\n    );\r\nEND;\r\n$function$\n"
-        },
-        {
-          "name": "create_slot_offers",
-          "arguments": "p_game_id uuid",
-          "return_type": "void",
-          "description": null,
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": true,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.create_slot_offers(p_game_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n  v_total_players INTEGER;\r\n  v_available_slots INTEGER;\r\n  v_pending_offers INTEGER;\r\n  v_first_dropout_time TIMESTAMP WITH TIME ZONE;\r\n  v_game_date TIMESTAMP WITH TIME ZONE;\r\n  v_total_hours NUMERIC;\r\n  v_hours_per_player NUMERIC;\r\n  v_hours_elapsed NUMERIC;\r\n  v_players_to_offer INTEGER;\r\nBEGIN\r\n  -- Get total number of reserve players\r\n  SELECT COUNT(*)\r\n  INTO v_total_players\r\n  FROM game_registrations gr\r\n  WHERE gr.game_id = p_game_id\r\n  AND gr.status = 'reserve'\r\n  AND NOT gr.has_declined; -- Exclude players who have declined\r\n\r\n  -- Get number of available slots (dropouts)\r\n  SELECT COUNT(*)\r\n  INTO v_available_slots\r\n  FROM game_registrations gr\r\n  WHERE gr.game_id = p_game_id\r\n  AND gr.status = 'dropped_out';\r\n\r\n  -- Get number of pending offers\r\n  SELECT COUNT(*)\r\n  INTO v_pending_offers\r\n  FROM slot_offers so\r\n  WHERE so.game_id = p_game_id\r\n  AND so.status = 'pending';\r\n\r\n  -- If no slots available or already have enough pending offers, exit\r\n  IF v_available_slots = 0 OR v_pending_offers >= v_available_slots THEN\r\n    RETURN;\r\n  END IF;\r\n\r\n  -- Get the time of the first dropout for this game\r\n  SELECT MIN(created_at) INTO v_first_dropout_time\r\n  FROM game_registrations\r\n  WHERE game_id = p_game_id AND status = 'dropped_out';\r\n\r\n  -- Get the game date and set to midnight\r\n  SELECT DATE_TRUNC('day', date) INTO v_game_date\r\n  FROM games \r\n  WHERE id = p_game_id;\r\n\r\n  -- Calculate total hours from first dropout to game day\r\n  IF v_first_dropout_time IS NOT NULL THEN\r\n    -- Calculate total time window in hours\r\n    v_total_hours := EXTRACT(EPOCH FROM (v_game_date - v_first_dropout_time)) / 3600;\r\n    \r\n    -- Calculate hours per player\r\n    v_hours_per_player := v_total_hours / GREATEST(v_total_players, 1);\r\n\r\n    -- Calculate hours elapsed since first dropout\r\n    v_hours_elapsed := EXTRACT(EPOCH FROM (NOW() - v_first_dropout_time)) / 3600;\r\n\r\n    -- Calculate how many players should have offers based on elapsed time\r\n    v_players_to_offer := LEAST(\r\n      FLOOR(v_hours_elapsed / v_hours_per_player) + 1, -- Add 1 to ensure at least one offer\r\n      v_total_players\r\n    );\r\n  ELSE\r\n    -- If no dropouts yet, don't create any offers\r\n    RETURN;\r\n  END IF;\r\n\r\n  -- Create offers for eligible players\r\n  WITH ranked_players AS (\r\n    SELECT \r\n      gr.player_id,\r\n      ROW_NUMBER() OVER (ORDER BY gr.created_at ASC) as rank\r\n    FROM game_registrations gr\r\n    LEFT JOIN slot_offers so ON \r\n      so.game_id = gr.game_id \r\n      AND so.player_id = gr.player_id\r\n      AND so.status = 'pending' -- Only check for pending offers\r\n    WHERE gr.game_id = p_game_id\r\n    AND gr.status = 'reserve'\r\n    AND NOT gr.has_declined -- Exclude players who have declined\r\n    AND so.id IS NULL -- Only players without pending offers\r\n  )\r\n  INSERT INTO slot_offers (game_id, player_id, status, offered_at)\r\n  SELECT \r\n    p_game_id,\r\n    rp.player_id,\r\n    'pending',\r\n    NOW()\r\n  FROM ranked_players rp\r\n  WHERE rp.rank <= LEAST(\r\n    v_players_to_offer,\r\n    v_available_slots - v_pending_offers -- Only create offers up to available slots\r\n  )\r\n  AND NOT EXISTS ( -- Double check no existing pending offers\r\n    SELECT 1 FROM slot_offers so2\r\n    WHERE so2.game_id = p_game_id\r\n    AND so2.player_id = rp.player_id\r\n    AND so2.status = 'pending'\r\n  );\r\n\r\n  -- Create notifications for new offers\r\n  INSERT INTO notifications (\r\n    player_id,\r\n    type,\r\n    message,\r\n    metadata\r\n  )\r\n  SELECT \r\n    so.player_id,\r\n    'slot_offer',\r\n    'A spot has opened up in the game. Would you like to play?',\r\n    jsonb_build_object(\r\n      'game_id', p_game_id,\r\n      'action', 'new_slot_offer'\r\n    )\r\n  FROM slot_offers so\r\n  WHERE so.game_id = p_game_id\r\n  AND so.status = 'pending'\r\n  AND so.offered_at >= NOW() - INTERVAL '1 minute'; -- Only notify for newly created offers\r\nEND;\r\n$function$\n"
         },
         {
           "name": "debug_game_state",
@@ -7207,6 +7205,17 @@
           "definition": "CREATE OR REPLACE FUNCTION public.get_team_color_stats(target_year integer DEFAULT NULL::integer)\n RETURNS TABLE(winning_color text, win_rate numeric)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n  RETURN QUERY\r\n  WITH game_results AS (\r\n    SELECT\r\n      gr.team,\r\n      g.outcome,\r\n      COUNT(*) as total_games,\r\n      SUM(CASE \r\n        WHEN (gr.team = 'blue' AND g.outcome = 'blue_win') OR \r\n             (gr.team = 'orange' AND g.outcome = 'orange_win') \r\n        THEN 1 \r\n        ELSE 0 \r\n      END) as wins\r\n    FROM game_registrations gr\r\n    JOIN games g ON gr.game_id = g.id\r\n    WHERE g.outcome IS NOT NULL\r\n    AND gr.status = 'selected'\r\n    AND (target_year IS NULL OR EXTRACT(YEAR FROM g.created_at) = target_year)\r\n    GROUP BY gr.team, g.outcome\r\n  )\r\n  SELECT\r\n    team as winning_color,\r\n    ROUND(CAST(SUM(wins) AS numeric) / NULLIF(SUM(total_games), 0), 3) as win_rate\r\n  FROM game_results\r\n  GROUP BY team\r\n  ORDER BY win_rate DESC\r\n  LIMIT 1;\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "calculate_slot_offer_times",
+          "arguments": "p_game_id uuid, p_num_players integer",
+          "return_type": "TABLE(player_rank integer, available_time timestamp with time zone, next_player_access_time timestamp with time zone)",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.calculate_slot_offer_times(p_game_id uuid, p_num_players integer)\n RETURNS TABLE(player_rank integer, available_time timestamp with time zone, next_player_access_time timestamp with time zone)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_game_date timestamp with time zone;\r\n    v_midnight_before_game timestamp with time zone;\r\n    v_time_until_midnight interval;\r\n    v_interval_per_player interval;\r\nBEGIN\r\n    -- Handle zero players case\r\n    IF p_num_players <= 0 THEN\r\n        RETURN QUERY\r\n        SELECT \r\n            1 as player_rank,\r\n            CURRENT_TIMESTAMP as available_time,\r\n            CURRENT_TIMESTAMP as next_player_access_time;\r\n        RETURN;\r\n    END IF;\r\n\r\n    -- Get game date\r\n    SELECT date\r\n    INTO v_game_date \r\n    FROM games \r\n    WHERE id = p_game_id;\r\n\r\n    -- Calculate midnight at the start of game day\r\n    v_midnight_before_game := date_trunc('day', v_game_date);\r\n    \r\n    -- Calculate time until midnight\r\n    v_time_until_midnight := v_midnight_before_game - CURRENT_TIMESTAMP;\r\n    \r\n    -- Calculate interval between each player gaining access\r\n    v_interval_per_player := v_time_until_midnight / p_num_players;\r\n\r\n    -- Return access times for each rank\r\n    RETURN QUERY\r\n    SELECT \r\n        generate_series as player_rank,\r\n        CASE\r\n            WHEN generate_series = 1 THEN CURRENT_TIMESTAMP -- First player gets immediate access\r\n            ELSE CURRENT_TIMESTAMP + ((generate_series - 1) * v_interval_per_player) -- Others get access at their interval\r\n        END as available_time,\r\n        CASE \r\n            WHEN generate_series = p_num_players THEN v_midnight_before_game -- Last interval ends at midnight\r\n            ELSE CURRENT_TIMESTAMP + (generate_series * v_interval_per_player) -- When next player gains access\r\n        END as next_player_access_time\r\n    FROM generate_series(1, p_num_players);\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "grant_admin_role",
           "arguments": "target_player_id uuid, make_super_admin boolean DEFAULT false, permissions admin_permission[] DEFAULT NULL::admin_permission[]",
           "return_type": "void",
@@ -7271,6 +7280,17 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.void_other_slot_offers()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_selected_count INTEGER;\r\n    v_max_players INTEGER;\r\nBEGIN\r\n    -- If a slot offer is being accepted\r\n    IF NEW.status = 'accepted' AND (OLD.status IS NULL OR OLD.status != 'accepted') THEN\r\n        -- Get the current selected player count and add 1 for the current acceptance\r\n        SELECT COUNT(*) + 1 INTO v_selected_count\r\n        FROM game_registrations\r\n        WHERE game_id = NEW.game_id\r\n        AND status = 'selected';\r\n\r\n        -- Get max players for the game\r\n        SELECT max_players INTO v_max_players\r\n        FROM games\r\n        WHERE id = NEW.game_id;\r\n\r\n        -- Check if accepting would exceed max players\r\n        IF v_selected_count > v_max_players THEN\r\n            RAISE EXCEPTION 'Cannot accept offer: maximum players reached';\r\n        END IF;\r\n\r\n        -- Void all other pending offers for this game\r\n        UPDATE slot_offers\r\n        SET status = 'voided',\r\n            updated_at = NOW()\r\n        WHERE game_id = NEW.game_id\r\n        AND id != NEW.id\r\n        AND status = 'pending';\r\n\r\n        -- Update the player's registration status to selected\r\n        UPDATE game_registrations\r\n        SET status = 'selected'\r\n        WHERE game_id = NEW.game_id\r\n        AND player_id = NEW.player_id;\r\n    END IF;\r\n    \r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "create_slot_offers",
+          "arguments": "p_game_id uuid",
+          "return_type": "void",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": true,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.create_slot_offers(p_game_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n  v_total_players INTEGER;\r\n  v_available_slots INTEGER;\r\n  v_pending_offers INTEGER;\r\n  v_game_date TIMESTAMP WITH TIME ZONE;\r\n  v_total_hours NUMERIC;\r\n  v_hours_per_player NUMERIC;\r\n  v_players_to_offer INTEGER;\r\n  v_has_recent_decline BOOLEAN;\r\nBEGIN\r\n  -- Check if there was a recent decline\r\n  SELECT EXISTS (\r\n    SELECT 1 \r\n    FROM slot_offers \r\n    WHERE game_id = p_game_id \r\n    AND status = 'declined'\r\n    AND declined_at >= NOW() - INTERVAL '1 minute'\r\n  ) INTO v_has_recent_decline;\r\n\r\n  -- Get total number of reserve players (excluding declined players)\r\n  SELECT COUNT(*)\r\n  INTO v_total_players\r\n  FROM game_registrations gr\r\n  WHERE gr.game_id = p_game_id\r\n  AND gr.status = 'reserve'\r\n  AND NOT EXISTS (\r\n    SELECT 1 FROM slot_offers so\r\n    WHERE so.game_id = gr.game_id\r\n    AND so.player_id = gr.player_id\r\n    AND so.status = 'declined'\r\n  );\r\n\r\n  -- Get number of available slots\r\n  SELECT COUNT(*)\r\n  INTO v_available_slots\r\n  FROM game_registrations gr\r\n  WHERE gr.game_id = p_game_id\r\n  AND gr.status = 'dropped_out';\r\n\r\n  -- Get number of pending offers\r\n  SELECT COUNT(*)\r\n  INTO v_pending_offers\r\n  FROM slot_offers so\r\n  WHERE so.game_id = p_game_id\r\n  AND so.status = 'pending';\r\n\r\n  IF v_available_slots = 0 OR v_pending_offers >= v_available_slots THEN\r\n    RETURN;\r\n  END IF;\r\n\r\n  -- Get the game date (midnight of game day)\r\n  SELECT DATE_TRUNC('day', date) INTO v_game_date\r\n  FROM games \r\n  WHERE id = p_game_id;\r\n\r\n  -- Calculate total remaining hours and hours per player\r\n  v_total_hours := EXTRACT(EPOCH FROM (v_game_date - NOW())) / 3600;\r\n  v_hours_per_player := v_total_hours / GREATEST(v_total_players, 1);\r\n\r\n  -- If recent decline, offer to next player immediately\r\n  -- Otherwise calculate based on time elapsed\r\n  IF v_has_recent_decline THEN\r\n    v_players_to_offer := 1;\r\n  ELSE\r\n    v_players_to_offer := GREATEST(1, FLOOR(v_total_hours / v_hours_per_player));\r\n  END IF;\r\n\r\n  -- Create offers for eligible players\r\n  WITH ranked_players AS (\r\n    SELECT \r\n      gr.player_id,\r\n      ROW_NUMBER() OVER (ORDER BY ps.xp DESC, gr.created_at ASC) as rank\r\n    FROM game_registrations gr\r\n    JOIN player_stats ps ON ps.id = gr.player_id\r\n    LEFT JOIN slot_offers so ON \r\n      so.game_id = gr.game_id \r\n      AND so.player_id = gr.player_id\r\n      AND so.status = 'pending'\r\n    WHERE gr.game_id = p_game_id\r\n    AND gr.status = 'reserve'\r\n    AND NOT EXISTS (\r\n      SELECT 1 FROM slot_offers so2\r\n      WHERE so2.game_id = gr.game_id\r\n      AND so2.player_id = gr.player_id\r\n      AND so2.status = 'declined'\r\n    )\r\n    AND so.id IS NULL\r\n  )\r\n  INSERT INTO slot_offers (game_id, player_id, status, offered_at)\r\n  SELECT \r\n    p_game_id,\r\n    rp.player_id,\r\n    'pending',\r\n    NOW()\r\n  FROM ranked_players rp\r\n  WHERE rp.rank <= LEAST(\r\n    v_players_to_offer,\r\n    v_available_slots - v_pending_offers\r\n  )\r\n  AND NOT EXISTS (\r\n    SELECT 1 FROM slot_offers so2\r\n    WHERE so2.game_id = p_game_id\r\n    AND so2.player_id = rp.player_id\r\n    AND so2.status = 'pending'\r\n  );\r\n\r\n  -- Create notifications for new offers\r\n  INSERT INTO notifications (\r\n    player_id,\r\n    type,\r\n    message,\r\n    metadata\r\n  )\r\n  SELECT \r\n    so.player_id,\r\n    'slot_offer',\r\n    'A spot has opened up in the game. Would you like to play?',\r\n    jsonb_build_object(\r\n      'game_id', p_game_id,\r\n      'action', 'new_slot_offer'\r\n    )\r\n  FROM slot_offers so\r\n  WHERE so.game_id = p_game_id\r\n  AND so.status = 'pending'\r\n  AND so.offered_at >= NOW() - INTERVAL '1 minute';\r\nEND;\r\n$function$\n"
         }
       ]
     }

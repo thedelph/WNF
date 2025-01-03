@@ -45,6 +45,8 @@ export default function Component() {
   const [isEditing, setIsEditing] = useState(false)
   const [friendlyName, setFriendlyName] = useState('')
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
+  const [gameSequences, setGameSequences] = useState<number[]>([])
+  const [latestSequence, setLatestSequence] = useState<number>(0)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -74,6 +76,38 @@ export default function Component() {
 
         if (profileError) throw profileError
         if (!profileData) throw new Error('Player not found')
+
+        // Get the latest sequence number from completed games
+        const { data: latestSeqData, error: latestSeqError } = await supabase
+          .from('games')
+          .select('sequence_number')
+          .eq('completed', true)
+          .order('sequence_number', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestSeqError) throw latestSeqError;
+        setLatestSequence(latestSeqData?.sequence_number || 0);
+
+        // Get game sequences for the player
+        const { data: gameData, error: gameError } = await supabase
+          .from('game_registrations')
+          .select(`
+            games (
+              sequence_number,
+              is_historical
+            )
+          `)
+          .eq('player_id', profileData.id)
+          .order('games(sequence_number)', { ascending: false });
+
+        if (gameError) throw gameError;
+        
+        const sequences = gameData
+          ?.filter(reg => reg.games?.is_historical)
+          .map(reg => reg.games?.sequence_number)
+          .filter(Boolean) || [];
+        setGameSequences(sequences);
 
         // Calculate rarity based on all players' XP
         const { data: allXPData, error: xpError } = await supabase
@@ -294,9 +328,11 @@ export default function Component() {
                       caps: profile.caps || 0,
                       activeBonuses: profile.active_bonuses || 0,
                       activePenalties: profile.active_penalties || 0,
-                      currentStreak: profile.current_streak || 0
-                    }} 
-                    showTotal={false}
+                      currentStreak: profile.current_streak || 0,
+                      gameSequences: gameSequences,
+                      latestSequence: latestSequence,
+                      xp: profile.xp || 0
+                    }}
                   />
                 </motion.div>
 
