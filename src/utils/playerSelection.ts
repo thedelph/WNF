@@ -29,30 +29,35 @@ export const handlePlayerSelection = async ({
   try {
     // Get all registered players with their XP from player_stats view
     const { data: registeredPlayers, error: fetchError } = await supabaseAdmin
-      .from('player_stats')
+      .from('game_registrations')
       .select(`
-        id,
-        xp,
-        game_registrations!game_registrations_player_id_fkey (
-          id,
-          game_id,
-          status,
-          selection_method
-        )
+        player_id,
+        status,
+        selection_method
       `)
-      .eq('game_registrations.game_id', gameId)
-      .eq('game_registrations.status', 'registered');
+      .eq('game_id', gameId)
+      .eq('status', 'registered');
 
     if (fetchError) throw fetchError;
     if (!registeredPlayers?.length) return { error: 'No registered players found' };
 
+    // Get XP for all registered players
+    const playerIds = registeredPlayers.map(reg => reg.player_id);
+    const { data: playerStats } = await supabaseAdmin
+      .from('player_stats')
+      .select('id, xp')
+      .in('id', playerIds);
+
     // Transform the data to include only what we need
-    const players: PlayerStats[] = registeredPlayers.map(player => ({
-      id: player.id,
-      xp: player.xp || 0,
-      status: player.game_registrations[0]?.status,
-      selection_method: player.game_registrations[0]?.selection_method
-    }));
+    const players: PlayerStats[] = registeredPlayers.map(reg => {
+      const stats = playerStats?.find(p => p.id === reg.player_id);
+      return {
+        id: reg.player_id,
+        xp: stats?.xp || 0,
+        status: reg.status,
+        selection_method: reg.selection_method
+      };
+    });
 
     // Sort players by XP in descending order
     const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp);
