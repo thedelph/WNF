@@ -10,8 +10,7 @@ import { PlayerSelectionSection } from './PlayerSelectionSection';
 import { supabase } from '../../utils/supabase';
 import { ViewToggle } from './views/ViewToggle';
 import { PlayerListView } from './views/PlayerListView';
-import { useGlobalXP } from '../../hooks/useGlobalXP';
-import { calculateRarity } from '../../utils/rarityCalculations';
+import { getRarity } from '../../utils/rarityCalculations';
 
 /**
  * Main component for displaying player selection results
@@ -38,9 +37,6 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
     activeSlotOffers
   } = useGamePlayers(gameId);
 
-  const { xpValues: globalXpValues, loading: globalXpLoading, error: globalXpError } = useGlobalXP();
-
-  // Fetch player stats for XP calculation
   useEffect(() => {
     const fetchPlayerStats = async () => {
       try {
@@ -62,23 +58,37 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
           `)
           .in('id', playerIds);
 
+        // Get player XP data for rarity
+        const { data: xpData, error: xpError } = await supabase
+          .from('player_xp')
+          .select('player_id, rarity')
+          .in('player_id', playerIds);
+
         if (statsError) throw statsError;
+        if (xpError) throw xpError;
 
-        // Transform into a lookup object
-        const statsLookup = statsData.reduce((acc, player) => {
-          acc[player.id] = {
-            xp: player.xp || 0,
-            caps: player.caps || 0,
-            active_bonuses: player.active_bonuses || 0,
-            active_penalties: player.active_penalties || 0,
-            win_rate: player.win_rate || 0,
-            current_streak: player.current_streak || 0,
-            max_streak: player.max_streak || 0
-          };
-          return acc;
-        }, {} as Record<string, any>);
+        // Combine rarity data with stats
+        const rarityMap = xpData?.reduce((acc, xp) => ({
+          ...acc,
+          [xp.player_id]: xp.rarity
+        }), {});
 
-        setPlayerStats(statsLookup);
+        // Transform into record for easy lookup
+        const stats = statsData?.reduce((acc, stat) => ({
+          ...acc,
+          [stat.id]: {
+            xp: stat.xp || 0,
+            rarity: rarityMap?.[stat.id] || 'Amateur',
+            caps: stat.caps || 0,
+            activeBonuses: stat.active_bonuses || 0,
+            activePenalties: stat.active_penalties || 0,
+            winRate: stat.win_rate || 0,
+            currentStreak: stat.current_streak || 0,
+            maxStreak: stat.max_streak || 0
+          }
+        }), {});
+
+        setPlayerStats(stats || {});
       } catch (error) {
         console.error('Error fetching player stats:', error);
       } finally {
@@ -176,24 +186,13 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
     }
   };
 
-  if (isLoading || loading || globalXpLoading) {
+  if (isLoading || loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="loading loading-spinner loading-lg"></div>
       </div>
     );
   }
-
-  if (globalXpError) {
-    return (
-      <div className="text-center text-error p-4">
-        <p>{globalXpError}</p>
-      </div>
-    );
-  }
-
-  // Get all XP values for rarity calculation
-  const allXpValues = Object.values(playerStats).map(stat => stat.xp);
 
   return (
     <div className="space-y-8">
@@ -219,18 +218,17 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             icon={FaUser}
             players={selectedPlayers.map(player => ({
               ...player,
+              friendlyName: player.friendly_name,
               xp: playerStats[player.id]?.xp || 0,
+              rarity: playerStats[player.id]?.rarity || 'Amateur',
               caps: playerStats[player.id]?.caps || 0,
-              activeBonuses: playerStats[player.id]?.active_bonuses || 0,
-              activePenalties: playerStats[player.id]?.active_penalties || 0,
-              winRate: playerStats[player.id]?.win_rate || 0,
-              currentStreak: playerStats[player.id]?.current_streak || 0,
-              maxStreak: playerStats[player.id]?.max_streak || 0,
-              preferredPosition: '',
-              rarity: calculateRarity(player.xp || 0, globalXpValues),
+              activeBonuses: playerStats[player.id]?.activeBonuses || 0,
+              activePenalties: playerStats[player.id]?.activePenalties || 0,
+              winRate: playerStats[player.id]?.winRate || 0,
+              currentStreak: playerStats[player.id]?.currentStreak || 0,
+              maxStreak: playerStats[player.id]?.maxStreak || 0,
               hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
-            allXpValues={Object.values(playerStats).map(stat => stat.xp)}
             isExpanded={showSelected}
             onToggle={() => setShowSelected(!showSelected)}
           >
@@ -255,24 +253,22 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             icon={FaUserClock}
             players={reservePlayers.map(player => ({
               ...player,
+              friendlyName: player.friendly_name,
               xp: playerStats[player.id]?.xp || 0,
+              rarity: playerStats[player.id]?.rarity || 'Amateur',
               caps: playerStats[player.id]?.caps || 0,
-              activeBonuses: playerStats[player.id]?.active_bonuses || 0,
-              activePenalties: playerStats[player.id]?.active_penalties || 0,
-              winRate: playerStats[player.id]?.win_rate || 0,
-              currentStreak: playerStats[player.id]?.current_streak || 0,
-              maxStreak: playerStats[player.id]?.max_streak || 0,
-              preferredPosition: '',
-              rarity: calculateRarity(player.xp || 0, globalXpValues),
+              activeBonuses: playerStats[player.id]?.activeBonuses || 0,
+              activePenalties: playerStats[player.id]?.activePenalties || 0,
+              winRate: playerStats[player.id]?.winRate || 0,
+              currentStreak: playerStats[player.id]?.currentStreak || 0,
+              maxStreak: playerStats[player.id]?.maxStreak || 0,
               potentialOfferTimes: player.potentialOfferTimes,
               slotOfferAvailableAt: player.slotOffers?.[0]?.available_at || player.potentialOfferTimes?.available_time,
               slotOfferExpiresAt: player.slotOffers?.[0]?.expires_at || player.potentialOfferTimes?.next_player_access_time,
-              hasSlotOffer: player.hasSlotOffer || (player.potentialOfferTimes !== null),
-              slotOfferStatus: player.slotOffers?.[0]?.status || null,
+              hasSlotOffer: player.slotOffers?.length > 0,
               declinedAt: player.slotOffers?.[0]?.declined_at || null,
               hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
-            allXpValues={Object.values(playerStats).map(stat => stat.xp)}
             isExpanded={showReserves}
             onToggle={() => setShowReserves(!showReserves)}
           >
@@ -297,18 +293,17 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             icon={FaUserClock}
             players={droppedOutPlayers.map(player => ({
               ...player,
+              friendlyName: player.friendly_name,
               xp: playerStats[player.id]?.xp || 0,
+              rarity: playerStats[player.id]?.rarity || 'Amateur',
               caps: playerStats[player.id]?.caps || 0,
-              activeBonuses: playerStats[player.id]?.active_bonuses || 0,
-              activePenalties: playerStats[player.id]?.active_penalties || 0,
-              winRate: playerStats[player.id]?.win_rate || 0,
-              currentStreak: playerStats[player.id]?.current_streak || 0,
-              maxStreak: playerStats[player.id]?.max_streak || 0,
-              preferredPosition: '',
-              rarity: calculateRarity(player.xp || 0, globalXpValues),
+              activeBonuses: playerStats[player.id]?.activeBonuses || 0,
+              activePenalties: playerStats[player.id]?.activePenalties || 0,
+              winRate: playerStats[player.id]?.winRate || 0,
+              currentStreak: playerStats[player.id]?.currentStreak || 0,
+              maxStreak: playerStats[player.id]?.maxStreak || 0,
               hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
-            allXpValues={Object.values(playerStats).map(stat => stat.xp)}
             isExpanded={showDroppedOut}
             onToggle={() => setShowDroppedOut(!showDroppedOut)}
           />
@@ -317,39 +312,39 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         <PlayerListView
           selectedPlayers={selectedPlayers.map(player => ({
             ...player,
+            friendlyName: player.friendly_name,
             xp: playerStats[player.id]?.xp || 0,
+            rarity: playerStats[player.id]?.rarity || 'Amateur',
             caps: playerStats[player.id]?.caps || 0,
-            activeBonuses: playerStats[player.id]?.active_bonuses || 0,
-            activePenalties: playerStats[player.id]?.active_penalties || 0,
-            winRate: playerStats[player.id]?.win_rate || 0,
-            currentStreak: playerStats[player.id]?.current_streak || 0,
-            maxStreak: playerStats[player.id]?.max_streak || 0,
-            preferredPosition: '',
-            rarity: calculateRarity(player.xp || 0, globalXpValues)
+            activeBonuses: playerStats[player.id]?.activeBonuses || 0,
+            activePenalties: playerStats[player.id]?.activePenalties || 0,
+            winRate: playerStats[player.id]?.winRate || 0,
+            currentStreak: playerStats[player.id]?.currentStreak || 0,
+            maxStreak: playerStats[player.id]?.maxStreak || 0
           }))}
           reservePlayers={reservePlayers.map(player => ({
             ...player,
+            friendlyName: player.friendly_name,
             xp: playerStats[player.id]?.xp || 0,
+            rarity: playerStats[player.id]?.rarity || 'Amateur',
             caps: playerStats[player.id]?.caps || 0,
-            activeBonuses: playerStats[player.id]?.active_bonuses || 0,
-            activePenalties: playerStats[player.id]?.active_penalties || 0,
-            winRate: playerStats[player.id]?.win_rate || 0,
-            currentStreak: playerStats[player.id]?.current_streak || 0,
-            maxStreak: playerStats[player.id]?.max_streak || 0,
-            preferredPosition: '',
-            rarity: calculateRarity(player.xp || 0, globalXpValues)
+            activeBonuses: playerStats[player.id]?.activeBonuses || 0,
+            activePenalties: playerStats[player.id]?.activePenalties || 0,
+            winRate: playerStats[player.id]?.winRate || 0,
+            currentStreak: playerStats[player.id]?.currentStreak || 0,
+            maxStreak: playerStats[player.id]?.maxStreak || 0
           }))}
           droppedOutPlayers={droppedOutPlayers.map(player => ({
             ...player,
+            friendlyName: player.friendly_name,
             xp: playerStats[player.id]?.xp || 0,
+            rarity: playerStats[player.id]?.rarity || 'Amateur',
             caps: playerStats[player.id]?.caps || 0,
-            activeBonuses: playerStats[player.id]?.active_bonuses || 0,
-            activePenalties: playerStats[player.id]?.active_penalties || 0,
-            winRate: playerStats[player.id]?.win_rate || 0,
-            currentStreak: playerStats[player.id]?.current_streak || 0,
-            maxStreak: playerStats[player.id]?.max_streak || 0,
-            preferredPosition: '',
-            rarity: calculateRarity(player.xp || 0, globalXpValues)
+            activeBonuses: playerStats[player.id]?.activeBonuses || 0,
+            activePenalties: playerStats[player.id]?.activePenalties || 0,
+            winRate: playerStats[player.id]?.winRate || 0,
+            currentStreak: playerStats[player.id]?.currentStreak || 0,
+            maxStreak: playerStats[player.id]?.maxStreak || 0
           }))}
           playerStats={playerStats}
         />

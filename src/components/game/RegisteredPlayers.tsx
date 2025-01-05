@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
-import { calculateRarity } from '../../utils/rarityCalculations';
 import PlayerCard from '../PlayerCard';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 import { useGlobalXP } from '../../hooks/useGlobalXP';
@@ -21,7 +20,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
 }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [playerStats, setPlayerStats] = React.useState<Record<string, { xp: number }>>({});
+  const [playerStats, setPlayerStats] = React.useState<Record<string, { xp: number, rarity: string }>>({});
   const { xpValues: globalXpValues, loading: globalXpLoading, error: globalXpError } = useGlobalXP();
 
   // Fetch player stats
@@ -35,16 +34,86 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
         const playerIds = registrations.map(reg => reg.player.id);
         const { data: statsData, error: statsError } = await supabase
           .from('player_stats')
-          .select('id, xp')
+          .select(`
+            id,
+            friendly_name,
+            xp,
+            caps,
+            active_bonuses,
+            active_penalties,
+            win_rate,
+            current_streak,
+            max_streak,
+            avatar_svg
+          `)
           .in('id', playerIds);
 
         if (statsError) throw statsError;
 
+        // Get rarity data from player_xp
+        const { data: xpData, error: xpError } = await supabase
+          .from('player_xp')
+          .select('player_id, rarity')
+          .in('player_id', statsData.map(p => p.id));
+
+        if (xpError) throw xpError;
+
+        // Create a map of player IDs to rarity
+        const rarityMap = xpData?.reduce((acc, xp) => ({
+          ...acc,
+          [xp.player_id]: xp.rarity
+        }), {});
+
+        // Get dropout penalties
+        const { data: dropoutData, error: dropoutError } = await supabase
+          .from('player_penalties')
+          .select('player_id')
+          .in('player_id', statsData.map(p => p.id))
+          .eq('penalty_type', 'SAME_DAY_DROPOUT')
+          .gt('games_remaining', 0);
+
+        if (dropoutError) throw dropoutError;
+
+        // Create a map of player IDs to dropout penalties count
+        const dropoutMap = dropoutData?.reduce((acc, penalty) => ({
+          ...acc,
+          [penalty.player_id]: (acc[penalty.player_id] || 0) + 1
+        }), {} as Record<string, number>);
+
+        // Transform the data to match our Player interface
+        const transformedPlayers = statsData.map(player => {
+          // Calculate streak bonus
+          const streakModifier = (player.current_streak || 0) * 0.1;
+          const bonusModifier = (player.active_bonuses || 0) * 0.1;
+          const penaltyModifier = (player.active_penalties || 0) * -0.1;
+          const dropoutModifier = (dropoutMap?.[player.id] || 0) * -0.5; // 50% penalty per dropout
+          const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
+
+          return {
+            id: player.id,
+            friendlyName: player.friendly_name,
+            caps: player.caps || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            winRate: player.win_rate || 0,
+            currentStreak: player.current_streak || 0,
+            maxStreak: player.max_streak || 0,
+            xp: player.xp || 0,
+            avatarSvg: player.avatar_svg || '',
+            rarity: rarityMap?.[player.id] || 'Amateur',
+            streakBonus: streakModifier,
+            dropoutPenalty: dropoutModifier,
+            bonusModifier: bonusModifier,
+            penaltyModifier: penaltyModifier,
+            totalModifier: totalModifier
+          };
+        });
+
         // Transform into a lookup object
-        const statsLookup = statsData.reduce((acc, player) => {
-          acc[player.id] = { xp: player.xp || 0 };
+        const statsLookup = transformedPlayers.reduce((acc, player) => {
+          acc[player.id] = { xp: player.xp, rarity: player.rarity };
           return acc;
-        }, {} as Record<string, { xp: number }>);
+        }, {} as Record<string, { xp: number, rarity: string }>);
 
         setPlayerStats(statsLookup);
       } catch (error) {
@@ -90,7 +159,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 justify-items-center sm:justify-items-stretch">
         {sortedRegistrations.map((registration) => {
           const playerXP = playerStats[registration.player.id]?.xp || 0;
-          const rarity = calculateRarity(playerXP, globalXpValues);
+          const playerRarity = playerStats[registration.player.id]?.rarity || 'Amateur';
 
           return (
             <motion.div
@@ -104,13 +173,12 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
                 friendlyName={registration.player.friendly_name}
                 xp={playerXP}
                 caps={registration.player.caps}
-                preferredPosition={registration.player.preferred_position || ''}
                 activeBonuses={registration.player.active_bonuses}
                 activePenalties={registration.player.active_penalties}
                 winRate={registration.player.win_rate}
                 currentStreak={registration.player.current_streak}
                 maxStreak={registration.player.max_streak}
-                rarity={rarity}
+                rarity={playerRarity}
                 avatarSvg={registration.player.avatar_svg || ''}
                 status={registration.status === 'reserve' ? 'reserve' : undefined}
               />

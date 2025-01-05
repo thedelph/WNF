@@ -25,7 +25,6 @@ export const GameList = forwardRef<{ fetchGames: () => void }, GameListProps>(({
 
   const fetchGames = async () => {
     setIsLoading(true);
-    console.log('Fetching games');
     
     const { data: gamesData, error: gamesError } = await supabase
       .from('games')

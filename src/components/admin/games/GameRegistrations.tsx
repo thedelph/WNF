@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../../../utils/supabase';
-import { calculateRarity } from '../../../utils/rarityCalculations';
+import { getRarity } from '../../../utils/rarityCalculations';
 import PlayerCard from '../../PlayerCard';
 import { ExtendedPlayerData } from '../../../types/playerSelection';
 import { Modal } from '../../common/modals/Modal';
@@ -39,7 +39,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
       setError(null);
 
       // First, get the registrations for this game
-      const { data: registrationData, error: registrationError } = await supabase
+      const { data: registrations, error } = await supabase
         .from('game_registrations')
         .select(`
           id,
@@ -62,41 +62,49 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
           )
         `)
         .eq('game_id', gameId)
-        .eq('status', 'registered');
+        .order('status', { ascending: false });
 
-      if (registrationError) throw registrationError;
+      if (error) throw error;
 
-      // Calculate rarity based on all players' XP
-      const { data: allXPData, error: xpError } = await supabase
-        .from('player_stats')
-        .select('xp');
+      // Get rarity data from player_xp
+      const playerIds = registrations?.map(reg => reg.player_stats.id) || [];
+      const { data: xpData, error: xpError } = await supabase
+        .from('player_xp')
+        .select('player_id, rarity')
+        .in('player_id', playerIds);
 
       if (xpError) throw xpError;
 
-      const allXP = allXPData.map(p => p.xp || 0);
+      // Create a map of player IDs to rarity
+      const rarityMap = xpData?.reduce((acc, xp) => ({
+        ...acc,
+        [xp.player_id]: xp.rarity
+      }), {});
 
-      // Transform and enrich the data
-      const enrichedRegistrations = registrationData.map(registration => {
-        const playerStats = registration.player_stats;
-        return {
-          id: playerStats.id,
-          friendly_name: playerStats.friendly_name,
-          xp: playerStats.xp || 0,
-          caps: playerStats.caps || 0,
-          preferred_position: '', // Set empty string as default since we don't use this
-          active_bonuses: playerStats.active_bonuses || 0,
-          active_penalties: playerStats.active_penalties || 0,
-          win_rate: playerStats.win_rate || 0,
-          current_streak: playerStats.current_streak || 0,
-          max_streak: playerStats.max_streak || 0,
-          avatar_svg: playerStats.avatar_svg || '',
-          rarity: calculateRarity(playerStats.xp || 0, allXP),
-          team: registration.team,
-          isRandomlySelected: registration.selection_method === 'random'
-        };
-      });
+      // Transform the registrations data
+      const transformedRegistrations = registrations?.map(reg => ({
+        id: reg.id,
+        gameId: reg.game_id,
+        playerId: reg.player_id,
+        status: reg.status,
+        selectionMethod: reg.selection_method,
+        team: reg.team,
+        player: {
+          id: reg.player_stats.id,
+          friendlyName: reg.player_stats.friendly_name,
+          xp: reg.player_stats.xp || 0,
+          caps: reg.player_stats.caps || 0,
+          activeBonuses: reg.player_stats.active_bonuses || 0,
+          activePenalties: reg.player_stats.active_penalties || 0,
+          winRate: reg.player_stats.win_rate || 0,
+          currentStreak: reg.player_stats.current_streak || 0,
+          maxStreak: reg.player_stats.max_streak || 0,
+          avatarSvg: reg.player_stats.avatar_svg || '',
+          rarity: rarityMap?.[reg.player_stats.id] || 'Amateur'
+        }
+      }));
 
-      setRegistrations(enrichedRegistrations);
+      setRegistrations(transformedRegistrations || []);
     } catch (err) {
       console.error('Error fetching registrations:', err);
       setError(err instanceof Error ? err.message : 'An error occurred while fetching registrations');
@@ -137,7 +145,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
   React.useEffect(() => {
     // Filter available players whenever registrations or players change
     // Filter out already registered players by their IDs
-    const registeredPlayerIds = registrations.map(reg => reg.id);
+    const registeredPlayerIds = registrations.map(reg => reg.playerId);
     const availablePlayers = players.filter(player =>
       !registeredPlayerIds.includes(player.id)
     );
@@ -324,14 +332,14 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                       }`}
                     >
                       <div className="flex items-center space-x-2 flex-grow mr-2">
-                        <span className="font-medium truncate">{player.friendly_name}</span>
+                        <span className="font-medium truncate">{player.player.friendlyName}</span>
                         {player.status === 'selected' && (
                           <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
-                            player.selection_method === 'random'
+                            player.selectionMethod === 'random'
                               ? 'bg-purple-100 text-purple-800'
                               : 'bg-green-100 text-green-800'
                           }`}>
-                            {player.selection_method === 'random' ? 'Random' : 'Merit'}
+                            {player.selectionMethod === 'random' ? 'Random' : 'Merit'}
                           </span>
                         )}
                       </div>
@@ -373,7 +381,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                 <h3 className="text-xl font-bold">Unassigned Players ({registrations.length})</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {registrations.map(player => (
-                    <PlayerCard key={player.id} {...player} />
+                    <PlayerCard key={player.id} {...player.player} />
                   ))}
                 </div>
               </motion.div>
@@ -392,7 +400,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                   <h3 className="text-xl font-bold text-blue-500">Blue Team ({registrations.filter(player => player.team === 'blue').length})</h3>
                   <div className="grid grid-cols-1 gap-4">
                     {registrations.filter(player => player.team === 'blue').map(player => (
-                      <PlayerCard key={player.id} {...player} />
+                      <PlayerCard key={player.id} {...player.player} />
                     ))}
                   </div>
                 </motion.div>
@@ -409,7 +417,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                   <h3 className="text-xl font-bold text-orange-500">Orange Team ({registrations.filter(player => player.team === 'orange').length})</h3>
                   <div className="grid grid-cols-1 gap-4">
                     {registrations.filter(player => player.team === 'orange').map(player => (
-                      <PlayerCard key={player.id} {...player} />
+                      <PlayerCard key={player.id} {...player.player} />
                     ))}
                   </div>
                 </motion.div>

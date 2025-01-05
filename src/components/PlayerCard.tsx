@@ -10,26 +10,22 @@ interface PlayerCardProps {
   friendlyName: string
   xp: number
   caps: number
-  preferredPosition: string
   activeBonuses: number
   activePenalties: number
   winRate: number
   currentStreak: number
   maxStreak: number
-  rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
-  avatarSvg: string
+  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
+  avatarSvg?: string
   isRandomlySelected?: boolean
-  status?: 'selected' | 'reserve' | 'dropped_out';
-  hasSlotOffer?: boolean;
-  slotOfferStatus?: 'pending' | 'accepted' | 'declined';
-  slotOfferExpiresAt?: string;
-  slotOfferAvailableAt?: string;
-  potentialOfferTimes?: {
-    available_time: string;
-    next_player_access_time: string;
-  } | null;
-  hasActiveSlotOffers?: boolean;
-  children?: React.ReactNode;
+  status?: string
+  hasSlotOffer?: boolean
+  slotOfferStatus?: string
+  slotOfferExpiresAt?: string
+  slotOfferAvailableAt?: string
+  potentialOfferTimes?: string[]
+  hasActiveSlotOffers?: boolean
+  children?: React.ReactNode
 }
 
 export default function PlayerCard({
@@ -37,7 +33,6 @@ export default function PlayerCard({
   friendlyName,
   xp,
   caps,
-  preferredPosition,
   activeBonuses,
   activePenalties,  
   winRate,

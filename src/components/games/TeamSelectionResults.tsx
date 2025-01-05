@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { calculateRarity } from '../../utils/rarityCalculations';
 import { supabase } from '../../utils/supabase';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 import PlayerCard from '../PlayerCard';
@@ -62,7 +61,6 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<GameSelection | null>(null);
-  const [playerStats, setPlayerStats] = useState<Record<string, { xp: number }>>({});
   const [view, setView] = useState<'list' | 'card'>('card');
   const [showBlueTeam, setShowBlueTeam] = useState(true);
   const [showOrangeTeam, setShowOrangeTeam] = useState(true);
@@ -82,9 +80,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
           .eq('game_id', gameId)
           .single();
 
-        console.log('Balanced Teams Data:', balancedTeams);
-
-        // Get all registrations with selection method
+        // Get all registrations with selection method and player data
         const { data: registrations, error: registrationError } = await supabase
           .from('game_registrations')
           .select(`
@@ -100,189 +96,87 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               active_penalties,
               win_rate,
               current_streak,
-              avatar_svg,
-              attack_rating,
-              defense_rating
+              max_streak,
+              avatar_svg
             )
           `)
           .eq('game_id', gameId);
 
-        if (registrationError) {
-          console.error('Registration Error:', registrationError);
-          throw registrationError;
-        }
+        if (registrationError) throw registrationError;
 
-        if (!registrations || registrations.length === 0) {
-          setError('No players found for this game');
-          return;
-        }
+        // Get rarity data from player_xp
+        const { data: xpData, error: xpError } = await supabase
+          .from('player_xp')
+          .select('player_id, rarity, xp')
+          .in('player_id', registrations.map(r => r.player_id));
 
-        console.log('Registrations with selection method:', registrations);
+        if (xpError) throw xpError;
 
-        // Get latest historical sequence number
-        const { data: latestSequenceData } = await supabase
-          .from('games')
-          .select('sequence_number')
-          .eq('is_historical', true)
-          .order('sequence_number', { ascending: false })
-          .limit(1);
-
-        const latestSequence = Number(latestSequenceData?.[0]?.sequence_number || 0);
-
-        // Get all historical game registrations with their sequence numbers
-        const { data: gameRegs, error: gameRegsError } = await supabase
-          .from('game_registrations')
-          .select(`
-            player_id,
-            team,
-            games!inner (
-              outcome,
-              sequence_number
-            )
-          `)
-          .eq('games.is_historical', true)
-          .order('games(sequence_number)', { ascending: false });
-
-        if (gameRegsError) throw gameRegsError;
-
-        // Group sequences by player
-        const playerSequences = gameRegs.reduce((acc, reg) => {
-          if (!reg.games?.sequence_number) return acc;
-          
-          const playerId = reg.player_id;
-          if (!acc[playerId]) {
-            acc[playerId] = {
-              sequences: [],
-              wins: 0,
-              total: 0
-            };
+        // Create maps for rarity and xp
+        const playerDataMap = xpData?.reduce((acc, data) => ({
+          ...acc,
+          [data.player_id]: {
+            rarity: data.rarity,
+            xp: data.xp
           }
+        }), {} as Record<string, { rarity: string, xp: number }>);
+
+        // Transform registrations into ExtendedPlayerData
+        const transformedRegistrations = registrations.map(reg => {
+          const player = reg.players;
+          const playerData = playerDataMap[reg.player_id] || { rarity: 'Amateur', xp: 0 };
           
-          // Add sequence number if not already present
-          const sequence = Number(reg.games.sequence_number);
-          if (!acc[playerId].sequences.includes(sequence)) {
-            acc[playerId].sequences.push(sequence);
-          }
-          
-          // Calculate wins
-          if (reg.games.outcome && reg.team) {
-            const team = reg.team.toLowerCase();
-            const isWin = (team === 'blue' && reg.games.outcome === 'blue_win') ||
-                         (team === 'orange' && reg.games.outcome === 'orange_win');
-            
-            if (isWin) acc[playerId].wins++;
-            acc[playerId].total++;
-          }
-          
-          return acc;
-        }, {} as Record<string, { sequences: number[], wins: number, total: number }>);
+          // Calculate streak bonus
+          const streakModifier = (player.current_streak || 0) * 0.1;
+          const bonusModifier = (player.active_bonuses || 0) * 0.1;
+          const penaltyModifier = (player.active_penalties || 0) * -0.1;
+          const totalModifier = streakModifier + bonusModifier + penaltyModifier;
 
-        // Get player stats for all selected players
-        const playerIds = registrations.map(reg => reg.players.id);
-        const { data: statsData, error: statsError } = await supabase
-          .from('player_stats')
-          .select('id, xp')
-          .in('id', playerIds);
+          return {
+            id: player.id,
+            friendly_name: player.friendly_name,
+            caps: player.caps || 0,
+            active_bonuses: player.active_bonuses || 0,
+            active_penalties: player.active_penalties || 0,
+            win_rate: player.win_rate || 0,
+            current_streak: player.current_streak || 0,
+            max_streak: player.max_streak || 0,
+            xp: playerData.xp,
+            rarity: playerData.rarity,
+            avatar_svg: player.avatar_svg || '',
+            team: reg.team,
+            status: reg.status,
+            selection_method: reg.selection_method,
+            streakBonus: streakModifier,
+            bonusModifier: bonusModifier,
+            penaltyModifier: penaltyModifier,
+            totalModifier: totalModifier
+          };
+        });
 
-        if (statsError) throw statsError;
-
-        // Transform into a lookup object
-        const statsLookup = statsData.reduce((acc, player) => {
-          acc[player.id] = { xp: player.xp || 0 };
-          return acc;
-        }, {} as Record<string, { xp: number }>);
-
-        setPlayerStats(statsLookup);
-
-        // Process selected players
-        let selectedPlayers = registrations
-          .filter(r => r.status === 'selected')
-          .map(r => {
-            const playerData = playerSequences[r.player_id] || { sequences: [], wins: 0, total: 0 };
-            const playerXP = statsLookup[r.players.id]?.xp || 0;
-
-            // If we have balanced teams from database, use those assignments
-            let team = r.team;
-            const isRandomlySelected = r.selection_method === 'random';
-            
-            if (balancedTeams?.team_assignments?.teams) {
-              const teamAssignment = balancedTeams.team_assignments.teams.find(
-                t => t.player_id === r.player_id
-              );
-              if (teamAssignment) {
-                team = teamAssignment.team;
-              }
-            }
-            
-            console.log('Player:', r.players.friendly_name, 'Random:', isRandomlySelected);
-            
-            return {
-              id: r.players.id,
-              friendly_name: r.players.friendly_name,
-              team,
-              isRandomlySelected,
-              stats: {
-                caps: r.players.caps || 0,
-                activeBonuses: r.players.active_bonuses || 0,
-                activePenalties: r.players.active_penalties || 0,
-                currentStreak: r.players.current_streak || 0,
-                gameSequences: playerData.sequences,
-                latestSequence
-              },
-              win_rate: r.players.win_rate || 0,
-              max_streak: r.players.current_streak || 0,
-              avatar_svg: r.players.avatar_svg,
-              xp: playerXP,
-              rarity: calculateRarity(playerXP, Object.values(statsLookup).map(stats => stats.xp)),
-              attack_rating: r.players.attack_rating || 0,
-              defense_rating: r.players.defense_rating || 0
-            };
-          });
-
-        // Process reserve players
-        const reservePlayers = registrations
-          .filter(r => r.status === 'reserve')
-          .map(r => {
-            const playerData = playerSequences[r.player_id] || { sequences: [], wins: 0, total: 0 };
-            const playerXP = statsLookup[r.players.id]?.xp || 0;
-            
-            return {
-              id: r.players.id,
-              friendly_name: r.players.friendly_name,
-              stats: {
-                caps: r.players.caps || 0,
-                activeBonuses: r.players.active_bonuses || 0,
-                activePenalties: r.players.active_penalties || 0,
-                currentStreak: r.players.current_streak || 0,
-                gameSequences: playerData.sequences,
-                latestSequence
-              },
-              win_rate: r.players.win_rate || 0,
-              max_streak: r.players.current_streak || 0,
-              avatar_svg: r.players.avatar_svg,
-              xp: playerXP,
-              rarity: calculateRarity(playerXP, Object.values(statsLookup).map(stats => stats.xp)),
-              attack_rating: r.players.attack_rating || 0,
-              defense_rating: r.players.defense_rating || 0
-            };
-          });
+        // Group players by team
+        const blueTeam = transformedRegistrations.filter(p => p.team === 'blue');
+        const orangeTeam = transformedRegistrations.filter(p => p.team === 'orange');
+        const reserves = transformedRegistrations.filter(p => p.status === 'reserve');
 
         setSelection({
-          id: balancedTeams?.id || gameId,
+          id: balancedTeams?.id || '',
           game_id: gameId,
           created_at: balancedTeams?.created_at || new Date().toISOString(),
-          selected_players: selectedPlayers,
-          reserve_players: reservePlayers,
-          selection_metadata: balancedTeams?.selection_metadata || {
+          selected_players: [...blueTeam, ...orangeTeam],
+          reserve_players: reserves,
+          selection_metadata: balancedTeams?.team_assignments?.stats || {
             startTime: '',
             endTime: '',
-            meritSlots: selectedPlayers.length,
+            meritSlots: 0,
             randomSlots: 0,
             selectionNotes: []
           }
         });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+
+      } catch (error) {
+        console.error('Error fetching selection and players:', error);
+        setError('Failed to load team selection data');
       } finally {
         setLoading(false);
       }
@@ -349,37 +243,32 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             >
               {blueTeam
                 .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
-                .map((player) => {
-                  const playerXP = playerStats[player.id]?.xp || 0;
-                  const rarity = calculateRarity(playerXP, globalXpValues);
-
-                  return (
-                    <motion.div
+                .map((player) => (
+                  <motion.div
+                    key={player.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <PlayerCard
                       key={player.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <PlayerCard
-                        key={player.id}
-                        id={player.id}
-                        friendlyName={player.friendly_name}
-                        xp={playerXP}
-                        caps={player.stats.caps}
-                        activeBonuses={player.stats.activeBonuses}
-                        activePenalties={player.stats.activePenalties}
-                        winRate={player.win_rate}
-                        currentStreak={player.stats.currentStreak}
-                        maxStreak={player.max_streak}
-                        rarity={rarity}
-                        avatarSvg={player.avatar_svg}
-                        isRandomlySelected={player.isRandomlySelected}
-                        gameSequences={player.stats.gameSequences}
-                      />
-                    </motion.div>
-                  );
-                })}
+                      id={player.id}
+                      friendlyName={player.friendly_name}
+                      xp={player.xp}
+                      caps={player.caps}
+                      activeBonuses={player.active_bonuses}
+                      activePenalties={player.active_penalties}
+                      winRate={player.win_rate}
+                      currentStreak={player.current_streak}
+                      maxStreak={player.max_streak}
+                      rarity={player.rarity}
+                      avatarSvg={player.avatar_svg}
+                      isRandomlySelected={player.selection_method === 'random'}
+                      gameSequences={[]}
+                    />
+                  </motion.div>
+                ))}
             </motion.div>
           </div>
 
@@ -396,37 +285,32 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             >
               {orangeTeam
                 .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
-                .map((player) => {
-                  const playerXP = playerStats[player.id]?.xp || 0;
-                  const rarity = calculateRarity(playerXP, globalXpValues);
-
-                  return (
-                    <motion.div
+                .map((player) => (
+                  <motion.div
+                    key={player.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <PlayerCard
                       key={player.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <PlayerCard
-                        key={player.id}
-                        id={player.id}
-                        friendlyName={player.friendly_name}
-                        xp={playerXP}
-                        caps={player.stats.caps}
-                        activeBonuses={player.stats.activeBonuses}
-                        activePenalties={player.stats.activePenalties}
-                        winRate={player.win_rate}
-                        currentStreak={player.stats.currentStreak}
-                        maxStreak={player.max_streak}
-                        rarity={rarity}
-                        avatarSvg={player.avatar_svg}
-                        isRandomlySelected={player.isRandomlySelected}
-                        gameSequences={player.stats.gameSequences}
-                      />
-                    </motion.div>
-                  );
-                })}
+                      id={player.id}
+                      friendlyName={player.friendly_name}
+                      xp={player.xp}
+                      caps={player.caps}
+                      activeBonuses={player.active_bonuses}
+                      activePenalties={player.active_penalties}
+                      winRate={player.win_rate}
+                      currentStreak={player.current_streak}
+                      maxStreak={player.max_streak}
+                      rarity={player.rarity}
+                      avatarSvg={player.avatar_svg}
+                      isRandomlySelected={player.selection_method === 'random'}
+                      gameSequences={[]}
+                    />
+                  </motion.div>
+                ))}
             </motion.div>
           </div>
         </div>
