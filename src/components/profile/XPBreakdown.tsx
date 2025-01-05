@@ -34,18 +34,22 @@ export default function XPBreakdown({
     // Calculate XP based on how many games ago relative to latest sequence
     const gamesAgo = latestSequence - sequence;
 
-    if (gamesAgo >= 20) {
-      acc.oldest.push(sequence);  // 20+ games ago: 10 XP
+    if (gamesAgo >= 40) {
+      acc.oldest.push(sequence);    // 41+ games ago: 0 XP
+    } else if (gamesAgo >= 30) {
+      acc.older2.push(sequence);    // 31-40 games ago: 5 XP
+    } else if (gamesAgo >= 20) {
+      acc.older1.push(sequence);    // 20-30 games ago: 10 XP
     } else if (gamesAgo >= 10) {
-      acc.older.push(sequence);   // 10-19 games ago: 12 XP
+      acc.older.push(sequence);     // 10-19 games ago: 12 XP
     } else if (gamesAgo >= 5) {
-      acc.mid.push(sequence);     // 5-9 games ago: 14 XP
+      acc.mid.push(sequence);       // 5-9 games ago: 14 XP
     } else if (gamesAgo >= 3) {
-      acc.newer.push(sequence);   // 3-4 games ago: 16 XP
+      acc.newer.push(sequence);     // 3-4 games ago: 16 XP
     } else if (gamesAgo >= 1) {
-      acc.recent.push(sequence);  // 1-2 games ago: 18 XP
+      acc.recent.push(sequence);    // 1-2 games ago: 18 XP
     } else {
-      acc.current.push(sequence); // Current game (0 games ago): 20 XP
+      acc.current.push(sequence);   // Current game (0 games ago): 20 XP
     }
     return acc;
   }, {
@@ -54,6 +58,8 @@ export default function XPBreakdown({
     newer: [] as number[],
     mid: [] as number[],
     older: [] as number[],
+    older1: [] as number[],
+    older2: [] as number[],
     oldest: [] as number[]
   });
 
@@ -63,6 +69,8 @@ export default function XPBreakdown({
     newer: gameCategories.newer.length,
     mid: gameCategories.mid.length,
     older: gameCategories.older.length,
+    older1: gameCategories.older1.length,
+    older2: gameCategories.older2.length,
     oldest: gameCategories.oldest.length
   };
 
@@ -73,7 +81,9 @@ export default function XPBreakdown({
     newer: gameCounts.newer * 16,      // 3-4 games ago
     mid: gameCounts.mid * 14,          // 5-9 games ago
     older: gameCounts.older * 12,      // 10-19 games ago
-    oldest: gameCounts.oldest * 10     // 20+ games ago
+    older1: gameCounts.older1 * 10,    // 20-30 games ago
+    older2: gameCounts.older2 * 5,     // 31-40 games ago
+    oldest: gameCounts.oldest * 0      // 41+ games ago
   };
 
   const baseXP = Object.values(categoryXP).reduce((sum, xp) => sum + xp, 0);
@@ -111,7 +121,9 @@ export default function XPBreakdown({
                     <li>3-4 Games Ago: 16 XP</li>
                     <li>5-9 Games Ago: 14 XP</li>
                     <li>10-19 Games Ago: 12 XP</li>
-                    <li>20+ Games Ago: 10 XP</li>
+                    <li>20-30 Games Ago: 10 XP</li>
+                    <li>31-40 Games Ago: 5 XP</li>
+                    <li>41+ Games Ago: 0 XP</li>
                   </ul>
                 </div>
 
@@ -201,13 +213,45 @@ export default function XPBreakdown({
                         </div>
                       </div>
                     )}
+                    {gameCounts.older1 > 0 && (
+                      <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-medium">20-30 Games Ago</h5>
+                              <p className="text-sm opacity-70">10 XP per game</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-lg">{categoryXP.older1} XP</div>
+                              <div className="text-xs opacity-70">{gameCounts.older1} game{gameCounts.older1 !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {gameCounts.older2 > 0 && (
+                      <div className="card bg-base-100 shadow-sm">
+                        <div className="card-body p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-medium">31-40 Games Ago</h5>
+                              <p className="text-sm opacity-70">5 XP per game</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono text-lg">{categoryXP.older2} XP</div>
+                              <div className="text-xs opacity-70">{gameCounts.older2} game{gameCounts.older2 !== 1 ? 's' : ''}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {gameCounts.oldest > 0 && (
                       <div className="card bg-base-100 shadow-sm">
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium">20+ Games Ago</h5>
-                              <p className="text-sm opacity-70">10 XP per game</p>
+                              <h5 className="font-medium">41+ Games Ago</h5>
+                              <p className="text-sm opacity-70">0 XP per game</p>
                             </div>
                             <div className="text-right">
                               <div className="font-mono text-lg">{categoryXP.oldest} XP</div>
