@@ -28,6 +28,7 @@ import { SlotOffersPage } from './pages/admin/SlotOffersPage';
 import Dashboard from './pages/Dashboard'
 import StandaloneDashboard from './pages/StandaloneDashboard'
 import EmailVerification from './pages/EmailVerification'
+import Changelog from './pages/Changelog'
 
 const App: React.FC = () => {
   return (
@@ -75,6 +76,7 @@ const App: React.FC = () => {
               <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
               <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/changelog" element={<Changelog />} />
             </Route>
           </Routes>
           <Toaster />
