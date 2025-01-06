@@ -254,6 +254,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               losses: playerStats[player.id]?.losses || 0,
               totalGames: playerStats[player.id]?.totalGames || 0,
               winRate: playerStats[player.id]?.winRate || 0,
+              whatsapp_group_member: player.whatsapp_group_member,
               hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
             isExpanded={showSelected}
@@ -293,6 +294,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               losses: playerStats[player.id]?.losses || 0,
               totalGames: playerStats[player.id]?.totalGames || 0,
               winRate: playerStats[player.id]?.winRate || 0,
+              whatsapp_group_member: player.whatsapp_group_member,
               potentialOfferTimes: player.potentialOfferTimes,
               slotOfferAvailableAt: player.slotOffers?.[0]?.available_at || player.potentialOfferTimes?.available_time,
               slotOfferExpiresAt: player.slotOffers?.[0]?.expires_at || player.potentialOfferTimes?.next_player_access_time,

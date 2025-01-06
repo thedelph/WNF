@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Trophy, Star, Medal, CircleOff, CircleDot, Sparkles, Swords, ListChecks, Flame } from 'lucide-react'
 import { usePlayerPenalties } from '../hooks/usePlayerPenalties';
 import { useUser } from '../hooks/useUser';
+import WhatsAppIndicator from './indicators/WhatsAppIndicator';
 
 interface PlayerCardProps {
   id: string
@@ -29,6 +30,7 @@ interface PlayerCardProps {
   slotOfferAvailableAt?: string
   potentialOfferTimes?: string[]
   hasActiveSlotOffers?: boolean
+  whatsapp_group_member?: string
   children?: React.ReactNode
 }
 
@@ -56,6 +58,7 @@ export default function PlayerCard({
   slotOfferAvailableAt,
   potentialOfferTimes,
   hasActiveSlotOffers,
+  whatsapp_group_member,
   children
 }: PlayerCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -228,6 +231,13 @@ export default function PlayerCard({
           transition={{ duration: 0.6 }}
         >
           <div className="card-body p-4">
+            {/* WhatsApp Indicator */}
+            {(whatsapp_group_member === "Yes" || whatsapp_group_member === "Proxy") && (
+              <WhatsAppIndicator 
+                variant={whatsapp_group_member === "Proxy" ? "proxy" : "solid"} 
+              />
+            )}
+            
             <div className="flex justify-between items-center mb-2">
               <h2 className="card-title text-xl">{friendlyName}</h2>
             </div>

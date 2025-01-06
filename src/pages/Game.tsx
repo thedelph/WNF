@@ -99,11 +99,11 @@ const Game = () => {
 
               current_streak,
 
-              win_rate,
-
               max_streak,
 
-              avatar_svg
+              avatar_svg,
+
+              whatsapp_group_member
 
             )
 

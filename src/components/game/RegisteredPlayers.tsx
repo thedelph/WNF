@@ -157,6 +157,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
                 draws={stats.draws}
                 losses={stats.losses}
                 totalGames={stats.total_games}
+                whatsapp_group_member={registration.player.whatsapp_group_member}
               />
             </motion.div>
           );

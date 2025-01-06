@@ -26,6 +26,7 @@ interface Player {
   bonusModifier: number
   penaltyModifier: number
   totalModifier: number
+  whatsapp_group_member?: string
 }
 
 export default function PlayerCardGrid() {
@@ -51,21 +52,43 @@ export default function PlayerCardGrid() {
       try {
         setLoading(true);
         
+        // Get player data including whatsapp status
+        const { data: playersData, error: playersError } = await supabase
+          .from('players')
+          .select(`
+            id,
+            user_id,
+            friendly_name,
+            caps,
+            active_bonuses,
+            active_penalties,
+            win_rate,
+            avatar_svg,
+            current_streak,
+            max_streak,
+            whatsapp_group_member,
+            attack_rating,
+            defense_rating
+          `)
+          .order('caps', { ascending: false });
+
+        if (playersError) throw playersError;
+
         // Get win rates using the get_player_win_rates function
         const { data: winRatesData, error: winRatesError } = await supabase
           .rpc('get_player_win_rates');
 
         if (winRatesError) throw winRatesError;
 
-        // Get other player stats
-        const { data: playersData, error: playersError } = await supabase
-          .from('player_stats')
-          .select('*')
-          .order('xp', { ascending: false });
+        // Get rarity data from player_xp
+        const { data: xpData, error: xpError } = await supabase
+          .from('player_xp')
+          .select('player_id, rarity, xp')
+          .in('player_id', playersData.map(p => p.id));
 
-        if (playersError) throw playersError;
+        if (xpError) throw xpError;
 
-        // Create a map of win rates by player ID
+        // Create maps for quick lookups
         const winRatesMap = new Map(
           winRatesData.map(wr => [wr.id, {
             winRate: wr.win_rate,
@@ -76,72 +99,49 @@ export default function PlayerCardGrid() {
           }])
         );
 
-        // Get rarity data from player_xp
-        const { data: xpData, error: xpError } = await supabase
-          .from('player_xp')
-          .select('player_id, rarity')
-          .in('player_id', playersData.map(p => p.id));
+        const xpMap = new Map(
+          xpData.map(xp => [xp.player_id, {
+            rarity: xp.rarity,
+            xp: xp.xp
+          }])
+        );
 
-        if (xpError) throw xpError;
-
-        // Create a map of player IDs to rarity
-        const rarityMap = xpData?.reduce((acc, xp) => ({
-          ...acc,
-          [xp.player_id]: xp.rarity
-        }), {});
-
-        // Get dropout penalties
-        const { data: dropoutData, error: dropoutError } = await supabase
-          .from('player_penalties')
-          .select('player_id')
-          .in('player_id', playersData.map(p => p.id))
-          .eq('penalty_type', 'SAME_DAY_DROPOUT')
-          .gt('games_remaining', 0);
-
-        if (dropoutError) throw dropoutError;
-
-        // Create a map of player IDs to dropout penalties count
-        const dropoutMap = dropoutData?.reduce((acc, penalty) => ({
-          ...acc,
-          [penalty.player_id]: (acc[penalty.player_id] || 0) + 1
-        }), {} as Record<string, number>);
-
-        // Transform the data to match our Player interface
-        const playersWithRarity = playersData.map(player => {
-          const winRateData = winRatesMap.get(player.id);
-          // Calculate streak bonus
-          const streakModifier = (player.current_streak || 0) * 0.1;
-          const bonusModifier = (player.active_bonuses || 0) * 0.1;
-          const penaltyModifier = (player.active_penalties || 0) * -0.1;
-          const dropoutModifier = (dropoutMap?.[player.id] || 0) * -0.5; // 50% penalty per dropout
-          const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
+        // Combine all the data
+        const combinedPlayers = playersData.map(player => {
+          const winRateData = winRatesMap.get(player.id) || {
+            winRate: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            totalGames: 0
+          };
+          
+          const xpInfo = xpMap.get(player.id) || {
+            rarity: 'Amateur',
+            xp: 0
+          };
 
           return {
             id: player.id,
             friendlyName: player.friendly_name,
-            caps: player.caps || 0,
-            preferredPosition: player.preferred_position || '',
-            activeBonuses: player.active_bonuses || 0,
-            activePenalties: player.active_penalties || 0,
-            winRate: winRateData?.winRate || 0,
-            currentStreak: player.current_streak || 0,
-            maxStreak: player.max_streak || 0,
-            xp: player.xp || 0,
-            avatarSvg: player.avatar_svg || '',
-            rarity: rarityMap?.[player.id] || 'Amateur',
-            wins: winRateData?.wins || 0,
-            draws: winRateData?.draws || 0,
-            losses: winRateData?.losses || 0,
-            totalGames: winRateData?.totalGames || 0,
-            streakBonus: streakModifier,
-            dropoutPenalty: dropoutModifier,
-            bonusModifier: bonusModifier,
-            penaltyModifier: penaltyModifier,
-            totalModifier: totalModifier
+            xp: xpInfo.xp,
+            caps: player.caps,
+            activeBonuses: player.active_bonuses,
+            activePenalties: player.active_penalties,
+            winRate: winRateData.winRate,
+            wins: winRateData.wins,
+            draws: winRateData.draws,
+            losses: winRateData.losses,
+            totalGames: winRateData.totalGames,
+            currentStreak: player.current_streak,
+            maxStreak: player.max_streak,
+            rarity: xpInfo.rarity,
+            avatarSvg: player.avatar_svg,
+            whatsapp_group_member: player.whatsapp_group_member
           };
         });
 
-        setPlayers(playersWithRarity);
+        setPlayers(combinedPlayers);
       } catch (error) {
         console.error('Error fetching players:', error);
         toast.error('Failed to load players');
@@ -354,7 +354,24 @@ export default function PlayerCardGrid() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.3 }}
               >
-                <PlayerCard {...player} />
+                <PlayerCard
+                  id={player.id}
+                  friendlyName={player.friendlyName}
+                  xp={player.xp}
+                  caps={player.caps}
+                  activeBonuses={player.activeBonuses}
+                  activePenalties={player.activePenalties}
+                  winRate={player.winRate}
+                  wins={player.wins}
+                  draws={player.draws}
+                  losses={player.losses}
+                  totalGames={player.totalGames}
+                  currentStreak={player.currentStreak}
+                  maxStreak={player.maxStreak}
+                  rarity={player.rarity}
+                  avatarSvg={player.avatarSvg}
+                  whatsapp_group_member={player.whatsapp_group_member}
+                />
               </motion.div>
             ))}
           </AnimatePresence>

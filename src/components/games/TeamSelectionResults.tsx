@@ -105,7 +105,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               active_penalties,
               current_streak,
               max_streak,
-              avatar_svg
+              avatar_svg,
+              whatsapp_group_member
             )
           `)
           .eq('game_id', gameId);
@@ -178,7 +179,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             draws: winRateData.draws,
             losses: winRateData.losses,
             totalGames: winRateData.total_games,
-            winRate: winRateData.win_rate
+            winRate: winRateData.win_rate,
+            whatsapp_group_member: player.whatsapp_group_member
           };
         });
 
@@ -298,6 +300,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       losses={player.losses}
                       totalGames={player.totalGames}
                       winRate={player.winRate}
+                      whatsapp_group_member={player.whatsapp_group_member}
                     />
                   </motion.div>
                 ))}
@@ -344,6 +347,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       losses={player.losses}
                       totalGames={player.totalGames}
                       winRate={player.winRate}
+                      whatsapp_group_member={player.whatsapp_group_member}
                     />
                   </motion.div>
                 ))}

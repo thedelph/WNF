@@ -44,7 +44,8 @@ export const useGamePlayers = (gameId: string) => {
           player:players!game_registrations_player_id_fkey (
             id,
             friendly_name,
-            avatar_svg
+            avatar_svg,
+            whatsapp_group_member
           ),
           player_stats!game_registrations_player_id_fkey (
             caps,
@@ -117,6 +118,7 @@ export const useGamePlayers = (gameId: string) => {
           id: reg.player.id,
           friendly_name: reg.player.friendly_name,
           avatar_svg: reg.player.avatar_svg,
+          whatsapp_group_member: reg.player.whatsapp_group_member,
           caps: reg.player_stats.caps,
           active_bonuses: reg.player_stats.active_bonuses,
           active_penalties: reg.player_stats.active_penalties,
