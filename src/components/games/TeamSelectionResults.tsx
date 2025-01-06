@@ -72,13 +72,22 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
     const fetchSelectionAndPlayers = async () => {
       try {
         setLoading(true);
-        
+        setError(null);
+
+        // Get win rates using the get_player_win_rates function
+        const { data: winRatesData, error: winRatesError } = await supabase
+          .rpc('get_player_win_rates');
+
+        if (winRatesError) throw winRatesError;
+
         // Try to get balanced teams from database
         const { data: balancedTeams, error: balanceError } = await supabase
           .from('balanced_team_assignments')
           .select('*')
           .eq('game_id', gameId)
           .single();
+
+        if (balanceError) throw balanceError;
 
         // Get all registrations with selection method and player data
         const { data: registrations, error: registrationError } = await supabase
@@ -94,7 +103,6 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               caps,
               active_bonuses,
               active_penalties,
-              win_rate,
               current_streak,
               max_streak,
               avatar_svg
@@ -103,6 +111,15 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
           .eq('game_id', gameId);
 
         if (registrationError) throw registrationError;
+
+        // Create win rates map
+        const winRatesMap = new Map(winRatesData?.map(wr => [wr.id, {
+          wins: wr.wins,
+          draws: wr.draws,
+          losses: wr.losses,
+          total_games: wr.total_games,
+          win_rate: wr.win_rate
+        }]) || []);
 
         // Get rarity data from player_xp
         const { data: xpData, error: xpError } = await supabase
@@ -125,6 +142,13 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         const transformedRegistrations = registrations.map(reg => {
           const player = reg.players;
           const playerData = playerDataMap[reg.player_id] || { rarity: 'Amateur', xp: 0 };
+          const winRateData = winRatesMap.get(reg.player_id) || {
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            total_games: 0,
+            win_rate: 0
+          };
           
           // Calculate streak bonus
           const streakModifier = (player.current_streak || 0) * 0.1;
@@ -138,7 +162,6 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             caps: player.caps || 0,
             active_bonuses: player.active_bonuses || 0,
             active_penalties: player.active_penalties || 0,
-            win_rate: player.win_rate || 0,
             current_streak: player.current_streak || 0,
             max_streak: player.max_streak || 0,
             xp: playerData.xp,
@@ -150,7 +173,12 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             streakBonus: streakModifier,
             bonusModifier: bonusModifier,
             penaltyModifier: penaltyModifier,
-            totalModifier: totalModifier
+            totalModifier: totalModifier,
+            wins: winRateData.wins,
+            draws: winRateData.draws,
+            losses: winRateData.losses,
+            totalGames: winRateData.total_games,
+            winRate: winRateData.win_rate
           };
         });
 
@@ -259,13 +287,17 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       caps={player.caps}
                       activeBonuses={player.active_bonuses}
                       activePenalties={player.active_penalties}
-                      winRate={player.win_rate}
                       currentStreak={player.current_streak}
                       maxStreak={player.max_streak}
                       rarity={player.rarity}
                       avatarSvg={player.avatar_svg}
                       isRandomlySelected={player.selection_method === 'random'}
                       gameSequences={[]}
+                      wins={player.wins}
+                      draws={player.draws}
+                      losses={player.losses}
+                      totalGames={player.totalGames}
+                      winRate={player.winRate}
                     />
                   </motion.div>
                 ))}
@@ -301,13 +333,17 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       caps={player.caps}
                       activeBonuses={player.active_bonuses}
                       activePenalties={player.active_penalties}
-                      winRate={player.win_rate}
                       currentStreak={player.current_streak}
                       maxStreak={player.max_streak}
                       rarity={player.rarity}
                       avatarSvg={player.avatar_svg}
                       isRandomlySelected={player.selection_method === 'random'}
                       gameSequences={[]}
+                      wins={player.wins}
+                      draws={player.draws}
+                      losses={player.losses}
+                      totalGames={player.totalGames}
+                      winRate={player.winRate}
                     />
                   </motion.div>
                 ))}

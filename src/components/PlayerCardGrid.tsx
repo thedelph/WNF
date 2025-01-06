@@ -8,14 +8,19 @@ interface Player {
   id: string
   friendlyName: string
   caps: number
+  preferredPosition: string
   activeBonuses: number
   activePenalties: number
   winRate: number
   currentStreak: number
   maxStreak: number
   xp: number
-  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
   avatarSvg?: string
+  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
+  wins: number
+  draws: number
+  losses: number
+  totalGames: number
   streakBonus: number
   dropoutPenalty: number
   bonusModifier: number
@@ -42,99 +47,111 @@ export default function PlayerCardGrid() {
   })
 
   useEffect(() => {
-    fetchPlayers()
-  }, [])
+    const fetchPlayers = async () => {
+      try {
+        setLoading(true);
+        
+        // Get win rates using the get_player_win_rates function
+        const { data: winRatesData, error: winRatesError } = await supabase
+          .rpc('get_player_win_rates');
 
-  const fetchPlayers = async () => {
-    try {
-      setLoading(true);
-      
-      // Get all players with their stats
-      const { data: playersData, error: statsError } = await supabase
-        .from('player_stats')
-        .select(`
-          id,
-          friendly_name,
-          xp,
-          caps,
-          active_bonuses,
-          active_penalties,
-          win_rate,
-          current_streak,
-          max_streak,
-          avatar_svg
-        `)
-        .order('xp', { ascending: false });
+        if (winRatesError) throw winRatesError;
 
-      if (statsError) throw statsError;
+        // Get other player stats
+        const { data: playersData, error: playersError } = await supabase
+          .from('player_stats')
+          .select('*')
+          .order('xp', { ascending: false });
 
-      // Get rarity data from player_xp
-      const { data: xpData, error: xpError } = await supabase
-        .from('player_xp')
-        .select('player_id, rarity')
-        .in('player_id', playersData.map(p => p.id));
+        if (playersError) throw playersError;
 
-      if (xpError) throw xpError;
+        // Create a map of win rates by player ID
+        const winRatesMap = new Map(
+          winRatesData.map(wr => [wr.id, {
+            winRate: wr.win_rate,
+            wins: wr.wins,
+            draws: wr.draws,
+            losses: wr.losses,
+            totalGames: wr.total_games
+          }])
+        );
 
-      // Create a map of player IDs to rarity
-      const rarityMap = xpData?.reduce((acc, xp) => ({
-        ...acc,
-        [xp.player_id]: xp.rarity
-      }), {});
+        // Get rarity data from player_xp
+        const { data: xpData, error: xpError } = await supabase
+          .from('player_xp')
+          .select('player_id, rarity')
+          .in('player_id', playersData.map(p => p.id));
 
-      // Get dropout penalties
-      const { data: dropoutData, error: dropoutError } = await supabase
-        .from('player_penalties')
-        .select('player_id')
-        .in('player_id', playersData.map(p => p.id))
-        .eq('penalty_type', 'SAME_DAY_DROPOUT')
-        .gt('games_remaining', 0);
+        if (xpError) throw xpError;
 
-      if (dropoutError) throw dropoutError;
+        // Create a map of player IDs to rarity
+        const rarityMap = xpData?.reduce((acc, xp) => ({
+          ...acc,
+          [xp.player_id]: xp.rarity
+        }), {});
 
-      // Create a map of player IDs to dropout penalties count
-      const dropoutMap = dropoutData?.reduce((acc, penalty) => ({
-        ...acc,
-        [penalty.player_id]: (acc[penalty.player_id] || 0) + 1
-      }), {} as Record<string, number>);
+        // Get dropout penalties
+        const { data: dropoutData, error: dropoutError } = await supabase
+          .from('player_penalties')
+          .select('player_id')
+          .in('player_id', playersData.map(p => p.id))
+          .eq('penalty_type', 'SAME_DAY_DROPOUT')
+          .gt('games_remaining', 0);
 
-      // Transform the data to match our Player interface
-      const transformedPlayers = playersData.map(player => {
-        // Calculate streak bonus
-        const streakModifier = (player.current_streak || 0) * 0.1;
-        const bonusModifier = (player.active_bonuses || 0) * 0.1;
-        const penaltyModifier = (player.active_penalties || 0) * -0.1;
-        const dropoutModifier = (dropoutMap?.[player.id] || 0) * -0.5; // 50% penalty per dropout
-        const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
+        if (dropoutError) throw dropoutError;
 
-        return {
-          id: player.id,
-          friendlyName: player.friendly_name,
-          caps: player.caps || 0,
-          activeBonuses: player.active_bonuses || 0,
-          activePenalties: player.active_penalties || 0,
-          winRate: player.win_rate || 0,
-          currentStreak: player.current_streak || 0,
-          maxStreak: player.max_streak || 0,
-          xp: player.xp || 0,
-          avatarSvg: player.avatar_svg || '',
-          rarity: rarityMap?.[player.id] || 'Amateur',
-          streakBonus: streakModifier,
-          dropoutPenalty: dropoutModifier,
-          bonusModifier: bonusModifier,
-          penaltyModifier: penaltyModifier,
-          totalModifier: totalModifier
-        };
-      });
+        // Create a map of player IDs to dropout penalties count
+        const dropoutMap = dropoutData?.reduce((acc, penalty) => ({
+          ...acc,
+          [penalty.player_id]: (acc[penalty.player_id] || 0) + 1
+        }), {} as Record<string, number>);
 
-      setPlayers(transformedPlayers);
-    } catch (error) {
-      console.error('Error fetching players:', error);
-      toast.error('Failed to load players');
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Transform the data to match our Player interface
+        const playersWithRarity = playersData.map(player => {
+          const winRateData = winRatesMap.get(player.id);
+          // Calculate streak bonus
+          const streakModifier = (player.current_streak || 0) * 0.1;
+          const bonusModifier = (player.active_bonuses || 0) * 0.1;
+          const penaltyModifier = (player.active_penalties || 0) * -0.1;
+          const dropoutModifier = (dropoutMap?.[player.id] || 0) * -0.5; // 50% penalty per dropout
+          const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
+
+          return {
+            id: player.id,
+            friendlyName: player.friendly_name,
+            caps: player.caps || 0,
+            preferredPosition: player.preferred_position || '',
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            winRate: winRateData?.winRate || 0,
+            currentStreak: player.current_streak || 0,
+            maxStreak: player.max_streak || 0,
+            xp: player.xp || 0,
+            avatarSvg: player.avatar_svg || '',
+            rarity: rarityMap?.[player.id] || 'Amateur',
+            wins: winRateData?.wins || 0,
+            draws: winRateData?.draws || 0,
+            losses: winRateData?.losses || 0,
+            totalGames: winRateData?.totalGames || 0,
+            streakBonus: streakModifier,
+            dropoutPenalty: dropoutModifier,
+            bonusModifier: bonusModifier,
+            penaltyModifier: penaltyModifier,
+            totalModifier: totalModifier
+          };
+        });
+
+        setPlayers(playersWithRarity);
+      } catch (error) {
+        console.error('Error fetching players:', error);
+        toast.error('Failed to load players');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlayers();
+  }, []);
 
   const sortedAndFilteredPlayers = players
     .filter(player => {

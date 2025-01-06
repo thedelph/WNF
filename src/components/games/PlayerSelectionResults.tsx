@@ -44,6 +44,14 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         
         // Get player stats for all players
         const playerIds = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers].map(player => player.id);
+        
+        // Get win rates
+        const { data: winRatesData, error: winRatesError } = await supabase
+          .rpc('get_player_win_rates');
+
+        if (winRatesError) throw winRatesError;
+
+        // Get other player stats
         const { data: statsData, error: statsError } = await supabase
           .from('player_stats')
           .select(`
@@ -52,7 +60,6 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             caps,
             active_bonuses,
             active_penalties,
-            win_rate,
             current_streak,
             max_streak
           `)
@@ -67,6 +74,15 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         if (statsError) throw statsError;
         if (xpError) throw xpError;
 
+        // Create win rates map
+        const winRatesMap = new Map(winRatesData?.map(wr => [wr.id, {
+          wins: wr.wins,
+          draws: wr.draws,
+          losses: wr.losses,
+          total_games: wr.total_games,
+          win_rate: wr.win_rate
+        }]) || []);
+
         // Combine rarity data with stats
         const rarityMap = xpData?.reduce((acc, xp) => ({
           ...acc,
@@ -74,19 +90,26 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         }), {});
 
         // Transform into record for easy lookup
-        const stats = statsData?.reduce((acc, stat) => ({
-          ...acc,
-          [stat.id]: {
-            xp: stat.xp || 0,
-            rarity: rarityMap?.[stat.id] || 'Amateur',
-            caps: stat.caps || 0,
-            activeBonuses: stat.active_bonuses || 0,
-            activePenalties: stat.active_penalties || 0,
-            winRate: stat.win_rate || 0,
-            currentStreak: stat.current_streak || 0,
-            maxStreak: stat.max_streak || 0
-          }
-        }), {});
+        const stats = statsData?.reduce((acc, stat) => {
+          const winRate = winRatesMap.get(stat.id);
+          return {
+            ...acc,
+            [stat.id]: {
+              xp: stat.xp || 0,
+              rarity: rarityMap?.[stat.id] || 'Amateur',
+              caps: stat.caps || 0,
+              activeBonuses: stat.active_bonuses || 0,
+              activePenalties: stat.active_penalties || 0,
+              currentStreak: stat.current_streak || 0,
+              maxStreak: stat.max_streak || 0,
+              wins: winRate?.wins || 0,
+              draws: winRate?.draws || 0,
+              losses: winRate?.losses || 0,
+              totalGames: winRate?.total_games || 0,
+              winRate: winRate?.win_rate || 0
+            }
+          };
+        }, {});
 
         setPlayerStats(stats || {});
       } catch (error) {
@@ -224,9 +247,13 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               caps: playerStats[player.id]?.caps || 0,
               activeBonuses: playerStats[player.id]?.activeBonuses || 0,
               activePenalties: playerStats[player.id]?.activePenalties || 0,
-              winRate: playerStats[player.id]?.winRate || 0,
               currentStreak: playerStats[player.id]?.currentStreak || 0,
               maxStreak: playerStats[player.id]?.maxStreak || 0,
+              wins: playerStats[player.id]?.wins || 0,
+              draws: playerStats[player.id]?.draws || 0,
+              losses: playerStats[player.id]?.losses || 0,
+              totalGames: playerStats[player.id]?.totalGames || 0,
+              winRate: playerStats[player.id]?.winRate || 0,
               hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
             isExpanded={showSelected}
@@ -259,9 +286,13 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               caps: playerStats[player.id]?.caps || 0,
               activeBonuses: playerStats[player.id]?.activeBonuses || 0,
               activePenalties: playerStats[player.id]?.activePenalties || 0,
-              winRate: playerStats[player.id]?.winRate || 0,
               currentStreak: playerStats[player.id]?.currentStreak || 0,
               maxStreak: playerStats[player.id]?.maxStreak || 0,
+              wins: playerStats[player.id]?.wins || 0,
+              draws: playerStats[player.id]?.draws || 0,
+              losses: playerStats[player.id]?.losses || 0,
+              totalGames: playerStats[player.id]?.totalGames || 0,
+              winRate: playerStats[player.id]?.winRate || 0,
               potentialOfferTimes: player.potentialOfferTimes,
               slotOfferAvailableAt: player.slotOffers?.[0]?.available_at || player.potentialOfferTimes?.available_time,
               slotOfferExpiresAt: player.slotOffers?.[0]?.expires_at || player.potentialOfferTimes?.next_player_access_time,
@@ -299,9 +330,13 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               caps: playerStats[player.id]?.caps || 0,
               activeBonuses: playerStats[player.id]?.activeBonuses || 0,
               activePenalties: playerStats[player.id]?.activePenalties || 0,
-              winRate: playerStats[player.id]?.winRate || 0,
               currentStreak: playerStats[player.id]?.currentStreak || 0,
               maxStreak: playerStats[player.id]?.maxStreak || 0,
+              wins: playerStats[player.id]?.wins || 0,
+              draws: playerStats[player.id]?.draws || 0,
+              losses: playerStats[player.id]?.losses || 0,
+              totalGames: playerStats[player.id]?.totalGames || 0,
+              winRate: playerStats[player.id]?.winRate || 0,
               hasActiveSlotOffers: activeSlotOffers?.length > 0
             }))}
             isExpanded={showDroppedOut}
@@ -318,9 +353,13 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             caps: playerStats[player.id]?.caps || 0,
             activeBonuses: playerStats[player.id]?.activeBonuses || 0,
             activePenalties: playerStats[player.id]?.activePenalties || 0,
-            winRate: playerStats[player.id]?.winRate || 0,
             currentStreak: playerStats[player.id]?.currentStreak || 0,
-            maxStreak: playerStats[player.id]?.maxStreak || 0
+            maxStreak: playerStats[player.id]?.maxStreak || 0,
+            wins: playerStats[player.id]?.wins || 0,
+            draws: playerStats[player.id]?.draws || 0,
+            losses: playerStats[player.id]?.losses || 0,
+            totalGames: playerStats[player.id]?.totalGames || 0,
+            winRate: playerStats[player.id]?.winRate || 0
           }))}
           reservePlayers={reservePlayers.map(player => ({
             ...player,
@@ -330,9 +369,13 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             caps: playerStats[player.id]?.caps || 0,
             activeBonuses: playerStats[player.id]?.activeBonuses || 0,
             activePenalties: playerStats[player.id]?.activePenalties || 0,
-            winRate: playerStats[player.id]?.winRate || 0,
             currentStreak: playerStats[player.id]?.currentStreak || 0,
-            maxStreak: playerStats[player.id]?.maxStreak || 0
+            maxStreak: playerStats[player.id]?.maxStreak || 0,
+            wins: playerStats[player.id]?.wins || 0,
+            draws: playerStats[player.id]?.draws || 0,
+            losses: playerStats[player.id]?.losses || 0,
+            totalGames: playerStats[player.id]?.totalGames || 0,
+            winRate: playerStats[player.id]?.winRate || 0
           }))}
           droppedOutPlayers={droppedOutPlayers.map(player => ({
             ...player,
@@ -342,9 +385,13 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             caps: playerStats[player.id]?.caps || 0,
             activeBonuses: playerStats[player.id]?.activeBonuses || 0,
             activePenalties: playerStats[player.id]?.activePenalties || 0,
-            winRate: playerStats[player.id]?.winRate || 0,
             currentStreak: playerStats[player.id]?.currentStreak || 0,
-            maxStreak: playerStats[player.id]?.maxStreak || 0
+            maxStreak: playerStats[player.id]?.maxStreak || 0,
+            wins: playerStats[player.id]?.wins || 0,
+            draws: playerStats[player.id]?.draws || 0,
+            losses: playerStats[player.id]?.losses || 0,
+            totalGames: playerStats[player.id]?.totalGames || 0,
+            winRate: playerStats[player.id]?.winRate || 0
           }))}
           playerStats={playerStats}
         />
