@@ -97,17 +97,46 @@ export const useGamePlayers = (gameId: string) => {
         return acc;
       }, {} as Record<number, any>) || {};
 
+      // Helper function to sort by slot offer priority
+      const sortBySlotOfferPriority = (a: any, b: any) => {
+        // First compare WhatsApp status
+        const aIsWhatsApp = a.player.whatsapp_group_member === 'Yes' || a.player.whatsapp_group_member === 'Proxy';
+        const bIsWhatsApp = b.player.whatsapp_group_member === 'Yes' || b.player.whatsapp_group_member === 'Proxy';
+        
+        if (aIsWhatsApp !== bIsWhatsApp) {
+          return aIsWhatsApp ? -1 : 1;
+        }
+        
+        // Then compare XP
+        if ((b.player_stats.xp || 0) !== (a.player_stats.xp || 0)) {
+          return (b.player_stats.xp || 0) - (a.player_stats.xp || 0);
+        }
+        
+        // Then compare streak
+        if ((b.player_stats.current_streak || 0) !== (a.player_stats.current_streak || 0)) {
+          return (b.player_stats.current_streak || 0) - (a.player_stats.current_streak || 0);
+        }
+        
+        // Then compare caps
+        if ((b.player_stats.caps || 0) !== (a.player_stats.caps || 0)) {
+          return (b.player_stats.caps || 0) - (a.player_stats.caps || 0);
+        }
+
+        // Finally compare registration time
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      };
+
       // Transform players
       const transformedPlayers = registrations.map((reg, index) => {
         const playerSlotOffers = slotOffersByPlayer[reg.player.id] || [];
         const latestOffer = playerSlotOffers[0];
         const isReserve = reg.status === 'reserve';
         
-        // For reserve players, get their rank based on XP
+        // For reserve players, get their rank based on proper slot offer priority
         const reserveRank = isReserve ? 
           registrations
             .filter(r => r.status === 'reserve')
-            .sort((a, b) => (b.player_stats.xp || 0) - (a.player_stats.xp || 0))
+            .sort(sortBySlotOfferPriority)
             .findIndex(r => r.player.id === reg.player.id) + 1 
           : null;
 
