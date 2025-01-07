@@ -707,8 +707,8 @@
           "table_name": "debug_logs",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "96 kB",
-          "estimated_rows": 46,
+          "total_size": "112 kB",
+          "estimated_rows": 177,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -727,8 +727,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175}",
-              "correlation": "0.281036"
+              "histogram_bounds": "{130,131,133,135,137,138,140,142,144,145,147,149,151,152,154,156,158,159,161,163,165,166,168,170,172,174,175,177,179,181,182,184,186,188,189,191,193,195,196,198,200,202,203,205,207,209,210,212,214,216,218,219,221,223,225,226,228,230,232,233,235,237,239,240,242,244,246,247,249,251,253,254,256,258,260,262,263,265,267,269,270,272,274,276,277,279,281,283,284,286,288,290,291,293,295,297,298,300,302,304,306}",
+              "correlation": "0.483373"
             },
             {
               "name": "timestamp",
@@ -742,11 +742,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.369565,
-              "most_common_values": "{\"2025-01-06 12:20:15.450003+00\",\"2025-01-06 12:20:16.235485+00\",\"2025-01-07 15:07:27.005219+00\",\"2025-01-07 15:07:27.681594+00\",\"2025-01-07 15:07:28.257061+00\",\"2025-01-07 15:07:28.821519+00\",\"2025-01-07 15:07:29.425799+00\",\"2025-01-07 15:07:30.018645+00\",\"2025-01-07 15:07:30.687726+00\",\"2025-01-07 15:07:31.730803+00\",\"2025-01-07 15:07:35.401735+00\",\"2025-01-07 15:07:36.462371+00\",\"2025-01-07 15:07:37.29618+00\",\"2025-01-07 15:07:38.441506+00\",\"2025-01-06 12:20:20.143545+00\"}",
-              "most_common_frequencies": "{0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0652174,0.0434783}",
+              "n_distinct": -0.344633,
+              "most_common_values": "{\"2025-01-06 12:20:15.450003+00\",\"2025-01-06 12:20:16.235485+00\",\"2025-01-07 15:07:27.005219+00\",\"2025-01-07 15:07:27.681594+00\",\"2025-01-07 15:07:28.257061+00\",\"2025-01-07 15:07:28.821519+00\",\"2025-01-07 15:07:29.425799+00\",\"2025-01-07 15:07:30.018645+00\",\"2025-01-07 15:07:30.687726+00\",\"2025-01-07 15:07:31.730803+00\",\"2025-01-07 15:07:35.401735+00\",\"2025-01-07 15:07:36.462371+00\",\"2025-01-07 15:07:37.29618+00\",\"2025-01-07 15:07:38.441506+00\",\"2025-01-07 16:14:10.330871+00\",\"2025-01-07 16:14:12.981233+00\",\"2025-01-07 16:14:23.731751+00\",\"2025-01-07 16:14:25.160765+00\",\"2025-01-07 16:14:28.854761+00\",\"2025-01-07 16:14:31.443741+00\",\"2025-01-07 16:14:32.488193+00\",\"2025-01-07 16:14:37.769973+00\",\"2025-01-07 16:14:39.992225+00\",\"2025-01-07 16:14:41.497186+00\",\"2025-01-07 16:14:42.612972+00\",\"2025-01-07 16:14:44.280565+00\",\"2025-01-07 16:25:40.413754+00\",\"2025-01-07 16:25:53.891637+00\",\"2025-01-07 16:26:03.275859+00\",\"2025-01-07 16:26:26.945646+00\",\"2025-01-07 16:26:28.242236+00\",\"2025-01-07 16:26:36.590683+00\",\"2025-01-07 16:26:42.274579+00\",\"2025-01-07 16:26:47.452893+00\",\"2025-01-07 16:26:53.959656+00\",\"2025-01-07 16:26:57.76224+00\",\"2025-01-07 16:27:01.192763+00\",\"2025-01-07 16:31:53.217388+00\",\"2025-01-07 16:31:55.423895+00\",\"2025-01-07 16:31:56.934738+00\",\"2025-01-07 16:31:57.856142+00\",\"2025-01-07 16:31:59.059117+00\",\"2025-01-07 16:31:59.885213+00\",\"2025-01-07 16:32:01.319352+00\",\"2025-01-07 16:39:10.297244+00\",\"2025-01-07 16:43:07.713679+00\",\"2025-01-07 16:43:09.67902+00\",\"2025-01-07 16:43:24.308184+00\",\"2025-01-07 16:43:29.611093+00\",\"2025-01-07 16:43:37.052732+00\",\"2025-01-07 16:43:37.822155+00\",\"2025-01-07 16:43:38.463852+00\",\"2025-01-07 16:43:39.246381+00\",\"2025-01-07 16:43:39.878478+00\",\"2025-01-07 16:43:40.50784+00\",\"2025-01-07 16:43:41.168814+00\",\"2025-01-07 16:43:43.018035+00\",\"2025-01-06 12:20:20.143545+00\",\"2025-01-07 16:45:07.622395+00\"}",
+              "most_common_frequencies": "{0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0112994,0.0112994}",
               "histogram_bounds": "{\"2025-01-06 00:00:00.213052+00\",\"2025-01-07 00:00:00.065276+00\"}",
-              "correlation": "0.281036"
+              "correlation": "0.483492"
             },
             {
               "name": "event_type",
@@ -762,9 +762,9 @@
               "numeric_scale": null,
               "n_distinct": 4,
               "most_common_values": "{game_stats,slot_offer_response,player_selection,maintenance}",
-              "most_common_frequencies": "{0.326087,0.326087,0.304348,0.0434783}",
+              "most_common_frequencies": "{0.333333,0.333333,0.322034,0.0112994}",
               "histogram_bounds": null,
-              "correlation": "0.285106"
+              "correlation": "0.307006"
             },
             {
               "name": "message",
@@ -778,11 +778,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 4,
-              "most_common_values": "{\"Game statistics\",\"Processing slot offer response\",\"Selected next player based on player_stats XP\",\"Cleaned up old debug logs\"}",
-              "most_common_frequencies": "{0.326087,0.326087,0.304348,0.0434783}",
+              "n_distinct": 5,
+              "most_common_values": "{\"Game statistics\",\"Processing slot offer response\",\"Selected next player based on player_stats XP\",\"Selected next player based on WhatsApp status and XP\",\"Cleaned up old debug logs\"}",
+              "most_common_frequencies": "{0.333333,0.333333,0.248588,0.0734463,0.0112994}",
               "histogram_bounds": null,
-              "correlation": "0.293987"
+              "correlation": "0.300051"
             },
             {
               "name": "details",
@@ -796,11 +796,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.73913,
-              "most_common_values": "{\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\"}",
-              "most_common_frequencies": "{0.26087,0.0434783}",
-              "histogram_bounds": "{\"{\\\"cleanup_time\\\": \\\"2025-01-06 00:00:00.213052+00\\\", \\\"deleted_count\\\": 1, \\\"remaining_logs\\\": 8, \\\"retention_hours\\\": 24}\",\"{\\\"cleanup_time\\\": \\\"2025-01-07 00:00:00.065276+00\\\", \\\"deleted_count\\\": 8, \\\"remaining_logs\\\": 9, \\\"retention_hours\\\": 24}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"accepted\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Gaz G\\\", \\\"selected_player\\\": \\\"d31a40f9-1972-43e9-9864-277110c9e958\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Matty\\\", \\\"selected_player\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Twiggy\\\", \\\"selected_player\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\"}\",\"{\\\"xp\\\": 68, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Joe\\\", \\\"selected_player\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 18, \\\"active_selected\\\": 17}\"}",
-              "correlation": "0.129941"
+              "n_distinct": -0.711864,
+              "most_common_values": "{\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\"}",
+              "most_common_frequencies": "{0.0677966,0.0677966,0.0677966,0.0621469,0.0451977,0.0112994}",
+              "histogram_bounds": "{\"{\\\"cleanup_time\\\": \\\"2025-01-06 00:00:00.213052+00\\\", \\\"deleted_count\\\": 1, \\\"remaining_logs\\\": 8, \\\"retention_hours\\\": 24}\",\"{\\\"cleanup_time\\\": \\\"2025-01-07 00:00:00.065276+00\\\", \\\"deleted_count\\\": 8, \\\"remaining_logs\\\": 9, \\\"retention_hours\\\": 24}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"accepted\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"d31a40f9-1972-43e9-9864-277110c9e958\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"xp\\\": 30, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Kaci\\\", \\\"selected_player\\\": \\\"c83d54c5-3468-4fde-b2b6-220034bb7480\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Adrian P\\\", \\\"selected_player\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Gaz G\\\", \\\"selected_player\\\": \\\"d31a40f9-1972-43e9-9864-277110c9e958\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Adrian P\\\", \\\"selected_player\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Gaz G\\\", \\\"selected_player\\\": \\\"d31a40f9-1972-43e9-9864-277110c9e958\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Matty\\\", \\\"selected_player\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Matty\\\", \\\"selected_player\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Twiggy\\\", \\\"selected_player\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Matty\\\", \\\"selected_player\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Twiggy\\\", \\\"selected_player\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\"}\",\"{\\\"xp\\\": 46, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Anthony B\\\", \\\"selected_player\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\"}\",\"{\\\"xp\\\": 46, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Anthony B\\\", \\\"selected_player\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\"}\",\"{\\\"xp\\\": 68, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Joe\\\", \\\"selected_player\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\"}\",\"{\\\"xp\\\": 68, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Joe\\\", \\\"selected_player\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 18, \\\"active_selected\\\": 17}\",\"{\\\"xp\\\": 12, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Chris F\\\", \\\"selected_player\\\": \\\"33443732-814b-4407-bbf0-8b30b57ef390\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 20, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Ben W\\\", \\\"selected_player\\\": \\\"ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Adrian P\\\", \\\"selected_player\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Adrian P\\\", \\\"selected_player\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 46, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Anthony B\\\", \\\"selected_player\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"whatsapp_status\\\": null, \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\"}",
+              "correlation": "0.14199"
             }
           ],
           "constraints": [
@@ -1059,8 +1059,8 @@
           "table_name": "game_registrations",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "288 kB",
-          "estimated_rows": 529,
+          "total_size": "296 kB",
+          "estimated_rows": 475,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1079,8 +1079,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{0042f36b-c3ba-4f90-a15f-1f541d0a0712,015d4b4d-48f1-4de1-b776-64b4747db012,03c9d259-85df-4550-acef-c2746ef37c7f,053f8020-f766-4453-840a-e227ccebf618,09502359-b4b4-4917-bedc-28a5caa9b590,0d24871d-d6ef-4cea-8420-83bcf921edf1,0e5264c4-bb1e-4d8c-b99b-2cb0d20b2a3f,0f83641c-5f77-44ad-b3c6-a2eb3fde4811,12d4f01c-2795-4689-bb73-5a295dcf864b,1402e38d-51a3-47ee-ac40-61bc2e25d7bf,18259c2a-e7bf-4fd3-bb66-10c4bde61525,1b14b806-de1f-4e7f-837e-0cd40d5cbd1e,1d989e4e-f87b-4651-959f-02b29f280a1b,200d2ddd-aab4-4e65-9a0c-c7b2ddbd87e9,23fb027e-2e23-4ee1-a210-742f941023ba,27ee9ae2-9f91-4815-b216-4134fd907c0f,2ac6d3c5-08f9-4685-a537-0ecd991ca79a,2c868e9f-fe2a-4f65-95d0-fbe25931497d,2e2ff0ac-5a06-4814-9c19-e6855c04dc1e,2fc8c438-e253-4c57-b20c-b294568c37af,32742ae8-b778-45dd-9420-2b397aea542a,362c1051-70dd-4d7a-98bf-8c3e4510111b,3a090f76-713b-4595-a792-76ddf6fdd2b7,3bb91122-b784-4175-9ce7-588ccd215aa7,3cf27505-e6e4-419f-9ed8-5604d4dd2410,3f7fafcb-56ea-404d-b394-a6de849feb3d,4182b89b-8443-4503-b764-0e6c02ead6b5,46eb8c59-671c-4df8-b883-ae5b839dc2b1,49917b8e-6bbb-43e6-b1a5-4a9450da4200,4ade2a5d-06da-4f9c-aa4a-e5db176fb0e7,4ef7a178-5af8-492f-a253-c30ea2bd40c8,508e5a06-7328-44cf-ae28-19cc59b2c56d,532fcb15-f8d5-49da-b5e0-51e67548828f,55f37b25-4fb1-4aa4-822a-3373b8e0aa05,5b8048bb-1f0f-433e-8a79-945bdc99aac2,5e55e833-69b1-44c1-87eb-1d026e671f13,61582169-1b31-4a6c-9d52-ed1f423b7e13,64b2bdd7-e3fc-496f-93ab-e64c87c20405,67768f90-cdb8-4738-b279-ba47fcbba3a5,68eb011d-5ec2-4d1a-9759-18047c168ba9,6bdbcad7-c473-4b8f-9fee-ef87489f091c,6ceafaf5-e38d-4c8d-8107-9b815040973f,6fa23f0d-f387-465b-8e53-b61b75e4a8f6,7262edfd-b81c-4be0-9056-47de7caa7d01,74131140-f8f2-402c-ba35-c935b3de5847,763c8fdc-c77d-4dde-9b03-a1ce5bcb8940,779557c3-05df-4496-b949-fff90a977404,798b8b5d-2fa6-470a-b78f-6a896219af43,7af8f7bf-e31f-478b-bf8b-6a36eb8dc20a,7cbbd313-eb2f-492b-9ef4-cc4b1c3d70cf,814e239a-1509-48c9-b3b3-611fd560f364,82c86742-3826-4200-8092-ff192f955f1f,85f57720-9118-4ed4-bc65-6c1e4977a272,88b6d76b-6b81-4c4b-b147-74f79f295cbd,8e16da2c-53ca-4c40-8970-a538ea08243c,8fe21603-629f-47f6-ad80-edea9cfc9b67,9156be3a-f794-4f7d-9dc3-bacc1fec7ebd,94a463d5-893d-4cfc-8149-7727756afece,97cacaef-243e-4eca-ba02-045020a211f9,9a52c12c-c73e-43b4-ad80-5994abecffff,9b547f80-6fad-48ae-aecd-f77d509e544e,a045f9c4-fc3c-42f2-aeae-885e100179e8,a19deb91-2aa3-4225-b182-543a5da4a760,a446a811-7088-4a5d-9188-9b2fa8816d06,a5ce84e9-48c7-46b4-a26f-d6de2e66ef33,a756c26f-3b15-411e-b93c-e9f6e7aa6592,a9e89631-063f-403d-b5d7-e23ca965b9e1,ac65d147-01ae-4b9b-a760-c387dc3f9ef9,b040182e-603b-426a-9d4b-064bc8f9799f,b3aa1a9c-794e-49f0-a3a7-b6d3c4020b36,b70dda01-9914-44f5-abba-ad246c16b2c2,b97c911c-d23f-4ac5-a430-db41566cbc2c,ba6c9de4-5ce2-42b7-82c6-9d1d9deee4b7,bc24f660-ae46-4939-9839-fadd3dec93bc,be78baea-9b37-4726-9813-decf6e99ece3,c0ce95c4-3c77-4ff5-9c7c-6400d7eca7b3,c21d4322-8825-4566-9117-2fddc082b200,c4526bf8-27cb-46da-8a37-839c838eda74,c7259106-8058-4533-8c09-cbc933aa51b7,ca6f6a19-d2dd-4c08-8671-0abd8345f1fc,cbd18839-cea4-49c1-9d58-557afafc1bef,ce2fd9de-673c-4726-8312-3bddbb71e021,d20c24af-1063-460a-b098-287271249322,d6592ecb-6c58-47eb-a085-054cbce9955d,db2c42e9-4b6c-41db-b78e-d4637b0fe874,ddf7ef7f-6d73-4c82-83e6-bac6b86a234a,dfc76934-8a37-4d9f-957b-e4ea01072b45,e3df76ce-6bda-4fb3-a93a-96cd2a25ef49,e6bd586a-10fc-44ab-a56d-d2e71e6a9fc1,e8e309b1-d505-4fc0-9185-145adfe970b7,eac13abe-f95d-46d0-8234-331f1490093a,ed631ce1-521e-4994-882b-562d16c2a8cb,eec90ae3-d612-4bf5-9e67-6777697eabea,f1b00051-9fa5-4ab7-84ce-6428b8766da9,f35667d0-f066-4950-b95c-6affb0f0eb3c,f4dccde9-d5e5-46db-beaf-1aba2bec6985,f74b3e0b-b7f5-41c8-b207-58e425f2727b,f94dd8bf-7cc9-4302-ac87-6b55d49efea6,fcf6dc69-fe60-4166-af79-414a152ceabc,fe307a74-6208-4ac6-aef0-8bd2dcf3abe0,ffcbd257-7be5-4773-b631-994a0f4057ee}",
-              "correlation": "-0.00189717"
+              "histogram_bounds": "{0042f36b-c3ba-4f90-a15f-1f541d0a0712,0129f2da-e93c-4c93-99cf-a517cdfe3de4,021f6074-0bbb-4784-bdfe-7ca239520d78,0527501f-6c31-4f0e-9c1a-107dcf21243d,07c1be2a-e5ce-4c36-bcac-c599d3b2449d,0c7d92e0-308d-4797-9127-9d74abab0f94,0e2fbbf6-d389-4c3b-8eab-9cc8b7298df6,0f69e79b-e0a0-4a54-8870-c6873a5875e7,12d4f01c-2795-4689-bb73-5a295dcf864b,142da8b1-9f91-4038-8589-0947e69cc776,18259c2a-e7bf-4fd3-bb66-10c4bde61525,1b9e6e0e-a2cd-4bd1-9186-3574d82468ed,1fad8da1-d002-4eeb-93a1-58727c317b74,224c00b0-afe6-4dfe-a578-dd01b18f3289,2716a5c9-1389-4486-b237-40b3fb9c9460,28e426de-373a-4034-a2e6-0ea5ca9483ac,2b70e953-d432-4fed-824d-3511a8c244f6,2ceff111-d3ae-46e1-a592-e45ccaac15d9,2e21a9ab-8ef7-4068-b6b3-a28fa36f990f,2f4bfa40-6e26-4b3b-ba17-7b376bc83437,31a005bf-3d82-4944-91a2-a4d28ab79f6f,35f2d701-cd39-484a-815a-9d0d8ff88597,39a2bd2f-b54a-41cc-bd53-7ee273ebf8cc,3b04fb27-9160-4a92-bcf9-a2b16a5cec7a,3cc671b0-e99e-4f93-8ba7-a20ed62e95d7,3f3d21df-6ec2-4b87-b633-b49b2bf7a17e,42d936f7-9f8c-4483-bce0-4ab640ffa840,472a35f7-c644-4422-b224-a6fbecc2836e,499c3ae3-dc25-4cb7-a02a-d2fe8c0057b9,4b68be04-b100-47da-ab23-e9d5a46ecbcc,4feec4d8-940b-4258-a536-a2f2fcf43b3c,50c3a306-80dc-4c75-8c57-2cd07fd84b03,545c8fbb-52ab-4507-83ff-5a2b26399c93,5af59ab4-aee8-4124-9426-6a9596d3a479,5d11c570-ec27-4b36-850c-6b8b49bce02f,5fcfaaa3-31b4-4f41-b8b1-91c2e75cb95d,634d4468-f77b-4530-87e0-c346e3598c45,64bb3089-ed72-4e5e-9ea7-33f541da47a7,67fd6665-e48e-433c-9008-fa978827f34b,69f2ca0d-0f0c-4204-85f5-116442ecb9f8,6ceafaf5-e38d-4c8d-8107-9b815040973f,7106602f-87ed-412c-9fbe-0fca09ef669d,7262edfd-b81c-4be0-9056-47de7caa7d01,752385ff-3a8c-4c46-89d6-cbc431a5fdf2,76800d68-249b-4a6a-ba94-56c4f8c0eeae,780becda-cfcc-413d-b029-7f7d4f7e10ed,798b8b5d-2fa6-470a-b78f-6a896219af43,7b18c3fe-7ef1-4d5b-828b-eeba33aabfa2,7e4cd272-95c3-4481-87cf-09725b44fa28,81bf3b3c-2c46-4181-adc0-f9a432a565ae,82ed85bc-76e4-4cdd-87a7-419052a02cef,866a2d8b-98d8-494b-a48d-a3bc707bf978,8ba316d4-5691-457e-9608-04b2f05cb986,8e16da2c-53ca-4c40-8970-a538ea08243c,908f4109-72c0-4770-b311-dd32c5c1855e,944b50be-bf27-41ae-9da5-2ba91500d140,97c6d7c1-625a-435e-9076-54bb3bb4358b,99b9979a-7c22-46c0-b928-a582e5209c04,9b547f80-6fad-48ae-aecd-f77d509e544e,a02f46c9-efb9-4d81-a61e-da1f89f23f8a,a0f5df8f-cd23-4c22-b34c-f1cc61786630,a446a811-7088-4a5d-9188-9b2fa8816d06,a61cb3a3-5c49-4b69-a7fc-8dce4e3b99f2,a756c26f-3b15-411e-b93c-e9f6e7aa6592,a9e89631-063f-403d-b5d7-e23ca965b9e1,ad42f02a-5e9c-4bab-86d3-19d37b08d807,af1af095-d06f-4f37-9275-177a798188a7,b19eaea6-b440-4a28-9be3-d60510a8b0c3,b5bb458e-1742-4367-b0a7-8d0cd8f765fb,b872cd23-3bf2-4095-8c61-40444ed820c6,ba195443-1259-4d73-b0ca-76872f558a7d,ba89e6c1-b8e8-4fda-b882-9fc5a4e5d77e,be491257-3aec-4812-9e31-75bc9a99cecd,bec7eb7a-75f0-4372-b9e0-437886f5f069,c102259b-c513-43d3-a4e8-bccc9f94517d,c2e24e89-8357-4043-84a3-81df0af8ce7b,c4a4056f-395d-4121-b48f-4b88fc1f92dd,c7c35a09-4912-4902-ac20-90c0e8c2e0d8,ca6f6a19-d2dd-4c08-8671-0abd8345f1fc,cbd18839-cea4-49c1-9d58-557afafc1bef,ce2fd9de-673c-4726-8312-3bddbb71e021,d2ca043d-f2a1-45c6-b33e-c1bcd3bcdfe9,d4980281-a099-476b-97dc-73abd247048b,d7cf8444-30ee-4fec-8e7e-7016a08d1360,dcfdea23-8de0-44fe-b8c2-2b383acb461b,deafea4a-6033-422d-b98f-c170be3b44e9,e11e49cf-8dd0-4df1-b00a-8c0e81dc57c3,e49db582-7fd9-41dc-b0f7-064849ea788b,e794bd5b-b4e8-4834-820a-a36b8772e56d,e8e309b1-d505-4fc0-9185-145adfe970b7,eac13abe-f95d-46d0-8234-331f1490093a,ed1d4cd7-00de-498a-bbd2-605bf9214dda,edd1a7b8-c4ba-437d-84d5-8f457c5e96b1,ef9eeb39-dbb6-45c4-a0f1-a4ccda4a1683,f1b00051-9fa5-4ab7-84ce-6428b8766da9,f3b81a0c-2407-43d2-966c-090afe6c671f,f6c6a273-b1a6-4a7b-b472-a7eef3b9bcf3,f94676ce-726f-4970-9f93-2b78bb271328,fc041141-5ea5-4461-898f-91a200565456,fe12e876-b471-4c60-a76d-af177fa2fece,ffcbd257-7be5-4773-b631-994a0f4057ee}",
+              "correlation": "0.00322407"
             },
             {
               "name": "game_id",
@@ -1095,10 +1095,10 @@
               "numeric_precision": null,
               "numeric_scale": null,
               "n_distinct": 29,
-              "most_common_values": "{f4f32c1d-3b58-4eaf-8dc3-4ea6e233819c,9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
+              "most_common_values": "{96702b26-ca36-487e-9b0c-e60f261522d5,9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
               "most_common_frequencies": "{0.102079,0.0415879,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0321361,0.0302457,0.0302457,0.0302457,0.0302457,0.0302457,0.0302457,0.0226843,0.0226843,0.0189036}",
               "histogram_bounds": null,
-              "correlation": "0.101706"
+              "correlation": "-0.107681"
             },
             {
               "name": "player_id",
@@ -1116,7 +1116,7 @@
               "most_common_values": "{2711aec5-829a-4569-a85f-ecf8c89f123d,1db2da77-3c88-4bda-989b-349b4cab6604,876113b5-d7c3-41bc-ab69-4b6859f864a5,904a7c17-c8cc-4aff-958d-7788dea001dc,35905fe4-5532-4513-9f58-de3c28942e1a,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,81c9ec8f-7b81-4263-879e-b2088aefaca8,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,5c0e1219-9355-4078-b76d-a63ec320969c,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,3a712b45-cd7e-4e66-a6dd-133255be5895,84c631df-a046-41e9-a10c-4a77561e6c08,8ad90589-7135-461f-b61d-272cbf3f6d04,be32d4f4-d8a2-4ac4-8fb2-21879753581c,b2466431-ede1-4eaa-a86e-ad0c7128b125,5d401fa5-157f-445f-9f06-def9de2ae6ce,32f8ab9b-1259-4764-b463-aa2e70ca8c74,a950fdd0-847e-4f4d-96f5-9064719c8953,dd6651f8-9203-4efb-92ca-e2b6f8230f97,05bb40f8-d63f-4469-9a35-e466d1f2f1da,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,18ebd05e-2357-44c6-a49d-d280ceed7784,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,78ba8339-270a-4d10-b7f6-f10999568948,9082191f-69ff-469f-baa6-46cc918346ae,d31a40f9-1972-43e9-9864-277110c9e958,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,75e00430-067e-44af-b498-84b28edd51be,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,c83d54c5-3468-4fde-b2b6-220034bb7480,d3920bbc-a281-4b97-bc88-96315e38d3ba,0bfd9afb-285d-474b-86cc-c91ab64c5622,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,33443732-814b-4407-bbf0-8b30b57ef390,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,767cc150-1746-4d71-a8db-b9771f2f7770,813eac3e-b880-4988-823f-a345c5d6ed87,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
               "most_common_frequencies": "{0.0491493,0.047259,0.047259,0.047259,0.0453686,0.0453686,0.0434783,0.0415879,0.0415879,0.0396975,0.0396975,0.0378072,0.0340265,0.0321361,0.0321361,0.0302457,0.0283554,0.026465,0.026465,0.026465,0.0245747,0.0245747,0.0132325,0.0132325,0.0113422,0.0094518,0.0094518,0.00756144,0.00756144,0.00756144,0.00756144,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072}",
               "histogram_bounds": null,
-              "correlation": "0.0822879"
+              "correlation": "0.138219"
             },
             {
               "name": "status",
@@ -1134,7 +1134,7 @@
               "most_common_values": "{selected,reserve}",
               "most_common_frequencies": "{0.930057,0.0680529}",
               "histogram_bounds": null,
-              "correlation": "0.620187"
+              "correlation": "0.660687"
             },
             {
               "name": "team",
@@ -1170,7 +1170,7 @@
               "most_common_values": "{t,f}",
               "most_common_frequencies": "{0.897921,0.102079}",
               "histogram_bounds": null,
-              "correlation": "0.450043"
+              "correlation": "0.600965"
             },
             {
               "name": "created_at",
@@ -1185,10 +1185,10 @@
               "numeric_precision": null,
               "numeric_scale": null,
               "n_distinct": -0.10775,
-              "most_common_values": "{\"2025-01-07 15:54:34.075+00\",\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-12-19 13:43:26.197049+00\",\"2024-12-19 13:43:26.287209+00\",\"2024-12-19 15:03:42.562721+00\",\"2024-12-19 15:03:42.638915+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
+              "most_common_values": "{\"2025-01-07 16:39:34.812+00\",\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-12-19 13:43:26.197049+00\",\"2024-12-19 13:43:26.287209+00\",\"2024-12-19 15:03:42.562721+00\",\"2024-12-19 15:03:42.638915+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
               "most_common_frequencies": "{0.102079,0.020794,0.020794,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0113422,0.0113422,0.0113422,0.0113422,0.0094518,0.0094518}",
               "histogram_bounds": null,
-              "correlation": "0.421695"
+              "correlation": "0.296582"
             },
             {
               "name": "paid_by_player_id",
@@ -1260,7 +1260,7 @@
               "most_common_values": "{merit,none,random}",
               "most_common_frequencies": "{0.860113,0.136106,0.00378072}",
               "histogram_bounds": null,
-              "correlation": "0.871444"
+              "correlation": "0.83429"
             },
             {
               "name": "payment_status",
@@ -1649,8 +1649,8 @@
           "table_name": "game_selections",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "176 kB",
-          "estimated_rows": 1,
+          "total_size": "80 kB",
+          "estimated_rows": 0,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1888,7 +1888,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "80 kB",
-          "estimated_rows": 29,
+          "estimated_rows": 28,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1907,8 +1907,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{08a33fb7-7677-41c2-8baa-0375c1f4d9c2,11cbf31e-b275-4fee-a5f6-d9468caf3d10,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,37725ca3-8857-411d-8e38-4135d9317bad,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,4cc10211-be50-4611-bc85-d59d16399a6b,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,54bc6b11-ea09-42d0-9f56-dd38809c669e,57fea9a1-765e-406c-b182-883d2720d99c,5aa66610-9141-478c-804f-97191da0198f,68e251b3-a23a-4a31-886a-07f171067de0,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,9030ab33-efb9-4763-9fd3-e30c87b6b20d,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,ea863f1a-b7da-4169-aae6-04c33f3dbce4,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,f4f32c1d-3b58-4eaf-8dc3-4ea6e233819c}",
-              "correlation": "0.0167488"
+              "histogram_bounds": "{08a33fb7-7677-41c2-8baa-0375c1f4d9c2,11cbf31e-b275-4fee-a5f6-d9468caf3d10,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,37725ca3-8857-411d-8e38-4135d9317bad,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,4cc10211-be50-4611-bc85-d59d16399a6b,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,54bc6b11-ea09-42d0-9f56-dd38809c669e,57fea9a1-765e-406c-b182-883d2720d99c,5aa66610-9141-478c-804f-97191da0198f,68e251b3-a23a-4a31-886a-07f171067de0,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,9030ab33-efb9-4763-9fd3-e30c87b6b20d,95fc8176-f956-4f3b-bf01-9488e17ebbaa,96702b26-ca36-487e-9b0c-e60f261522d5,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,ea863f1a-b7da-4169-aae6-04c33f3dbce4,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903}",
+              "correlation": "0.029064"
             },
             {
               "name": "date",
@@ -1943,7 +1943,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 00:00:00+00\",\"2024-06-19 00:00:00+00\",\"2024-06-26 00:00:00+00\",\"2024-07-03 00:00:00+00\",\"2024-07-11 00:00:00+00\",\"2024-07-17 00:00:00+00\",\"2024-07-24 00:00:00+00\",\"2024-07-31 00:00:00+00\",\"2024-08-07 00:00:00+00\",\"2024-08-14 00:00:00+00\",\"2024-08-21 00:00:00+00\",\"2024-08-28 00:00:00+00\",\"2024-09-04 00:00:00+00\",\"2024-09-11 00:00:00+00\",\"2024-09-18 00:00:00+00\",\"2024-09-25 00:00:00+00\",\"2024-10-02 00:00:00+00\",\"2024-10-09 00:00:00+00\",\"2024-10-16 00:00:00+00\",\"2024-10-23 00:00:00+00\",\"2024-10-30 00:00:00+00\",\"2024-11-06 00:00:00+00\",\"2024-11-13 00:00:00+00\",\"2024-11-20 00:00:00+00\",\"2024-11-27 00:00:00+00\",\"2024-12-04 00:00:00+00\",\"2024-12-11 00:00:00+00\",\"2024-12-18 00:00:00+00\",\"2025-01-07 15:54:00+00\"}",
+              "histogram_bounds": "{\"2024-05-15 00:00:00+00\",\"2024-06-19 00:00:00+00\",\"2024-06-26 00:00:00+00\",\"2024-07-03 00:00:00+00\",\"2024-07-11 00:00:00+00\",\"2024-07-17 00:00:00+00\",\"2024-07-24 00:00:00+00\",\"2024-07-31 00:00:00+00\",\"2024-08-07 00:00:00+00\",\"2024-08-14 00:00:00+00\",\"2024-08-21 00:00:00+00\",\"2024-08-28 00:00:00+00\",\"2024-09-04 00:00:00+00\",\"2024-09-11 00:00:00+00\",\"2024-09-18 00:00:00+00\",\"2024-09-25 00:00:00+00\",\"2024-10-02 00:00:00+00\",\"2024-10-09 00:00:00+00\",\"2024-10-16 00:00:00+00\",\"2024-10-23 00:00:00+00\",\"2024-10-30 00:00:00+00\",\"2024-11-06 00:00:00+00\",\"2024-11-13 00:00:00+00\",\"2024-11-20 00:00:00+00\",\"2024-11-27 00:00:00+00\",\"2024-12-04 00:00:00+00\",\"2024-12-11 00:00:00+00\",\"2024-12-18 00:00:00+00\",\"2025-01-07 16:39:00+00\"}",
               "correlation": "0.497044"
             },
             {
@@ -1961,7 +1961,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 23:59:58.999+00\",\"2024-06-19 23:59:59.998+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:58.999+00\",\"2024-08-14 23:59:58.999+00\",\"2024-08-21 23:59:58.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:58.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:58.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-07 15:55:00+00\"}",
+              "histogram_bounds": "{\"2024-05-15 23:59:58.999+00\",\"2024-06-19 23:59:59.998+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:58.999+00\",\"2024-08-14 23:59:58.999+00\",\"2024-08-21 23:59:58.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:58.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:58.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-07 16:40:00+00\"}",
               "correlation": "0.497044"
             },
             {
@@ -2033,7 +2033,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-11-11 16:53:47.616288+00\",\"2024-11-11 17:07:30.469444+00\",\"2024-11-11 17:18:03.706994+00\",\"2024-11-11 17:23:18.801122+00\",\"2024-11-11 17:26:09.716193+00\",\"2024-11-11 17:29:00.311676+00\",\"2024-11-11 17:32:33.308869+00\",\"2024-11-15 10:49:58.900155+00\",\"2024-11-15 11:09:28.864134+00\",\"2024-11-15 15:00:38.640031+00\",\"2024-11-15 15:17:51.610432+00\",\"2024-11-15 15:21:30.654751+00\",\"2024-11-15 15:26:50.629529+00\",\"2024-11-15 15:32:28.341681+00\",\"2024-11-15 15:36:14.706985+00\",\"2024-11-15 15:38:46.514516+00\",\"2024-11-15 15:41:05.888517+00\",\"2024-11-15 15:45:17.834528+00\",\"2024-11-15 15:48:49.234186+00\",\"2024-11-15 15:51:48.290128+00\",\"2024-11-15 15:57:50.931802+00\",\"2024-11-15 16:06:28.837439+00\",\"2024-11-15 23:40:49.13482+00\",\"2024-11-20 23:47:31.604513+00\",\"2024-11-28 09:22:39.728864+00\",\"2024-12-05 15:13:54.593481+00\",\"2024-12-16 09:51:53.452089+00\",\"2024-12-19 13:43:26.083004+00\",\"2025-01-07 15:54:30.758471+00\"}",
+              "histogram_bounds": "{\"2024-11-11 16:53:47.616288+00\",\"2024-11-11 17:07:30.469444+00\",\"2024-11-11 17:18:03.706994+00\",\"2024-11-11 17:23:18.801122+00\",\"2024-11-11 17:26:09.716193+00\",\"2024-11-11 17:29:00.311676+00\",\"2024-11-11 17:32:33.308869+00\",\"2024-11-15 10:49:58.900155+00\",\"2024-11-15 11:09:28.864134+00\",\"2024-11-15 15:00:38.640031+00\",\"2024-11-15 15:17:51.610432+00\",\"2024-11-15 15:21:30.654751+00\",\"2024-11-15 15:26:50.629529+00\",\"2024-11-15 15:32:28.341681+00\",\"2024-11-15 15:36:14.706985+00\",\"2024-11-15 15:38:46.514516+00\",\"2024-11-15 15:41:05.888517+00\",\"2024-11-15 15:45:17.834528+00\",\"2024-11-15 15:48:49.234186+00\",\"2024-11-15 15:51:48.290128+00\",\"2024-11-15 15:57:50.931802+00\",\"2024-11-15 16:06:28.837439+00\",\"2024-11-15 23:40:49.13482+00\",\"2024-11-20 23:47:31.604513+00\",\"2024-11-28 09:22:39.728864+00\",\"2024-12-05 15:13:54.593481+00\",\"2024-12-16 09:51:53.452089+00\",\"2024-12-19 13:43:26.083004+00\",\"2025-01-07 16:39:31.2917+00\"}",
               "correlation": "0.483744"
             },
             {
@@ -2591,7 +2591,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "64 kB",
-          "estimated_rows": 2,
+          "estimated_rows": 1,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -2610,8 +2610,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{10f6a452-2dbf-4570-8b2b-798c667101f3,87e5796c-6716-439b-acfd-f23d3ab4cc92,ed49186f-6052-41f2-8b1c-014fb52a759f}",
-              "correlation": "0.5"
+              "histogram_bounds": "{87e5796c-6716-439b-acfd-f23d3ab4cc92,d6ec80de-c49e-4441-b40f-6296d9176772}",
+              "correlation": "-1"
             },
             {
               "name": "player_id",
@@ -2628,8 +2628,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{8ad90589-7135-461f-b61d-272cbf3f6d04,904a7c17-c8cc-4aff-958d-7788dea001dc,b2466431-ede1-4eaa-a86e-ad0c7128b125}",
-              "correlation": "-0.5"
+              "histogram_bounds": "{8ad90589-7135-461f-b61d-272cbf3f6d04,b2466431-ede1-4eaa-a86e-ad0c7128b125}",
+              "correlation": "1"
             },
             {
               "name": "type",
@@ -2643,9 +2643,9 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.666667,
+              "n_distinct": -0.5,
               "most_common_values": "{slot_offer}",
-              "most_common_frequencies": "{0.666667}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
             },
@@ -2664,8 +2664,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"A spot has opened up in a game on 08/01/2025. You have exclusive access until 13:07!\",\"A spot has opened up in WNF #29. Would you like to play?\",\"Created slot offer for Alex E (highest XP reserve player) for game on 08/01/2025\"}",
-              "correlation": "0.5"
+              "histogram_bounds": "{\"A spot has opened up in a game on 08/01/2025. You have exclusive access until 16:19!\",\"A spot has opened up in WNF #29. Would you like to play?\"}",
+              "correlation": "1"
             },
             {
               "name": "action_url",
@@ -2697,11 +2697,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.666667,
-              "most_common_values": "{\"2025-01-03 10:09:08.68818+00\"}",
-              "most_common_frequencies": "{0.666667}",
-              "histogram_bounds": null,
-              "correlation": "1"
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": "{\"2025-01-02 15:14:14.337078+00\",\"2025-01-07 16:06:25.348295+00\"}",
+              "correlation": "-1"
             },
             {
               "name": "read_at",
@@ -2754,8 +2754,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"{\\\"action\\\": \\\"new_slot_offer\\\", \\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\"}\",\"{\\\"action\\\": \\\"slot_offers_created\\\", \\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\"}\",\"{\\\"game_id\\\": \\\"835fdcad-4a7c-4cd9-ba43-0efc8a666b8a\\\", \\\"slot_offer_id\\\": \\\"3435c48d-84c9-40d3-a246-ec87f5e23d25\\\", \\\"exclusive_until\\\": \\\"2025-01-03T13:07:18.183095+00:00\\\"}\"}",
-              "correlation": "0.5"
+              "histogram_bounds": "{\"{\\\"action\\\": \\\"new_slot_offer\\\", \\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"debug_info\\\": {\\\"time_slot\\\": {\\\"expires_at\\\": \\\"2025-01-07T16:19:36.310842+00:00\\\", \\\"available_at\\\": \\\"2025-01-07T16:06:25.348295+00:00\\\"}, \\\"reserve_count\\\": 36, \\\"calculated_times_debug\\\": {\\\"xp\\\": 202, \\\"caps\\\": 16, \\\"rank\\\": 1, \\\"streak\\\": 0, \\\"player_name\\\": \\\"Alex E\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"registration_time\\\": \\\"2025-01-07T16:05:59.996+00:00\\\", \\\"whatsapp_priority\\\": 0}, \\\"highest_priority_player\\\": {\\\"xp\\\": 202, \\\"name\\\": \\\"Alex E\\\", \\\"rank\\\": 1, \\\"whatsapp_status\\\": \\\"Yes\\\"}}, \\\"slot_offer_id\\\": \\\"8e061be0-5393-4de9-a377-f7dbec5d880d\\\", \\\"exclusive_until\\\": \\\"2025-01-07T16:19:36.310842+00:00\\\"}\"}",
+              "correlation": "-1"
             },
             {
               "name": "title",
@@ -2769,11 +2769,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.666667,
+              "n_distinct": -0.5,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"Exclusive Game Slot Available!\",\"Slot Offer Created\"}",
-              "correlation": "1"
+              "histogram_bounds": null,
+              "correlation": null
             },
             {
               "name": "icon",
@@ -2808,8 +2808,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{0,1,2}",
-              "correlation": "0.5"
+              "histogram_bounds": "{0,2}",
+              "correlation": "-1"
             }
           ],
           "constraints": [
@@ -4495,7 +4495,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,1db2da77-3c88-4bda-989b-349b4cab6604,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,35905fe4-5532-4513-9f58-de3c28942e1a,3a712b45-cd7e-4e66-a6dd-133255be5895,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
-              "correlation": "-0.138555"
+              "correlation": "-0.136878"
             },
             {
               "name": "xp",
@@ -4513,7 +4513,7 @@
               "most_common_values": "{12,10,20,14,26,34,40}",
               "most_common_frequencies": "{0.111111,0.0925926,0.0555556,0.037037,0.037037,0.037037,0.037037}",
               "histogram_bounds": "{16,18,22,24,30,46,68,76,86,112,165,174,180,188,192,202,218,223,239,240,244,274,312,326,344,360,403,409,417,456,562,717}",
-              "correlation": "-0.657785"
+              "correlation": "-0.707185"
             },
             {
               "name": "last_calculated",
@@ -4527,11 +4527,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.351852,
-              "most_common_values": "{\"2025-01-07 15:55:05.532925+00\"}",
-              "most_common_frequencies": "{0.666667}",
-              "histogram_bounds": "{\"2025-01-07 15:55:05.50631+00\",\"2025-01-07 15:55:05.509606+00\",\"2025-01-07 15:55:05.51618+00\",\"2025-01-07 15:55:05.516688+00\",\"2025-01-07 15:55:05.517752+00\",\"2025-01-07 15:55:05.518609+00\",\"2025-01-07 15:55:05.521543+00\",\"2025-01-07 15:55:05.526402+00\",\"2025-01-07 15:55:05.531973+00\",\"2025-01-07 15:55:05.533066+00\",\"2025-01-07 15:55:05.536524+00\",\"2025-01-07 15:55:05.540429+00\",\"2025-01-07 15:55:05.547804+00\",\"2025-01-07 15:55:05.550441+00\",\"2025-01-07 15:55:05.552884+00\",\"2025-01-07 15:55:05.555797+00\",\"2025-01-07 15:55:05.555899+00\",\"2025-01-07 15:55:16.349302+00\"}",
-              "correlation": "0.405679"
+              "n_distinct": -0.333333,
+              "most_common_values": "{\"2025-01-07 16:40:07.040727+00\",\"2025-01-07 16:40:07.033983+00\"}",
+              "most_common_frequencies": "{0.666667,0.037037}",
+              "histogram_bounds": "{\"2025-01-07 16:40:06.977314+00\",\"2025-01-07 16:40:06.984571+00\",\"2025-01-07 16:40:06.98719+00\",\"2025-01-07 16:40:07.0006+00\",\"2025-01-07 16:40:07.007268+00\",\"2025-01-07 16:40:07.010306+00\",\"2025-01-07 16:40:07.012296+00\",\"2025-01-07 16:40:07.012658+00\",\"2025-01-07 16:40:07.016528+00\",\"2025-01-07 16:40:07.038162+00\",\"2025-01-07 16:40:07.04845+00\",\"2025-01-07 16:40:07.048543+00\",\"2025-01-07 16:40:07.049055+00\",\"2025-01-07 16:40:07.051716+00\",\"2025-01-07 16:40:07.053023+00\",\"2025-01-07 16:40:09.980032+00\"}",
+              "correlation": "0.653516"
             },
             {
               "name": "rarity",
@@ -4549,7 +4549,7 @@
               "most_common_values": "{Amateur,\"Semi Pro\",Professional,Legendary,\"World Class\"}",
               "most_common_frequencies": "{0.592593,0.203704,0.12963,0.037037,0.037037}",
               "histogram_bounds": null,
-              "correlation": "-0.20465"
+              "correlation": "-0.207471"
             }
           ],
           "constraints": [
@@ -5296,8 +5296,8 @@
           "table_name": "slot_offers",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "88 kB",
-          "estimated_rows": 1,
+          "total_size": "72 kB",
+          "estimated_rows": 0,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -5316,8 +5316,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{3645894b-cadc-4b3d-bc77-5410abf762ab,5e3f80ca-8d74-4bf5-b6a4-532516d53cdd,8ada8124-62e7-4f76-ae26-8422743f6460,c3c456d2-29b7-49b4-9c35-69eddc84367c}",
-              "correlation": "0"
+              "histogram_bounds": "{008c5e91-540d-4551-9793-e39ea4c82426,015caeef-5b9e-4678-a4c3-affd3444cc13,2f6ff643-bf24-4ad8-a884-7949b7886979,31898447-b7eb-4096-9ea5-9460908cd473,363c873b-a2b7-487a-a0c5-3abe0cb1cbff,44d02296-5c81-4331-8822-9f978f2f9ddc,4511cc16-4486-49ab-b648-64feb1e3f306,4d2ee122-0d0e-44c2-bb40-53c60dba2505,62c16b90-a249-4b15-8aef-56aa11fa0880,97cd0254-d581-4ecc-ae8b-cf848913f8e3,af501653-c369-471f-9862-6b953dd10415,bab1ab8b-00e6-4be0-a4db-1baab5cb4a9e,fff2297e-1d43-4eff-ad91-aa623bdb499d}",
+              "correlation": "0.203297"
             },
             {
               "name": "game_id",
@@ -5331,8 +5331,8 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.25,
-              "most_common_values": "{152c312b-7d2e-4626-a473-c8eea69215f9}",
+              "n_distinct": 1,
+              "most_common_values": "{96702b26-ca36-487e-9b0c-e60f261522d5}",
               "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
@@ -5352,8 +5352,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,8ad90589-7135-461f-b61d-272cbf3f6d04,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125}",
-              "correlation": "-0.4"
+              "histogram_bounds": "{18ebd05e-2357-44c6-a49d-d280ceed7784,33443732-814b-4407-bbf0-8b30b57ef390,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,8ad90589-7135-461f-b61d-272cbf3f6d04,9082191f-69ff-469f-baa6-46cc918346ae,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca}",
+              "correlation": "-0.186813"
             },
             {
               "name": "status",
@@ -5367,11 +5367,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.5,
+              "n_distinct": -0.153846,
               "most_common_values": "{declined}",
-              "most_common_frequencies": "{0.75}",
+              "most_common_frequencies": "{0.923077}",
               "histogram_bounds": null,
-              "correlation": "0.4"
+              "correlation": "0.637363"
             },
             {
               "name": "offered_at",
@@ -5388,8 +5388,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-03 10:23:17.827419+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
-              "correlation": "0.8"
+              "histogram_bounds": "{\"2025-01-07 16:40:10.096879+00\",\"2025-01-07 16:43:07.713679+00\",\"2025-01-07 16:43:09.67902+00\",\"2025-01-07 16:43:24.308184+00\",\"2025-01-07 16:43:29.611093+00\",\"2025-01-07 16:43:37.052732+00\",\"2025-01-07 16:43:37.822155+00\",\"2025-01-07 16:43:38.463852+00\",\"2025-01-07 16:43:39.246381+00\",\"2025-01-07 16:43:39.878478+00\",\"2025-01-07 16:43:40.50784+00\",\"2025-01-07 16:43:41.168814+00\",\"2025-01-07 16:43:43.018035+00\"}",
+              "correlation": "0.994505"
             },
             {
               "name": "responded_at",
@@ -5403,10 +5403,10 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.75,
+              "n_distinct": -0.923077,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
+              "histogram_bounds": "{\"2025-01-07 16:43:07.713679+00\",\"2025-01-07 16:43:09.67902+00\",\"2025-01-07 16:43:24.308184+00\",\"2025-01-07 16:43:29.611093+00\",\"2025-01-07 16:43:37.052732+00\",\"2025-01-07 16:43:37.822155+00\",\"2025-01-07 16:43:38.463852+00\",\"2025-01-07 16:43:39.246381+00\",\"2025-01-07 16:43:39.878478+00\",\"2025-01-07 16:43:40.50784+00\",\"2025-01-07 16:43:41.168814+00\",\"2025-01-07 16:43:43.018035+00\"}",
               "correlation": "1"
             },
             {
@@ -5424,8 +5424,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-03 10:23:17.827419+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
-              "correlation": "0.8"
+              "histogram_bounds": "{\"2025-01-07 16:40:10.096879+00\",\"2025-01-07 16:43:07.713679+00\",\"2025-01-07 16:43:09.67902+00\",\"2025-01-07 16:43:24.308184+00\",\"2025-01-07 16:43:29.611093+00\",\"2025-01-07 16:43:37.052732+00\",\"2025-01-07 16:43:37.822155+00\",\"2025-01-07 16:43:38.463852+00\",\"2025-01-07 16:43:39.246381+00\",\"2025-01-07 16:43:39.878478+00\",\"2025-01-07 16:43:40.50784+00\",\"2025-01-07 16:43:41.168814+00\",\"2025-01-07 16:43:43.018035+00\"}",
+              "correlation": "0.994505"
             },
             {
               "name": "updated_at",
@@ -5442,8 +5442,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-03 10:23:17.827419+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
-              "correlation": "0.8"
+              "histogram_bounds": "{\"2025-01-07 16:40:10.096879+00\",\"2025-01-07 16:43:07.713679+00\",\"2025-01-07 16:43:09.67902+00\",\"2025-01-07 16:43:24.308184+00\",\"2025-01-07 16:43:29.611093+00\",\"2025-01-07 16:43:37.052732+00\",\"2025-01-07 16:43:37.822155+00\",\"2025-01-07 16:43:38.463852+00\",\"2025-01-07 16:43:39.246381+00\",\"2025-01-07 16:43:39.878478+00\",\"2025-01-07 16:43:40.50784+00\",\"2025-01-07 16:43:41.168814+00\",\"2025-01-07 16:43:43.018035+00\"}",
+              "correlation": "0.994505"
             },
             {
               "name": "expires_at",
@@ -5460,8 +5460,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-03 11:25:17.890258+00\",\"2025-01-03 11:30:09.619996+00\",\"2025-01-03 11:30:41.466293+00\",\"2025-01-03 13:21:04.372624+00\"}",
-              "correlation": "-0.4"
+              "histogram_bounds": "{\"2025-01-07 16:52:24.81641+00\",\"2025-01-07 17:43:07.713679+00\",\"2025-01-07 17:43:09.67902+00\",\"2025-01-07 17:43:24.308184+00\",\"2025-01-07 17:43:29.611093+00\",\"2025-01-07 17:43:37.052732+00\",\"2025-01-07 17:43:37.822155+00\",\"2025-01-07 17:43:38.463852+00\",\"2025-01-07 17:43:39.246381+00\",\"2025-01-07 17:43:39.878478+00\",\"2025-01-07 17:43:40.50784+00\",\"2025-01-07 17:43:41.168814+00\",\"2025-01-07 17:43:43.018035+00\"}",
+              "correlation": "0.994505"
             },
             {
               "name": "available_at",
@@ -5478,8 +5478,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-03 10:23:17.827419+00\",\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
-              "correlation": "0.8"
+              "histogram_bounds": "{\"2025-01-07 16:40:10.096879+00\",\"2025-01-07 16:43:07.713679+00\",\"2025-01-07 16:43:09.67902+00\",\"2025-01-07 16:43:24.308184+00\",\"2025-01-07 16:43:29.611093+00\",\"2025-01-07 16:43:37.052732+00\",\"2025-01-07 16:43:37.822155+00\",\"2025-01-07 16:43:38.463852+00\",\"2025-01-07 16:43:39.246381+00\",\"2025-01-07 16:43:39.878478+00\",\"2025-01-07 16:43:40.50784+00\",\"2025-01-07 16:43:41.168814+00\",\"2025-01-07 16:43:43.018035+00\"}",
+              "correlation": "0.994505"
             },
             {
               "name": "rank",
@@ -5493,7 +5493,7 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.25,
+              "n_distinct": 0,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -5529,10 +5529,10 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.75,
+              "n_distinct": -0.923077,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-03 10:25:17.890258+00\",\"2025-01-03 10:30:09.619996+00\",\"2025-01-03 10:30:41.466293+00\"}",
+              "histogram_bounds": "{\"2025-01-07 16:43:07.713679+00\",\"2025-01-07 16:43:09.67902+00\",\"2025-01-07 16:43:24.308184+00\",\"2025-01-07 16:43:29.611093+00\",\"2025-01-07 16:43:37.052732+00\",\"2025-01-07 16:43:37.822155+00\",\"2025-01-07 16:43:38.463852+00\",\"2025-01-07 16:43:39.246381+00\",\"2025-01-07 16:43:39.878478+00\",\"2025-01-07 16:43:40.50784+00\",\"2025-01-07 16:43:41.168814+00\",\"2025-01-07 16:43:43.018035+00\"}",
               "correlation": "1"
             },
             {
@@ -5547,11 +5547,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 1,
+              "most_common_values": "{1}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             },
             {
               "name": "admin_id",
@@ -5565,7 +5565,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -0.0769231,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -5583,7 +5583,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -0.0769231,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -6734,6 +6734,39 @@
       ],
       "functions": [
         {
+          "name": "get_next_slot_offer_players",
+          "arguments": "p_game_id uuid, p_hours_until_game numeric",
+          "return_type": "TABLE(player_id uuid)",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.get_next_slot_offer_players(p_game_id uuid, p_hours_until_game numeric)\n RETURNS TABLE(player_id uuid)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_selected_player uuid;\r\n    v_selected_name text;\r\n    v_selected_xp integer;\r\n    v_selected_whatsapp text;\r\nBEGIN\r\n    -- First get the next eligible player and store their details\r\n    WITH eligible_players AS (\r\n        SELECT \r\n            p.id as eligible_player_id,\r\n            p.friendly_name,\r\n            p.whatsapp_group_member,\r\n            gr.created_at,\r\n            ps.xp,\r\n            p.current_streak,\r\n            p.caps\r\n        FROM game_registrations gr\r\n        INNER JOIN players p ON p.id = gr.player_id\r\n        INNER JOIN player_stats ps ON ps.id = p.id\r\n        WHERE gr.game_id = p_game_id\r\n        AND gr.status = 'reserve'\r\n        AND NOT EXISTS (\r\n            SELECT 1 \r\n            FROM slot_offers so \r\n            WHERE so.game_id = p_game_id \r\n            AND so.player_id = p.id \r\n            AND so.status IN ('pending', 'declined')\r\n        )\r\n    )\r\n    SELECT \r\n        eligible_player_id,\r\n        friendly_name,\r\n        xp,\r\n        whatsapp_group_member\r\n    INTO \r\n        v_selected_player,\r\n        v_selected_name,\r\n        v_selected_xp,\r\n        v_selected_whatsapp\r\n    FROM eligible_players\r\n    ORDER BY \r\n        CASE WHEN whatsapp_group_member IN ('Yes', 'Proxy') THEN 0 ELSE 1 END ASC,\r\n        xp DESC,\r\n        current_streak DESC,\r\n        caps DESC,\r\n        created_at ASC\r\n    LIMIT 1;\r\n\r\n    -- Log the selection process\r\n    IF v_selected_player IS NOT NULL THEN\r\n        INSERT INTO debug_logs (event_type, message, details)\r\n        VALUES (\r\n            'player_selection',\r\n            'Selected next player based on WhatsApp status and XP',\r\n            jsonb_build_object(\r\n                'game_id', p_game_id,\r\n                'selected_player', v_selected_player,\r\n                'player_name', v_selected_name,\r\n                'xp', v_selected_xp,\r\n                'whatsapp_status', v_selected_whatsapp,\r\n                'selection_criteria', 'WhatsApp members first, then by XP'\r\n            )\r\n        );\r\n    ELSE\r\n        INSERT INTO debug_logs (event_type, message, details)\r\n        VALUES (\r\n            'player_selection',\r\n            'No eligible players found',\r\n            jsonb_build_object(\r\n                'game_id', p_game_id\r\n            )\r\n        );\r\n    END IF;\r\n\r\n    -- Return the selected player\r\n    RETURN QUERY\r\n    SELECT v_selected_player AS player_id\r\n    WHERE v_selected_player IS NOT NULL;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "calculate_slot_offer_times",
+          "arguments": "p_game_id uuid, p_num_players bigint",
+          "return_type": "TABLE(player_rank bigint, available_time timestamp with time zone, next_player_access_time timestamp with time zone, debug_info jsonb)",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.calculate_slot_offer_times(p_game_id uuid, p_num_players bigint)\n RETURNS TABLE(player_rank bigint, available_time timestamp with time zone, next_player_access_time timestamp with time zone, debug_info jsonb)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_game record;\r\n    v_total_time interval;\r\n    v_time_interval interval;\r\n    v_game_date timestamp with time zone;\r\nBEGIN\r\n    -- Get game details\r\n    SELECT * INTO v_game FROM games WHERE id = p_game_id;\r\n    IF NOT FOUND THEN\r\n        RAISE EXCEPTION 'Game not found';\r\n    END IF;\r\n\r\n    -- Calculate time intervals\r\n    v_game_date := date_trunc('day', v_game.date) + interval '1 minute';\r\n    v_total_time := v_game_date - CURRENT_TIMESTAMP;\r\n    \r\n    -- Handle case where there are no players\r\n    IF p_num_players = 0 THEN\r\n        RETURN;\r\n    END IF;\r\n    \r\n    v_time_interval := v_total_time / GREATEST(p_num_players, 1);\r\n\r\n    -- Return the results with debug info\r\n    RETURN QUERY\r\n    WITH RankedPlayers AS (\r\n        SELECT \r\n            p.id,\r\n            p.friendly_name,\r\n            p.whatsapp_group_member,\r\n            ps.xp,\r\n            p.current_streak,\r\n            p.caps,\r\n            gr.created_at as registration_time,\r\n            ROW_NUMBER() OVER (\r\n                ORDER BY \r\n                    CASE WHEN p.whatsapp_group_member IN ('Yes', 'Proxy') THEN 0 ELSE 1 END ASC,\r\n                    ps.xp DESC,\r\n                    p.current_streak DESC,\r\n                    p.caps DESC,\r\n                    gr.created_at ASC\r\n            ) as rank\r\n        FROM game_registrations gr\r\n        JOIN players p ON p.id = gr.player_id\r\n        JOIN player_stats ps ON ps.id = p.id\r\n        WHERE gr.game_id = p_game_id\r\n        AND gr.status = 'reserve'\r\n    )\r\n    SELECT \r\n        rank as player_rank,\r\n        CURRENT_TIMESTAMP + ((rank - 1) * v_time_interval) as available_time,\r\n        CURRENT_TIMESTAMP + (rank * v_time_interval) as next_player_access_time,\r\n        jsonb_build_object(\r\n            'player_name', friendly_name,\r\n            'whatsapp_status', whatsapp_group_member,\r\n            'xp', xp,\r\n            'streak', current_streak,\r\n            'caps', caps,\r\n            'registration_time', registration_time,\r\n            'rank', rank,\r\n            'whatsapp_priority', CASE WHEN whatsapp_group_member IN ('Yes', 'Proxy') THEN 0 ELSE 1 END\r\n        ) as debug_info\r\n    FROM RankedPlayers\r\n    ORDER BY rank;\r\n\r\n    -- Log debug info\r\n    RAISE NOTICE 'Game ID: %, Total Players: %, Time Interval: %', p_game_id, p_num_players, v_time_interval;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "create_slot_offers_for_game",
+          "arguments": "p_game_id uuid, p_admin_id uuid DEFAULT NULL::uuid, p_dropped_out_player_id uuid DEFAULT NULL::uuid",
+          "return_type": "TABLE(slot_offer_id uuid, debug_info jsonb)",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.create_slot_offers_for_game(p_game_id uuid, p_admin_id uuid DEFAULT NULL::uuid, p_dropped_out_player_id uuid DEFAULT NULL::uuid)\n RETURNS TABLE(slot_offer_id uuid, debug_info jsonb)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_game record;\r\n    v_highest_priority_player record;\r\n    v_time_slot record;\r\n    v_reserve_count bigint;\r\n    v_slot_offer_id uuid;\r\n    v_debug_info jsonb;\r\nBEGIN\r\n    -- Get game details\r\n    SELECT * INTO v_game FROM games WHERE id = p_game_id;\r\n    IF NOT FOUND THEN\r\n        RAISE EXCEPTION 'Game not found';\r\n    END IF;\r\n\r\n    -- Get the count of reserve players\r\n    SELECT COUNT(*) INTO v_reserve_count \r\n    FROM game_registrations \r\n    WHERE game_id = p_game_id \r\n    AND status = 'reserve';\r\n\r\n    -- Get the highest priority reserve player\r\n    WITH RankedPlayers AS (\r\n        SELECT \r\n            gr.player_id,\r\n            p.friendly_name,\r\n            p.whatsapp_group_member,\r\n            ps.xp,\r\n            p.current_streak,\r\n            p.caps,\r\n            gr.created_at as registration_time,\r\n            ROW_NUMBER() OVER (\r\n                ORDER BY \r\n                    CASE WHEN p.whatsapp_group_member IN ('Yes', 'Proxy') THEN 0 ELSE 1 END ASC,\r\n                    ps.xp DESC,\r\n                    p.current_streak DESC,\r\n                    p.caps DESC,\r\n                    gr.created_at ASC\r\n            ) as rank\r\n        FROM game_registrations gr\r\n        JOIN players p ON p.id = gr.player_id\r\n        JOIN player_stats ps ON ps.id = p.id\r\n        WHERE gr.game_id = p_game_id\r\n        AND gr.status = 'reserve'\r\n        AND NOT EXISTS (\r\n            -- Exclude players who already have any slot offer (pending or declined) for this game\r\n            SELECT 1 FROM slot_offers so\r\n            WHERE so.player_id = gr.player_id\r\n            AND so.game_id = p_game_id\r\n            AND (so.status = 'pending' OR so.status = 'declined')\r\n        )\r\n    )\r\n    SELECT * INTO v_highest_priority_player\r\n    FROM RankedPlayers\r\n    WHERE rank = 1;\r\n\r\n    -- If no eligible player found, return null\r\n    IF NOT FOUND THEN\r\n        RETURN;\r\n    END IF;\r\n\r\n    -- Get the time slot for the highest priority player with debug info\r\n    SELECT * INTO v_time_slot\r\n    FROM public.calculate_slot_offer_times(p_game_id, v_reserve_count)\r\n    WHERE player_rank = 1;\r\n\r\n    -- Store debug info\r\n    v_debug_info := jsonb_build_object(\r\n        'highest_priority_player', jsonb_build_object(\r\n            'name', v_highest_priority_player.friendly_name,\r\n            'whatsapp_status', v_highest_priority_player.whatsapp_group_member,\r\n            'xp', v_highest_priority_player.xp,\r\n            'rank', v_highest_priority_player.rank\r\n        ),\r\n        'time_slot', jsonb_build_object(\r\n            'available_at', v_time_slot.available_time,\r\n            'expires_at', v_time_slot.next_player_access_time\r\n        ),\r\n        'reserve_count', v_reserve_count,\r\n        'calculated_times_debug', v_time_slot.debug_info\r\n    );\r\n\r\n    -- Create slot offer\r\n    INSERT INTO slot_offers (\r\n        game_id,\r\n        player_id,\r\n        status,\r\n        available_at,\r\n        expires_at,\r\n        admin_id,\r\n        dropped_out_player_id,\r\n        priority\r\n    ) VALUES (\r\n        p_game_id,\r\n        v_highest_priority_player.player_id,\r\n        'pending',\r\n        v_time_slot.available_time,\r\n        v_time_slot.next_player_access_time,\r\n        p_admin_id,\r\n        p_dropped_out_player_id,\r\n        1\r\n    ) RETURNING id INTO v_slot_offer_id;\r\n\r\n    -- Create notification for the eligible player\r\n    INSERT INTO notifications (\r\n        player_id,\r\n        type,\r\n        message,\r\n        metadata,\r\n        title,\r\n        priority\r\n    ) VALUES (\r\n        v_highest_priority_player.player_id,\r\n        'slot_offer',\r\n        format('A spot has opened up in a game on %s. You have exclusive access until %s!',\r\n               to_char(v_game.date, 'DD/MM/YYYY'),\r\n               to_char(v_time_slot.next_player_access_time, 'HH24:MI')),\r\n        jsonb_build_object(\r\n            'game_id', p_game_id,\r\n            'slot_offer_id', v_slot_offer_id,\r\n            'exclusive_until', v_time_slot.next_player_access_time,\r\n            'debug_info', v_debug_info\r\n        ),\r\n        'Exclusive Game Slot Available!',\r\n        2\r\n    );\r\n\r\n    -- Return both the slot offer ID and debug info\r\n    RETURN QUERY\r\n    SELECT v_slot_offer_id, v_debug_info;\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "update_all_player_xp",
           "arguments": "",
           "return_type": "void",
@@ -6820,28 +6853,6 @@
           "security_definer": true,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.handle_slot_offer_response(p_offer_id uuid, p_status slot_offer_status)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n  v_game_id UUID;\r\n  v_player_id UUID;\r\n  v_game_date TIMESTAMP WITH TIME ZONE;\r\n  v_game_number INTEGER;\r\n  v_hours_until_game NUMERIC;\r\n  v_next_players UUID[];\r\n  v_current_selected_players JSONB;\r\nBEGIN\r\n  -- Get the offer details\r\n  SELECT \r\n    game_id,\r\n    player_id,\r\n    g.date,\r\n    COUNT(g2.*) + 1,\r\n    EXTRACT(EPOCH FROM (g.date - NOW())) / 3600 \r\n    INTO v_game_id, v_player_id, v_game_date, v_game_number, v_hours_until_game\r\n  FROM slot_offers so\r\n  JOIN games g ON g.id = so.game_id\r\n  LEFT JOIN games g2 ON g2.date < g.date OR (g2.date = g.date AND g2.id < g.id)\r\n  WHERE so.id = p_offer_id\r\n  GROUP BY so.game_id, so.player_id, g.date;\r\n\r\n  IF p_status = 'accepted' THEN\r\n    -- Get current selected players from game_selections\r\n    SELECT COALESCE(selected_players, '[]'::jsonb)\r\n    INTO v_current_selected_players\r\n    FROM game_selections\r\n    WHERE game_id = v_game_id;\r\n\r\n    -- If no game_selections entry exists, create one\r\n    IF NOT FOUND THEN\r\n      INSERT INTO game_selections (game_id, selected_players)\r\n      VALUES (v_game_id, '[]'::jsonb)\r\n      RETURNING selected_players INTO v_current_selected_players;\r\n    END IF;\r\n\r\n    -- Add the new player to selected_players if not already present\r\n    IF NOT v_current_selected_players ? v_player_id::text THEN\r\n      UPDATE game_selections\r\n      SET selected_players = (\r\n        SELECT jsonb_agg(value)\r\n        FROM (\r\n          SELECT * FROM jsonb_array_elements(v_current_selected_players)\r\n          UNION ALL\r\n          SELECT to_jsonb(v_player_id::text)\r\n        ) t\r\n      )\r\n      WHERE game_id = v_game_id;\r\n    END IF;\r\n\r\n    -- Update game registration status\r\n    UPDATE game_registrations\r\n    SET status = 'selected'\r\n    WHERE game_id = v_game_id AND player_id = v_player_id;\r\n\r\n    -- Update other pending offers to voided\r\n    UPDATE slot_offers\r\n    SET \r\n      status = 'voided',\r\n      responded_at = NOW()\r\n    WHERE \r\n      game_id = v_game_id \r\n      AND id != p_offer_id \r\n      AND status = 'pending';\r\n\r\n  ELSIF p_status = 'declined' THEN\r\n    -- Get next eligible players\r\n    SELECT ARRAY(\r\n      SELECT player_id \r\n      FROM get_next_slot_offer_players(v_game_id, v_hours_until_game)\r\n      LIMIT 1\r\n    ) INTO v_next_players;\r\n\r\n    -- Create new offers for next eligible players\r\n    IF array_length(v_next_players, 1) > 0 THEN\r\n      INSERT INTO slot_offers (\r\n        game_id,\r\n        player_id,\r\n        status,\r\n        offered_at,\r\n        expires_at,\r\n        available_at\r\n      )\r\n      SELECT \r\n        v_game_id,\r\n        player_id,\r\n        'pending'::slot_offer_status,\r\n        NOW(),\r\n        NOW() + INTERVAL '1 hour',\r\n        NOW()\r\n      FROM unnest(v_next_players) AS player_id;\r\n    END IF;\r\n  END IF;\r\n\r\n  -- Update the slot offer status\r\n  UPDATE slot_offers\r\n  SET \r\n    status = p_status,\r\n    responded_at = NOW(),\r\n    accepted_at = CASE WHEN p_status = 'accepted' THEN NOW() ELSE NULL END,\r\n    declined_at = CASE WHEN p_status = 'declined' THEN NOW() ELSE NULL END\r\n  WHERE id = p_offer_id;\r\n\r\nEND;\r\n$function$\n"
-        },
-        {
-          "name": "calculate_slot_offer_times",
-          "arguments": "p_game_id uuid, p_num_players bigint",
-          "return_type": "TABLE(player_rank bigint, available_time timestamp with time zone, next_player_access_time timestamp with time zone, debug_info jsonb)",
-          "description": null,
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": false,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.calculate_slot_offer_times(p_game_id uuid, p_num_players bigint)\n RETURNS TABLE(player_rank bigint, available_time timestamp with time zone, next_player_access_time timestamp with time zone, debug_info jsonb)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_game record;\r\n    v_total_time interval;\r\n    v_time_interval interval;\r\n    v_game_date timestamp with time zone;\r\nBEGIN\r\n    -- Get game details\r\n    SELECT * INTO v_game FROM games WHERE id = p_game_id;\r\n    IF NOT FOUND THEN\r\n        RAISE EXCEPTION 'Game not found';\r\n    END IF;\r\n\r\n    -- Calculate time intervals\r\n    v_game_date := date_trunc('day', v_game.date) + interval '1 minute';\r\n    v_total_time := v_game_date - CURRENT_TIMESTAMP;\r\n    \r\n    -- Handle case where there are no players\r\n    IF p_num_players = 0 THEN\r\n        RETURN;\r\n    END IF;\r\n    \r\n    v_time_interval := v_total_time / GREATEST(p_num_players, 1);\r\n\r\n    -- Return the results with debug info\r\n    RETURN QUERY\r\n    WITH RankedPlayers AS (\r\n        SELECT \r\n            p.id,\r\n            p.friendly_name,\r\n            p.whatsapp_group_member,\r\n            ps.xp,\r\n            p.current_streak,\r\n            p.caps,\r\n            gr.created_at as registration_time,\r\n            ROW_NUMBER() OVER (\r\n                ORDER BY \r\n                    CASE WHEN p.whatsapp_group_member IN ('Yes', 'Proxy') THEN 0 ELSE 1 END ASC,\r\n                    ps.xp DESC,\r\n                    p.current_streak DESC,\r\n                    p.caps DESC,\r\n                    gr.created_at ASC\r\n            ) as rank\r\n        FROM game_registrations gr\r\n        JOIN players p ON p.id = gr.player_id\r\n        JOIN player_stats ps ON ps.id = p.id\r\n        WHERE gr.game_id = p_game_id\r\n        AND gr.status = 'reserve'\r\n    )\r\n    SELECT \r\n        rank as player_rank,\r\n        CURRENT_TIMESTAMP + ((rank - 1) * v_time_interval) as available_time,\r\n        CURRENT_TIMESTAMP + (rank * v_time_interval) as next_player_access_time,\r\n        jsonb_build_object(\r\n            'player_name', friendly_name,\r\n            'whatsapp_status', whatsapp_group_member,\r\n            'xp', xp,\r\n            'streak', current_streak,\r\n            'caps', caps,\r\n            'registration_time', registration_time,\r\n            'rank', rank,\r\n            'whatsapp_priority', CASE WHEN whatsapp_group_member IN ('Yes', 'Proxy') THEN 0 ELSE 1 END\r\n        ) as debug_info\r\n    FROM RankedPlayers\r\n    ORDER BY rank;\r\n\r\n    -- Log debug info\r\n    RAISE NOTICE 'Game ID: %, Total Players: %, Time Interval: %', p_game_id, p_num_players, v_time_interval;\r\nEND;\r\n$function$\n"
-        },
-        {
-          "name": "create_slot_offers_for_game",
-          "arguments": "p_game_id uuid, p_admin_id uuid DEFAULT NULL::uuid, p_dropped_out_player_id uuid DEFAULT NULL::uuid",
-          "return_type": "TABLE(slot_offer_id uuid, debug_info jsonb)",
-          "description": null,
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": false,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.create_slot_offers_for_game(p_game_id uuid, p_admin_id uuid DEFAULT NULL::uuid, p_dropped_out_player_id uuid DEFAULT NULL::uuid)\n RETURNS TABLE(slot_offer_id uuid, debug_info jsonb)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_game record;\r\n    v_highest_priority_player record;\r\n    v_time_slot record;\r\n    v_reserve_count bigint;\r\n    v_slot_offer_id uuid;\r\n    v_debug_info jsonb;\r\nBEGIN\r\n    -- Get game details\r\n    SELECT * INTO v_game FROM games WHERE id = p_game_id;\r\n    IF NOT FOUND THEN\r\n        RAISE EXCEPTION 'Game not found';\r\n    END IF;\r\n\r\n    -- Get the count of reserve players\r\n    SELECT COUNT(*) INTO v_reserve_count \r\n    FROM game_registrations \r\n    WHERE game_id = p_game_id \r\n    AND status = 'reserve';\r\n\r\n    -- Get the highest priority reserve player\r\n    WITH RankedPlayers AS (\r\n        SELECT \r\n            gr.player_id,\r\n            p.friendly_name,\r\n            p.whatsapp_group_member,\r\n            ps.xp,\r\n            p.current_streak,\r\n            p.caps,\r\n            gr.created_at as registration_time,\r\n            ROW_NUMBER() OVER (\r\n                ORDER BY \r\n                    CASE WHEN p.whatsapp_group_member IN ('Yes', 'Proxy') THEN 0 ELSE 1 END ASC,\r\n                    ps.xp DESC,\r\n                    p.current_streak DESC,\r\n                    p.caps DESC,\r\n                    gr.created_at ASC\r\n            ) as rank\r\n        FROM game_registrations gr\r\n        JOIN players p ON p.id = gr.player_id\r\n        JOIN player_stats ps ON ps.id = p.id\r\n        WHERE gr.game_id = p_game_id\r\n        AND gr.status = 'reserve'\r\n        AND NOT EXISTS (\r\n            -- Exclude players who already have an active slot offer\r\n            SELECT 1 FROM slot_offers so\r\n            WHERE so.player_id = gr.player_id\r\n            AND so.game_id = p_game_id\r\n            AND so.status = 'pending'\r\n        )\r\n    )\r\n    SELECT * INTO v_highest_priority_player\r\n    FROM RankedPlayers\r\n    WHERE rank = 1;\r\n\r\n    -- If no eligible player found, return null\r\n    IF NOT FOUND THEN\r\n        RETURN;\r\n    END IF;\r\n\r\n    -- Get the time slot for the highest priority player with debug info\r\n    SELECT * INTO v_time_slot\r\n    FROM public.calculate_slot_offer_times(p_game_id, v_reserve_count)\r\n    WHERE player_rank = 1;\r\n\r\n    -- Store debug info\r\n    v_debug_info := jsonb_build_object(\r\n        'highest_priority_player', jsonb_build_object(\r\n            'name', v_highest_priority_player.friendly_name,\r\n            'whatsapp_status', v_highest_priority_player.whatsapp_group_member,\r\n            'xp', v_highest_priority_player.xp,\r\n            'rank', v_highest_priority_player.rank\r\n        ),\r\n        'time_slot', jsonb_build_object(\r\n            'available_at', v_time_slot.available_time,\r\n            'expires_at', v_time_slot.next_player_access_time\r\n        ),\r\n        'reserve_count', v_reserve_count,\r\n        'calculated_times_debug', v_time_slot.debug_info\r\n    );\r\n\r\n    -- Create slot offer\r\n    INSERT INTO slot_offers (\r\n        game_id,\r\n        player_id,\r\n        status,\r\n        available_at,\r\n        expires_at,\r\n        admin_id,\r\n        dropped_out_player_id,\r\n        priority\r\n    ) VALUES (\r\n        p_game_id,\r\n        v_highest_priority_player.player_id,\r\n        'pending',\r\n        v_time_slot.available_time,\r\n        v_time_slot.next_player_access_time,\r\n        p_admin_id,\r\n        p_dropped_out_player_id,\r\n        1\r\n    ) RETURNING id INTO v_slot_offer_id;\r\n\r\n    -- Create notification for the eligible player\r\n    INSERT INTO notifications (\r\n        player_id,\r\n        type,\r\n        message,\r\n        metadata,\r\n        title,\r\n        priority\r\n    ) VALUES (\r\n        v_highest_priority_player.player_id,\r\n        'slot_offer',\r\n        format('A spot has opened up in a game on %s. You have exclusive access until %s!',\r\n               to_char(v_game.date, 'DD/MM/YYYY'),\r\n               to_char(v_time_slot.next_player_access_time, 'HH24:MI')),\r\n        jsonb_build_object(\r\n            'game_id', p_game_id,\r\n            'slot_offer_id', v_slot_offer_id,\r\n            'exclusive_until', v_time_slot.next_player_access_time,\r\n            'debug_info', v_debug_info\r\n        ),\r\n        'Exclusive Game Slot Available!',\r\n        2\r\n    );\r\n\r\n    -- Return both the slot offer ID and debug info\r\n    RETURN QUERY\r\n    SELECT v_slot_offer_id, v_debug_info;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "handle_slot_offer_response",
@@ -7007,17 +7018,6 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.calculate_player_rarity()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  WITH player_rankings AS (\r\n    SELECT \r\n      player_id,\r\n      xp,\r\n      CASE\r\n        WHEN percent_rank() OVER (ORDER BY xp DESC) <= 0.02 THEN 'Legendary'\r\n        WHEN percent_rank() OVER (ORDER BY xp DESC) <= 0.07 THEN 'World Class'\r\n        WHEN percent_rank() OVER (ORDER BY xp DESC) <= 0.20 THEN 'Professional'\r\n        WHEN percent_rank() OVER (ORDER BY xp DESC) <= 0.40 THEN 'Semi Pro'\r\n        ELSE 'Amateur'\r\n      END as calculated_rarity\r\n    FROM player_xp\r\n  )\r\n  UPDATE player_xp\r\n  SET rarity = pr.calculated_rarity\r\n  FROM player_rankings pr\r\n  WHERE player_xp.player_id = pr.player_id;\r\nEND;\r\n$function$\n"
-        },
-        {
-          "name": "get_next_slot_offer_players",
-          "arguments": "p_game_id uuid, p_hours_until_game numeric",
-          "return_type": "TABLE(player_id uuid)",
-          "description": null,
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": false,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.get_next_slot_offer_players(p_game_id uuid, p_hours_until_game numeric)\n RETURNS TABLE(player_id uuid)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_selected_player uuid;\r\n    v_selected_name text;\r\n    v_selected_xp integer;\r\nBEGIN\r\n    -- First get the next eligible player and store their details\r\n    WITH eligible_players AS (\r\n        SELECT \r\n            p.id as eligible_player_id,  -- Changed alias\r\n            p.friendly_name,\r\n            gr.created_at,\r\n            ps.xp\r\n        FROM game_registrations gr\r\n        INNER JOIN players p ON p.id = gr.player_id\r\n        INNER JOIN player_stats ps ON ps.id = p.id\r\n        WHERE gr.game_id = p_game_id\r\n        AND gr.status = 'reserve'\r\n        AND NOT EXISTS (\r\n            SELECT 1 \r\n            FROM slot_offers so \r\n            WHERE so.game_id = p_game_id \r\n            AND so.player_id = p.id \r\n            AND so.status IN ('pending', 'declined')\r\n        )\r\n    )\r\n    SELECT \r\n        eligible_player_id,  -- Use new alias\r\n        friendly_name,\r\n        xp\r\n    INTO \r\n        v_selected_player,\r\n        v_selected_name,\r\n        v_selected_xp\r\n    FROM eligible_players\r\n    ORDER BY xp DESC, created_at ASC\r\n    LIMIT 1;\r\n\r\n    -- Log the selection process\r\n    IF v_selected_player IS NOT NULL THEN\r\n        INSERT INTO debug_logs (event_type, message, details)\r\n        VALUES (\r\n            'player_selection',\r\n            'Selected next player based on player_stats XP',\r\n            jsonb_build_object(\r\n                'game_id', p_game_id,\r\n                'selected_player', v_selected_player,\r\n                'player_name', v_selected_name,\r\n                'xp', v_selected_xp\r\n            )\r\n        );\r\n    ELSE\r\n        INSERT INTO debug_logs (event_type, message, details)\r\n        VALUES (\r\n            'player_selection',\r\n            'No eligible players found',\r\n            jsonb_build_object(\r\n                'game_id', p_game_id\r\n            )\r\n        );\r\n    END IF;\r\n\r\n    -- Return the selected player\r\n    RETURN QUERY\r\n    SELECT v_selected_player AS player_id  -- Explicit column alias in return\r\n    WHERE v_selected_player IS NOT NULL;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "delete_game_cascade",
