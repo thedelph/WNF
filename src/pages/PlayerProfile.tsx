@@ -15,6 +15,9 @@ import { useGameHistory } from '../hooks/useGameHistory';
 import XPBreakdown from '../components/profile/XPBreakdown';
 import { PlayerStats } from '../types/player';
 import { GameHistory } from '../types/game';
+import clsx from 'clsx';
+import { Tooltip } from '../components/ui/Tooltip';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 
 /**
  * PlayerProfile component displays detailed information about a player
@@ -295,20 +298,39 @@ export default function PlayerProfileNew() {
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row gap-4">
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                document.getElementById('player-rating')?.scrollIntoView({ 
-                  behavior: 'smooth',
-                  block: 'start'
-                });
-              }}
-              className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none"
-            >
-              <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-              <span className="font-medium">PLAYER RATING</span>
-            </motion.button>
+            <TooltipPrimitive.Provider>
+              {!user ? (
+                <Tooltip 
+                  content="You must be logged in to view player ratings"
+                  side="bottom"
+                >
+                  <motion.button 
+                    onClick={() => {
+                      toast.error('You must be logged in to view player ratings');
+                    }}
+                    className="btn h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none btn-disabled bg-gray-400 text-gray-600 cursor-not-allowed"
+                  >
+                    <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
+                    <span className="font-medium">PLAYER RATING</span>
+                  </motion.button>
+                </Tooltip>
+              ) : (
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    document.getElementById('player-rating')?.scrollIntoView({ 
+                      behavior: 'smooth',
+                      block: 'start'
+                    });
+                  }}
+                  className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none"
+                >
+                  <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
+                  <span className="font-medium">PLAYER RATING</span>
+                </motion.button>
+              )}
+            </TooltipPrimitive.Provider>
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

@@ -24,14 +24,16 @@ export const Tooltip = ({
   align = 'center'
 }: TooltipProps) => {
   return (
-    <TooltipPrimitive.Provider>
+    <TooltipPrimitive.Provider delayDuration={0}>
       <TooltipPrimitive.Root>
         <TooltipPrimitive.Trigger asChild>
-          {children}
+          <span className="touch-manipulation">
+            {children}
+          </span>
         </TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
-            className="z-50 overflow-hidden rounded-md bg-base-300 px-3 py-1.5 text-sm text-base-content animate-in fade-in-0 zoom-in-95"
+            className="z-50 overflow-hidden rounded-md bg-base-300 px-3 py-1.5 text-sm text-base-content animate-in fade-in-0 zoom-in-95 touch-none"
             side={side}
             align={align}
             sideOffset={5}
