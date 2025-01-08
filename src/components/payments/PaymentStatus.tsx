@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../../utils/supabase'
 import { useUser } from '../../hooks/useUser'
 import { toast } from 'react-hot-toast'
 import { motion } from 'framer-motion'
+import clsx from 'clsx'
 
 interface Props {
   gameId: string
@@ -75,19 +76,25 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
         )
       default:
         return (
-          <motion.button
+          <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={handleMarkAsPaid}
-            disabled={loading}
-            className="btn btn-xs btn-outline"
           >
-            {loading ? (
-              <span className="loading loading-spinner loading-xs"></span>
-            ) : (
-              'Mark Paid'
-            )}
-          </motion.button>
+            <button
+              onClick={handleMarkAsPaid}
+              disabled={loading}
+              className={clsx(
+                "btn btn-sm",
+                loading ? "btn-disabled" : "btn-primary"
+              )}
+            >
+              {loading ? (
+                <span className="loading loading-spinner loading-xs"></span>
+              ) : (
+                'Mark as Paid'
+              )}
+            </button>
+          </motion.div>
         )
     }
   }

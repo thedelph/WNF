@@ -92,13 +92,15 @@ export default function XPBreakdown({
 
   return (
     <div className="mt-4">
-      <button
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
         className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
       >
         <span className="inline-flex items-center justify-center w-4 h-4">ℹ️</span>
         <span className="font-medium">XP BREAKDOWN</span>
-      </button>
+      </motion.button>
 
       <AnimatePresence>
         {isOpen && (

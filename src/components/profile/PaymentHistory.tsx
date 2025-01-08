@@ -4,6 +4,8 @@ import { useUser } from '../../hooks/useUser'
 import { PaymentStatus } from '../payments/PaymentStatus'
 import { format } from 'date-fns'
 import { motion } from 'framer-motion'
+import { clsx } from 'clsx'
+import { AnimatePresence } from 'framer-motion'
 
 interface GamePayment {
   id: string
@@ -20,12 +22,6 @@ const PaymentHistory = () => {
   const { player } = useUser()
   const [games, setGames] = useState<GamePayment[]>([])
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (player?.id) {
-      fetchPaymentHistory()
-    }
-  }, [player?.id])
 
   const fetchPaymentHistory = async () => {
     try {
@@ -45,7 +41,8 @@ const PaymentHistory = () => {
         `)
         .eq('player_id', player?.id)
         .eq('status', 'selected')
-        .order('created_at', { ascending: false })
+        .order('games(date)', { ascending: false })
+        .order('games(sequence_number)', { ascending: false })
         .limit(10)
 
       if (error) throw error
@@ -63,6 +60,12 @@ const PaymentHistory = () => {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (player?.id) {
+      fetchPaymentHistory()
+    }
+  }, [player?.id])
 
   if (loading) {
     return (
@@ -89,7 +92,9 @@ const PaymentHistory = () => {
       className="space-y-4"
     >
       <h2 className="text-xl font-semibold mb-4">Recent Games & Payments</h2>
-      <div className="overflow-x-auto">
+      
+      {/* Desktop View - Table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="table w-full">
           <thead>
             <tr className="bg-base-200">
@@ -101,34 +106,133 @@ const PaymentHistory = () => {
             </tr>
           </thead>
           <tbody>
-            {games.map(game => (
-              <tr key={game.id} className="hover:bg-base-100">
-                <td>#{game.sequence_number}</td>
-                <td>{format(new Date(game.date), 'MMM d, h:mm a')}</td>
-                <td>{game.venue.name}</td>
-                <td>
-                  <PaymentStatus 
-                    gameId={game.id} 
-                    playerId={player?.id || ''} 
-                    onStatusChange={fetchPaymentHistory}
-                  />
-                </td>
-                <td>
-                  {game.payment_link && game.payment_status !== 'admin_verified' && (
-                    <a 
-                      href={game.payment_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-primary"
-                    >
-                      Pay Now
-                    </a>
-                  )}
-                </td>
-              </tr>
-            ))}
+            <AnimatePresence>
+              {games.map((game) => (
+                <TableRow 
+                  key={game.id} 
+                  game={game} 
+                  onRefresh={fetchPaymentHistory}
+                />
+              ))}
+            </AnimatePresence>
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile View - Cards */}
+      <div className="md:hidden space-y-4">
+        <AnimatePresence>
+          {games.map((game) => (
+            <PaymentCard 
+              key={game.id} 
+              game={game} 
+              onRefresh={fetchPaymentHistory}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  )
+}
+
+interface RowProps {
+  game: GamePayment
+  onRefresh: () => Promise<void>
+}
+
+const PaymentButton = ({ game }: { game: GamePayment }) => {
+  const isVerified = game.payment_status === 'verified' || game.payment_status === 'admin_verified'
+  
+  if (!game.payment_link) return null
+
+  return (
+    <motion.div
+      whileHover={!isVerified ? { scale: 1.05 } : {}}
+      whileTap={!isVerified ? { scale: 0.95 } : {}}
+    >
+      <a
+        href={game.payment_link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={clsx(
+          "btn btn-sm",
+          isVerified ? "btn-disabled opacity-50" : "btn-primary"
+        )}
+        onClick={(e) => {
+          if (isVerified) {
+            e.preventDefault()
+          }
+        }}
+      >
+        Pay Now
+      </a>
+    </motion.div>
+  )
+}
+
+const TableRow = ({ game, onRefresh }: RowProps) => {
+  const { player } = useUser()
+  
+  return (
+    <motion.tr
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.2 }}
+    >
+      <td>WNF #{game.sequence_number}</td>
+      <td>{format(new Date(game.date), 'MMM d, yyyy')}</td>
+      <td>{game.venue.name}</td>
+      <td>
+        <PaymentStatus 
+          gameId={game.id}
+          playerId={player?.id || ''}
+          onStatusChange={onRefresh}
+        />
+      </td>
+      <td>
+        <PaymentButton game={game} />
+      </td>
+    </motion.tr>
+  )
+}
+
+const PaymentCard = ({ game, onRefresh }: RowProps) => {
+  const { player } = useUser()
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.2 }}
+      className={clsx(
+        "card bg-base-200 shadow-lg",
+        game.payment_status === 'paid' && 'border-l-4 border-success',
+        game.payment_status === 'pending' && 'border-l-4 border-warning',
+        !game.payment_status && 'border-l-4 border-error'
+      )}
+    >
+      <div className="card-body p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium">WNF #{game.sequence_number}</span>
+            <span className="text-sm opacity-70">
+              {format(new Date(game.date), 'MMM d, yyyy')}
+            </span>
+          </div>
+          <div className="badge badge-sm badge-ghost">
+            {game.venue.name}
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <PaymentStatus 
+            gameId={game.id}
+            playerId={player?.id || ''}
+            onStatusChange={onRefresh}
+          />
+          <PaymentButton game={game} />
+        </div>
       </div>
     </motion.div>
   )

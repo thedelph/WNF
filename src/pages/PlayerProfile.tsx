@@ -295,7 +295,9 @@ export default function PlayerProfileNew() {
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row gap-4">
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 document.getElementById('player-rating')?.scrollIntoView({ 
                   behavior: 'smooth',
@@ -306,8 +308,10 @@ export default function PlayerProfileNew() {
             >
               <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
               <span className="font-medium">PLAYER RATING</span>
-            </button>
-            <button 
+            </motion.button>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 document.getElementById('game-history')?.scrollIntoView({ 
                   behavior: 'smooth',
@@ -318,7 +322,7 @@ export default function PlayerProfileNew() {
             >
               <span className="inline-flex items-center justify-center w-4 h-4">📜</span>
               <span className="font-medium">GAME HISTORY</span>
-            </button>
+            </motion.button>
           </div>
           <XPBreakdown stats={{
             caps: player.caps || 0,
