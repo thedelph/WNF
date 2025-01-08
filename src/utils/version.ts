@@ -27,6 +27,10 @@ export const changelogData: ChangelogEntry[] = [
           {
             title: 'Tooltips',
             details: "Tooltips added to game history section. They display on games where there weren't an even number of players on each team, or where the score is unknown to indicate that those games don't count towards a player's winrate."
+          },
+          {
+            title: 'Navigation buttons added',
+            details: 'Navigation buttons added to player profiles to auto scroll the page.'
           }
         ]
       },
@@ -40,10 +44,6 @@ export const changelogData: ChangelogEntry[] = [
           {
             title: 'XP tail-off for old games',
             details: 'Older games will eventually count for 0 XP, reducing runaway leader effect and introducing rolling seasons/soft resets over time.'
-          },
-          {
-            title: 'Navigation buttons added',
-            details: 'Navigation buttons added to player profiles to auto scroll the page.'
           }
         ]
       },
