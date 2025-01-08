@@ -81,13 +81,15 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         if (winRatesError) throw winRatesError;
 
         // Try to get balanced teams from database
-        const { data: balancedTeams, error: balanceError } = await supabase
+        const { data: balancedTeamsData, error: balanceError } = await supabase
           .from('balanced_team_assignments')
           .select('*')
-          .eq('game_id', gameId)
-          .single();
+          .eq('game_id', gameId);
 
         if (balanceError) throw balanceError;
+
+        // Get the first balanced team assignment if any exist
+        const balancedTeams = balancedTeamsData?.[0];
 
         // Get all registrations with selection method and player data
         const { data: registrations, error: registrationError } = await supabase

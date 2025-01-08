@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Venue } from '../../../types/game';
+import { Venue, GAME_STATUSES, GameStatus, Player } from '../../../types/game';
 import FormContainer from '../../common/containers/FormContainer';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../utils/supabase';
+import BasicGameDetails from './form-components/BasicGameDetails';
+import GameTimingDetails from './form-components/GameTimingDetails';
+import PlayerSelectionDetails from './form-components/PlayerSelectionDetails';
+import TeamAnnouncementDetails from './form-components/TeamAnnouncementDetails';
+import GameDetailsPaste from './form-components/GameDetailsPaste';
 
 interface CreateGameFormProps {
   date?: string;
@@ -16,6 +21,10 @@ interface CreateGameFormProps {
   onGameCreated?: () => void;
 }
 
+/**
+ * Form component for creating new games with different phases
+ * Supports three phases: Upcoming Game, Player Selection, and Team Announcement
+ */
 export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   date: presetDate,
   time: presetTime,
@@ -26,19 +35,36 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   teamAnnouncementTime: presetTeamAnnouncementTime,
   onGameCreated,
 }) => {
+  // Basic state
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [date, setDate] = useState(presetDate || '');
   const [time, setTime] = useState(presetTime || '21:00');
   const [registrationStart, setRegistrationStart] = useState(presetRegistrationStart || '');
   const [registrationEnd, setRegistrationEnd] = useState(presetRegistrationEnd || '');
   const [teamAnnouncementTime, setTeamAnnouncementTime] = useState(presetTeamAnnouncementTime || '');
   const [venueId, setVenueId] = useState(presetVenueId || '');
-  const [maxPlayers, setMaxPlayers] = useState(18);
+  const [maxPlayers, setMaxPlayers] = useState<number>(18);
   const [randomSlots, setRandomSlots] = useState(2);
-  const [pitchCost, setPitchCost] = useState(presetPitchCost || 0);
+  const [pitchCost, setPitchCost] = useState(presetPitchCost || 50);
+  const [gamePhase, setGamePhase] = useState<GameStatus>(GAME_STATUSES.UPCOMING);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Phase-specific state
+  const [confirmedPlayers, setConfirmedPlayers] = useState<string[]>([]);
+  const [reservePlayers, setReservePlayers] = useState<string[]>([]);
+  const [randomPickPlayers, setRandomPickPlayers] = useState<string[]>([]);
+  const [droppedOutPlayers, setDroppedOutPlayers] = useState<string[]>([]);
+  const [teamAPlayers, setTeamAPlayers] = useState<string[]>([]);
+  const [teamBPlayers, setTeamBPlayers] = useState<string[]>([]);
+  const [teamAAttackRating, setTeamAAttackRating] = useState(0);
+  const [teamADefenseRating, setTeamADefenseRating] = useState(0);
+  const [teamBAttackRating, setTeamBAttackRating] = useState(0);
+  const [teamBDefenseRating, setTeamBDefenseRating] = useState(0);
 
   useEffect(() => {
     fetchVenues();
+    fetchPlayers();
   }, []);
 
   // Update form when preset values change
@@ -70,269 +96,344 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     }
   };
 
+  const fetchPlayers = async () => {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .order('friendly_name');
+
+    if (error) {
+      toast.error('Failed to fetch players');
+      return;
+    }
+
+    setPlayers(data || []);
+  };
+
+  // Function to calculate team announcement time (4 hours before game start)
+  const calculateTeamAnnouncementTime = (gameDateTime: string) => {
+    console.log('Calculating team announcement time for:', gameDateTime);
+    const gameDate = new Date(gameDateTime);
+    console.log('Game date parsed as:', gameDate);
+    
+    // Create announcement time by subtracting 4 hours in milliseconds
+    const announcementTime = new Date(gameDate.getTime() - (4 * 60 * 60 * 1000));
+    console.log('Announcement time calculated as:', announcementTime);
+    
+    // Format as YYYY-MM-DDTHH:mm for datetime-local input
+    const year = announcementTime.getFullYear();
+    const month = (announcementTime.getMonth() + 1).toString().padStart(2, '0');
+    const day = announcementTime.getDate().toString().padStart(2, '0');
+    const hours = announcementTime.getHours().toString().padStart(2, '0');
+    const minutes = announcementTime.getMinutes().toString().padStart(2, '0');
+    
+    const formattedTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    console.log('Formatted announcement time:', formattedTime);
+    
+    return formattedTime;
+  };
+
+  // Update team announcement time whenever date or time changes
+  useEffect(() => {
+    if (gamePhase === GAME_STATUSES.PLAYERS_ANNOUNCED && date && time) {
+      console.log('Effect triggered with date:', date, 'time:', time);
+      const gameDateTime = `${date}T${time}`;
+      console.log('Game date time constructed as:', gameDateTime);
+      setTeamAnnouncementTime(calculateTeamAnnouncementTime(gameDateTime));
+    }
+  }, [date, time, gamePhase]);
+
+  // Function to handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setIsSubmitting(true);
+
     try {
-      const gameDate = new Date(`${date}T${time}`);
-      const regStart = new Date(registrationStart);
-      const regEnd = new Date(registrationEnd);
-      const teamAnnounce = new Date(teamAnnouncementTime);
-      const now = new Date();
-
-      // Validate dates
-      if (regStart >= regEnd) {
-        toast.error('Registration start must be before registration end');
-        return;
+      // Validate dates based on game phase
+      const gameDateTime = `${date}T${time}`;
+      let registrationStartDate = registrationStart;
+      let registrationEndDate = registrationEnd;
+      
+      if (gamePhase !== GAME_STATUSES.UPCOMING) {
+        // For non-upcoming games, set registration window to be in the past
+        const gameDate = new Date(gameDateTime);
+        registrationStartDate = new Date(gameDate.getTime() - (48 * 60 * 60 * 1000)).toISOString(); // 48 hours before game
+        registrationEndDate = new Date(gameDate.getTime() - (24 * 60 * 60 * 1000)).toISOString(); // 24 hours before game
       }
 
-      if (gameDate <= regEnd) {
-        toast.error('Game date must be after registration end');
-        return;
-      }
+      console.log('Creating game with data:', {
+        date: gameDateTime,
+        venue_id: venueId,
+        pitch_cost: pitchCost,
+        status: gamePhase,
+        max_players: maxPlayers,
+        registration_window_start: registrationStartDate,
+        registration_window_end: registrationEndDate,
+        team_announcement_time: teamAnnouncementTime,
+      });
 
-      if (teamAnnounce <= regEnd) {
-        toast.error('Team announcement must be after registration end');
-        return;
-      }
+      // Create the game using admin role
+      const { data: gameResult, error: gameError } = await supabase.auth.getSession().then(({ data: { session } }) => {
+        return supabase
+          .from('games')
+          .insert([
+            {
+              date: gameDateTime,
+              venue_id: venueId,
+              pitch_cost: pitchCost,
+              status: gamePhase,
+              max_players: maxPlayers,
+              registration_window_start: registrationStartDate,
+              registration_window_end: registrationEndDate,
+              team_announcement_time: teamAnnouncementTime,
+            },
+          ])
+          .select()
+          .single();
+      });
 
-      if (teamAnnounce >= gameDate) {
-        toast.error('Team announcement must be before game start');
-        return;
-      }
+      if (gameError) throw gameError;
 
-      // Determine initial status
-      let initialStatus = 'upcoming';
-      if (now >= regStart && now < regEnd) {
-        initialStatus = 'open';
-      }
+      // Register confirmed and random pick players using admin role
+      const allSelectedPlayers = [...confirmedPlayers, ...randomPickPlayers];
+      console.log('Registering players:', { 
+        confirmed: confirmedPlayers,
+        random: randomPickPlayers,
+        all: allSelectedPlayers
+      });
 
-      const { error } = await supabase
-        .from('games')
-        .insert({
-          date: gameDate.toISOString(),
-          registration_window_start: regStart.toISOString(),
-          registration_window_end: regEnd.toISOString(),
-          team_announcement_time: teamAnnounce.toISOString(),
-          venue_id: venueId,
-          max_players: maxPlayers,
-          random_slots: randomSlots,
-          pitch_cost: pitchCost,
-          status: initialStatus,
-          teams_announced: false
+      if (allSelectedPlayers.length > 0) {
+        const { error: registrationError } = await supabase.auth.getSession().then(({ data: { session } }) => {
+          return supabase
+            .from('game_registrations')
+            .insert(
+              allSelectedPlayers.map(playerId => ({
+                game_id: gameResult.id,
+                player_id: playerId,
+                status: 'selected',
+                selection_method: randomPickPlayers.includes(playerId) ? 'random' : 'merit'
+              }))
+            );
         });
 
-      if (error) throw error;
+        if (registrationError) {
+          console.error('Error registering players:', registrationError);
+          toast.error('Game created but there was an error registering some players');
+          return;
+        }
+      }
+
+      // Add reserve players using admin role
+      if (reservePlayers.length > 0) {
+        const { error: reserveError } = await supabase.auth.getSession().then(({ data: { session } }) => {
+          return supabase
+            .from('game_registrations')
+            .insert(
+              reservePlayers.map(playerId => ({
+                game_id: gameResult.id,
+                player_id: playerId,
+                status: 'reserve',
+                selection_method: 'none'  // Reserve players weren't selected by any method
+              }))
+            );
+        });
+
+        if (reserveError) {
+          console.error('Error adding reserve players:', reserveError);
+          toast.error('Game created but there was an error adding some reserve players');
+          return;
+        }
+      }
+
+      // Add dropped out players
+      if (droppedOutPlayers.length > 0) {
+        const { error: droppedOutError } = await supabase.auth.getSession().then(({ data: { session } }) => {
+          return supabase
+            .from('game_registrations')
+            .insert(
+              droppedOutPlayers.map(playerId => ({
+                game_id: gameResult.id,
+                player_id: playerId,
+                status: 'dropped_out',
+                selection_method: 'none'  // Dropped out players don't have a selection method
+              }))
+            );
+        });
+
+        if (droppedOutError) {
+          console.error('Error adding dropped out players:', droppedOutError);
+          toast.error('Game created but there was an error adding some dropped out players');
+          return;
+        }
+      }
 
       toast.success('Game created successfully!');
-      
-      // Reset form
-      setDate('');
-      setTime('21:00');
-      setRegistrationStart('');
-      setRegistrationEnd('');
-      setTeamAnnouncementTime('');
-      setMaxPlayers(18);
-      setRandomSlots(2);
-      setPitchCost(0);
-
-      // Notify parent component
       onGameCreated?.();
     } catch (error) {
       console.error('Error creating game:', error);
-      toast.error('Failed to create game');
+      toast.error('Error creating game');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  // Handler for when player lists are extracted from pasted text
+  const handlePlayerListsExtracted = (
+    selectedPlayers: string[],
+    randomPlayers: string[],
+    reservePlayers: string[],
+    droppedOutPlayers: string[]
+  ) => {
+    // Filter players to only include those in our database
+    const validSelectedPlayers = selectedPlayers
+      .map(name => players.find(p => p.friendly_name === name))
+      .filter((p): p is Player => p !== undefined)
+      .map(p => p.id);
+
+    const validRandomPlayers = randomPlayers
+      .map(name => players.find(p => p.friendly_name === name))
+      .filter((p): p is Player => p !== undefined)
+      .map(p => p.id);
+
+    const validReservePlayers = reservePlayers
+      .map(name => players.find(p => p.friendly_name === name))
+      .filter((p): p is Player => p !== undefined)
+      .map(p => p.id);
+
+    const validDroppedOutPlayers = droppedOutPlayers
+      .map(name => players.find(p => p.friendly_name === name))
+      .filter((p): p is Player => p !== undefined)
+      .map(p => p.id);
+
+    setConfirmedPlayers(validSelectedPlayers);
+    setRandomPickPlayers(validRandomPlayers);
+    setReservePlayers(validReservePlayers);
+    setDroppedOutPlayers(validDroppedOutPlayers);
   };
 
   return (
     <FormContainer title="Create New Game">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Game Phase Selection */}
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Game Date</span>
-          </label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="input input-bordered"
-            required
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Start Time</span>
-          </label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="input input-bordered"
-            required
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Registration Window Start</span>
-            <button 
-              type="button"
-              className="btn btn-xs"
-              onClick={() => setRegistrationStart(new Date().toISOString().slice(0, 16))}
-            >
-              Set to Now
-            </button>
-          </label>
-          <input
-            type="datetime-local"
-            value={registrationStart}
-            onChange={(e) => setRegistrationStart(e.target.value)}
-            className="input input-bordered"
-            required
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Registration Window End</span>
-            <button 
-              type="button"
-              className="btn btn-xs"
-              onClick={() => {
-                const oneMinuteFromNow = new Date(Date.now() + 60000);
-                setRegistrationEnd(oneMinuteFromNow.toISOString().slice(0, 16));
-              }}
-            >
-              1 Min from Now
-            </button>
-          </label>
-          <input
-            type="datetime-local"
-            value={registrationEnd}
-            onChange={(e) => setRegistrationEnd(e.target.value)}
-            className="input input-bordered"
-            required
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Team Announcement Time</span>
-            <button
-              type="button"
-              className="btn btn-xs"
-              onClick={() => {
-                if (!date || !time) {
-                  toast.error('Please set game date and time first');
-                  return;
-                }
-                try {
-                  const gameDateTime = new Date(`${date}T${time}`);
-                  if (isNaN(gameDateTime.getTime())) {
-                    toast.error('Invalid game date or time');
-                    return;
-                  }
-                  const announcementTime = new Date(gameDateTime);
-                  announcementTime.setHours(announcementTime.getHours() - 4);
-                  setTeamAnnouncementTime(announcementTime.toISOString().slice(0, 16));
-                } catch (error) {
-                  console.error('Error setting team announcement time:', error);
-                  toast.error('Failed to set team announcement time');
-                }
-              }}
-            >
-              4H Before Game
-            </button>
-          </label>
-          <input
-            type="datetime-local"
-            value={teamAnnouncementTime}
-            onChange={(e) => setTeamAnnouncementTime(e.target.value)}
-            className="input input-bordered"
-            required
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Venue</span>
+            <span className="label-text">Game Phase</span>
           </label>
           <select
-            value={venueId}
-            onChange={(e) => setVenueId(e.target.value)}
-            className="select select-bordered"
-            required
+            value={gamePhase}
+            onChange={(e) => {
+              const newPhase = e.target.value as GameStatus;
+              console.log('Phase changed to:', newPhase);
+              setGamePhase(newPhase);
+              
+              // Set team announcement time when switching to Player Selection Phase
+              if (newPhase === GAME_STATUSES.PLAYERS_ANNOUNCED && date && time) {
+                console.log('Setting team announcement time on phase change with date:', date, 'time:', time);
+                const gameDateTime = `${date}T${time}`;
+                setTeamAnnouncementTime(calculateTeamAnnouncementTime(gameDateTime));
+              }
+            }}
+            className="select select-bordered w-full"
           >
-            <option value="">Select a venue...</option>
-            {venues.map((venue) => (
-              <option key={venue.id} value={venue.id}>
-                {venue.name}
-              </option>
-            ))}
+            <option value={GAME_STATUSES.UPCOMING}>Upcoming Game</option>
+            <option value={GAME_STATUSES.PLAYERS_ANNOUNCED}>Player Selection Phase</option>
+            <option value={GAME_STATUSES.TEAMS_ANNOUNCED}>Team Announcement Phase</option>
           </select>
         </div>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Max Players</span>
-          </label>
-          <input
-            type="number"
-            value={maxPlayers}
-            onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-            min={1}
-            max={30}
-            className="input input-bordered"
-            required
-          />
-        </div>
+        {/* Game Details Paste */}
+        <GameDetailsPaste
+          onDateTimeExtracted={(newDate, newTime) => {
+            setDate(newDate);
+            setTime(newTime);
+            // If in Player Selection Phase, update team announcement time
+            if (gamePhase === GAME_STATUSES.PLAYERS_ANNOUNCED) {
+              const gameDateTime = `${newDate}T${newTime}`;
+              setTeamAnnouncementTime(calculateTeamAnnouncementTime(gameDateTime));
+            }
+          }}
+          onPlayerListsExtracted={handlePlayerListsExtracted}
+          onMaxPlayersExtracted={(maxPlayers) => {
+            setMaxPlayers(maxPlayers);
+          }}
+        />
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Random Slots</span>
-          </label>
-          <input
-            type="number"
-            value={randomSlots}
-            onChange={(e) => setRandomSlots(parseInt(e.target.value))}
-            min={0}
-            max={maxPlayers}
-            className="input input-bordered"
-            required
-          />
-          <label className="label">
-            <span className="label-text-alt">Number of slots to be assigned randomly</span>
-          </label>
-        </div>
+        {/* Basic Game Details */}
+        <BasicGameDetails
+          date={date}
+          time={time}
+          venueId={venueId}
+          maxPlayers={maxPlayers}
+          randomSlots={randomSlots}
+          pitchCost={pitchCost}
+          venues={venues}
+          onDateChange={setDate}
+          onTimeChange={setTime}
+          onVenueChange={setVenueId}
+          onMaxPlayersChange={setMaxPlayers}
+          onRandomSlotsChange={setRandomSlots}
+          onPitchCostChange={setPitchCost}
+        />
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Pitch Cost (£)</span>
-          </label>
-          <input
-            type="number"
-            value={pitchCost}
-            onChange={(e) => setPitchCost(parseFloat(e.target.value))}
-            min={0}
-            step={0.01}
-            className="input input-bordered"
-            required
+        {/* Game Timing Details */}
+        <GameTimingDetails
+          gamePhase={gamePhase}
+          date={date}
+          time={time}
+          registrationStart={registrationStart}
+          registrationEnd={registrationEnd}
+          teamAnnouncementTime={teamAnnouncementTime}
+          onRegistrationStartChange={setRegistrationStart}
+          onRegistrationEndChange={setRegistrationEnd}
+          onTeamAnnouncementTimeChange={setTeamAnnouncementTime}
+        />
+
+        {/* Player Selection Phase Details */}
+        {gamePhase === GAME_STATUSES.PLAYERS_ANNOUNCED && (
+          <PlayerSelectionDetails
+            players={players}
+            confirmedPlayers={confirmedPlayers}
+            reservePlayers={reservePlayers}
+            randomPickPlayers={randomPickPlayers}
+            droppedOutPlayers={droppedOutPlayers}
+            onConfirmedPlayersChange={setConfirmedPlayers}
+            onReservePlayersChange={setReservePlayers}
+            onRandomPickPlayersChange={setRandomPickPlayers}
+            onDroppedOutPlayersChange={setDroppedOutPlayers}
           />
-          <label className="label">
-            <span className="label-text-alt">Total cost for renting the pitch</span>
-          </label>
-        </div>
+        )}
+
+        {/* Team Announcement Phase Details */}
+        {gamePhase === GAME_STATUSES.TEAMS_ANNOUNCED && (
+          <TeamAnnouncementDetails
+            players={players}
+            teamAPlayers={teamAPlayers}
+            teamBPlayers={teamBPlayers}
+            teamAAttackRating={teamAAttackRating}
+            teamADefenseRating={teamADefenseRating}
+            teamBAttackRating={teamBAttackRating}
+            teamBDefenseRating={teamBDefenseRating}
+            onTeamAPlayersChange={setTeamAPlayers}
+            onTeamBPlayersChange={setTeamBPlayers}
+            onTeamAAttackRatingChange={setTeamAAttackRating}
+            onTeamADefenseRatingChange={setTeamADefenseRating}
+            onTeamBAttackRatingChange={setTeamBAttackRating}
+            onTeamBDefenseRatingChange={setTeamBDefenseRating}
+          />
+        )}
 
         <motion.button
           type="submit"
           className="btn btn-primary w-full"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          disabled={isSubmitting}
         >
-          Create Game
+          {isSubmitting ? 'Creating...' : 'Create Game'}
         </motion.button>
       </form>
     </FormContainer>
-  )
+  );
 };
+
+export default CreateGameForm;

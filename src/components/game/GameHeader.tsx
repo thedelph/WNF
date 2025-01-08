@@ -26,18 +26,20 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   const formattedDate = game.date ? format(new Date(game.date), 'EEEE, do MMMM yyyy') : '';
   const kickoffTime = game.date ? format(new Date(game.date), '@ h:mmaaa') : '';
 
-  // Determine which countdown to show
+  // Determine which countdown to show based on game status and dates
   const now = new Date();
   let nextEvent = null;
   let nextEventLabel = '';
 
-  if (game.registration_window_start && new Date(game.registration_window_start) > now) {
-    nextEvent = new Date(game.registration_window_start);
-    nextEventLabel = 'Registration Opens in';
-  } else if (game.registration_window_end && new Date(game.registration_window_end) > now) {
-    nextEvent = new Date(game.registration_window_end);
-    nextEventLabel = 'Registration Closes in';
-  } else if (game.team_announcement_time && new Date(game.team_announcement_time) > now) {
+  if (game.status === 'upcoming') {
+    if (game.registration_window_start && new Date(game.registration_window_start) > now) {
+      nextEvent = new Date(game.registration_window_start);
+      nextEventLabel = 'Registration Opens in';
+    } else if (game.registration_window_end && new Date(game.registration_window_end) > now) {
+      nextEvent = new Date(game.registration_window_end);
+      nextEventLabel = 'Registration Closes in';
+    }
+  } else if (game.status === 'players_announced' && game.team_announcement_time && new Date(game.team_announcement_time) > now) {
     nextEvent = new Date(game.team_announcement_time);
     nextEventLabel = 'Teams Announced in';
   }

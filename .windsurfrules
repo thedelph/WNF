@@ -1,7 +1,7 @@
 If a file gets above 200 lines of code - always break it up and modularize it into multiple files.
 My build system is Vite, React, Tailwind CSS, Daisy UI, React Hot Toast, Framer Motion, and Supabase as the backend.
 Always add a large amount of comments to your code so that it's easier to understand and maintain.
-All my database schema information is in SQL-info/Supabase-Database-Info.txt. Please refer to this file before checking any of the migration files.
+All my database schema information is in C:\Users\chris\Documents\GitHub\WNF\SQL\Supabase-Database-Info.txt. Please refer to this file before checking any of the migration files.
 If you ever need information about the database schema, please give me an SQL command to run on my Supabase database and I can get you the information you need.
 Please refer to @instruction.md for project context and background.
 Always make re-usable components where possible and search for existing components that can be used befeore creating new ones.

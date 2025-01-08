@@ -118,3 +118,22 @@ export type NotificationType =
   | 'penalty_earned'
   | 'system_announcement'
   | 'slot_offer'  // Added this type to match the database
+
+export interface GameFormData {
+  date: string;
+  time: string;
+  venue: string;
+  pitchCost: number;
+  maxPlayers: number;
+  randomSlots: number;
+  phase: GameStatus;
+  confirmedPlayers: string[];
+  reservePlayers: string[];
+  randomPickPlayers: string[];
+  teamAPlayers: string[];
+  teamBPlayers: string[];
+  teamAAttackRating: number;
+  teamADefenseRating: number;
+  teamBAttackRating: number;
+  teamBDefenseRating: number;
+}
