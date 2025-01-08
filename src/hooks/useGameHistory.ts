@@ -11,7 +11,7 @@ interface GameFilters {
 }
 
 interface SortConfig {
-  key: keyof GameHistory['games'] | 'team';
+  key: 'team' | 'sequence_number';
   direction: 'asc' | 'desc';
 }
 
@@ -21,7 +21,7 @@ interface SortConfig {
  */
 export const useGameHistory = () => {
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'date',
+    key: 'sequence_number',
     direction: 'desc'
   });
 
@@ -80,11 +80,11 @@ export const useGameHistory = () => {
 
     // Apply sorting
     filteredGames.sort((a, b) => {
-      if (sortConfig.key === 'date') {
-        if (!a.games?.date || !b.games?.date) return 0;
-        const dateA = new Date(a.games.date).getTime();
-        const dateB = new Date(b.games.date).getTime();
-        return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+      if (sortConfig.key === 'sequence_number') {
+        if (!a.games?.sequence_number || !b.games?.sequence_number) return 0;
+        return sortConfig.direction === 'asc'
+          ? a.games.sequence_number - b.games.sequence_number
+          : b.games.sequence_number - a.games.sequence_number;
       }
       if (sortConfig.key === 'team') {
         if (!a.team || !b.team) return 0;

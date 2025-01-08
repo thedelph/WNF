@@ -32,9 +32,7 @@ export const GameHistoryTable = ({
               <th onClick={() => handleSort('sequence_number')} className="cursor-pointer hover:bg-base-200">
                 WNF # {sortConfig.key === 'sequence_number' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
-              <th onClick={() => handleSort('date')} className="cursor-pointer hover:bg-base-200">
-                Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-              </th>
+              <th>Date</th>
               <th onClick={() => handleSort('team')} className="cursor-pointer hover:bg-base-200">
                 Team {sortConfig.key === 'team' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
@@ -67,15 +65,6 @@ export const GameHistoryTable = ({
             )}
           >
             WNF # {sortConfig.key === 'sequence_number' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-          </button>
-          <button 
-            onClick={() => handleSort('date')} 
-            className={clsx(
-              "btn btn-sm",
-              sortConfig.key === 'date' && "btn-primary"
-            )}
-          >
-            Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
           </button>
           <button 
             onClick={() => handleSort('team')} 
