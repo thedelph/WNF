@@ -327,10 +327,11 @@ export default function Ratings() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="btn btn-primary"
+                className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2"
                 onClick={handleRatingSubmit}
               >
-                Submit Rating
+                <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
+                <span className="font-medium">SUBMIT RATING</span>
               </motion.button>
             </div>
           </motion.div>
@@ -371,7 +372,7 @@ export default function Ratings() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="btn btn-primary btn-sm"
+                      className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2"
                       onClick={() => {
                         setSelectedPlayer(player);
                         setRatings({
@@ -380,7 +381,8 @@ export default function Ratings() {
                         });
                       }}
                     >
-                      {player.current_rating ? 'Update Rating' : 'Rate Player'}
+                      <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
+                      <span className="font-medium">{player.current_rating ? 'UPDATE RATING' : 'RATE PLAYER'}</span>
                     </motion.button>
                   </div>
                 ) : (
