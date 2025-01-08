@@ -36,6 +36,10 @@ export const changelogData: ChangelogEntry[] = [
           {
             title: 'Game History View',
             details: 'Game history on player profiles now changed from table view to card view'
+          },
+          {
+            title: 'XP tail-off for old games',
+            details: 'Older games will eventually count for 0 XP, reducing runaway leader effect and introducing rolling seasons/soft resets over time.'
           }
         ]
       },

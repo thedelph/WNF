@@ -293,39 +293,70 @@ export default function PlayerProfileNew() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <XPBreakdown stats={{
-          caps: player.caps || 0,
-          activeBonuses: player.active_bonuses || 0,
-          activePenalties: player.active_penalties || 0,
-          currentStreak: player.current_streak || 0,
-          gameSequences: player.game_sequences,
-          latestSequence: latestSequence,
-          xp: player.xp || 0
-        }} />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button 
+              onClick={() => {
+                document.getElementById('player-rating')?.scrollIntoView({ 
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }}
+              className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none"
+            >
+              <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
+              <span className="font-medium">PLAYER RATING</span>
+            </button>
+            <button 
+              onClick={() => {
+                document.getElementById('game-history')?.scrollIntoView({ 
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }}
+              className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-2 sm:order-none"
+            >
+              <span className="inline-flex items-center justify-center w-4 h-4">📜</span>
+              <span className="font-medium">GAME HISTORY</span>
+            </button>
+          </div>
+          <XPBreakdown stats={{
+            caps: player.caps || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            currentStreak: player.current_streak || 0,
+            gameSequences: player.game_sequences,
+            latestSequence: latestSequence,
+            xp: player.xp || 0
+          }} />
+        </div>
       </motion.div>
 
       <StatsGrid player={player} />
 
       {/* Only show PlayerRating if not viewing own profile */}
       {(!user || user.id !== player.user_id) && (
-        <PlayerRating
-          player={player}
-          user={user}
-          onRatePlayer={() => {
-            setRatings({
-              attack: player.my_rating?.attack_rating || 0,
-              defense: player.my_rating?.defense_rating || 0
-            });
-            setShowRatingModal(true);
-          }}
-          ratings={ratings}
-          setRatings={setRatings}
-        />
+        <div id="player-rating">
+          <PlayerRating
+            player={player}
+            user={user}
+            onRatePlayer={() => {
+              setRatings({
+                attack: player.my_rating?.attack_rating || 0,
+                defense: player.my_rating?.defense_rating || 0
+              });
+              setShowRatingModal(true);
+            }}
+            ratings={ratings}
+            setRatings={setRatings}
+          />
+        </div>
       )}
 
       {/* Show message if viewing own profile */}
       {user && user.id === player.user_id && (
         <motion.div
+          id="player-rating"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="card bg-base-100 shadow-xl mb-8"
@@ -338,7 +369,7 @@ export default function PlayerProfileNew() {
       )}
 
       {/* Game History */}
-      <div className="bg-base-100 rounded-lg p-6 shadow-lg">
+      <div id="game-history" className="bg-base-100 rounded-lg p-6 shadow-lg">
         <h2 className="text-2xl font-bold mb-4">Game History</h2>
         <FilterHeader filters={filters} setFilters={setFilters} />
         {games.length > 0 ? (
