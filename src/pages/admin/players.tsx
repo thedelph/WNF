@@ -69,19 +69,32 @@ export default function Players() {
       return
     }
 
-    const confirmDelete = window.confirm('Are you sure you want to delete the selected players?')
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete all selected players?'
+    )
     if (confirmDelete) {
       try {
+        const playerIds = Array.from(selectedPlayers)
+
+        // First delete all player_xp records
+        const { error: xpError } = await supabaseAdmin
+          .from('player_xp')
+          .delete()
+          .in('player_id', playerIds)
+
+        if (xpError) throw xpError
+
+        // Then delete all selected players
         const { error } = await supabaseAdmin
           .from('players')
           .delete()
-          .in('id', Array.from(selectedPlayers))
-        
+          .in('id', playerIds)
+
         if (error) throw error
-        
+
         toast.success('Players deleted successfully')
-        await fetchPlayers()
         setSelectedPlayers(new Set())
+        await fetchPlayers()
       } catch (error) {
         console.error('Delete error:', error)
         toast.error(`Failed to delete players: ${error.message}`)
