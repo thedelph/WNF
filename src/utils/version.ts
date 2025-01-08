@@ -18,6 +18,39 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.0.2',
+    date: '08/01/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'N/A',
+            details: 'No additions in this release'
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Game History View',
+            details: 'Game history on player profiles now changed from table view to card view'
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Game Score Display',
+            details: 'Previous game scores now showing correctly instead of saying "Unknown"'
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.0.1',
     date: '06/01/2025',
     sections: [
