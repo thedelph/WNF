@@ -38,7 +38,7 @@ export const GameHistoryTable = ({
               const outcome = getGameOutcome(game);
               return (
                 <motion.tr 
-                  key={game.game_id}
+                  key={game.games.id}
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -69,27 +69,20 @@ export const GameHistoryTable = ({
                     </div>
                   </td>
                   <td>
-                    {(game.games.score_blue !== null && 
-                      game.games.score_orange !== null && 
-                      game.games.score_blue !== undefined && 
-                      game.games.score_orange !== undefined && 
-                      !(game.games.score_blue === 0 && game.games.score_orange === 0) &&
-                      outcome !== 'Unknown') ? (
+                    {game.games.score_blue !== null && game.games.score_orange !== null ? (
                       <div className="flex gap-2 items-center">
                         <div className={`badge badge-sm font-medium ${
                           !game.team ? 'badge-ghost' :
                           game.team?.toLowerCase() === 'blue' ? 'badge-info' : 'badge-warning'
                         }`}>
-                          {!game.team ? '?' : 
-                           game.team?.toLowerCase() === 'blue' ? game.games.score_blue : game.games.score_orange}
+                          {game.team?.toLowerCase() === 'blue' ? game.games.score_blue : game.games.score_orange}
                         </div>
                         <span>-</span>
                         <div className={`badge badge-sm font-medium ${
                           !game.team ? 'badge-ghost' :
                           game.team?.toLowerCase() === 'blue' ? 'badge-warning' : 'badge-info'
                         }`}>
-                          {!game.team ? '?' :
-                           game.team?.toLowerCase() === 'blue' ? game.games.score_orange : game.games.score_blue}
+                          {game.team?.toLowerCase() === 'blue' ? game.games.score_orange : game.games.score_blue}
                         </div>
                       </div>
                     ) : (
