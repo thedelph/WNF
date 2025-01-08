@@ -18,15 +18,15 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
-    version: '1.0.2',
+    version: '1.0.3',
     date: '08/01/2025',
     sections: [
       {
         type: 'Added',
         items: [
           {
-            title: 'N/A',
-            details: 'No additions in this release'
+            title: 'Tooltips',
+            details: 'Tooltips added to game history section.'
           }
         ]
       },
@@ -45,6 +45,39 @@ export const changelogData: ChangelogEntry[] = [
           {
             title: 'Game Score Display',
             details: 'Previous game scores now showing correctly instead of saying "Unknown"'
+          }
+        ]
+      }
+    ]
+  },
+  {
+    version: '1.0.2',
+    date: '07/01/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'WNF WhatsApp Group Priority System',
+            details: 'WNF WhatsApp group members now get priority in game registration when it comes to random selection and reserve selection. '
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: 'No changes in this release'
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: 'No changes in this release'
           }
         ]
       }
