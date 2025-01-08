@@ -21,6 +21,12 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
   }, [gameId, playerId])
 
   const fetchPaymentStatus = async () => {
+    // Don't fetch if we don't have valid IDs
+    if (!gameId || !playerId) {
+      console.warn('Missing gameId or playerId for payment status')
+      return
+    }
+
     try {
       const { data, error } = await supabaseAdmin
         .from('game_registrations')
@@ -39,6 +45,12 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
   }
 
   const handleMarkAsPaid = async () => {
+    // Don't proceed if we don't have valid IDs
+    if (!gameId || !playerId) {
+      toast.error('Unable to update payment status')
+      return
+    }
+
     try {
       setLoading(true)
       const { error } = await supabaseAdmin
@@ -65,13 +77,13 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
       case 'admin_verified':
         return (
           <div className="badge badge-success gap-2">
-            Verified ✓
+            Admin Verified ✓
           </div>
         )
       case 'marked_paid':
         return (
           <div className="badge badge-warning gap-2">
-            Pending ⌛
+            Pending Verification ⌛
           </div>
         )
       default:
@@ -88,11 +100,7 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
                 loading ? "btn-disabled" : "btn-primary"
               )}
             >
-              {loading ? (
-                <span className="loading loading-spinner loading-xs"></span>
-              ) : (
-                'Mark as Paid'
-              )}
+              {loading ? "Updating..." : "Mark as Paid"}
             </button>
           </motion.div>
         )

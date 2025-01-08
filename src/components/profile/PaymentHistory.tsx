@@ -18,14 +18,62 @@ interface GamePayment {
   }
 }
 
+const ITEMS_PER_PAGE = 10
+
 const PaymentHistory = () => {
   const { player } = useUser()
   const [games, setGames] = useState<GamePayment[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
+  const [paymentFilter, setPaymentFilter] = useState<string>('all')
+  const [dateRange, setDateRange] = useState<'all' | 'month' | '3months' | '6months'>('all')
+
+  useEffect(() => {
+    if (player?.id) {
+      fetchTotalCount()
+      fetchPaymentHistory()
+    }
+  }, [player?.id, currentPage, sortOrder, paymentFilter, dateRange])
+
+  const fetchTotalCount = async () => {
+    try {
+      let query = supabaseAdmin
+        .from('game_registrations')
+        .select('id', { count: 'exact', head: true })
+        .eq('player_id', player?.id)
+        .eq('status', 'selected')
+
+      // Apply payment status filter
+      if (paymentFilter !== 'all') {
+        query = query.eq('payment_status', paymentFilter)
+      }
+
+      // Apply date range filter
+      if (dateRange !== 'all') {
+        const now = new Date()
+        let monthsAgo = 1
+        if (dateRange === '3months') monthsAgo = 3
+        if (dateRange === '6months') monthsAgo = 6
+        
+        const startDate = new Date()
+        startDate.setMonth(now.getMonth() - monthsAgo)
+        query = query.gte('games.date', startDate.toISOString())
+      }
+
+      const { count, error } = await query
+
+      if (error) throw error
+      setTotalCount(count || 0)
+    } catch (error) {
+      console.error('Error fetching total count:', error)
+    }
+  }
 
   const fetchPaymentHistory = async () => {
     try {
-      const { data, error } = await supabaseAdmin
+      let query = supabaseAdmin
         .from('game_registrations')
         .select(`
           payment_status,
@@ -41,13 +89,32 @@ const PaymentHistory = () => {
         `)
         .eq('player_id', player?.id)
         .eq('status', 'selected')
-        .order('games(date)', { ascending: false })
-        .order('games(sequence_number)', { ascending: false })
-        .limit(10)
+        .order('games(date)', { ascending: sortOrder === 'asc' })
+        .order('games(sequence_number)', { ascending: sortOrder === 'asc' })
+
+      // Apply payment status filter
+      if (paymentFilter !== 'all') {
+        query = query.eq('payment_status', paymentFilter)
+      }
+
+      // Apply date range filter
+      if (dateRange !== 'all') {
+        const now = new Date()
+        let monthsAgo = 1
+        if (dateRange === '3months') monthsAgo = 3
+        if (dateRange === '6months') monthsAgo = 6
+        
+        const startDate = new Date()
+        startDate.setMonth(now.getMonth() - monthsAgo)
+        query = query.gte('games.date', startDate.toISOString())
+      }
+
+      query = query.range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1)
+
+      const { data, error } = await query
 
       if (error) throw error
 
-      // Transform the data to include payment_status
       const transformedGames = data?.map(d => ({
         ...d.games,
         payment_status: d.payment_status
@@ -61,25 +128,12 @@ const PaymentHistory = () => {
     }
   }
 
-  useEffect(() => {
-    if (player?.id) {
-      fetchPaymentHistory()
-    }
-  }, [player?.id])
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
         <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    )
-  }
-
-  if (games.length === 0) {
-    return (
-      <div className="text-center p-8">
-        <h2 className="text-xl font-semibold mb-4">Recent Games & Payments</h2>
-        <p className="text-gray-500">No recent games found.</p>
       </div>
     )
   }
@@ -92,45 +146,139 @@ const PaymentHistory = () => {
       className="space-y-4"
     >
       <h2 className="text-xl font-semibold mb-4">Recent Games & Payments</h2>
-      
-      {/* Desktop View - Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="table w-full">
-          <thead>
-            <tr className="bg-base-200">
-              <th className="w-20">Game</th>
-              <th className="w-32">Date</th>
-              <th>Venue</th>
-              <th className="w-32">Payment Status</th>
-              <th className="w-24">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+
+      {/* Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
+        <select 
+          className="select select-bordered select-sm"
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
+        >
+          <option value="desc">Newest First</option>
+          <option value="asc">Oldest First</option>
+        </select>
+
+        <select 
+          className="select select-bordered select-sm"
+          value={paymentFilter}
+          onChange={(e) => {
+            setPaymentFilter(e.target.value)
+            setCurrentPage(1) // Reset to first page when filter changes
+          }}
+        >
+          <option value="all">All Payments</option>
+          <option value="admin_verified">Admin Verified</option>
+          <option value="marked_paid">Pending Verification</option>
+          <option value="unpaid">Unpaid</option>
+        </select>
+
+        <select 
+          className="select select-bordered select-sm"
+          value={dateRange}
+          onChange={(e) => {
+            setDateRange(e.target.value as 'all' | 'month' | '3months' | '6months')
+            setCurrentPage(1) // Reset to first page when filter changes
+          }}
+        >
+          <option value="all">All Time</option>
+          <option value="month">Last Month</option>
+          <option value="3months">Last 3 Months</option>
+          <option value="6months">Last 6 Months</option>
+        </select>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mb-4">
+          <div className="join">
+            <button
+              className={clsx(
+                "join-item btn btn-sm",
+                currentPage === 1 
+                  ? "btn-disabled opacity-50" 
+                  : "bg-primary hover:bg-primary/90 text-white"
+              )}
+              onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+            >
+              «
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i + 1}
+                className={clsx(
+                  "join-item btn btn-sm",
+                  currentPage === i + 1 
+                    ? "bg-primary text-white" 
+                    : "bg-primary/10 hover:bg-primary/90 hover:text-white"
+                )}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              className={clsx(
+                "join-item btn btn-sm",
+                currentPage === totalPages 
+                  ? "btn-disabled opacity-50" 
+                  : "bg-primary hover:bg-primary/90 text-white"
+              )}
+              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+              disabled={currentPage === totalPages}
+            >
+              »
+            </button>
+          </div>
+        </div>
+      )}
+
+      {games.length === 0 && currentPage === 1 ? (
+        <div className="text-center p-8">
+          <p className="text-gray-500">No games found matching your filters.</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop View - Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="table w-full">
+              <thead>
+                <tr className="bg-base-200">
+                  <th className="w-20">Game</th>
+                  <th className="w-32">Date</th>
+                  <th>Venue</th>
+                  <th className="w-32">Payment Status</th>
+                  <th className="w-24">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {games.map((game) => (
+                    <TableRow 
+                      key={game.id} 
+                      game={game} 
+                      onRefresh={fetchPaymentHistory}
+                    />
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile View - Cards */}
+          <div className="md:hidden space-y-4">
             <AnimatePresence>
               {games.map((game) => (
-                <TableRow 
+                <PaymentCard 
                   key={game.id} 
                   game={game} 
                   onRefresh={fetchPaymentHistory}
                 />
               ))}
             </AnimatePresence>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile View - Cards */}
-      <div className="md:hidden space-y-4">
-        <AnimatePresence>
-          {games.map((game) => (
-            <PaymentCard 
-              key={game.id} 
-              game={game} 
-              onRefresh={fetchPaymentHistory}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
+          </div>
+        </>
+      )}
     </motion.div>
   )
 }
@@ -173,6 +321,9 @@ const PaymentButton = ({ game }: { game: GamePayment }) => {
 const TableRow = ({ game, onRefresh }: RowProps) => {
   const { player } = useUser()
   
+  // Don't render if we don't have valid IDs
+  if (!player?.id || !game.id) return null
+
   return (
     <motion.tr
       initial={{ opacity: 0, y: 20 }}
@@ -186,7 +337,7 @@ const TableRow = ({ game, onRefresh }: RowProps) => {
       <td>
         <PaymentStatus 
           gameId={game.id}
-          playerId={player?.id || ''}
+          playerId={player.id}
           onStatusChange={onRefresh}
         />
       </td>
@@ -199,7 +350,11 @@ const TableRow = ({ game, onRefresh }: RowProps) => {
 
 const PaymentCard = ({ game, onRefresh }: RowProps) => {
   const { player } = useUser()
+  const isVerified = game.payment_status === 'verified' || game.payment_status === 'admin_verified'
   
+  // Don't render if we don't have valid IDs
+  if (!player?.id || !game.id) return null
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -208,9 +363,9 @@ const PaymentCard = ({ game, onRefresh }: RowProps) => {
       transition={{ duration: 0.2 }}
       className={clsx(
         "card bg-base-200 shadow-lg",
-        game.payment_status === 'paid' && 'border-l-4 border-success',
-        game.payment_status === 'pending' && 'border-l-4 border-warning',
-        !game.payment_status && 'border-l-4 border-error'
+        isVerified && 'border-l-4 border-success',
+        game.payment_status === 'marked_paid' && 'border-l-4 border-warning',
+        (!game.payment_status || game.payment_status === 'unpaid') && 'border-l-4 border-error'
       )}
     >
       <div className="card-body p-4">
@@ -228,7 +383,7 @@ const PaymentCard = ({ game, onRefresh }: RowProps) => {
         <div className="flex items-center justify-between mt-2">
           <PaymentStatus 
             gameId={game.id}
-            playerId={player?.id || ''}
+            playerId={player.id}
             onStatusChange={onRefresh}
           />
           <PaymentButton game={game} />
