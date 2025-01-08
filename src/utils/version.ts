@@ -40,6 +40,10 @@ export const changelogData: ChangelogEntry[] = [
           {
             title: 'XP tail-off for old games',
             details: 'Older games will eventually count for 0 XP, reducing runaway leader effect and introducing rolling seasons/soft resets over time.'
+          },
+          {
+            title: 'Navigation buttons added',
+            details: 'Navigation buttons added to player profiles to auto scroll the page.'
           }
         ]
       },
