@@ -26,7 +26,7 @@ export const changelogData: ChangelogEntry[] = [
         items: [
           {
             title: 'Tooltips',
-            details: 'Tooltips added to game history section.'
+            details: "Tooltips added to game history section. They display on games where there weren't an even number of players on each team, or where the score is unknown to indicate that those games don't count towards a player's winrate."
           }
         ]
       },
@@ -45,6 +45,10 @@ export const changelogData: ChangelogEntry[] = [
           {
             title: 'Game Score Display',
             details: 'Previous game scores now showing correctly instead of saying "Unknown"'
+          },
+          {
+            title: 'Sort by WNF #',
+            details: 'Sort by WNF # now works correctly in game history.'
           }
         ]
       }
