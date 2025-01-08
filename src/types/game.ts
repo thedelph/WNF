@@ -94,6 +94,19 @@ export interface Player {
   isAdmin?: boolean;
 }
 
+export interface GameHistory {
+  team: string;
+  games: {
+    id: string;
+    date: string;
+    score_blue: number | null;
+    score_orange: number | null;
+    outcome: 'blue_win' | 'orange_win' | 'draw' | null;
+    blue_team_size: number;  // Number of players on blue team
+    orange_team_size: number;  // Number of players on orange team
+  };
+}
+
 export const isValidGameStatus = (status: string): status is GameStatus => {
   return Object.values(GAME_STATUSES).includes(status as GameStatus)
 }

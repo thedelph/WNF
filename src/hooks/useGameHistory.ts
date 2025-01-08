@@ -37,10 +37,10 @@ export const useGameHistory = () => {
   /**
    * Determines the outcome of a game from a player's perspective
    */
-  const getGameOutcome = (game: GameHistory): string => {
-    if (!game?.games?.outcome) return 'Unknown';
+  const getGameOutcome = (game: GameHistory): string | null => {
+    if (!game?.games?.outcome) return null;
     if (game.games.outcome === 'draw') return 'Draw';
-    if (!game?.team) return 'Unknown';
+    if (!game?.team) return null;
     
     const team = game.team.toLowerCase();
     const isWin = (team === 'blue' && game.games.outcome === 'blue_win') ||

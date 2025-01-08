@@ -119,12 +119,12 @@ export default function PlayerProfileNew() {
           myRating = ratingData;
         }
 
-        // Get game history
+        // Get game history with team sizes
         const { data: gameData, error: gameError } = await supabase
           .from('game_registrations')
           .select(`
             team,
-            games (
+            games!inner (
               id,
               date,
               sequence_number,
@@ -139,6 +139,41 @@ export default function PlayerProfileNew() {
 
         if (gameError) throw gameError;
 
+        // Get team sizes for each game
+        const gameIds = gameData?.map(g => g.games.id) || [];
+        const { data: teamSizes, error: teamSizesError } = await supabase
+          .from('game_registrations')
+          .select('game_id, team')
+          .eq('status', 'selected')
+          .in('game_id', gameIds);
+
+        if (teamSizesError) throw teamSizesError;
+
+        // Calculate team sizes for each game
+        const teamSizeMap = teamSizes?.reduce((acc, reg) => {
+          if (!acc[reg.game_id]) {
+            acc[reg.game_id] = { blue: 0, orange: 0 };
+          }
+          if (reg.team === 'blue') {
+            acc[reg.game_id].blue++;
+          } else if (reg.team === 'orange') {
+            acc[reg.game_id].orange++;
+          }
+          return acc;
+        }, {} as Record<string, { blue: number; orange: number }>);
+
+        // Combine game data with team sizes
+        const gamesWithTeamSizes = gameData?.map(game => ({
+          ...game,
+          games: {
+            ...game.games,
+            blue_team_size: teamSizeMap?.[game.games.id]?.blue || 0,
+            orange_team_size: teamSizeMap?.[game.games.id]?.orange || 0
+          }
+        })) || [];
+
+        setGames(gamesWithTeamSizes);
+
         // Transform player data
         const playerStats: PlayerStats = {
           id: playerData.id,
@@ -151,7 +186,7 @@ export default function PlayerProfileNew() {
           max_streak: playerData.max_streak || 0,
           xp: playerData.player_xp?.xp || 0,
           win_rate: playerData.win_rate || 0,
-          game_sequences: gameData
+          game_sequences: gamesWithTeamSizes
             ?.filter(reg => reg.games?.is_historical)
             .map(reg => reg.games?.sequence_number)
             .filter(Boolean) || [],
@@ -161,8 +196,6 @@ export default function PlayerProfileNew() {
         };
 
         setPlayer(playerStats);
-        setGames(gameData || []);
-
       } catch (error) {
         console.error('Error fetching player data:', error);
         toast.error('Failed to load player data');
