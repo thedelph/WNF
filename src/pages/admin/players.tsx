@@ -98,6 +98,15 @@ export default function Players() {
     const confirmDelete = window.confirm('Are you sure you want to delete this player?')
     if (confirmDelete) {
       try {
+        // First delete the player_xp record
+        const { error: xpError } = await supabaseAdmin
+          .from('player_xp')
+          .delete()
+          .eq('player_id', playerId)
+
+        if (xpError) throw xpError
+
+        // Then delete the player
         const { error } = await supabaseAdmin
           .from('players')
           .delete()

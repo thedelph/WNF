@@ -66,7 +66,7 @@ export default function MergeTestUserModal({
       // First, fetch the test user's stats
       const { data: testUserData, error: testUserError } = await supabaseAdmin
         .from('players')
-        .select('caps, win_rate, active_bonuses, active_penalties, attack_rating, defense_rating, current_streak, max_streak')
+        .select('caps, win_rate, active_bonuses, active_penalties, attack_rating, defense_rating, current_streak, max_streak, whatsapp_group_member, whatsapp_mobile_number')
         .eq('id', testUser.id)
         .single();
 
@@ -153,6 +153,14 @@ export default function MergeTestUserModal({
 
       if (penaltiesError) throw penaltiesError;
 
+      // Update player_xp records
+      const { error: xpError } = await supabaseAdmin
+        .from('player_xp')
+        .update({ player_id: selectedUserId })
+        .eq('player_id', testUser.id);
+
+      if (xpError) throw xpError;
+
       // 7. Update balanced_team_assignments
       const { data: teamAssignments, error: teamAssignmentsError } = await supabaseAdmin
         .from('balanced_team_assignments')
@@ -202,6 +210,8 @@ export default function MergeTestUserModal({
           defense_rating: testUserData.defense_rating,
           current_streak: testUserData.current_streak,
           max_streak: testUserData.max_streak,
+          whatsapp_group_member: testUserData.whatsapp_group_member,
+          whatsapp_mobile_number: testUserData.whatsapp_mobile_number,
         })
         .eq('id', selectedUserId);
 
