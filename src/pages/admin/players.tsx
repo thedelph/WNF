@@ -164,6 +164,34 @@ export default function Players() {
     }
   };
 
+  const handleRecalculateStreaks = async () => {
+    try {
+      // Show confirmation dialog
+      if (!window.confirm('Are you sure you want to recalculate streaks for all players? This may take a few moments.')) {
+        return;
+      }
+
+      // Start loading state
+      setLoading(true);
+      toast.loading('Recalculating streaks for all players...');
+
+      const { error } = await supabase
+        .rpc('admin_recalculate_all_player_streaks');
+
+      if (error) throw error;
+
+      // Refresh the player list
+      fetchPlayers();
+      
+      toast.success('Successfully recalculated streaks for all players!');
+    } catch (error) {
+      console.error('Error recalculating streaks:', error);
+      toast.error('Failed to recalculate streaks. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPlayers()
   }, [])
@@ -198,6 +226,17 @@ export default function Players() {
               <span className="loading loading-spinner loading-sm"></span>
             ) : (
               'RECALCULATE XP'
+            )}
+          </button>
+          <button
+            onClick={handleRecalculateStreaks}
+            disabled={loading}
+            className="btn btn-secondary"
+          >
+            {loading ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              'RECALCULATE STREAKS'
             )}
           </button>
           <input
