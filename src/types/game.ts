@@ -94,6 +94,19 @@ export interface Player {
   isAdmin?: boolean;
 }
 
+export interface GameHistory {
+  team: string;
+  games: {
+    id: string;
+    date: string;
+    score_blue: number | null;
+    score_orange: number | null;
+    outcome: 'blue_win' | 'orange_win' | 'draw' | null;
+    blue_team_size: number;  // Number of players on blue team
+    orange_team_size: number;  // Number of players on orange team
+  };
+}
+
 export const isValidGameStatus = (status: string): status is GameStatus => {
   return Object.values(GAME_STATUSES).includes(status as GameStatus)
 }
@@ -118,3 +131,22 @@ export type NotificationType =
   | 'penalty_earned'
   | 'system_announcement'
   | 'slot_offer'  // Added this type to match the database
+
+export interface GameFormData {
+  date: string;
+  time: string;
+  venue: string;
+  pitchCost: number;
+  maxPlayers: number;
+  randomSlots: number;
+  phase: GameStatus;
+  confirmedPlayers: string[];
+  reservePlayers: string[];
+  randomPickPlayers: string[];
+  teamAPlayers: string[];
+  teamBPlayers: string[];
+  teamAAttackRating: number;
+  teamADefenseRating: number;
+  teamBAttackRating: number;
+  teamBDefenseRating: number;
+}

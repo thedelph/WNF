@@ -38,6 +38,7 @@ export interface ExtendedPlayerData extends PlayerStats {
     expires_at?: string;
     available_at?: string;
   }[];
+  whatsapp_group_member?: string;
 }
 
 export interface PlayerSelectionResultsProps {

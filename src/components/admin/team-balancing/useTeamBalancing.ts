@@ -45,62 +45,73 @@ export const useTeamBalancing = () => {
       const nextGame = gamesData[0];
       setGame(nextGame);
 
+      // Always fetch fresh player data first
+      const { data: registrations, error: registrationError } = await supabase
+        .from('game_registrations')
+        .select(`
+          *,
+          status,
+          players!game_registrations_player_id_fkey (
+            id,
+            friendly_name,
+            attack_rating,
+            defense_rating
+          )
+        `)
+        .eq('game_id', nextGame.id)
+        .eq('status', 'selected');
+
+      if (registrationError) {
+        console.error('Error fetching registrations:', registrationError);
+        toast.error('Error loading player registrations');
+        return;
+      }
+
+      if (!registrations || registrations.length === 0) {
+        setError('No players have been selected for this game yet.');
+        return;
+      }
+
+      // Debug log for Lewis's fresh data
+      const lewisData = registrations.find(reg => reg.players.friendly_name.toLowerCase().includes('lewis'));
+      if (lewisData) {
+        console.log('Fresh Lewis data from database:', {
+          id: lewisData.players.id,
+          name: lewisData.players.friendly_name,
+          attack: lewisData.players.attack_rating,
+          defense: lewisData.players.defense_rating
+        });
+      }
+
+      // Get existing team assignments if any
       const { data: assignmentData, error: assignmentError } = await supabase
         .from('balanced_team_assignments')
         .select('*')
         .eq('game_id', nextGame.id)
         .maybeSingle();
 
-      console.log('Assignment data:', assignmentData);
+      // Create new assignments using fresh player data
+      const playerRatings = registrations.map(reg => ({
+        player_id: reg.players.id,
+        attack_rating: reg.players.attack_rating || 5,
+        defense_rating: reg.players.defense_rating || 5
+      }));
 
-      if (assignmentError) {
-        console.error('Error fetching assignments:', assignmentError);
-        toast.error('Error loading team assignments');
-      }
-
+      let finalAssignments;
       if (assignmentData?.team_assignments?.teams) {
-        console.log('Setting teams:', assignmentData.team_assignments.teams);
-        setAssignments(assignmentData.team_assignments.teams);
+        // Use existing team assignments but with updated player data
+        finalAssignments = assignmentData.team_assignments.teams.map(assignment => {
+          const freshPlayerData = registrations.find(reg => reg.players.id === assignment.player_id);
+          return {
+            ...assignment,
+            attack_rating: freshPlayerData?.players.attack_rating || assignment.attack_rating,
+            defense_rating: freshPlayerData?.players.defense_rating || assignment.defense_rating
+          };
+        });
       } else {
-        // Fetch all registered players if no assignments exist
-        const { data: registrations, error: registrationError } = await supabase
-          .from('game_registrations')
-          .select(`
-            *,
-            status,
-            players!game_registrations_player_id_fkey (
-              id,
-              friendly_name,
-              attack_rating,
-              defense_rating
-            )
-          `)
-          .eq('game_id', nextGame.id)
-          .eq('status', 'selected');
-
-        if (registrationError) {
-          console.error('Error fetching registrations:', registrationError);
-          toast.error('Error loading player registrations');
-          return;
-        }
-
-        if (!registrations || registrations.length === 0) {
-          setError('No players have been selected for this game yet.');
-          return;
-        }
-
-        // Convert registrations to PlayerRating format for balanceTeams
-        const playerRatings = registrations.map(reg => ({
-          player_id: reg.players.id,
-          attack_rating: reg.players.attack_rating || 5,
-          defense_rating: reg.players.defense_rating || 5
-        }));
-
-        // Use the same balancing algorithm as team announcement
+        // Create new team assignments
         const balancedTeams = balanceTeams(playerRatings);
-
-        // Convert back to TeamAssignment format
-        const assignments = registrations.map(reg => {
+        finalAssignments = registrations.map(reg => {
           const isBlue = balancedTeams.blueTeam.includes(reg.players.id);
           return {
             player_id: reg.players.id,
@@ -110,9 +121,10 @@ export const useTeamBalancing = () => {
             team: isBlue ? 'blue' : 'orange'
           };
         });
-
-        setAssignments(assignments);
       }
+
+      console.log('Setting final assignments:', finalAssignments);
+      setAssignments(finalAssignments);
     } catch (err) {
       console.error('Error in fetchData:', err);
       setError('An error occurred while loading the data.');
@@ -195,5 +207,6 @@ export const useTeamBalancing = () => {
     assignments,
     hasUnsavedChanges,
     updateAssignments,
+    fetchData
   };
 };

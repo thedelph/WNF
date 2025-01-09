@@ -9,9 +9,15 @@ import { StatsGrid } from '../components/profile/StatsGrid';
 import { PlayerRating } from '../components/profile/PlayerRating';
 import { FilterHeader } from '../components/profile/GameHistory/FilterHeader';
 import { GameHistoryTable } from '../components/profile/GameHistory/GameHistoryTable';
+import { RatingModal } from '../components/profile/RatingModal';
+import { LoadingState } from '../components/common/LoadingState';
+import { useGameHistory } from '../hooks/useGameHistory';
 import XPBreakdown from '../components/profile/XPBreakdown';
 import { PlayerStats } from '../types/player';
 import { GameHistory } from '../types/game';
+import clsx from 'clsx';
+import { Tooltip } from '../components/ui/Tooltip';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 
 /**
  * PlayerProfile component displays detailed information about a player
@@ -30,85 +36,15 @@ export default function PlayerProfileNew() {
     defense: 0,
   });
 
-  // Sorting and filtering states
-  const [sortConfig, setSortConfig] = useState<{ key: keyof GameHistory['games'] | 'team', direction: 'asc' | 'desc' }>({
-    key: 'date',
-    direction: 'desc'
-  });
-  const [filters, setFilters] = useState({
-    dateRange: {
-      start: null as Date | null,
-      end: null as Date | null
-    },
-    team: '' as '' | 'Blue' | 'Orange',
-    outcome: '' as '' | 'Won' | 'Lost' | 'Draw' | 'Unknown'
-  });
-
-  // Sort and filter functions
-  const sortAndFilterGames = (games: GameHistory[]) => {
-    let filteredGames = [...games].filter(game => game && game.games);
-
-    // Apply filters
-    if (filters.dateRange.start || filters.dateRange.end) {
-      filteredGames = filteredGames.filter(game => {
-        if (!game.games?.date) return false;
-        const gameDate = new Date(game.games.date);
-        const afterStart = !filters.dateRange.start || gameDate >= filters.dateRange.start;
-        const beforeEnd = !filters.dateRange.end || gameDate <= filters.dateRange.end;
-        return afterStart && beforeEnd;
-      });
-    }
-
-    if (filters.team) {
-      filteredGames = filteredGames.filter(game =>
-        game.team && game.team.toLowerCase() === filters.team.toLowerCase()
-      );
-    }
-
-    if (filters.outcome) {
-      filteredGames = filteredGames.filter(game => {
-        const outcome = getGameOutcome(game);
-        return outcome === filters.outcome;
-      });
-    }
-
-    // Apply sorting
-    filteredGames.sort((a, b) => {
-      if (sortConfig.key === 'date') {
-        if (!a.games?.date || !b.games?.date) return 0;
-        const dateA = new Date(a.games.date).getTime();
-        const dateB = new Date(b.games.date).getTime();
-        return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
-      }
-      if (sortConfig.key === 'team') {
-        if (!a.team || !b.team) return 0;
-        return sortConfig.direction === 'asc'
-          ? a.team.localeCompare(b.team)
-          : b.team.localeCompare(a.team);
-      }
-      return 0;
-    });
-
-    return filteredGames;
-  };
-
-  const getGameOutcome = (game: GameHistory): string => {
-    if (!game?.games?.outcome) return 'Unknown';
-    if (game.games.outcome === 'draw') return 'Draw';
-    if (!game?.team) return 'Unknown';
-    
-    const team = game.team.toLowerCase();
-    const isWin = (team === 'blue' && game.games.outcome === 'blue_win') ||
-                 (team === 'orange' && game.games.outcome === 'orange_win');
-    return isWin ? 'Won' : 'Lost';
-  };
-
-  const handleSort = (key: typeof sortConfig.key) => {
-    setSortConfig(current => ({
-      key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  };
+  // Use custom hook for game history management
+  const {
+    sortConfig,
+    filters,
+    setFilters,
+    handleSort,
+    sortAndFilterGames,
+    getGameOutcome
+  } = useGameHistory();
 
   useEffect(() => {
     const fetchPlayerData = async () => {
@@ -127,26 +63,77 @@ export default function PlayerProfileNew() {
         if (latestSeqError) throw latestSeqError;
         setLatestSequence(latestSeqData?.sequence_number || 0);
 
-        // Get player stats from the updated player_stats view that includes XP
+        // Get player stats and XP
         const { data: playerData, error: playerError } = await supabase
-          .from('player_stats')
-          .select('*')
-          .eq('id', id)
+          .rpc('get_player_with_reserve_xp', { p_player_id: id })
           .single();
 
-        if (playerError) throw playerError;
+        if (playerError) {
+          console.error('Error fetching player data:', playerError);
+          throw playerError;
+        }
 
-        // Get game history
+        // Calculate total reserve XP from the transactions
+        const totalReserveXP = playerData.reserve_xp || 0;
+          
+        // Get game info for any reserve XP transactions
+        if (playerData.reserve_xp_transactions && playerData.reserve_xp_transactions.length > 0) {
+          const { data: gameData } = await supabase
+            .from('games')
+            .select('id, sequence_number')
+            .in('id', playerData.reserve_xp_transactions.map(t => t.game_id));
+        }
+
+        // Get current user's player ID if logged in
+        let currentPlayerId = null;
+        if (user) {
+          const { data: currentPlayer } = await supabase
+            .from('players')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+          currentPlayerId = currentPlayer?.id;
+        }
+
+        // Get games played together and rating if logged in
+        let gamesPlayedTogether = 0;
+        let myRating = null;
+        
+        if (currentPlayerId) {
+          // Get games played together using a raw count query
+          const { data: gamesCount } = await supabase
+            .rpc('count_games_played_together', {
+              player_one_id: currentPlayerId,
+              player_two_id: id
+            });
+            
+          gamesPlayedTogether = gamesCount || 0;
+
+          // Get current user's rating for this player
+          const { data: ratingData } = await supabase
+            .from('player_ratings')
+            .select('attack_rating, defense_rating')
+            .eq('rater_id', currentPlayerId)
+            .eq('rated_player_id', id)
+            .maybeSingle();
+            
+          myRating = ratingData;
+        }
+
+        // Get game history with team sizes and status
         const { data: gameData, error: gameError } = await supabase
           .from('game_registrations')
           .select(`
             team,
-            games (
+            status,
+            games!inner (
               id,
               date,
               sequence_number,
               outcome,
-              is_historical
+              is_historical,
+              score_blue,
+              score_orange
             )
           `)
           .eq('player_id', id)
@@ -154,11 +141,46 @@ export default function PlayerProfileNew() {
 
         if (gameError) throw gameError;
 
+        // Get team sizes for each game
+        const gameIds = gameData?.map(g => g.games.id) || [];
+        const { data: teamSizes, error: teamSizesError } = await supabase
+          .from('game_registrations')
+          .select('game_id, team')
+          .eq('status', 'selected')
+          .in('game_id', gameIds);
+
+        if (teamSizesError) throw teamSizesError;
+
+        // Calculate team sizes for each game
+        const teamSizeMap = teamSizes?.reduce((acc, reg) => {
+          if (!acc[reg.game_id]) {
+            acc[reg.game_id] = { blue: 0, orange: 0 };
+          }
+          if (reg.team === 'blue') {
+            acc[reg.game_id].blue++;
+          } else if (reg.team === 'orange') {
+            acc[reg.game_id].orange++;
+          }
+          return acc;
+        }, {} as Record<string, { blue: number; orange: number }>);
+
+        // Combine game data with team sizes
+        const gamesWithTeamSizes = gameData?.map(game => ({
+          ...game,
+          games: {
+            ...game.games,
+            blue_team_size: teamSizeMap?.[game.games.id]?.blue || 0,
+            orange_team_size: teamSizeMap?.[game.games.id]?.orange || 0
+          }
+        })) || [];
+
+        setGames(gamesWithTeamSizes);
+
         // Transform player data
         const playerStats: PlayerStats = {
           id: playerData.id,
+          user_id: playerData.user_id,
           friendly_name: playerData.friendly_name,
-          preferred_position: playerData.preferred_position,
           avatar_svg: playerData.avatar_svg,
           caps: playerData.caps || 0,
           active_bonuses: playerData.active_bonuses || 0,
@@ -167,15 +189,20 @@ export default function PlayerProfileNew() {
           max_streak: playerData.max_streak || 0,
           xp: playerData.xp || 0,
           win_rate: playerData.win_rate || 0,
-          game_sequences: gameData
+          gameHistory: gamesWithTeamSizes
             ?.filter(reg => reg.games?.is_historical)
-            .map(reg => reg.games?.sequence_number)
-            .filter(Boolean) || []
+            .map(reg => ({
+              sequence: reg.games?.sequence_number,
+              status: reg.status
+            }))
+            .filter(game => game.sequence !== undefined) || [],
+          games_played_together: gamesPlayedTogether,
+          my_rating: myRating,
+          reserveXP: playerData.reserve_xp || 0,
+          reserveCount: playerData.reserve_count || 0
         };
 
         setPlayer(playerStats);
-        setGames(gameData || []);
-
       } catch (error) {
         console.error('Error fetching player data:', error);
         toast.error('Failed to load player data');
@@ -246,11 +273,7 @@ export default function PlayerProfileNew() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (!player) {
@@ -277,35 +300,108 @@ export default function PlayerProfileNew() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <XPBreakdown stats={{
-          caps: player.caps || 0,
-          activeBonuses: player.active_bonuses || 0,
-          activePenalties: player.active_penalties || 0,
-          currentStreak: player.current_streak || 0,
-          gameSequences: player.game_sequences,
-          latestSequence: latestSequence,
-          xp: player.xp || 0
-        }} />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <TooltipPrimitive.Provider>
+              {!user ? (
+                <Tooltip 
+                  content="You must be logged in to view player ratings"
+                  side="bottom"
+                >
+                  <motion.button 
+                    onClick={() => {
+                      toast.error('You must be logged in to view player ratings');
+                    }}
+                    className="btn h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none btn-disabled bg-gray-400 text-gray-600 cursor-not-allowed"
+                  >
+                    <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
+                    <span className="font-medium">PLAYER RATING</span>
+                  </motion.button>
+                </Tooltip>
+              ) : (
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    document.getElementById('player-rating')?.scrollIntoView({ 
+                      behavior: 'smooth',
+                      block: 'start'
+                    });
+                  }}
+                  className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none"
+                >
+                  <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
+                  <span className="font-medium">PLAYER RATING</span>
+                </motion.button>
+              )}
+            </TooltipPrimitive.Provider>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                document.getElementById('game-history')?.scrollIntoView({ 
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }}
+              className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-2 sm:order-none"
+            >
+              <span className="inline-flex items-center justify-center w-4 h-4">📜</span>
+              <span className="font-medium">GAME HISTORY</span>
+            </motion.button>
+          </div>
+          <XPBreakdown stats={{
+            caps: player.caps || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            currentStreak: player.current_streak || 0,
+            gameHistory: player.gameHistory || [],
+            latestSequence: latestSequence,
+            xp: player.xp || 0,
+            reserveXP: player.reserveXP || 0,
+            reserveCount: player.reserveCount || 0
+          }} />
+        </div>
       </motion.div>
 
       <StatsGrid player={player} />
 
-      <PlayerRating
-        player={player}
-        user={user}
-        onRatePlayer={() => {
-          setRatings({
-            attack: player.my_rating?.attack_rating || 0,
-            defense: player.my_rating?.defense_rating || 0
-          });
-          setShowRatingModal(true);
-        }}
-        ratings={ratings}
-        setRatings={setRatings}
-      />
+      {/* Only show PlayerRating if not viewing own profile */}
+      {(!user || user.id !== player.user_id) && (
+        <div id="player-rating">
+          <PlayerRating
+            player={player}
+            user={user}
+            onRatePlayer={() => {
+              setRatings({
+                attack: player.my_rating?.attack_rating || 0,
+                defense: player.my_rating?.defense_rating || 0
+              });
+              setShowRatingModal(true);
+            }}
+            ratings={ratings}
+            setRatings={setRatings}
+          />
+        </div>
+      )}
+
+      {/* Show message if viewing own profile */}
+      {user && user.id === player.user_id && (
+        <motion.div
+          id="player-rating"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card bg-base-100 shadow-xl mb-8"
+        >
+          <div className="card-body">
+            <h2 className="card-title">Player Rating</h2>
+            <p className="text-gray-500">You cannot rate yourself</p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Game History */}
-      <div className="bg-base-100 rounded-lg p-6 shadow-lg">
+      <div id="game-history" className="bg-base-100 rounded-lg p-6 shadow-lg">
         <h2 className="text-2xl font-bold mb-4">Game History</h2>
         <FilterHeader filters={filters} setFilters={setFilters} />
         {games.length > 0 ? (
@@ -322,76 +418,13 @@ export default function PlayerProfileNew() {
 
       {/* Rating Modal */}
       {showRatingModal && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-        >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
-            className="bg-white rounded-lg p-6 max-w-md w-full space-y-4"
-          >
-            <h2 className="text-xl font-semibold">
-              Rate {player?.friendly_name}
-            </h2>
-            
-            <div className="space-y-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Attack Rating</span>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  value={ratings.attack}
-                  onChange={(e) => setRatings(prev => ({ ...prev, attack: parseInt(e.target.value) }))}
-                  className="range range-primary"
-                  step="0.5"
-                />
-                <div className="text-center mt-2">{ratings.attack / 2} stars</div>
-              </div>
-
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Defense Rating</span>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  value={ratings.defense}
-                  onChange={(e) => setRatings(prev => ({ ...prev, defense: parseInt(e.target.value) }))}
-                  className="range range-primary"
-                  step="0.5"
-                />
-                <div className="text-center mt-2">{ratings.defense / 2} stars</div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="btn btn-ghost"
-                onClick={() => setShowRatingModal(false)}
-              >
-                Cancel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="btn btn-primary"
-                onClick={handleRatingSubmit}
-              >
-                Submit Rating
-              </motion.button>
-            </div>
-          </motion.div>
-        </motion.div>
+        <RatingModal
+          player={player}
+          ratings={ratings}
+          setRatings={setRatings}
+          onClose={() => setShowRatingModal(false)}
+          onSubmit={handleRatingSubmit}
+        />
       )}
     </motion.div>
   );

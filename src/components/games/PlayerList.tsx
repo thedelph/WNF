@@ -21,11 +21,6 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   children,
   renderPlayerExtra
 }) => {
-  // Sort players by XP in descending order
-  const sortedPlayers = [...players].sort((a, b) =>
-    (b.xp || 0) - (a.xp || 0)
-  );
-
   return (
     <motion.div
       initial={false}
@@ -34,7 +29,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
       className="overflow-hidden"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 p-4 justify-items-center sm:justify-items-stretch">
-        {sortedPlayers.map((player) => (
+        {players.map((player) => (
           <motion.div
             key={player.id}
             initial={{ opacity: 0, y: 20 }}

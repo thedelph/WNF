@@ -110,29 +110,56 @@ export default function HistoricalGames() {
 
       // For each player, count their game registrations
       for (const player of players) {
-        const { count, error: countError } = await supabaseAdmin
+        console.log(`Calculating caps for ${player.friendly_name}...`);
+        
+        // Get all games that should count towards caps
+        const { data: games, error: gamesError } = await supabaseAdmin
           .from('game_registrations')
-          .select('*', { count: 'exact', head: false })
+          .select(`
+            id,
+            games!inner (
+              id,
+              date,
+              completed,
+              is_historical,
+              status
+            )
+          `)
           .eq('player_id', player.id)
           .eq('status', 'selected')
+          .eq('games.completed', true)
+          .lt('games.date', new Date().toISOString());
 
-        if (countError) {
-          console.error(`Error counting games for player ${player.friendly_name}:`, countError)
-          continue
+        if (gamesError) {
+          console.error(`Error getting games for player ${player.friendly_name}:`, gamesError);
+          continue;
         }
 
-        // Update player's caps with the counted value
-        const { error: updateError } = await supabaseAdmin
-          .from('players')
-          .update({ caps: count })
-          .eq('id', player.id)
-
-        if (updateError) {
-          console.error(`Error updating caps for player ${player.friendly_name}:`, updateError)
-          continue
+        // Log each game being counted
+        if (games) {
+          console.log(`Games being counted for ${player.friendly_name}:`);
+          games.forEach(game => {
+            console.log(`Game ${game.games.id}: date=${game.games.date}, completed=${game.games.completed}, status=${game.games.status}`);
+          });
         }
 
-        console.log(`Updated caps for ${player.friendly_name} to ${count}`)
+        const count = games?.length || 0;
+        console.log(`Found ${count} games for ${player.friendly_name}`);
+
+        // Only update if we have a valid count
+        if (typeof count === 'number') {
+          const { error: updateError } = await supabaseAdmin
+            .from('players')
+            .update({ caps: count })
+            .eq('id', player.id);
+
+          if (updateError) {
+            console.error(`Error updating caps for player ${player.friendly_name}:`, updateError);
+            continue;
+          }
+
+          console.log(`Successfully updated caps for ${player.friendly_name} to ${count}`);
+        }
       }
 
       toast.success('Successfully recalculated all player caps')

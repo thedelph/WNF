@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
-
+import { toast } from 'react-hot-toast'
 import { motion } from 'framer-motion'
-import { toast } from 'react-toastify'
+import { Tooltip } from '../components/ui/Tooltip'
 import AvatarCreator from '../components/AvatarCreator'
 import PaymentHistory from '../components/profile/PaymentHistory'
 import XPBreakdown from '../components/profile/XPBreakdown'
@@ -28,6 +28,7 @@ interface PlayerProfile {
 
 interface ExtendedPlayerData extends PlayerProfile {
   rarity: number
+  reserveXP: number
 }
 
 // Calculate rarity percentile based on player's XP compared to all players
@@ -45,7 +46,7 @@ export default function Component() {
   const [isEditing, setIsEditing] = useState(false)
   const [friendlyName, setFriendlyName] = useState('')
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
-  const [gameSequences, setGameSequences] = useState<number[]>([])
+  const [gameSequences, setGameSequences] = useState<any[]>([])
   const [latestSequence, setLatestSequence] = useState<number>(0)
 
   useEffect(() => {
@@ -81,13 +82,19 @@ export default function Component() {
             current_streak,
             max_streak,
             avatar_svg,
-            avatar_options
+            avatar_options,
+            reserve_xp_transactions (
+              xp_amount
+            )
           `)
           .eq('user_id', user!.id)
           .single()
 
         if (profileError) throw profileError
         if (!profileData) throw new Error('Player not found')
+
+        // Calculate total reserve XP
+        const totalReserveXP = profileData.reserve_xp_transactions?.reduce((sum, tx) => sum + (tx.xp_amount || 0), 0) || 0;
 
         // Get game sequences for the player
         const { data: gameData, error: gameError } = await supabase
@@ -96,7 +103,8 @@ export default function Component() {
             games (
               sequence_number,
               is_historical
-            )
+            ),
+            status
           `)
           .eq('player_id', profileData.id)
           .order('games(sequence_number)', { ascending: false });
@@ -105,8 +113,11 @@ export default function Component() {
         
         const sequences = gameData
           ?.filter(reg => reg.games?.is_historical)
-          .map(reg => reg.games?.sequence_number)
-          .filter(Boolean) || [];
+          .map(reg => ({
+            sequence: reg.games?.sequence_number,
+            status: reg.status || 'selected'
+          }))
+          .filter(game => game.sequence !== undefined) || [];
         setGameSequences(sequences);
 
         // Calculate rarity based on all players' XP
@@ -121,7 +132,8 @@ export default function Component() {
 
         setProfile({
           ...profileData,
-          rarity
+          rarity,
+          reserveXP: totalReserveXP
         })
       } catch (err) {
         console.error('Error fetching player data:', err)
@@ -133,8 +145,31 @@ export default function Component() {
 
     if (user) {
       fetchProfile()
-      const interval = setInterval(fetchProfile, 5000)
-      return () => clearInterval(interval)
+    }
+  }, [user])
+
+  // Set up real-time subscription for profile updates
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel('profile_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'player_stats',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          fetchProfile()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
     }
   }, [user])
 
@@ -270,8 +305,12 @@ export default function Component() {
                   <div className="space-y-3 sm:space-y-4">
                     <div>
                       <label className="label">
-                        <span className="label-text font-medium">Friendly Name</span>
-                        <span className="label-text-alt" title="This is the name that will show up on the team sheets.">ℹ️</span>
+                        <span className="label-text font-medium flex items-center gap-1">
+                          Friendly Name
+                          <Tooltip content="This is the name that will show up on the team sheets">
+                            <span className="cursor-help">ℹ️</span>
+                          </Tooltip>
+                        </span>
                       </label>
                       {isEditing ? (
                         <input 
@@ -307,12 +346,15 @@ export default function Component() {
                             onClick={() => setIsAvatarEditorOpen(true)}
                           />
                         </motion.div>
-                        <button 
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => setIsAvatarEditorOpen(true)} 
-                          className="btn btn-primary w-full sm:w-auto"
+                          className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
-                          Edit Avatar
-                        </button>
+                          <span className="inline-flex items-center justify-center w-4 h-4">🎨</span>
+                          <span className="font-medium">EDIT AVATAR</span>
+                        </motion.button>
                       </div>
                     </div>
                   </div>
@@ -329,9 +371,13 @@ export default function Component() {
                       activeBonuses: profile.active_bonuses || 0,
                       activePenalties: profile.active_penalties || 0,
                       currentStreak: profile.current_streak || 0,
-                      gameSequences: gameSequences,
+                      gameHistory: gameSequences.map(sequence => ({
+                        sequence: sequence.sequence,
+                        status: sequence.status
+                      })),
                       latestSequence: latestSequence,
-                      xp: profile.xp || 0
+                      xp: profile.xp || 0,
+                      reserveXP: profile.reserveXP
                     }}
                   />
                 </motion.div>
@@ -363,26 +409,35 @@ export default function Component() {
           >
             {isEditing ? (
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleSaveProfile} 
-                  className="btn btn-primary w-full sm:w-auto"
+                  className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
-                  Save Profile
-                </button>
-                <button 
+                  <span className="inline-flex items-center justify-center w-4 h-4">💾</span>
+                  <span className="font-medium">SAVE PROFILE</span>
+                </motion.button>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setIsEditing(false)} 
-                  className="btn btn-ghost w-full sm:w-auto"
+                  className="btn bg-base-200 hover:bg-base-300 text-base-content h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
-                  Cancel
-                </button>
+                  <span className="inline-flex items-center justify-center w-4 h-4">✖️</span>
+                  <span className="font-medium">CANCEL</span>
+                </motion.button>
               </div>
             ) : (
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleEditProfile} 
-                className="btn btn-primary w-full sm:w-auto"
+                className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
               >
-                Edit Profile
-              </button>
+                <span className="inline-flex items-center justify-center w-4 h-4">✏️</span>
+                <span className="font-medium">EDIT PROFILE</span>
+              </motion.button>
             )}
           </motion.div>
         </div>

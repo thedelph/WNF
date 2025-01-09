@@ -15,7 +15,24 @@ interface PlayerRatingProps {
 }
 
 export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }: PlayerRatingProps) => {
-  if (!user || user.id === player.id) return null;
+  // If no user is logged in, don't show anything
+  if (!user) return null;
+
+  // If user is viewing their own profile
+  if (user.id === player.id) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card bg-base-100 shadow-xl mb-8"
+      >
+        <div className="card-body">
+          <h2 className="card-title">Player Rating</h2>
+          <p className="text-gray-500">You cannot rate yourself</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -40,10 +57,11 @@ export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="btn btn-primary"
+                  className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2"
                   onClick={onRatePlayer}
                 >
-                  {player.my_rating ? 'Update Rating' : 'Rate Player'}
+                  <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
+                  <span className="font-medium">{player.my_rating ? 'UPDATE RATING' : 'RATE PLAYER'}</span>
                 </motion.button>
               </div>
             ) : (

@@ -12,6 +12,7 @@ const TeamBalancingOverview: React.FC = () => {
     error,
     assignments,
     updateAssignments,
+    fetchData
   } = useTeamBalancing();
 
   // Track selected players for swapping
@@ -199,7 +200,7 @@ const TeamBalancingOverview: React.FC = () => {
   }
 
   if (error) {
-    return <div className="text-error text-center p-4">Error loading teams: {error}</div>;
+    return <div className="text-center p-4 text-error">{error}</div>;
   }
 
   if (!assignments || assignments.length === 0) {
@@ -207,7 +208,7 @@ const TeamBalancingOverview: React.FC = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4 space-y-6">
       <h2 className="text-2xl font-bold mb-6">Team Balance Overview</h2>
       
       <TeamStats stats={teamStats} />
@@ -301,6 +302,24 @@ const TeamBalancingOverview: React.FC = () => {
           swapRankings={swapRankings}
           onPlayerSelect={handlePlayerSelect}
         />
+      </div>
+      <div className="flex justify-center mt-8">
+        <button
+          className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
+          onClick={() => {
+            toast.promise(
+              fetchData(),
+              {
+                loading: 'Refreshing team data...',
+                success: 'Team data updated successfully',
+                error: 'Failed to refresh team data'
+              }
+            );
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Refreshing...' : 'Refresh Team Data'}
+        </button>
       </div>
     </div>
   );

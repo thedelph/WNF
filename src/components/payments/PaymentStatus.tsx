@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../../utils/supabase'
 import { useUser } from '../../hooks/useUser'
 import { toast } from 'react-hot-toast'
 import { motion } from 'framer-motion'
+import clsx from 'clsx'
 
 interface Props {
   gameId: string
@@ -20,6 +21,12 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
   }, [gameId, playerId])
 
   const fetchPaymentStatus = async () => {
+    // Don't fetch if we don't have valid IDs
+    if (!gameId || !playerId) {
+      console.warn('Missing gameId or playerId for payment status')
+      return
+    }
+
     try {
       const { data, error } = await supabaseAdmin
         .from('game_registrations')
@@ -38,6 +45,12 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
   }
 
   const handleMarkAsPaid = async () => {
+    // Don't proceed if we don't have valid IDs
+    if (!gameId || !playerId) {
+      toast.error('Unable to update payment status')
+      return
+    }
+
     try {
       setLoading(true)
       const { error } = await supabaseAdmin
@@ -64,30 +77,32 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
       case 'admin_verified':
         return (
           <div className="badge badge-success gap-2">
-            Verified ✓
+            Admin Verified ✓
           </div>
         )
       case 'marked_paid':
         return (
           <div className="badge badge-warning gap-2">
-            Pending ⌛
+            Pending Verification ⌛
           </div>
         )
       default:
         return (
-          <motion.button
+          <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={handleMarkAsPaid}
-            disabled={loading}
-            className="btn btn-xs btn-outline"
           >
-            {loading ? (
-              <span className="loading loading-spinner loading-xs"></span>
-            ) : (
-              'Mark Paid'
-            )}
-          </motion.button>
+            <button
+              onClick={handleMarkAsPaid}
+              disabled={loading}
+              className={clsx(
+                "btn btn-sm",
+                loading ? "btn-disabled" : "btn-primary"
+              )}
+            >
+              {loading ? "Updating..." : "Mark as Paid"}
+            </button>
+          </motion.div>
         )
     }
   }

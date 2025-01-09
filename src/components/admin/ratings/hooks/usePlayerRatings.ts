@@ -8,11 +8,12 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isSuperAdmin) {
-      toast.error('Unauthorized access');
-      return;
+    if (isSuperAdmin) {
+      fetchPlayers();
+    } else {
+      setPlayers([]);
+      setLoading(false);
     }
-    fetchPlayers();
   }, [isSuperAdmin]);
 
   const fetchPlayers = async () => {

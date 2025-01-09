@@ -66,7 +66,7 @@ export default function MergeTestUserModal({
       // First, fetch the test user's stats
       const { data: testUserData, error: testUserError } = await supabaseAdmin
         .from('players')
-        .select('caps, win_rate, active_bonuses, active_penalties, attack_rating, defense_rating, current_streak, max_streak')
+        .select('caps, win_rate, active_bonuses, active_penalties, attack_rating, defense_rating, current_streak, max_streak, whatsapp_group_member, whatsapp_mobile_number')
         .eq('id', testUser.id)
         .single();
 
@@ -153,6 +153,75 @@ export default function MergeTestUserModal({
 
       if (penaltiesError) throw penaltiesError;
 
+      // Update player_xp records - fetch test user's XP records first
+      const { data: testUserXp, error: fetchXpError } = await supabaseAdmin
+        .from('player_xp')
+        .select('*')
+        .eq('player_id', testUser.id);
+
+      if (fetchXpError) throw fetchXpError;
+
+      // Fetch real user's existing XP records
+      const { data: realUserXp, error: fetchRealXpError } = await supabaseAdmin
+        .from('player_xp')
+        .select('*')
+        .eq('player_id', selectedUserId);
+
+      if (fetchRealXpError) throw fetchRealXpError;
+
+      // Create a map of existing real user XP records by game_id
+      const realUserXpMap = new Map(
+        realUserXp?.map(record => [record.game_id, record]) || []
+      );
+
+      // Process each test user XP record
+      for (const xpRecord of testUserXp || []) {
+        if (!xpRecord.game_id) continue; // Skip records without game_id
+
+        if (realUserXpMap.has(xpRecord.game_id)) {
+          // Update existing XP record
+          const existingRecord = realUserXpMap.get(xpRecord.game_id);
+          const { error: updateXpError } = await supabaseAdmin
+            .from('player_xp')
+            .update({
+              xp_earned: (existingRecord.xp_earned || 0) + (xpRecord.xp_earned || 0),
+              updated_at: new Date().toISOString()
+            })
+            .eq('player_id', selectedUserId)
+            .eq('game_id', xpRecord.game_id);
+
+          if (updateXpError) throw updateXpError;
+        } else {
+          // Create new XP record for the real user
+          const { error: insertXpError } = await supabaseAdmin
+            .from('player_xp')
+            .insert({
+              player_id: selectedUserId,
+              game_id: xpRecord.game_id,
+              xp_earned: xpRecord.xp_earned || 0,
+              updated_at: new Date().toISOString()
+            });
+
+          if (insertXpError) throw insertXpError;
+        }
+      }
+
+      // Delete test user's XP records
+      const { error: deleteXpError } = await supabaseAdmin
+        .from('player_xp')
+        .delete()
+        .eq('player_id', testUser.id);
+
+      if (deleteXpError) throw deleteXpError;
+
+      // Recalculate XP for the real user
+      const { error: recalcError } = await supabaseAdmin
+        .rpc('calculate_player_xp', {
+          player_id: selectedUserId
+        });
+
+      if (recalcError) throw recalcError;
+
       // 7. Update balanced_team_assignments
       const { data: teamAssignments, error: teamAssignmentsError } = await supabaseAdmin
         .from('balanced_team_assignments')
@@ -202,6 +271,8 @@ export default function MergeTestUserModal({
           defense_rating: testUserData.defense_rating,
           current_streak: testUserData.current_streak,
           max_streak: testUserData.max_streak,
+          whatsapp_group_member: testUserData.whatsapp_group_member,
+          whatsapp_mobile_number: testUserData.whatsapp_mobile_number,
         })
         .eq('id', selectedUserId);
 

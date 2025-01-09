@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Trophy, Star, Medal, CircleOff, CircleDot, Sparkles } from 'lucide-react'
+import { Trophy, Star, Medal, CircleOff, CircleDot, Sparkles, Swords, ListChecks, Flame } from 'lucide-react'
 import { usePlayerPenalties } from '../hooks/usePlayerPenalties';
 import { useUser } from '../hooks/useUser';
+import WhatsAppIndicator from './indicators/WhatsAppIndicator';
 
 interface PlayerCardProps {
   id: string
@@ -13,8 +14,13 @@ interface PlayerCardProps {
   activeBonuses: number
   activePenalties: number
   winRate: number
+  wins: number
+  draws: number
+  losses: number
+  totalGames: number
   currentStreak: number
   maxStreak: number
+  benchWarmerStreak: number
   rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
   avatarSvg?: string
   isRandomlySelected?: boolean
@@ -25,6 +31,7 @@ interface PlayerCardProps {
   slotOfferAvailableAt?: string
   potentialOfferTimes?: string[]
   hasActiveSlotOffers?: boolean
+  whatsapp_group_member?: string
   children?: React.ReactNode
 }
 
@@ -36,8 +43,13 @@ export default function PlayerCard({
   activeBonuses,
   activePenalties,  
   winRate,
+  wins,
+  draws,
+  losses,
+  totalGames,
   currentStreak,
   maxStreak,
+  benchWarmerStreak,
   rarity,
   avatarSvg,
   isRandomlySelected,
@@ -48,6 +60,7 @@ export default function PlayerCard({
   slotOfferAvailableAt,
   potentialOfferTimes,
   hasActiveSlotOffers,
+  whatsapp_group_member,
   children
 }: PlayerCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -73,7 +86,8 @@ export default function PlayerCard({
   const bonusModifier = activeBonuses * 0.1;
   const penaltyModifier = activePenalties * -0.1;
   const dropoutModifier = dropoutPenalties * -0.5; // 50% penalty per dropout
-  const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
+  const benchWarmerModifier = benchWarmerStreak * 0.05; // 5% bonus per game in bench warmer streak
+  const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier + benchWarmerModifier;
 
   const getStatusBadge = () => {
     if (!status || status !== 'dropped_out') return null;
@@ -220,6 +234,13 @@ export default function PlayerCard({
           transition={{ duration: 0.6 }}
         >
           <div className="card-body p-4">
+            {/* WhatsApp Indicator */}
+            {(whatsapp_group_member === "Yes" || whatsapp_group_member === "Proxy") && (
+              <WhatsAppIndicator 
+                variant={whatsapp_group_member === "Proxy" ? "proxy" : "solid"} 
+              />
+            )}
+            
             <div className="flex justify-between items-center mb-2">
               <h2 className="card-title text-xl">{friendlyName}</h2>
             </div>
@@ -312,6 +333,19 @@ export default function PlayerCard({
                   <span className="text-sm font-bold">{(penaltyModifier * 100).toFixed(0)}%</span>
                 </motion.div>
               )}
+              {benchWarmerStreak > 0 && (
+                <motion.div 
+                  className="flex justify-between items-center bg-purple-500/20 rounded-lg p-2"
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <CircleDot className="w-4 h-4" />
+                    <span className="text-sm">Bench Warmer</span>
+                  </div>
+                  <span className="text-sm font-bold">+{(benchWarmerModifier * 100).toFixed(0)}%</span>
+                </motion.div>
+              )}
             </div>
 
             <div className="mt-auto">
@@ -345,21 +379,46 @@ export default function PlayerCard({
                   <Trophy className="w-4 h-4" />
                   <span>Win Rate</span>
                 </div>
-                <span className="font-bold">{typeof winRate === 'number' ? winRate.toFixed(1) : '0.0'}%</span>
+                {totalGames >= 10 ? (
+                  <span className="font-bold">{winRate.toFixed(1)}%</span>
+                ) : (
+                  <span className="text-xs opacity-70">More Data Needed ({totalGames}/10)</span>
+                )}
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4" />
+                  <Swords className="w-4 h-4" />
+                  <span>W/D/L</span>
+                </div>
+                <span className="font-bold">{wins} / {draws} / {losses}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ListChecks className="w-4 h-4" />
+                  <span>Total Games</span>
+                </div>
+                <span className="font-bold">{totalGames}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-4 h-4" />
                   <span>Current Streak</span>
                 </div>
                 <span className="font-bold">{currentStreak}</span>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <Medal className="w-4 h-4" />
+                  <Star className="w-4 h-4" />
                   <span>Max Streak</span>
                 </div>
                 <span className="font-bold">{maxStreak}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  <span>Bench Warmer Streak</span>
+                </div>
+                <span className="font-bold">{benchWarmerStreak}</span>
               </div>
             </div>
 
