@@ -14,7 +14,7 @@ import { useRaterStats } from '../../components/admin/ratings/hooks/useRaterStat
 import { usePlayerFiltering } from '../../components/admin/ratings/hooks/usePlayerFiltering';
 
 const RatingsView: React.FC = () => {
-  const { isSuperAdmin } = useAdmin();
+  const { isSuperAdmin, loading: adminLoading } = useAdmin();
   const [activeTab, setActiveTab] = useState<'received' | 'given'>('received');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedRaterId, setSelectedRaterId] = useState<string | null>(null);
@@ -56,7 +56,15 @@ const RatingsView: React.FC = () => {
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
   const selectedRater = raters.find(r => r.id === selectedRaterId);
 
-  if (!isSuperAdmin) return null;
+  // Wait for admin status to be confirmed before rendering anything
+  if (adminLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Only check for super admin after loading is complete
+  if (!isSuperAdmin) {
+    return null;
+  }
 
   const loading = playersLoading || ratersLoading;
 
@@ -120,6 +128,7 @@ const RatingsView: React.FC = () => {
                   ? selectedPlayer?.ratings || []
                   : selectedRater?.ratings_given || []
                 }
+                mode={activeTab}
                 sortConfig={sortConfig}
                 onSort={handleSort}
               />

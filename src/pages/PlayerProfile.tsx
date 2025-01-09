@@ -65,26 +65,24 @@ export default function PlayerProfileNew() {
 
         // Get player stats and XP
         const { data: playerData, error: playerError } = await supabase
-          .from('players')
-          .select(`
-            id,
-            friendly_name,
-            avatar_svg,
-            caps,
-            active_bonuses,
-            active_penalties,
-            current_streak,
-            max_streak,
-            win_rate,
-            player_xp!left (
-              xp
-            ),
-            user_id
-          `)
-          .eq('id', id)
+          .rpc('get_player_with_reserve_xp', { p_player_id: id })
           .single();
 
-        if (playerError) throw playerError;
+        if (playerError) {
+          console.error('Error fetching player data:', playerError);
+          throw playerError;
+        }
+
+        // Calculate total reserve XP from the transactions
+        const totalReserveXP = playerData.reserve_xp || 0;
+          
+        // Get game info for any reserve XP transactions
+        if (playerData.reserve_xp_transactions && playerData.reserve_xp_transactions.length > 0) {
+          const { data: gameData } = await supabase
+            .from('games')
+            .select('id, sequence_number')
+            .in('id', playerData.reserve_xp_transactions.map(t => t.game_id));
+        }
 
         // Get current user's player ID if logged in
         let currentPlayerId = null;
@@ -122,11 +120,12 @@ export default function PlayerProfileNew() {
           myRating = ratingData;
         }
 
-        // Get game history with team sizes
+        // Get game history with team sizes and status
         const { data: gameData, error: gameError } = await supabase
           .from('game_registrations')
           .select(`
             team,
+            status,
             games!inner (
               id,
               date,
@@ -180,6 +179,7 @@ export default function PlayerProfileNew() {
         // Transform player data
         const playerStats: PlayerStats = {
           id: playerData.id,
+          user_id: playerData.user_id,
           friendly_name: playerData.friendly_name,
           avatar_svg: playerData.avatar_svg,
           caps: playerData.caps || 0,
@@ -187,15 +187,19 @@ export default function PlayerProfileNew() {
           active_penalties: playerData.active_penalties || 0,
           current_streak: playerData.current_streak || 0,
           max_streak: playerData.max_streak || 0,
-          xp: playerData.player_xp?.xp || 0,
+          xp: playerData.xp || 0,
           win_rate: playerData.win_rate || 0,
-          game_sequences: gamesWithTeamSizes
+          gameHistory: gamesWithTeamSizes
             ?.filter(reg => reg.games?.is_historical)
-            .map(reg => reg.games?.sequence_number)
-            .filter(Boolean) || [],
+            .map(reg => ({
+              sequence: reg.games?.sequence_number,
+              status: reg.status
+            }))
+            .filter(game => game.sequence !== undefined) || [],
           games_played_together: gamesPlayedTogether,
           my_rating: myRating,
-          user_id: playerData.user_id
+          reserveXP: playerData.reserve_xp || 0,
+          reserveCount: playerData.reserve_count || 0
         };
 
         setPlayer(playerStats);
@@ -351,9 +355,11 @@ export default function PlayerProfileNew() {
             activeBonuses: player.active_bonuses || 0,
             activePenalties: player.active_penalties || 0,
             currentStreak: player.current_streak || 0,
-            gameSequences: player.game_sequences,
+            gameHistory: player.gameHistory || [],
             latestSequence: latestSequence,
-            xp: player.xp || 0
+            xp: player.xp || 0,
+            reserveXP: player.reserveXP || 0,
+            reserveCount: player.reserveCount || 0
           }} />
         </div>
       </motion.div>

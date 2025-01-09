@@ -34,7 +34,8 @@ This is the initial phase when creating a new game.
 #### Key Features:
 - Allows setting custom registration window dates
 - Registration window must be before the game date
-- Team announcement time is automatically calculated (4 hours before game time)
+- Team announcement time can be set manually (defaults to 4 hours before game time)
+- Supports modification of team announcement time through the EditGameModal
 
 #### Required Fields:
 - Game Date
@@ -42,6 +43,17 @@ This is the initial phase when creating a new game.
 - Venue
 - Registration Window Start
 - Registration Window End
+- Team Announcement Time (optional, defaults to 4 hours before game time)
+
+#### Time Constraints:
+```sql
+registration_window_start < registration_window_end < team_announcement_time <= date
+```
+
+#### Best Practices:
+- Set team announcement time at least 2 hours before the game to give players sufficient notice
+- Consider time zones when setting announcement times for international players
+- Team announcement time should be after registration ends to ensure all registrations are processed
 
 ### 2. Player Selection Phase
 

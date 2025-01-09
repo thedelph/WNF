@@ -3,7 +3,7 @@
     "database_structure": {
       "metadata": {
         "database_name": "postgres",
-        "database_size": "16 MB",
+        "database_size": "17 MB",
         "version": "PostgreSQL 15.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit",
         "current_schemas": [
           "public",
@@ -461,8 +461,8 @@
           "table_name": "balanced_team_assignments",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "80 kB",
-          "estimated_rows": 0,
+          "total_size": "128 kB",
+          "estimated_rows": 1,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -478,7 +478,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -496,7 +496,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -514,7 +514,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -532,7 +532,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -550,7 +550,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -568,7 +568,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -586,7 +586,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": 0,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -708,7 +708,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "112 kB",
-          "estimated_rows": 177,
+          "estimated_rows": 1,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -727,8 +727,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{130,131,133,135,137,138,140,142,144,145,147,149,151,152,154,156,158,159,161,163,165,166,168,170,172,174,175,177,179,181,182,184,186,188,189,191,193,195,196,198,200,202,203,205,207,209,210,212,214,216,218,219,221,223,225,226,228,230,232,233,235,237,239,240,242,244,246,247,249,251,253,254,256,258,260,262,263,265,267,269,270,272,274,276,277,279,281,283,284,286,288,290,291,293,295,297,298,300,302,304,306}",
-              "correlation": "0.483373"
+              "histogram_bounds": null,
+              "correlation": null
             },
             {
               "name": "timestamp",
@@ -742,11 +742,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.344633,
-              "most_common_values": "{\"2025-01-06 12:20:15.450003+00\",\"2025-01-06 12:20:16.235485+00\",\"2025-01-07 15:07:27.005219+00\",\"2025-01-07 15:07:27.681594+00\",\"2025-01-07 15:07:28.257061+00\",\"2025-01-07 15:07:28.821519+00\",\"2025-01-07 15:07:29.425799+00\",\"2025-01-07 15:07:30.018645+00\",\"2025-01-07 15:07:30.687726+00\",\"2025-01-07 15:07:31.730803+00\",\"2025-01-07 15:07:35.401735+00\",\"2025-01-07 15:07:36.462371+00\",\"2025-01-07 15:07:37.29618+00\",\"2025-01-07 15:07:38.441506+00\",\"2025-01-07 16:14:10.330871+00\",\"2025-01-07 16:14:12.981233+00\",\"2025-01-07 16:14:23.731751+00\",\"2025-01-07 16:14:25.160765+00\",\"2025-01-07 16:14:28.854761+00\",\"2025-01-07 16:14:31.443741+00\",\"2025-01-07 16:14:32.488193+00\",\"2025-01-07 16:14:37.769973+00\",\"2025-01-07 16:14:39.992225+00\",\"2025-01-07 16:14:41.497186+00\",\"2025-01-07 16:14:42.612972+00\",\"2025-01-07 16:14:44.280565+00\",\"2025-01-07 16:25:40.413754+00\",\"2025-01-07 16:25:53.891637+00\",\"2025-01-07 16:26:03.275859+00\",\"2025-01-07 16:26:26.945646+00\",\"2025-01-07 16:26:28.242236+00\",\"2025-01-07 16:26:36.590683+00\",\"2025-01-07 16:26:42.274579+00\",\"2025-01-07 16:26:47.452893+00\",\"2025-01-07 16:26:53.959656+00\",\"2025-01-07 16:26:57.76224+00\",\"2025-01-07 16:27:01.192763+00\",\"2025-01-07 16:31:53.217388+00\",\"2025-01-07 16:31:55.423895+00\",\"2025-01-07 16:31:56.934738+00\",\"2025-01-07 16:31:57.856142+00\",\"2025-01-07 16:31:59.059117+00\",\"2025-01-07 16:31:59.885213+00\",\"2025-01-07 16:32:01.319352+00\",\"2025-01-07 16:39:10.297244+00\",\"2025-01-07 16:43:07.713679+00\",\"2025-01-07 16:43:09.67902+00\",\"2025-01-07 16:43:24.308184+00\",\"2025-01-07 16:43:29.611093+00\",\"2025-01-07 16:43:37.052732+00\",\"2025-01-07 16:43:37.822155+00\",\"2025-01-07 16:43:38.463852+00\",\"2025-01-07 16:43:39.246381+00\",\"2025-01-07 16:43:39.878478+00\",\"2025-01-07 16:43:40.50784+00\",\"2025-01-07 16:43:41.168814+00\",\"2025-01-07 16:43:43.018035+00\",\"2025-01-06 12:20:20.143545+00\",\"2025-01-07 16:45:07.622395+00\"}",
-              "most_common_frequencies": "{0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0169492,0.0112994,0.0112994}",
-              "histogram_bounds": "{\"2025-01-06 00:00:00.213052+00\",\"2025-01-07 00:00:00.065276+00\"}",
-              "correlation": "0.483492"
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": null,
+              "correlation": null
             },
             {
               "name": "event_type",
@@ -760,11 +760,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 4,
-              "most_common_values": "{game_stats,slot_offer_response,player_selection,maintenance}",
-              "most_common_frequencies": "{0.333333,0.333333,0.322034,0.0112994}",
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
               "histogram_bounds": null,
-              "correlation": "0.307006"
+              "correlation": null
             },
             {
               "name": "message",
@@ -778,11 +778,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 5,
-              "most_common_values": "{\"Game statistics\",\"Processing slot offer response\",\"Selected next player based on player_stats XP\",\"Selected next player based on WhatsApp status and XP\",\"Cleaned up old debug logs\"}",
-              "most_common_frequencies": "{0.333333,0.333333,0.248588,0.0734463,0.0112994}",
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
               "histogram_bounds": null,
-              "correlation": "0.300051"
+              "correlation": null
             },
             {
               "name": "details",
@@ -796,11 +796,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.711864,
-              "most_common_values": "{\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 17, \\\"active_selected\\\": 16}\"}",
-              "most_common_frequencies": "{0.0677966,0.0677966,0.0677966,0.0621469,0.0451977,0.0112994}",
-              "histogram_bounds": "{\"{\\\"cleanup_time\\\": \\\"2025-01-06 00:00:00.213052+00\\\", \\\"deleted_count\\\": 1, \\\"remaining_logs\\\": 8, \\\"retention_hours\\\": 24}\",\"{\\\"cleanup_time\\\": \\\"2025-01-07 00:00:00.065276+00\\\", \\\"deleted_count\\\": 8, \\\"remaining_logs\\\": 9, \\\"retention_hours\\\": 24}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"accepted\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"d31a40f9-1972-43e9-9864-277110c9e958\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"8ad90589-7135-461f-b61d-272cbf3f6d04\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_id\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_id\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"new_status\\\": \\\"declined\\\", \\\"old_status\\\": \\\"pending\\\"}\",\"{\\\"xp\\\": 30, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Kaci\\\", \\\"selected_player\\\": \\\"c83d54c5-3468-4fde-b2b6-220034bb7480\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Adrian P\\\", \\\"selected_player\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Gaz G\\\", \\\"selected_player\\\": \\\"d31a40f9-1972-43e9-9864-277110c9e958\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Adrian P\\\", \\\"selected_player\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Gaz G\\\", \\\"selected_player\\\": \\\"d31a40f9-1972-43e9-9864-277110c9e958\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Matty\\\", \\\"selected_player\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Matty\\\", \\\"selected_player\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Twiggy\\\", \\\"selected_player\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Matty\\\", \\\"selected_player\\\": \\\"0c2096c3-6eca-4582-b2a1-2166d2c8d61e\\\"}\",\"{\\\"xp\\\": 40, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Twiggy\\\", \\\"selected_player\\\": \\\"78ba8339-270a-4d10-b7f6-f10999568948\\\"}\",\"{\\\"xp\\\": 46, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Anthony B\\\", \\\"selected_player\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\"}\",\"{\\\"xp\\\": 46, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Anthony B\\\", \\\"selected_player\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\"}\",\"{\\\"xp\\\": 68, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Joe\\\", \\\"selected_player\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\"}\",\"{\\\"xp\\\": 68, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Joe\\\", \\\"selected_player\\\": \\\"bca1e452-a4c1-4ecc-bc95-8c17c3974e8d\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"9b157ae5-2698-471d-b30b-1fad62f5140d\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 180, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Phil R\\\", \\\"selected_player\\\": \\\"05bb40f8-d63f-4469-9a35-e466d1f2f1da\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 188, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Tom K\\\", \\\"selected_player\\\": \\\"b2466431-ede1-4eaa-a86e-ad0c7128b125\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"8f3b5266-4eb0-4c13-9422-adf2cf6b6c40\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\"}\",\"{\\\"game_id\\\": \\\"745e7e3b-4685-4b51-b01f-396a2b61f4b1\\\", \\\"max_players\\\": 18, \\\"dropped_count\\\": 1, \\\"selected_count\\\": 18, \\\"active_selected\\\": 17}\",\"{\\\"xp\\\": 12, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Chris F\\\", \\\"selected_player\\\": \\\"33443732-814b-4407-bbf0-8b30b57ef390\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 20, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Ben W\\\", \\\"selected_player\\\": \\\"ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Adrian P\\\", \\\"selected_player\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 34, \\\"game_id\\\": \\\"d2b887a4-6bfe-4682-b7ec-e7f36cc18772\\\", \\\"player_name\\\": \\\"Adrian P\\\", \\\"selected_player\\\": \\\"9082191f-69ff-469f-baa6-46cc918346ae\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 46, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Anthony B\\\", \\\"selected_player\\\": \\\"c465ed34-a5df-42ef-9332-3273a72f4c4d\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 76, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Carlton\\\", \\\"selected_player\\\": \\\"18ebd05e-2357-44c6-a49d-d280ceed7784\\\", \\\"whatsapp_status\\\": null, \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 86, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Ethan\\\", \\\"selected_player\\\": \\\"be3517a2-68e2-4884-85f9-18eb16eebdd0\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 112, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Lewis\\\", \\\"selected_player\\\": \\\"e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 165, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Lee S\\\", \\\"selected_player\\\": \\\"694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 174, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Simon\\\", \\\"selected_player\\\": \\\"a950fdd0-847e-4f4d-96f5-9064719c8953\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\",\"{\\\"xp\\\": 192, \\\"game_id\\\": \\\"96702b26-ca36-487e-9b0c-e60f261522d5\\\", \\\"player_name\\\": \\\"Mike B\\\", \\\"selected_player\\\": \\\"be32d4f4-d8a2-4ac4-8fb2-21879753581c\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"selection_criteria\\\": \\\"WhatsApp members first, then by XP\\\"}\"}",
-              "correlation": "0.14199"
+              "n_distinct": -1,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": null,
+              "correlation": null
             }
           ],
           "constraints": [
@@ -1059,8 +1059,8 @@
           "table_name": "game_registrations",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "296 kB",
-          "estimated_rows": 475,
+          "total_size": "288 kB",
+          "estimated_rows": 495,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1079,8 +1079,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{0042f36b-c3ba-4f90-a15f-1f541d0a0712,0129f2da-e93c-4c93-99cf-a517cdfe3de4,021f6074-0bbb-4784-bdfe-7ca239520d78,0527501f-6c31-4f0e-9c1a-107dcf21243d,07c1be2a-e5ce-4c36-bcac-c599d3b2449d,0c7d92e0-308d-4797-9127-9d74abab0f94,0e2fbbf6-d389-4c3b-8eab-9cc8b7298df6,0f69e79b-e0a0-4a54-8870-c6873a5875e7,12d4f01c-2795-4689-bb73-5a295dcf864b,142da8b1-9f91-4038-8589-0947e69cc776,18259c2a-e7bf-4fd3-bb66-10c4bde61525,1b9e6e0e-a2cd-4bd1-9186-3574d82468ed,1fad8da1-d002-4eeb-93a1-58727c317b74,224c00b0-afe6-4dfe-a578-dd01b18f3289,2716a5c9-1389-4486-b237-40b3fb9c9460,28e426de-373a-4034-a2e6-0ea5ca9483ac,2b70e953-d432-4fed-824d-3511a8c244f6,2ceff111-d3ae-46e1-a592-e45ccaac15d9,2e21a9ab-8ef7-4068-b6b3-a28fa36f990f,2f4bfa40-6e26-4b3b-ba17-7b376bc83437,31a005bf-3d82-4944-91a2-a4d28ab79f6f,35f2d701-cd39-484a-815a-9d0d8ff88597,39a2bd2f-b54a-41cc-bd53-7ee273ebf8cc,3b04fb27-9160-4a92-bcf9-a2b16a5cec7a,3cc671b0-e99e-4f93-8ba7-a20ed62e95d7,3f3d21df-6ec2-4b87-b633-b49b2bf7a17e,42d936f7-9f8c-4483-bce0-4ab640ffa840,472a35f7-c644-4422-b224-a6fbecc2836e,499c3ae3-dc25-4cb7-a02a-d2fe8c0057b9,4b68be04-b100-47da-ab23-e9d5a46ecbcc,4feec4d8-940b-4258-a536-a2f2fcf43b3c,50c3a306-80dc-4c75-8c57-2cd07fd84b03,545c8fbb-52ab-4507-83ff-5a2b26399c93,5af59ab4-aee8-4124-9426-6a9596d3a479,5d11c570-ec27-4b36-850c-6b8b49bce02f,5fcfaaa3-31b4-4f41-b8b1-91c2e75cb95d,634d4468-f77b-4530-87e0-c346e3598c45,64bb3089-ed72-4e5e-9ea7-33f541da47a7,67fd6665-e48e-433c-9008-fa978827f34b,69f2ca0d-0f0c-4204-85f5-116442ecb9f8,6ceafaf5-e38d-4c8d-8107-9b815040973f,7106602f-87ed-412c-9fbe-0fca09ef669d,7262edfd-b81c-4be0-9056-47de7caa7d01,752385ff-3a8c-4c46-89d6-cbc431a5fdf2,76800d68-249b-4a6a-ba94-56c4f8c0eeae,780becda-cfcc-413d-b029-7f7d4f7e10ed,798b8b5d-2fa6-470a-b78f-6a896219af43,7b18c3fe-7ef1-4d5b-828b-eeba33aabfa2,7e4cd272-95c3-4481-87cf-09725b44fa28,81bf3b3c-2c46-4181-adc0-f9a432a565ae,82ed85bc-76e4-4cdd-87a7-419052a02cef,866a2d8b-98d8-494b-a48d-a3bc707bf978,8ba316d4-5691-457e-9608-04b2f05cb986,8e16da2c-53ca-4c40-8970-a538ea08243c,908f4109-72c0-4770-b311-dd32c5c1855e,944b50be-bf27-41ae-9da5-2ba91500d140,97c6d7c1-625a-435e-9076-54bb3bb4358b,99b9979a-7c22-46c0-b928-a582e5209c04,9b547f80-6fad-48ae-aecd-f77d509e544e,a02f46c9-efb9-4d81-a61e-da1f89f23f8a,a0f5df8f-cd23-4c22-b34c-f1cc61786630,a446a811-7088-4a5d-9188-9b2fa8816d06,a61cb3a3-5c49-4b69-a7fc-8dce4e3b99f2,a756c26f-3b15-411e-b93c-e9f6e7aa6592,a9e89631-063f-403d-b5d7-e23ca965b9e1,ad42f02a-5e9c-4bab-86d3-19d37b08d807,af1af095-d06f-4f37-9275-177a798188a7,b19eaea6-b440-4a28-9be3-d60510a8b0c3,b5bb458e-1742-4367-b0a7-8d0cd8f765fb,b872cd23-3bf2-4095-8c61-40444ed820c6,ba195443-1259-4d73-b0ca-76872f558a7d,ba89e6c1-b8e8-4fda-b882-9fc5a4e5d77e,be491257-3aec-4812-9e31-75bc9a99cecd,bec7eb7a-75f0-4372-b9e0-437886f5f069,c102259b-c513-43d3-a4e8-bccc9f94517d,c2e24e89-8357-4043-84a3-81df0af8ce7b,c4a4056f-395d-4121-b48f-4b88fc1f92dd,c7c35a09-4912-4902-ac20-90c0e8c2e0d8,ca6f6a19-d2dd-4c08-8671-0abd8345f1fc,cbd18839-cea4-49c1-9d58-557afafc1bef,ce2fd9de-673c-4726-8312-3bddbb71e021,d2ca043d-f2a1-45c6-b33e-c1bcd3bcdfe9,d4980281-a099-476b-97dc-73abd247048b,d7cf8444-30ee-4fec-8e7e-7016a08d1360,dcfdea23-8de0-44fe-b8c2-2b383acb461b,deafea4a-6033-422d-b98f-c170be3b44e9,e11e49cf-8dd0-4df1-b00a-8c0e81dc57c3,e49db582-7fd9-41dc-b0f7-064849ea788b,e794bd5b-b4e8-4834-820a-a36b8772e56d,e8e309b1-d505-4fc0-9185-145adfe970b7,eac13abe-f95d-46d0-8234-331f1490093a,ed1d4cd7-00de-498a-bbd2-605bf9214dda,edd1a7b8-c4ba-437d-84d5-8f457c5e96b1,ef9eeb39-dbb6-45c4-a0f1-a4ccda4a1683,f1b00051-9fa5-4ab7-84ce-6428b8766da9,f3b81a0c-2407-43d2-966c-090afe6c671f,f6c6a273-b1a6-4a7b-b472-a7eef3b9bcf3,f94676ce-726f-4970-9f93-2b78bb271328,fc041141-5ea5-4461-898f-91a200565456,fe12e876-b471-4c60-a76d-af177fa2fece,ffcbd257-7be5-4773-b631-994a0f4057ee}",
-              "correlation": "0.00322407"
+              "histogram_bounds": "{0042f36b-c3ba-4f90-a15f-1f541d0a0712,0129f2da-e93c-4c93-99cf-a517cdfe3de4,0319cb6b-3640-4940-b4b5-17fe49283ea2,053f8020-f766-4453-840a-e227ccebf618,069a3b21-20df-4c69-846d-8a85c584419b,0c399c56-a995-493c-87bd-d7012dcd3e8b,0e1fc460-62d7-4eaf-b60f-725d9b733bcf,0f5bd942-5e42-43e1-8cc6-39a5d60ff807,101a35a6-c176-42f5-ae5e-157cbbc16403,132b189d-0631-41f1-9cef-e8fc8a465029,14a123e3-f726-4644-8812-9e2bf213de8b,192dc160-dd36-4fc6-9d47-c8123e5ad6f8,1bb669b8-fd13-4f75-9210-9fb69a297f92,200d2ddd-aab4-4e65-9a0c-c7b2ddbd87e9,23fb027e-2e23-4ee1-a210-742f941023ba,27a7bc9b-12e3-4c27-9a04-405d697c397c,2a43c0b7-afd9-4fdb-ab0c-626638df8b21,2c7d420b-4eac-4e48-b43a-d6e5a18537bb,2d3cbf3a-36cc-4ec3-a80e-4a357024c91c,2f0a6313-34f3-49cb-a60a-88280351bf61,30238cdd-332f-49ec-947f-e304bbf9da3b,35f2d701-cd39-484a-815a-9d0d8ff88597,391c185f-a0a5-4ef4-9621-cabd7b82239f,3b04fb27-9160-4a92-bcf9-a2b16a5cec7a,3ca42b24-35b7-43b4-aaee-3f8055969f15,3e9e4749-ddb2-4eb2-862b-5b139f3b7f39,40fb4012-2135-421c-be1e-57a4bdfaf81a,45178ce0-9969-42b8-aaaf-023683621422,493c10e0-2b80-429d-96e2-0dc9a734e16a,4a11e64b-3ccb-46c6-a031-4eebeeefea3b,4d0ab613-cf27-4205-b162-af0e15f0a791,505772ee-90bc-4039-a610-902358da5e00,51e4dc4e-74c3-48fe-80ea-6ac20d7d4013,55b93fa9-7f7e-4212-a755-0f5bee54f3be,5b8048bb-1f0f-433e-8a79-945bdc99aac2,5dd8903f-97b6-4222-a0c2-d59b68653c24,609a9f75-f399-4bda-83bc-469f2088f6c9,63d28813-e427-4945-99f3-966cbfded94e,65e4cddc-4a48-4859-9a68-4b217fe57299,6853ecc0-9112-4dff-ad29-a85ecd9c97d1,6a80e21c-02a6-4fef-92e5-a2792e9f523b,6ceafaf5-e38d-4c8d-8107-9b815040973f,71934db0-1b03-4497-b118-77a01fa84d86,72d49315-8645-4397-b448-f9e8c66e2803,752385ff-3a8c-4c46-89d6-cbc431a5fdf2,76800d68-249b-4a6a-ba94-56c4f8c0eeae,780becda-cfcc-413d-b029-7f7d4f7e10ed,798b8b5d-2fa6-470a-b78f-6a896219af43,7affa6ce-b927-4aae-9ed4-f0396d2406a4,7e3105f3-0f92-4cdb-8075-63302aa7e59a,81bf3b3c-2c46-4181-adc0-f9a432a565ae,82c86742-3826-4200-8092-ff192f955f1f,85f57720-9118-4ed4-bc65-6c1e4977a272,8ba316d4-5691-457e-9608-04b2f05cb986,8e16da2c-53ca-4c40-8970-a538ea08243c,906d5ae8-ceff-4e65-b1ad-947ffa419ea8,91be19f7-654d-4be5-971d-862acc0d587b,96558425-c11d-469c-be8f-dc022f854867,995e8c3e-9b36-4266-b366-01b7855e1a5d,9b347117-8f19-4310-b256-dfaaabebaeec,9de91aa0-afce-4efe-b523-8506553effef,a0a5b8ae-687e-4a7c-89d8-80dae66d065e,a3e0aa52-9399-4f72-891e-3443afc31a51,a478431a-937f-4548-aa16-08d0420ac979,a695be22-c2cd-4f68-a4ed-106efcae380a,a91ffbd0-797c-4b93-86f4-6d37db378c96,ab6bae68-d43c-4151-990b-bacf0b3ac47c,af11367e-2702-4c7e-9c5a-ea1ac3d16277,b19eaea6-b440-4a28-9be3-d60510a8b0c3,b471d2d6-8419-443d-9678-4f910a74e8a8,b84dcf94-ee08-4ee7-952a-08322cc7eb8a,ba1877db-bbc4-46e2-b373-26cadc003de0,ba6c9de4-5ce2-42b7-82c6-9d1d9deee4b7,bd2712cb-847e-4f6c-b1fa-8be4faa8a2e8,be8ee7cd-d5db-4a69-9791-e259375bba99,c0ce95c4-3c77-4ff5-9c7c-6400d7eca7b3,c21d4322-8825-4566-9117-2fddc082b200,c3de9747-4825-4f75-b39b-d084fbfee969,c6d1484e-ba5a-4992-9616-1775332281f9,ca6f6a19-d2dd-4c08-8671-0abd8345f1fc,cbd18839-cea4-49c1-9d58-557afafc1bef,cde4ee50-360b-49ed-af56-b5803392bdaf,d20c24af-1063-460a-b098-287271249322,d575a153-6211-47bd-b87c-07d30c63e498,d90d5be8-e518-483c-8b89-b06819134d02,dd392c4a-89b2-4a8d-851f-f81f4102d132,df514aff-604e-44b8-b23e-2f2d123601a4,e3d82932-5cf5-41ba-97d1-b91b1bbf4883,e62af1de-0bf8-41fe-968c-23f26a743f25,e7f6e235-6dec-4314-8b4b-cb52963c63a9,ea389ee5-796e-4133-be03-34f0eb7631d3,eb00f09c-8504-4749-b25b-78485c907565,ee064f01-51d5-4d1d-8e9f-140680ce8beb,ef42bc49-4ff5-42e7-98bb-c02dbff8b10e,f1b00051-9fa5-4ab7-84ce-6428b8766da9,f3b81a0c-2407-43d2-966c-090afe6c671f,f6c6a273-b1a6-4a7b-b472-a7eef3b9bcf3,f94676ce-726f-4970-9f93-2b78bb271328,fcf6dc69-fe60-4166-af79-414a152ceabc,fe307a74-6208-4ac6-aef0-8bd2dcf3abe0,ffcbd257-7be5-4773-b631-994a0f4057ee}",
+              "correlation": "-0.0304648"
             },
             {
               "name": "game_id",
@@ -1094,11 +1094,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 29,
-              "most_common_values": "{96702b26-ca36-487e-9b0c-e60f261522d5,9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
-              "most_common_frequencies": "{0.102079,0.0415879,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0340265,0.0321361,0.0302457,0.0302457,0.0302457,0.0302457,0.0302457,0.0302457,0.0226843,0.0226843,0.0189036}",
+              "n_distinct": 28,
+              "most_common_values": "{9030ab33-efb9-4763-9fd3-e30c87b6b20d,08a33fb7-7677-41c2-8baa-0375c1f4d9c2,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,54bc6b11-ea09-42d0-9f56-dd38809c669e,5aa66610-9141-478c-804f-97191da0198f,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903,4cc10211-be50-4611-bc85-d59d16399a6b,11cbf31e-b275-4fee-a5f6-d9468caf3d10,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,57fea9a1-765e-406c-b182-883d2720d99c,68e251b3-a23a-4a31-886a-07f171067de0,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,ea863f1a-b7da-4169-aae6-04c33f3dbce4,37725ca3-8857-411d-8e38-4135d9317bad}",
+              "most_common_frequencies": "{0.0463158,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0378947,0.0357895,0.0336842,0.0336842,0.0336842,0.0336842,0.0336842,0.0336842,0.0252632,0.0252632,0.0210526}",
               "histogram_bounds": null,
-              "correlation": "-0.107681"
+              "correlation": "-0.223643"
             },
             {
               "name": "player_id",
@@ -1112,11 +1112,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.102079,
-              "most_common_values": "{2711aec5-829a-4569-a85f-ecf8c89f123d,1db2da77-3c88-4bda-989b-349b4cab6604,876113b5-d7c3-41bc-ab69-4b6859f864a5,904a7c17-c8cc-4aff-958d-7788dea001dc,35905fe4-5532-4513-9f58-de3c28942e1a,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,81c9ec8f-7b81-4263-879e-b2088aefaca8,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,5c0e1219-9355-4078-b76d-a63ec320969c,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,3a712b45-cd7e-4e66-a6dd-133255be5895,84c631df-a046-41e9-a10c-4a77561e6c08,8ad90589-7135-461f-b61d-272cbf3f6d04,be32d4f4-d8a2-4ac4-8fb2-21879753581c,b2466431-ede1-4eaa-a86e-ad0c7128b125,5d401fa5-157f-445f-9f06-def9de2ae6ce,32f8ab9b-1259-4764-b463-aa2e70ca8c74,a950fdd0-847e-4f4d-96f5-9064719c8953,dd6651f8-9203-4efb-92ca-e2b6f8230f97,05bb40f8-d63f-4469-9a35-e466d1f2f1da,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,18ebd05e-2357-44c6-a49d-d280ceed7784,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,78ba8339-270a-4d10-b7f6-f10999568948,9082191f-69ff-469f-baa6-46cc918346ae,d31a40f9-1972-43e9-9864-277110c9e958,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,75e00430-067e-44af-b498-84b28edd51be,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,c83d54c5-3468-4fde-b2b6-220034bb7480,d3920bbc-a281-4b97-bc88-96315e38d3ba,0bfd9afb-285d-474b-86cc-c91ab64c5622,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,33443732-814b-4407-bbf0-8b30b57ef390,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,767cc150-1746-4d71-a8db-b9771f2f7770,813eac3e-b880-4988-823f-a345c5d6ed87,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
-              "most_common_frequencies": "{0.0491493,0.047259,0.047259,0.047259,0.0453686,0.0453686,0.0434783,0.0415879,0.0415879,0.0396975,0.0396975,0.0378072,0.0340265,0.0321361,0.0321361,0.0302457,0.0283554,0.026465,0.026465,0.026465,0.0245747,0.0245747,0.0132325,0.0132325,0.0113422,0.0094518,0.0094518,0.00756144,0.00756144,0.00756144,0.00756144,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00567108,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072,0.00378072}",
-              "histogram_bounds": null,
-              "correlation": "0.138219"
+              "n_distinct": -0.113684,
+              "most_common_values": "{2711aec5-829a-4569-a85f-ecf8c89f123d,876113b5-d7c3-41bc-ab69-4b6859f864a5,904a7c17-c8cc-4aff-958d-7788dea001dc,f3e8c7b3-8394-4da6-a68e-60ee4d7ba48e,40a27806-c64d-4786-8886-fb535b529b83,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,81c9ec8f-7b81-4263-879e-b2088aefaca8,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5,5c0e1219-9355-4078-b76d-a63ec320969c,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,3a712b45-cd7e-4e66-a6dd-133255be5895,84c631df-a046-41e9-a10c-4a77561e6c08,8ad90589-7135-461f-b61d-272cbf3f6d04,be32d4f4-d8a2-4ac4-8fb2-21879753581c,b2466431-ede1-4eaa-a86e-ad0c7128b125,5d401fa5-157f-445f-9f06-def9de2ae6ce,32f8ab9b-1259-4764-b463-aa2e70ca8c74,a950fdd0-847e-4f4d-96f5-9064719c8953,dd6651f8-9203-4efb-92ca-e2b6f8230f97,05bb40f8-d63f-4469-9a35-e466d1f2f1da,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,18ebd05e-2357-44c6-a49d-d280ceed7784,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,78ba8339-270a-4d10-b7f6-f10999568948,9082191f-69ff-469f-baa6-46cc918346ae,d31a40f9-1972-43e9-9864-277110c9e958,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,75e00430-067e-44af-b498-84b28edd51be,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,c83d54c5-3468-4fde-b2b6-220034bb7480,d3920bbc-a281-4b97-bc88-96315e38d3ba}",
+              "most_common_frequencies": "{0.0526316,0.0505263,0.0505263,0.0505263,0.0484211,0.0484211,0.0463158,0.0442105,0.0442105,0.0421053,0.0421053,0.04,0.0357895,0.0336842,0.0336842,0.0315789,0.0294737,0.0273684,0.0273684,0.0273684,0.0252632,0.0252632,0.0126316,0.0126316,0.0105263,0.00842105,0.00842105,0.00631579,0.00631579,0.00631579,0.00631579,0.00421053,0.00421053,0.00421053,0.00421053,0.00421053,0.00421053,0.00421053,0.00421053}",
+              "histogram_bounds": "{0bfd9afb-285d-474b-86cc-c91ab64c5622,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,33443732-814b-4407-bbf0-8b30b57ef390,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,767cc150-1746-4d71-a8db-b9771f2f7770,813eac3e-b880-4988-823f-a345c5d6ed87,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
+              "correlation": "0.173318"
             },
             {
               "name": "status",
@@ -1130,11 +1130,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 3,
-              "most_common_values": "{selected,reserve}",
-              "most_common_frequencies": "{0.930057,0.0680529}",
+              "n_distinct": 1,
+              "most_common_values": "{selected}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": "0.660687"
+              "correlation": "1"
             },
             {
               "name": "team",
@@ -1150,9 +1150,9 @@
               "numeric_scale": null,
               "n_distinct": 2,
               "most_common_values": "{orange,blue}",
-              "most_common_frequencies": "{0.449905,0.448015}",
+              "most_common_frequencies": "{0.501053,0.498947}",
               "histogram_bounds": null,
-              "correlation": "0.572075"
+              "correlation": "0.562753"
             },
             {
               "name": "paid",
@@ -1166,11 +1166,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 2,
-              "most_common_values": "{t,f}",
-              "most_common_frequencies": "{0.897921,0.102079}",
+              "n_distinct": 1,
+              "most_common_values": "{t}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": "0.600965"
+              "correlation": "1"
             },
             {
               "name": "created_at",
@@ -1184,11 +1184,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.10775,
-              "most_common_values": "{\"2025-01-07 16:39:34.812+00\",\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-12-19 13:43:26.197049+00\",\"2024-12-19 13:43:26.287209+00\",\"2024-12-19 15:03:42.562721+00\",\"2024-12-19 15:03:42.638915+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
-              "most_common_frequencies": "{0.102079,0.020794,0.020794,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0170132,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0151229,0.0113422,0.0113422,0.0113422,0.0113422,0.0094518,0.0094518}",
+              "n_distinct": -0.117895,
+              "most_common_values": "{\"2024-11-15 15:32:28.417896+00\",\"2024-11-15 15:32:28.534694+00\",\"2024-11-11 17:26:09.811064+00\",\"2024-11-11 17:26:09.87908+00\",\"2024-11-11 17:29:00.404629+00\",\"2024-11-11 17:29:00.459064+00\",\"2024-11-11 17:32:33.391191+00\",\"2024-11-11 17:32:33.448724+00\",\"2024-11-15 10:49:59.018562+00\",\"2024-11-15 10:49:59.08566+00\",\"2024-11-15 15:25:20.731293+00\",\"2024-11-15 15:25:20.808342+00\",\"2024-11-15 15:36:14.785982+00\",\"2024-11-15 15:36:14.850174+00\",\"2024-11-15 15:41:05.987294+00\",\"2024-11-15 15:41:06.072672+00\",\"2024-11-15 15:45:17.925549+00\",\"2024-11-15 15:45:18.031348+00\",\"2024-11-15 15:48:49.304042+00\",\"2024-11-15 15:48:49.38855+00\",\"2024-11-15 15:51:48.368044+00\",\"2024-11-15 15:51:48.4376+00\",\"2024-11-15 16:04:25.477469+00\",\"2024-11-15 16:04:25.53922+00\",\"2024-11-15 23:40:49.259957+00\",\"2024-11-15 23:40:49.328407+00\",\"2024-11-16 00:17:38.660113+00\",\"2024-11-16 00:17:38.724796+00\",\"2024-11-16 00:19:23.127238+00\",\"2024-11-16 00:19:23.174666+00\",\"2024-11-28 09:22:39.830321+00\",\"2024-11-28 09:22:39.89501+00\",\"2024-12-16 09:51:53.718502+00\",\"2024-12-19 13:43:26.197049+00\",\"2024-12-19 13:43:26.287209+00\",\"2024-12-19 15:03:42.562721+00\",\"2024-12-19 15:03:42.638915+00\",\"2024-11-11 17:23:18.874391+00\",\"2024-11-11 17:23:18.9478+00\",\"2024-11-15 11:09:28.958801+00\",\"2024-11-15 11:09:29.03145+00\",\"2024-11-15 15:26:50.716691+00\",\"2024-11-15 15:26:50.783285+00\",\"2024-11-15 16:06:28.923613+00\",\"2024-11-15 16:06:28.989375+00\",\"2024-11-20 23:47:31.706078+00\",\"2024-11-20 23:47:31.788576+00\",\"2024-12-05 15:13:54.754434+00\",\"2024-12-05 15:13:54.85387+00\",\"2024-12-16 09:51:53.602842+00\",\"2024-11-11 17:07:30.569145+00\",\"2024-11-11 17:07:30.662434+00\",\"2024-11-11 17:18:03.786984+00\",\"2024-11-11 17:18:03.847411+00\",\"2024-11-11 17:02:27.557002+00\",\"2024-11-11 17:02:27.617386+00\"}",
+              "most_common_frequencies": "{0.0231579,0.0231579,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0189474,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0168421,0.0126316,0.0126316,0.0126316,0.0126316,0.0105263,0.0105263}",
               "histogram_bounds": null,
-              "correlation": "0.296582"
+              "correlation": "0.209418"
             },
             {
               "name": "paid_by_player_id",
@@ -1240,7 +1240,7 @@
               "numeric_scale": null,
               "n_distinct": 1,
               "most_common_values": "{\"2024-12-29 00:03:01.41468+00\"}",
-              "most_common_frequencies": "{0.897921}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
             },
@@ -1256,11 +1256,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 3,
-              "most_common_values": "{merit,none,random}",
-              "most_common_frequencies": "{0.860113,0.136106,0.00378072}",
+              "n_distinct": 2,
+              "most_common_values": "{merit,none}",
+              "most_common_frequencies": "{0.924211,0.0757895}",
               "histogram_bounds": null,
-              "correlation": "0.83429"
+              "correlation": "0.839444"
             },
             {
               "name": "payment_status",
@@ -1276,7 +1276,7 @@
               "numeric_scale": null,
               "n_distinct": 1,
               "most_common_values": "{admin_verified}",
-              "most_common_frequencies": "{0.897921}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
             },
@@ -1294,7 +1294,7 @@
               "numeric_scale": null,
               "n_distinct": 1,
               "most_common_values": "{\"2024-12-29 00:03:01.41468+00\"}",
-              "most_common_frequencies": "{0.897921}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
             },
@@ -1509,6 +1509,24 @@
               "new_table": null
             },
             {
+              "name": "update_player_streak_trigger",
+              "timing": "AFTER",
+              "event": "INSERT",
+              "statement": "EXECUTE FUNCTION update_player_streak()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "update_player_streak_trigger",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION update_player_streak()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
               "name": "update_streaks_trigger",
               "timing": "AFTER",
               "event": "INSERT",
@@ -1560,6 +1578,18 @@
               "collation": "0 0",
               "opclass": "10065 10065",
               "storage_parameters": null
+            },
+            {
+              "name": "idx_game_registrations_game_status",
+              "definition": "CREATE INDEX idx_game_registrations_game_status ON public.game_registrations USING btree (game_id, status)",
+              "is_unique": false,
+              "is_primary": false,
+              "is_exclusion": false,
+              "is_immediate": true,
+              "partial_predicate": null,
+              "collation": "0 100",
+              "opclass": "10065 3126",
+              "storage_parameters": null
             }
           ],
           "rls_policies": [
@@ -1571,7 +1601,7 @@
               ],
               "command": "INSERT",
               "definition": null,
-              "with_check": "(EXISTS ( SELECT 1\n   FROM players p\n  WHERE ((p.id = auth.uid()) AND ((p.is_admin = true) OR (p.is_super_admin = true)))))"
+              "with_check": "(EXISTS ( SELECT 1\n   FROM players p\n  WHERE ((p.user_id = auth.uid()) AND ((p.is_admin = true) OR (p.is_super_admin = true)))))"
             },
             {
               "name": "Enable insert for authenticated users",
@@ -1581,7 +1611,7 @@
               ],
               "command": "INSERT",
               "definition": null,
-              "with_check": "((EXISTS ( SELECT 1\n   FROM players\n  WHERE ((players.id = auth.uid()) AND (players.is_admin = true)))) OR (player_id = auth.uid()))"
+              "with_check": "((EXISTS ( SELECT 1\n   FROM players p\n  WHERE ((p.user_id = auth.uid()) AND (p.is_admin = true)))) OR (EXISTS ( SELECT 1\n   FROM players p\n  WHERE ((p.user_id = auth.uid()) AND (p.id = game_registrations.player_id)))))"
             },
             {
               "name": "Enable read access for all users",
@@ -1888,7 +1918,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "80 kB",
-          "estimated_rows": 28,
+          "estimated_rows": 29,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1907,8 +1937,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{08a33fb7-7677-41c2-8baa-0375c1f4d9c2,11cbf31e-b275-4fee-a5f6-d9468caf3d10,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,37725ca3-8857-411d-8e38-4135d9317bad,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,4cc10211-be50-4611-bc85-d59d16399a6b,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,54bc6b11-ea09-42d0-9f56-dd38809c669e,57fea9a1-765e-406c-b182-883d2720d99c,5aa66610-9141-478c-804f-97191da0198f,68e251b3-a23a-4a31-886a-07f171067de0,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,9030ab33-efb9-4763-9fd3-e30c87b6b20d,95fc8176-f956-4f3b-bf01-9488e17ebbaa,96702b26-ca36-487e-9b0c-e60f261522d5,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,ea863f1a-b7da-4169-aae6-04c33f3dbce4,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903}",
-              "correlation": "0.029064"
+              "histogram_bounds": "{08a33fb7-7677-41c2-8baa-0375c1f4d9c2,11cbf31e-b275-4fee-a5f6-d9468caf3d10,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,37725ca3-8857-411d-8e38-4135d9317bad,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,450bb264-1dd1-4d0a-9f27-88483d04c1c4,4cc10211-be50-4611-bc85-d59d16399a6b,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,54bc6b11-ea09-42d0-9f56-dd38809c669e,57fea9a1-765e-406c-b182-883d2720d99c,5aa66610-9141-478c-804f-97191da0198f,68e251b3-a23a-4a31-886a-07f171067de0,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,9030ab33-efb9-4763-9fd3-e30c87b6b20d,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,ea863f1a-b7da-4169-aae6-04c33f3dbce4,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903}",
+              "correlation": "0.0413793"
             },
             {
               "name": "date",
@@ -1925,8 +1955,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 23:59:59.999+00\",\"2024-06-19 23:59:59.999+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:59.999+00\",\"2024-08-14 23:59:59.999+00\",\"2024-08-21 23:59:59.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:59.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:59.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-08 21:00:00+00\"}",
-              "correlation": "0.497044"
+              "histogram_bounds": "{\"2024-05-15 23:59:59.999+00\",\"2024-06-19 23:59:59.999+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:59.999+00\",\"2024-08-14 23:59:59.999+00\",\"2024-08-21 23:59:59.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:59.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:59.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-09 12:56:00+00\"}",
+              "correlation": "0.565517"
             },
             {
               "name": "registration_window_start",
@@ -1943,8 +1973,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 00:00:00+00\",\"2024-06-19 00:00:00+00\",\"2024-06-26 00:00:00+00\",\"2024-07-03 00:00:00+00\",\"2024-07-11 00:00:00+00\",\"2024-07-17 00:00:00+00\",\"2024-07-24 00:00:00+00\",\"2024-07-31 00:00:00+00\",\"2024-08-07 00:00:00+00\",\"2024-08-14 00:00:00+00\",\"2024-08-21 00:00:00+00\",\"2024-08-28 00:00:00+00\",\"2024-09-04 00:00:00+00\",\"2024-09-11 00:00:00+00\",\"2024-09-18 00:00:00+00\",\"2024-09-25 00:00:00+00\",\"2024-10-02 00:00:00+00\",\"2024-10-09 00:00:00+00\",\"2024-10-16 00:00:00+00\",\"2024-10-23 00:00:00+00\",\"2024-10-30 00:00:00+00\",\"2024-11-06 00:00:00+00\",\"2024-11-13 00:00:00+00\",\"2024-11-20 00:00:00+00\",\"2024-11-27 00:00:00+00\",\"2024-12-04 00:00:00+00\",\"2024-12-11 00:00:00+00\",\"2024-12-18 00:00:00+00\",\"2025-01-07 16:39:00+00\"}",
-              "correlation": "0.497044"
+              "histogram_bounds": "{\"2024-05-15 00:00:00+00\",\"2024-06-19 00:00:00+00\",\"2024-06-26 00:00:00+00\",\"2024-07-03 00:00:00+00\",\"2024-07-11 00:00:00+00\",\"2024-07-17 00:00:00+00\",\"2024-07-24 00:00:00+00\",\"2024-07-31 00:00:00+00\",\"2024-08-07 00:00:00+00\",\"2024-08-14 00:00:00+00\",\"2024-08-21 00:00:00+00\",\"2024-08-28 00:00:00+00\",\"2024-09-04 00:00:00+00\",\"2024-09-11 00:00:00+00\",\"2024-09-18 00:00:00+00\",\"2024-09-25 00:00:00+00\",\"2024-10-02 00:00:00+00\",\"2024-10-09 00:00:00+00\",\"2024-10-16 00:00:00+00\",\"2024-10-23 00:00:00+00\",\"2024-10-30 00:00:00+00\",\"2024-11-06 00:00:00+00\",\"2024-11-13 00:00:00+00\",\"2024-11-20 00:00:00+00\",\"2024-11-27 00:00:00+00\",\"2024-12-04 00:00:00+00\",\"2024-12-11 00:00:00+00\",\"2024-12-18 00:00:00+00\",\"2025-01-07 13:00:00+00\"}",
+              "correlation": "0.565517"
             },
             {
               "name": "registration_window_end",
@@ -1961,8 +1991,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 23:59:58.999+00\",\"2024-06-19 23:59:59.998+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:58.999+00\",\"2024-08-14 23:59:58.999+00\",\"2024-08-21 23:59:58.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:58.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:58.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-07 16:40:00+00\"}",
-              "correlation": "0.497044"
+              "histogram_bounds": "{\"2024-05-15 23:59:58.999+00\",\"2024-06-19 23:59:59.998+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:58.999+00\",\"2024-08-14 23:59:58.999+00\",\"2024-08-21 23:59:58.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:58.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:58.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-08 13:00:00+00\"}",
+              "correlation": "0.565517"
             },
             {
               "name": "score_blue",
@@ -1980,7 +2010,7 @@
               "most_common_values": "{5,4,3}",
               "most_common_frequencies": "{0.172414,0.137931,0.0689655}",
               "histogram_bounds": "{7,8}",
-              "correlation": "-0.368132"
+              "correlation": "-0.445055"
             },
             {
               "name": "score_orange",
@@ -1998,7 +2028,7 @@
               "most_common_values": "{5,3}",
               "most_common_frequencies": "{0.172414,0.137931}",
               "histogram_bounds": "{2,4,6,10}",
-              "correlation": "-0.302198"
+              "correlation": "-0.461538"
             },
             {
               "name": "outcome",
@@ -2016,7 +2046,7 @@
               "most_common_values": "{blue_win,orange_win,draw}",
               "most_common_frequencies": "{0.344828,0.241379,0.0689655}",
               "histogram_bounds": null,
-              "correlation": "0.492982"
+              "correlation": "0.270175"
             },
             {
               "name": "created_at",
@@ -2033,8 +2063,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-11-11 16:53:47.616288+00\",\"2024-11-11 17:07:30.469444+00\",\"2024-11-11 17:18:03.706994+00\",\"2024-11-11 17:23:18.801122+00\",\"2024-11-11 17:26:09.716193+00\",\"2024-11-11 17:29:00.311676+00\",\"2024-11-11 17:32:33.308869+00\",\"2024-11-15 10:49:58.900155+00\",\"2024-11-15 11:09:28.864134+00\",\"2024-11-15 15:00:38.640031+00\",\"2024-11-15 15:17:51.610432+00\",\"2024-11-15 15:21:30.654751+00\",\"2024-11-15 15:26:50.629529+00\",\"2024-11-15 15:32:28.341681+00\",\"2024-11-15 15:36:14.706985+00\",\"2024-11-15 15:38:46.514516+00\",\"2024-11-15 15:41:05.888517+00\",\"2024-11-15 15:45:17.834528+00\",\"2024-11-15 15:48:49.234186+00\",\"2024-11-15 15:51:48.290128+00\",\"2024-11-15 15:57:50.931802+00\",\"2024-11-15 16:06:28.837439+00\",\"2024-11-15 23:40:49.13482+00\",\"2024-11-20 23:47:31.604513+00\",\"2024-11-28 09:22:39.728864+00\",\"2024-12-05 15:13:54.593481+00\",\"2024-12-16 09:51:53.452089+00\",\"2024-12-19 13:43:26.083004+00\",\"2025-01-07 16:39:31.2917+00\"}",
-              "correlation": "0.483744"
+              "histogram_bounds": "{\"2024-11-11 16:53:47.616288+00\",\"2024-11-11 17:07:30.469444+00\",\"2024-11-11 17:18:03.706994+00\",\"2024-11-11 17:23:18.801122+00\",\"2024-11-11 17:26:09.716193+00\",\"2024-11-11 17:29:00.311676+00\",\"2024-11-11 17:32:33.308869+00\",\"2024-11-15 10:49:58.900155+00\",\"2024-11-15 11:09:28.864134+00\",\"2024-11-15 15:00:38.640031+00\",\"2024-11-15 15:17:51.610432+00\",\"2024-11-15 15:21:30.654751+00\",\"2024-11-15 15:26:50.629529+00\",\"2024-11-15 15:32:28.341681+00\",\"2024-11-15 15:36:14.706985+00\",\"2024-11-15 15:38:46.514516+00\",\"2024-11-15 15:41:05.888517+00\",\"2024-11-15 15:45:17.834528+00\",\"2024-11-15 15:48:49.234186+00\",\"2024-11-15 15:51:48.290128+00\",\"2024-11-15 15:57:50.931802+00\",\"2024-11-15 16:06:28.837439+00\",\"2024-11-15 23:40:49.13482+00\",\"2024-11-20 23:47:31.604513+00\",\"2024-11-28 09:22:39.728864+00\",\"2024-12-05 15:13:54.593481+00\",\"2024-12-16 09:51:53.452089+00\",\"2024-12-19 13:43:26.083004+00\",\"2025-01-09 12:54:51.42022+00\"}",
+              "correlation": "0.609852"
             },
             {
               "name": "venue_id",
@@ -2070,7 +2100,7 @@
               "most_common_values": "{18,16,12}",
               "most_common_frequencies": "{0.62069,0.206897,0.0689655}",
               "histogram_bounds": "{10,17,22}",
-              "correlation": "0.683744"
+              "correlation": "0.748768"
             },
             {
               "name": "random_slots",
@@ -2088,7 +2118,7 @@
               "most_common_values": "{0}",
               "most_common_frequencies": "{0.965517}",
               "histogram_bounds": null,
-              "correlation": "0.933005"
+              "correlation": "0.864039"
             },
             {
               "name": "is_historical",
@@ -2106,7 +2136,7 @@
               "most_common_values": "{t}",
               "most_common_frequencies": "{0.965517}",
               "histogram_bounds": null,
-              "correlation": "0.961576"
+              "correlation": "0.992611"
             },
             {
               "name": "sequence_number",
@@ -2124,7 +2154,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29}",
-              "correlation": "0.497044"
+              "correlation": "0.565517"
             },
             {
               "name": "pitch_cost",
@@ -2178,7 +2208,7 @@
               "most_common_values": "{f}",
               "most_common_frequencies": "{0.965517}",
               "histogram_bounds": null,
-              "correlation": "0.933005"
+              "correlation": "0.864039"
             },
             {
               "name": "completed",
@@ -2196,7 +2226,7 @@
               "most_common_values": "{t}",
               "most_common_frequencies": "{0.965517}",
               "histogram_bounds": null,
-              "correlation": "0.961576"
+              "correlation": "0.992611"
             },
             {
               "name": "teams_announced",
@@ -2210,11 +2240,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 1,
+              "n_distinct": 2,
               "most_common_values": "{f}",
-              "most_common_frequencies": "{1}",
+              "most_common_frequencies": "{0.965517}",
               "histogram_bounds": null,
-              "correlation": "1"
+              "correlation": "0.864039"
             },
             {
               "name": "team_announcement_time",
@@ -2231,8 +2261,8 @@
               "n_distinct": -0.896552,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 19:59:59.999+00\",\"2024-06-19 19:59:59.999+00\",\"2024-06-26 16:00:00+00\",\"2024-07-03 16:00:00+00\",\"2024-07-11 16:00:00+00\",\"2024-07-17 16:00:00+00\",\"2024-07-24 16:00:00+00\",\"2024-07-31 16:00:00+00\",\"2024-08-07 19:59:59.999+00\",\"2024-08-14 19:59:59.999+00\",\"2024-08-21 19:59:59.999+00\",\"2024-08-28 16:00:00+00\",\"2024-09-04 16:00:00+00\",\"2024-09-11 16:00:00+00\",\"2024-09-18 19:59:59.999+00\",\"2024-09-25 16:00:00+00\",\"2024-10-02 16:00:00+00\",\"2024-10-09 16:00:00+00\",\"2024-10-16 16:00:00+00\",\"2024-10-23 19:59:59.999+00\",\"2024-10-30 16:00:00+00\",\"2024-11-06 16:00:00+00\",\"2024-11-13 16:00:00+00\",\"2024-11-20 16:00:00+00\",\"2024-11-27 16:00:00+00\",\"2025-01-08 17:00:00+00\"}",
-              "correlation": "0.465983"
+              "histogram_bounds": "{\"2024-05-15 19:59:59.999+00\",\"2024-06-19 19:59:59.999+00\",\"2024-06-26 16:00:00+00\",\"2024-07-03 16:00:00+00\",\"2024-07-11 16:00:00+00\",\"2024-07-17 16:00:00+00\",\"2024-07-24 16:00:00+00\",\"2024-07-31 16:00:00+00\",\"2024-08-07 19:59:59.999+00\",\"2024-08-14 19:59:59.999+00\",\"2024-08-21 19:59:59.999+00\",\"2024-08-28 16:00:00+00\",\"2024-09-04 16:00:00+00\",\"2024-09-11 16:00:00+00\",\"2024-09-18 19:59:59.999+00\",\"2024-09-25 16:00:00+00\",\"2024-10-02 16:00:00+00\",\"2024-10-09 16:00:00+00\",\"2024-10-16 16:00:00+00\",\"2024-10-23 19:59:59.999+00\",\"2024-10-30 16:00:00+00\",\"2024-11-06 16:00:00+00\",\"2024-11-13 16:00:00+00\",\"2024-11-20 16:00:00+00\",\"2024-11-27 16:00:00+00\",\"2025-01-09 12:55:00+00\"}",
+              "correlation": "0.606838"
             },
             {
               "name": "status",
@@ -2250,7 +2280,7 @@
               "most_common_values": "{open}",
               "most_common_frequencies": "{0.965517}",
               "histogram_bounds": null,
-              "correlation": "0.933005"
+              "correlation": "0.864039"
             }
           ],
           "constraints": [
@@ -2447,6 +2477,15 @@
           ],
           "triggers": [
             {
+              "name": "game_completion_reserve_xp_trigger",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION handle_game_completion_reserve_xp()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
               "name": "game_completion_status_check",
               "timing": "BEFORE",
               "event": "UPDATE",
@@ -2478,6 +2517,15 @@
               "timing": "AFTER",
               "event": "UPDATE",
               "statement": "EXECUTE FUNCTION update_game_sequence_numbers()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "on_game_deletion",
+              "timing": "BEFORE",
+              "event": "DELETE",
+              "statement": "EXECUTE FUNCTION handle_game_deletion()",
               "orientation": "ROW",
               "old_table": null,
               "new_table": null
@@ -2590,8 +2638,8 @@
           "table_name": "notifications",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "64 kB",
-          "estimated_rows": 1,
+          "total_size": "48 kB",
+          "estimated_rows": 18,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -3576,7 +3624,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "48 kB",
-          "estimated_rows": 24,
+          "estimated_rows": 28,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -4474,7 +4522,7 @@
           "table_name": "player_xp",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "72 kB",
+          "total_size": "184 kB",
           "estimated_rows": 54,
           "storage_parameters": null,
           "replica_identity": "d",
@@ -4494,8 +4542,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,1db2da77-3c88-4bda-989b-349b4cab6604,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,35905fe4-5532-4513-9f58-de3c28942e1a,3a712b45-cd7e-4e66-a6dd-133255be5895,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
-              "correlation": "-0.136878"
+              "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,3a712b45-cd7e-4e66-a6dd-133255be5895,40a27806-c64d-4786-8886-fb535b529b83,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,f3e8c7b3-8394-4da6-a68e-60ee4d7ba48e,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
+              "correlation": "-0.133829"
             },
             {
               "name": "xp",
@@ -4509,11 +4557,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.722222,
-              "most_common_values": "{12,10,20,14,26,34,40}",
-              "most_common_frequencies": "{0.111111,0.0925926,0.0555556,0.037037,0.037037,0.037037,0.037037}",
-              "histogram_bounds": "{16,18,22,24,30,46,68,76,86,112,165,174,180,188,192,202,218,223,239,240,244,274,312,326,344,360,403,409,417,456,562,717}",
-              "correlation": "-0.707185"
+              "n_distinct": -0.685185,
+              "most_common_values": "{10,12,14,20,24,34,216,266}",
+              "most_common_frequencies": "{0.111111,0.0925926,0.0555556,0.0555556,0.037037,0.037037,0.037037,0.037037}",
+              "histogram_bounds": "{16,22,26,28,38,45,49,97,101,115,143,178,180,199,207,224,229,235,238,240,257,274,406,448,459,465,500,612,773}",
+              "correlation": "-0.840137"
             },
             {
               "name": "last_calculated",
@@ -4527,11 +4575,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.333333,
-              "most_common_values": "{\"2025-01-07 16:40:07.040727+00\",\"2025-01-07 16:40:07.033983+00\"}",
-              "most_common_frequencies": "{0.666667,0.037037}",
-              "histogram_bounds": "{\"2025-01-07 16:40:06.977314+00\",\"2025-01-07 16:40:06.984571+00\",\"2025-01-07 16:40:06.98719+00\",\"2025-01-07 16:40:07.0006+00\",\"2025-01-07 16:40:07.007268+00\",\"2025-01-07 16:40:07.010306+00\",\"2025-01-07 16:40:07.012296+00\",\"2025-01-07 16:40:07.012658+00\",\"2025-01-07 16:40:07.016528+00\",\"2025-01-07 16:40:07.038162+00\",\"2025-01-07 16:40:07.04845+00\",\"2025-01-07 16:40:07.048543+00\",\"2025-01-07 16:40:07.049055+00\",\"2025-01-07 16:40:07.051716+00\",\"2025-01-07 16:40:07.053023+00\",\"2025-01-07 16:40:09.980032+00\"}",
-              "correlation": "0.653516"
+              "n_distinct": 1,
+              "most_common_values": "{\"2025-01-09 12:58:50.606216+00\"}",
+              "most_common_frequencies": "{1}",
+              "histogram_bounds": null,
+              "correlation": "1"
             },
             {
               "name": "rarity",
@@ -4549,7 +4597,7 @@
               "most_common_values": "{Amateur,\"Semi Pro\",Professional,Legendary,\"World Class\"}",
               "most_common_frequencies": "{0.592593,0.203704,0.12963,0.037037,0.037037}",
               "histogram_bounds": null,
-              "correlation": "-0.207471"
+              "correlation": "-0.224014"
             }
           ],
           "constraints": [
@@ -4644,7 +4692,7 @@
           "table_name": "players",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "96 kB",
+          "total_size": "176 kB",
           "estimated_rows": 54,
           "storage_parameters": null,
           "replica_identity": "d",
@@ -4664,8 +4712,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,1db2da77-3c88-4bda-989b-349b4cab6604,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,35905fe4-5532-4513-9f58-de3c28942e1a,3a712b45-cd7e-4e66-a6dd-133255be5895,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
-              "correlation": "0.0755861"
+              "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,3a712b45-cd7e-4e66-a6dd-133255be5895,40a27806-c64d-4786-8886-fb535b529b83,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,f3e8c7b3-8394-4da6-a68e-60ee4d7ba48e,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
+              "correlation": "0.0919764"
             },
             {
               "name": "user_id",
@@ -4679,11 +4727,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.037037,
+              "n_distinct": -0.0555556,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{1013107b-535e-45a9-9fc8-f54faa410585,a4c15f00-d500-4ae3-b9f2-b8808f7f737c}",
-              "correlation": "-1"
+              "histogram_bounds": "{6099599c-21d3-454a-953a-19fa3973b82e,a4c15f00-d500-4ae3-b9f2-b8808f7f737c,fb791661-b7d6-4512-bb69-40d316cd4497}",
+              "correlation": "-0.5"
             },
             {
               "name": "friendly_name",
@@ -4701,7 +4749,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{\"Adrian P\",\"Alex E\",\"Anthony B\",\"Ben W\",Boyle,Callum,Calvin,Carlton,\"Chris F\",\"Chris H\",Colin,Craig,Daniel,Danion,\"Darren C\",\"Darren W\",Dave,Dilon,Dom,Ethan,Faz,\"Gaz G\",\"Jack G\",\"Jack M\",\"James H\",Joe,Johnny,Justin,Kaci,Ken,Kieran,Kyle,\"Lee M\",\"Lee S\",Lewis,Maddocks,Matty,\"Mike B\",\"Mike M\",Paul,Pete,\"Phil J\",\"Phil R\",\"Phil V\",\"Ryan J\",\"Ryan L\",Sam,\"Scott J\",Simon,Stephen,\"Tom Ip\",\"Tom K\",Twiggy,Zhao}",
-              "correlation": "-0.133905"
+              "correlation": "-0.378311"
             },
             {
               "name": "caps",
@@ -4715,11 +4763,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.351852,
-              "most_common_values": "{1,2,3,13,24,4,6,12,16,20,21,23}",
-              "most_common_frequencies": "{0.277778,0.148148,0.0740741,0.0555556,0.0555556,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037}",
-              "histogram_bounds": "{5,14,15,17,19,22,25}",
-              "correlation": "0.419097"
+              "n_distinct": -0.333333,
+              "most_common_values": "{1,2,3,13,14,17,21,25,7,24}",
+              "most_common_frequencies": "{0.277778,0.148148,0.0740741,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.037037,0.037037}",
+              "histogram_bounds": "{4,5,6,16,19,20,22,26}",
+              "correlation": "0.216162"
             },
             {
               "name": "win_rate",
@@ -4787,11 +4835,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.148148,
+              "n_distinct": -0.166667,
               "most_common_values": "{\"2024-11-11 15:52:58.97872+00\"}",
-              "most_common_frequencies": "{0.87037}",
-              "histogram_bounds": "{\"2024-11-08 00:21:14.457969+00\",\"2024-11-11 15:46:24.694242+00\",\"2024-11-15 15:58:08.358688+00\",\"2024-11-15 15:59:47.248446+00\",\"2024-11-20 23:45:39.998846+00\",\"2024-12-05 15:12:14.368105+00\",\"2024-12-24 16:53:39.142845+00\"}",
-              "correlation": "0.704364"
+              "most_common_frequencies": "{0.851852}",
+              "histogram_bounds": "{\"2024-11-08 00:21:14.457969+00\",\"2024-11-11 15:46:24.694242+00\",\"2024-11-15 15:58:08.358688+00\",\"2024-11-15 15:59:47.248446+00\",\"2024-11-20 23:45:39.998846+00\",\"2024-12-05 15:12:14.368105+00\",\"2025-01-08 13:38:51.0936+00\",\"2025-01-08 19:00:27.895529+00\"}",
+              "correlation": "0.653897"
             },
             {
               "name": "is_admin",
@@ -4809,7 +4857,7 @@
               "most_common_values": "{f}",
               "most_common_frequencies": "{0.981481}",
               "histogram_bounds": null,
-              "correlation": "0.986964"
+              "correlation": "0.991995"
             },
             {
               "name": "is_super_admin",
@@ -4827,7 +4875,7 @@
               "most_common_values": "{f}",
               "most_common_frequencies": "{0.981481}",
               "histogram_bounds": null,
-              "correlation": "0.986964"
+              "correlation": "0.991995"
             },
             {
               "name": "avatar_svg",
@@ -4841,7 +4889,7 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.0185185,
+              "n_distinct": -0.037037,
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": null,
@@ -4859,11 +4907,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.0185185,
+              "n_distinct": -0.037037,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{\"{\\\"seed\\\": \\\"0.11485077377172692\\\"}\",\"{\\\"seed\\\": \\\"0.33882686695448494\\\"}\"}",
+              "correlation": "1"
             },
             {
               "name": "attack_rating",
@@ -4877,11 +4925,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.185185,
-              "most_common_values": "{0,6.0000000000000000,7.0000000000000000,5.0000000000000000,1.00000000000000000000}",
-              "most_common_frequencies": "{0.574074,0.111111,0.111111,0.0740741,0.037037}",
-              "histogram_bounds": "{2.0000000000000000,3.0000000000000000,8.0000000000000000,9.0000000000000000,9.5000000000000000}",
-              "correlation": "0.520488"
+              "n_distinct": -0.203704,
+              "most_common_values": "{0,6.0000000000000000,5.0000000000000000,7.0000000000000000,2.0000000000000000,8.0000000000000000,8.5}",
+              "most_common_frequencies": "{0.555556,0.111111,0.0740741,0.0740741,0.037037,0.037037,0.037037}",
+              "histogram_bounds": "{4.0000000000000000,6.5000000000000000,9.0000000000000000,10.0000000000000000}",
+              "correlation": "0.286373"
             },
             {
               "name": "defense_rating",
@@ -4895,11 +4943,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.166667,
+              "n_distinct": -0.203704,
               "most_common_values": "{0,4.0000000000000000,7.0000000000000000,5.0000000000000000,6.0000000000000000,8.0000000000000000}",
-              "most_common_frequencies": "{0.574074,0.0925926,0.0925926,0.0740741,0.0555556,0.0555556}",
-              "histogram_bounds": "{1.00000000000000000000,6.5000000000000000,9.0000000000000000}",
-              "correlation": "0.542367"
+              "most_common_frequencies": "{0.555556,0.0925926,0.0925926,0.0555556,0.0555556,0.0555556}",
+              "histogram_bounds": "{3.0000000000000000,3.5000000000000000,8.5,9.5000000000000000,10.0000000000000000}",
+              "correlation": "0.326396"
             },
             {
               "name": "is_test_user",
@@ -4914,10 +4962,10 @@
               "numeric_precision": null,
               "numeric_scale": null,
               "n_distinct": 2,
-              "most_common_values": "{t}",
-              "most_common_frequencies": "{0.981481}",
+              "most_common_values": "{t,f}",
+              "most_common_frequencies": "{0.944444,0.0555556}",
               "histogram_bounds": null,
-              "correlation": "0.951973"
+              "correlation": "0.845169"
             },
             {
               "name": "manual_caps_override",
@@ -4949,11 +4997,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.148148,
-              "most_common_values": "{0,2,3,1,4}",
-              "most_common_frequencies": "{0.666667,0.0925926,0.0740741,0.0555556,0.0555556}",
-              "histogram_bounds": "{7,8,12}",
-              "correlation": "0.775033"
+              "n_distinct": -0.166667,
+              "most_common_values": "{0,1,3,4,5}",
+              "most_common_frequencies": "{0.62963,0.148148,0.0555556,0.0555556,0.037037}",
+              "histogram_bounds": "{2,8,9,13}",
+              "correlation": "0.418868"
             },
             {
               "name": "max_streak",
@@ -4967,11 +5015,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.259259,
-              "most_common_values": "{1,2,3,4,5,6,11,8,12,13}",
-              "most_common_frequencies": "{0.462963,0.0740741,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.037037,0.037037,0.037037}",
-              "histogram_bounds": "{7,9,10,16}",
-              "correlation": "0.49312"
+              "n_distinct": -0.240741,
+              "most_common_values": "{1,4,2,5,6,11,13,8,9}",
+              "most_common_frequencies": "{0.462963,0.0925926,0.0740741,0.0555556,0.0555556,0.0555556,0.0555556,0.037037,0.037037}",
+              "histogram_bounds": "{3,10,12,16}",
+              "correlation": "0.229121"
             },
             {
               "name": "average_attack_rating",
@@ -5021,11 +5069,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 2,
+              "most_common_values": "{Yes}",
+              "most_common_frequencies": "{0.518519}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "0.961576"
             },
             {
               "name": "whatsapp_mobile_number",
@@ -5039,11 +5087,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -0.037037,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{+447400055259,+447734866252}",
+              "correlation": "-1"
             }
           ],
           "constraints": [
@@ -5288,6 +5336,431 @@
               ],
               "command": "UPDATE",
               "definition": "(auth.uid() = id)",
+              "with_check": null
+            }
+          ]
+        },
+        {
+          "table_name": "reserve_xp_transactions",
+          "table_type": "BASE TABLE",
+          "description": "Tracks XP transactions related to reserve players. Players receive +5 XP for remaining in reserves after a game, \r\n    and -10 XP for declining a slot offer (except for same-day offers).",
+          "total_size": "96 kB",
+          "estimated_rows": 2,
+          "storage_parameters": null,
+          "replica_identity": "d",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "description": null,
+              "position": 1,
+              "identity_generation": null,
+              "is_generated": "NEVER",
+              "generation_expression": null,
+              "numeric_precision": null,
+              "numeric_scale": null,
+              "n_distinct": null,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": null,
+              "correlation": null
+            },
+            {
+              "name": "player_id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 2,
+              "identity_generation": null,
+              "is_generated": "NEVER",
+              "generation_expression": null,
+              "numeric_precision": null,
+              "numeric_scale": null,
+              "n_distinct": null,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": null,
+              "correlation": null
+            },
+            {
+              "name": "game_id",
+              "type": "uuid",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 3,
+              "identity_generation": null,
+              "is_generated": "NEVER",
+              "generation_expression": null,
+              "numeric_precision": null,
+              "numeric_scale": null,
+              "n_distinct": null,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": null,
+              "correlation": null
+            },
+            {
+              "name": "xp_amount",
+              "type": "integer",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 4,
+              "identity_generation": null,
+              "is_generated": "NEVER",
+              "generation_expression": null,
+              "numeric_precision": 32,
+              "numeric_scale": 0,
+              "n_distinct": null,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": null,
+              "correlation": null
+            },
+            {
+              "name": "transaction_type",
+              "type": "text",
+              "nullable": "NO",
+              "default": null,
+              "description": null,
+              "position": 5,
+              "identity_generation": null,
+              "is_generated": "NEVER",
+              "generation_expression": null,
+              "numeric_precision": null,
+              "numeric_scale": null,
+              "n_distinct": null,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": null,
+              "correlation": null
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "nullable": "YES",
+              "default": "CURRENT_TIMESTAMP",
+              "description": null,
+              "position": 6,
+              "identity_generation": null,
+              "is_generated": "NEVER",
+              "generation_expression": null,
+              "numeric_precision": null,
+              "numeric_scale": null,
+              "n_distinct": null,
+              "most_common_values": null,
+              "most_common_frequencies": null,
+              "histogram_bounds": null,
+              "correlation": null
+            }
+          ],
+          "constraints": [
+            {
+              "name": "reserve_xp_transactions_game_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "game_id",
+              "foreign_table": "games",
+              "foreign_column": "id",
+              "check_definition": null,
+              "update_rule": "NO ACTION",
+              "delete_rule": "NO ACTION"
+            },
+            {
+              "name": "reserve_xp_transactions_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "id",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_fkey",
+              "type": "FOREIGN KEY",
+              "column": "player_id",
+              "foreign_table": "players",
+              "foreign_column": "id",
+              "check_definition": null,
+              "update_rule": "NO ACTION",
+              "delete_rule": "NO ACTION"
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "player_id",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "player_id",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "player_id",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "game_id",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "player_id",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "transaction_type",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "game_id",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "player_id",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "game_id",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "game_id",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "game_id",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "transaction_type",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "transaction_type",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "player_id",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "transaction_type",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "game_id",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "type": "UNIQUE",
+              "column": "transaction_type",
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "transaction_type",
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "reserve_xp_transactions_transaction_type_check",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "reserve_xp_transactions",
+              "foreign_column": "transaction_type",
+              "check_definition": "CHECK ((transaction_type = ANY (ARRAY['RESERVE_REWARD'::text, 'SLOT_DECLINE_PENALTY'::text])))",
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "2200_158856_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null,
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "2200_158856_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null,
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "2200_158856_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null,
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "2200_158856_4_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null,
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            },
+            {
+              "name": "2200_158856_5_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null,
+              "check_definition": null,
+              "update_rule": null,
+              "delete_rule": null
+            }
+          ],
+          "triggers": [
+            {
+              "name": "reserve_xp_update_trigger",
+              "timing": "AFTER",
+              "event": "INSERT",
+              "statement": "EXECUTE FUNCTION handle_reserve_xp_transaction()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "reserve_xp_update_trigger",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION handle_reserve_xp_transaction()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            }
+          ],
+          "indexes": [
+            {
+              "name": "reserve_xp_transactions_pkey",
+              "definition": "CREATE UNIQUE INDEX reserve_xp_transactions_pkey ON public.reserve_xp_transactions USING btree (id)",
+              "is_unique": true,
+              "is_primary": true,
+              "is_exclusion": false,
+              "is_immediate": true,
+              "partial_predicate": null,
+              "collation": "0",
+              "opclass": "10065",
+              "storage_parameters": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_id_game_id_transaction_type_key",
+              "definition": "CREATE UNIQUE INDEX reserve_xp_transactions_player_id_game_id_transaction_type_key ON public.reserve_xp_transactions USING btree (player_id, game_id, transaction_type)",
+              "is_unique": true,
+              "is_primary": false,
+              "is_exclusion": false,
+              "is_immediate": true,
+              "partial_predicate": null,
+              "collation": "0 0 100",
+              "opclass": "10065 10065 3126",
+              "storage_parameters": null
+            },
+            {
+              "name": "reserve_xp_transactions_player_game_idx",
+              "definition": "CREATE INDEX reserve_xp_transactions_player_game_idx ON public.reserve_xp_transactions USING btree (player_id, game_id)",
+              "is_unique": false,
+              "is_primary": false,
+              "is_exclusion": false,
+              "is_immediate": true,
+              "partial_predicate": null,
+              "collation": "0 0",
+              "opclass": "10065 10065",
+              "storage_parameters": null
+            },
+            {
+              "name": "reserve_xp_transactions_created_at_idx",
+              "definition": "CREATE INDEX reserve_xp_transactions_created_at_idx ON public.reserve_xp_transactions USING btree (created_at)",
+              "is_unique": false,
+              "is_primary": false,
+              "is_exclusion": false,
+              "is_immediate": true,
+              "partial_predicate": null,
+              "collation": "0",
+              "opclass": "3127",
+              "storage_parameters": null
+            },
+            {
+              "name": "idx_reserve_xp_transactions_player_game",
+              "definition": "CREATE INDEX idx_reserve_xp_transactions_player_game ON public.reserve_xp_transactions USING btree (player_id, game_id)",
+              "is_unique": false,
+              "is_primary": false,
+              "is_exclusion": false,
+              "is_immediate": true,
+              "partial_predicate": null,
+              "collation": "0 0",
+              "opclass": "10065 10065",
+              "storage_parameters": null
+            }
+          ],
+          "rls_policies": [
+            {
+              "name": "Admins can insert and update XP transactions",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "authenticated"
+              ],
+              "command": "INSERT",
+              "definition": null,
+              "with_check": "(EXISTS ( SELECT 1\n   FROM ((admin_roles ar\n     JOIN players p ON ((p.id = ar.player_id)))\n     JOIN admin_permissions ap ON ((ar.id = ap.admin_role_id)))\n  WHERE ((p.user_id = auth.uid()) AND (ap.permission = 'MANAGE_XP'::text))))"
+            },
+            {
+              "name": "Admins can manage all XP transactions",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "authenticated"
+              ],
+              "command": "ALL",
+              "definition": "(EXISTS ( SELECT 1\n   FROM ((admin_roles ar\n     JOIN players p ON ((p.id = ar.player_id)))\n     JOIN admin_permissions ap ON ((ar.id = ap.admin_role_id)))\n  WHERE ((p.user_id = auth.uid()) AND (ap.permission = 'MANAGE_XP'::text))))",
+              "with_check": null
+            },
+            {
+              "name": "Admins can update XP transactions",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "authenticated"
+              ],
+              "command": "UPDATE",
+              "definition": "(EXISTS ( SELECT 1\n   FROM ((admin_roles ar\n     JOIN players p ON ((p.id = ar.player_id)))\n     JOIN admin_permissions ap ON ((ar.id = ap.admin_role_id)))\n  WHERE ((p.user_id = auth.uid()) AND (ap.permission = 'MANAGE_XP'::text))))",
+              "with_check": null
+            },
+            {
+              "name": "Players can view their own XP transactions",
+              "permissive": "PERMISSIVE",
+              "roles": [
+                "authenticated"
+              ],
+              "command": "SELECT",
+              "definition": "(auth.uid() IN ( SELECT players.user_id\n   FROM players\n  WHERE (players.id = reserve_xp_transactions.player_id)))",
               "with_check": null
             }
           ]
@@ -5803,6 +6276,15 @@
             }
           ],
           "triggers": [
+            {
+              "name": "slot_decline_penalty_trigger",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION handle_slot_decline_penalty()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
             {
               "name": "slot_offer_response_trigger",
               "timing": "BEFORE",
@@ -6786,18 +7268,7 @@
           "leakproof": false,
           "security_definer": false,
           "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.handle_game_registration_xp()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN\r\n        PERFORM calculate_player_xp(NEW.player_id);\r\n    END IF;\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
-        },
-        {
-          "name": "calculate_player_xp",
-          "arguments": "p_player_id uuid, p_latest_sequence integer DEFAULT NULL::integer",
-          "return_type": "integer",
-          "description": null,
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": false,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.calculate_player_xp(p_player_id uuid, p_latest_sequence integer DEFAULT NULL::integer)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_caps integer;\r\n    v_active_bonuses integer;\r\n    v_active_penalties integer;\r\n    v_current_streak integer;\r\n    v_base_xp integer := 0;\r\n    v_latest_game_sequence integer;\r\n    v_game_sequences integer[];\r\n    v_final_xp integer;\r\n    v_streak_multiplier numeric;\r\nBEGIN\r\n    -- Get player stats\r\n    SELECT \r\n        COALESCE(p.caps, 0),\r\n        COALESCE(p.active_bonuses, 0),\r\n        COALESCE(p.active_penalties, 0),\r\n        COALESCE(p.current_streak, 0)\r\n    INTO \r\n        v_caps,\r\n        v_active_bonuses,\r\n        v_active_penalties,\r\n        v_current_streak\r\n    FROM players p\r\n    WHERE p.id = p_player_id;\r\n\r\n    -- Get latest game sequence if not provided\r\n    IF p_latest_sequence IS NULL THEN\r\n        SELECT MAX(sequence_number)\r\n        INTO v_latest_game_sequence\r\n        FROM games\r\n        WHERE completed = true;\r\n    ELSE\r\n        v_latest_game_sequence := p_latest_sequence;\r\n    END IF;\r\n\r\n    -- Get player's game sequences\r\n    WITH player_games AS (\r\n        SELECT g.sequence_number\r\n        FROM games g\r\n        JOIN game_registrations gr ON g.id = gr.game_id\r\n        WHERE gr.player_id = p_player_id\r\n        AND g.completed = true\r\n        AND g.sequence_number <= v_latest_game_sequence\r\n        ORDER BY g.sequence_number DESC\r\n    )\r\n    SELECT array_agg(sequence_number ORDER BY sequence_number DESC)\r\n    INTO v_game_sequences\r\n    FROM player_games;\r\n\r\n    -- Calculate weighted base XP with new weighting system\r\n    WITH RECURSIVE game_categories AS (\r\n        SELECT \r\n            SUM(CASE \r\n                WHEN sequence_number = v_latest_game_sequence THEN 20  -- Current game (0 games ago)\r\n                WHEN v_latest_game_sequence - sequence_number <= 2 THEN 18  -- Games 2-3 ago\r\n                WHEN v_latest_game_sequence - sequence_number <= 4 THEN 16  -- Games 4-5 ago\r\n                WHEN v_latest_game_sequence - sequence_number <= 9 THEN 14  -- Games 6-10 ago\r\n                WHEN v_latest_game_sequence - sequence_number <= 19 THEN 12 -- Games 11-20 ago\r\n                WHEN v_latest_game_sequence - sequence_number <= 29 THEN 10 -- Games 21-30 ago\r\n                WHEN v_latest_game_sequence - sequence_number <= 39 THEN 5  -- Games 31-40 ago\r\n                ELSE 0  -- Games 41+ ago\r\n            END) as category_xp\r\n        FROM unnest(v_game_sequences) AS sequence_number\r\n    )\r\n    SELECT COALESCE(category_xp, 0)\r\n    INTO v_base_xp\r\n    FROM game_categories;\r\n\r\n    -- Calculate streak multiplier (10% bonus per streak level)\r\n    v_streak_multiplier := GREATEST(1, 1 + (v_current_streak * 0.1));\r\n\r\n    -- Calculate final XP with streak multiplier\r\n    v_final_xp := GREATEST(0, round(v_base_xp * v_streak_multiplier));\r\n\r\n    -- Update the player_xp table\r\n    INSERT INTO player_xp (player_id, xp, last_calculated)\r\n    VALUES (p_player_id, v_final_xp, now())\r\n    ON CONFLICT (player_id) \r\n    DO UPDATE SET \r\n        xp = EXCLUDED.xp,\r\n        last_calculated = EXCLUDED.last_calculated;\r\n\r\n    RETURN v_final_xp;\r\nEND;\r\n$function$\n"
+          "definition": "CREATE OR REPLACE FUNCTION public.handle_game_registration_xp()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Update player XP using the calculate_player_xp function\r\n    INSERT INTO player_xp (player_id, xp, last_calculated)\r\n    VALUES (\r\n        NEW.player_id, \r\n        calculate_player_xp(NEW.player_id), \r\n        CURRENT_TIMESTAMP\r\n    )\r\n    ON CONFLICT (player_id) \r\n    DO UPDATE SET \r\n        xp = EXCLUDED.xp,\r\n        last_calculated = EXCLUDED.last_calculated;\r\n\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "handle_slot_offer_acceptance",
@@ -6855,6 +7326,17 @@
           "definition": "CREATE OR REPLACE FUNCTION public.handle_slot_offer_response(p_offer_id uuid, p_status slot_offer_status)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n  v_game_id UUID;\r\n  v_player_id UUID;\r\n  v_game_date TIMESTAMP WITH TIME ZONE;\r\n  v_game_number INTEGER;\r\n  v_hours_until_game NUMERIC;\r\n  v_next_players UUID[];\r\n  v_current_selected_players JSONB;\r\nBEGIN\r\n  -- Get the offer details\r\n  SELECT \r\n    game_id,\r\n    player_id,\r\n    g.date,\r\n    COUNT(g2.*) + 1,\r\n    EXTRACT(EPOCH FROM (g.date - NOW())) / 3600 \r\n    INTO v_game_id, v_player_id, v_game_date, v_game_number, v_hours_until_game\r\n  FROM slot_offers so\r\n  JOIN games g ON g.id = so.game_id\r\n  LEFT JOIN games g2 ON g2.date < g.date OR (g2.date = g.date AND g2.id < g.id)\r\n  WHERE so.id = p_offer_id\r\n  GROUP BY so.game_id, so.player_id, g.date;\r\n\r\n  IF p_status = 'accepted' THEN\r\n    -- Get current selected players from game_selections\r\n    SELECT COALESCE(selected_players, '[]'::jsonb)\r\n    INTO v_current_selected_players\r\n    FROM game_selections\r\n    WHERE game_id = v_game_id;\r\n\r\n    -- If no game_selections entry exists, create one\r\n    IF NOT FOUND THEN\r\n      INSERT INTO game_selections (game_id, selected_players)\r\n      VALUES (v_game_id, '[]'::jsonb)\r\n      RETURNING selected_players INTO v_current_selected_players;\r\n    END IF;\r\n\r\n    -- Add the new player to selected_players if not already present\r\n    IF NOT v_current_selected_players ? v_player_id::text THEN\r\n      UPDATE game_selections\r\n      SET selected_players = (\r\n        SELECT jsonb_agg(value)\r\n        FROM (\r\n          SELECT * FROM jsonb_array_elements(v_current_selected_players)\r\n          UNION ALL\r\n          SELECT to_jsonb(v_player_id::text)\r\n        ) t\r\n      )\r\n      WHERE game_id = v_game_id;\r\n    END IF;\r\n\r\n    -- Update game registration status\r\n    UPDATE game_registrations\r\n    SET status = 'selected'\r\n    WHERE game_id = v_game_id AND player_id = v_player_id;\r\n\r\n    -- Update other pending offers to voided\r\n    UPDATE slot_offers\r\n    SET \r\n      status = 'voided',\r\n      responded_at = NOW()\r\n    WHERE \r\n      game_id = v_game_id \r\n      AND id != p_offer_id \r\n      AND status = 'pending';\r\n\r\n  ELSIF p_status = 'declined' THEN\r\n    -- Get next eligible players\r\n    SELECT ARRAY(\r\n      SELECT player_id \r\n      FROM get_next_slot_offer_players(v_game_id, v_hours_until_game)\r\n      LIMIT 1\r\n    ) INTO v_next_players;\r\n\r\n    -- Create new offers for next eligible players\r\n    IF array_length(v_next_players, 1) > 0 THEN\r\n      INSERT INTO slot_offers (\r\n        game_id,\r\n        player_id,\r\n        status,\r\n        offered_at,\r\n        expires_at,\r\n        available_at\r\n      )\r\n      SELECT \r\n        v_game_id,\r\n        player_id,\r\n        'pending'::slot_offer_status,\r\n        NOW(),\r\n        NOW() + INTERVAL '1 hour',\r\n        NOW()\r\n      FROM unnest(v_next_players) AS player_id;\r\n    END IF;\r\n  END IF;\r\n\r\n  -- Update the slot offer status\r\n  UPDATE slot_offers\r\n  SET \r\n    status = p_status,\r\n    responded_at = NOW(),\r\n    accepted_at = CASE WHEN p_status = 'accepted' THEN NOW() ELSE NULL END,\r\n    declined_at = CASE WHEN p_status = 'declined' THEN NOW() ELSE NULL END\r\n  WHERE id = p_offer_id;\r\n\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "process_reserve_xp_rewards",
+          "arguments": "",
+          "return_type": "void",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.process_reserve_xp_rewards()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Insert reserve rewards for eligible players\r\n    INSERT INTO reserve_xp_transactions (player_id, game_id, xp_amount, transaction_type)\r\n    SELECT DISTINCT\r\n        gr.player_id,\r\n        gr.game_id,\r\n        5 as xp_amount,\r\n        'RESERVE_REWARD' as transaction_type\r\n    FROM game_registrations gr\r\n    JOIN games g ON g.id = gr.game_id\r\n    LEFT JOIN reserve_xp_transactions rxp \r\n        ON rxp.player_id = gr.player_id \r\n        AND rxp.game_id = gr.game_id\r\n        AND rxp.transaction_type = 'RESERVE_REWARD'\r\n    WHERE \r\n        gr.status = 'reserve'\r\n        AND g.date < CURRENT_TIMESTAMP\r\n        AND g.status = 'completed'  -- Only award XP for completed games\r\n        AND rxp.id IS NULL\r\n        -- Ensure player wasn't moved from reserve to selected\r\n        AND NOT EXISTS (\r\n            SELECT 1 \r\n            FROM game_registrations gr2\r\n            WHERE gr2.game_id = gr.game_id\r\n            AND gr2.player_id = gr.player_id\r\n            AND gr2.status = 'selected'\r\n        );\r\n\r\n    -- Update player_xp table with new XP\r\n    UPDATE player_xp px\r\n    SET \r\n        xp = px.xp + (\r\n            SELECT COALESCE(SUM(xp_amount), 0)\r\n            FROM reserve_xp_transactions rt\r\n            WHERE rt.player_id = px.player_id\r\n            AND rt.created_at > px.last_calculated\r\n        ),\r\n        last_calculated = CURRENT_TIMESTAMP\r\n    WHERE EXISTS (\r\n        SELECT 1 \r\n        FROM reserve_xp_transactions rt\r\n        WHERE rt.player_id = px.player_id\r\n        AND rt.created_at > px.last_calculated\r\n    );\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "handle_slot_offer_response",
           "arguments": "",
           "return_type": "trigger",
@@ -6877,6 +7359,17 @@
           "definition": "CREATE OR REPLACE FUNCTION public.get_player_game_sequences()\n RETURNS TABLE(player_id uuid, game_sequences bigint[])\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  RETURN QUERY\r\n  WITH game_numbers AS (\r\n    SELECT \r\n      gr.player_id,\r\n      g.id as game_id,\r\n      ROW_NUMBER() OVER (PARTITION BY gr.player_id ORDER BY g.date DESC) as game_sequence\r\n    FROM game_registrations gr\r\n    JOIN games g ON gr.game_id = g.id\r\n    WHERE gr.status = 'selected'\r\n  )\r\n  SELECT \r\n    gn.player_id,\r\n    ARRAY_AGG(gn.game_sequence ORDER BY gn.game_sequence) as game_sequences\r\n  FROM game_numbers gn\r\n  GROUP BY gn.player_id;\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "update_player_streak",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": "Updates player streak based on consecutive selected games. Any non-selected game (including reserve) breaks the streak.",
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.update_player_streak()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Update streak based on consecutive selected games, breaking on reserve games\r\n    WITH game_history AS (\r\n        SELECT \r\n            g.date,\r\n            gr.status,\r\n            ROW_NUMBER() OVER (ORDER BY g.date DESC) as game_number\r\n        FROM game_registrations gr\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE gr.player_id = NEW.player_id\r\n        AND g.completed = true\r\n        ORDER BY g.date DESC\r\n    ),\r\n    first_non_selected AS (\r\n        -- Find the first non-selected game (including reserve) as that breaks the streak\r\n        SELECT MIN(game_number) as streak_break\r\n        FROM game_history\r\n        WHERE status != 'selected'\r\n    ),\r\n    streak_calc AS (\r\n        -- Count selected games until we hit a non-selected game\r\n        SELECT COUNT(*) as streak_length\r\n        FROM game_history h\r\n        WHERE h.status = 'selected'\r\n        AND (\r\n            -- Either there are no streak breaks yet\r\n            NOT EXISTS (SELECT 1 FROM first_non_selected) \r\n            OR \r\n            -- Or we're only counting games before the streak break\r\n            h.game_number < (SELECT streak_break FROM first_non_selected)\r\n        )\r\n    )\r\n    UPDATE players\r\n    SET current_streak = COALESCE((SELECT streak_length FROM streak_calc), 0)\r\n    WHERE id = NEW.player_id;\r\n\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "balance_teams",
           "arguments": "game_id uuid",
           "return_type": "void",
@@ -6897,17 +7390,6 @@
           "security_definer": true,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.add_admin_role(p_player_id uuid, p_permissions text[])\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n    v_role_id UUID;\r\nBEGIN\r\n    -- Insert or get admin role\r\n    INSERT INTO admin_roles (player_id)\r\n    VALUES (p_player_id)\r\n    ON CONFLICT (player_id) DO UPDATE\r\n    SET updated_at = NOW()\r\n    RETURNING id INTO v_role_id;\r\n\r\n    -- Add permissions\r\n    INSERT INTO admin_permissions (admin_role_id, permission)\r\n    SELECT v_role_id, unnest(p_permissions)\r\n    ON CONFLICT (admin_role_id, permission) DO NOTHING;\r\n\r\n    RETURN v_role_id;\r\nEND;\r\n$function$\n"
-        },
-        {
-          "name": "calculate_player_xp",
-          "arguments": "p_caps integer, p_active_bonuses integer, p_active_penalties integer, p_current_streak integer",
-          "return_type": "integer",
-          "description": null,
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": false,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.calculate_player_xp(p_caps integer, p_active_bonuses integer, p_active_penalties integer, p_current_streak integer)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_bonus_modifier integer;\r\n    v_penalty_modifier integer;\r\n    v_streak_modifier integer;\r\n    v_base_modifier integer;\r\nBEGIN\r\n    -- Match the TypeScript calculation\r\n    v_bonus_modifier := p_active_bonuses * 1;\r\n    v_penalty_modifier := p_active_penalties * 1;\r\n    v_streak_modifier := p_current_streak * 1;\r\n    v_base_modifier := 10 + v_bonus_modifier - v_penalty_modifier + v_streak_modifier;\r\n    \r\n    -- Return calculated XP (rounded to nearest integer)\r\n    RETURN round(p_caps * GREATEST(v_base_modifier, 1));\r\nEND;\r\n$function$\n"
         },
         {
           "name": "calculate_player_streaks",
@@ -7122,12 +7604,12 @@
           "name": "handle_game_deletion",
           "arguments": "",
           "return_type": "trigger",
-          "description": null,
+          "description": "Handles cleanup when a game is deleted:\r\n1. Deletes all reserve XP transactions for the game\r\n2. Recalculates XP for all affected players (both those with reserve XP and those who were registered)",
           "volatility": "v",
           "leakproof": false,
           "security_definer": false,
           "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.handle_game_deletion()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_slot_offer_ids UUID[];\r\nBEGIN\r\n    -- Get all slot offer IDs for this game\r\n    SELECT array_agg(id) INTO v_slot_offer_ids\r\n    FROM slot_offers\r\n    WHERE game_id = OLD.id;\r\n\r\n    -- Delete notifications related to slot offers for this game\r\n    DELETE FROM notifications\r\n    WHERE (metadata->>'game_id')::UUID = OLD.id\r\n    AND type IN ('slot_offer', 'system_announcement')\r\n    AND (metadata->>'action' = 'slot_offers_created' \r\n         OR (metadata->>'slot_offer_id')::UUID = ANY(v_slot_offer_ids));\r\n\r\n    -- Delete slot offers for this game\r\n    DELETE FROM slot_offers\r\n    WHERE game_id = OLD.id;\r\n\r\n    -- Return OLD to allow the deletion to proceed\r\n    RETURN OLD;\r\nEND;\r\n$function$\n"
+          "definition": "CREATE OR REPLACE FUNCTION public.handle_game_deletion()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    affected_players UUID[];\r\nBEGIN\r\n    -- Get all players who had reserve XP for this game\r\n    SELECT ARRAY_AGG(DISTINCT player_id) \r\n    INTO affected_players\r\n    FROM reserve_xp_transactions \r\n    WHERE game_id = OLD.id;\r\n\r\n    -- Delete all reserve XP transactions for this game\r\n    DELETE FROM reserve_xp_transactions WHERE game_id = OLD.id;\r\n\r\n    -- Add players who were registered for the game\r\n    affected_players := array_cat(\r\n        affected_players,\r\n        ARRAY(\r\n            SELECT DISTINCT player_id \r\n            FROM game_registrations \r\n            WHERE game_id = OLD.id\r\n        )\r\n    );\r\n\r\n    -- Recalculate XP for all affected players\r\n    IF affected_players IS NOT NULL THEN\r\n        UPDATE player_xp\r\n        SET \r\n            xp = calculate_player_xp(player_id),\r\n            last_calculated = CURRENT_TIMESTAMP\r\n        WHERE player_id = ANY(affected_players);\r\n    END IF;\r\n\r\n    RETURN OLD;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "handle_slot_offer_response",
@@ -7240,6 +7722,17 @@
           "definition": "CREATE OR REPLACE FUNCTION public.update_updated_at_column()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    NEW.updated_at = CURRENT_TIMESTAMP;\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "count_games_played_together",
+          "arguments": "player_one_id uuid, player_two_id uuid",
+          "return_type": "integer",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.count_games_played_together(player_one_id uuid, player_two_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  RETURN (\r\n    SELECT COUNT(DISTINCT gr1.game_id)\r\n    FROM game_registrations gr1\r\n    INNER JOIN game_registrations gr2 ON gr1.game_id = gr2.game_id\r\n    INNER JOIN games g ON gr1.game_id = g.id\r\n    WHERE gr1.player_id = player_one_id\r\n    AND gr2.player_id = player_two_id\r\n    AND g.completed = true\r\n  );\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "handle_admin_slot_offer_action",
           "arguments": "p_slot_offer_id uuid, p_action text, p_admin_id uuid DEFAULT NULL::uuid",
           "return_type": "void",
@@ -7260,6 +7753,28 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.handle_slot_offer_response(p_slot_offer_id uuid, p_action text, p_admin_id uuid DEFAULT NULL::uuid)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_slot_offer record;\r\n    v_game record;\r\n    v_current_players jsonb;\r\n    v_next_players UUID[];\r\n    v_hours_until_game NUMERIC;\r\nBEGIN\r\n    -- Get slot offer details\r\n    SELECT * INTO v_slot_offer\r\n    FROM slot_offers\r\n    WHERE id = p_slot_offer_id;\r\n\r\n    IF NOT FOUND THEN\r\n        RAISE EXCEPTION 'Slot offer not found';\r\n    END IF;\r\n\r\n    -- Get game details including current selected players\r\n    SELECT g.*, gs.selected_players, \r\n           EXTRACT(EPOCH FROM (g.date - NOW())) / 3600 as hours_until_game\r\n    INTO v_game\r\n    FROM games g\r\n    LEFT JOIN game_selections gs ON gs.game_id = g.id\r\n    WHERE g.id = v_slot_offer.game_id;\r\n\r\n    IF p_action = 'accept' THEN\r\n        -- Update game_selections with the new player\r\n        v_current_players := COALESCE(v_game.selected_players, '[]'::jsonb);\r\n        \r\n        -- Add the new player's ID as JSONB\r\n        UPDATE game_selections\r\n        SET selected_players = v_current_players || jsonb_build_array(v_slot_offer.player_id::text)\r\n        WHERE game_id = v_slot_offer.game_id;\r\n\r\n        -- Update game registration status\r\n        UPDATE game_registrations\r\n        SET status = 'selected'\r\n        WHERE game_id = v_slot_offer.game_id\r\n        AND player_id = v_slot_offer.player_id;\r\n\r\n        -- Update slot offer status\r\n        UPDATE slot_offers\r\n        SET \r\n            status = 'accepted',\r\n            responded_at = CURRENT_TIMESTAMP,\r\n            accepted_at = CURRENT_TIMESTAMP\r\n        WHERE id = p_slot_offer_id;\r\n\r\n    ELSIF p_action = 'decline' THEN\r\n        -- Update slot offer status\r\n        UPDATE slot_offers\r\n        SET \r\n            status = 'declined',\r\n            responded_at = CURRENT_TIMESTAMP,\r\n            declined_at = CURRENT_TIMESTAMP\r\n        WHERE id = p_slot_offer_id;\r\n\r\n        -- Get next eligible players based on XP\r\n        SELECT ARRAY(\r\n            SELECT player_id \r\n            FROM get_next_slot_offer_players(v_slot_offer.game_id, v_game.hours_until_game)\r\n            LIMIT 1\r\n        ) INTO v_next_players;\r\n\r\n        -- Create new offers for next eligible players\r\n        IF array_length(v_next_players, 1) > 0 THEN\r\n            -- Create new slot offers\r\n            INSERT INTO slot_offers (\r\n                game_id,\r\n                player_id,\r\n                status,\r\n                offered_at,\r\n                expires_at,\r\n                available_at,\r\n                rank\r\n            )\r\n            SELECT \r\n                v_slot_offer.game_id,\r\n                player_id,\r\n                'pending'::slot_offer_status,\r\n                NOW(),\r\n                NOW() + INTERVAL '1 hour',\r\n                NOW(),\r\n                COALESCE(v_slot_offer.rank, 1) + ROW_NUMBER() OVER ()\r\n            FROM unnest(v_next_players) AS player_id;\r\n\r\n            -- Create notifications\r\n            INSERT INTO notifications (\r\n                player_id,\r\n                type,\r\n                message,\r\n                metadata\r\n            )\r\n            SELECT \r\n                player_id,\r\n                'slot_offer',\r\n                'A spot has opened up in WNF #' || (\r\n                    SELECT COUNT(*) + 1 \r\n                    FROM games g2 \r\n                    WHERE g2.date < v_game.date \r\n                    OR (g2.date = v_game.date AND g2.id < v_slot_offer.game_id)\r\n                ) || '. Would you like to play?',\r\n                jsonb_build_object(\r\n                    'game_id', v_slot_offer.game_id,\r\n                    'action', 'new_slot_offer'\r\n                )\r\n            FROM unnest(v_next_players) AS player_id;\r\n        END IF;\r\n    END IF;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "handle_game_completion_reserve_xp",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": "Trigger function that awards +5 XP to reserve players when a game is completed.",
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.handle_game_completion_reserve_xp()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Only process if the game is being marked as completed\r\n    IF NEW.status = 'completed' AND OLD.status != 'completed' THEN\r\n        -- Insert reserve rewards for eligible players\r\n        INSERT INTO reserve_xp_transactions (\r\n            player_id,\r\n            game_id,\r\n            xp_amount,\r\n            transaction_type\r\n        )\r\n        SELECT \r\n            gr.player_id,\r\n            gr.game_id,\r\n            5 as xp_amount,\r\n            'RESERVE_REWARD' as transaction_type\r\n        FROM game_registrations gr\r\n        WHERE gr.game_id = NEW.id\r\n        AND gr.status = 'reserve'\r\n        AND NOT EXISTS (\r\n            SELECT 1 \r\n            FROM reserve_xp_transactions rt \r\n            WHERE rt.player_id = gr.player_id \r\n            AND rt.game_id = gr.game_id\r\n        );\r\n\r\n        -- Update player XP for all affected players\r\n        UPDATE player_xp px\r\n        SET \r\n            xp = calculate_player_xp(px.player_id),\r\n            last_calculated = CURRENT_TIMESTAMP\r\n        FROM game_registrations gr\r\n        WHERE gr.game_id = NEW.id\r\n        AND gr.player_id = px.player_id;\r\n    END IF;\r\n\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "handle_slot_decline_penalty",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": "Trigger function that applies -10 XP penalty when a player declines a slot offer, \r\nunless the offer was made on the same day as the game.",
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.handle_slot_decline_penalty()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Only process if the slot offer is being declined\r\n    IF NEW.status = 'declined' AND OLD.status != 'declined' THEN\r\n        -- Check if the offer was made on the same day as the game\r\n        IF NOT EXISTS (\r\n            SELECT 1 \r\n            FROM games g \r\n            WHERE g.id = NEW.game_id \r\n            AND DATE(g.date) = DATE(NEW.created_at)\r\n        ) THEN\r\n            -- Insert penalty transaction\r\n            INSERT INTO reserve_xp_transactions (\r\n                player_id,\r\n                game_id,\r\n                xp_amount,\r\n                transaction_type\r\n            )\r\n            VALUES (\r\n                NEW.player_id,\r\n                NEW.game_id,\r\n                -10,\r\n                'SLOT_DECLINE_PENALTY'\r\n            );\r\n\r\n            -- Update player XP\r\n            UPDATE player_xp\r\n            SET \r\n                xp = calculate_player_xp(player_id),\r\n                last_calculated = CURRENT_TIMESTAMP\r\n            WHERE player_id = NEW.player_id;\r\n        END IF;\r\n    END IF;\r\n\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "accept_slot_offer",
@@ -7359,6 +7874,17 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.get_best_buddies()\n RETURNS TABLE(id uuid, friendly_name text, buddy_id uuid, buddy_friendly_name text, games_together bigint)\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN QUERY\r\n    WITH team_pairs AS (\r\n        SELECT \r\n            gr1.player_id as player1_id,\r\n            gr2.player_id as player2_id,\r\n            COUNT(*) as games_together\r\n        FROM game_registrations gr1\r\n        JOIN game_registrations gr2 \r\n            ON gr1.game_id = gr2.game_id \r\n            AND gr1.team = gr2.team\r\n            AND gr1.player_id < gr2.player_id\r\n        WHERE gr1.status = 'selected' \r\n        AND gr2.status = 'selected'\r\n        GROUP BY gr1.player_id, gr2.player_id\r\n    )\r\n    SELECT \r\n        p1.id,\r\n        p1.friendly_name,\r\n        p2.id as buddy_id,\r\n        p2.friendly_name as buddy_friendly_name,\r\n        tp.games_together\r\n    FROM team_pairs tp\r\n    JOIN players p1 ON p1.id = tp.player1_id\r\n    JOIN players p2 ON p2.id = tp.player2_id\r\n    ORDER BY tp.games_together DESC\r\n    LIMIT 3;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "calculate_player_xp",
+          "arguments": "p_player_id uuid",
+          "return_type": "integer",
+          "description": "Calculates player XP based on:\r\n1. Base XP from selected games (weighted by global game count):\r\n   - Current Game: 20 XP\r\n   - 1-2 Games Ago: 18 XP\r\n   - 3-4 Games Ago: 16 XP\r\n   - 5-9 Games Ago: 14 XP\r\n   - 10-19 Games Ago: 12 XP\r\n   - 20-29 Games Ago: 10 XP\r\n   - 30-39 Games Ago: 5 XP\r\n   - 40+ Games Ago: 0 XP\r\n2. Streak multiplier: +10% per streak level (only applies to base XP)\r\n3. Reserve XP (+5 for being reserve, -10 for declining slots)\r\nFinal XP = (base_xp * streak_multiplier) + reserve_xp",
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.calculate_player_xp(p_player_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_base_xp integer;\r\n    v_streak_multiplier decimal;\r\n    v_reserve_xp integer;\r\n    v_final_xp integer;\r\n    v_latest_game_number integer;\r\nBEGIN\r\n    -- Get the latest game number from ALL games\r\n    SELECT MAX(sequence_number) INTO v_latest_game_number FROM games WHERE completed = true;\r\n\r\n    -- Calculate base XP from game participation (only for selected players)\r\n    WITH player_games AS (\r\n        SELECT \r\n            g.id,\r\n            g.sequence_number,\r\n            gr.status,\r\n            (v_latest_game_number - g.sequence_number) as games_ago  -- Calculate based on global game count\r\n        FROM game_registrations gr\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE gr.player_id = p_player_id\r\n        AND g.completed = true\r\n        AND gr.status = 'selected'  -- Only include selected games\r\n        ORDER BY g.sequence_number DESC\r\n    ),\r\n    game_weights AS (\r\n        SELECT \r\n            id,\r\n            sequence_number,\r\n            games_ago,\r\n            CASE\r\n                WHEN games_ago = 0 THEN 20   -- Current game\r\n                WHEN games_ago <= 2 THEN 18   -- 1-2 games ago\r\n                WHEN games_ago <= 4 THEN 16   -- 3-4 games ago\r\n                WHEN games_ago <= 9 THEN 14   -- 5-9 games ago\r\n                WHEN games_ago <= 19 THEN 12  -- 10-19 games ago\r\n                WHEN games_ago <= 29 THEN 10  -- 20-29 games ago\r\n                WHEN games_ago <= 39 THEN 5   -- 30-39 games ago\r\n                ELSE 0                        -- 40+ games ago\r\n            END as weight\r\n        FROM player_games\r\n    )\r\n    SELECT COALESCE(SUM(weight), 0)\r\n    INTO v_base_xp \r\n    FROM game_weights;\r\n\r\n    -- Get streak multiplier (only applies to base XP, not reserve XP)\r\n    -- +10% per streak level\r\n    SELECT \r\n        COALESCE(1 + (current_streak * 0.1), 1)\r\n    INTO v_streak_multiplier\r\n    FROM players\r\n    WHERE id = p_player_id;\r\n\r\n    -- Get reserve XP (flat +5 for being reserve, -10 for declining slots)\r\n    SELECT \r\n        COALESCE(SUM(xp_amount), 0)\r\n    INTO v_reserve_xp\r\n    FROM reserve_xp_transactions\r\n    WHERE player_id = p_player_id;\r\n\r\n    -- Calculate final XP\r\n    -- Base XP gets streak multiplier, reserve XP is added flat\r\n    v_final_xp := ROUND(v_base_xp * v_streak_multiplier) + v_reserve_xp;\r\n\r\n    -- Return final XP (never negative)\r\n    RETURN GREATEST(v_final_xp, 0);\r\nEND;\r\n$function$\n"
         },
         {
           "name": "get_player_stats",
@@ -7469,6 +7995,17 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.void_other_slot_offers()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_selected_count INTEGER;\r\n    v_max_players INTEGER;\r\nBEGIN\r\n    -- If a slot offer is being accepted\r\n    IF NEW.status = 'accepted' AND (OLD.status IS NULL OR OLD.status != 'accepted') THEN\r\n        -- Get the current selected player count and add 1 for the current acceptance\r\n        SELECT COUNT(*) + 1 INTO v_selected_count\r\n        FROM game_registrations\r\n        WHERE game_id = NEW.game_id\r\n        AND status = 'selected';\r\n\r\n        -- Get max players for the game\r\n        SELECT max_players INTO v_max_players\r\n        FROM games\r\n        WHERE id = NEW.game_id;\r\n\r\n        -- Check if accepting would exceed max players\r\n        IF v_selected_count > v_max_players THEN\r\n            RAISE EXCEPTION 'Cannot accept offer: maximum players reached';\r\n        END IF;\r\n\r\n        -- Void all other pending offers for this game\r\n        UPDATE slot_offers\r\n        SET status = 'voided',\r\n            updated_at = NOW()\r\n        WHERE game_id = NEW.game_id\r\n        AND id != NEW.id\r\n        AND status = 'pending';\r\n\r\n        -- Update the player's registration status to selected\r\n        UPDATE game_registrations\r\n        SET status = 'selected'\r\n        WHERE game_id = NEW.game_id\r\n        AND player_id = NEW.player_id;\r\n    END IF;\r\n    \r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "handle_reserve_xp_transaction",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.handle_reserve_xp_transaction()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Update player XP using the calculate_player_xp function\r\n    UPDATE player_xp\r\n    SET \r\n        xp = calculate_player_xp(NEW.player_id),\r\n        last_calculated = CURRENT_TIMESTAMP\r\n    WHERE player_id = NEW.player_id;\r\n    \r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "create_slot_offers",

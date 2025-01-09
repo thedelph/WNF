@@ -1,123 +1,136 @@
 # Game Completion Form Documentation
 
 ## Overview
-The GameCompletionForm is a React component that handles the administrative process of completing a game session. It provides an interface for administrators to record game outcomes, manage team assignments, track payment statuses, and send payment notifications to players.
+The Game Completion Form is used to record the final details of a completed game, including scores, teams, player statuses, and payment information. It provides a comprehensive interface for managing all aspects of game completion.
 
-## Key Features
+## Components
 
-### 1. Game Score and Outcome Management
-- Allows input of scores for both Blue and Orange teams
-- Automatically determines game outcome based on scores
-- Validates that the selected outcome matches the input scores
-- Supports three outcomes: Blue Win, Orange Win, or Draw
+### Main Form (`GameCompletionForm.tsx`)
+- Handles the overall game completion process
+- Manages scores, team assignments, and player statuses
+- Provides interfaces for payment tracking
+- Allows last-minute player additions and changes
 
-### 2. Team Management
-- Displays players in Blue and Orange team sections
-- Allows administrators to:
-  - Assign/reassign players to teams
-  - Select/deselect players who participated
-  - Track the number of players per team
+#### Key Features
+1. **Score Management**
+   - Blue Team Score input
+   - Orange Team Score input
+   - Automatic game outcome determination based on scores
 
-### 3. Payment Tracking
-- Manages payment status for each player:
-  - Unpaid (default)
-  - Marked Paid
-  - Admin Verified
-- Supports Monzo payment link integration
-- Automatically sends payment notifications to selected players
+2. **Team Management**
+   - Split view showing Blue and Orange teams
+   - Player assignment to teams
+   - Player status tracking (Selected, Available, Reserve)
+   - Payment status tracking per player
 
-## Technical Implementation
+3. **Player Search and Addition**
+   - Real-time search across all registered players
+   - Ability to add players who weren't originally registered
+   - Immediate team/status assignment for new additions
 
-### State Management
-The component uses React's useState hook to manage:
-- Team scores (scoreBlue, scoreOrange)
-- Game outcome
-- Payment link
-- Player information and team assignments
-- Loading state
+4. **Reserve System**
+   - Two reserve statuses:
+     - "Reserve - No Slot Offer": Default status for reserve players
+     - "Reserve - Declined Slot": For players who declined an offered slot
+   - Automatic team removal when marked as reserve
 
-### Data Flow
-1. Initial Load:
-   - Fetches existing game players and their team assignments
-   - Loads any pre-existing game data (scores, outcome)
+### Team Section (`TeamSection.tsx`)
+- Displays team-specific information
+- Handles player status changes
+- Manages payment status updates
 
-2. Form Submission:
-   - Updates game details in Supabase
-   - Updates player selections and team assignments
-   - Sends payment notifications to selected players
+#### Features
+1. **Player Display**
+   - Selected Players: Currently on the team
+   - Available Players: Not assigned to any team
+   - Reserve Players: In reserve pool
 
-### Database Interactions
-- Reads from and writes to the following Supabase tables:
-  - games
-  - game_registrations
-  - notifications
-
-## Component Structure
-The GameCompletionForm has been modularized into several smaller components for better maintainability:
-
-### Directory Structure
-```
-src/components/admin/history/game-completion/
-├── types.ts              # Shared TypeScript interfaces
-├── GameCompletionForm.tsx # Main component
-├── ScoreInput.tsx        # Score input component
-├── GameOutcome.tsx       # Game outcome selection component
-└── TeamSection.tsx       # Team management component
-```
-
-### Component Breakdown
-
-1. **GameCompletionForm** (`GameCompletionForm.tsx`)
-   - Main container component
-   - Handles form state and submission
-   - Manages API interactions
-   - Coordinates child components
-
-2. **ScoreInput** (`ScoreInput.tsx`)
-   - Reusable component for score input
-   - Handles individual team score entry
-   - Input validation and formatting
-
-3. **GameOutcome** (`GameOutcome.tsx`)
-   - Manages game outcome selection
-   - Validates outcome against scores
-   - Provides visual feedback for invalid selections
-
-4. **TeamSection** (`TeamSection.tsx`)
-   - Handles team-specific player management
-   - Player selection and team assignment
+2. **Status Management**
+   - Team assignment dropdown
+   - Reserve status options
    - Payment status tracking
-   - Responsive team display
 
-### Types (`types.ts`)
-Contains shared TypeScript interfaces for:
-- Component props
-- Player data structures
-- Form state types
+### Player Search (`PlayerSearch.tsx`)
+- Enables adding new players to the game
+- Provides real-time search functionality
+- Allows immediate team/status assignment
 
-## Props
+#### Features
+1. **Search Functionality**
+   - Real-time player search
+   - Filters out already added players
+   - Shows player friendly names
+
+2. **Addition Options**
+   - Team assignment (Blue/Orange)
+   - Status selection
+   - Initial payment status setting
+
+## Data Flow
+
+### Player Data Structure
 ```typescript
-interface Props {
-  game: Game;           // Game object containing game details
-  onComplete: () => void; // Callback function called after successful completion
+interface PlayerWithTeam {
+  id: string
+  friendly_name: string
+  team: 'blue' | 'orange' | null
+  status: 'selected' | 'registered' | 'reserve_no_offer' | 'reserve_declined'
+  payment_status: 'unpaid' | 'marked_paid' | 'admin_verified'
 }
 ```
 
-## User Interface
-- Responsive layout with Tailwind CSS and DaisyUI
-- Animated transitions using Framer Motion
-- Form validation with error messages
-- Real-time updates for team assignments and payment status
+### Database Interactions
+1. **Fetching Players**
+   - Gets game registrations for specific game
+   - Retrieves player details in separate query
+   - Combines data with proper status mapping
+
+2. **Updating Players**
+   - Updates team assignments
+   - Manages reserve status changes
+   - Tracks payment status updates
+
+3. **Adding Players**
+   - Creates new game registration
+   - Sets initial team and status
+   - Establishes payment tracking
+
+## Usage Guidelines
+
+### Completing a Game
+1. Enter final scores for both teams
+2. Verify player assignments are correct
+3. Update payment statuses as needed
+4. Add any last-minute player changes
+5. Submit the completed game
+
+### Managing Reserves
+1. Players can be marked as reserve through the dropdown
+2. Reserve players are automatically removed from teams
+3. Two reserve statuses available:
+   - "No Slot Offer": Default reserve status
+   - "Declined Slot": For tracking declined offers
+
+### Last-Minute Changes
+1. Use the player search to find any registered player
+2. Add them to either team or as reserve
+3. Adjust their status and payment information as needed
+4. Changes are saved automatically
+
+### Payment Tracking
+1. Each player has three possible payment statuses:
+   - Unpaid: Default status
+   - Marked Paid: Player claims payment made
+   - Admin Verified: Payment confirmed by admin
 
 ## Error Handling
-- Validates form completeness
-- Ensures outcome matches scores
-- Provides toast notifications for success/failure
-- Includes error logging for debugging
+- Validates score inputs
+- Prevents duplicate player assignments
+- Handles network errors gracefully
+- Provides feedback through toast notifications
 
-## Best Practices
-- Implements proper type checking with TypeScript
-- Uses proper form validation
-- Includes loading states for better UX
-- Implements error boundaries and proper error handling
-- Uses async/await for database operations
+## Future Enhancements
+- Enhanced payment tracking features
+- More detailed reserve management
+- Additional player statistics
+- Improved error reporting

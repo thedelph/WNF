@@ -35,9 +35,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
     if (game.registration_window_start && new Date(game.registration_window_start) > now) {
       nextEvent = new Date(game.registration_window_start);
       nextEventLabel = 'Registration Opens in';
-    } else if (game.registration_window_end && new Date(game.registration_window_end) > now) {
+    }
+  } else if (game.status === 'open') {
+    if (game.registration_window_end && new Date(game.registration_window_end) > now) {
       nextEvent = new Date(game.registration_window_end);
-      nextEventLabel = 'Registration Closes in';
+      nextEventLabel = 'Players Announced in';
     }
   } else if (game.status === 'players_announced' && game.team_announcement_time && new Date(game.team_announcement_time) > now) {
     nextEvent = new Date(game.team_announcement_time);

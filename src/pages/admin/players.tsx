@@ -136,6 +136,34 @@ export default function Players() {
     }
   }
 
+  const handleRecalculateXP = async () => {
+    try {
+      // Show confirmation dialog
+      if (!window.confirm('Are you sure you want to recalculate XP for all players? This may take a few moments.')) {
+        return;
+      }
+
+      // Start loading state
+      setLoading(true);
+      toast.loading('Recalculating XP for all players...');
+
+      const { error } = await supabase
+        .rpc('admin_recalculate_all_player_xp');
+
+      if (error) throw error;
+
+      // Refresh the player list
+      fetchPlayers();
+      
+      toast.success('Successfully recalculated XP for all players!');
+    } catch (error) {
+      console.error('Error recalculating XP:', error);
+      toast.error('Failed to recalculate XP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPlayers()
   }, [])
@@ -158,46 +186,60 @@ export default function Players() {
         Player Management
       </motion.h1>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <input
-          type="text"
-          placeholder="Search players..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="input input-bordered w-full max-w-xs"
-        />
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="btn btn-error"
-          onClick={handleDeleteSelected}
-        >
-          <FaTrash className="mr-2" /> Delete Selected
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="btn btn-primary"
-          onClick={() => setShowCreateTestUserModal(true)}
-        >
-          <FaUserPlus className="mr-2" /> Create Test User
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="btn btn-secondary"
-          onClick={() => setShowBulkCreateModal(true)}
-        >
-          <FaUsers className="mr-2" /> Bulk Create Test Users
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="btn btn-accent"
-          onClick={() => setShowImportModal(true)}
-        >
-          <FaFileImport className="mr-2" /> Import CSV
-        </motion.button>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Player Management</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={handleRecalculateXP}
+            disabled={loading}
+            className="btn btn-primary"
+          >
+            {loading ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              'RECALCULATE XP'
+            )}
+          </button>
+          <input
+            type="text"
+            placeholder="Search players..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input input-bordered w-full max-w-xs"
+          />
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn btn-error"
+            onClick={handleDeleteSelected}
+          >
+            <FaTrash className="mr-2" /> Delete Selected
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn btn-primary"
+            onClick={() => setShowCreateTestUserModal(true)}
+          >
+            <FaUserPlus className="mr-2" /> Create Test User
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn btn-secondary"
+            onClick={() => setShowBulkCreateModal(true)}
+          >
+            <FaUsers className="mr-2" /> Bulk Create Test Users
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn btn-accent"
+            onClick={() => setShowImportModal(true)}
+          >
+            <FaFileImport className="mr-2" /> Import CSV
+          </motion.button>
+        </div>
       </div>
 
       {loading ? (

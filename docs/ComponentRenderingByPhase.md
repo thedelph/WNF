@@ -19,10 +19,12 @@ The `Game.tsx` page is the main container that:
 Components Rendered:
 ├── GameHeader
 ├── GameDetails
+│   └── TeamAnnouncementTimer (if team_announcement_time is set)
 └── RegisteredPlayers (view-only)
 ```
 - `GameHeader`: Shows game title, date, and venue
-- `GameDetails`: Displays registration window times and other game details
+- `GameDetails`: Displays registration window times, team announcement time, and other game details
+- `TeamAnnouncementTimer`: Countdown to team announcement (visible when team_announcement_time is set)
 - No registration button is shown as registration hasn't opened yet
 
 ### Phase 2: Registration Open (`status: 'open'`)
@@ -30,6 +32,7 @@ Components Rendered:
 Components Rendered:
 ├── GameHeader
 ├── GameDetails
+│   └── TeamAnnouncementTimer (if team_announcement_time is set)
 ├── GameRegistration (active)
 └── RegisteredPlayers (live updates)
 ```
@@ -45,11 +48,14 @@ Components Rendered:
 Components Rendered:
 ├── GameHeader
 ├── GameDetails
+│   └── TeamAnnouncementTimer (displays "Teams will be announced soon" if within 1 hour)
 ├── PlayerSelectionResults
 │   ├── Selected Players List
 │   └── Reserve Players List
 └── RegisteredPlayers (view-only)
 ```
+- `GameHeader`: Shows game title, date, and venue
+- `GameDetails`: Displays registration window times and other game details
 - `PlayerSelectionResults`: Shows:
   - Confirmed players (merit + random selection)
   - Reserve list
@@ -81,6 +87,27 @@ Components Rendered:
     ├── Player Attendance
     └── Payment Status
 ```
+
+## Admin Components
+
+#### EditGameModal
+```
+Component Structure:
+├── EditGameModalForm
+│   ├── Game Date Input
+│   ├── Start Time Input
+│   ├── Registration Window Inputs
+│   ├── Team Announcement Time Input
+│   ├── Venue Selection
+│   ├── Max Players Input
+│   └── Random Slots Input
+└── Action Buttons
+    ├── Close Registration
+    └── Save Changes
+```
+- Allows admins to modify game details including team announcement time
+- Uses Radix UI tooltips for field explanations
+- Validates time constraints between registration, announcement, and game times
 
 ## Component Conditional Logic
 

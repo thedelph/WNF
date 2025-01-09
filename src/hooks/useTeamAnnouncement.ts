@@ -96,8 +96,7 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
           const { error: updateError } = await supabaseAdmin
             .from('game_registrations')
             .update({ 
-              team,
-              status: 'selected'
+              team
             })
             .eq('game_id', id)
             .in('player_id', teamPlayers);

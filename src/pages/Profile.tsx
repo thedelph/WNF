@@ -28,6 +28,7 @@ interface PlayerProfile {
 
 interface ExtendedPlayerData extends PlayerProfile {
   rarity: number
+  reserveXP: number
 }
 
 // Calculate rarity percentile based on player's XP compared to all players
@@ -45,7 +46,7 @@ export default function Component() {
   const [isEditing, setIsEditing] = useState(false)
   const [friendlyName, setFriendlyName] = useState('')
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
-  const [gameSequences, setGameSequences] = useState<number[]>([])
+  const [gameSequences, setGameSequences] = useState<any[]>([])
   const [latestSequence, setLatestSequence] = useState<number>(0)
 
   useEffect(() => {
@@ -81,13 +82,19 @@ export default function Component() {
             current_streak,
             max_streak,
             avatar_svg,
-            avatar_options
+            avatar_options,
+            reserve_xp_transactions (
+              xp_amount
+            )
           `)
           .eq('user_id', user!.id)
           .single()
 
         if (profileError) throw profileError
         if (!profileData) throw new Error('Player not found')
+
+        // Calculate total reserve XP
+        const totalReserveXP = profileData.reserve_xp_transactions?.reduce((sum, tx) => sum + (tx.xp_amount || 0), 0) || 0;
 
         // Get game sequences for the player
         const { data: gameData, error: gameError } = await supabase
@@ -96,7 +103,8 @@ export default function Component() {
             games (
               sequence_number,
               is_historical
-            )
+            ),
+            status
           `)
           .eq('player_id', profileData.id)
           .order('games(sequence_number)', { ascending: false });
@@ -105,8 +113,11 @@ export default function Component() {
         
         const sequences = gameData
           ?.filter(reg => reg.games?.is_historical)
-          .map(reg => reg.games?.sequence_number)
-          .filter(Boolean) || [];
+          .map(reg => ({
+            sequence: reg.games?.sequence_number,
+            status: reg.status || 'selected'
+          }))
+          .filter(game => game.sequence !== undefined) || [];
         setGameSequences(sequences);
 
         // Calculate rarity based on all players' XP
@@ -121,7 +132,8 @@ export default function Component() {
 
         setProfile({
           ...profileData,
-          rarity
+          rarity,
+          reserveXP: totalReserveXP
         })
       } catch (err) {
         console.error('Error fetching player data:', err)
@@ -359,9 +371,13 @@ export default function Component() {
                       activeBonuses: profile.active_bonuses || 0,
                       activePenalties: profile.active_penalties || 0,
                       currentStreak: profile.current_streak || 0,
-                      gameSequences: gameSequences,
+                      gameHistory: gameSequences.map(sequence => ({
+                        sequence: sequence.sequence,
+                        status: sequence.status
+                      })),
                       latestSequence: latestSequence,
-                      xp: profile.xp || 0
+                      xp: profile.xp || 0,
+                      reserveXP: profile.reserveXP
                     }}
                   />
                 </motion.div>

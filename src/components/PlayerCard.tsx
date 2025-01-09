@@ -20,6 +20,7 @@ interface PlayerCardProps {
   totalGames: number
   currentStreak: number
   maxStreak: number
+  benchWarmerStreak: number
   rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
   avatarSvg?: string
   isRandomlySelected?: boolean
@@ -48,6 +49,7 @@ export default function PlayerCard({
   totalGames,
   currentStreak,
   maxStreak,
+  benchWarmerStreak,
   rarity,
   avatarSvg,
   isRandomlySelected,
@@ -84,7 +86,8 @@ export default function PlayerCard({
   const bonusModifier = activeBonuses * 0.1;
   const penaltyModifier = activePenalties * -0.1;
   const dropoutModifier = dropoutPenalties * -0.5; // 50% penalty per dropout
-  const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
+  const benchWarmerModifier = benchWarmerStreak * 0.05; // 5% bonus per game in bench warmer streak
+  const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier + benchWarmerModifier;
 
   const getStatusBadge = () => {
     if (!status || status !== 'dropped_out') return null;
@@ -330,6 +333,19 @@ export default function PlayerCard({
                   <span className="text-sm font-bold">{(penaltyModifier * 100).toFixed(0)}%</span>
                 </motion.div>
               )}
+              {benchWarmerStreak > 0 && (
+                <motion.div 
+                  className="flex justify-between items-center bg-purple-500/20 rounded-lg p-2"
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <CircleDot className="w-4 h-4" />
+                    <span className="text-sm">Bench Warmer</span>
+                  </div>
+                  <span className="text-sm font-bold">+{(benchWarmerModifier * 100).toFixed(0)}%</span>
+                </motion.div>
+              )}
             </div>
 
             <div className="mt-auto">
@@ -396,6 +412,13 @@ export default function PlayerCard({
                   <span>Max Streak</span>
                 </div>
                 <span className="font-bold">{maxStreak}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  <span>Bench Warmer Streak</span>
+                </div>
+                <span className="font-bold">{benchWarmerStreak}</span>
               </div>
             </div>
 

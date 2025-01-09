@@ -132,6 +132,13 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
             rarity: 'Amateur'
           };
 
+          // Calculate streak bonus
+          const streakModifier = registration.player.current_streak * 0.1;
+          const bonusModifier = registration.player.active_bonuses * 0.1;
+          const penaltyModifier = registration.player.active_penalties * -0.1;
+          const dropoutModifier = 0; // This would need to be fetched from the database if needed
+          const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
+
           return (
             <motion.div
               key={registration.player.id}
@@ -158,6 +165,11 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
                 losses={stats.losses}
                 totalGames={stats.total_games}
                 whatsapp_group_member={registration.player.whatsapp_group_member}
+                streakBonus={streakModifier}
+                bonusModifier={bonusModifier}
+                penaltyModifier={penaltyModifier}
+                dropoutPenalty={dropoutModifier}
+                totalModifier={totalModifier}
               />
             </motion.div>
           );

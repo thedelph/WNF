@@ -19,6 +19,11 @@ interface PlayerProfile {
   // Add any other fields that exist in your database
 }
 
+export interface GameHistoryItem {
+  sequence: number;
+  status: 'selected' | 'reserve' | 'not_selected';
+}
+
 export interface PlayerStats {
   id: string;
   user_id: string;
@@ -31,10 +36,12 @@ export interface PlayerStats {
   max_streak: number;
   xp: number;
   win_rate: number;
-  game_sequences: number[];
+  gameHistory: GameHistoryItem[];
   games_played_together?: number;
   my_rating?: {
     attack_rating: number;
     defense_rating: number;
   } | null;
+  reserveXP?: number;
+  reserveCount?: number;
 }

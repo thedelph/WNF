@@ -486,6 +486,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             players={selectedPlayers.map(player => ({
               ...player,
               friendlyName: player.friendly_name,
+              avatarSvg: player.avatar_svg,
               xp: playerStats[player.id]?.xp || 0,
               rarity: playerStats[player.id]?.rarity || 'Amateur',
               caps: playerStats[player.id]?.caps || 0,
@@ -554,6 +555,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               .map(player => ({
                 ...player,
                 friendlyName: player.friendly_name,
+                avatarSvg: player.avatar_svg,
                 xp: playerStats[player.id]?.xp || 0,
                 rarity: playerStats[player.id]?.rarity || 'Amateur',
                 caps: playerStats[player.id]?.caps || 0,
@@ -599,6 +601,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             players={droppedOutPlayers.map(player => ({
               ...player,
               friendlyName: player.friendly_name,
+              avatarSvg: player.avatar_svg,
               xp: playerStats[player.id]?.xp || 0,
               rarity: playerStats[player.id]?.rarity || 'Amateur',
               caps: playerStats[player.id]?.caps || 0,
@@ -622,6 +625,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
           selectedPlayers={selectedPlayers.map(player => ({
             ...player,
             friendlyName: player.friendly_name,
+            avatarSvg: player.avatar_svg,
             xp: playerStats[player.id]?.xp || 0,
             rarity: playerStats[player.id]?.rarity || 'Amateur',
             caps: playerStats[player.id]?.caps || 0,
@@ -666,6 +670,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             .map(player => ({
               ...player,
               friendlyName: player.friendly_name,
+              avatarSvg: player.avatar_svg,
               xp: playerStats[player.id]?.xp || 0,
               rarity: playerStats[player.id]?.rarity || 'Amateur',
               caps: playerStats[player.id]?.caps || 0,
@@ -682,6 +687,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
           droppedOutPlayers={droppedOutPlayers.map(player => ({
             ...player,
             friendlyName: player.friendly_name,
+            avatarSvg: player.avatar_svg,
             xp: playerStats[player.id]?.xp || 0,
             rarity: playerStats[player.id]?.rarity || 'Amateur',
             caps: playerStats[player.id]?.caps || 0,

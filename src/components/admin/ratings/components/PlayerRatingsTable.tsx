@@ -7,18 +7,22 @@ interface PlayerRatingsTableProps {
   ratings: Rating[];
   sortConfig: SortConfig;
   onSort: (key: SortConfig['key']) => void;
+  mode: 'received' | 'given';
 }
 
 export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
   ratings,
   sortConfig,
   onSort,
+  mode,
 }) => {
   // Sort ratings based on current configuration
   const sortedRatings = [...ratings].sort((a, b) => {
     const direction = sortConfig.direction === 'asc' ? 1 : -1;
     if (sortConfig.key === 'friendly_name') {
-      return direction * a.rater.friendly_name.localeCompare(b.rater.friendly_name);
+      const nameA = mode === 'received' ? a.rater?.friendly_name : a.rated_player?.friendly_name;
+      const nameB = mode === 'received' ? b.rater?.friendly_name : b.rated_player?.friendly_name;
+      return direction * (nameA?.localeCompare(nameB || '') || 0);
     }
     return direction * ((a[sortConfig.key] || 0) - (b[sortConfig.key] || 0));
   });
@@ -29,7 +33,7 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
         <thead>
           <tr>
             <th onClick={() => onSort('friendly_name')} className="cursor-pointer">
-              Rater Name
+              {mode === 'received' ? 'Rater Name' : 'Rated Player'}
             </th>
             <th onClick={() => onSort('attack_rating')} className="cursor-pointer">
               Attack Rating
@@ -49,7 +53,11 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
               exit={{ opacity: 0 }}
               className="hover"
             >
-              <td>{rating.rater.friendly_name}</td>
+              <td>
+                {mode === 'received' 
+                  ? rating.rater?.friendly_name 
+                  : rating.rated_player?.friendly_name}
+              </td>
               <td>{rating.attack_rating}</td>
               <td>{rating.defense_rating}</td>
               <td>{formatDate(rating.created_at)}</td>

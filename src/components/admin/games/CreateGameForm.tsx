@@ -195,7 +195,7 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
       if (gameError) throw gameError;
 
       // Register confirmed and random pick players using admin role
-      const allSelectedPlayers = [...confirmedPlayers, ...randomPickPlayers];
+      const allSelectedPlayers = [...new Set([...confirmedPlayers, ...randomPickPlayers])];
       console.log('Registering players:', { 
         confirmed: confirmedPlayers,
         random: randomPickPlayers,
@@ -203,67 +203,103 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
       });
 
       if (allSelectedPlayers.length > 0) {
-        const { error: registrationError } = await supabase.auth.getSession().then(({ data: { session } }) => {
-          return supabase
-            .from('game_registrations')
-            .insert(
-              allSelectedPlayers.map(playerId => ({
-                game_id: gameResult.id,
-                player_id: playerId,
-                status: 'selected',
-                selection_method: randomPickPlayers.includes(playerId) ? 'random' : 'merit'
-              }))
-            );
-        });
+        // First check if any of these players are already registered
+        const { data: existingRegistrations } = await supabase
+          .from('game_registrations')
+          .select('player_id')
+          .eq('game_id', gameResult.id)
+          .in('player_id', allSelectedPlayers);
 
-        if (registrationError) {
-          console.error('Error registering players:', registrationError);
-          toast.error('Game created but there was an error registering some players');
-          return;
+        const existingPlayerIds = new Set(existingRegistrations?.map(reg => reg.player_id) || []);
+        const newPlayers = allSelectedPlayers.filter(id => !existingPlayerIds.has(id));
+
+        if (newPlayers.length > 0) {
+          const { error: registrationError } = await supabase.auth.getSession().then(({ data: { session } }) => {
+            return supabase
+              .from('game_registrations')
+              .insert(
+                newPlayers.map(playerId => ({
+                  game_id: gameResult.id,
+                  player_id: playerId,
+                  status: 'selected',
+                  selection_method: randomPickPlayers.includes(playerId) ? 'random' : 'merit'
+                }))
+              );
+          });
+
+          if (registrationError) {
+            console.error('Error registering players:', registrationError);
+            toast.error('Game created but there was an error registering some players');
+            return;
+          }
         }
       }
 
       // Add reserve players using admin role
       if (reservePlayers.length > 0) {
-        const { error: reserveError } = await supabase.auth.getSession().then(({ data: { session } }) => {
-          return supabase
-            .from('game_registrations')
-            .insert(
-              reservePlayers.map(playerId => ({
-                game_id: gameResult.id,
-                player_id: playerId,
-                status: 'reserve',
-                selection_method: 'none'  // Reserve players weren't selected by any method
-              }))
-            );
-        });
+        // First check if any of these players are already registered
+        const { data: existingReserveRegistrations } = await supabase
+          .from('game_registrations')
+          .select('player_id')
+          .eq('game_id', gameResult.id)
+          .in('player_id', reservePlayers);
 
-        if (reserveError) {
-          console.error('Error adding reserve players:', reserveError);
-          toast.error('Game created but there was an error adding some reserve players');
-          return;
+        const existingReserveIds = new Set(existingReserveRegistrations?.map(reg => reg.player_id) || []);
+        const newReservePlayers = reservePlayers.filter(id => !existingReserveIds.has(id));
+
+        if (newReservePlayers.length > 0) {
+          const { error: reserveError } = await supabase.auth.getSession().then(({ data: { session } }) => {
+            return supabase
+              .from('game_registrations')
+              .insert(
+                newReservePlayers.map(playerId => ({
+                  game_id: gameResult.id,
+                  player_id: playerId,
+                  status: 'reserve',
+                  selection_method: 'none'  // Reserve players weren't selected by any method
+                }))
+              );
+          });
+
+          if (reserveError) {
+            console.error('Error adding reserve players:', reserveError);
+            toast.error('Game created but there was an error adding some reserve players');
+            return;
+          }
         }
       }
 
       // Add dropped out players
       if (droppedOutPlayers.length > 0) {
-        const { error: droppedOutError } = await supabase.auth.getSession().then(({ data: { session } }) => {
-          return supabase
-            .from('game_registrations')
-            .insert(
-              droppedOutPlayers.map(playerId => ({
-                game_id: gameResult.id,
-                player_id: playerId,
-                status: 'dropped_out',
-                selection_method: 'none'  // Dropped out players don't have a selection method
-              }))
-            );
-        });
+        // First check if any of these players are already registered
+        const { data: existingDroppedRegistrations } = await supabase
+          .from('game_registrations')
+          .select('player_id')
+          .eq('game_id', gameResult.id)
+          .in('player_id', droppedOutPlayers);
 
-        if (droppedOutError) {
-          console.error('Error adding dropped out players:', droppedOutError);
-          toast.error('Game created but there was an error adding some dropped out players');
-          return;
+        const existingDroppedIds = new Set(existingDroppedRegistrations?.map(reg => reg.player_id) || []);
+        const newDroppedPlayers = droppedOutPlayers.filter(id => !existingDroppedIds.has(id));
+
+        if (newDroppedPlayers.length > 0) {
+          const { error: droppedOutError } = await supabase.auth.getSession().then(({ data: { session } }) => {
+            return supabase
+              .from('game_registrations')
+              .insert(
+                newDroppedPlayers.map(playerId => ({
+                  game_id: gameResult.id,
+                  player_id: playerId,
+                  status: 'dropped_out',
+                  selection_method: 'none'  // Dropped out players don't have a selection method
+                }))
+              );
+          });
+
+          if (droppedOutError) {
+            console.error('Error adding dropped out players:', droppedOutError);
+            toast.error('Game created but there was an error adding some dropped out players');
+            return;
+          }
         }
       }
 
