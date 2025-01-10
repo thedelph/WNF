@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useRegistration } from '../hooks/useRegistration'
+import { PasswordInput } from './PasswordInput'
 
 /**
  * Registration form component with email, friendly name, and password fields
+ * Features password strength validation and matching confirmation
  */
 const RegistrationForm: React.FC = () => {
   const [email, setEmail] = useState('')
@@ -53,7 +55,7 @@ const RegistrationForm: React.FC = () => {
             type="text"
             value={friendlyName}
             onChange={(e) => setFriendlyName(e.target.value)}
-            placeholder="How you want to appear on the teamsheet"
+            placeholder="Your name on the teamsheet"
             className="input input-bordered w-full"
             required
           />
@@ -66,12 +68,9 @@ const RegistrationForm: React.FC = () => {
           <label className="label">
             <span className="label-text">Password</span>
           </label>
-          <input
-            type="password"
+          <PasswordInput
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="input input-bordered w-full"
+            onChange={setPassword}
             required
           />
         </div>
@@ -80,12 +79,12 @@ const RegistrationForm: React.FC = () => {
           <label className="label">
             <span className="label-text">Confirm Password</span>
           </label>
-          <input
-            type="password"
+          <PasswordInput
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={setConfirmPassword}
             placeholder="Confirm Password"
-            className="input input-bordered w-full"
+            isConfirm
+            confirmValue={password}
             required
           />
         </div>
