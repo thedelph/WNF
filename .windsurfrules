@@ -1,12 +1,13 @@
 If a file gets above 200 lines of code - always break it up and modularize it into multiple files.
 My build system is Vite, React, Tailwind CSS, Daisy UI, React Hot Toast, Framer Motion, and Supabase as the backend.
+Use tooltips where possible via C:\Users\chris\Documents\GitHub\WNF\src\components\ui\Tooltip.tsx to give more context to the user. Use Radix UI for this instead of Daisy UI.
 Always add a large amount of comments to your code so that it's easier to understand and maintain.
 All my database schema information is in C:\Users\chris\Documents\GitHub\WNF\SQL\Supabase-Database-Info.txt. Please refer to this file before checking any of the migration files.
 If you ever need information about the database schema, please give me an SQL command to run on my Supabase database and I can get you the information you need.
 Please refer to C:\Users\chris\Documents\GitHub\WNF\instructions.md for project context and background.
 Please refer to C:\Users\chris\Documents\GitHub\WNF\docs for documentation of functions and components.
 Ask me whether to update documentation on a regular basis whenever I add a new feature or fix a bug.
-Always use a consistent naming convention for all variables, functions, and components.
 Always make re-usable components where possible and search for existing components that can be used befeore creating new ones.
 If a component is too complex - break it up into smaller components.
-Use tooltips where possible via C:\Users\chris\Documents\GitHub\WNF\src\components\ui\Tooltip.tsx to give more context to the user. Use Radix UI for this instead of Daisy UI.
+All terminal commands should be provided in PowerShell format/syntax.
+Always follow existing naming convention/directory structures for all functions, variables, components and files.
