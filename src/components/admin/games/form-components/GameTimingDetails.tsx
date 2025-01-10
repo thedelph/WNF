@@ -61,6 +61,17 @@ export const GameTimingDetails: React.FC<GameTimingDetailsProps> = ({
           <div className="form-control">
             <label className="label">
               <span className="label-text">Registration Window End</span>
+              <button 
+                type="button"
+                className="btn btn-xs"
+                onClick={() => {
+                  const oneMinuteFromNow = new Date();
+                  oneMinuteFromNow.setMinutes(oneMinuteFromNow.getMinutes() + 1);
+                  onRegistrationEndChange(oneMinuteFromNow.toISOString().slice(0, 16));
+                }}
+              >
+                1m from now
+              </button>
             </label>
             <input
               type="datetime-local"

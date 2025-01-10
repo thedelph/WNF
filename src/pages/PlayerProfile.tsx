@@ -63,9 +63,21 @@ export default function PlayerProfileNew() {
         if (latestSeqError) throw latestSeqError;
         setLatestSequence(latestSeqData?.sequence_number || 0);
 
-        // Get player stats and XP
+        // Get player stats
         const { data: playerData, error: playerError } = await supabase
-          .rpc('get_player_with_reserve_xp', { p_player_id: id })
+          .from('players')
+          .select(`
+            id,
+            user_id,
+            friendly_name,
+            avatar_svg,
+            caps,
+            active_bonuses,
+            active_penalties,
+            current_streak,
+            max_streak
+          `)
+          .eq('id', id)
           .single();
 
         if (playerError) {
@@ -73,16 +85,26 @@ export default function PlayerProfileNew() {
           throw playerError;
         }
 
-        // Calculate total reserve XP from the transactions
-        const totalReserveXP = playerData.reserve_xp || 0;
-          
-        // Get game info for any reserve XP transactions
-        if (playerData.reserve_xp_transactions && playerData.reserve_xp_transactions.length > 0) {
-          const { data: gameData } = await supabase
-            .from('games')
-            .select('id, sequence_number')
-            .in('id', playerData.reserve_xp_transactions.map(t => t.game_id));
+        // Get player XP
+        const { data: xpData, error: xpError } = await supabase
+          .rpc('calculate_player_xp', { p_player_id: id });
+
+        if (xpError) {
+          console.error('Error calculating player XP:', xpError);
+          throw xpError;
         }
+
+        // Get player win rates
+        const { data: winRatesData, error: winRatesError } = await supabase
+          .rpc('get_player_win_rates');
+
+        if (winRatesError) {
+          console.error('Error fetching win rates:', winRatesError);
+          throw winRatesError;
+        }
+
+        // Find win rate data for this player
+        const playerWinRates = winRatesData?.find(wr => wr.id === id);
 
         // Get current user's player ID if logged in
         let currentPlayerId = null;
@@ -126,28 +148,40 @@ export default function PlayerProfileNew() {
           .select(`
             team,
             status,
-            games!inner (
+            game:game_id(
               id,
-              date,
               sequence_number,
+              date,
               outcome,
-              is_historical,
               score_blue,
-              score_orange
+              score_orange,
+              is_historical,
+              needs_completion,
+              completed
             )
           `)
           .eq('player_id', id)
-          .order('games(date)', { ascending: false });
+          .eq('game.is_historical', true)
+          .eq('game.needs_completion', false)
+          .eq('game.completed', true)
+          .order('game(sequence_number)', { ascending: false });
 
         if (gameError) throw gameError;
 
         // Get team sizes for each game
-        const gameIds = gameData?.map(g => g.games.id) || [];
+        const validGames = gameData?.filter(g => g.game !== null) || [];
+        const gameIds = validGames.map(g => g.game.id);
+        
+        if (gameIds.length === 0) {
+          setGames([]);
+          return;
+        }
+
         const { data: teamSizes, error: teamSizesError } = await supabase
           .from('game_registrations')
           .select('game_id, team')
-          .eq('status', 'selected')
-          .in('game_id', gameIds);
+          .in('game_id', gameIds)
+          .eq('status', 'selected');
 
         if (teamSizesError) throw teamSizesError;
 
@@ -164,15 +198,17 @@ export default function PlayerProfileNew() {
           return acc;
         }, {} as Record<string, { blue: number; orange: number }>);
 
-        // Combine game data with team sizes
-        const gamesWithTeamSizes = gameData?.map(game => ({
-          ...game,
+        // Transform game history data
+        const gamesWithTeamSizes = validGames.map(reg => ({
+          ...reg,
           games: {
-            ...game.games,
-            blue_team_size: teamSizeMap?.[game.games.id]?.blue || 0,
-            orange_team_size: teamSizeMap?.[game.games.id]?.orange || 0
+            ...reg.game,
+            team_sizes: {
+              blue: teamSizeMap?.[reg.game.id]?.blue || 0,
+              orange: teamSizeMap?.[reg.game.id]?.orange || 0
+            }
           }
-        })) || [];
+        }));
 
         setGames(gamesWithTeamSizes);
 
@@ -187,8 +223,10 @@ export default function PlayerProfileNew() {
           active_penalties: playerData.active_penalties || 0,
           current_streak: playerData.current_streak || 0,
           max_streak: playerData.max_streak || 0,
-          xp: playerData.xp || 0,
-          win_rate: playerData.win_rate || 0,
+          xp: xpData || 0,
+          wins: playerWinRates?.wins || 0,
+          totalGames: (playerWinRates?.wins || 0) + (playerWinRates?.draws || 0) + (playerWinRates?.losses || 0),
+          win_rate: playerWinRates?.win_rate || 0,
           gameHistory: gamesWithTeamSizes
             ?.filter(reg => reg.games?.is_historical)
             .map(reg => ({
@@ -198,8 +236,8 @@ export default function PlayerProfileNew() {
             .filter(game => game.sequence !== undefined) || [],
           games_played_together: gamesPlayedTogether,
           my_rating: myRating,
-          reserveXP: playerData.reserve_xp || 0,
-          reserveCount: playerData.reserve_count || 0
+          reserveXP: 0,
+          reserveCount: 0
         };
 
         setPlayer(playerStats);
