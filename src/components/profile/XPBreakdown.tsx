@@ -44,11 +44,11 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
     const gamesAgo = latestSequence - game.sequence;
 
     if (gamesAgo >= 40) {
-      acc.oldest.push(game.sequence);    // 41+ games ago: 0 XP
+      acc.oldest.push(game.sequence);    // 40+ games ago: 0 XP
     } else if (gamesAgo >= 30) {
-      acc.older2.push(game.sequence);    // 31-40 games ago: 5 XP
+      acc.older2.push(game.sequence);    // 30-39 games ago: 5 XP
     } else if (gamesAgo >= 20) {
-      acc.older1.push(game.sequence);    // 20-30 games ago: 10 XP
+      acc.older1.push(game.sequence);    // 20-29 games ago: 10 XP
     } else if (gamesAgo >= 10) {
       acc.older.push(game.sequence);     // 10-19 games ago: 12 XP
     } else if (gamesAgo >= 5) {
@@ -90,9 +90,9 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
     newer: gameCounts.newer * 16,      // 3-4 games ago
     mid: gameCounts.mid * 14,          // 5-9 games ago
     older: gameCounts.older * 12,      // 10-19 games ago
-    older1: gameCounts.older1 * 10,    // 20-30 games ago
-    older2: gameCounts.older2 * 5,     // 31-40 games ago
-    oldest: gameCounts.oldest * 0      // 41+ games ago
+    older1: gameCounts.older1 * 10,    // 20-29 games ago
+    older2: gameCounts.older2 * 5,     // 30-39 games ago
+    oldest: gameCounts.oldest * 0      // 40+ games ago
   };
 
   const baseXP = Object.values(categoryXP).reduce((sum, xp) => sum + xp, 0);
@@ -149,9 +149,9 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                     <li>3-4 Games Ago: 16 XP</li>
                     <li>5-9 Games Ago: 14 XP</li>
                     <li>10-19 Games Ago: 12 XP</li>
-                    <li>20-30 Games Ago: 10 XP</li>
-                    <li>31-40 Games Ago: 5 XP</li>
-                    <li>41+ Games Ago: 0 XP</li>
+                    <li>20-29 Games Ago: 10 XP</li>
+                    <li>30-39 Games Ago: 5 XP</li>
+                    <li>40+ Games Ago: 0 XP</li>
                           <li>Streak Bonus: Temporary 10% XP for each consecutive game played (resets if you miss a game)</li>
                           <li>Reserve Bonus: +5 XP each time you're a reserve player in the last 40 games</li>
                           <li>Reserve Penalty: -10 XP if you decline an available slot after being selected from reserves. Doesn't apply if the offer is on the day of the game.</li>
@@ -270,7 +270,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">20-30 Games Ago</h5>
+                              <h5 className="font-medium text-base-content">20-29 Games Ago</h5>
                               <p className="text-sm opacity-70 text-base-content/70">10 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -289,7 +289,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">31-40 Games Ago</h5>
+                              <h5 className="font-medium text-base-content">30-39 Games Ago</h5>
                               <p className="text-sm opacity-70 text-base-content/70">5 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -308,7 +308,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">41+ Games Ago</h5>
+                              <h5 className="font-medium text-base-content">40+ Games Ago</h5>
                               <p className="text-sm opacity-70 text-base-content/70">0 XP per game</p>
                             </div>
                             <div className="text-right">

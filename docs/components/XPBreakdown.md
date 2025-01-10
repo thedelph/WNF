@@ -35,6 +35,23 @@ interface XPBreakdownProps {
   - `reserveCount`: Number of times player has been a reserve
 - `showTotal`: Boolean to toggle display of total XP
 
+## XP Weighting System
+
+The XP breakdown uses the following weighting system for games:
+
+| Games Ago    | XP Value |
+|--------------|----------|
+| Current game | 20 XP    |
+| 1-2 games    | 18 XP    |
+| 3-4 games    | 16 XP    |
+| 5-9 games    | 14 XP    |
+| 10-19 games  | 12 XP    |
+| 20-29 games  | 10 XP    |
+| 30-39 games  | 5 XP     |
+| 40+ games    | 0 XP     |
+
+This weighting system ensures that recent participation is valued more highly while still maintaining some value for historical participation up to 39 games ago.
+
 ## Features
 
 ### Reserve XP Display
