@@ -9,6 +9,7 @@ interface Player {
   id: string;
   friendly_name: string;
   games_played: number;
+  whatsapp_group_member: string;
   current_rating?: {
     attack_rating: number;
     defense_rating: number;
@@ -26,6 +27,8 @@ export default function Ratings() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
   const [filterOption, setFilterOption] = useState<FilterOption>('all');
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [whatsAppMembersOnly, setWhatsAppMembersOnly] = useState(true);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [ratings, setRatings] = useState<{ attack: number; defense: number }>({
     attack: 0,
@@ -44,10 +47,18 @@ export default function Ratings() {
 
   useEffect(() => {
     applyFiltersAndSort();
-  }, [players, sortOption, filterOption]);
+  }, [players, sortOption, filterOption, whatsAppMembersOnly]);
 
   const applyFiltersAndSort = () => {
     let result = [...players];
+
+    // Apply WhatsApp filter
+    if (whatsAppMembersOnly) {
+      result = result.filter(player => 
+        player.whatsapp_group_member === 'Yes' || 
+        player.whatsapp_group_member === 'Proxy'
+      );
+    }
 
     // Apply filters
     switch (filterOption) {
@@ -146,7 +157,7 @@ export default function Ratings() {
       // Get all players and their game count with the current user
       const { data: playersWithGames, error } = await supabase
         .rpc('get_players_with_game_count', {
-          current_player_id: currentPlayer.id // Use player.id instead of auth user.id
+          current_player_id: currentPlayer.id
         });
 
       if (error) throw error;
@@ -155,13 +166,26 @@ export default function Ratings() {
       const { data: existingRatings } = await supabase
         .from('player_ratings')
         .select('rated_player_id, attack_rating, defense_rating')
-        .eq('rater_id', currentPlayer.id); // Use player.id instead of auth user.id
+        .eq('rater_id', currentPlayer.id);
+
+      // Get WhatsApp status for all players
+      const { data: whatsAppData, error: whatsAppError } = await supabase
+        .from('players')
+        .select('id, whatsapp_group_member');
+
+      if (whatsAppError) throw whatsAppError;
+
+      // Create a map for WhatsApp status
+      const whatsAppStatusMap = new Map(
+        whatsAppData?.map(player => [player.id, player.whatsapp_group_member])
+      );
 
       // Combine the data and filter out the current user
       const enhancedPlayers = playersWithGames
-        .filter((player: any) => player.id !== currentPlayer.id) // Filter using player.id
+        .filter((player: any) => player.id !== currentPlayer.id)
         .map((player: any) => ({
           ...player,
+          whatsapp_group_member: whatsAppStatusMap.get(player.id) || null,
           current_rating: existingRatings?.find(
             (rating) => rating.rated_player_id === player.id
           )
@@ -225,63 +249,100 @@ export default function Ratings() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Player Ratings</h1>
       
-      {/* Sort and Filter Controls */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium mb-2">Sort By</label>
-          <select
-            className="w-full p-2 border rounded-md bg-white"
-            value={sortOption}
-            onChange={(e) => {
-              // Reset to alphabetical if switching from rated to unrated and using a rating sort
-              if (
-                filterOption === 'unrated' && 
-                (e.target.value.includes('attack') || e.target.value.includes('defense'))
-              ) {
-                setSortOption('alphabetical');
-                return;
-              }
-              setSortOption(e.target.value as SortOption);
-            }}
-          >
-            <option value="alphabetical">Alphabetical</option>
-            <option value="games_played">Games Played</option>
-            <option value="rated">Rated First</option>
-            <option value="unrated">Unrated First</option>
-            {filterOption !== 'unrated' && (
-              <>
-                <option value="attack_asc">Attack Rating (Low to High)</option>
-                <option value="attack_desc">Attack Rating (High to Low)</option>
-                <option value="defense_asc">Defense Rating (Low to High)</option>
-                <option value="defense_desc">Defense Rating (High to Low)</option>
-              </>
-            )}
-          </select>
-        </div>
+      {/* Advanced Filters Section */}
+      <div className="mb-6">
+        <button
+          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <span>{isFiltersOpen ? '−' : '+'}</span>
+          Sorting & Filtering Options
+        </button>
+        
+        <AnimatePresence>
+          {isFiltersOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 p-4 bg-white rounded-lg shadow-md space-y-4">
+                {/* Sort and Filter Controls */}
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-sm font-medium mb-2">Sort By</label>
+                    <select
+                      className="w-full p-2 border rounded-md bg-white"
+                      value={sortOption}
+                      onChange={(e) => {
+                        if (
+                          filterOption === 'unrated' && 
+                          (e.target.value.includes('attack') || e.target.value.includes('defense'))
+                        ) {
+                          setSortOption('alphabetical');
+                          return;
+                        }
+                        setSortOption(e.target.value as SortOption);
+                      }}
+                    >
+                      <option value="alphabetical">Alphabetical</option>
+                      <option value="games_played">Games Played</option>
+                      <option value="rated">Rated First</option>
+                      <option value="unrated">Unrated First</option>
+                      {filterOption !== 'unrated' && (
+                        <>
+                          <option value="attack_asc">Attack Rating (Low to High)</option>
+                          <option value="attack_desc">Attack Rating (High to Low)</option>
+                          <option value="defense_asc">Defense Rating (Low to High)</option>
+                          <option value="defense_desc">Defense Rating (High to Low)</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
 
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium mb-2">Filter</label>
-          <select
-            className="w-full p-2 border rounded-md bg-white"
-            value={filterOption}
-            onChange={(e) => {
-              const newFilter = e.target.value as FilterOption;
-              // Reset sort option if switching to unrated and using a rating sort
-              if (
-                newFilter === 'unrated' && 
-                (sortOption.includes('attack') || sortOption.includes('defense'))
-              ) {
-                setSortOption('alphabetical');
-              }
-              setFilterOption(newFilter);
-            }}
-          >
-            <option value="all">All Players</option>
-            <option value="rated">Rated Players</option>
-            <option value="unrated">Unrated Players</option>
-            <option value="min_games">10+ Games</option>
-          </select>
-        </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-sm font-medium mb-2">Filter</label>
+                    <select
+                      className="w-full p-2 border rounded-md bg-white"
+                      value={filterOption}
+                      onChange={(e) => {
+                        const newFilter = e.target.value as FilterOption;
+                        if (
+                          newFilter === 'unrated' && 
+                          (sortOption.includes('attack') || sortOption.includes('defense'))
+                        ) {
+                          setSortOption('alphabetical');
+                        }
+                        setFilterOption(newFilter);
+                      }}
+                    >
+                      <option value="all">All Players</option>
+                      <option value="rated">Rated Players</option>
+                      <option value="unrated">Unrated Players</option>
+                      <option value="min_games">10+ Games</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* WhatsApp Members Only Filter */}
+                <div className="flex items-center space-x-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="whatsAppMembersOnly"
+                    checked={whatsAppMembersOnly}
+                    onChange={(e) => setWhatsAppMembersOnly(e.target.checked)}
+                    className="checkbox checkbox-primary"
+                  />
+                  <label htmlFor="whatsAppMembersOnly" className="text-sm font-medium text-gray-700">
+                    WhatsApp Members Only
+                  </label>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Rating Modal */}

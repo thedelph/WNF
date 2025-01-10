@@ -18,6 +18,39 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.0.5',
+    date: '10/01/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Ratings Filtering',
+            details: 'Ratings page now has WhatsApp Group Membership filter option  (on by default).'
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Win rate fix',
+            details: 'Win rates now display correctly on the profile page. Previously was showing N/A.'
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.0.4',
     date: '10/01/2025',
     sections: [
