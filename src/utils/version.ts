@@ -18,6 +18,47 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.0.4',
+    date: '10/01/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Bench Warmer Bonus',
+            details: "To reward/incentivize reserves, players will get 5 XP for every game where they are listed as a reserve when the game ends. If the player gets an offer of a slot, and declines it, they will instead lose 10 XP. The 5 XP tails off after 40 games where it is then valued at 0 XP."
+          },
+          {
+            title: 'Bench Warmer Streak',
+            details: "For every game where a player is listed as a reserve when the game ends they will get a temporary 10% XP bonus. Similar to the regular streak bonus but to reward keen reserves. The streak is reset when the player plays a game or doesn't register as a reserve."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Player Cards',
+            details: 'Now show Bench Warmer Streak where appropriate.'
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'XP fix',
+            details: 'XP is now calculated entirely on the backend database rather than a frontend function.'
+          },
+          {
+            title: 'Streak fix',
+            details: 'Game streaks are now calculated entirely on the backend database rather than a frontend function.'
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.0.3',
     date: '08/01/2025',
     sections: [

@@ -14,6 +14,8 @@ type Player = {
   is_test_user: boolean
   calculated_caps?: number
   manual_caps_override?: boolean
+  whatsapp_group_member?: 'Yes' | 'No' | 'Proxy'
+  whatsapp_mobile_number?: string
 }
 
 const EditPlayer: React.FC = () => {
@@ -23,6 +25,7 @@ const EditPlayer: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [calculatedCaps, setCalculatedCaps] = useState<number | null>(null)
   const [useManualOverride, setUseManualOverride] = useState(false)
+  const [phoneError, setPhoneError] = useState<string>('')
 
   const fetchCalculatedCaps = useCallback(async () => {
     if (!id) return
@@ -74,10 +77,31 @@ const EditPlayer: React.FC = () => {
     setPlayer((prev) => prev ? ({ ...prev, [name]: value }) : null)
   }
 
+  const validatePhoneNumber = (number: string): boolean => {
+    // Allow empty string as the field is optional
+    if (!number) return true
+    // E.164 format validation
+    return /^\+[1-9]\d{1,14}$/.test(number)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!player) return
+
+    // Validate WhatsApp fields
+    if (player.whatsapp_group_member === 'Yes' && !player.whatsapp_mobile_number) {
+      setPhoneError('Phone number is required when WhatsApp Group Member is set to Yes')
+      toast.error('Please provide a WhatsApp number')
+      return
+    }
+
+    // Validate phone number format if provided
+    if (player.whatsapp_mobile_number && !validatePhoneNumber(player.whatsapp_mobile_number)) {
+      setPhoneError('Please enter a valid phone number in international format (e.g., +447123456789)')
+      toast.error('Please fix the phone number format')
+      return
+    }
 
     try {
       const { error } = await supabaseAdmin
@@ -89,7 +113,9 @@ const EditPlayer: React.FC = () => {
           is_test_user: player.is_test_user,
           manual_caps_override: useManualOverride,
           ...(player.attack_rating ? { attack_rating: player.attack_rating } : {}),
-          ...(player.defense_rating ? { defense_rating: player.defense_rating } : {})
+          ...(player.defense_rating ? { defense_rating: player.defense_rating } : {}),
+          whatsapp_group_member: player.whatsapp_group_member || null,
+          whatsapp_mobile_number: player.whatsapp_mobile_number || null
         })
         .eq('id', id)
 
@@ -232,6 +258,66 @@ const EditPlayer: React.FC = () => {
               className="checkbox checkbox-primary"
             />
           </label>
+        </div>
+        <div className="form-control">
+          <label className="label" htmlFor="whatsapp_group_member">
+            <span className="label-text">WhatsApp Group Member</span>
+          </label>
+          <select
+            id="whatsapp_group_member"
+            name="whatsapp_group_member"
+            value={player.whatsapp_group_member || ''}
+            onChange={(e) => {
+              handleChange(e);
+              // Clear phone number and error when switching to No or Proxy
+              if (e.target.value !== 'Yes') {
+                setPlayer(prev => prev ? { ...prev, whatsapp_mobile_number: '' } : null);
+                setPhoneError('');
+              }
+            }}
+            className="select select-bordered w-full"
+          >
+            <option value="">Select status</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="Proxy">Proxy</option>
+          </select>
+        </div>
+
+        <div className="form-control">
+          <label className="label" htmlFor="whatsapp_mobile_number">
+            <span className="label-text">
+              WhatsApp Mobile Number
+              {player.whatsapp_group_member === 'Yes' && <span className="text-error ml-1">*</span>}
+            </span>
+            <span className="label-text-alt text-gray-500">Format: +447123456789</span>
+          </label>
+          <input
+            type="tel"
+            id="whatsapp_mobile_number"
+            name="whatsapp_mobile_number"
+            value={player.whatsapp_mobile_number || ''}
+            onChange={(e) => {
+              setPhoneError('')
+              const value = e.target.value.replace(/[^\d+\s]/g, '');
+              setPlayer(prev => prev ? { ...prev, whatsapp_mobile_number: value } : null);
+              if (value && !validatePhoneNumber(value)) {
+                setPhoneError('Please enter a valid phone number in international format')
+              }
+            }}
+            pattern="^\+[1-9]\d{1,14}$"
+            placeholder="+447123456789"
+            className={`input input-bordered w-full ${phoneError ? 'input-error' : ''} ${
+              player.whatsapp_group_member !== 'Yes' ? 'input-disabled bg-base-200' : ''
+            }`}
+            disabled={player.whatsapp_group_member !== 'Yes'}
+            required={player.whatsapp_group_member === 'Yes'}
+          />
+          {phoneError && (
+            <label className="label">
+              <span className="label-text-alt text-error">{phoneError}</span>
+            </label>
+          )}
         </div>
         <div className="flex justify-between mt-6">
           <motion.button

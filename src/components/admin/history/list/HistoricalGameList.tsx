@@ -23,13 +23,6 @@ interface Filters {
   playerId: string | null
 }
 
-interface PlayerStreak {
-  playerId: string
-  currentStreak: number
-  maxStreak: number
-  lastGameDate: Date | null
-}
-
 const HistoricalGameList: React.FC<Props> = ({ games, loading, onGameDeleted, recalculateAllCaps }) => {
   const [filters, setFilters] = useState<Filters>({
     dateFrom: '',
@@ -40,80 +33,9 @@ const HistoricalGameList: React.FC<Props> = ({ games, loading, onGameDeleted, re
 
   useEffect(() => {
     if (games.length > 0) {
-      const updateAll = async () => {
-        await calculateAndUpdateStreaks(games)
-        await recalculateAllCaps()
-      }
-      updateAll()
+      recalculateAllCaps()
     }
   }, [games.length])
-
-  const calculateAndUpdateStreaks = async (games: Game[]) => {
-    try {
-      // Sort games chronologically (oldest first)
-      const validGames = [...games].sort((a, b) => 
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-      )
-
-      // Initialize player streaks map
-      const playerStreaks = new Map<string, {
-        currentStreak: number,
-        maxStreak: number
-      }>()
-
-      // Process each game in chronological order
-      validGames.forEach((game, index) => {
-        const playersInGame = new Set(game.game_registrations?.map(r => r.player_id) || [])
-
-        // For each player that exists in our tracking
-        for (const [playerId, streak] of playerStreaks.entries()) {
-          if (playersInGame.has(playerId)) {
-            // Player attended this game - increment streak
-            streak.currentStreak++
-            streak.maxStreak = Math.max(streak.maxStreak, streak.currentStreak)
-          } else {
-            // Player missed this game - reset current streak
-            streak.currentStreak = 0
-          }
-        }
-
-        // Add any new players we haven't seen before
-        playersInGame.forEach(playerId => {
-          if (!playerStreaks.has(playerId)) {
-            playerStreaks.set(playerId, {
-              currentStreak: 1,
-              maxStreak: 1
-            })
-          }
-        })
-      })
-
-      console.log('Final streak calculations:', Object.fromEntries(playerStreaks))
-
-      // Update database with calculated streaks
-      for (const [playerId, streak] of playerStreaks.entries()) {
-        const { error } = await supabase
-          .from('players')
-          .update({
-            current_streak: streak.currentStreak,
-            max_streak: streak.maxStreak
-          })
-          .eq('id', playerId)
-
-        if (error) {
-          console.error(`Error updating player ${playerId}:`, error)
-        } else {
-          console.log(`Successfully updated streaks for player ${playerId}:`, streak)
-        }
-      }
-
-      toast.success('Streak calculations complete')
-
-    } catch (error) {
-      console.error('Error in calculateAndUpdateStreaks:', error)
-      toast.error('Error updating player streaks')
-    }
-  }
 
   const filteredGames = games.filter(game => {
     if (filters.dateFrom && new Date(game.date) < new Date(filters.dateFrom)) return false
@@ -143,13 +65,6 @@ const HistoricalGameList: React.FC<Props> = ({ games, loading, onGameDeleted, re
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <button 
-        onClick={() => calculateAndUpdateStreaks(games)}
-        className="btn btn-primary mb-4"
-      >
-        Recalculate Streaks
-      </button>
-
       <GameFilters filters={filters} onFiltersChange={setFilters} />
       
       <div className="mt-8 space-y-6">
