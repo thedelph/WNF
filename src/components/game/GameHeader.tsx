@@ -54,7 +54,8 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
     >
       {/* Game Title, Date, and Venue */}
       <div className="text-center space-y-2">
-        <div className="text-sm text-gray-500 mb-2">Test Game - Please Ignore</div>
+        <div className="text-sm text-gray-500 mb-2">Trial Run (Again!) - Assuming the weather improves and the pitch is open this time...</div>
+        <div className="text-sm text-gray-500 mb-2">Please bear with me as there may still be bugs!</div>
         <h1 className="text-3xl font-bold">WNF #{game.sequence_number || game.game_number || '29'}</h1>
         <div className="text-xl text-gray-600">
           <div className="flex items-center justify-center space-x-2">
