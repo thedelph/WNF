@@ -343,17 +343,17 @@ export default function PlayerProfileNew() {
             <TooltipPrimitive.Provider>
               {!user ? (
                 <Tooltip 
-                  content="You must be logged in to view player ratings"
+                  content="You must be logged in to rate players"
                   side="bottom"
                 >
                   <motion.button 
                     onClick={() => {
-                      toast.error('You must be logged in to view player ratings');
+                      toast.error('You must be logged in to rate players');
                     }}
                     className="btn h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none btn-disabled bg-gray-400 text-gray-600 cursor-not-allowed"
                   >
                     <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-                    <span className="font-medium">PLAYER RATING</span>
+                    <span className="font-medium">RATE PLAYER</span>
                   </motion.button>
                 </Tooltip>
               ) : (
