@@ -78,7 +78,6 @@ export default function Component() {
             caps,
             active_bonuses,
             active_penalties,
-            win_rate,
             current_streak,
             max_streak,
             avatar_svg,
@@ -88,10 +87,18 @@ export default function Component() {
             )
           `)
           .eq('user_id', user!.id)
-          .single()
+          .single();
 
-        if (profileError) throw profileError
-        if (!profileData) throw new Error('Player not found')
+        if (profileError) throw profileError;
+        if (!profileData) throw new Error('Player not found');
+
+        // Get win rate data
+        const { data: winRatesData, error: winRatesError } = await supabase
+          .rpc('get_player_win_rates');
+
+        if (winRatesError) throw winRatesError;
+
+        const playerWinRate = winRatesData?.find(wr => wr.id === profileData.id)?.win_rate || 0;
 
         // Calculate total reserve XP
         const totalReserveXP = profileData.reserve_xp_transactions?.reduce((sum, tx) => sum + (tx.xp_amount || 0), 0) || 0;
@@ -132,6 +139,7 @@ export default function Component() {
 
         setProfile({
           ...profileData,
+          win_rate: playerWinRate,
           rarity,
           reserveXP: totalReserveXP
         })
