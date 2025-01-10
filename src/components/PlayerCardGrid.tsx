@@ -14,6 +14,7 @@ interface Player {
   winRate: number
   currentStreak: number
   maxStreak: number
+  benchWarmerStreak: number
   xp: number
   avatarSvg?: string
   rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
@@ -68,6 +69,7 @@ export default function PlayerCardGrid() {
             avatar_svg,
             current_streak,
             max_streak,
+            bench_warmer_streak,
             whatsapp_group_member,
             attack_rating,
             defense_rating
@@ -137,6 +139,7 @@ export default function PlayerCardGrid() {
             totalGames: winRateData.totalGames,
             currentStreak: player.current_streak,
             maxStreak: player.max_streak,
+            benchWarmerStreak: player.bench_warmer_streak,
             rarity: xpInfo.rarity,
             avatarSvg: player.avatar_svg,
             whatsapp_group_member: player.whatsapp_group_member
@@ -197,6 +200,7 @@ export default function PlayerCardGrid() {
 
   const handleSort = (key: keyof Player) => {
     setSortConfig(current => ({
+
       key,
       direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
     }));
@@ -283,6 +287,7 @@ export default function PlayerCardGrid() {
                         className="input input-bordered input-sm w-24"
                         value={filters.minCaps}
                         onChange={(e) => setFilters(prev => ({ ...prev, minCaps: e.target.value }))}
+
                       />
                       <input
                         type="number"
@@ -290,6 +295,7 @@ export default function PlayerCardGrid() {
                         className="input input-bordered input-sm w-24"
                         value={filters.maxCaps}
                         onChange={(e) => setFilters(prev => ({ ...prev, maxCaps: e.target.value }))}
+
                       />
                     </div>
                   </div>
@@ -306,6 +312,7 @@ export default function PlayerCardGrid() {
                         className="input input-bordered input-sm w-24"
                         value={filters.minWinRate}
                         onChange={(e) => setFilters(prev => ({ ...prev, minWinRate: e.target.value }))}
+
                       />
                       <input
                         type="number"
@@ -313,6 +320,7 @@ export default function PlayerCardGrid() {
                         className="input input-bordered input-sm w-24"
                         value={filters.maxWinRate}
                         onChange={(e) => setFilters(prev => ({ ...prev, maxWinRate: e.target.value }))}
+
                       />
                     </div>
                   </div>
@@ -329,6 +337,7 @@ export default function PlayerCardGrid() {
                         className="input input-bordered input-sm w-24"
                         value={filters.minStreak}
                         onChange={(e) => setFilters(prev => ({ ...prev, minStreak: e.target.value }))}
+
                       />
                       <input
                         type="number"
@@ -336,6 +345,7 @@ export default function PlayerCardGrid() {
                         className="input input-bordered input-sm w-24"
                         value={filters.maxStreak}
                         onChange={(e) => setFilters(prev => ({ ...prev, maxStreak: e.target.value }))}
+
                       />
                     </div>
                   </div>
@@ -349,6 +359,7 @@ export default function PlayerCardGrid() {
                       className="select select-bordered select-sm"
                       value={filters.rarity}
                       onChange={(e) => setFilters(prev => ({ ...prev, rarity: e.target.value }))}
+
                     >
                       <option value="">All Rarities</option>
                       <option value="Amateur">Amateur</option>
@@ -370,6 +381,7 @@ export default function PlayerCardGrid() {
                         className="checkbox checkbox-primary"
                         checked={whatsAppMembersOnly}
                         onChange={(e) => setWhatsAppMembersOnly(e.target.checked)}
+
                       />
                     </div>
                   </div>
@@ -391,32 +403,42 @@ export default function PlayerCardGrid() {
                   <button
                     className={`btn btn-sm ${sortConfig.key === 'xp' ? 'btn-primary' : 'btn-ghost'}`}
                     onClick={() => handleSort('xp')}
+
                   >
                     XP {sortConfig.key === 'xp' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+
                   </button>
                   <button
                     className={`btn btn-sm ${sortConfig.key === 'caps' ? 'btn-primary' : 'btn-ghost'}`}
                     onClick={() => handleSort('caps')}
+
                   >
                     Caps {sortConfig.key === 'caps' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+
                   </button>
                   <button
                     className={`btn btn-sm ${sortConfig.key === 'winRate' ? 'btn-primary' : 'btn-ghost'}`}
                     onClick={() => handleSort('winRate')}
+
                   >
                     Win Rate {sortConfig.key === 'winRate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+
                   </button>
                   <button
                     className={`btn btn-sm ${sortConfig.key === 'currentStreak' ? 'btn-primary' : 'btn-ghost'}`}
                     onClick={() => handleSort('currentStreak')}
+
                   >
                     Streak {sortConfig.key === 'currentStreak' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+
                   </button>
                   <button
                     className={`btn btn-sm ${sortConfig.key === 'friendlyName' ? 'btn-primary' : 'btn-ghost'}`}
                     onClick={() => handleSort('friendlyName')}
+
                   >
                     Name {sortConfig.key === 'friendlyName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+
                   </button>
                 </motion.div>
               </motion.div>
@@ -457,6 +479,7 @@ export default function PlayerCardGrid() {
                     totalGames={player.totalGames}
                     currentStreak={player.currentStreak}
                     maxStreak={player.maxStreak}
+                    benchWarmerStreak={player.benchWarmerStreak}
                     rarity={player.rarity}
                     avatarSvg={player.avatarSvg}
                     whatsapp_group_member={player.whatsapp_group_member}
