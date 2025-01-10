@@ -10,6 +10,7 @@ import { PlayerSelectionPanel } from './PlayerSelectionPanel';
 import { FaCheckSquare, FaSquare, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
+import { useAdmin } from '../../../hooks/useAdmin';
 
 interface GameRegistrationsProps {
   gameId: string;
@@ -21,6 +22,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
   onClose,
 }) => {
   const { session } = useAuth();
+  const { isAdmin } = useAdmin();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [registrations, setRegistrations] = React.useState<ExtendedPlayerData[]>([]);
@@ -112,6 +114,44 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
       setLoading(false);
     }
   };
+
+  // Function to generate random test game registrations
+  const generateRandomTestGame = async () => {
+    const toastId = toast.loading('Selecting random players...');
+    try {
+      setLoading(true);
+
+      // SQL query to get random players with weighted probabilities
+      const { data: randomPlayers, error: randomError } = await supabaseAdmin.rpc('get_random_weighted_players');
+
+      if (randomError) throw randomError;
+
+      // Get the IDs of players that are available (not already registered)
+      const registeredPlayerIds = registrations.map(reg => reg.playerId);
+      const availableRandomPlayers = randomPlayers.filter(player => !registeredPlayerIds.includes(player.id));
+
+      if (availableRandomPlayers.length === 0) {
+        toast.error('No available players to select', { id: toastId });
+        return;
+      }
+
+      // Select these players in the UI
+      setSelectedPlayerIds(availableRandomPlayers.map(player => player.id));
+      setIsSelectAll(false); // Reset select all state since we're selecting specific players
+
+      toast.success(`${availableRandomPlayers.length} players selected randomly!`, { id: toastId });
+    } catch (err) {
+      console.error('Error selecting random players:', err);
+      toast.error('Failed to select random players', { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    console.log('Session:', session);
+    console.log('User email:', session?.user?.email);
+  }, [session]);
 
   React.useEffect(() => {
     if (gameId) {
@@ -292,6 +332,20 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
 
       {!loading && !error && session && (
         <div className="space-y-6">
+          {isAdmin && (
+            <div className="flex justify-end mb-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={generateRandomTestGame}
+                className="btn btn-secondary"
+                disabled={loading}
+              >
+                Generate Test Game
+              </motion.button>
+            </div>
+          )}
+
           <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
             <div className="flex-grow">
               <SearchBar
@@ -301,15 +355,17 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                 className="w-full"
               />
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSelectAll}
-              className="btn btn-outline text-sm sm:text-base py-2 px-3 sm:py-3 sm:px-4"
-            >
-              {isSelectAll ? <FaCheckSquare className="mr-2" /> : <FaSquare className="mr-2" />}
-              {isSelectAll ? 'Deselect All' : 'Select All'}
-            </motion.button>
+            <div className="flex space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSelectAll}
+                className="btn btn-outline btn-sm"
+              >
+                {isSelectAll ? <FaCheckSquare className="mr-2" /> : <FaSquare className="mr-2" />}
+                {isSelectAll ? 'Deselect All' : 'Select All'}
+              </motion.button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">

@@ -462,7 +462,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "128 kB",
-          "estimated_rows": 1,
+          "estimated_rows": 0,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -708,7 +708,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "112 kB",
-          "estimated_rows": 1,
+          "estimated_rows": 36,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1060,7 +1060,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "288 kB",
-          "estimated_rows": 495,
+          "estimated_rows": 475,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1491,6 +1491,24 @@
           ],
           "triggers": [
             {
+              "name": "game_registration_bench_warmer_streak_update",
+              "timing": "AFTER",
+              "event": "INSERT",
+              "statement": "EXECUTE FUNCTION update_bench_warmer_streak()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "game_registration_bench_warmer_streak_update",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION update_bench_warmer_streak()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
               "name": "game_registration_xp_update",
               "timing": "AFTER",
               "event": "INSERT",
@@ -1509,25 +1527,7 @@
               "new_table": null
             },
             {
-              "name": "update_player_streak_trigger",
-              "timing": "AFTER",
-              "event": "INSERT",
-              "statement": "EXECUTE FUNCTION update_player_streak()",
-              "orientation": "ROW",
-              "old_table": null,
-              "new_table": null
-            },
-            {
-              "name": "update_player_streak_trigger",
-              "timing": "AFTER",
-              "event": "UPDATE",
-              "statement": "EXECUTE FUNCTION update_player_streak()",
-              "orientation": "ROW",
-              "old_table": null,
-              "new_table": null
-            },
-            {
-              "name": "update_streaks_trigger",
+              "name": "update_streaks_on_registration",
               "timing": "AFTER",
               "event": "INSERT",
               "statement": "EXECUTE FUNCTION update_player_streaks()",
@@ -1536,16 +1536,7 @@
               "new_table": null
             },
             {
-              "name": "update_streaks_trigger",
-              "timing": "AFTER",
-              "event": "DELETE",
-              "statement": "EXECUTE FUNCTION update_player_streaks()",
-              "orientation": "ROW",
-              "old_table": null,
-              "new_table": null
-            },
-            {
-              "name": "update_streaks_trigger",
+              "name": "update_streaks_on_registration",
               "timing": "AFTER",
               "event": "UPDATE",
               "statement": "EXECUTE FUNCTION update_player_streaks()",
@@ -1918,7 +1909,7 @@
           "table_type": "BASE TABLE",
           "description": null,
           "total_size": "80 kB",
-          "estimated_rows": 29,
+          "estimated_rows": 28,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -1937,8 +1928,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{08a33fb7-7677-41c2-8baa-0375c1f4d9c2,11cbf31e-b275-4fee-a5f6-d9468caf3d10,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,37725ca3-8857-411d-8e38-4135d9317bad,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,450bb264-1dd1-4d0a-9f27-88483d04c1c4,4cc10211-be50-4611-bc85-d59d16399a6b,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,54bc6b11-ea09-42d0-9f56-dd38809c669e,57fea9a1-765e-406c-b182-883d2720d99c,5aa66610-9141-478c-804f-97191da0198f,68e251b3-a23a-4a31-886a-07f171067de0,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,9030ab33-efb9-4763-9fd3-e30c87b6b20d,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,ea863f1a-b7da-4169-aae6-04c33f3dbce4,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903}",
-              "correlation": "0.0413793"
+              "histogram_bounds": "{08a33fb7-7677-41c2-8baa-0375c1f4d9c2,11cbf31e-b275-4fee-a5f6-d9468caf3d10,1afd7965-a642-40ad-9d23-57e607c8f835,2ca68eac-a8b1-45d7-9c10-f0803800e1f7,3332c2d8-8600-4ba6-9029-26fa6190be96,34078038-5c66-4cba-a6e1-a41d732dcebe,37725ca3-8857-411d-8e38-4135d9317bad,3808f43c-6b2e-4c6c-bb1f-71702e119cff,3b1d39cf-3201-4053-80ab-c2bf95b7613a,3d03f1f9-5b12-41dd-a72e-214cf73f4fb6,42417771-801c-46ec-8d6e-ebefbcd0fb04,43cef2a8-9c8c-48f7-9124-8ab6b17de301,4cc10211-be50-4611-bc85-d59d16399a6b,4e4c4605-22ef-4138-b088-3cd9d5b65d2d,5125c991-ade2-454e-86ea-27d116e0abf5,54bc6b11-ea09-42d0-9f56-dd38809c669e,57fea9a1-765e-406c-b182-883d2720d99c,5aa66610-9141-478c-804f-97191da0198f,68e251b3-a23a-4a31-886a-07f171067de0,83ca5ef5-7a7c-406d-8d25-7ccb9500db05,9030ab33-efb9-4763-9fd3-e30c87b6b20d,95fc8176-f956-4f3b-bf01-9488e17ebbaa,ae6c1dfa-39c3-465c-890f-3fe6ab5f4bc9,b52a8b13-f411-46a9-b9ba-3c858f74e2d5,c6d09fc5-3c97-4eac-965c-996615407fa4,e3c77ca3-1210-4a14-bc74-f99f5ec554b9,ea863f1a-b7da-4169-aae6-04c33f3dbce4,eb444d7d-e9d4-4207-bc88-fec8109ebdf2,f360829a-1586-4ffa-ad25-28789c28d903}",
+              "correlation": "-0.0157635"
             },
             {
               "name": "date",
@@ -1955,7 +1946,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 23:59:59.999+00\",\"2024-06-19 23:59:59.999+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:59.999+00\",\"2024-08-14 23:59:59.999+00\",\"2024-08-21 23:59:59.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:59.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:59.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-09 12:56:00+00\"}",
+              "histogram_bounds": "{\"2024-05-15 23:59:59.999+00\",\"2024-06-19 23:59:59.999+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:59.999+00\",\"2024-08-14 23:59:59.999+00\",\"2024-08-21 23:59:59.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:59.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:59.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-10 00:20:00+00\"}",
               "correlation": "0.565517"
             },
             {
@@ -1973,7 +1964,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 00:00:00+00\",\"2024-06-19 00:00:00+00\",\"2024-06-26 00:00:00+00\",\"2024-07-03 00:00:00+00\",\"2024-07-11 00:00:00+00\",\"2024-07-17 00:00:00+00\",\"2024-07-24 00:00:00+00\",\"2024-07-31 00:00:00+00\",\"2024-08-07 00:00:00+00\",\"2024-08-14 00:00:00+00\",\"2024-08-21 00:00:00+00\",\"2024-08-28 00:00:00+00\",\"2024-09-04 00:00:00+00\",\"2024-09-11 00:00:00+00\",\"2024-09-18 00:00:00+00\",\"2024-09-25 00:00:00+00\",\"2024-10-02 00:00:00+00\",\"2024-10-09 00:00:00+00\",\"2024-10-16 00:00:00+00\",\"2024-10-23 00:00:00+00\",\"2024-10-30 00:00:00+00\",\"2024-11-06 00:00:00+00\",\"2024-11-13 00:00:00+00\",\"2024-11-20 00:00:00+00\",\"2024-11-27 00:00:00+00\",\"2024-12-04 00:00:00+00\",\"2024-12-11 00:00:00+00\",\"2024-12-18 00:00:00+00\",\"2025-01-07 13:00:00+00\"}",
+              "histogram_bounds": "{\"2024-05-15 00:00:00+00\",\"2024-06-19 00:00:00+00\",\"2024-06-26 00:00:00+00\",\"2024-07-03 00:00:00+00\",\"2024-07-11 00:00:00+00\",\"2024-07-17 00:00:00+00\",\"2024-07-24 00:00:00+00\",\"2024-07-31 00:00:00+00\",\"2024-08-07 00:00:00+00\",\"2024-08-14 00:00:00+00\",\"2024-08-21 00:00:00+00\",\"2024-08-28 00:00:00+00\",\"2024-09-04 00:00:00+00\",\"2024-09-11 00:00:00+00\",\"2024-09-18 00:00:00+00\",\"2024-09-25 00:00:00+00\",\"2024-10-02 00:00:00+00\",\"2024-10-09 00:00:00+00\",\"2024-10-16 00:00:00+00\",\"2024-10-23 00:00:00+00\",\"2024-10-30 00:00:00+00\",\"2024-11-06 00:00:00+00\",\"2024-11-13 00:00:00+00\",\"2024-11-20 00:00:00+00\",\"2024-11-27 00:00:00+00\",\"2024-12-04 00:00:00+00\",\"2024-12-11 00:00:00+00\",\"2024-12-18 00:00:00+00\",\"2025-01-10 00:17:00+00\"}",
               "correlation": "0.565517"
             },
             {
@@ -1991,7 +1982,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 23:59:58.999+00\",\"2024-06-19 23:59:59.998+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:58.999+00\",\"2024-08-14 23:59:58.999+00\",\"2024-08-21 23:59:58.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:58.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:58.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-08 13:00:00+00\"}",
+              "histogram_bounds": "{\"2024-05-15 23:59:58.999+00\",\"2024-06-19 23:59:59.998+00\",\"2024-06-26 20:00:00+00\",\"2024-07-03 20:00:00+00\",\"2024-07-11 20:00:00+00\",\"2024-07-17 20:00:00+00\",\"2024-07-24 20:00:00+00\",\"2024-07-31 20:00:00+00\",\"2024-08-07 23:59:58.999+00\",\"2024-08-14 23:59:58.999+00\",\"2024-08-21 23:59:58.999+00\",\"2024-08-28 20:00:00+00\",\"2024-09-04 20:00:00+00\",\"2024-09-11 20:00:00+00\",\"2024-09-18 23:59:58.999+00\",\"2024-09-25 20:00:00+00\",\"2024-10-02 20:00:00+00\",\"2024-10-09 20:00:00+00\",\"2024-10-16 20:00:00+00\",\"2024-10-23 23:59:58.999+00\",\"2024-10-30 20:00:00+00\",\"2024-11-06 20:00:00+00\",\"2024-11-13 20:00:00+00\",\"2024-11-20 20:00:00+00\",\"2024-11-27 20:00:00+00\",\"2024-12-04 20:00:00+00\",\"2024-12-11 20:00:00+00\",\"2024-12-18 20:00:00+00\",\"2025-01-10 00:18:00+00\"}",
               "correlation": "0.565517"
             },
             {
@@ -2063,7 +2054,7 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-11-11 16:53:47.616288+00\",\"2024-11-11 17:07:30.469444+00\",\"2024-11-11 17:18:03.706994+00\",\"2024-11-11 17:23:18.801122+00\",\"2024-11-11 17:26:09.716193+00\",\"2024-11-11 17:29:00.311676+00\",\"2024-11-11 17:32:33.308869+00\",\"2024-11-15 10:49:58.900155+00\",\"2024-11-15 11:09:28.864134+00\",\"2024-11-15 15:00:38.640031+00\",\"2024-11-15 15:17:51.610432+00\",\"2024-11-15 15:21:30.654751+00\",\"2024-11-15 15:26:50.629529+00\",\"2024-11-15 15:32:28.341681+00\",\"2024-11-15 15:36:14.706985+00\",\"2024-11-15 15:38:46.514516+00\",\"2024-11-15 15:41:05.888517+00\",\"2024-11-15 15:45:17.834528+00\",\"2024-11-15 15:48:49.234186+00\",\"2024-11-15 15:51:48.290128+00\",\"2024-11-15 15:57:50.931802+00\",\"2024-11-15 16:06:28.837439+00\",\"2024-11-15 23:40:49.13482+00\",\"2024-11-20 23:47:31.604513+00\",\"2024-11-28 09:22:39.728864+00\",\"2024-12-05 15:13:54.593481+00\",\"2024-12-16 09:51:53.452089+00\",\"2024-12-19 13:43:26.083004+00\",\"2025-01-09 12:54:51.42022+00\"}",
+              "histogram_bounds": "{\"2024-11-11 16:53:47.616288+00\",\"2024-11-11 17:07:30.469444+00\",\"2024-11-11 17:18:03.706994+00\",\"2024-11-11 17:23:18.801122+00\",\"2024-11-11 17:26:09.716193+00\",\"2024-11-11 17:29:00.311676+00\",\"2024-11-11 17:32:33.308869+00\",\"2024-11-15 10:49:58.900155+00\",\"2024-11-15 11:09:28.864134+00\",\"2024-11-15 15:00:38.640031+00\",\"2024-11-15 15:17:51.610432+00\",\"2024-11-15 15:21:30.654751+00\",\"2024-11-15 15:26:50.629529+00\",\"2024-11-15 15:32:28.341681+00\",\"2024-11-15 15:36:14.706985+00\",\"2024-11-15 15:38:46.514516+00\",\"2024-11-15 15:41:05.888517+00\",\"2024-11-15 15:45:17.834528+00\",\"2024-11-15 15:48:49.234186+00\",\"2024-11-15 15:51:48.290128+00\",\"2024-11-15 15:57:50.931802+00\",\"2024-11-15 16:06:28.837439+00\",\"2024-11-15 23:40:49.13482+00\",\"2024-11-20 23:47:31.604513+00\",\"2024-11-28 09:22:39.728864+00\",\"2024-12-05 15:13:54.593481+00\",\"2024-12-16 09:51:53.452089+00\",\"2024-12-19 13:43:26.083004+00\",\"2025-01-10 00:18:02.735297+00\"}",
               "correlation": "0.609852"
             },
             {
@@ -2261,7 +2252,7 @@
               "n_distinct": -0.896552,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{\"2024-05-15 19:59:59.999+00\",\"2024-06-19 19:59:59.999+00\",\"2024-06-26 16:00:00+00\",\"2024-07-03 16:00:00+00\",\"2024-07-11 16:00:00+00\",\"2024-07-17 16:00:00+00\",\"2024-07-24 16:00:00+00\",\"2024-07-31 16:00:00+00\",\"2024-08-07 19:59:59.999+00\",\"2024-08-14 19:59:59.999+00\",\"2024-08-21 19:59:59.999+00\",\"2024-08-28 16:00:00+00\",\"2024-09-04 16:00:00+00\",\"2024-09-11 16:00:00+00\",\"2024-09-18 19:59:59.999+00\",\"2024-09-25 16:00:00+00\",\"2024-10-02 16:00:00+00\",\"2024-10-09 16:00:00+00\",\"2024-10-16 16:00:00+00\",\"2024-10-23 19:59:59.999+00\",\"2024-10-30 16:00:00+00\",\"2024-11-06 16:00:00+00\",\"2024-11-13 16:00:00+00\",\"2024-11-20 16:00:00+00\",\"2024-11-27 16:00:00+00\",\"2025-01-09 12:55:00+00\"}",
+              "histogram_bounds": "{\"2024-05-15 19:59:59.999+00\",\"2024-06-19 19:59:59.999+00\",\"2024-06-26 16:00:00+00\",\"2024-07-03 16:00:00+00\",\"2024-07-11 16:00:00+00\",\"2024-07-17 16:00:00+00\",\"2024-07-24 16:00:00+00\",\"2024-07-31 16:00:00+00\",\"2024-08-07 19:59:59.999+00\",\"2024-08-14 19:59:59.999+00\",\"2024-08-21 19:59:59.999+00\",\"2024-08-28 16:00:00+00\",\"2024-09-04 16:00:00+00\",\"2024-09-11 16:00:00+00\",\"2024-09-18 19:59:59.999+00\",\"2024-09-25 16:00:00+00\",\"2024-10-02 16:00:00+00\",\"2024-10-09 16:00:00+00\",\"2024-10-16 16:00:00+00\",\"2024-10-23 19:59:59.999+00\",\"2024-10-30 16:00:00+00\",\"2024-11-06 16:00:00+00\",\"2024-11-13 16:00:00+00\",\"2024-11-20 16:00:00+00\",\"2024-11-27 16:00:00+00\",\"2025-01-10 00:19:00+00\"}",
               "correlation": "0.606838"
             },
             {
@@ -2495,6 +2486,33 @@
               "new_table": null
             },
             {
+              "name": "game_deletion_stats_update",
+              "timing": "AFTER",
+              "event": "DELETE",
+              "statement": "EXECUTE FUNCTION handle_game_deletion()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "game_deletion_update",
+              "timing": "BEFORE",
+              "event": "DELETE",
+              "statement": "EXECUTE FUNCTION handle_game_deletion()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "game_deletion_xp_update",
+              "timing": "BEFORE",
+              "event": "DELETE",
+              "statement": "EXECUTE FUNCTION handle_game_deletion_xp()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
               "name": "game_sequence_delete",
               "timing": "AFTER",
               "event": "DELETE",
@@ -2518,6 +2536,24 @@
               "event": "UPDATE",
               "statement": "EXECUTE FUNCTION update_game_sequence_numbers()",
               "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "game_streaks_update",
+              "timing": "AFTER",
+              "event": "DELETE",
+              "statement": "EXECUTE FUNCTION update_streaks_on_game_change()",
+              "orientation": "STATEMENT",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "game_streaks_update",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION update_streaks_on_game_change()",
+              "orientation": "STATEMENT",
               "old_table": null,
               "new_table": null
             },
@@ -2562,6 +2598,24 @@
               "timing": "AFTER",
               "event": "UPDATE",
               "statement": "EXECUTE FUNCTION update_player_caps_on_game_completion()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "update_player_xp_on_game_completion",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION update_player_xp()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "update_streaks_on_game_change",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION update_player_streaks()",
               "orientation": "ROW",
               "old_table": null,
               "new_table": null
@@ -2638,8 +2692,8 @@
           "table_name": "notifications",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "48 kB",
-          "estimated_rows": 18,
+          "total_size": "40 kB",
+          "estimated_rows": 0,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -2658,8 +2712,8 @@
               "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": "{87e5796c-6716-439b-acfd-f23d3ab4cc92,d6ec80de-c49e-4441-b40f-6296d9176772}",
-              "correlation": "-1"
+              "histogram_bounds": "{049267e0-a738-4d68-9acb-fd2b7f94dd83,04a097a6-c5ae-4d97-9800-f7de59a20f3c,05e3164e-3621-4a95-a8b7-32a10d9bf78b,121ca90c-3963-4ff6-aeba-5e42bd7afddc,18ebac62-e949-4733-86bf-34b277e6b696,1a4944ef-702c-4bd0-9b27-278e4c781503,1a789ce3-7c4a-4fc8-b74b-48f14739343c,1cc62d25-98c8-41a3-8bde-b5a9679f9b7d,1dab285e-e00f-4ac1-aecf-a56f4ad6e5b5,26b36673-ecbb-4b74-a00a-713eaf068a13,3120571b-f94c-49c6-b060-f6e18b0d5e09,33d373b6-f940-4c33-ba74-ce850cc85135,3fa59715-9b3b-40b9-b596-959c1b8e4316,41069541-ccaf-4ba0-a6c0-9a6488ed930d,4831f48d-add8-4044-ad18-bdc0985d15c0,501af337-05c8-4dec-b398-9d1d59a56f82,537a9f93-22d0-41d0-93f1-9b802eda98e4,59f9033b-6032-4ea0-b5d5-113fc784a3ce,5b6e63b1-8e9e-4c67-a880-7c32bfc5647d,5d7ef945-5962-4db8-a7b8-c3a2158cab71,5ea5eddb-f76e-4464-af7d-843aa58e041f,5f674e91-acb6-4e2b-8853-b5affefa01c7,66989d0a-a5e2-405a-b7fb-308b742d9c0c,89406aee-ce65-4849-8d47-275990e5f7f3,8c496034-b289-40ac-a90d-82b9fdbc8250,9126706f-1c67-4962-9679-845a21a6b2ef,9f95ad6f-1a6d-4c91-824b-d992616d0933,ab59e5b5-6e54-452d-a3ad-7a4ea1b2e228,b2907341-2827-47b4-a6f6-c1fd6ca30694,c3342e94-bed6-4b4b-9b7e-a5250adc0964,c7ce5105-d667-45a8-9315-c544a167d76a,ccc99ac4-b2c0-4165-b9c4-c136d430b49a,d4c0ab1d-0c9d-45a5-80ca-cca3be8c26da,daa554f3-cd68-4224-9e01-bb281fe7f387,e7b1aff8-74c4-41c5-a9e9-e6c2f2df10fe,f31ee788-1dc9-4e79-9236-ca287377aaa6}",
+              "correlation": "0.0339768"
             },
             {
               "name": "player_id",
@@ -2673,11 +2727,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -1,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": "{8ad90589-7135-461f-b61d-272cbf3f6d04,b2466431-ede1-4eaa-a86e-ad0c7128b125}",
-              "correlation": "1"
+              "n_distinct": -0.555556,
+              "most_common_values": "{2711aec5-829a-4569-a85f-ecf8c89f123d,3a712b45-cd7e-4e66-a6dd-133255be5895,40a27806-c64d-4786-8886-fb535b529b83,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,81c9ec8f-7b81-4263-879e-b2088aefaca8,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,dd6651f8-9203-4efb-92ca-e2b6f8230f97,f3e8c7b3-8394-4da6-a68e-60ee4d7ba48e,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
+              "most_common_frequencies": "{0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556}",
+              "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,2806705a-9b9f-4437-b9bb-ca6489404484,32f8ab9b-1259-4764-b463-aa2e70ca8c74,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65}",
+              "correlation": "0.150064"
             },
             {
               "name": "type",
@@ -2691,8 +2745,8 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.5,
-              "most_common_values": "{slot_offer}",
+              "n_distinct": 1,
+              "most_common_values": "{payment_request}",
               "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
@@ -2709,10 +2763,10 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -1,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": "{\"A spot has opened up in a game on 08/01/2025. You have exclusive access until 16:19!\",\"A spot has opened up in WNF #29. Would you like to play?\"}",
+              "n_distinct": 1,
+              "most_common_values": "{\"Payment required for game #29. Click the Monzo link to pay.\"}",
+              "most_common_frequencies": "{1}",
+              "histogram_bounds": null,
               "correlation": "1"
             },
             {
@@ -2727,11 +2781,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 0,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 1,
+              "most_common_values": "{https://monzo.me/test}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             },
             {
               "name": "created_at",
@@ -2745,11 +2799,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -1,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": "{\"2025-01-02 15:14:14.337078+00\",\"2025-01-07 16:06:25.348295+00\"}",
-              "correlation": "-1"
+              "n_distinct": 2,
+              "most_common_values": "{\"2025-01-09 23:46:52.2628+00\",\"2025-01-10 00:20:38.345237+00\"}",
+              "most_common_frequencies": "{0.5,0.5}",
+              "histogram_bounds": null,
+              "correlation": "1"
             },
             {
               "name": "read_at",
@@ -2799,11 +2853,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -1,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": "{\"{\\\"action\\\": \\\"new_slot_offer\\\", \\\"game_id\\\": \\\"f5bd7f97-5df1-43fe-ad9c-33093bc1f53b\\\"}\",\"{\\\"game_id\\\": \\\"98ed2b9a-b965-4f09-8ee2-88d909749265\\\", \\\"debug_info\\\": {\\\"time_slot\\\": {\\\"expires_at\\\": \\\"2025-01-07T16:19:36.310842+00:00\\\", \\\"available_at\\\": \\\"2025-01-07T16:06:25.348295+00:00\\\"}, \\\"reserve_count\\\": 36, \\\"calculated_times_debug\\\": {\\\"xp\\\": 202, \\\"caps\\\": 16, \\\"rank\\\": 1, \\\"streak\\\": 0, \\\"player_name\\\": \\\"Alex E\\\", \\\"whatsapp_status\\\": \\\"Yes\\\", \\\"registration_time\\\": \\\"2025-01-07T16:05:59.996+00:00\\\", \\\"whatsapp_priority\\\": 0}, \\\"highest_priority_player\\\": {\\\"xp\\\": 202, \\\"name\\\": \\\"Alex E\\\", \\\"rank\\\": 1, \\\"whatsapp_status\\\": \\\"Yes\\\"}}, \\\"slot_offer_id\\\": \\\"8e061be0-5393-4de9-a377-f7dbec5d880d\\\", \\\"exclusive_until\\\": \\\"2025-01-07T16:19:36.310842+00:00\\\"}\"}",
-              "correlation": "-1"
+              "n_distinct": 2,
+              "most_common_values": "{\"{\\\"action\\\": \\\"payment_request\\\", \\\"amount\\\": 5, \\\"game_id\\\": \\\"be2bcf0b-6085-40e2-a183-ccf79d14a156\\\", \\\"payment_link\\\": \\\"https://monzo.me/test\\\"}\",\"{\\\"action\\\": \\\"payment_request\\\", \\\"amount\\\": 5, \\\"game_id\\\": \\\"c6d09fc5-3c97-4eac-965c-996615407fa4\\\", \\\"payment_link\\\": \\\"https://monzo.me/test\\\"}\"}",
+              "most_common_frequencies": "{0.5,0.5}",
+              "histogram_bounds": null,
+              "correlation": "1"
             },
             {
               "name": "title",
@@ -2817,11 +2871,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": -0.5,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 1,
+              "most_common_values": "{\"Payment Required\"}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             },
             {
               "name": "icon",
@@ -2835,11 +2889,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": 0,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 1,
+              "most_common_values": "{currency-pound}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             },
             {
               "name": "priority",
@@ -2853,11 +2907,11 @@
               "generation_expression": null,
               "numeric_precision": 16,
               "numeric_scale": 0,
-              "n_distinct": -1,
-              "most_common_values": null,
-              "most_common_frequencies": null,
-              "histogram_bounds": "{0,2}",
-              "correlation": "-1"
+              "n_distinct": 1,
+              "most_common_values": "{2}",
+              "most_common_frequencies": "{1}",
+              "histogram_bounds": null,
+              "correlation": "1"
             }
           ],
           "constraints": [
@@ -4522,7 +4576,7 @@
           "table_name": "player_xp",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "184 kB",
+          "total_size": "352 kB",
           "estimated_rows": 54,
           "storage_parameters": null,
           "replica_identity": "d",
@@ -4543,7 +4597,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,3a712b45-cd7e-4e66-a6dd-133255be5895,40a27806-c64d-4786-8886-fb535b529b83,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,f3e8c7b3-8394-4da6-a68e-60ee4d7ba48e,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
-              "correlation": "-0.133829"
+              "correlation": "0.994969"
             },
             {
               "name": "xp",
@@ -4557,11 +4611,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.685185,
-              "most_common_values": "{10,12,14,20,24,34,216,266}",
-              "most_common_frequencies": "{0.111111,0.0925926,0.0555556,0.0555556,0.037037,0.037037,0.037037,0.037037}",
-              "histogram_bounds": "{16,22,26,28,38,45,49,97,101,115,143,178,180,199,207,224,229,235,238,240,257,274,406,448,459,465,500,612,773}",
-              "correlation": "-0.840137"
+              "n_distinct": -0.740741,
+              "most_common_values": "{15,17,19,25,29,39}",
+              "most_common_frequencies": "{0.111111,0.0925926,0.0555556,0.037037,0.037037,0.037037}",
+              "histogram_bounds": "{20,21,27,31,33,43,45,49,73,77,86,112,165,173,180,189,193,194,218,223,238,239,244,266,312,326,344,360,403,409,417,456,562,717}",
+              "correlation": "0.107604"
             },
             {
               "name": "last_calculated",
@@ -4576,7 +4630,7 @@
               "numeric_precision": null,
               "numeric_scale": null,
               "n_distinct": 1,
-              "most_common_values": "{\"2025-01-09 12:58:50.606216+00\"}",
+              "most_common_values": "{\"2025-01-10 00:23:42.00463+00\"}",
               "most_common_frequencies": "{1}",
               "histogram_bounds": null,
               "correlation": "1"
@@ -4597,7 +4651,7 @@
               "most_common_values": "{Amateur,\"Semi Pro\",Professional,Legendary,\"World Class\"}",
               "most_common_frequencies": "{0.592593,0.203704,0.12963,0.037037,0.037037}",
               "histogram_bounds": null,
-              "correlation": "-0.224014"
+              "correlation": "0.405984"
             }
           ],
           "constraints": [
@@ -4692,7 +4746,7 @@
           "table_name": "players",
           "table_type": "BASE TABLE",
           "description": null,
-          "total_size": "176 kB",
+          "total_size": "216 kB",
           "estimated_rows": 54,
           "storage_parameters": null,
           "replica_identity": "d",
@@ -4713,7 +4767,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{05bb40f8-d63f-4469-9a35-e466d1f2f1da,0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,22e64ff0-c283-47a4-a445-91f7f7194373,2711aec5-829a-4569-a85f-ecf8c89f123d,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,3a712b45-cd7e-4e66-a6dd-133255be5895,40a27806-c64d-4786-8886-fb535b529b83,489fd3c5-73e4-4be9-9058-3fcb04dcad5d,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5c0e1219-9355-4078-b76d-a63ec320969c,5d401fa5-157f-445f-9f06-def9de2ae6ce,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,81c9ec8f-7b81-4263-879e-b2088aefaca8,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,84c631df-a046-41e9-a10c-4a77561e6c08,876113b5-d7c3-41bc-ab69-4b6859f864a5,8ad90589-7135-461f-b61d-272cbf3f6d04,8af191dc-5e8f-4fe9-a5f0-97fe316b0004,8e7c2ed7-9850-411a-a1e3-eddd3d3b74cd,904a7c17-c8cc-4aff-958d-7788dea001dc,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,ba4d8e2a-5559-4cfe-a7a1-92e6d03efe65,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,dd6651f8-9203-4efb-92ca-e2b6f8230f97,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61,f3e8c7b3-8394-4da6-a68e-60ee4d7ba48e,fbbb2730-3fe7-4a0c-9fba-9d375c0ff2e5}",
-              "correlation": "0.0919764"
+              "correlation": "0.122851"
             },
             {
               "name": "user_id",
@@ -4731,7 +4785,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{6099599c-21d3-454a-953a-19fa3973b82e,a4c15f00-d500-4ae3-b9f2-b8808f7f737c,fb791661-b7d6-4512-bb69-40d316cd4497}",
-              "correlation": "-0.5"
+              "correlation": "0.5"
             },
             {
               "name": "friendly_name",
@@ -4749,7 +4803,7 @@
               "most_common_values": null,
               "most_common_frequencies": null,
               "histogram_bounds": "{\"Adrian P\",\"Alex E\",\"Anthony B\",\"Ben W\",Boyle,Callum,Calvin,Carlton,\"Chris F\",\"Chris H\",Colin,Craig,Daniel,Danion,\"Darren C\",\"Darren W\",Dave,Dilon,Dom,Ethan,Faz,\"Gaz G\",\"Jack G\",\"Jack M\",\"James H\",Joe,Johnny,Justin,Kaci,Ken,Kieran,Kyle,\"Lee M\",\"Lee S\",Lewis,Maddocks,Matty,\"Mike B\",\"Mike M\",Paul,Pete,\"Phil J\",\"Phil R\",\"Phil V\",\"Ryan J\",\"Ryan L\",Sam,\"Scott J\",Simon,Stephen,\"Tom Ip\",\"Tom K\",Twiggy,Zhao}",
-              "correlation": "-0.378311"
+              "correlation": "0.0210787"
             },
             {
               "name": "caps",
@@ -4763,11 +4817,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.333333,
-              "most_common_values": "{1,2,3,13,14,17,21,25,7,24}",
-              "most_common_frequencies": "{0.277778,0.148148,0.0740741,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.037037,0.037037}",
-              "histogram_bounds": "{4,5,6,16,19,20,22,26}",
-              "correlation": "0.216162"
+              "n_distinct": -0.351852,
+              "most_common_values": "{1,2,3,13,24,4,6,12,16,20,21,23}",
+              "most_common_frequencies": "{0.277778,0.148148,0.0740741,0.0555556,0.0555556,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037,0.037037}",
+              "histogram_bounds": "{5,14,15,17,19,22,25}",
+              "correlation": "0.561044"
             },
             {
               "name": "win_rate",
@@ -4839,7 +4893,7 @@
               "most_common_values": "{\"2024-11-11 15:52:58.97872+00\"}",
               "most_common_frequencies": "{0.851852}",
               "histogram_bounds": "{\"2024-11-08 00:21:14.457969+00\",\"2024-11-11 15:46:24.694242+00\",\"2024-11-15 15:58:08.358688+00\",\"2024-11-15 15:59:47.248446+00\",\"2024-11-20 23:45:39.998846+00\",\"2024-12-05 15:12:14.368105+00\",\"2025-01-08 13:38:51.0936+00\",\"2025-01-08 19:00:27.895529+00\"}",
-              "correlation": "0.653897"
+              "correlation": "0.649171"
             },
             {
               "name": "is_admin",
@@ -4857,7 +4911,7 @@
               "most_common_values": "{f}",
               "most_common_frequencies": "{0.981481}",
               "histogram_bounds": null,
-              "correlation": "0.991995"
+              "correlation": "0.999771"
             },
             {
               "name": "is_super_admin",
@@ -4875,7 +4929,7 @@
               "most_common_values": "{f}",
               "most_common_frequencies": "{0.981481}",
               "histogram_bounds": null,
-              "correlation": "0.991995"
+              "correlation": "0.999771"
             },
             {
               "name": "avatar_svg",
@@ -4926,10 +4980,10 @@
               "numeric_precision": null,
               "numeric_scale": null,
               "n_distinct": -0.203704,
-              "most_common_values": "{0,6.0000000000000000,5.0000000000000000,7.0000000000000000,2.0000000000000000,8.0000000000000000,8.5}",
+              "most_common_values": "{0,6.0000000000000000,5.0000000000000000,7.0000000000000000,2.0000000000000000,8.0000000000000000,8.5000000000000000}",
               "most_common_frequencies": "{0.555556,0.111111,0.0740741,0.0740741,0.037037,0.037037,0.037037}",
               "histogram_bounds": "{4.0000000000000000,6.5000000000000000,9.0000000000000000,10.0000000000000000}",
-              "correlation": "0.286373"
+              "correlation": "0.725024"
             },
             {
               "name": "defense_rating",
@@ -4944,10 +4998,10 @@
               "numeric_precision": null,
               "numeric_scale": null,
               "n_distinct": -0.203704,
-              "most_common_values": "{0,4.0000000000000000,7.0000000000000000,5.0000000000000000,6.0000000000000000,8.0000000000000000}",
+              "most_common_values": "{0,4.0000000000000000,7,5.0000000000000000,6.0000000000000000,8.0000000000000000}",
               "most_common_frequencies": "{0.555556,0.0925926,0.0925926,0.0555556,0.0555556,0.0555556}",
               "histogram_bounds": "{3.0000000000000000,3.5000000000000000,8.5,9.5000000000000000,10.0000000000000000}",
-              "correlation": "0.326396"
+              "correlation": "0.758186"
             },
             {
               "name": "is_test_user",
@@ -4965,7 +5019,7 @@
               "most_common_values": "{t,f}",
               "most_common_frequencies": "{0.944444,0.0555556}",
               "histogram_bounds": null,
-              "correlation": "0.845169"
+              "correlation": "0.787307"
             },
             {
               "name": "manual_caps_override",
@@ -4997,11 +5051,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.166667,
-              "most_common_values": "{0,1,3,4,5}",
-              "most_common_frequencies": "{0.62963,0.148148,0.0555556,0.0555556,0.037037}",
-              "histogram_bounds": "{2,8,9,13}",
-              "correlation": "0.418868"
+              "n_distinct": -0.148148,
+              "most_common_values": "{0,2,3,1,4}",
+              "most_common_frequencies": "{0.666667,0.0925926,0.0740741,0.0555556,0.0555556}",
+              "histogram_bounds": "{7,8,12}",
+              "correlation": "0.933829"
             },
             {
               "name": "max_streak",
@@ -5015,11 +5069,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": -0.240741,
-              "most_common_values": "{1,4,2,5,6,11,13,8,9}",
-              "most_common_frequencies": "{0.462963,0.0925926,0.0740741,0.0555556,0.0555556,0.0555556,0.0555556,0.037037,0.037037}",
-              "histogram_bounds": "{3,10,12,16}",
-              "correlation": "0.229121"
+              "n_distinct": -0.259259,
+              "most_common_values": "{1,2,3,4,5,6,11,8,12,13}",
+              "most_common_frequencies": "{0.462963,0.0740741,0.0555556,0.0555556,0.0555556,0.0555556,0.0555556,0.037037,0.037037,0.037037}",
+              "histogram_bounds": "{7,9,10,16}",
+              "correlation": "0.663274"
             },
             {
               "name": "average_attack_rating",
@@ -5073,7 +5127,7 @@
               "most_common_values": "{Yes}",
               "most_common_frequencies": "{0.518519}",
               "histogram_bounds": null,
-              "correlation": "0.961576"
+              "correlation": "0.875369"
             },
             {
               "name": "whatsapp_mobile_number",
@@ -5092,6 +5146,24 @@
               "most_common_frequencies": null,
               "histogram_bounds": "{+447400055259,+447734866252}",
               "correlation": "-1"
+            },
+            {
+              "name": "bench_warmer_streak",
+              "type": "integer",
+              "nullable": "YES",
+              "default": "0",
+              "description": null,
+              "position": 23,
+              "identity_generation": null,
+              "is_generated": "NEVER",
+              "generation_expression": null,
+              "numeric_precision": 32,
+              "numeric_scale": 0,
+              "n_distinct": 1,
+              "most_common_values": "{0}",
+              "most_common_frequencies": "{1}",
+              "histogram_bounds": null,
+              "correlation": "1"
             }
           ],
           "constraints": [
@@ -5206,7 +5278,26 @@
               "delete_rule": null
             }
           ],
-          "triggers": null,
+          "triggers": [
+            {
+              "name": "player_streak_xp_update",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION update_xp_on_streak_change()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            },
+            {
+              "name": "update_xp_on_streak_change",
+              "timing": "AFTER",
+              "event": "UPDATE",
+              "statement": "EXECUTE FUNCTION update_xp_on_streak_change()",
+              "orientation": "ROW",
+              "old_table": null,
+              "new_table": null
+            }
+          ],
           "indexes": [
             {
               "name": "players_friendly_name_test_unique",
@@ -5344,8 +5435,8 @@
           "table_name": "reserve_xp_transactions",
           "table_type": "BASE TABLE",
           "description": "Tracks XP transactions related to reserve players. Players receive +5 XP for remaining in reserves after a game, \r\n    and -10 XP for declining a slot offer (except for same-day offers).",
-          "total_size": "96 kB",
-          "estimated_rows": 2,
+          "total_size": "104 kB",
+          "estimated_rows": 0,
           "storage_parameters": null,
           "replica_identity": "d",
           "columns": [
@@ -5361,11 +5452,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{0664344d-50d2-46bb-af12-2824e0ca1f90,0760fea2-067e-4618-b033-ef18c98ce6ff,081bb85e-f1e3-414f-8d30-996d9e3498ea,08c6d9a4-4108-44d8-ba77-e6ab7592847f,140f32ed-71b0-4ba9-a017-558d9f101d3e,262da7df-fef6-4421-b827-75dddf4b3850,2ad4ef59-bc4a-4f48-92fc-8934bfc7eac7,396c19fb-7403-4978-90da-82c182a305d9,3a865857-ac34-4e05-a016-84935f2619e6,43fe29c8-2d04-4933-b8a9-6cac00f89a96,548ad403-63e3-4987-84a5-f372081fdb38,54e97215-beb7-41cd-8aaf-14b3eb9b6230,652f4b4d-283a-4624-843a-05fd97aa9d14,6ce73529-f4c6-4cd5-a64b-60c52ec6fcb0,7463e0af-942c-40a9-b3e5-16e53d434097,75279e80-26fe-449f-9d06-65545891afff,7bc9fe32-e7de-4e36-aa42-9e8b92125f81,83e5df2c-118f-42ca-862e-279dcef47c9c,92886ef4-a452-4b74-a158-f0892ca1ae23,93eb9786-47a3-4707-83ad-1eeb24be005f,9aa2c976-f799-414c-977e-97e35e060ed2,9bc2c323-9bc1-45d9-bf5b-434e3c8a4521,9bf07096-f56c-4c15-844b-935793ea5847,9dbca2c6-1bd9-4eb1-a406-cfa680bc1d24,a3fb419b-f307-45a0-805e-1e5e0ca0044e,a66b8d83-a2b4-4206-af51-8e1bf4c32707,aad26b34-aea2-41d1-b628-5621af22472d,b8e8e2e9-6b98-4558-b0ae-cd32da07f349,b94690b8-3063-4680-b06e-20595b06e647,b9a8f52a-499e-45af-ab75-899a28b1c1e2,ca43c600-333e-41dc-a544-2c24c27a1e40,cebc08cd-d00a-4568-b6a3-12ac198c11a9,dbff1822-cc3d-45e4-bea3-e5f22c187552,e727eccd-87b3-42fb-a767-32c659a1253e,ea790725-5b28-4ce6-a450-e094fd4fc178,fd226111-d4da-4af8-b603-4dde7873ba43}",
+              "correlation": "0.275161"
             },
             {
               "name": "player_id",
@@ -5379,11 +5470,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
+              "n_distinct": -1,
               "most_common_values": null,
               "most_common_frequencies": null,
-              "histogram_bounds": null,
-              "correlation": null
+              "histogram_bounds": "{0bfd9afb-285d-474b-86cc-c91ab64c5622,0c2096c3-6eca-4582-b2a1-2166d2c8d61e,18ebd05e-2357-44c6-a49d-d280ceed7784,22e64ff0-c283-47a4-a445-91f7f7194373,2806705a-9b9f-4437-b9bb-ca6489404484,2d7bd29f-85c0-4593-bdcf-eb2102445cfc,32f8ab9b-1259-4764-b463-aa2e70ca8c74,33443732-814b-4407-bbf0-8b30b57ef390,5200018e-14e6-46a0-8dff-2aa113ea6b8e,52128184-ee7e-44c6-8c65-31acee1b6843,56b37bdf-5f8b-4110-91b2-e55f6e83eb30,5e23dccd-8454-4c69-96a8-ec5b1d0ec54c,667be1e9-a840-4368-a40a-ed9e89dcf055,694e67d6-e9d9-49f9-9a8a-1ea4bada9ae4,6e34ce3e-bbcd-4ba7-812e-32b0c39192fb,75e00430-067e-44af-b498-84b28edd51be,767cc150-1746-4d71-a8db-b9771f2f7770,78ba8339-270a-4d10-b7f6-f10999568948,813eac3e-b880-4988-823f-a345c5d6ed87,8481aae6-f7e9-41b1-9a93-77a9fd8e800f,9082191f-69ff-469f-baa6-46cc918346ae,a0a34603-1309-4c2c-9064-02e62cda7d41,a298edef-70b4-4805-95eb-f921c50c2838,a950fdd0-847e-4f4d-96f5-9064719c8953,b2466431-ede1-4eaa-a86e-ad0c7128b125,bca1e452-a4c1-4ecc-bc95-8c17c3974e8d,be32d4f4-d8a2-4ac4-8fb2-21879753581c,be3517a2-68e2-4884-85f9-18eb16eebdd0,c465ed34-a5df-42ef-9332-3273a72f4c4d,c83d54c5-3468-4fde-b2b6-220034bb7480,d31a40f9-1972-43e9-9864-277110c9e958,d3920bbc-a281-4b97-bc88-96315e38d3ba,d909f3d1-18e3-4637-9ab4-bd05e81f87af,e5472c2e-b3b7-4fa6-b1c7-f4221cb4beca,e790c8d4-4068-4f9e-b34f-633e392c562e,ee7ff6aa-3a38-47e7-92b5-060342521a61}",
+              "correlation": "-0.112741"
             },
             {
               "name": "game_id",
@@ -5397,11 +5488,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 1,
+              "most_common_values": "{c6d09fc5-3c97-4eac-965c-996615407fa4}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             },
             {
               "name": "xp_amount",
@@ -5415,11 +5506,11 @@
               "generation_expression": null,
               "numeric_precision": 32,
               "numeric_scale": 0,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 1,
+              "most_common_values": "{5}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             },
             {
               "name": "transaction_type",
@@ -5433,11 +5524,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 1,
+              "most_common_values": "{RESERVE_REWARD}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             },
             {
               "name": "created_at",
@@ -5451,11 +5542,11 @@
               "generation_expression": null,
               "numeric_precision": null,
               "numeric_scale": null,
-              "n_distinct": null,
-              "most_common_values": null,
-              "most_common_frequencies": null,
+              "n_distinct": 1,
+              "most_common_values": "{\"2025-01-10 00:20:31.186892+00\"}",
+              "most_common_frequencies": "{1}",
               "histogram_bounds": null,
-              "correlation": null
+              "correlation": "1"
             }
           ],
           "constraints": [
@@ -5467,7 +5558,7 @@
               "foreign_column": "id",
               "check_definition": null,
               "update_rule": "NO ACTION",
-              "delete_rule": "NO ACTION"
+              "delete_rule": "CASCADE"
             },
             {
               "name": "reserve_xp_transactions_pkey",
@@ -7216,6 +7307,17 @@
       ],
       "functions": [
         {
+          "name": "update_bench_warmer_streak",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.update_bench_warmer_streak()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Update bench_warmer_streak for the affected player\r\n    IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN\r\n        UPDATE players\r\n        SET bench_warmer_streak = calculate_bench_warmer_streak(NEW.player_id)\r\n        WHERE id = NEW.player_id;\r\n    END IF;\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "get_next_slot_offer_players",
           "arguments": "p_game_id uuid, p_hours_until_game numeric",
           "return_type": "TABLE(player_id uuid)",
@@ -7249,6 +7351,39 @@
           "definition": "CREATE OR REPLACE FUNCTION public.create_slot_offers_for_game(p_game_id uuid, p_admin_id uuid DEFAULT NULL::uuid, p_dropped_out_player_id uuid DEFAULT NULL::uuid)\n RETURNS TABLE(slot_offer_id uuid, debug_info jsonb)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_game record;\r\n    v_highest_priority_player record;\r\n    v_time_slot record;\r\n    v_reserve_count bigint;\r\n    v_slot_offer_id uuid;\r\n    v_debug_info jsonb;\r\nBEGIN\r\n    -- Get game details\r\n    SELECT * INTO v_game FROM games WHERE id = p_game_id;\r\n    IF NOT FOUND THEN\r\n        RAISE EXCEPTION 'Game not found';\r\n    END IF;\r\n\r\n    -- Get the count of reserve players\r\n    SELECT COUNT(*) INTO v_reserve_count \r\n    FROM game_registrations \r\n    WHERE game_id = p_game_id \r\n    AND status = 'reserve';\r\n\r\n    -- Get the highest priority reserve player\r\n    WITH RankedPlayers AS (\r\n        SELECT \r\n            gr.player_id,\r\n            p.friendly_name,\r\n            p.whatsapp_group_member,\r\n            ps.xp,\r\n            p.current_streak,\r\n            p.caps,\r\n            gr.created_at as registration_time,\r\n            ROW_NUMBER() OVER (\r\n                ORDER BY \r\n                    CASE WHEN p.whatsapp_group_member IN ('Yes', 'Proxy') THEN 0 ELSE 1 END ASC,\r\n                    ps.xp DESC,\r\n                    p.current_streak DESC,\r\n                    p.caps DESC,\r\n                    gr.created_at ASC\r\n            ) as rank\r\n        FROM game_registrations gr\r\n        JOIN players p ON p.id = gr.player_id\r\n        JOIN player_stats ps ON ps.id = p.id\r\n        WHERE gr.game_id = p_game_id\r\n        AND gr.status = 'reserve'\r\n        AND NOT EXISTS (\r\n            -- Exclude players who already have any slot offer (pending or declined) for this game\r\n            SELECT 1 FROM slot_offers so\r\n            WHERE so.player_id = gr.player_id\r\n            AND so.game_id = p_game_id\r\n            AND (so.status = 'pending' OR so.status = 'declined')\r\n        )\r\n    )\r\n    SELECT * INTO v_highest_priority_player\r\n    FROM RankedPlayers\r\n    WHERE rank = 1;\r\n\r\n    -- If no eligible player found, return null\r\n    IF NOT FOUND THEN\r\n        RETURN;\r\n    END IF;\r\n\r\n    -- Get the time slot for the highest priority player with debug info\r\n    SELECT * INTO v_time_slot\r\n    FROM public.calculate_slot_offer_times(p_game_id, v_reserve_count)\r\n    WHERE player_rank = 1;\r\n\r\n    -- Store debug info\r\n    v_debug_info := jsonb_build_object(\r\n        'highest_priority_player', jsonb_build_object(\r\n            'name', v_highest_priority_player.friendly_name,\r\n            'whatsapp_status', v_highest_priority_player.whatsapp_group_member,\r\n            'xp', v_highest_priority_player.xp,\r\n            'rank', v_highest_priority_player.rank\r\n        ),\r\n        'time_slot', jsonb_build_object(\r\n            'available_at', v_time_slot.available_time,\r\n            'expires_at', v_time_slot.next_player_access_time\r\n        ),\r\n        'reserve_count', v_reserve_count,\r\n        'calculated_times_debug', v_time_slot.debug_info\r\n    );\r\n\r\n    -- Create slot offer\r\n    INSERT INTO slot_offers (\r\n        game_id,\r\n        player_id,\r\n        status,\r\n        available_at,\r\n        expires_at,\r\n        admin_id,\r\n        dropped_out_player_id,\r\n        priority\r\n    ) VALUES (\r\n        p_game_id,\r\n        v_highest_priority_player.player_id,\r\n        'pending',\r\n        v_time_slot.available_time,\r\n        v_time_slot.next_player_access_time,\r\n        p_admin_id,\r\n        p_dropped_out_player_id,\r\n        1\r\n    ) RETURNING id INTO v_slot_offer_id;\r\n\r\n    -- Create notification for the eligible player\r\n    INSERT INTO notifications (\r\n        player_id,\r\n        type,\r\n        message,\r\n        metadata,\r\n        title,\r\n        priority\r\n    ) VALUES (\r\n        v_highest_priority_player.player_id,\r\n        'slot_offer',\r\n        format('A spot has opened up in a game on %s. You have exclusive access until %s!',\r\n               to_char(v_game.date, 'DD/MM/YYYY'),\r\n               to_char(v_time_slot.next_player_access_time, 'HH24:MI')),\r\n        jsonb_build_object(\r\n            'game_id', p_game_id,\r\n            'slot_offer_id', v_slot_offer_id,\r\n            'exclusive_until', v_time_slot.next_player_access_time,\r\n            'debug_info', v_debug_info\r\n        ),\r\n        'Exclusive Game Slot Available!',\r\n        2\r\n    );\r\n\r\n    -- Return both the slot offer ID and debug info\r\n    RETURN QUERY\r\n    SELECT v_slot_offer_id, v_debug_info;\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "admin_recalculate_all_player_streaks",
+          "arguments": "",
+          "return_type": "void",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": true,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.admin_recalculate_all_player_streaks()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n    player_rec RECORD;\r\nBEGIN\r\n    -- Check if user is admin or super admin\r\n    IF NOT EXISTS (\r\n        SELECT 1 \r\n        FROM players \r\n        WHERE user_id = auth.uid() \r\n        AND (is_admin = true OR is_super_admin = true)\r\n    ) THEN\r\n        RAISE EXCEPTION 'Unauthorized: User does not have admin permissions';\r\n    END IF;\r\n\r\n    -- Loop through each player and recalculate their streaks\r\n    FOR player_rec IN SELECT id FROM players\r\n    LOOP\r\n        UPDATE players\r\n        SET \r\n            current_streak = calculate_player_streak(player_rec.id),\r\n            bench_warmer_streak = calculate_bench_warmer_streak(player_rec.id)\r\n        WHERE id = player_rec.id;\r\n    END LOOP;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "process_reserve_xp",
+          "arguments": "",
+          "return_type": "void",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.process_reserve_xp()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Get the latest game number for calculating games_ago\r\n    WITH latest_game AS (\r\n        SELECT MAX(sequence_number) as max_seq\r\n        FROM games \r\n        WHERE completed = true\r\n    )\r\n    -- Insert reserve rewards for eligible players with tapering\r\n    INSERT INTO reserve_xp_transactions (player_id, game_id, xp_amount, transaction_type)\r\n    SELECT DISTINCT\r\n        gr.player_id,\r\n        gr.game_id,\r\n        CASE\r\n            WHEN (latest.max_seq - g.sequence_number) BETWEEN 0 AND 39 THEN \r\n                5 * (40 - (latest.max_seq - g.sequence_number)) / 40  -- Linear taper from 5 to 0 over 40 games\r\n            ELSE 0  -- No XP for games older than 40 games ago\r\n        END as xp_amount,\r\n        'RESERVE_REWARD' as transaction_type\r\n    FROM game_registrations gr\r\n    JOIN games g ON g.id = gr.game_id\r\n    CROSS JOIN latest_game latest\r\n    LEFT JOIN reserve_xp_transactions rxp \r\n        ON rxp.player_id = gr.player_id \r\n        AND rxp.game_id = gr.game_id\r\n        AND rxp.transaction_type = 'RESERVE_REWARD'\r\n    WHERE \r\n        gr.status = 'reserve'\r\n        AND g.date < CURRENT_TIMESTAMP\r\n        AND g.status = 'completed'  -- Only award XP for completed games\r\n        AND rxp.id IS NULL\r\n        -- Ensure player wasn't moved from reserve to selected\r\n        AND NOT EXISTS (\r\n            SELECT 1 \r\n            FROM game_registrations gr2\r\n            WHERE gr2.game_id = gr.game_id\r\n            AND gr2.player_id = gr.player_id\r\n            AND gr2.status = 'selected'\r\n        );\r\n\r\n    -- Update player_xp table with new XP\r\n    UPDATE player_xp px\r\n    SET \r\n        xp = calculate_player_xp(px.player_id),\r\n        last_calculated = CURRENT_TIMESTAMP\r\n    WHERE EXISTS (\r\n        SELECT 1 \r\n        FROM reserve_xp_transactions rt\r\n        WHERE rt.player_id = px.player_id\r\n        AND rt.created_at > px.last_calculated\r\n    );\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "process_game_completion",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.process_game_completion()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Only process if the game is being marked as completed\r\n    IF NEW.status = 'completed' AND OLD.status != 'completed' THEN\r\n        -- Get the latest game number for calculating games_ago\r\n        WITH latest_game AS (\r\n            SELECT MAX(sequence_number) as max_seq\r\n            FROM games \r\n            WHERE completed = true\r\n        )\r\n        -- Insert reserve rewards for eligible players with tapering\r\n        INSERT INTO reserve_xp_transactions (\r\n            player_id,\r\n            game_id,\r\n            xp_amount,\r\n            transaction_type\r\n        )\r\n        SELECT \r\n            gr.player_id,\r\n            gr.game_id,\r\n            CASE\r\n                WHEN (latest.max_seq - NEW.sequence_number) BETWEEN 0 AND 39 THEN \r\n                    5 * (40 - (latest.max_seq - NEW.sequence_number)) / 40  -- Linear taper from 5 to 0 over 40 games\r\n                ELSE 0  -- No XP for games older than 40 games ago\r\n            END as xp_amount,\r\n            'RESERVE_REWARD' as transaction_type\r\n        FROM game_registrations gr\r\n        CROSS JOIN latest_game latest\r\n        WHERE gr.game_id = NEW.id\r\n        AND gr.status = 'reserve'\r\n        AND NOT EXISTS (\r\n            SELECT 1 \r\n            FROM reserve_xp_transactions rt \r\n            WHERE rt.player_id = gr.player_id \r\n            AND rt.game_id = gr.game_id\r\n        );\r\n\r\n        -- Update player XP for all affected players\r\n        UPDATE player_xp px\r\n        SET \r\n            xp = calculate_player_xp(px.player_id),\r\n            last_calculated = CURRENT_TIMESTAMP\r\n        FROM game_registrations gr\r\n        WHERE gr.game_id = NEW.id\r\n        AND gr.player_id = px.player_id;\r\n    END IF;\r\n\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "update_all_player_xp",
           "arguments": "",
           "return_type": "void",
@@ -7280,6 +7415,17 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.handle_slot_offer_acceptance()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    IF NEW.status = 'accepted' AND OLD.status != 'accepted' THEN\r\n        -- Update the game registration status\r\n        UPDATE game_registrations\r\n        SET \r\n            status = 'selected',\r\n            selection_method = 'slot_offer'  -- Using the correct allowed value\r\n        WHERE game_id = NEW.game_id\r\n        AND player_id = NEW.player_id;\r\n    END IF;\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "update_streaks_on_game_completion",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.update_streaks_on_game_completion()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- When a game is marked as completed\r\n    IF (TG_OP = 'UPDATE' AND NEW.completed = true AND (OLD.completed = false OR OLD.completed IS NULL)) THEN\r\n        -- Update streaks for all players in this game\r\n        UPDATE players p\r\n        SET \r\n            current_streak = calculate_player_streak(p.id),\r\n            bench_warmer_streak = calculate_bench_warmer_streak(p.id)\r\n        FROM game_registrations gr\r\n        WHERE gr.game_id = NEW.id \r\n        AND gr.player_id = p.id;\r\n    END IF;\r\n    \r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "maintenance_cleanup_debug_logs",
@@ -7337,6 +7483,50 @@
           "definition": "CREATE OR REPLACE FUNCTION public.process_reserve_xp_rewards()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Insert reserve rewards for eligible players\r\n    INSERT INTO reserve_xp_transactions (player_id, game_id, xp_amount, transaction_type)\r\n    SELECT DISTINCT\r\n        gr.player_id,\r\n        gr.game_id,\r\n        5 as xp_amount,\r\n        'RESERVE_REWARD' as transaction_type\r\n    FROM game_registrations gr\r\n    JOIN games g ON g.id = gr.game_id\r\n    LEFT JOIN reserve_xp_transactions rxp \r\n        ON rxp.player_id = gr.player_id \r\n        AND rxp.game_id = gr.game_id\r\n        AND rxp.transaction_type = 'RESERVE_REWARD'\r\n    WHERE \r\n        gr.status = 'reserve'\r\n        AND g.date < CURRENT_TIMESTAMP\r\n        AND g.status = 'completed'  -- Only award XP for completed games\r\n        AND rxp.id IS NULL\r\n        -- Ensure player wasn't moved from reserve to selected\r\n        AND NOT EXISTS (\r\n            SELECT 1 \r\n            FROM game_registrations gr2\r\n            WHERE gr2.game_id = gr.game_id\r\n            AND gr2.player_id = gr.player_id\r\n            AND gr2.status = 'selected'\r\n        );\r\n\r\n    -- Update player_xp table with new XP\r\n    UPDATE player_xp px\r\n    SET \r\n        xp = px.xp + (\r\n            SELECT COALESCE(SUM(xp_amount), 0)\r\n            FROM reserve_xp_transactions rt\r\n            WHERE rt.player_id = px.player_id\r\n            AND rt.created_at > px.last_calculated\r\n        ),\r\n        last_calculated = CURRENT_TIMESTAMP\r\n    WHERE EXISTS (\r\n        SELECT 1 \r\n        FROM reserve_xp_transactions rt\r\n        WHERE rt.player_id = px.player_id\r\n        AND rt.created_at > px.last_calculated\r\n    );\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "calculate_player_xp",
+          "arguments": "p_player_id uuid",
+          "return_type": "integer",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.calculate_player_xp(p_player_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_base_xp integer;\r\n    v_streak_multiplier decimal;\r\n    v_bench_warmer_multiplier decimal;\r\n    v_reserve_xp integer;\r\n    v_final_xp integer;\r\n    v_latest_game_number integer;\r\nBEGIN\r\n    -- Get the latest game number from ALL games\r\n    SELECT MAX(sequence_number) INTO v_latest_game_number FROM games WHERE completed = true;\r\n\r\n    -- Calculate base XP from game participation (only for selected players)\r\n    WITH player_games AS (\r\n        SELECT \r\n            g.id,\r\n            g.sequence_number,\r\n            gr.status,\r\n            (v_latest_game_number - g.sequence_number) as games_ago  -- Calculate based on global game count\r\n        FROM game_registrations gr\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE gr.player_id = p_player_id\r\n        AND g.completed = true\r\n        AND gr.status = 'selected'  -- Only include selected games\r\n        ORDER BY g.sequence_number DESC\r\n    ),\r\n    game_weights AS (\r\n        SELECT \r\n            id,\r\n            sequence_number,\r\n            games_ago,\r\n            CASE\r\n                WHEN games_ago = 0 THEN 20   -- Most recent historical game\r\n                WHEN games_ago BETWEEN 1 AND 2 THEN 18   -- 1-2 games ago\r\n                WHEN games_ago BETWEEN 3 AND 4 THEN 16   -- 3-4 games ago\r\n                WHEN games_ago BETWEEN 5 AND 9 THEN 14   -- 5-9 games ago\r\n                WHEN games_ago BETWEEN 10 AND 19 THEN 12  -- 10-19 games ago\r\n                WHEN games_ago BETWEEN 20 AND 29 THEN 10  -- 20-29 games ago\r\n                WHEN games_ago BETWEEN 30 AND 39 THEN 5   -- 30-39 games ago\r\n                ELSE 0                        -- 40+ games ago\r\n            END as weight\r\n        FROM player_games\r\n    )\r\n    SELECT COALESCE(SUM(weight), 0)\r\n    INTO v_base_xp \r\n    FROM game_weights;\r\n\r\n    -- Get streak multiplier (only applies to base XP, not reserve XP)\r\n    -- +10% per streak level\r\n    SELECT \r\n        COALESCE(1 + (current_streak * 0.1), 1)\r\n    INTO v_streak_multiplier\r\n    FROM players\r\n    WHERE id = p_player_id;\r\n\r\n    -- Get bench warmer streak multiplier\r\n    -- +5% per bench warmer streak level\r\n    SELECT \r\n        COALESCE(1 + (bench_warmer_streak * 0.05), 1)\r\n    INTO v_bench_warmer_multiplier\r\n    FROM players\r\n    WHERE id = p_player_id;\r\n\r\n    -- Get reserve XP (flat +5 for being reserve, -10 for declining slots)\r\n    SELECT \r\n        COALESCE(SUM(xp_amount), 0)\r\n    INTO v_reserve_xp\r\n    FROM reserve_xp_transactions\r\n    WHERE player_id = p_player_id;\r\n\r\n    -- Calculate final XP\r\n    -- Base XP gets both streak multipliers, reserve XP is added flat\r\n    v_final_xp := (v_base_xp * v_streak_multiplier * v_bench_warmer_multiplier)::integer + v_reserve_xp;\r\n    \r\n    RETURN v_final_xp;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "recalculate_all_player_xp",
+          "arguments": "",
+          "return_type": "TABLE(player_id uuid, old_xp integer, new_xp integer, friendly_name text)",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.recalculate_all_player_xp()\n RETURNS TABLE(player_id uuid, old_xp integer, new_xp integer, friendly_name text)\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- First, get the old XP values\r\n    CREATE TEMP TABLE temp_old_xp AS\r\n    SELECT px.player_id as px_player_id, px.xp as old_xp\r\n    FROM player_xp px;\r\n\r\n    -- Then update all XP values\r\n    WITH updated_xp AS (\r\n        UPDATE player_xp px\r\n        SET \r\n            xp = calculate_player_xp(px.player_id),\r\n            last_calculated = CURRENT_TIMESTAMP\r\n        FROM players p\r\n        WHERE px.player_id = p.id\r\n        RETURNING px.player_id, px.xp as new_xp\r\n    )\r\n    -- Insert for any players that don't have an XP record\r\n    INSERT INTO player_xp (player_id, xp, last_calculated)\r\n    SELECT \r\n        p.id,\r\n        calculate_player_xp(p.id),\r\n        CURRENT_TIMESTAMP\r\n    FROM players p\r\n    WHERE NOT EXISTS (\r\n        SELECT 1 FROM player_xp px WHERE px.player_id = p.id\r\n    );\r\n\r\n    -- Return the results showing changes\r\n    RETURN QUERY\r\n    SELECT \r\n        px.player_id,\r\n        COALESCE(t.old_xp, 0),\r\n        px.xp as new_xp,\r\n        p.friendly_name\r\n    FROM player_xp px\r\n    JOIN players p ON p.id = px.player_id\r\n    LEFT JOIN temp_old_xp t ON t.px_player_id = px.player_id\r\n    WHERE COALESCE(t.old_xp, 0) != px.xp\r\n    ORDER BY ABS(px.xp - COALESCE(t.old_xp, 0)) DESC;\r\n\r\n    -- Clean up\r\n    DROP TABLE temp_old_xp;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "recalculate_player_xp",
+          "arguments": "target_player_id uuid",
+          "return_type": "TABLE(old_xp integer, new_xp integer, friendly_name text)",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.recalculate_player_xp(target_player_id uuid)\n RETURNS TABLE(old_xp integer, new_xp integer, friendly_name text)\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_old_xp integer;\r\nBEGIN\r\n    -- Get old XP value\r\n    SELECT px.xp INTO v_old_xp\r\n    FROM player_xp px\r\n    WHERE px.player_id = target_player_id;\r\n\r\n    RETURN QUERY\r\n    WITH new_value AS (\r\n        INSERT INTO player_xp (player_id, xp, last_calculated)\r\n        SELECT \r\n            target_player_id,\r\n            calculate_player_xp(target_player_id),\r\n            CURRENT_TIMESTAMP\r\n        ON CONFLICT (player_id) DO UPDATE\r\n        SET \r\n            xp = EXCLUDED.xp,\r\n            last_calculated = EXCLUDED.last_calculated\r\n        RETURNING xp as new_xp\r\n    )\r\n    SELECT \r\n        COALESCE(v_old_xp, 0) as old_xp,\r\n        nv.new_xp,\r\n        p.friendly_name\r\n    FROM new_value nv\r\n    JOIN players p ON p.id = target_player_id;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "update_xp_on_streak_change",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.update_xp_on_streak_change()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- If bench_warmer_streak or current_streak has changed\r\n    IF (TG_OP = 'UPDATE' AND (\r\n        NEW.bench_warmer_streak IS DISTINCT FROM OLD.bench_warmer_streak OR \r\n        NEW.current_streak IS DISTINCT FROM OLD.current_streak\r\n    )) THEN\r\n        -- Update player_xp table\r\n        INSERT INTO player_xp (player_id, xp, last_calculated)\r\n        VALUES (\r\n            NEW.id,\r\n            calculate_player_xp(NEW.id),\r\n            CURRENT_TIMESTAMP\r\n        )\r\n        ON CONFLICT (player_id) \r\n        DO UPDATE SET \r\n            xp = EXCLUDED.xp,\r\n            last_calculated = EXCLUDED.last_calculated;\r\n    END IF;\r\n    \r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "handle_slot_offer_response",
           "arguments": "",
           "return_type": "trigger",
@@ -7367,7 +7557,7 @@
           "leakproof": false,
           "security_definer": false,
           "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.update_player_streak()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Update streak based on consecutive selected games, breaking on reserve games\r\n    WITH game_history AS (\r\n        SELECT \r\n            g.date,\r\n            gr.status,\r\n            ROW_NUMBER() OVER (ORDER BY g.date DESC) as game_number\r\n        FROM game_registrations gr\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE gr.player_id = NEW.player_id\r\n        AND g.completed = true\r\n        ORDER BY g.date DESC\r\n    ),\r\n    first_non_selected AS (\r\n        -- Find the first non-selected game (including reserve) as that breaks the streak\r\n        SELECT MIN(game_number) as streak_break\r\n        FROM game_history\r\n        WHERE status != 'selected'\r\n    ),\r\n    streak_calc AS (\r\n        -- Count selected games until we hit a non-selected game\r\n        SELECT COUNT(*) as streak_length\r\n        FROM game_history h\r\n        WHERE h.status = 'selected'\r\n        AND (\r\n            -- Either there are no streak breaks yet\r\n            NOT EXISTS (SELECT 1 FROM first_non_selected) \r\n            OR \r\n            -- Or we're only counting games before the streak break\r\n            h.game_number < (SELECT streak_break FROM first_non_selected)\r\n        )\r\n    )\r\n    UPDATE players\r\n    SET current_streak = COALESCE((SELECT streak_length FROM streak_calc), 0)\r\n    WHERE id = NEW.player_id;\r\n\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+          "definition": "CREATE OR REPLACE FUNCTION public.update_player_streak()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Only update streak for status changes that affect past games\r\n    IF EXISTS (\r\n        SELECT 1 \r\n        FROM games g \r\n        WHERE g.id = NEW.game_id \r\n        AND g.date < NOW()\r\n    ) THEN\r\n        UPDATE players \r\n        SET current_streak = calculate_player_streak(NEW.player_id)\r\n        WHERE id = NEW.player_id;\r\n    END IF;\r\n    \r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "balance_teams",
@@ -7502,6 +7692,17 @@
           "definition": "CREATE OR REPLACE FUNCTION public.calculate_player_rarity()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  WITH player_rankings AS (\r\n    SELECT \r\n      player_id,\r\n      xp,\r\n      CASE\r\n        WHEN percent_rank() OVER (ORDER BY xp DESC) <= 0.02 THEN 'Legendary'\r\n        WHEN percent_rank() OVER (ORDER BY xp DESC) <= 0.07 THEN 'World Class'\r\n        WHEN percent_rank() OVER (ORDER BY xp DESC) <= 0.20 THEN 'Professional'\r\n        WHEN percent_rank() OVER (ORDER BY xp DESC) <= 0.40 THEN 'Semi Pro'\r\n        ELSE 'Amateur'\r\n      END as calculated_rarity\r\n    FROM player_xp\r\n  )\r\n  UPDATE player_xp\r\n  SET rarity = pr.calculated_rarity\r\n  FROM player_rankings pr\r\n  WHERE player_xp.player_id = pr.player_id;\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "update_player_xp",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.update_player_xp()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- When a game is marked as completed\r\n    IF (TG_OP = 'UPDATE' AND NEW.completed = true AND (OLD.completed = false OR OLD.completed IS NULL)) THEN\r\n        -- Update XP for all players who participated in this game\r\n        INSERT INTO player_xp (player_id, xp, last_calculated)\r\n        SELECT \r\n            gr.player_id,\r\n            calculate_player_xp(gr.player_id),\r\n            CURRENT_TIMESTAMP\r\n        FROM game_registrations gr\r\n        WHERE gr.game_id = NEW.id\r\n        ON CONFLICT (player_id) DO UPDATE\r\n        SET \r\n            xp = EXCLUDED.xp,\r\n            last_calculated = EXCLUDED.last_calculated;\r\n    END IF;\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "delete_game_cascade",
           "arguments": "game_id uuid",
           "return_type": "void",
@@ -7533,6 +7734,17 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.get_player_caps(target_year integer DEFAULT NULL::integer)\n RETURNS TABLE(id uuid, friendly_name text, total_games integer)\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN QUERY\r\n    SELECT \r\n        p.id,\r\n        p.friendly_name,\r\n        COUNT(gr.id)::integer as total_games\r\n    FROM players p\r\n    JOIN game_registrations gr ON gr.player_id = p.id\r\n    JOIN games g ON gr.game_id = g.id\r\n    WHERE gr.status = 'selected'\r\n    AND (target_year IS NULL OR EXTRACT(YEAR FROM g.date) = target_year)\r\n    GROUP BY p.id, p.friendly_name\r\n    HAVING COUNT(gr.id) >= 10\r\n    ORDER BY COUNT(gr.id) DESC;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "get_player_with_reserve_xp",
+          "arguments": "p_player_id uuid",
+          "return_type": "TABLE(id uuid, friendly_name text, avatar_svg text, caps integer, active_bonuses integer, active_penalties integer, current_streak integer, max_streak integer, win_rate numeric, xp integer, user_id uuid, reserve_xp integer, reserve_count integer)",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": true,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.get_player_with_reserve_xp(p_player_id uuid)\n RETURNS TABLE(id uuid, friendly_name text, avatar_svg text, caps integer, active_bonuses integer, active_penalties integer, current_streak integer, max_streak integer, win_rate numeric, xp integer, user_id uuid, reserve_xp integer, reserve_count integer)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n    RETURN QUERY\r\n    SELECT \r\n        p.id,\r\n        p.friendly_name,\r\n        p.avatar_svg,\r\n        p.caps,\r\n        p.active_bonuses,\r\n        p.active_penalties,\r\n        p.current_streak,\r\n        p.max_streak,\r\n        p.win_rate,\r\n        COALESCE(px.xp, 0) as xp,\r\n        p.user_id,\r\n        COALESCE(SUM(rt.xp_amount), 0)::INTEGER as reserve_xp,\r\n        COUNT(rt.id)::INTEGER as reserve_count\r\n    FROM players p\r\n    LEFT JOIN player_xp px ON px.player_id = p.id\r\n    LEFT JOIN reserve_xp_transactions rt ON rt.player_id = p.id\r\n    WHERE p.id = p_player_id\r\n    GROUP BY \r\n        p.id,\r\n        p.friendly_name,\r\n        p.avatar_svg,\r\n        p.caps,\r\n        p.active_bonuses,\r\n        p.active_penalties,\r\n        p.current_streak,\r\n        p.max_streak,\r\n        p.win_rate,\r\n        px.xp,\r\n        p.user_id;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "reject_slot_offer",
@@ -7609,7 +7821,7 @@
           "leakproof": false,
           "security_definer": false,
           "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.handle_game_deletion()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    affected_players UUID[];\r\nBEGIN\r\n    -- Get all players who had reserve XP for this game\r\n    SELECT ARRAY_AGG(DISTINCT player_id) \r\n    INTO affected_players\r\n    FROM reserve_xp_transactions \r\n    WHERE game_id = OLD.id;\r\n\r\n    -- Delete all reserve XP transactions for this game\r\n    DELETE FROM reserve_xp_transactions WHERE game_id = OLD.id;\r\n\r\n    -- Add players who were registered for the game\r\n    affected_players := array_cat(\r\n        affected_players,\r\n        ARRAY(\r\n            SELECT DISTINCT player_id \r\n            FROM game_registrations \r\n            WHERE game_id = OLD.id\r\n        )\r\n    );\r\n\r\n    -- Recalculate XP for all affected players\r\n    IF affected_players IS NOT NULL THEN\r\n        UPDATE player_xp\r\n        SET \r\n            xp = calculate_player_xp(player_id),\r\n            last_calculated = CURRENT_TIMESTAMP\r\n        WHERE player_id = ANY(affected_players);\r\n    END IF;\r\n\r\n    RETURN OLD;\r\nEND;\r\n$function$\n"
+          "definition": "CREATE OR REPLACE FUNCTION public.handle_game_deletion()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Recalculate attendance streaks\r\n    WITH player_streaks AS (\r\n        SELECT \r\n            p.id as player_id,\r\n            COALESCE(\r\n                (\r\n                    SELECT COUNT(*)\r\n                    FROM game_registrations gr\r\n                    JOIN games g ON g.id = gr.game_id\r\n                    WHERE gr.player_id = p.id\r\n                    AND gr.status = 'selected'\r\n                    AND g.completed = true\r\n                    AND g.date >= (\r\n                        SELECT MAX(g2.date)\r\n                        FROM game_registrations gr2\r\n                        JOIN games g2 ON g2.id = gr2.game_id\r\n                        WHERE gr2.player_id = p.id\r\n                        AND (gr2.status != 'selected' OR NOT g2.completed)\r\n                        AND g2.date < NOW()\r\n                    )\r\n                ), 0\r\n            ) as streak\r\n        FROM players p\r\n    )\r\n    UPDATE players p\r\n    SET current_streak = ps.streak\r\n    FROM player_streaks ps\r\n    WHERE p.id = ps.player_id;\r\n\r\n    -- Recalculate bench warmer streaks\r\n    WITH bench_streaks AS (\r\n        SELECT \r\n            p.id as player_id,\r\n            COALESCE(\r\n                (\r\n                    SELECT COUNT(*)\r\n                    FROM game_registrations gr\r\n                    JOIN games g ON g.id = gr.game_id\r\n                    WHERE gr.player_id = p.id\r\n                    AND gr.status = 'reserve'\r\n                    AND g.completed = true\r\n                    AND g.date >= (\r\n                        SELECT MAX(g2.date)\r\n                        FROM game_registrations gr2\r\n                        JOIN games g2 ON g2.id = gr2.game_id\r\n                        WHERE gr2.player_id = p.id\r\n                        AND (gr2.status != 'reserve' OR NOT g2.completed)\r\n                        AND g2.date < NOW()\r\n                    )\r\n                ), 0\r\n            ) as streak\r\n        FROM players p\r\n    )\r\n    UPDATE players p\r\n    SET bench_warmer_streak = bs.streak\r\n    FROM bench_streaks bs\r\n    WHERE p.id = bs.player_id;\r\n\r\n    RETURN OLD;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "handle_slot_offer_response",
@@ -7621,6 +7833,17 @@
           "security_definer": true,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.handle_slot_offer_response(p_offer_id uuid, p_status text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n  v_game_id UUID;\r\n  v_player_id UUID;\r\nBEGIN\r\n  -- Get the offer details\r\n  SELECT game_id, player_id INTO v_game_id, v_player_id\r\n  FROM slot_offers\r\n  WHERE id = p_offer_id;\r\n\r\n  IF NOT FOUND THEN\r\n    RAISE EXCEPTION 'Slot offer not found';\r\n  END IF;\r\n\r\n  -- If accepting the offer\r\n  IF p_status = 'accepted' THEN\r\n    -- Update game registration to selected\r\n    UPDATE game_registrations\r\n    SET status = 'selected'\r\n    WHERE game_id = v_game_id\r\n    AND player_id = v_player_id;\r\n\r\n    -- Mark all other offers for this game as void\r\n    UPDATE slot_offers\r\n    SET status = 'void'\r\n    WHERE game_id = v_game_id\r\n    AND id != p_offer_id;\r\n\r\n    -- Create notifications for other players\r\n    INSERT INTO notifications (\r\n      player_id,\r\n      type,\r\n      message,\r\n      metadata,\r\n      created_at\r\n    )\r\n    SELECT \r\n      so.player_id,\r\n      'system_message',\r\n      'The slot you were offered has been filled by another player.',\r\n      jsonb_build_object(\r\n        'game_id', v_game_id,\r\n        'action', 'slot_filled'\r\n      ),\r\n      NOW()\r\n    FROM slot_offers so\r\n    WHERE so.game_id = v_game_id\r\n    AND so.id != p_offer_id\r\n    AND so.status = 'pending';\r\n  END IF;\r\n\r\n  -- Update the offer status\r\n  UPDATE slot_offers\r\n  SET \r\n    status = p_status,\r\n    responded_at = NOW()\r\n  WHERE id = p_offer_id;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "update_streaks_on_game_change",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.update_streaks_on_game_change()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Update attendance streaks\r\n    WITH player_streaks AS (\r\n        SELECT \r\n            p.id as player_id,\r\n            COUNT(*) as streak\r\n        FROM players p\r\n        JOIN game_registrations gr ON gr.player_id = p.id\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE gr.status = 'selected'\r\n        AND g.completed = true\r\n        AND NOT EXISTS (\r\n            SELECT 1\r\n            FROM games g2\r\n            LEFT JOIN game_registrations gr2 ON gr2.game_id = g2.id AND gr2.player_id = p.id\r\n            WHERE g2.sequence_number > g.sequence_number\r\n            AND g2.completed = true\r\n            AND (gr2.id IS NULL OR gr2.status != 'selected')\r\n        )\r\n        GROUP BY p.id\r\n    )\r\n    UPDATE players p\r\n    SET current_streak = COALESCE(ps.streak, 0)\r\n    FROM player_streaks ps\r\n    WHERE p.id = ps.player_id;\r\n\r\n    -- Update bench warmer streaks\r\n    WITH bench_streaks AS (\r\n        SELECT \r\n            p.id as player_id,\r\n            COUNT(*) as streak\r\n        FROM players p\r\n        JOIN game_registrations gr ON gr.player_id = p.id\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE gr.status = 'reserve'\r\n        AND g.completed = true\r\n        AND NOT EXISTS (\r\n            SELECT 1\r\n            FROM games g2\r\n            LEFT JOIN game_registrations gr2 ON gr2.game_id = g2.id AND gr2.player_id = p.id\r\n            WHERE g2.sequence_number > g.sequence_number\r\n            AND g2.completed = true\r\n            AND (gr2.id IS NULL OR gr2.status != 'reserve')\r\n        )\r\n        GROUP BY p.id\r\n    )\r\n    UPDATE players p\r\n    SET bench_warmer_streak = COALESCE(bs.streak, 0)\r\n    FROM bench_streaks bs\r\n    WHERE p.id = bs.player_id;\r\n\r\n    -- The XP will be automatically recalculated by our existing XP trigger\r\n    RETURN NULL;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "promote_to_super_admin",
@@ -7678,17 +7901,6 @@
           "definition": "CREATE OR REPLACE FUNCTION public.process_team_announcements()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n    game_record RECORD;\r\nBEGIN\r\n    FOR game_record IN\r\n        SELECT id\r\n        FROM games\r\n        WHERE team_announcement_time <= NOW()\r\n        AND team_announcement_time > NOW() - INTERVAL '5 minutes'\r\n        AND teams_announced = FALSE\r\n    LOOP\r\n        -- Balance teams for this game\r\n        PERFORM balance_teams(game_record.id);\r\n        \r\n        -- Mark the game as having teams announced\r\n        UPDATE games\r\n        SET teams_announced = TRUE\r\n        WHERE id = game_record.id;\r\n    END LOOP;\r\nEND;\r\n$function$\n"
         },
         {
-          "name": "update_player_streaks",
-          "arguments": "",
-          "return_type": "trigger",
-          "description": null,
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": false,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.update_player_streaks()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Your existing streak update logic here\r\n    -- But make sure to return the correct type\r\n    \r\n    IF TG_OP = 'INSERT' THEN\r\n        RETURN NEW;\r\n    ELSIF TG_OP = 'DELETE' THEN\r\n        RETURN OLD;\r\n    ELSIF TG_OP = 'UPDATE' THEN\r\n        RETURN NEW;\r\n    END IF;\r\nEND;\r\n$function$\n"
-        },
-        {
           "name": "update_player_caps_on_game_completion",
           "arguments": "",
           "return_type": "trigger",
@@ -7733,6 +7945,17 @@
           "definition": "CREATE OR REPLACE FUNCTION public.count_games_played_together(player_one_id uuid, player_two_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n  RETURN (\r\n    SELECT COUNT(DISTINCT gr1.game_id)\r\n    FROM game_registrations gr1\r\n    INNER JOIN game_registrations gr2 ON gr1.game_id = gr2.game_id\r\n    INNER JOIN games g ON gr1.game_id = g.id\r\n    WHERE gr1.player_id = player_one_id\r\n    AND gr2.player_id = player_two_id\r\n    AND g.completed = true\r\n  );\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "handle_game_deletion_xp",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.handle_game_deletion_xp()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    affected_player_id uuid;\r\nBEGIN\r\n    -- Store the affected player IDs before the game is deleted\r\n    FOR affected_player_id IN \r\n        SELECT DISTINCT player_id \r\n        FROM game_registrations \r\n        WHERE game_id = OLD.id\r\n    LOOP\r\n        -- Update player_xp table using the same pattern as other triggers\r\n        INSERT INTO player_xp (player_id, xp, last_calculated)\r\n        VALUES (\r\n            affected_player_id,\r\n            calculate_player_xp(affected_player_id),\r\n            CURRENT_TIMESTAMP\r\n        )\r\n        ON CONFLICT (player_id) \r\n        DO UPDATE SET \r\n            xp = EXCLUDED.xp,\r\n            last_calculated = EXCLUDED.last_calculated;\r\n    END LOOP;\r\n    \r\n    RETURN OLD;\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "handle_admin_slot_offer_action",
           "arguments": "p_slot_offer_id uuid, p_action text, p_admin_id uuid DEFAULT NULL::uuid",
           "return_type": "void",
@@ -7742,6 +7965,17 @@
           "security_definer": true,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.handle_admin_slot_offer_action(p_slot_offer_id uuid, p_action text, p_admin_id uuid DEFAULT NULL::uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nBEGIN\r\n    -- Validate the action\r\n    IF p_action NOT IN ('accept', 'decline') THEN\r\n        RAISE EXCEPTION 'Invalid action: must be either accept or decline';\r\n    END IF;\r\n\r\n    -- Call the existing handle_slot_offer_response function\r\n    PERFORM handle_slot_offer_response(\r\n        p_slot_offer_id,\r\n        CASE \r\n            WHEN p_action = 'accept' THEN 'accepted'::slot_offer_status\r\n            WHEN p_action = 'decline' THEN 'declined'::slot_offer_status\r\n        END\r\n    );\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "calculate_player_streak",
+          "arguments": "player_uuid uuid",
+          "return_type": "integer",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.calculate_player_streak(player_uuid uuid)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN (\r\n        SELECT \r\n            COUNT(*)\r\n        FROM players p\r\n        JOIN game_registrations gr ON gr.player_id = p.id\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE p.id = player_uuid\r\n        AND gr.status = 'selected'\r\n        AND g.completed = true\r\n        AND NOT EXISTS (\r\n            SELECT 1\r\n            FROM games g2\r\n            LEFT JOIN game_registrations gr2 ON gr2.game_id = g2.id AND gr2.player_id = p.id\r\n            WHERE g2.sequence_number > g.sequence_number\r\n            AND g2.completed = true\r\n            AND (gr2.id IS NULL OR gr2.status != 'selected')\r\n        )\r\n    );\r\nEND;\r\n$function$\n"
         },
         {
           "name": "handle_slot_offer_response",
@@ -7777,6 +8011,17 @@
           "definition": "CREATE OR REPLACE FUNCTION public.handle_slot_decline_penalty()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- Only process if the slot offer is being declined\r\n    IF NEW.status = 'declined' AND OLD.status != 'declined' THEN\r\n        -- Check if the offer was made on the same day as the game\r\n        IF NOT EXISTS (\r\n            SELECT 1 \r\n            FROM games g \r\n            WHERE g.id = NEW.game_id \r\n            AND DATE(g.date) = DATE(NEW.created_at)\r\n        ) THEN\r\n            -- Insert penalty transaction\r\n            INSERT INTO reserve_xp_transactions (\r\n                player_id,\r\n                game_id,\r\n                xp_amount,\r\n                transaction_type\r\n            )\r\n            VALUES (\r\n                NEW.player_id,\r\n                NEW.game_id,\r\n                -10,\r\n                'SLOT_DECLINE_PENALTY'\r\n            );\r\n\r\n            -- Update player XP\r\n            UPDATE player_xp\r\n            SET \r\n                xp = calculate_player_xp(player_id),\r\n                last_calculated = CURRENT_TIMESTAMP\r\n            WHERE player_id = NEW.player_id;\r\n        END IF;\r\n    END IF;\r\n\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
         },
         {
+          "name": "calculate_bench_warmer_streak",
+          "arguments": "player_uuid uuid",
+          "return_type": "integer",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.calculate_bench_warmer_streak(player_uuid uuid)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN (\r\n        SELECT \r\n            COUNT(*)\r\n        FROM players p\r\n        JOIN game_registrations gr ON gr.player_id = p.id\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE p.id = player_uuid\r\n        AND gr.status = 'reserve'\r\n        AND g.completed = true\r\n        AND NOT EXISTS (\r\n            SELECT 1\r\n            FROM games g2\r\n            LEFT JOIN game_registrations gr2 ON gr2.game_id = g2.id AND gr2.player_id = p.id\r\n            WHERE g2.sequence_number > g.sequence_number\r\n            AND g2.completed = true\r\n            AND (gr2.id IS NULL OR gr2.status != 'reserve')\r\n        )\r\n    );\r\nEND;\r\n$function$\n"
+        },
+        {
           "name": "accept_slot_offer",
           "arguments": "p_slot_offer_id uuid",
           "return_type": "void",
@@ -7797,6 +8042,17 @@
           "security_definer": true,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.calculate_balanced_teams(input_game_id uuid)\n RETURNS TABLE(team text, player_id uuid, friendly_name text, attack_rating numeric, defense_rating numeric, experience_factor numeric)\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n    total_players integer;\r\n    players_per_team integer;\r\nBEGIN\r\n    -- Get total number of confirmed players\r\n    SELECT COUNT(*) INTO total_players\r\n    FROM public.game_registrations gp\r\n    WHERE gp.game_id = input_game_id AND gp.status = 'confirmed';\r\n\r\n    -- Calculate players per team\r\n    players_per_team := total_players / 2;\r\n\r\n    RETURN QUERY\r\n    WITH player_stats AS (\r\n        SELECT \r\n            gp.player_id,\r\n            p.friendly_name,\r\n            COALESCE(ps.attack_rating, 0) as attack_rating,\r\n            COALESCE(ps.defense_rating, 0) as defense_rating,\r\n            -- Calculate experience factor based on caps and streaks\r\n            (COALESCE(ps.caps, 0) * 0.1 + COALESCE(ps.current_streak, 0) * 0.05) as experience_factor,\r\n            -- Calculate weighted total rating\r\n            (COALESCE(ps.attack_rating, 0) + COALESCE(ps.defense_rating, 0)) * \r\n            (1 + (COALESCE(ps.active_bonuses, 0) * 0.1) - (COALESCE(ps.active_penalties, 0) * 0.1)) as weighted_rating\r\n        FROM public.game_registrations gp\r\n        JOIN public.players p ON p.id = gp.player_id\r\n        LEFT JOIN public.player_stats ps ON ps.id = gp.player_id\r\n        WHERE gp.game_id = input_game_id AND gp.status = 'confirmed'\r\n    ),\r\n    ranked_players AS (\r\n        SELECT \r\n            *,\r\n            ROW_NUMBER() OVER (\r\n                ORDER BY weighted_rating DESC\r\n            ) as rank\r\n        FROM player_stats\r\n    ),\r\n    team_assignments AS (\r\n        SELECT \r\n            CASE \r\n                -- Zigzag pattern for more balanced distribution\r\n                WHEN rank % 4 IN (1, 4) THEN 'blue'\r\n                ELSE 'orange'\r\n            END as team,\r\n            player_id,\r\n            friendly_name,\r\n            attack_rating,\r\n            defense_rating,\r\n            experience_factor\r\n        FROM ranked_players\r\n    )\r\n    SELECT \r\n        ta.team,\r\n        ta.player_id,\r\n        ta.friendly_name,\r\n        ta.attack_rating,\r\n        ta.defense_rating,\r\n        ta.experience_factor\r\n    FROM team_assignments ta\r\n    ORDER BY ta.team, (ta.attack_rating + ta.defense_rating) DESC;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "update_player_streaks",
+          "arguments": "",
+          "return_type": "trigger",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.update_player_streaks()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    -- For game_registrations changes\r\n    IF TG_TABLE_NAME = 'game_registrations' THEN\r\n        -- Only update streak for completed/historical games\r\n        IF EXISTS (\r\n            SELECT 1 \r\n            FROM games g \r\n            WHERE g.id = NEW.game_id \r\n            AND ((g.completed = true AND g.needs_completion = false) OR g.is_historical = true)\r\n        ) THEN\r\n            UPDATE players \r\n            SET \r\n                current_streak = calculate_player_streak(NEW.player_id),\r\n                bench_warmer_streak = calculate_bench_warmer_streak(NEW.player_id)\r\n            WHERE id = NEW.player_id;\r\n        END IF;\r\n    \r\n    -- For games changes\r\n    ELSIF TG_TABLE_NAME = 'games' THEN\r\n        -- When a game is marked as completed or historical, or deleted\r\n        IF (TG_OP = 'UPDATE' AND \r\n            (\r\n                (NEW.completed = true AND (OLD.completed = false OR OLD.completed IS NULL))\r\n                OR (NEW.is_historical = true AND (OLD.is_historical = false OR OLD.is_historical IS NULL))\r\n            )\r\n        ) OR TG_OP = 'DELETE' THEN\r\n            -- Update streaks for all players in this game\r\n            UPDATE players p\r\n            SET \r\n                current_streak = calculate_player_streak(p.id),\r\n                bench_warmer_streak = calculate_bench_warmer_streak(p.id)\r\n            FROM game_registrations gr\r\n            WHERE gr.game_id = COALESCE(NEW.id, OLD.id)\r\n            AND gr.player_id = p.id;\r\n        END IF;\r\n    END IF;\r\n    \r\n    RETURN COALESCE(NEW, OLD);\r\nEND;\r\n$function$\n"
         },
         {
           "name": "create_game",
@@ -7876,17 +8132,6 @@
           "definition": "CREATE OR REPLACE FUNCTION public.get_best_buddies()\n RETURNS TABLE(id uuid, friendly_name text, buddy_id uuid, buddy_friendly_name text, games_together bigint)\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    RETURN QUERY\r\n    WITH team_pairs AS (\r\n        SELECT \r\n            gr1.player_id as player1_id,\r\n            gr2.player_id as player2_id,\r\n            COUNT(*) as games_together\r\n        FROM game_registrations gr1\r\n        JOIN game_registrations gr2 \r\n            ON gr1.game_id = gr2.game_id \r\n            AND gr1.team = gr2.team\r\n            AND gr1.player_id < gr2.player_id\r\n        WHERE gr1.status = 'selected' \r\n        AND gr2.status = 'selected'\r\n        GROUP BY gr1.player_id, gr2.player_id\r\n    )\r\n    SELECT \r\n        p1.id,\r\n        p1.friendly_name,\r\n        p2.id as buddy_id,\r\n        p2.friendly_name as buddy_friendly_name,\r\n        tp.games_together\r\n    FROM team_pairs tp\r\n    JOIN players p1 ON p1.id = tp.player1_id\r\n    JOIN players p2 ON p2.id = tp.player2_id\r\n    ORDER BY tp.games_together DESC\r\n    LIMIT 3;\r\nEND;\r\n$function$\n"
         },
         {
-          "name": "calculate_player_xp",
-          "arguments": "p_player_id uuid",
-          "return_type": "integer",
-          "description": "Calculates player XP based on:\r\n1. Base XP from selected games (weighted by global game count):\r\n   - Current Game: 20 XP\r\n   - 1-2 Games Ago: 18 XP\r\n   - 3-4 Games Ago: 16 XP\r\n   - 5-9 Games Ago: 14 XP\r\n   - 10-19 Games Ago: 12 XP\r\n   - 20-29 Games Ago: 10 XP\r\n   - 30-39 Games Ago: 5 XP\r\n   - 40+ Games Ago: 0 XP\r\n2. Streak multiplier: +10% per streak level (only applies to base XP)\r\n3. Reserve XP (+5 for being reserve, -10 for declining slots)\r\nFinal XP = (base_xp * streak_multiplier) + reserve_xp",
-          "volatility": "v",
-          "leakproof": false,
-          "security_definer": false,
-          "parallel_safety": "u",
-          "definition": "CREATE OR REPLACE FUNCTION public.calculate_player_xp(p_player_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    v_base_xp integer;\r\n    v_streak_multiplier decimal;\r\n    v_reserve_xp integer;\r\n    v_final_xp integer;\r\n    v_latest_game_number integer;\r\nBEGIN\r\n    -- Get the latest game number from ALL games\r\n    SELECT MAX(sequence_number) INTO v_latest_game_number FROM games WHERE completed = true;\r\n\r\n    -- Calculate base XP from game participation (only for selected players)\r\n    WITH player_games AS (\r\n        SELECT \r\n            g.id,\r\n            g.sequence_number,\r\n            gr.status,\r\n            (v_latest_game_number - g.sequence_number) as games_ago  -- Calculate based on global game count\r\n        FROM game_registrations gr\r\n        JOIN games g ON g.id = gr.game_id\r\n        WHERE gr.player_id = p_player_id\r\n        AND g.completed = true\r\n        AND gr.status = 'selected'  -- Only include selected games\r\n        ORDER BY g.sequence_number DESC\r\n    ),\r\n    game_weights AS (\r\n        SELECT \r\n            id,\r\n            sequence_number,\r\n            games_ago,\r\n            CASE\r\n                WHEN games_ago = 0 THEN 20   -- Current game\r\n                WHEN games_ago <= 2 THEN 18   -- 1-2 games ago\r\n                WHEN games_ago <= 4 THEN 16   -- 3-4 games ago\r\n                WHEN games_ago <= 9 THEN 14   -- 5-9 games ago\r\n                WHEN games_ago <= 19 THEN 12  -- 10-19 games ago\r\n                WHEN games_ago <= 29 THEN 10  -- 20-29 games ago\r\n                WHEN games_ago <= 39 THEN 5   -- 30-39 games ago\r\n                ELSE 0                        -- 40+ games ago\r\n            END as weight\r\n        FROM player_games\r\n    )\r\n    SELECT COALESCE(SUM(weight), 0)\r\n    INTO v_base_xp \r\n    FROM game_weights;\r\n\r\n    -- Get streak multiplier (only applies to base XP, not reserve XP)\r\n    -- +10% per streak level\r\n    SELECT \r\n        COALESCE(1 + (current_streak * 0.1), 1)\r\n    INTO v_streak_multiplier\r\n    FROM players\r\n    WHERE id = p_player_id;\r\n\r\n    -- Get reserve XP (flat +5 for being reserve, -10 for declining slots)\r\n    SELECT \r\n        COALESCE(SUM(xp_amount), 0)\r\n    INTO v_reserve_xp\r\n    FROM reserve_xp_transactions\r\n    WHERE player_id = p_player_id;\r\n\r\n    -- Calculate final XP\r\n    -- Base XP gets streak multiplier, reserve XP is added flat\r\n    v_final_xp := ROUND(v_base_xp * v_streak_multiplier) + v_reserve_xp;\r\n\r\n    -- Return final XP (never negative)\r\n    RETURN GREATEST(v_final_xp, 0);\r\nEND;\r\n$function$\n"
-        },
-        {
           "name": "get_player_stats",
           "arguments": "target_year integer DEFAULT NULL::integer",
           "return_type": "TABLE(id uuid, friendly_name text, caps integer, win_rate numeric, current_streak integer, max_streak integer, recent_games integer)",
@@ -7951,6 +8196,17 @@
           "security_definer": false,
           "parallel_safety": "u",
           "definition": "CREATE OR REPLACE FUNCTION public.handle_registration_close(input_game_id uuid)\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    total_slots INTEGER;\r\n    random_slots INTEGER;\r\n    xp_slots INTEGER;\r\nBEGIN\r\n    -- Get game details\r\n    SELECT max_players, random_slots INTO total_slots, random_slots\r\n    FROM games\r\n    WHERE id = input_game_id;\r\n    \r\n    -- Calculate XP-based slots\r\n    xp_slots := total_slots - random_slots;\r\n    \r\n    -- Update game status\r\n    UPDATE games \r\n    SET status = 'registration_closed'\r\n    WHERE id = input_game_id;\r\n    \r\n    -- Select players by XP (for xp_slots)\r\n    WITH xp_selections AS (\r\n        SELECT gr.id\r\n        FROM game_registrations gr\r\n        JOIN players p ON gr.player_id = p.id\r\n        WHERE gr.game_id = input_game_id\r\n        ORDER BY p.xp DESC\r\n        LIMIT xp_slots\r\n    ),\r\n    -- Select remaining players randomly (for random_slots)\r\n    random_selections AS (\r\n        SELECT gr.id\r\n        FROM game_registrations gr\r\n        WHERE gr.game_id = input_game_id\r\n        AND gr.id NOT IN (SELECT id FROM xp_selections)\r\n        ORDER BY random()\r\n        LIMIT random_slots\r\n    )\r\n    -- Update selected players' status\r\n    UPDATE game_registrations\r\n    SET status = \r\n        CASE \r\n            WHEN id IN (SELECT id FROM xp_selections) OR \r\n                 id IN (SELECT id FROM random_selections)\r\n            THEN 'selected'\r\n            ELSE 'reserve'\r\n        END\r\n    WHERE game_id = input_game_id;\r\nEND;\r\n$function$\n"
+        },
+        {
+          "name": "admin_recalculate_all_player_xp",
+          "arguments": "",
+          "return_type": "void",
+          "description": null,
+          "volatility": "v",
+          "leakproof": false,
+          "security_definer": false,
+          "parallel_safety": "u",
+          "definition": "CREATE OR REPLACE FUNCTION public.admin_recalculate_all_player_xp()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\r\nDECLARE\r\n    player_rec RECORD;\r\nBEGIN\r\n    -- Check if user is admin or super admin\r\n    IF NOT EXISTS (\r\n        SELECT 1 \r\n        FROM players \r\n        WHERE user_id = auth.uid() \r\n        AND (is_admin = true OR is_super_admin = true)\r\n    ) THEN\r\n        RAISE EXCEPTION 'Unauthorized: User does not have admin permissions';\r\n    END IF;\r\n\r\n    -- Loop through each player and recalculate their XP\r\n    FOR player_rec IN SELECT id FROM players\r\n    LOOP\r\n        -- Update player_xp table with the calculated XP\r\n        INSERT INTO player_xp (player_id, xp, last_calculated)\r\n        VALUES (\r\n            player_rec.id,\r\n            calculate_player_xp(player_rec.id),\r\n            CURRENT_TIMESTAMP\r\n        )\r\n        ON CONFLICT (player_id) \r\n        DO UPDATE SET \r\n            xp = EXCLUDED.xp,\r\n            last_calculated = EXCLUDED.last_calculated;\r\n    END LOOP;\r\nEND;\r\n$function$\n"
         },
         {
           "name": "get_player_attendance_streaks",
