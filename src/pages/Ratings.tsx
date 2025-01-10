@@ -29,6 +29,7 @@ export default function Ratings() {
   const [filterOption, setFilterOption] = useState<FilterOption>('all');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [whatsAppMembersOnly, setWhatsAppMembersOnly] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [ratings, setRatings] = useState<{ attack: number; defense: number }>({
     attack: 0,
@@ -47,10 +48,18 @@ export default function Ratings() {
 
   useEffect(() => {
     applyFiltersAndSort();
-  }, [players, sortOption, filterOption, whatsAppMembersOnly]);
+  }, [players, sortOption, filterOption, whatsAppMembersOnly, searchQuery]);
 
   const applyFiltersAndSort = () => {
     let result = [...players];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(player => 
+        player.friendly_name.toLowerCase().includes(query)
+      );
+    }
 
     // Apply WhatsApp filter
     if (whatsAppMembersOnly) {
@@ -269,6 +278,18 @@ export default function Ratings() {
               className="overflow-hidden"
             >
               <div className="mt-4 p-4 bg-white rounded-lg shadow-md space-y-4">
+                {/* Search Input */}
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-2">Search Players</label>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by name..."
+                    className="w-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                  />
+                </div>
+
                 {/* Sort and Filter Controls */}
                 <div className="flex flex-wrap gap-4">
                   <div className="flex-1 min-w-[200px]">
