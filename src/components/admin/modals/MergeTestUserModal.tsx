@@ -217,7 +217,7 @@ export default function MergeTestUserModal({
       // Recalculate XP for the real user
       const { error: recalcError } = await supabaseAdmin
         .rpc('calculate_player_xp', {
-          player_id: selectedUserId
+          p_player_id: selectedUserId
         });
 
       if (recalcError) throw recalcError;
