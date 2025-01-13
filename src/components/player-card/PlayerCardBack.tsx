@@ -51,7 +51,7 @@ export const PlayerCardBack: React.FC<PlayerCardProps> = ({
           {totalGames >= 10 ? (
             <span className="font-bold text-sm">{winRate?.toFixed(1) || '0.0'}%</span>
           ) : (
-            <span className="text-xs opacity-70">More Data Needed ({totalGames}/10)</span>
+            <span className="text-xs opacity-70">Pending ({totalGames}/10)</span>
           )}
         </div>
 
