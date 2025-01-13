@@ -89,7 +89,11 @@ export const PlayerCardBack: React.FC<PlayerCardProps> = ({
       </div>
 
       <div className="mt-2 flex justify-center">
-        <Link to={`/players/${id}`} className="badge badge-outline hover:bg-white/10">
+        <Link 
+          to={`/players/${id}`} 
+          className="badge badge-lg badge-outline hover:bg-white/10 px-4 py-3 text-sm font-semibold z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
           VIEW PROFILE
         </Link>
       </div>

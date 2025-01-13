@@ -34,30 +34,29 @@ export const PlayerCard: React.FC<PlayerCardProps> = (props) => {
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <motion.div 
-        className="relative w-full h-full"
-        initial={false}
+        className="relative w-full h-full preserve-3d"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6 }}
+        style={{ transformStyle: 'preserve-3d' }}
       >
         {/* Front of card */}
-        <motion.div 
-          className={`absolute w-full h-full ${getRarityColor(props.rarity)} text-white rounded-xl p-4 backface-hidden`}
-          initial={false}
-          animate={{ opacity: isFlipped ? 0 : 1 }}
-          transition={{ duration: 0.6 }}
+        <div 
+          className={`absolute w-full h-full ${getRarityColor(props.rarity)} text-white rounded-xl p-4`}
+          style={{ backfaceVisibility: 'hidden' }}
         >
           <PlayerCardFront {...props} />
-        </motion.div>
+        </div>
 
         {/* Back of card */}
-        <motion.div 
-          className={`absolute w-full h-full ${getRarityColor(props.rarity)} rounded-xl p-4 backface-hidden`}
-          initial={false}
-          animate={{ opacity: isFlipped ? 1 : 0, rotateY: 180 }}
-          transition={{ duration: 0.6 }}
+        <div 
+          className={`absolute w-full h-full ${getRarityColor(props.rarity)} text-white rounded-xl p-4`}
+          style={{ 
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)'
+          }}
         >
           <PlayerCardBack {...props} />
-        </motion.div>
+        </div>
       </motion.div>
     </motion.div>
   )
