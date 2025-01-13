@@ -74,29 +74,35 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         setLoading(true);
         setError(null);
 
-        // Get win rates using the get_player_win_rates function
+        // Get win rates
         const { data: winRatesData, error: winRatesError } = await supabase
           .rpc('get_player_win_rates');
 
         if (winRatesError) throw winRatesError;
 
-        // Try to get balanced teams from database
+        // Get balanced teams data
         const { data: balancedTeamsData, error: balanceError } = await supabase
           .from('balanced_team_assignments')
-          .select('*')
-          .eq('game_id', gameId);
+          .select('game_id, team_assignments, created_at')
+          .eq('game_id', gameId)
+          .order('created_at', { ascending: false })
+          .limit(1);
 
         if (balanceError) throw balanceError;
+
+        const balancedTeams = balancedTeamsData?.[0];
 
         // Get all registrations with selection method and player data
         const { data: registrations, error: registrationError } = await supabase
           .from('game_registrations')
           .select(`
+            id,
+            game_id,
             player_id,
-            status,
             team,
+            status,
             selection_method,
-            players!game_registrations_player_id_fkey (
+            players:players!game_registrations_player_id_fkey (
               id,
               friendly_name,
               caps,
@@ -189,7 +195,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         const reserves = transformedRegistrations.filter(p => p.status === 'reserve');
 
         setSelection({
-          id: balancedTeams?.id || '',
+          id: balancedTeams?.game_id || '',
           game_id: gameId,
           created_at: balancedTeams?.created_at || new Date().toISOString(),
           selected_players: [...blueTeam, ...orangeTeam],
@@ -281,25 +287,23 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                     transition={{ duration: 0.3 }}
                   >
                     <PlayerCard
-                      key={player.id}
                       id={player.id}
                       friendlyName={player.friendly_name}
-                      xp={player.xp}
-                      caps={player.caps}
-                      activeBonuses={player.active_bonuses}
-                      activePenalties={player.active_penalties}
-                      currentStreak={player.current_streak}
-                      maxStreak={player.max_streak}
-                      rarity={player.rarity}
+                      xp={player.xp || 0}
+                      caps={player.caps || 0}
+                      activeBonuses={player.active_bonuses || 0}
+                      activePenalties={player.active_penalties || 0}
+                      currentStreak={player.current_streak || 0}
+                      maxStreak={player.max_streak || 0}
                       avatarSvg={player.avatar_svg}
-                      isRandomlySelected={player.selection_method === 'random'}
-                      gameSequences={[]}
-                      wins={player.wins}
-                      draws={player.draws}
-                      losses={player.losses}
-                      totalGames={player.totalGames}
-                      winRate={player.winRate}
+                      rarity={player.rarity || 'Amateur'}
+                      wins={player.wins || 0}
+                      draws={player.draws || 0}
+                      losses={player.losses || 0}
+                      totalGames={player.totalGames || 0}
+                      winRate={player.winRate || 0}
                       whatsapp_group_member={player.whatsapp_group_member}
+                      isRandomlySelected={player.selection_method === 'random'}
                     />
                   </motion.div>
                 ))}
@@ -328,25 +332,23 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                     transition={{ duration: 0.3 }}
                   >
                     <PlayerCard
-                      key={player.id}
                       id={player.id}
                       friendlyName={player.friendly_name}
-                      xp={player.xp}
-                      caps={player.caps}
-                      activeBonuses={player.active_bonuses}
-                      activePenalties={player.active_penalties}
-                      currentStreak={player.current_streak}
-                      maxStreak={player.max_streak}
-                      rarity={player.rarity}
+                      xp={player.xp || 0}
+                      caps={player.caps || 0}
+                      activeBonuses={player.active_bonuses || 0}
+                      activePenalties={player.active_penalties || 0}
+                      currentStreak={player.current_streak || 0}
+                      maxStreak={player.max_streak || 0}
                       avatarSvg={player.avatar_svg}
-                      isRandomlySelected={player.selection_method === 'random'}
-                      gameSequences={[]}
-                      wins={player.wins}
-                      draws={player.draws}
-                      losses={player.losses}
-                      totalGames={player.totalGames}
-                      winRate={player.winRate}
+                      rarity={player.rarity || 'Amateur'}
+                      wins={player.wins || 0}
+                      draws={player.draws || 0}
+                      losses={player.losses || 0}
+                      totalGames={player.totalGames || 0}
+                      winRate={player.winRate || 0}
                       whatsapp_group_member={player.whatsapp_group_member}
+                      isRandomlySelected={player.selection_method === 'random'}
                     />
                   </motion.div>
                 ))}

@@ -501,7 +501,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               totalGames: playerStats[player.id]?.totalGames || 0,
               winRate: playerStats[player.id]?.winRate || 0,
               whatsapp_group_member: player.whatsapp_group_member,
-              hasActiveSlotOffers: activeSlotOffers?.length > 0
+              hasActiveSlotOffers: activeSlotOffers?.length > 0,
+              isRandomlySelected: player.selection_method === 'random'
             }))}
             isExpanded={showSelected}
             onToggle={() => setShowSelected(!showSelected)}

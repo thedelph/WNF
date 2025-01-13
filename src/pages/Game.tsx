@@ -160,22 +160,11 @@ const Game = () => {
       }));
 
       setPlayerData({
-
         registrations: allValidRegistrations.map(reg => ({
-
-          ...reg,
-
-          player: {
-
-            ...reg.player,
-
-            processed: true
-
-          }
-
+          player: reg.player,
+          status: reg.status,
+          created_at: reg.created_at || new Date().toISOString()
         })),
-
-
         selectedPlayers: transformedPlayers,
 
         reservePlayers: registrations
