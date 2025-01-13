@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import PlayerCard from '../player-card/PlayerCard';
 import { supabase } from '../../utils/supabase';
-import PlayerCard from '../PlayerCard';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 import { useGlobalXP } from '../../hooks/useGlobalXP';
 

@@ -365,6 +365,9 @@ export default function PlayerCard({
           transition={{ duration: 0.6 }}
         >
           <div className="flex flex-col items-center justify-between h-full text-white">
+            {/* Add player name at the top of the back */}
+            <h2 className="card-title text-xl mb-4">{friendlyName}</h2>
+            
             <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border-4 border-white/20">
               <img 
                 src={avatarSvg || '/default-avatar.svg'} 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import PlayerCard from '../player-card/PlayerCard';
 import { supabase } from '../../utils/supabase';
 import { ExtendedPlayerData } from '../../types/playerSelection';
-import PlayerCard from '../PlayerCard';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { ViewToggle } from './views/ViewToggle';
 import { FaUsers } from 'react-icons/fa';
@@ -87,9 +87,6 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
           .eq('game_id', gameId);
 
         if (balanceError) throw balanceError;
-
-        // Get the first balanced team assignment if any exist
-        const balancedTeams = balancedTeamsData?.[0];
 
         // Get all registrations with selection method and player data
         const { data: registrations, error: registrationError } = await supabase

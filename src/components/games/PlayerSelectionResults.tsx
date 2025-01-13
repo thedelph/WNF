@@ -13,6 +13,7 @@ import { PlayerListView } from './views/PlayerListView';
 import { getRarity } from '../../utils/rarityCalculations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import PlayerCard from '../player-card/PlayerCard';
 
 interface SelectionReasoningProps {
   selectedPlayers: any[];

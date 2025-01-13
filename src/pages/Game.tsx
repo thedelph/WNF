@@ -17,6 +17,8 @@ import { TeamSelectionResults } from '../components/games/TeamSelectionResults';
 
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
+import { PlayerCard } from '../components/player-card/PlayerCard';
+
 import { useRegistrationClose } from '../hooks/useRegistrationClose';
 
 import { useTeamAnnouncement } from '../hooks/useTeamAnnouncement';
@@ -47,13 +49,11 @@ const Game = () => {
 
   });
 
-
   const fetchGameData = useCallback(async () => {
 
     try {
 
       setIsLoading(true);
-
 
       const baseQuery = supabase
 
@@ -61,7 +61,7 @@ const Game = () => {
 
         .select(`
 
-          *,
+          *, 
 
           venue:venues!games_venue_id_fkey (
 
@@ -73,7 +73,7 @@ const Game = () => {
 
             google_maps_url
 
-          ),
+          ), 
 
           game_registrations (
 
@@ -107,12 +107,11 @@ const Game = () => {
 
             )
 
-          ),
+          ), 
 
           sequence_number
 
         `);
-
 
       const { data: game, error } = id 
 
@@ -128,12 +127,9 @@ const Game = () => {
 
             .maybeSingle();
 
-
       if (error) throw error;
 
-
       setUpcomingGame(game || null);
-
 
       if (!game) {
 
@@ -142,7 +138,6 @@ const Game = () => {
         return;
 
       }
-
 
       const registrations = game.game_registrations || [];
 
@@ -154,7 +149,6 @@ const Game = () => {
 
       );
 
-
       const transformedPlayers = selectedRegistrations.map(reg => ({
 
         player: reg.player,
@@ -164,7 +158,6 @@ const Game = () => {
         team: reg.team?.toLowerCase()
 
       }));
-
 
       setPlayerData({
 
@@ -207,13 +200,11 @@ const Game = () => {
 
   }, [id]);
 
-
   const checkUserRegistration = useCallback(async () => {
 
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user || !upcomingGame) return;
-
 
     const { data: playerProfile } = await supabase
 
@@ -225,9 +216,7 @@ const Game = () => {
 
       .single();
 
-
     if (!playerProfile) return;
-
 
     const registration = upcomingGame.game_registrations?.find(
 
@@ -235,11 +224,9 @@ const Game = () => {
 
     );
 
-
     setIsUserRegistered(!!registration);
 
   }, [upcomingGame]);
-
 
   const { isRegistrationClosed, isProcessingClose } = useRegistrationClose({
 
@@ -249,13 +236,11 @@ const Game = () => {
 
   });
 
-
   const onGameUpdated = useCallback(async () => {
 
     await fetchGameData();
 
   }, [fetchGameData]);
-
 
   const { isTeamAnnouncementTime } = useTeamAnnouncement({
 
@@ -265,7 +250,6 @@ const Game = () => {
 
   });
 
-
   const { isProcessingOpen } = useRegistrationOpen({
 
     game: upcomingGame,
@@ -273,7 +257,6 @@ const Game = () => {
     onGameUpdated: fetchGameData
 
   });
-
 
   // Determine if registration is open based on window times
 
@@ -285,13 +268,11 @@ const Game = () => {
 
     now < new Date(upcomingGame.registration_window_end);
 
-
   // Set up realtime subscription for game updates
 
   useEffect(() => {
 
     if (!upcomingGame?.id) return;
-
 
     // Subscribe to game changes
 
@@ -325,7 +306,6 @@ const Game = () => {
 
       .subscribe();
 
-
     // Subscribe to registration changes
 
     const registrationSubscription = supabase
@@ -358,7 +338,6 @@ const Game = () => {
 
       .subscribe();
 
-
     return () => {
 
       gameSubscription.unsubscribe();
@@ -369,20 +348,17 @@ const Game = () => {
 
   }, [upcomingGame?.id, fetchGameData]);
 
-
   useEffect(() => {
 
     fetchGameData();
 
   }, [fetchGameData]);
 
-
   useEffect(() => {
 
     checkUserRegistration();
 
   }, [checkUserRegistration, upcomingGame?.game_registrations]);
-
 
   const handleRegistration = async () => {
     try {
@@ -445,7 +421,6 @@ const Game = () => {
 
   }
 
-
   if (!upcomingGame) {
 
     return (
@@ -460,7 +435,6 @@ const Game = () => {
 
   }
 
-
   return (
     <div className="space-y-8">
       <GameHeader
@@ -472,6 +446,7 @@ const Game = () => {
       {/* Only show GameRegistration and RegisteredPlayers during registration window */}
       {isRegistrationOpen && (
         <>
+
           <GameRegistration
             game={upcomingGame}
             isRegistrationOpen={isRegistrationOpen}
@@ -483,6 +458,7 @@ const Game = () => {
           />
           <RegisteredPlayers registrations={playerData.registrations} />
         </>
+
       )}
 
       {/* Show PlayerSelectionResults after registration closes but before team announcement */}
@@ -502,6 +478,5 @@ const Game = () => {
     </div>
   );
 };
-
 
 export default Game;

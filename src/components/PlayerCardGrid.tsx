@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import PlayerCard from './PlayerCard'
+import PlayerCard from './player-card/PlayerCard'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 
@@ -200,7 +200,6 @@ export default function PlayerCardGrid() {
 
   const handleSort = (key: keyof Player) => {
     setSortConfig(current => ({
-
       key,
       direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
     }));
