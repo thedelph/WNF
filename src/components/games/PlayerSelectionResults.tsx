@@ -13,7 +13,7 @@ import { PlayerListView } from './views/PlayerListView';
 import { getRarity } from '../../utils/rarityCalculations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import PlayerCard from '../player-card/PlayerCard';
+import { PlayerCard } from '../player-card';
 
 interface SelectionReasoningProps {
   selectedPlayers: any[];
@@ -268,6 +268,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
   const [view, setView] = useState<'list' | 'card'>('card');
   const [playerStats, setPlayerStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   const { player } = useUser();
   const {
@@ -290,86 +291,87 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         // Get player stats for all players
         const playerIds = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers].map(player => player.id);
         
-        // Get win rates
-        const { data: winRatesData, error: winRatesError } = await supabase
-          .rpc('get_player_win_rates');
-
-        if (winRatesError) throw winRatesError;
-
-        // Get other player stats
-        const { data: statsData, error: statsError } = await supabase
-          .from('player_stats')
+        // Get player stats and XP data
+        const { data: playerData, error: playerError } = await supabase
+          .from('players')
           .select(`
             id,
-            xp,
             caps,
+            current_streak,
+            max_streak,
             active_bonuses,
             active_penalties,
-            current_streak,
-            max_streak
+            win_rate,
+            player_xp (
+              xp,
+              rank,
+              rarity
+            )
           `)
           .in('id', playerIds);
 
-        // Get player XP data for rarity
-        const { data: xpData, error: xpError } = await supabase
-          .from('player_xp')
-          .select('player_id, rarity')
-          .in('player_id', playerIds);
+        if (playerError) throw playerError;
 
-        if (statsError) throw statsError;
-        if (xpError) throw xpError;
+        // Get win rates and game stats
+        const { data: winRateData, error: winRateError } = await supabase
+          .rpc('get_player_win_rates')
+          .in('id', playerIds);
 
-        // Create win rates map
-        const winRatesMap = new Map(winRatesData?.map(wr => [wr.id, {
-          wins: wr.wins,
-          draws: wr.draws,
-          losses: wr.losses,
-          total_games: wr.total_games,
-          win_rate: wr.win_rate
-        }]) || []);
+        if (winRateError) throw winRateError;
 
-        // Combine rarity data with stats
-        const rarityMap = xpData?.reduce((acc, xp) => ({
+        // Create a map of win rate data for easy lookup
+        const winRateMap = winRateData.reduce((acc: any, player: any) => ({
           ...acc,
-          [xp.player_id]: xp.rarity
+          [player.id]: {
+            wins: player.wins,
+            draws: player.draws,
+            losses: player.losses,
+            totalGames: player.total_games,
+            winRate: player.win_rate
+          }
         }), {});
 
         // Transform into record for easy lookup
-        const stats = statsData?.reduce((acc, stat) => {
-          const winRate = winRatesMap.get(stat.id);
-          return {
-            ...acc,
-            [stat.id]: {
-              xp: stat.xp || 0,
-              rarity: rarityMap?.[stat.id] || 'Amateur',
-              caps: stat.caps || 0,
-              activeBonuses: stat.active_bonuses || 0,
-              activePenalties: stat.active_penalties || 0,
-              currentStreak: stat.current_streak || 0,
-              maxStreak: stat.max_streak || 0,
-              wins: winRate?.wins || 0,
-              draws: winRate?.draws || 0,
-              losses: winRate?.losses || 0,
-              totalGames: winRate?.total_games || 0,
-              winRate: winRate?.win_rate || 0
-            }
-          };
-        }, {});
+        const stats = playerData?.reduce((acc, player) => ({
+          ...acc,
+          [player.id]: {
+            xp: player.player_xp?.xp || 0,
+            rarity: player.player_xp?.rarity || 'Amateur',
+            caps: player.caps || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            currentStreak: player.current_streak || 0,
+            maxStreak: player.max_streak || 0,
+            wins: winRateMap[player.id]?.wins || 0,
+            draws: winRateMap[player.id]?.draws || 0,
+            losses: winRateMap[player.id]?.losses || 0,
+            totalGames: winRateMap[player.id]?.totalGames || 0,
+            winRate: winRateMap[player.id]?.winRate || 0,
+            rank: player.player_xp?.rank || undefined
+          }
+        }), {});
 
-        setPlayerStats(stats || {});
-      } catch (error) {
-        console.error('Error fetching player stats:', error);
+        setPlayerStats(stats);
+      } catch (err) {
+        console.error('Error fetching player stats:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
     };
 
-    if (selectedPlayers.length > 0 || reservePlayers.length > 0 || droppedOutPlayers.length > 0) {
-      fetchPlayerStats();
-    }
+    fetchPlayerStats();
   }, [selectedPlayers, reservePlayers, droppedOutPlayers]);
 
-  // Check various player states
+  const allPlayers = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers];
+  
+  const getPlayerWithRank = (player) => {
+    return {
+      ...player,
+      rank: playerStats[player.id]?.rank
+    };
+  };
+
   const hasDroppedOut = droppedOutPlayers.some(p => p.id === player?.id);
   const isRegistered = [...selectedPlayers, ...reservePlayers].some(p => p.id === player?.id);
   const shouldShowButton = isRegistered || hasDroppedOut;
@@ -485,7 +487,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             title="Selected Players"
             icon={FaUser}
             players={selectedPlayers.map(player => ({
-              ...player,
+              ...getPlayerWithRank(player),
               friendlyName: player.friendly_name,
               avatarSvg: player.avatar_svg,
               xp: playerStats[player.id]?.xp || 0,
@@ -555,7 +557,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
                 return (a.registration_time || '').localeCompare(b.registration_time || '');
               })
               .map(player => ({
-                ...player,
+                ...getPlayerWithRank(player),
                 friendlyName: player.friendly_name,
                 avatarSvg: player.avatar_svg,
                 xp: playerStats[player.id]?.xp || 0,
@@ -601,7 +603,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             title="Dropped Out Players"
             icon={FaUserClock}
             players={droppedOutPlayers.map(player => ({
-              ...player,
+              ...getPlayerWithRank(player),
               friendlyName: player.friendly_name,
               avatarSvg: player.avatar_svg,
               xp: playerStats[player.id]?.xp || 0,
@@ -625,7 +627,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
       ) : (
         <PlayerListView
           selectedPlayers={selectedPlayers.map(player => ({
-            ...player,
+            ...getPlayerWithRank(player),
             friendlyName: player.friendly_name,
             avatarSvg: player.avatar_svg,
             xp: playerStats[player.id]?.xp || 0,
@@ -670,7 +672,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               return (a.registration_time || '').localeCompare(b.registration_time || '');
             })
             .map(player => ({
-              ...player,
+              ...getPlayerWithRank(player),
               friendlyName: player.friendly_name,
               avatarSvg: player.avatar_svg,
               xp: playerStats[player.id]?.xp || 0,
@@ -687,7 +689,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               winRate: playerStats[player.id]?.winRate || 0
             }))}
           droppedOutPlayers={droppedOutPlayers.map(player => ({
-            ...player,
+            ...getPlayerWithRank(player),
             friendlyName: player.friendly_name,
             avatarSvg: player.avatar_svg,
             xp: playerStats[player.id]?.xp || 0,

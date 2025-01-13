@@ -30,8 +30,10 @@ export const PlayerCardBack: React.FC<PlayerCardProps> = ({
       )}
       
       {/* Player name at the top */}
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="card-title text-lg font-bold">{friendlyName}</h2>
+      <div className="relative flex flex-col items-center">
+        <div className="relative">
+          <h2 className="text-lg font-bold mb-1">{friendlyName}</h2>
+        </div>
       </div>
       
       <div className="w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden bg-white/10">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import PlayerCard from '../player-card/PlayerCard';
+import { PlayerCard } from '../player-card/PlayerCard';
 import { supabase } from '../../utils/supabase';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 import { useGlobalXP } from '../../hooks/useGlobalXP';
@@ -23,6 +23,12 @@ interface PlayerStats {
   total_games: number;
   win_rate: number;
   rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary';
+  caps: number;
+  activeBonuses: number;
+  activePenalties: number;
+  currentStreak: number;
+  maxStreak: number;
+  rank: number | undefined;
 }
 
 export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
@@ -31,62 +37,81 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [playerStats, setPlayerStats] = React.useState<Record<string, PlayerStats>>({});
+  const [registrationsState, setRegistrations] = React.useState(registrations);
   const { xpValues: globalXpValues, loading: globalXpLoading, error: globalXpError } = useGlobalXP();
 
-  // Fetch player stats
   React.useEffect(() => {
     const fetchPlayerStats = async () => {
       try {
         setLoading(true);
-        setError(null);
         
-        // Get player IDs
+        // Get player stats for all players
         const playerIds = registrations.map(reg => reg.player.id);
+        
+        // Get player stats and XP data
+        const { data: playerData, error: playerError } = await supabase
+          .from('players')
+          .select(`
+            id,
+            caps,
+            current_streak,
+            max_streak,
+            active_bonuses,
+            active_penalties,
+            win_rate,
+            player_xp (
+              xp,
+              rank,
+              rarity
+            )
+          `)
+          .in('id', playerIds);
 
-        // Get win rates using the get_player_win_rates function
-        const { data: winRatesData, error: winRatesError } = await supabase
-          .rpc('get_player_win_rates');
+        if (playerError) throw playerError;
 
-        if (winRatesError) throw winRatesError;
+        // Get win rates and game stats
+        const { data: winRateData, error: winRateError } = await supabase
+          .rpc('get_player_win_rates')
+          .in('id', playerIds);
 
-        // Get other player stats
-        const { data: statsData, error: statsError } = await supabase
-          .from('player_xp')
-          .select('player_id, xp, rarity')
-          .in('player_id', playerIds);
+        if (winRateError) throw winRateError;
 
-        if (statsError) throw statsError;
+        // Create a map of win rate data for easy lookup
+        const winRateMap = winRateData.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.id]: {
+            wins: player.wins,
+            draws: player.draws,
+            losses: player.losses,
+            totalGames: player.total_games,
+            winRate: player.win_rate
+          }
+        }), {});
 
-        // Create a map of win rates by player ID
-        const winRatesMap = new Map(winRatesData.map(wr => [wr.id, wr]));
+        // Transform into record for easy lookup
+        const stats = playerData?.reduce((acc, player) => ({
+          ...acc,
+          [player.id]: {
+            xp: player.player_xp?.xp || 0,
+            rarity: player.player_xp?.rarity || 'Amateur',
+            caps: player.caps || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            currentStreak: player.current_streak || 0,
+            maxStreak: player.max_streak || 0,
+            wins: winRateMap[player.id]?.wins || 0,
+            draws: winRateMap[player.id]?.draws || 0,
+            losses: winRateMap[player.id]?.losses || 0,
+            totalGames: winRateMap[player.id]?.totalGames || 0,
+            winRate: winRateMap[player.id]?.winRate || 0,
+            rank: player.player_xp?.rank || undefined
+          }
+        }), {});
 
-        // Create a map of player XP and rarity by player ID
-        const playerXPMap = new Map(statsData.map(stat => [stat.player_id, {
-          xp: stat.xp,
-          rarity: stat.rarity
-        }]));
-
-        // Combine stats and win rates into a lookup object
-        const statsLookup = playerIds.reduce((acc, playerId) => {
-          const winRateData = winRatesMap.get(playerId);
-          const playerXPData = playerXPMap.get(playerId);
-          
-          acc[playerId] = {
-            xp: playerXPData?.xp || 0,
-            wins: winRateData?.wins || 0,
-            draws: winRateData?.draws || 0,
-            losses: winRateData?.losses || 0,
-            total_games: winRateData?.total_games || 0,
-            win_rate: winRateData?.win_rate || 0,
-            rarity: playerXPData?.rarity || 'Amateur'
-          };
-          return acc;
-        }, {} as Record<string, PlayerStats>);
-
-        setPlayerStats(statsLookup);
-      } catch (error) {
-        console.error('Error fetching player stats:', error);
-        setError('Failed to fetch player stats');
+        setPlayerStats(stats);
+      } catch (err) {
+        console.error('Error fetching player stats:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
@@ -111,31 +136,30 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
     );
   }
 
-  // Sort registrations by XP in descending order
-  const sortedRegistrations = [...registrations].sort((a, b) => {
-    const aXP = playerStats[a.player.id]?.xp || 0;
-    const bXP = playerStats[b.player.id]?.xp || 0;
-    return bXP - aXP;
-  });
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 justify-items-center sm:justify-items-stretch">
-        {sortedRegistrations.map((registration) => {
+        {registrationsState.map((registration) => {
           const stats = playerStats[registration.player.id] || {
             xp: 0,
+            rarity: 'Amateur',
+            caps: 0,
+            activeBonuses: 0,
+            activePenalties: 0,
+            currentStreak: 0,
+            maxStreak: 0,
             wins: 0,
             draws: 0,
             losses: 0,
-            total_games: 0,
-            win_rate: 0,
-            rarity: 'Amateur'
+            totalGames: 0,
+            winRate: 0,
+            rank: undefined
           };
 
           // Calculate streak bonus
-          const streakModifier = registration.player.current_streak * 0.1;
-          const bonusModifier = registration.player.active_bonuses * 0.1;
-          const penaltyModifier = registration.player.active_penalties * -0.1;
+          const streakModifier = stats.currentStreak * 0.1;
+          const bonusModifier = stats.activeBonuses * 0.1;
+          const penaltyModifier = stats.activePenalties * -0.1;
           const dropoutModifier = 0; // This would need to be fetched from the database if needed
           const totalModifier = streakModifier + bonusModifier + penaltyModifier + dropoutModifier;
 
@@ -150,26 +174,27 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
                 id={registration.player.id}
                 friendlyName={registration.player.friendly_name}
                 xp={stats.xp}
-                caps={registration.player.caps}
+                caps={stats.caps}
                 preferredPosition={registration.player.preferred_position || ''}
-                activeBonuses={registration.player.active_bonuses}
-                activePenalties={registration.player.active_penalties}
-                winRate={stats.win_rate}
-                currentStreak={registration.player.current_streak}
-                maxStreak={registration.player.max_streak}
+                activeBonuses={stats.activeBonuses}
+                activePenalties={stats.activePenalties}
+                winRate={stats.winRate}
+                currentStreak={stats.currentStreak}
+                maxStreak={stats.maxStreak}
                 rarity={stats.rarity}
                 avatarSvg={registration.player.avatar_svg || ''}
                 status={registration.status === 'reserve' ? 'reserve' : undefined}
                 wins={stats.wins}
                 draws={stats.draws}
                 losses={stats.losses}
-                totalGames={stats.total_games}
+                totalGames={stats.totalGames}
                 whatsapp_group_member={registration.player.whatsapp_group_member}
                 streakBonus={streakModifier}
                 bonusModifier={bonusModifier}
                 penaltyModifier={penaltyModifier}
                 dropoutPenalty={dropoutModifier}
                 totalModifier={totalModifier}
+                rank={stats.rank}
               />
             </motion.div>
           );

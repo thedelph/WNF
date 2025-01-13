@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { calculateRarity } from '../../../utils/rarityCalculations';
-import PlayerCard from '../../PlayerCard';
+import { PlayerCard } from '../../player-card/PlayerCard';
 import { ExtendedPlayerData } from '../../../types/playerSelection';
 import { supabase } from '../../../utils/supabase';
 
@@ -21,7 +21,7 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get latest game sequence
+  // Get latest game sequence and calculate player ranks
   useEffect(() => {
     const fetchLatestSequence = async () => {
       try {
@@ -46,6 +46,15 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
 
     fetchLatestSequence();
   }, []);
+
+  // Calculate ranks based on XP
+  const playersWithRanks = useMemo(() => {
+    // Use rank from database
+    return players.map(player => ({
+      ...player,
+      rank: player.rank // Use the rank from the database
+    }));
+  }, [players]);
 
   if (loading) {
     return (
@@ -101,7 +110,7 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
           >
             <div className="bg-base-200 rounded-b-lg p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {sortedPlayers.map((player) => {
+                {playersWithRanks.map((player) => {
                   const rarity = calculateRarity(player.xp, allXpValues);
                   return (
                     <motion.div
@@ -122,6 +131,7 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
                         currentStreak={player.current_streak}
                         maxStreak={player.max_streak}
                         rarity={rarity}
+                        rank={player.rank}
                         avatarSvg={player.avatar_svg || ''}
                         isRandomlySelected={player.isRandomlySelected}
                         hasSlotOffer={player.hasSlotOffer}

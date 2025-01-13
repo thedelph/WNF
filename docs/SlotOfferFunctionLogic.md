@@ -154,6 +154,246 @@ INSERT INTO notifications (
   - Game date
   - Action type
 
+## Admin Slot Offer Actions
+
+### handle_admin_slot_offer_action Function
+
+The `handle_admin_slot_offer_action` function manages administrative responses to slot offers. This function is critical for maintaining data consistency when admins accept or reject slot offers on behalf of players.
+
+#### Function Parameters
+- `p_slot_offer_id` (UUID): The ID of the slot offer being acted upon
+- `p_admin_id` (UUID): The ID of the admin taking the action
+- `p_action` (TEXT): The action being taken ('accept' or 'reject')
+
+#### Process Flow for Acceptance
+
+1. **Validation**
+```sql
+-- Check if slot offer exists and is pending
+SELECT * INTO v_slot_offer 
+FROM slot_offers 
+WHERE id = p_slot_offer_id 
+AND status = 'pending';
+
+IF NOT FOUND THEN
+    RAISE EXCEPTION 'Slot offer not found or not in pending status';
+END IF;
+```
+
+2. **Game Selections Update**
+```sql
+-- Check for existing game_selections record
+SELECT * INTO v_game_selection
+FROM game_selections
+WHERE game_id = v_slot_offer.game_id;
+
+IF NOT FOUND THEN
+    -- Create new game_selections record with initialized fields
+    INSERT INTO game_selections (
+        game_id,
+        selected_players,
+        reserve_players,
+        metadata
+    ) VALUES (
+        v_slot_offer.game_id,
+        JSONB_BUILD_ARRAY(),
+        JSONB_BUILD_ARRAY(),
+        JSONB_BUILD_OBJECT('last_modified_by', p_admin_id)
+    );
+ELSE
+    -- Update existing record
+    UPDATE game_selections
+    SET metadata = JSONB_SET(
+        metadata,
+        '{last_modified_by}',
+        to_jsonb(p_admin_id)
+    )
+    WHERE game_id = v_slot_offer.game_id;
+END IF;
+```
+
+3. **Status Update**
+```sql
+UPDATE slot_offers
+SET 
+    status = 'accepted',
+    responded_at = CURRENT_TIMESTAMP,
+    admin_id = p_admin_id
+WHERE id = p_slot_offer_id;
+```
+
+### Common Issues and Solutions
+
+#### 1. Game Selections Not-Null Constraint Violation
+**Symptom:** Error about null values in the reserve_players column
+
+**Solution:**
+- Always initialize reserve_players as an empty JSONB array
+- Check for existing record before attempting update
+- Use explicit INSERT for new records with all required fields
+
+```sql
+-- Correct initialization
+INSERT INTO game_selections (
+    game_id,
+    selected_players,
+    reserve_players,  -- Required field
+    metadata
+) VALUES (
+    v_game_id,
+    JSONB_BUILD_ARRAY(),
+    JSONB_BUILD_ARRAY(),  -- Initialize as empty array
+    JSONB_BUILD_OBJECT()
+);
+```
+
+#### 2. ON CONFLICT Issues
+**Symptom:** Error about missing unique constraint for ON CONFLICT clause
+
+**Solution:**
+- Avoid using ON CONFLICT for game_selections updates
+- Explicitly check for existing records
+- Use separate INSERT and UPDATE logic paths
+
+```sql
+-- Correct approach
+IF EXISTS (SELECT 1 FROM game_selections WHERE game_id = v_game_id) THEN
+    -- Update existing record
+    UPDATE game_selections SET ...
+ELSE
+    -- Insert new record
+    INSERT INTO game_selections ...
+END IF;
+```
+
+### Verification Queries
+
+#### Check Slot Offer Status
+```sql
+SELECT 
+    so.id,
+    so.status,
+    so.created_at,
+    so.responded_at,
+    so.admin_id,
+    p.friendly_name as player_name,
+    g.date as game_date
+FROM slot_offers so
+JOIN players p ON p.id = so.player_id
+JOIN games g ON g.id = so.game_id
+WHERE so.game_id = [game_id]
+ORDER BY so.created_at DESC;
+```
+
+#### Verify Game Selections
+```sql
+SELECT 
+    gs.game_id,
+    gs.selected_players,
+    gs.reserve_players,
+    gs.metadata->>'last_modified_by' as last_modified_by,
+    g.date as game_date
+FROM game_selections gs
+JOIN games g ON g.id = gs.game_id
+WHERE gs.game_id = [game_id];
+```
+
+## Frontend Integration Notes
+
+### Game Identification
+When displaying game information in the UI, always use the `sequence_number` field from the games table:
+
+```typescript
+interface Game {
+  id: string;
+  sequence_number: number;  // Use this for display
+  date: string;
+  // ... other fields
+}
+```
+
+Common pitfalls:
+- Don't use `game_number` - this field doesn't exist in the database schema
+- Always handle nullable `sequence_number` with appropriate fallbacks
+- Ensure type definitions match database schema exactly
+
+### Component Integration
+
+#### Slot Offer Display Components
+The following components handle slot offer display and interactions:
+
+1. `AdminSlotOffers.tsx`
+   - Displays slot offers for admin management
+   - Uses `sequence_number` for game identification
+   - Handles admin accept/decline actions
+
+2. `SlotOfferItem.tsx`
+   - Displays individual slot offers
+   - Shows game details including sequence number and venue
+
+### Common Integration Issues
+
+#### 1. Schema Mismatches
+**Problem:** Frontend type definitions not matching database schema
+**Solution:** Always verify type definitions against `Supabase-Database-Info.txt`
+
+Example of correct type definition:
+```typescript
+export interface SlotOffer {
+  id: string;
+  game_id: string;
+  player_id: string;
+  status: 'pending' | 'accepted' | 'declined' | 'expired' | 'voided';
+  game: {
+    sequence_number: number;  // Correct field name
+    // ... other fields
+  };
+}
+```
+
+#### 2. Null Handling
+**Problem:** Not handling nullable fields properly
+**Solution:** Always use optional chaining and provide fallbacks
+
+```typescript
+// Correct approach
+<p>Game #{offer.game?.sequence_number || 'N/A'}</p>
+
+// Incorrect approach
+<p>Game #{offer.game.sequence_number}</p>  // May cause runtime errors
+```
+
+#### 3. RPC Function Parameters
+When calling the `handle_admin_slot_offer_action` function, ensure parameters match exactly:
+
+```typescript
+const { error } = await supabase.rpc('handle_admin_slot_offer_action', {
+  p_slot_offer_id: slotOfferId,  // Must match parameter name in function
+  p_action: action,
+  p_admin_id: adminId
+});
+```
+
+### Database Schema Dependencies
+The slot offer system relies on these key tables and fields:
+
+1. `games`
+   - `id` (UUID)
+   - `sequence_number` (integer) - Used for display and ordering
+   - `date` (timestamp with time zone)
+
+2. `slot_offers`
+   - `id` (UUID)
+   - `game_id` (UUID, references games.id)
+   - `status` (text)
+   - `player_id` (UUID, references players.id)
+
+3. `game_selections`
+   - `game_id` (UUID, references games.id)
+   - `selected_players` (JSONB)
+   - `reserve_players` (JSONB)
+   - `metadata` (JSONB)
+
 ## Function Interactions and Troubleshooting
 
 ### Related Functions
@@ -182,7 +422,7 @@ ORDER BY
     gr.created_at ASC
 
 -- Wrong logic (can appear in get_next_slot_offer_players):
-ORDER BY xp DESC, created_at ASC  -- Missing WhatsApp priority!
+ORDER BY xp DESC, created_at ASC  // Missing WhatsApp priority!
 ```
 
 #### Symptoms:
@@ -389,6 +629,23 @@ From our testing session:
    - Joe → Accepted
 
 This sequence confirmed correct priority handling through multiple declines.
+
+## Best Practices
+
+1. **Transaction Management**
+   - Always wrap slot offer actions in transactions
+   - Include both slot_offers and game_selections updates in the same transaction
+   - Roll back on any failure to maintain consistency
+
+2. **Metadata Tracking**
+   - Record admin actions in metadata
+   - Include timestamps for audit trails
+   - Store relevant context for troubleshooting
+
+3. **Error Handling**
+   - Use specific error messages for different failure cases
+   - Log all admin actions for accountability
+   - Implement proper cleanup on failure
 
 ## Error Handling
 - Game not found: Raises exception

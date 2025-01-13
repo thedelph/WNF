@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import PlayerCard from '../player-card/PlayerCard';
+import { PlayerCard } from '../player-card/PlayerCard';
 import { supabase } from '../../utils/supabase';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 import { LoadingSpinner } from '../LoadingSpinner';
@@ -57,168 +57,145 @@ const TeamListView: React.FC<TeamListViewProps> = ({ title, players, color }) =>
   );
 };
 
+const getPlayerWithRank = (player: ExtendedPlayerData) => {
+  return {
+    ...player,
+    rank: playerStats[player.id]?.rank
+  };
+};
+
 export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ gameId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<GameSelection | null>(null);
-  const [view, setView] = useState<'list' | 'card'>('card');
-  const [showBlueTeam, setShowBlueTeam] = useState(true);
-  const [showOrangeTeam, setShowOrangeTeam] = useState(true);
-  const [showReserves, setShowReserves] = useState(true);
-
+  const [view, setView] = useState<'cards' | 'list'>('cards');
+  const [playerStats, setPlayerStats] = useState<Record<string, any>>({});
   const { xpValues: globalXpValues, loading: globalXpLoading, error: globalXpError } = useGlobalXP();
 
   useEffect(() => {
-    const fetchSelectionAndPlayers = async () => {
+    const fetchTeamSelection = async () => {
       try {
         setLoading(true);
-        setError(null);
-
-        // Get win rates
-        const { data: winRatesData, error: winRatesError } = await supabase
-          .rpc('get_player_win_rates');
-
-        if (winRatesError) throw winRatesError;
-
-        // Get balanced teams data
-        const { data: balancedTeamsData, error: balanceError } = await supabase
-          .from('balanced_team_assignments')
-          .select('game_id, team_assignments, created_at')
-          .eq('game_id', gameId)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (balanceError) throw balanceError;
-
-        const balancedTeams = balancedTeamsData?.[0];
-
-        // Get all registrations with selection method and player data
-        const { data: registrations, error: registrationError } = await supabase
-          .from('game_registrations')
+        const { data, error } = await supabase
+          .from('game_selections')
           .select(`
             id,
             game_id,
-            player_id,
-            team,
-            status,
-            selection_method,
-            players:players!game_registrations_player_id_fkey (
+            created_at,
+            selected_players:selected_players (
               id,
               friendly_name,
-              caps,
-              active_bonuses,
-              active_penalties,
-              current_streak,
-              max_streak,
               avatar_svg,
-              whatsapp_group_member
-            )
+              whatsapp_group_member,
+              team
+            ),
+            reserve_players:reserve_players (
+              id,
+              friendly_name,
+              avatar_svg,
+              whatsapp_group_member,
+              team
+            ),
+            selection_metadata
           `)
-          .eq('game_id', gameId);
+          .eq('game_id', gameId)
+          .single();
 
-        if (registrationError) throw registrationError;
+        if (error) throw error;
 
-        // Create win rates map
-        const winRatesMap = new Map(winRatesData?.map(wr => [wr.id, {
-          wins: wr.wins,
-          draws: wr.draws,
-          losses: wr.losses,
-          total_games: wr.total_games,
-          win_rate: wr.win_rate
-        }]) || []);
-
-        // Get rarity data from player_xp
-        const { data: xpData, error: xpError } = await supabase
-          .from('player_xp')
-          .select('player_id, rarity, xp')
-          .in('player_id', registrations.map(r => r.player_id));
-
-        if (xpError) throw xpError;
-
-        // Create maps for rarity and xp
-        const playerDataMap = xpData?.reduce((acc, data) => ({
-          ...acc,
-          [data.player_id]: {
-            rarity: data.rarity,
-            xp: data.xp
-          }
-        }), {} as Record<string, { rarity: string, xp: number }>);
-
-        // Transform registrations into ExtendedPlayerData
-        const transformedRegistrations = registrations.map(reg => {
-          const player = reg.players;
-          const playerData = playerDataMap[reg.player_id] || { rarity: 'Amateur', xp: 0 };
-          const winRateData = winRatesMap.get(reg.player_id) || {
-            wins: 0,
-            draws: 0,
-            losses: 0,
-            total_games: 0,
-            win_rate: 0
-          };
-          
-          // Calculate streak bonus
-          const streakModifier = (player.current_streak || 0) * 0.1;
-          const bonusModifier = (player.active_bonuses || 0) * 0.1;
-          const penaltyModifier = (player.active_penalties || 0) * -0.1;
-          const totalModifier = streakModifier + bonusModifier + penaltyModifier;
-
-          return {
-            id: player.id,
-            friendly_name: player.friendly_name,
-            caps: player.caps || 0,
-            active_bonuses: player.active_bonuses || 0,
-            active_penalties: player.active_penalties || 0,
-            current_streak: player.current_streak || 0,
-            max_streak: player.max_streak || 0,
-            xp: playerData.xp,
-            rarity: playerData.rarity,
-            avatar_svg: player.avatar_svg || '',
-            team: reg.team,
-            status: reg.status,
-            selection_method: reg.selection_method,
-            streakBonus: streakModifier,
-            bonusModifier: bonusModifier,
-            penaltyModifier: penaltyModifier,
-            totalModifier: totalModifier,
-            wins: winRateData.wins,
-            draws: winRateData.draws,
-            losses: winRateData.losses,
-            totalGames: winRateData.total_games,
-            winRate: winRateData.win_rate,
-            whatsapp_group_member: player.whatsapp_group_member
-          };
-        });
-
-        // Group players by team
-        const blueTeam = transformedRegistrations.filter(p => p.team === 'blue');
-        const orangeTeam = transformedRegistrations.filter(p => p.team === 'orange');
-        const reserves = transformedRegistrations.filter(p => p.status === 'reserve');
-
-        setSelection({
-          id: balancedTeams?.game_id || '',
-          game_id: gameId,
-          created_at: balancedTeams?.created_at || new Date().toISOString(),
-          selected_players: [...blueTeam, ...orangeTeam],
-          reserve_players: reserves,
-          selection_metadata: balancedTeams?.team_assignments?.stats || {
-            startTime: '',
-            endTime: '',
-            meritSlots: 0,
-            randomSlots: 0,
-            selectionNotes: []
-          }
-        });
-
-      } catch (error) {
-        console.error('Error fetching selection and players:', error);
-        setError('Failed to load team selection data');
+        if (data) {
+          setSelection(data);
+        }
+      } catch (err) {
+        console.error('Error fetching team selection:', err);
+        setError('Failed to load team selection');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSelectionAndPlayers();
+    fetchTeamSelection();
   }, [gameId]);
+
+  useEffect(() => {
+    const fetchPlayerStats = async () => {
+      try {
+        setLoading(true);
+        
+        // Get player stats for all players
+        const playerIds = [...(selection?.selected_players || []), ...(selection?.reserve_players || [])].map(player => player.id);
+        
+        // Get player stats and XP data
+        const { data: playerData, error: playerError } = await supabase
+          .from('players')
+          .select(`
+            id,
+            caps,
+            current_streak,
+            max_streak,
+            active_bonuses,
+            active_penalties,
+            win_rate,
+            player_xp (
+              xp,
+              rank,
+              rarity
+            )
+          `)
+          .in('id', playerIds);
+
+        if (playerError) throw playerError;
+
+        // Get win rates and game stats
+        const { data: winRateData, error: winRateError } = await supabase
+          .rpc('get_player_win_rates')
+          .in('id', playerIds);
+
+        if (winRateError) throw winRateError;
+
+        // Create a map of win rate data for easy lookup
+        const winRateMap = winRateData.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.id]: {
+            wins: player.wins,
+            draws: player.draws,
+            losses: player.losses,
+            totalGames: player.total_games,
+            winRate: player.win_rate
+          }
+        }), {});
+
+        // Transform into record for easy lookup
+        const stats = playerData?.reduce((acc, player) => ({
+          ...acc,
+          [player.id]: {
+            xp: player.player_xp?.xp || 0,
+            rarity: player.player_xp?.rarity || 'Amateur',
+            caps: player.caps || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            currentStreak: player.current_streak || 0,
+            maxStreak: player.max_streak || 0,
+            wins: winRateMap[player.id]?.wins || 0,
+            draws: winRateMap[player.id]?.draws || 0,
+            losses: winRateMap[player.id]?.losses || 0,
+            totalGames: winRateMap[player.id]?.totalGames || 0,
+            winRate: winRateMap[player.id]?.winRate || 0,
+            rank: player.player_xp?.rank || undefined
+          }
+        }), {});
+
+        setPlayerStats(stats);
+      } catch (err) {
+        console.error('Error fetching player stats:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (selection) fetchPlayerStats();
+  }, [selection]);
 
   if (loading || globalXpLoading) {
     return (
@@ -289,21 +266,22 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                     <PlayerCard
                       id={player.id}
                       friendlyName={player.friendly_name}
-                      xp={player.xp || 0}
-                      caps={player.caps || 0}
-                      activeBonuses={player.active_bonuses || 0}
-                      activePenalties={player.active_penalties || 0}
-                      currentStreak={player.current_streak || 0}
-                      maxStreak={player.max_streak || 0}
+                      xp={playerStats[player.id]?.xp || 0}
+                      caps={playerStats[player.id]?.caps || 0}
+                      activeBonuses={playerStats[player.id]?.activeBonuses || 0}
+                      activePenalties={playerStats[player.id]?.activePenalties || 0}
+                      currentStreak={playerStats[player.id]?.currentStreak || 0}
+                      maxStreak={playerStats[player.id]?.maxStreak || 0}
                       avatarSvg={player.avatar_svg}
-                      rarity={player.rarity || 'Amateur'}
-                      wins={player.wins || 0}
-                      draws={player.draws || 0}
-                      losses={player.losses || 0}
-                      totalGames={player.totalGames || 0}
-                      winRate={player.winRate || 0}
+                      rarity={playerStats[player.id]?.rarity || 'Amateur'}
+                      wins={playerStats[player.id]?.wins || 0}
+                      draws={playerStats[player.id]?.draws || 0}
+                      losses={playerStats[player.id]?.losses || 0}
+                      totalGames={playerStats[player.id]?.totalGames || 0}
+                      winRate={playerStats[player.id]?.winRate || 0}
                       whatsapp_group_member={player.whatsapp_group_member}
-                      isRandomlySelected={player.selection_method === 'random'}
+                      isRandomlySelected={false}
+                      rank={playerStats[player.id]?.rank}
                     />
                   </motion.div>
                 ))}
@@ -334,21 +312,22 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                     <PlayerCard
                       id={player.id}
                       friendlyName={player.friendly_name}
-                      xp={player.xp || 0}
-                      caps={player.caps || 0}
-                      activeBonuses={player.active_bonuses || 0}
-                      activePenalties={player.active_penalties || 0}
-                      currentStreak={player.current_streak || 0}
-                      maxStreak={player.max_streak || 0}
+                      xp={playerStats[player.id]?.xp || 0}
+                      caps={playerStats[player.id]?.caps || 0}
+                      activeBonuses={playerStats[player.id]?.activeBonuses || 0}
+                      activePenalties={playerStats[player.id]?.activePenalties || 0}
+                      currentStreak={playerStats[player.id]?.currentStreak || 0}
+                      maxStreak={playerStats[player.id]?.maxStreak || 0}
                       avatarSvg={player.avatar_svg}
-                      rarity={player.rarity || 'Amateur'}
-                      wins={player.wins || 0}
-                      draws={player.draws || 0}
-                      losses={player.losses || 0}
-                      totalGames={player.totalGames || 0}
-                      winRate={player.winRate || 0}
+                      rarity={playerStats[player.id]?.rarity || 'Amateur'}
+                      wins={playerStats[player.id]?.wins || 0}
+                      draws={playerStats[player.id]?.draws || 0}
+                      losses={playerStats[player.id]?.losses || 0}
+                      totalGames={playerStats[player.id]?.totalGames || 0}
+                      winRate={playerStats[player.id]?.winRate || 0}
                       whatsapp_group_member={player.whatsapp_group_member}
-                      isRandomlySelected={player.selection_method === 'random'}
+                      isRandomlySelected={false}
+                      rank={playerStats[player.id]?.rank}
                     />
                   </motion.div>
                 ))}

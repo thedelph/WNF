@@ -1,6 +1,6 @@
 // src/pages/PlayerList.tsx
 import React from 'react'
-import PlayerCardGrid from '../components/PlayerCardGrid'
+import PlayerCardGrid from '../components/player-card/PlayerCardGrid'
 
 const PlayerList = () => {
   return (

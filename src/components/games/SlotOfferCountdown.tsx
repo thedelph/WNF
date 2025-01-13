@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
 import { calculateRarity } from '../../utils/rarityCalculations';
-import PlayerCard from '../PlayerCard';
+import { PlayerCard } from '../player-card/PlayerCard';
 import CountdownTimer from '../CountdownTimer';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 import { toast } from 'react-hot-toast';

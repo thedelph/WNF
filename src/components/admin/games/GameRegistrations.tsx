@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../../../utils/supabase';
 import { getRarity } from '../../../utils/rarityCalculations';
-import PlayerCard from '../../PlayerCard';
+import { PlayerCard } from '../../player-card/PlayerCard';
 import { ExtendedPlayerData } from '../../../types/playerSelection';
 import { Modal } from '../../common/modals/Modal';
 import { SearchBar } from '../../common/inputs/SearchBar';

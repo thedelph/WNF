@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import PlayerCard from './player-card/PlayerCard'
-import { supabase } from '../utils/supabase'
+import { PlayerCard } from './PlayerCard'
+import { supabase } from '../../utils/supabase'
 import { toast } from 'react-hot-toast'
 
 interface Player {
@@ -28,10 +28,30 @@ interface Player {
   penaltyModifier: number
   totalModifier: number
   whatsapp_group_member?: string
+  rank: number
+}
+
+interface PlayerStats {
+  [id: string]: {
+    xp: number
+    rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
+    caps: number
+    activeBonuses: number
+    activePenalties: number
+    currentStreak: number
+    maxStreak: number
+    wins: number
+    draws: number
+    losses: number
+    totalGames: number
+    winRate: number
+    rank: number | undefined
+  }
 }
 
 export default function PlayerCardGrid() {
   const [players, setPlayers] = useState<Player[]>([])
+  const [playerStats, setPlayerStats] = useState<PlayerStats>({})
   const [loading, setLoading] = useState(true)
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Player;
@@ -53,110 +73,139 @@ export default function PlayerCardGrid() {
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        setLoading(true);
-        
-        // Get player data including whatsapp status
-        const { data: playersData, error: playersError } = await supabase
+        setLoading(true)
+        // Fetch players with their stats and rank
+        const { data: players, error } = await supabase
           .from('players')
           .select(`
             id,
-            user_id,
             friendly_name,
-            caps,
-            active_bonuses,
-            active_penalties,
-            win_rate,
             avatar_svg,
-            current_streak,
-            max_streak,
-            bench_warmer_streak,
-            whatsapp_group_member,
-            attack_rating,
-            defense_rating
+            whatsapp_group_member
           `)
-          .order('caps', { ascending: false });
+          .order('friendly_name')
 
-        if (playersError) throw playersError;
+        if (error) {
+          throw error
+        }
 
-        // Get win rates using the get_player_win_rates function
-        const { data: winRatesData, error: winRatesError } = await supabase
-          .rpc('get_player_win_rates');
-
-        if (winRatesError) throw winRatesError;
-
-        // Get rarity data from player_xp
-        const { data: xpData, error: xpError } = await supabase
-          .from('player_xp')
-          .select('player_id, rarity, xp')
-          .in('player_id', playersData.map(p => p.id));
-
-        if (xpError) throw xpError;
-
-        // Create maps for quick lookups
-        const winRatesMap = new Map(
-          winRatesData.map(wr => [wr.id, {
-            winRate: wr.win_rate,
-            wins: wr.wins,
-            draws: wr.draws,
-            losses: wr.losses,
-            totalGames: wr.total_games
-          }])
-        );
-
-        const xpMap = new Map(
-          xpData.map(xp => [xp.player_id, {
-            rarity: xp.rarity,
-            xp: xp.xp
-          }])
-        );
-
-        // Combine all the data
-        const combinedPlayers = playersData.map(player => {
-          const winRateData = winRatesMap.get(player.id) || {
+        if (players) {
+          setPlayers(players.map((player) => ({
+            id: player.id,
+            friendlyName: player.friendly_name,
+            avatarSvg: player.avatar_svg,
+            whatsapp_group_member: player.whatsapp_group_member,
+            caps: 0,
+            xp: 0,
+            activeBonuses: 0,
+            activePenalties: 0,
+            currentStreak: 0,
+            maxStreak: 0,
             winRate: 0,
             wins: 0,
             draws: 0,
             losses: 0,
-            totalGames: 0
-          };
-          
-          const xpInfo = xpMap.get(player.id) || {
-            rarity: 'Amateur',
-            xp: 0
-          };
-
-          return {
-            id: player.id,
-            friendlyName: player.friendly_name,
-            xp: xpInfo.xp,
-            caps: player.caps,
-            activeBonuses: player.active_bonuses,
-            activePenalties: player.active_penalties,
-            winRate: winRateData.winRate,
-            wins: winRateData.wins,
-            draws: winRateData.draws,
-            losses: winRateData.losses,
-            totalGames: winRateData.totalGames,
-            currentStreak: player.current_streak,
-            maxStreak: player.max_streak,
-            benchWarmerStreak: player.bench_warmer_streak,
-            rarity: xpInfo.rarity,
-            avatarSvg: player.avatar_svg,
-            whatsapp_group_member: player.whatsapp_group_member
-          };
-        });
-
-        setPlayers(combinedPlayers);
+            totalGames: 0,
+            preferredPosition: '',
+            benchWarmerStreak: 0,
+            streakBonus: 0,
+            dropoutPenalty: 0,
+            bonusModifier: 0,
+            penaltyModifier: 0,
+            totalModifier: 0,
+            rank: undefined
+          })))
+        }
       } catch (error) {
-        console.error('Error fetching players:', error);
-        toast.error('Failed to load players');
+        console.error('Error fetching players:', error)
+        toast.error('Failed to load players')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPlayers()
+  }, [])
+
+  useEffect(() => {
+    const fetchPlayerStats = async (playerIds: string[]) => {
+      try {
+        setLoading(true);
+
+        // Get player stats and XP data
+        const { data: playerData, error: playerError } = await supabase
+          .from('players')
+          .select(`
+            id,
+            caps,
+            current_streak,
+            max_streak,
+            active_bonuses,
+            active_penalties,
+            win_rate,
+            player_xp (
+              xp,
+              rank,
+              rarity
+            )
+          `)
+          .in('id', playerIds);
+
+        if (playerError) throw playerError;
+
+        // Get win rates and game stats
+        const { data: winRateData, error: winRateError } = await supabase
+          .rpc('get_player_win_rates')
+          .in('id', playerIds);
+
+        if (winRateError) throw winRateError;
+
+        // Create a map of win rate data for easy lookup
+        const winRateMap = winRateData.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.id]: {
+            wins: player.wins,
+            draws: player.draws,
+            losses: player.losses,
+            totalGames: player.total_games,
+            winRate: player.win_rate
+          }
+        }), {});
+
+        // Transform into record for easy lookup
+        const stats = playerData?.reduce((acc, player) => ({
+          ...acc,
+          [player.id]: {
+            xp: player.player_xp?.xp || 0,
+            rarity: player.player_xp?.rarity || 'Amateur',
+            caps: player.caps || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            currentStreak: player.current_streak || 0,
+            maxStreak: player.max_streak || 0,
+            wins: winRateMap[player.id]?.wins || 0,
+            draws: winRateMap[player.id]?.draws || 0,
+            losses: winRateMap[player.id]?.losses || 0,
+            totalGames: winRateMap[player.id]?.totalGames || 0,
+            winRate: winRateMap[player.id]?.winRate || 0,
+            rank: player.player_xp?.rank || undefined
+          }
+        }), {});
+
+        setPlayerStats(stats);
+      } catch (err) {
+        console.error('Error fetching player stats:', err);
+        toast.error('Failed to load player stats');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPlayers();
-  }, []);
+    if (players.length > 0) {
+      const playerIds = players.map(player => player.id);
+      fetchPlayerStats(playerIds);
+    }
+  }, [players]);
 
   const sortedAndFilteredPlayers = players
     .filter(player => {
@@ -166,17 +215,17 @@ export default function PlayerCardGrid() {
       const nameMatch = name.includes(searchTerm);
 
       // Numeric range filters
-      const capsInRange = (filters.minCaps === '' || player.caps >= Number(filters.minCaps)) &&
-                         (filters.maxCaps === '' || player.caps <= Number(filters.maxCaps));
+      const capsInRange = (filters.minCaps === '' || playerStats[player.id]?.caps >= Number(filters.minCaps)) &&
+                         (filters.maxCaps === '' || playerStats[player.id]?.caps <= Number(filters.maxCaps));
       
-      const winRateInRange = (filters.minWinRate === '' || player.winRate >= Number(filters.minWinRate)) &&
-                            (filters.maxWinRate === '' || player.winRate <= Number(filters.maxWinRate));
+      const winRateInRange = (filters.minWinRate === '' || playerStats[player.id]?.winRate >= Number(filters.minWinRate)) &&
+                            (filters.maxWinRate === '' || playerStats[player.id]?.winRate <= Number(filters.maxWinRate));
       
-      const streakInRange = (filters.minStreak === '' || player.currentStreak >= Number(filters.minStreak)) &&
-                           (filters.maxStreak === '' || player.currentStreak <= Number(filters.maxStreak));
+      const streakInRange = (filters.minStreak === '' || playerStats[player.id]?.currentStreak >= Number(filters.minStreak)) &&
+                           (filters.maxStreak === '' || playerStats[player.id]?.currentStreak <= Number(filters.maxStreak));
 
       // Rarity filter
-      const rarityMatch = !filters.rarity || player.rarity === filters.rarity;
+      const rarityMatch = !filters.rarity || playerStats[player.id]?.rarity === filters.rarity;
 
       // WhatsApp members filter
       const whatsAppMatch = !whatsAppMembersOnly || (player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy');
@@ -189,7 +238,7 @@ export default function PlayerCardGrid() {
       // Special handling for numeric fields
       if (sortConfig.key === 'winRate' || sortConfig.key === 'xp' || 
           sortConfig.key === 'caps' || sortConfig.key === 'currentStreak') {
-        return (Number(a[sortConfig.key]) - Number(b[sortConfig.key])) * direction;
+        return (Number(playerStats[a.id]?.[sortConfig.key] || 0) - Number(playerStats[b.id]?.[sortConfig.key] || 0)) * direction;
       }
       
       // Default string comparison for other fields
@@ -467,21 +516,22 @@ export default function PlayerCardGrid() {
                   <PlayerCard
                     id={player.id}
                     friendlyName={player.friendlyName}
-                    xp={player.xp}
-                    caps={player.caps}
-                    activeBonuses={player.activeBonuses}
-                    activePenalties={player.activePenalties}
-                    winRate={player.winRate}
-                    wins={player.wins}
-                    draws={player.draws}
-                    losses={player.losses}
-                    totalGames={player.totalGames}
-                    currentStreak={player.currentStreak}
-                    maxStreak={player.maxStreak}
-                    benchWarmerStreak={player.benchWarmerStreak}
-                    rarity={player.rarity}
+                    xp={playerStats[player.id]?.xp || 0}
+                    caps={playerStats[player.id]?.caps || 0}
+                    activeBonuses={playerStats[player.id]?.activeBonuses || 0}
+                    activePenalties={playerStats[player.id]?.activePenalties || 0}
+                    winRate={playerStats[player.id]?.winRate || 0}
+                    wins={playerStats[player.id]?.wins || 0}
+                    draws={playerStats[player.id]?.draws || 0}
+                    losses={playerStats[player.id]?.losses || 0}
+                    totalGames={playerStats[player.id]?.totalGames || 0}
+                    currentStreak={playerStats[player.id]?.currentStreak || 0}
+                    maxStreak={playerStats[player.id]?.maxStreak || 0}
+                    benchWarmerStreak={0}
+                    rarity={playerStats[player.id]?.rarity || 'Amateur'}
                     avatarSvg={player.avatarSvg}
                     whatsapp_group_member={player.whatsapp_group_member}
+                    rank={playerStats[player.id]?.rank || undefined}
                   />
                 </motion.div>
               ))}

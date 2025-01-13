@@ -5,13 +5,14 @@ import { PlayerCardProps } from './PlayerCardTypes'
 import { PlayerCardModifiers } from './PlayerCardModifiers'
 import { PlayerCardBadges } from './PlayerCardBadges'
 import WhatsAppIndicator from '../indicators/WhatsAppIndicator'
+import RankShield from './RankShield'
 import { usePlayerPenalties } from '../../hooks/usePlayerPenalties'
 import { useUser } from '../../hooks/useUser'
 
 /**
  * Displays the front face of the player card with primary information
  */
-export const PlayerCardFront: React.FC<PlayerCardProps> = ({
+export const PlayerCardFront: React.FC<PlayerCardProps & { rank?: number, isFlipped?: boolean }> = ({
   id,
   friendlyName,
   xp,
@@ -30,6 +31,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps> = ({
   potentialOfferTimes,
   hasActiveSlotOffers,
   whatsapp_group_member,
+  rank,
+  isFlipped,
   children,
 }) => {
   const { dropoutPenalties } = usePlayerPenalties(id)
@@ -50,9 +53,12 @@ export const PlayerCardFront: React.FC<PlayerCardProps> = ({
         />
       )}
       
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="card-title text-lg font-bold">{friendlyName}</h2>
-      </div>
+      {/* Rank Shield */}
+      {rank && rank <= 16 && !isFlipped && (
+        <div className="absolute top-2 right-2 z-10">
+          <RankShield rank={rank} />
+        </div>
+      )}
       
       {/* Status badges */}
       <PlayerCardBadges
@@ -68,6 +74,22 @@ export const PlayerCardFront: React.FC<PlayerCardProps> = ({
         {children}
       </PlayerCardBadges>
 
+      {/* Player name */}
+      <div className="relative flex flex-col items-center">
+        <div className="relative">
+          <h2 className="text-lg font-bold mb-1">{friendlyName}</h2>
+        </div>
+      </div>
+
+      {/* XP Section */}
+      <div className="flex flex-col items-center">
+        <span className="text-4xl font-bold">{xp}</span>
+        <div className="flex items-center gap-1">
+          <Sparkles className="w-5 h-5" />
+          <span>XP</span>
+        </div>
+      </div>
+
       {/* Caps Section */}
       <div className="bg-black/30 rounded-lg p-3 mb-4">
         <div className="flex justify-between items-center">
@@ -76,19 +98,6 @@ export const PlayerCardFront: React.FC<PlayerCardProps> = ({
             <span className="text-sm">Caps</span>
           </div>
           <span className="text-2xl font-bold">{caps}</span>
-        </div>
-      </div>
-
-      {/* XP Section */}
-      <div className="mb-4">
-        <div className="bg-black/40 rounded-lg p-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              <span className="text-sm font-bold">XP</span>
-            </div>
-            <span className="text-3xl font-bold">{xp}</span>
-          </div>
         </div>
       </div>
 

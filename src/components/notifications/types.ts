@@ -30,6 +30,6 @@ export interface SlotOffer {
     venue: {
       name: string;
     };
-    game_number: number;
+    sequence_number: number;
   };
 }

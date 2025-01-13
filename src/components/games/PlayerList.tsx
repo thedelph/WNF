@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import PlayerCard from '../player-card/PlayerCard';
+import { PlayerCard } from '../player-card/PlayerCard';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 
 interface PlayerListProps {
@@ -51,17 +51,18 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 wins={player.wins}
                 draws={player.draws}
                 losses={player.losses}
-                totalGames={player.totalGames}
-                xp={player.xp}
                 whatsapp_group_member={player.whatsapp_group_member}
                 isRandomlySelected={player.isRandomlySelected}
-                status={player.status}
+                rank={player.rank}
+                xp={player.xp}
+                totalGames={player.totalGames}
                 hasSlotOffer={player.hasSlotOffer}
                 slotOfferStatus={player.slotOfferStatus}
                 slotOfferExpiresAt={player.slotOfferExpiresAt}
                 slotOfferAvailableAt={player.slotOfferAvailableAt}
                 potentialOfferTimes={player.potentialOfferTimes}
                 hasActiveSlotOffers={player.hasActiveSlotOffers}
+                status={player.status}
               />
               {renderPlayerExtra && renderPlayerExtra(player)}
             </div>

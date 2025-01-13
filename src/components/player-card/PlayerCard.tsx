@@ -1,6 +1,11 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { PlayerCardProps } from './PlayerCardTypes'
+import { Trophy, Star, Medal, CircleOff, CircleDot, Sparkles, Swords, ListChecks, Flame } from 'lucide-react'
+import { usePlayerPenalties } from '../../hooks/usePlayerPenalties';
+import { useUser } from '../../hooks/useUser';
+import WhatsAppIndicator from '../indicators/WhatsAppIndicator';
+import { RankShield } from './RankShield';
 import { PlayerCardFront } from './PlayerCardFront'
 import { PlayerCardBack } from './PlayerCardBack'
 
@@ -8,7 +13,65 @@ import { PlayerCardBack } from './PlayerCardBack'
  * A flippable card component that displays player information and statistics
  * The card can be flipped to show more detailed information on the back
  */
-export const PlayerCard: React.FC<PlayerCardProps> = (props) => {
+interface PlayerCardProps {
+  id: string
+  friendlyName: string
+  xp: number
+  caps: number
+  activeBonuses: number
+  activePenalties: number
+  winRate: number
+  wins: number
+  draws: number
+  losses: number
+  totalGames: number
+  currentStreak: number
+  maxStreak: number
+  benchWarmerStreak: number
+  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
+  avatarSvg?: string
+  isRandomlySelected?: boolean
+  status?: string
+  hasSlotOffer?: boolean
+  slotOfferStatus?: string
+  slotOfferExpiresAt?: string
+  slotOfferAvailableAt?: string
+  potentialOfferTimes?: string[]
+  hasActiveSlotOffers?: boolean
+  whatsapp_group_member?: string
+  children?: React.ReactNode
+  rank?: number
+}
+
+export const PlayerCard: React.FC<PlayerCardProps> = ({
+  id,
+  friendlyName,
+  xp,
+  caps,
+  activeBonuses,
+  activePenalties,
+  winRate,
+  wins,
+  draws,
+  losses,
+  totalGames,
+  currentStreak,
+  maxStreak,
+  benchWarmerStreak,
+  rarity,
+  avatarSvg,
+  isRandomlySelected,
+  status,
+  hasSlotOffer,
+  slotOfferStatus,
+  slotOfferExpiresAt,
+  slotOfferAvailableAt,
+  potentialOfferTimes,
+  hasActiveSlotOffers,
+  whatsapp_group_member,
+  children,
+  rank,
+}) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
   const getRarityColor = (rarity: string) => {
@@ -41,21 +104,62 @@ export const PlayerCard: React.FC<PlayerCardProps> = (props) => {
       >
         {/* Front of card */}
         <div 
-          className={`absolute w-full h-full ${getRarityColor(props.rarity)} text-white rounded-xl p-4`}
+          className={`absolute w-full h-full ${getRarityColor(rarity)} text-white rounded-xl p-4`}
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <PlayerCardFront {...props} />
+          <PlayerCardFront
+            id={id}
+            friendlyName={friendlyName}
+            xp={xp}
+            caps={caps}
+            activeBonuses={activeBonuses}
+            activePenalties={activePenalties}
+            currentStreak={currentStreak}
+            benchWarmerStreak={benchWarmerStreak}
+            rarity={rarity}
+            isRandomlySelected={isRandomlySelected}
+            status={status}
+            hasSlotOffer={hasSlotOffer}
+            slotOfferStatus={slotOfferStatus}
+            slotOfferExpiresAt={slotOfferExpiresAt}
+            slotOfferAvailableAt={slotOfferAvailableAt}
+            potentialOfferTimes={potentialOfferTimes}
+            hasActiveSlotOffers={hasActiveSlotOffers}
+            whatsapp_group_member={whatsapp_group_member}
+            rank={rank}
+            isFlipped={isFlipped}
+          >
+            {children}
+          </PlayerCardFront>
         </div>
 
         {/* Back of card */}
         <div 
-          className={`absolute w-full h-full ${getRarityColor(props.rarity)} text-white rounded-xl p-4`}
+          className={`absolute w-full h-full ${getRarityColor(rarity)} text-white rounded-xl p-4`}
           style={{ 
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)'
           }}
         >
-          <PlayerCardBack {...props} />
+          <PlayerCardBack
+            id={id}
+            friendlyName={friendlyName}
+            xp={xp}
+            caps={caps}
+            activeBonuses={activeBonuses}
+            activePenalties={activePenalties}
+            winRate={winRate}
+            wins={wins}
+            draws={draws}
+            losses={losses}
+            totalGames={totalGames}
+            currentStreak={currentStreak}
+            maxStreak={maxStreak}
+            benchWarmerStreak={benchWarmerStreak}
+            rarity={rarity}
+            avatarSvg={avatarSvg}
+            whatsapp_group_member={whatsapp_group_member}
+          />
         </div>
       </motion.div>
     </motion.div>

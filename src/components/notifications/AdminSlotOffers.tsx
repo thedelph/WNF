@@ -81,7 +81,7 @@ export const AdminSlotOffers: React.FC<AdminSlotOffersProps> = ({ slotOffers, on
                   </span>
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Game #{offer.game?.game_number} - {formatDate(offer.game?.date)}
+                  Game #{offer.game?.sequence_number} - {formatDate(offer.game?.date)}
                 </p>
               </div>
               {offer.status === 'pending' && (

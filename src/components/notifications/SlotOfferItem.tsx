@@ -56,7 +56,7 @@ export const SlotOfferItem: React.FC<SlotOfferItemProps> = ({ slotOffer, onDismi
 
         <div className="text-sm">
           <p>
-            Game #{slotOffer.game.game_number} at {slotOffer.game.venue.name}
+            Game #{slotOffer.game.sequence_number} at {slotOffer.game.venue.name}
           </p>
           <p className="text-gray-500">
             {formatDate(slotOffer.game.date)}

@@ -1,4 +1,3 @@
-@ -0,0 +1,274 @@
 Win Rate Calculation in WNF
 
 Win rates in WNF are carefully calculated to ensure they represent a fair and accurate measure of player performance. Here's a detailed explanation of how they work:
@@ -34,11 +33,36 @@ Display Rules:
 - Win rates are rounded to 1 decimal place
 - Players need at least 10 games with even teams to be eligible for the "Best Win Rates" award
 - When displaying top win rates, all players who match or exceed the third-highest win rate are shown (this means you might see more than 3 players if there are ties)
+- Win rates and W/D/L records are displayed on the back of player cards
+- For players with less than 10 games, "Pending (X/10)" is shown instead of a win rate percentage
+- Win rates are consistently formatted across all components using the same database function
 
 Technical Implementation:
 ----------------------
 
-1. Database Function (get_player_win_rates):
+1. Win Rate Display Components:
+The following components use the `get_player_win_rates` function to display win rates:
+- PlayerCardBack: Shows detailed W/D/L stats and win rate
+- PlayerSelectionResults: Displays win rates for selected and reserve players
+- RegisteredPlayers: Shows win rates for all registered players
+- TeamSelectionResults: Displays win rates for selected team members
+
+2. Win Rate Calculation Function:
+The `get_player_win_rates` function calculates win rates for all players based on their game history. This function:
+- Only counts games where the player was selected to play
+- Only includes games with recorded outcomes
+- Only counts games with even teams (same number of players on both sides)
+- Requires at least 10 eligible games for a win rate to be calculated
+
+3. Automatic Updates:
+Win rates are automatically updated in the following scenarios:
+- When a game is completed
+- When a game's outcome is changed
+- When a game's teams are modified
+
+This ensures that player win rates are always up-to-date and reflect their current performance.
+
+4. Database Implementation:
 ```sql
 CREATE OR REPLACE FUNCTION public.get_player_win_rates(target_year integer DEFAULT NULL::integer)
 RETURNS TABLE(
@@ -100,134 +124,10 @@ BEGIN
     FROM players p
     LEFT JOIN player_games pg ON pg.id = p.id
     GROUP BY p.id, p.friendly_name
-    HAVING COUNT(*) FILTER (WHERE pg.blue_count = pg.orange_count) >= 10
     ORDER BY win_rate DESC NULLS LAST;
 END;
-$function$
-```
+$function$;
 
-2. React Hook Implementation (useStats):
-```typescript
-// Stats interface defining the shape of win rate data
-interface PlayerStats {
-  id: string;
-  friendlyName: string;
-  caps: number;
-  winRate: number;
-  currentStreak: number;
-  maxStreak: number;
-  recentGames: number;
-  wins: number;
-  draws: number;
-  losses: number;
-}
-
-// Inside useStats hook
-const fetchStats = async () => {
-  try {
-    // Fetch player stats for win rates
-    const { data: playerStats, error: statsError } = await supabase
-      .rpc('get_player_win_rates', { 
-        target_year: year || null 
-      });
-
-    if (statsError) throw statsError;
-
-    // Transform player stats to match our interface
-    const transformedPlayerStats = playerStats?.map(p => ({
-      id: p.id,
-      friendlyName: p.friendly_name,
-      caps: capsMap.get(p.id) || Number(p.total_games),
-      winRate: Number(p.win_rate),
-      currentStreak: streakMap.get(p.id)?.current_streak || 0,
-      maxStreak: streakMap.get(p.id)?.max_streak || 0,
-      recentGames: 0,
-      wins: Number(p.wins),
-      draws: Number(p.draws),
-      losses: Number(p.losses)
-    })) || [];
-
-    // Calculate best win rates
-    const bestWinRates = (() => {
-      const eligible = transformedPlayerStats
-        .filter(p => p.caps >= 10)
-        .sort((a, b) => b.winRate - a.winRate);
-      const threshold = eligible[2]?.winRate || 0;
-      return eligible.filter(p => p.winRate >= threshold);
-    })();
-
-    // Set stats in state
-    setStats(prev => ({
-      ...prev,
-      bestWinRates,
-      loading: false,
-      error: null
-    }));
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-    setStats(prev => ({
-      ...prev,
-      loading: false,
-      error: 'Failed to fetch stats'
-    }));
-  }
-};
-```
-
-3. Display Component (StatsCard):
-```typescript
-// Used to display win rates on the dashboard
-export const StatsCard = ({ 
-  title, 
-  stats, 
-  icon, 
-  description, 
-  color = 'teal' 
-}: StatsCardProps) => {
-  // Determine medal positions considering ties
-  const getMedalIndex = (currentIndex: number, currentValue: number, players: any[]) => {
-    // Count how many players have a higher win rate
-    const playersWithHigherRate = players.filter(p => p.winRate > currentValue).length;
-    return playersWithHigherRate;
-  };
-
-  return (
-    <motion.div
-      className={`card bg-base-100 shadow-xl ${className}`}
-      variants={cardVariants}
-    >
-      {/* Card content */}
-      <div className="card-body">
-        <div className="flex items-center gap-2 mb-4">
-          {icon}
-          <h2 className="card-title">{title}</h2>
-        </div>
-        
-        {stats && (
-          <div className="space-y-4">
-            {stats.map((stat, index) => (
-              <div key={stat.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {getMedalPosition(index, stat.winRate, stats)}
-                  <span>{stat.friendlyName}</span>
-                </div>
-                <span className="font-semibold">
-                  {stat.winRate.toFixed(1)}%
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {description && (
-          <p className="text-sm text-base-content/70 mt-4">
-            {description}
-          </p>
-        )}
-      </div>
-    </motion.div>
-  );
-};
 ```
 
 Database Schema Dependencies:

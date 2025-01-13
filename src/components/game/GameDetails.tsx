@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../utils/supabase';
 import { calculateRarity } from '../../utils/rarityCalculations';
-import PlayerCard from '../PlayerCard';
+import { PlayerCard } from '../player-card/PlayerCard';
 import { RegisteredPlayers } from './RegisteredPlayers';
 import { ExtendedPlayerData } from '../../types/playerSelection';
 import { CountdownTimer } from '../common/CountdownTimer';
