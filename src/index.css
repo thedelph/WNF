@@ -38,13 +38,3 @@ body {
 .label-text {
   @apply text-sm font-medium text-gray-700;
 }
-
-.preserve-3d {
-  transform-style: preserve-3d;
-  perspective: 1000px;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
