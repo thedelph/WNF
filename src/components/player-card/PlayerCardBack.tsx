@@ -75,7 +75,7 @@ export const PlayerCardBack: React.FC<PlayerCardProps> = ({
         <img 
           src="/assets/wnf.webp" 
           alt="" 
-          className="w-2/3 h-auto opacity-10"
+          className="w-2/3 h-auto opacity-5"
           style={{ 
             filter: 'grayscale(100%) brightness(1.5) contrast(1.2)',
             transform: 'rotate(-20deg)'
