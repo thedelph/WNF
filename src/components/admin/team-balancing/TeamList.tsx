@@ -70,8 +70,8 @@ const PlayerCard = ({
               )}
             </div>
             <div className="text-sm space-x-3">
-              <span>Attack: {player.attack_rating}</span>
-              <span>Defense: {player.defense_rating}</span>
+              <span>Attack: {player.attack_rating.toFixed(1)}</span>
+              <span>Defense: {player.defense_rating.toFixed(1)}</span>
             </div>
           </div>
         </div>

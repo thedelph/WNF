@@ -35,7 +35,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats }) => {
   const renderDiffIndicator = (diff: number) => {
     if (diff === 0) return null;
     const color = diff < 5 ? 'text-success' : diff < 10 ? 'text-warning' : 'text-error';
-    return <span className={`${color} ml-2`}>Diff: {diff.toFixed(1)}</span>;
+    return <span className={`${color} ml-2`}>Diff: {formatStat(diff)}</span>;
   };
 
   return (
