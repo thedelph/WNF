@@ -20,7 +20,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      {currentStreak > 1 && (
+      {currentStreak > 0 && (
         <motion.div 
           className="flex justify-between items-center bg-green-500/20 rounded-lg p-2"
           initial={{ x: -20, opacity: 0 }}
