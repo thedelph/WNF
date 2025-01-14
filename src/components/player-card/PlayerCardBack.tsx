@@ -97,7 +97,7 @@ export const PlayerCardBack: React.FC<PlayerCardProps> = ({
         </div>
       </div>
       
-      <div className="w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden bg-white/10">
+      <div className="w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden relative z-10">
         <img 
           src={avatarSvg || '/default-avatar.svg'} 
           alt="Player Avatar" 
