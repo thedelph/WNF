@@ -247,14 +247,11 @@ const Game = () => {
 
   });
 
-  // Determine if registration is open based on window times
-
+  // Determine if registration is open based on window times and game status
   const now = new Date();
-
   const isRegistrationOpen = upcomingGame && 
-
+    upcomingGame.status === 'open' &&
     now >= new Date(upcomingGame.registration_window_start) &&
-
     now < new Date(upcomingGame.registration_window_end);
 
   // Set up realtime subscription for game updates
@@ -432,10 +429,9 @@ const Game = () => {
         isRegistrationClosed={isRegistrationClosed}
       />
 
-      {/* Only show GameRegistration and RegisteredPlayers during registration window */}
+      {/* Show GameRegistration and RegisteredPlayers only during registration window */}
       {isRegistrationOpen && (
         <>
-
           <GameRegistration
             game={upcomingGame}
             isRegistrationOpen={isRegistrationOpen}
@@ -447,11 +443,10 @@ const Game = () => {
           />
           <RegisteredPlayers registrations={playerData.registrations} />
         </>
-
       )}
 
       {/* Show PlayerSelectionResults after registration closes but before team announcement */}
-      {!isRegistrationOpen && !isTeamAnnouncementTime && upcomingGame.status !== 'teams_announced' && (
+      {upcomingGame.status === 'players_announced' && !isTeamAnnouncementTime && (
         <PlayerSelectionResults gameId={upcomingGame.id} />
       )}
 
