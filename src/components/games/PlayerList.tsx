@@ -46,6 +46,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 winRate={player.winRate}
                 currentStreak={player.currentStreak}
                 maxStreak={player.maxStreak}
+                benchWarmerStreak={player.benchWarmerStreak}
                 avatarSvg={player.avatarSvg}
                 rarity={player.rarity}
                 wins={player.wins}

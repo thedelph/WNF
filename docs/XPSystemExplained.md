@@ -54,6 +54,23 @@ Important notes:
 - Formula: `1 + (current_streak * 0.1)`
 - Example: A streak of 3 results in a 1.3x multiplier
 
+##### Bench Warmer Streak
+A bench warmer streak is calculated based on consecutive games where a player:
+- Was registered but not selected for the game
+- Remained in the reserves list until the game was completed
+- Did not decline any slot offers during this period
+
+The bench warmer streak is used to provide a bonus to players who consistently show up as reserves:
+- Players receive a 5% bonus for each bench warmer streak level
+- Formula: `1 + (bench_warmer_streak * 0.05)`
+- Example: A streak of 2 results in a 1.10x multiplier
+
+The bench warmer streak is broken when:
+- The player is selected for a game
+- The player declines a slot offer
+- The player fails to register for a game
+- There's a gap between their reserve appearances
+
 ##### Final XP Calculation
 ```sql
 final_xp = ROUND((base_xp + reserve_xp) * streak_multiplier * bench_warmer_multiplier)

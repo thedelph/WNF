@@ -7,6 +7,7 @@ export interface PlayerStats {
   active_penalties: number;
   current_streak: number;
   max_streak: number;
+  bench_warmer_streak: number;
   win_rate: number;
   xp: number;
   avatar_svg?: string;
@@ -39,6 +40,7 @@ export interface ExtendedPlayerData extends PlayerStats {
     available_at?: string;
   }[];
   whatsapp_group_member?: string;
+  benchWarmerStreak?: number;  // Add this for consistency with PlayerCard props
 }
 
 export interface PlayerSelectionResultsProps {

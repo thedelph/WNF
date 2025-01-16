@@ -19,9 +19,122 @@ The player selection process is automatically triggered when a game's registrati
    - Only "No" and NULL are treated as non-WhatsApp members
 
 3. **Random Selection Priority**
-   - If exact number of WhatsApp members as random slots: all are selected
-   - If more WhatsApp members than slots: random selection among WhatsApp members only
-   - If fewer WhatsApp members than slots: all WhatsApp members selected, remaining slots filled randomly from non-WhatsApp members
+   - **WhatsApp Status Priority**
+     - If exact number of WhatsApp members as random slots: all are selected
+     - If more WhatsApp members than slots: random selection among WhatsApp members only
+     - If fewer WhatsApp members than slots: all WhatsApp members selected, remaining slots filled randomly from non-WhatsApp members
+
+   - **Weighted Random Selection**
+     - Each player's chance of being randomly selected is weighted based on their reserve history
+     - Base weight: 1 point for every player
+     - Additional points: +1 for each consecutive game as a reserve (bench_warmer_streak)
+     - Selection probability = Player's total points / Sum of all eligible players' points
+
+     Example:
+     ```
+     3 players competing for 2 slots:
+     Player A: 2 games as reserve = 3 points (1 base + 2 streak)
+     Player B: 5 games as reserve = 6 points (1 base + 5 streak)
+     Player C: 0 games as reserve = 1 point (1 base + 0 streak)
+
+     Total points = 10
+     Selection chances:
+     - Player A: 30% (3/10)
+     - Player B: 60% (6/10)
+     - Player C: 10% (1/10)
+     ```
+
+   - **Combined Priority System**
+     - WhatsApp status is still the primary grouping factor
+     - Within each group (WhatsApp/non-WhatsApp), weighted random selection is applied
+     - This ensures WhatsApp members are prioritized while maintaining fairness within groups
+
+## Weighted Random Selection Process
+
+### Base Weight System
+Each player's chance of being selected is weighted based on their history as a reserve:
+- Base points: 1 point (everyone starts with this)
+- Reserve bonus: +1 point per game as reserve
+- Total points = Base points + Reserve streak points
+
+For example:
+```
+Player A (3 games as reserve):  1 + 3 = 4 points
+Player B (0 games as reserve):  1 + 0 = 1 point
+Player C (5 games as reserve):  1 + 5 = 6 points
+```
+
+### Selection Probability
+The probability of being selected is calculated as:
+```
+Player's probability = (Player's total points / Sum of all players' points) × 100%
+```
+
+Example calculation with the above players:
+```
+Total pool points = 11 (4 + 1 + 6)
+
+Player A: (4/11) × 100 = 36.36%
+Player B: (1/11) × 100 = 9.09%
+Player C: (6/11) × 100 = 54.55%
+```
+
+### WhatsApp Priority System
+The selection process first separates players into two groups:
+1. WhatsApp Members
+2. Non-WhatsApp Members
+
+For random selection slots:
+- If there are enough WhatsApp members for all slots:
+  - Only WhatsApp members are considered
+  - Weighted selection applies within WhatsApp group
+- If there are fewer WhatsApp members than slots:
+  - All WhatsApp members are automatically selected
+  - Remaining slots filled from non-WhatsApp members using weighted selection
+- If no WhatsApp members:
+  - All players are considered in a single pool
+  - Weighted selection applies to everyone
+
+### Selection Process Example
+Given:
+- 2 random slots to fill
+- 3 WhatsApp members (A, B, C) with reserve streaks [2, 0, 1]
+- 2 non-WhatsApp members (D, E) with reserve streaks [4, 0]
+
+Step 1: WhatsApp Members Pool
+```
+Total pool points = 7 (3 + 1 + 2)
+A (2 games): (3/7) × 100 = 42.86%
+B (0 games): (1/7) × 100 = 14.28%
+C (1 game):  (2/7) × 100 = 28.57%
+```
+
+Step 2: Non-WhatsApp Members Pool (only used if needed)
+```
+Total pool points = 6 (5 + 1)
+D (4 games): (5/6) × 100 = 83.33%
+E (0 games): (1/6) × 100 = 16.67%
+```
+
+### Dynamic Probability Adjustment
+After each selection:
+1. Selected player is removed from the pool
+2. Total points are recalculated
+3. Probabilities are updated for remaining players
+
+Example: If player A is selected first:
+```
+Remaining WhatsApp members:
+Total points = 3 (1 + 2)
+B (0 games): (1/3) × 100 = 33.33%
+C (1 game):  (2/3) × 100 = 66.67%
+```
+
+This system ensures:
+- Players who have been reserves more often have better chances
+- WhatsApp members are prioritized
+- Probabilities remain fair and balanced
+- No player can be selected twice
 
 ## useRegistrationClose Hook
 

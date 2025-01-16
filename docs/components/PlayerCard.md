@@ -33,11 +33,16 @@ The player card displays various modifiers that affect XP gain:
 2. **Dropout Penalty**: -50% XP per dropout
 3. **Active Bonuses**: +10% XP per active bonus
 4. **Active Penalties**: -10% XP per active penalty
-5. **Bench Warmer**: +5% XP per game in reserves
+5. **Bench Warmer**: +5% XP per consecutive game in reserves
 
 Each modifier is displayed in a colored badge with its corresponding percentage:
-- Positive modifiers (Streak, Active Bonuses, Bench Warmer) use green/purple backgrounds
-- Negative modifiers (Dropout Penalty, Active Penalties) use red backgrounds
+- Positive modifiers use specific colors:
+  - Streak Bonus: Green background
+  - Active Bonuses: Green background
+  - Bench Warmer: Purple background with CircleDot icon
+- Negative modifiers use red backgrounds:
+  - Dropout Penalty
+  - Active Penalties
 
 ## Rank Shield Implementation
 
@@ -90,6 +95,7 @@ See individual component documentation for detailed prop information:
 | rank | number? | Player's global rank from the database (optional) |
 | isFlipped | boolean? | Whether the card is currently flipped (controls rank shield visibility) |
 | caps | number | Player's total caps |
+| benchWarmerStreak | number | Player's consecutive games in reserves |
 
 ## Usage
 
@@ -102,6 +108,7 @@ import { PlayerCard } from '../components/player-card/PlayerCard';
   xp={1000}
   rank={14} // Global rank from player_xp table
   caps={5}
+  benchWarmerStreak={3}
   // ... other props
 />
 ```

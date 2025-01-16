@@ -14,6 +14,7 @@ import { getRarity } from '../../utils/rarityCalculations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { PlayerCard } from '../player-card';
+import { WeightedSelectionExplanation } from './WeightedSelectionExplanation';
 
 interface SelectionReasoningProps {
   selectedPlayers: any[];
@@ -45,16 +46,34 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
       player => !meritPlayers.some(mp => mp.id === player.id)
     );
 
+    // Debug log
+    console.log('Player Stats:', playerStats);
+    console.log('Random Pool Players:', randomPool.map(p => ({
+      name: p.friendly_name,
+      id: p.id,
+      stats: playerStats[p.id]
+    })));
+
+    // Prepare data for weighted selection explanation
+    const eligiblePlayers = randomPool.map(player => ({
+      id: player.id,
+      friendly_name: player.friendly_name,
+      benchWarmerStreak: playerStats[player.id]?.benchWarmerStreak || 0,
+      whatsapp_group_member: player.whatsapp_group_member,
+      total_points: 0,  // Will be calculated by the component
+      probability: 0    // Will be calculated by the component
+    }));
+
     return (
       <div className="space-y-4 text-sm">
         <div>
           <h4 className="font-bold mb-2">Merit Selection ({meritPlayers.length} players)</h4>
-          <p className="mb-2">Players are selected by XP (highest first). In case of equal XP, the following tiebreakers are used in order:</p>
+          <p className="mb-2">Players were selected by XP (highest first). In case of equal XP, the following tiebreakers were used in order:</p>
           <ol className="list-decimal pl-4 mb-4">
-            <li>WhatsApp membership (members win)</li>
-            <li>Current streak (highest wins)</li>
-            <li>Caps (highest wins)</li>
-            <li>Registration time (earliest wins)</li>
+            <li>WhatsApp membership (members won)</li>
+            <li>Current streak (highest won)</li>
+            <li>Caps (highest won)</li>
+            <li>Registration time (earliest won)</li>
           </ol>
           <ul className="list-disc pl-4">
             {meritPlayers.map(player => {
@@ -83,146 +102,38 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
 
         <div>
           <h4 className="font-bold mb-2">Random Selection ({randomPlayers.length} players)</h4>
-          <p className="mb-2">WhatsApp members are prioritized in the random selection pool according to these rules:</p>
+          <p className="mb-2">WhatsApp members were prioritized in the random selection pool according to these rules:</p>
           <ul className="list-disc pl-4 mb-4">
-            <li>If there are enough WhatsApp members for all slots: only WhatsApp members are considered</li>
-            <li>If there are fewer WhatsApp members than slots: all WhatsApp members are selected, remaining slots filled from non-WhatsApp members</li>
+            <li>If there were enough WhatsApp members for all slots: only WhatsApp members were considered</li>
+            <li>If there were fewer WhatsApp members than slots: all WhatsApp members were selected, remaining slots filled from non-WhatsApp members</li>
             <li>If no WhatsApp members: regular random selection from all eligible players</li>
           </ul>
           
-          {/* Show the selection pool first */}
-          <div className="mb-4">
-            <p className="font-semibold mb-2">Random Selection Pool:</p>
-            {(() => {
-              const whatsappMembers = randomPool.filter(
-                p => p.whatsapp_group_member === 'Yes' || p.whatsapp_group_member === 'Proxy'
-              ).sort((a, b) => (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0));
+          {/* Add weighted selection explanation */}
+          <WeightedSelectionExplanation 
+            players={eligiblePlayers}
+            numSlots={randomPlayers.length}
+          />
 
-              const nonWhatsappMembers = randomPool.filter(
-                p => p.whatsapp_group_member === 'No' || !p.whatsapp_group_member
-              ).sort((a, b) => (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0));
-
-              const enoughWhatsappMembers = whatsappMembers.length >= randomPlayers.length;
-              const noWhatsappMembers = whatsappMembers.length === 0;
-
-              return (
-                <>
-                  <p className="mb-2">
-                    {noWhatsappMembers 
-                      ? `Since there were no WhatsApp members in the random pool, all players were eligible for random selection.`
-                      : enoughWhatsappMembers 
-                        ? `Since there were ${whatsappMembers.length} WhatsApp members available for ${randomPlayers.length} random slots, only WhatsApp members were considered for random selection.`
-                        : `There were only ${whatsappMembers.length} WhatsApp members available for ${randomPlayers.length} random slots, so non-WhatsApp members were also considered for the remaining ${randomPlayers.length - whatsappMembers.length} slot(s).`
-                    }
-                  </p>
-
-                  {whatsappMembers.length > 0 && (
-                    <div className="pl-4 mb-3">
-                      <p className="font-medium">WhatsApp Members{enoughWhatsappMembers ? ' (Random Selection Pool)' : ' (Automatically Selected)'}:</p>
-                      <ul className="list-disc pl-4">
-                        {whatsappMembers.map(player => (
-                          <li key={player.id}>
-                            {player.friendly_name} ({playerStats[player.id]?.xp || 0} XP)
-                            {randomPlayers.some(rp => rp.id === player.id) && ' - Selected'}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {nonWhatsappMembers.length > 0 && (
-                    <div className="pl-4">
-                      <p className="font-medium">
-                        Non-WhatsApp Members {noWhatsappMembers ? '(All Eligible)' : !enoughWhatsappMembers ? `(Eligible for remaining ${randomPlayers.length - whatsappMembers.length} slot(s))` : '(Not considered for random selection)'}:
-                      </p>
-                      <ul className="list-disc pl-4">
-                        {nonWhatsappMembers.map(player => (
-                          <li key={player.id}>
-                            {player.friendly_name} ({playerStats[player.id]?.xp || 0} XP)
-                            {randomPlayers.some(rp => rp.id === player.id) && ' - Selected'}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-
-          {/* Show the selected players */}
-          <p className="font-semibold mb-2">Selected Players:</p>
-          <ul className="list-disc pl-4">
-            {randomPlayers.map(player => {
-              const isWhatsApp = player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy';
-              return (
-                <li key={player.id} className="mb-2">
-                  <span className="font-semibold">{player.friendly_name}</span>: 
-                  Selected randomly {isWhatsApp 
-                    ? '(WhatsApp member priority)'
-                    : '(from remaining slots after WhatsApp members)'}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-bold mb-2">Reserve Players ({reservePlayers.length} players)</h4>
-          <p className="mb-2">Reserve players are ordered with the following priority:</p>
-          <ol className="list-decimal pl-4 mb-4">
-            <li><strong>WhatsApp Status:</strong> WhatsApp members first, non-members second</li>
-            <li><strong>Within Each Group:</strong> Sorted by XP (highest first)</li>
-            <li><strong>Tiebreakers:</strong> Same as merit selection (Streak → Caps → Registration Time)</li>
-          </ol>
-          <ul className="list-disc pl-4">
-            {[...reservePlayers]
-              .sort((a, b) => {
-                // First check WhatsApp status
-                const aIsWhatsApp = a.whatsapp_group_member === 'Yes' || a.whatsapp_group_member === 'Proxy';
-                const bIsWhatsApp = b.whatsapp_group_member === 'Yes' || b.whatsapp_group_member === 'Proxy';
-                
-                if (aIsWhatsApp !== bIsWhatsApp) {
-                  return aIsWhatsApp ? -1 : 1;
-                }
-
-                // Both have same WhatsApp status - compare by XP
-                if ((playerStats[b.id]?.xp || 0) !== (playerStats[a.id]?.xp || 0)) {
-                  return (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0);
-                }
-
-                // Both have same XP and WhatsApp status - check streak
-                if ((playerStats[b.id]?.current_streak || 0) !== (playerStats[a.id]?.current_streak || 0)) {
-                  return (playerStats[b.id]?.current_streak || 0) - (playerStats[a.id]?.current_streak || 0);
-                }
-
-                // Same streak - check caps
-                if ((playerStats[b.id]?.caps || 0) !== (playerStats[a.id]?.caps || 0)) {
-                  return (playerStats[b.id]?.caps || 0) - (playerStats[a.id]?.caps || 0);
-                }
-
-                // Same caps - check registration time
-                return (a.registration_time || '').localeCompare(b.registration_time || '');
-              })
-              .map((player, index, array) => {
+          {/* Show selected players */}
+          <div className="mt-4">
+            <p className="font-semibold mb-2">Selected Players:</p>
+            <ul className="list-disc pl-4">
+              {randomPlayers.map(player => {
+                const stats = playerStats[player.id];
                 const isWhatsApp = player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy';
-                const prevPlayer = array[index - 1];
-                const isPrevWhatsApp = prevPlayer && (prevPlayer.whatsapp_group_member === 'Yes' || prevPlayer.whatsapp_group_member === 'Proxy');
-                const showDivider = index > 0 && isWhatsApp !== isPrevWhatsApp;
-
                 return (
-                  <React.Fragment key={player.id}>
-                    {showDivider && <div className="my-2 border-t border-base-300"></div>}
-                    <li>
-                      {player.friendly_name} ({playerStats[player.id]?.xp || 0} XP
-                      {playerStats[player.id]?.current_streak > 0 && `, Streak: ${playerStats[player.id]?.current_streak}`}
-                      {playerStats[player.id]?.caps > 0 && `, Caps: ${playerStats[player.id]?.caps}`})
-                      {isWhatsApp && ' - WhatsApp member'}
-                    </li>
-                  </React.Fragment>
+                  <li key={player.id} className="mb-2">
+                    <span className="font-semibold">{player.friendly_name}</span>
+                    {isWhatsApp && ' (WhatsApp member)'}
+                    <span className="text-info">
+                      {' '}(Has a reserve streak of {stats?.benchWarmerStreak || 0} games)
+                    </span>
+                  </li>
                 );
               })}
-          </ul>
+            </ul>
+          </div>
         </div>
       </div>
     );
@@ -352,6 +263,20 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             rank: player.player_xp?.rank || undefined
           }
         }), {});
+
+        console.log('Debug - Raw Player Data:', playerData?.map(p => ({
+          id: p.id,
+          name: selectedPlayers.find(sp => sp.id === p.id)?.friendly_name || 
+                reservePlayers.find(rp => rp.id === p.id)?.friendly_name,
+          bench_warmer_streak: p.bench_warmer_streak
+        })));
+
+        console.log('Debug - Processed Stats:', Object.entries(stats).map(([id, stat]) => ({
+          id,
+          name: selectedPlayers.find(sp => sp.id === id)?.friendly_name || 
+                reservePlayers.find(rp => rp.id === id)?.friendly_name,
+          benchWarmerStreak: stat.benchWarmerStreak
+        })));
 
         setPlayerStats(stats);
       } catch (err) {

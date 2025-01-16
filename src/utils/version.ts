@@ -18,6 +18,39 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.0.6',
+    date: '16/01/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Random Selection Process',
+            details: 'Random selection now uses weighted probabilities based on bench warmer streaks. Players with longer bench warmer streaks have a higher chance of being selected for random slots, helping to ensure fairer rotation of reserve players.'
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Bench Warmer Streak Bonus',
+            details: 'Now displays properly on player cards.'
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.0.5',
     date: '10/01/2025',
     sections: [
