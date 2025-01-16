@@ -77,17 +77,17 @@ export const handlePlayerSelection = async ({
 
     // Sort players by XP and tiebreakers
     const sortedPlayers = [...players].sort((a, b) => {
-      // First check WhatsApp status
+      // First compare by XP
+      if (b.xp !== a.xp) {
+        return b.xp - a.xp;
+      }
+
+      // If XP is equal, then check WhatsApp status
       const aIsWhatsApp = a.whatsapp_group_member === 'Yes' || a.whatsapp_group_member === 'Proxy';
       const bIsWhatsApp = b.whatsapp_group_member === 'Yes' || b.whatsapp_group_member === 'Proxy';
       
       if (aIsWhatsApp !== bIsWhatsApp) {
         return aIsWhatsApp ? -1 : 1;
-      }
-
-      // Both have same WhatsApp status - compare by XP
-      if (b.xp !== a.xp) {
-        return b.xp - a.xp;
       }
 
       // Both have same XP and WhatsApp status - check streak
@@ -143,44 +143,54 @@ export const handlePlayerSelection = async ({
       }))
     ];
 
-    // Update game_registrations for selected players
-    const updatePromises = selectedPlayers.map(player => 
-      supabaseAdmin
-        .from('game_registrations')
-        .update({
-          status: 'selected',
-          selection_method: player.selection_method
-        })
-        .eq('game_id', gameId)
-        .eq('player_id', player.id)
-    );
+    try {
+      // First update all selected players
+      for (const player of selectedPlayers) {
+        const { error: updateError } = await supabaseAdmin
+          .from('game_registrations')
+          .update({
+            status: 'selected',
+            selection_method: player.selection_method
+          })
+          .eq('game_id', gameId)
+          .eq('player_id', player.id);
 
-    // Update game_registrations for non-selected players
-    const nonSelectedPlayerIds = players
-      .filter(p => !selectedPlayers.find(sp => sp.id === p.id))
-      .map(p => p.id);
+        if (updateError) {
+          throw new Error(`Failed to update selected player ${player.id}: ${updateError.message}`);
+        }
+      }
 
-    if (nonSelectedPlayerIds.length > 0) {
-      updatePromises.push(
-        supabaseAdmin
+      // Then update non-selected players
+      const nonSelectedPlayerIds = players
+        .filter(p => !selectedPlayers.find(sp => sp.id === p.id))
+        .map(p => p.id);
+
+      if (nonSelectedPlayerIds.length > 0) {
+        const { error: reserveError } = await supabaseAdmin
           .from('game_registrations')
           .update({
             status: 'reserve',
             selection_method: 'none'
           })
           .eq('game_id', gameId)
-          .in('player_id', nonSelectedPlayerIds)
-      );
+          .in('player_id', nonSelectedPlayerIds);
+
+        if (reserveError) {
+          throw new Error(`Failed to update reserve players: ${reserveError.message}`);
+        }
+      }
+
+      return {
+        success: true,
+        selectedPlayers,
+        nonSelectedPlayerIds
+      };
+    } catch (error) {
+      console.error('Error updating player selection:', error);
+      return {
+        error: error instanceof Error ? error.message : 'An error occurred during player selection update'
+      };
     }
-
-    // Execute all updates
-    await Promise.all(updatePromises);
-
-    return {
-      success: true,
-      selectedPlayers,
-      nonSelectedPlayerIds
-    };
   } catch (error) {
     console.error('Error in handlePlayerSelection:', error);
     return {

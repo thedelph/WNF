@@ -76,36 +76,63 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
     const fetchTeamSelection = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('game_selections')
+        // First get the selected and reserve players through game_registrations
+        const { data: registrations, error: registrationsError } = await supabase
+          .from('game_registrations')
           .select(`
             id,
             game_id,
-            created_at,
-            selected_players:selected_players (
+            status,
+            team,
+            players:player_id (
               id,
               friendly_name,
               avatar_svg,
-              whatsapp_group_member,
-              team
-            ),
-            reserve_players:reserve_players (
-              id,
-              friendly_name,
-              avatar_svg,
-              whatsapp_group_member,
-              team
-            ),
-            selection_metadata
+              whatsapp_group_member
+            )
           `)
+          .eq('game_id', gameId);
+
+        if (registrationsError) throw registrationsError;
+
+        // Transform the data into the expected format
+        const selectedPlayers = registrations
+          ?.filter(reg => reg.status === 'selected')
+          .map(reg => ({
+            ...reg.players,
+            team: reg.team
+          })) || [];
+
+        const reservePlayers = registrations
+          ?.filter(reg => reg.status === 'reserve')
+          .map(reg => ({
+            ...reg.players,
+            team: reg.team
+          })) || [];
+
+        // Get the game selection metadata
+        const { data: selectionData, error: selectionError } = await supabase
+          .from('game_selections')
+          .select('selection_metadata')
           .eq('game_id', gameId)
           .single();
 
-        if (error) throw error;
+        if (selectionError) throw selectionError;
 
-        if (data) {
-          setSelection(data);
-        }
+        setSelection({
+          id: gameId,
+          game_id: gameId,
+          created_at: new Date().toISOString(), // This might need to come from somewhere else
+          selected_players: selectedPlayers,
+          reserve_players: reservePlayers,
+          selection_metadata: selectionData?.selection_metadata || {
+            startTime: '',
+            endTime: '',
+            meritSlots: 0,
+            randomSlots: 0,
+            selectionNotes: []
+          }
+        });
       } catch (err) {
         console.error('Error fetching team selection:', err);
         setError('Failed to load team selection');
@@ -133,6 +160,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             caps,
             current_streak,
             max_streak,
+            bench_warmer_streak,
             active_bonuses,
             active_penalties,
             win_rate,
@@ -176,6 +204,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             activePenalties: player.active_penalties || 0,
             currentStreak: player.current_streak || 0,
             maxStreak: player.max_streak || 0,
+            benchWarmerStreak: player.bench_warmer_streak || 0,
             wins: winRateMap[player.id]?.wins || 0,
             draws: winRateMap[player.id]?.draws || 0,
             losses: winRateMap[player.id]?.losses || 0,
@@ -272,6 +301,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       activePenalties={playerStats[player.id]?.activePenalties || 0}
                       currentStreak={playerStats[player.id]?.currentStreak || 0}
                       maxStreak={playerStats[player.id]?.maxStreak || 0}
+                      benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
                       avatarSvg={player.avatar_svg}
                       rarity={playerStats[player.id]?.rarity || 'Amateur'}
                       wins={playerStats[player.id]?.wins || 0}
@@ -318,6 +348,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       activePenalties={playerStats[player.id]?.activePenalties || 0}
                       currentStreak={playerStats[player.id]?.currentStreak || 0}
                       maxStreak={playerStats[player.id]?.maxStreak || 0}
+                      benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
                       avatarSvg={player.avatar_svg}
                       rarity={playerStats[player.id]?.rarity || 'Amateur'}
                       wins={playerStats[player.id]?.wins || 0}

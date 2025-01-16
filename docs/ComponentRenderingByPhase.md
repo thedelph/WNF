@@ -143,10 +143,23 @@ Features:
 ```typescript
 Visibility Conditions:
 - Game status === 'teams_announced' || 'completed'
+Data Flow:
+1. Fetches player data through game_registrations:
+   - Gets selected and reserve players with their team assignments
+   - Includes player details (friendly_name, avatar_svg, etc.)
+2. Retrieves selection metadata from game_selections table
+3. Combines data for display:
+   - Team assignments
+   - Player details
+   - Selection metadata
 Features:
 - Team balance statistics
 - Player ratings display
 - Position preferences
+- Supports both card and list view modes
+Database Relationships:
+- game_registrations -> players (for player details)
+- game_selections (for metadata)
 ```
 
 ## State Management

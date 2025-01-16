@@ -146,13 +146,116 @@ Bottom 5 by XP:
 - 3 to reserves
 ```
 
+## Data Storage and Access
+
+### Database Structure
+
+The player selection process involves several key tables:
+
+1. **game_registrations**
+   - Primary table for player-game relationships
+   - Stores:
+     - `player_id`: Reference to players table
+     - `game_id`: Reference to games table
+     - `status`: Selected/Reserve/Registered
+     - `team`: Team assignment (for selected players)
+     - Registration metadata (timestamps, etc.)
+
+2. **game_selections**
+   - Stores selection process metadata
+   - Contains:
+     - `game_id`: Reference to games table
+     - `selection_metadata`: JSON with:
+       - startTime
+       - endTime
+       - meritSlots
+       - randomSlots
+       - selectionNotes
+
+3. **players**
+   - Contains player information
+   - Relevant fields:
+     - `id`
+     - `friendly_name`
+     - `avatar_svg`
+     - `whatsapp_group_member`
+
+### Data Access Patterns
+
+#### Fetching Selected Players
+```typescript
+// Correct pattern using game_registrations relationship
+const { data: registrations } = await supabase
+  .from('game_registrations')
+  .select(`
+    id,
+    game_id,
+    status,
+    team,
+    players:player_id (
+      id,
+      friendly_name,
+      avatar_svg,
+      whatsapp_group_member
+    )
+  `)
+  .eq('game_id', gameId)
+  .eq('status', 'selected');
+```
+
+#### Fetching Reserve Players
+```typescript
+// Similar pattern for reserve players
+const { data: reserves } = await supabase
+  .from('game_registrations')
+  .select(`
+    id,
+    game_id,
+    status,
+    players:player_id (
+      id,
+      friendly_name,
+      avatar_svg,
+      whatsapp_group_member
+    )
+  `)
+  .eq('game_id', gameId)
+  .eq('status', 'reserve');
+```
+
+#### Getting Selection Metadata
+```typescript
+// Separate query for selection metadata
+const { data: metadata } = await supabase
+  .from('game_selections')
+  .select('selection_metadata')
+  .eq('game_id', gameId)
+  .single();
+```
+
+### Component Data Flow
+
+1. **PlayerSelectionResults.tsx**
+   - Displays initial selection results
+   - Uses game_registrations to show:
+     - Selected players (merit + random)
+     - Reserve list
+   - Fetches selection metadata from game_selections
+
+2. **TeamSelectionResults.tsx**
+   - Shows final team assignments
+   - Queries through game_registrations for:
+     - Player details
+     - Team assignments
+   - Gets additional metadata from game_selections
+
 ## Selection Results
 
 The process produces:
 - List of selected players (both merit and random)
 - List of reserve players (ordered by WhatsApp status first, then XP)
 - Selection metadata (timestamps, selection methods)
-- Player status updates in the database
+- Player status and team updates in game_registrations
 
 ### Reserve List Ordering
 

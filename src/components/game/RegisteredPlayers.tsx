@@ -28,6 +28,7 @@ interface PlayerStats {
   activePenalties: number;
   currentStreak: number;
   maxStreak: number;
+  benchWarmerStreak: number;
   rank: number | undefined;
 }
 
@@ -59,6 +60,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
             active_bonuses,
             active_penalties,
             win_rate,
+            bench_warmer_streak,
             player_xp (
               xp,
               rank,
@@ -99,6 +101,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
             activePenalties: player.active_penalties || 0,
             currentStreak: player.current_streak || 0,
             maxStreak: player.max_streak || 0,
+            benchWarmerStreak: player.bench_warmer_streak || 0,
             wins: winRateMap[player.id]?.wins || 0,
             draws: winRateMap[player.id]?.draws || 0,
             losses: winRateMap[player.id]?.losses || 0,
@@ -139,7 +142,14 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 justify-items-center sm:justify-items-stretch">
-        {registrationsState.map((registration) => {
+        {/* Sort registrations by player XP in descending order */}
+        {[...registrationsState]
+          .sort((a, b) => {
+            const aXp = playerStats[a.player.id]?.xp || 0;
+            const bXp = playerStats[b.player.id]?.xp || 0;
+            return bXp - aXp; // Descending order
+          })
+          .map((registration) => {
           const stats = playerStats[registration.player.id] || {
             xp: 0,
             rarity: 'Amateur',
@@ -148,6 +158,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
             activePenalties: 0,
             currentStreak: 0,
             maxStreak: 0,
+            benchWarmerStreak: 0,
             wins: 0,
             draws: 0,
             losses: 0,
@@ -181,6 +192,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
                 winRate={stats.winRate}
                 currentStreak={stats.currentStreak}
                 maxStreak={stats.maxStreak}
+                benchWarmerStreak={stats.benchWarmerStreak}
                 rarity={stats.rarity}
                 avatarSvg={registration.player.avatar_svg || ''}
                 status={registration.status === 'reserve' ? 'reserve' : undefined}
