@@ -80,7 +80,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
         >
           <div className="flex items-center gap-2">
             <CircleDot className="w-4 h-4" />
-            <span className="text-sm">Bench Warmer Bonus</span>
+            <span className="text-sm">Bench Warmer</span>
           </div>
           <span className="text-sm font-bold">+{(benchWarmerModifier * 100).toFixed(0)}%</span>
         </motion.div>

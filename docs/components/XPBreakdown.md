@@ -52,6 +52,41 @@ The XP breakdown uses the following weighting system for games:
 
 This weighting system ensures that recent participation is valued more highly while still maintaining some value for historical participation up to 39 games ago.
 
+## XP Calculation Details
+
+The XP breakdown shows various components that contribute to a player's total XP:
+
+### Base Game XP
+- Weighted based on game recency (see table below)
+- Shows individual game contributions
+- Includes game results (WIN/LOSS/DRAW)
+
+### Reserve XP
+- Shows +5 XP for being reserve
+- Shows -10 XP for declining slots
+- Added to base XP before multipliers are applied
+
+### Multipliers
+1. Streak Multiplier
+   - Based on consecutive game participation
+   - 10% bonus per streak level
+   - Applied to combined (base + reserve) XP
+
+2. Bench Warmer Multiplier
+   - Based on consecutive reserve/non-selection status
+   - 5% bonus per bench warmer streak level
+   - Applied to combined (base + reserve) XP
+
+### Example Calculation
+```
+Base Game XP: 146
+Reserve XP: +5
+Combined Base: 151
+Streak Multiplier: 1.0 (no streak)
+Bench Warmer Multiplier: 1.05 (5% from streak of 1)
+Final XP: 151 * 1.0 * 1.05 = 158.55 (rounded to 159)
+```
+
 ## Features
 
 ### Reserve XP Display

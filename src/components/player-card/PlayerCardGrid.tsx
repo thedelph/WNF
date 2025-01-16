@@ -140,6 +140,7 @@ export default function PlayerCardGrid() {
             caps,
             current_streak,
             max_streak,
+            bench_warmer_streak,
             active_bonuses,
             active_penalties,
             win_rate,
@@ -183,6 +184,7 @@ export default function PlayerCardGrid() {
             activePenalties: player.active_penalties || 0,
             currentStreak: player.current_streak || 0,
             maxStreak: player.max_streak || 0,
+            benchWarmerStreak: player.bench_warmer_streak || 0,
             wins: winRateMap[player.id]?.wins || 0,
             draws: winRateMap[player.id]?.draws || 0,
             losses: winRateMap[player.id]?.losses || 0,
@@ -527,7 +529,7 @@ export default function PlayerCardGrid() {
                     totalGames={playerStats[player.id]?.totalGames || 0}
                     currentStreak={playerStats[player.id]?.currentStreak || 0}
                     maxStreak={playerStats[player.id]?.maxStreak || 0}
-                    benchWarmerStreak={0}
+                    benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
                     rarity={playerStats[player.id]?.rarity || 'Amateur'}
                     avatarSvg={player.avatarSvg}
                     whatsapp_group_member={player.whatsapp_group_member}

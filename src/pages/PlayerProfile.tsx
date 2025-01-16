@@ -75,7 +75,12 @@ export default function PlayerProfileNew() {
             active_bonuses,
             active_penalties,
             current_streak,
-            max_streak
+            max_streak,
+            player_xp (
+              xp,
+              rank,
+              rarity
+            )
           `)
           .eq('id', id)
           .single();
@@ -85,14 +90,44 @@ export default function PlayerProfileNew() {
           throw playerError;
         }
 
-        // Get player XP
-        const { data: xpData, error: xpError } = await supabase
-          .rpc('calculate_player_xp', { p_player_id: id });
+        // Get reserve XP data
+        const { data: reserveXPData, error: reserveXPError } = await supabase
+          .from('reserve_xp_transactions')
+          .select('xp_amount')
+          .eq('player_id', id);
 
-        if (xpError) {
-          console.error('Error calculating player XP:', xpError);
-          throw xpError;
+        if (reserveXPError) {
+          console.error('Error fetching reserve XP:', reserveXPError);
+          throw reserveXPError;
         }
+
+        // Debug log for reserve data
+        console.log('Reserve XP Data:', reserveXPData);
+
+        // Get all registrations for historical games
+        const { data: registrations, error: registrationsError } = await supabase
+          .from('game_registrations')
+          .select(`
+            status,
+            games!inner (
+              sequence_number,
+              is_historical
+            )
+          `)
+          .eq('player_id', id)
+          .eq('games.is_historical', true);
+
+        if (registrationsError) {
+          console.error('Error fetching registrations:', registrationsError);
+          throw registrationsError;
+        }
+
+        // Count reserve appearances
+        const reserveCount = registrations?.filter(reg => reg.status === 'reserve').length || 0;
+        // Each reserve appearance gives 5 XP
+        const reserveXP = reserveCount * 5;
+
+        console.log('Calculated from game history:', { reserveCount, reserveXP });
 
         // Get player win rates
         const { data: winRatesData, error: winRatesError } = await supabase
@@ -164,6 +199,8 @@ export default function PlayerProfileNew() {
           .eq('game.is_historical', true)
           .eq('game.needs_completion', false)
           .eq('game.completed', true)
+          // Only show games where player was on blue or orange team
+          .in('team', ['blue', 'orange'])
           .order('game(sequence_number)', { ascending: false });
 
         if (gameError) throw gameError;
@@ -223,7 +260,7 @@ export default function PlayerProfileNew() {
           active_penalties: playerData.active_penalties || 0,
           current_streak: playerData.current_streak || 0,
           max_streak: playerData.max_streak || 0,
-          xp: xpData || 0,
+          xp: playerData.player_xp?.xp || 0,
           wins: playerWinRates?.wins || 0,
           totalGames: (playerWinRates?.wins || 0) + (playerWinRates?.draws || 0) + (playerWinRates?.losses || 0),
           win_rate: playerWinRates?.win_rate || 0,
@@ -236,9 +273,12 @@ export default function PlayerProfileNew() {
             .filter(game => game.sequence !== undefined) || [],
           games_played_together: gamesPlayedTogether,
           my_rating: myRating,
-          reserveXP: 0,
-          reserveCount: 0
+          reserveXP: reserveXP,
+          reserveCount: reserveCount
         };
+
+        // Debug log for final player stats
+        console.log('Final Player Stats:', playerStats);
 
         setPlayer(playerStats);
       } catch (error) {
@@ -396,8 +436,8 @@ export default function PlayerProfileNew() {
             gameHistory: player.gameHistory || [],
             latestSequence: latestSequence,
             xp: player.xp || 0,
-            reserveXP: player.reserveXP || 0,
-            reserveCount: player.reserveCount || 0
+            reserveXP: player.reserveXP ?? 0,
+            reserveCount: player.reserveCount ?? 0
           }} />
         </div>
       </motion.div>

@@ -33,3 +33,40 @@ export interface GameOutcomeProps {
   onChange: (value: string) => void
   isValid: boolean
 }
+
+// Historical Game Form Types
+export interface ParsedGameInfo {
+  date: string
+  time: string
+  gameNumber: number
+  venue: string
+  maxPlayers: number
+  selectedPlayers: { name: string; xp: number }[]
+  randomPlayers: { name: string; xp: number }[]
+  reservePlayers: { name: string; xp: number }[]
+}
+
+export interface ParsedTeams {
+  orangeTeam: string[]
+  blueTeam: string[]
+}
+
+export interface TeamPlayer {
+  id: string
+  name: string
+  selectionType?: 'merit' | 'random'
+}
+
+export interface ReservePlayer {
+  id: string
+  name: string
+  isWhatsAppMember: boolean
+}
+
+export interface DropoutPlayer {
+  id: string
+  name: string
+  reason?: string
+}
+
+export type GameOutcomeType = 'blue_win' | 'orange_win' | 'draw' | null

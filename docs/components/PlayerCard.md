@@ -25,6 +25,20 @@ The Player Card system is split into several components for better maintainabili
 - Global rank shield displaying the player's rank (only visible on front face)
 - Responsive design with hover and tap animations
 
+## Modifiers and Bonuses
+
+The player card displays various modifiers that affect XP gain:
+
+1. **Streak Bonus**: +10% XP per consecutive game played
+2. **Dropout Penalty**: -50% XP per dropout
+3. **Active Bonuses**: +10% XP per active bonus
+4. **Active Penalties**: -10% XP per active penalty
+5. **Bench Warmer**: +5% XP per game in reserves
+
+Each modifier is displayed in a colored badge with its corresponding percentage:
+- Positive modifiers (Streak, Active Bonuses, Bench Warmer) use green/purple backgrounds
+- Negative modifiers (Dropout Penalty, Active Penalties) use red backgrounds
+
 ## Rank Shield Implementation
 
 The rank shield feature was implemented with the following components:

@@ -56,14 +56,35 @@ Important notes:
 
 ##### Final XP Calculation
 ```sql
-final_xp = ROUND((base_xp * streak_multiplier) + reserve_xp)
+final_xp = ROUND((base_xp + reserve_xp) * streak_multiplier * bench_warmer_multiplier)
 ```
 Where:
 - `base_xp`: Sum of weighted XP from selected games
-- `streak_multiplier`: Based on consecutive selected games in past games only
 - `reserve_xp`: Sum of reserve bonuses (+5) and penalties (-10)
-- Result cannot be negative (minimum of 0)
+- `streak_multiplier`: Based on consecutive selected games (1 + (current_streak * 0.1))
+- `bench_warmer_multiplier`: Based on bench warmer streak (1 + (bench_warmer_streak * 0.05))
 - Result is rounded to the nearest integer
+
+Important Notes:
+- Reserve XP is added to base XP before any multipliers are applied
+- Both streak and bench warmer multipliers apply to the combined (base + reserve) XP
+- Example calculation:
+  ```
+  Base XP: 146
+  Reserve XP: +5
+  Combined Base: 151
+  Streak Multiplier: 1.0 (no streak)
+  Bench Warmer Multiplier: 1.05 (5% from streak of 1)
+  Final: 151 * 1.0 * 1.05 = 158.55 (rounded to 159)
+  ```
+
+### Troubleshooting XP Calculations
+When verifying XP calculations:
+1. Check player's game history for base XP weighting
+2. Verify reserve transactions in reserve_xp_transactions table
+3. Confirm both streak and bench warmer streak values
+4. Remember that all XP (including reserve XP) gets multiplied by both streak multipliers
+5. Use the calculate_player_xp() function to recalculate if needed
 
 ### 3. Reserve XP System
 
@@ -146,3 +167,49 @@ The XP system automatically updates through these triggers:
 - The weighting system can be adjusted by modifying the function
 - Streak calculations can be modified by updating break conditions
 - Reserve XP values (+5/-10) can be changed if needed
+
+## Lessons Learned
+
+### Reserve XP Calculation
+Reserve XP should be calculated from:
+1. `game_registrations` table with status = 'reserve'
+2. Each reserve appearance = +5 XP
+3. Count only historical games (is_historical = true)
+
+### Streak Calculation
+A player's streak is calculated based on their consecutive participation in past games only. Future game registrations or selections do not affect the streak calculation.
+
+### Common Issues and Troubleshooting
+
+#### XP Discrepancies
+If XP values differ between components:
+1. Check if using `player_xp` table vs calculating XP manually
+2. Verify reserve appearances in `game_registrations` table
+3. Ensure only one type of streak (attendance or reserve) is being applied
+
+#### Reserve XP Calculation
+Reserve XP should be calculated from:
+1. `game_registrations` table with status = 'reserve'
+2. Each reserve appearance = +5 XP
+3. Count only historical games (is_historical = true)
+
+#### Database Schema Dependencies
+The XP system relies on these tables:
+- `player_xp`: Current XP totals
+- `game_registrations`: Game participation and reserve status
+- `reserve_xp_transactions`: Historical record of reserve XP changes
+
+## Implementation Notes
+1. Always fetch reserve status from `game_registrations` rather than transactions
+2. Use nullish coalescing (`??`) instead of OR (`||`) for XP values to handle zero values correctly
+3. Check for undefined before applying multipliers
+4. Round down final XP values using `Math.floor()`
+
+## Component Display Guidelines
+1. Show streaks as percentages rather than XP values
+2. Display the full XP calculation formula
+3. Clearly indicate which streak type is active
+4. Use consistent terminology:
+   - "Bench Warmer" for reserve streak UI
+   - "Reserve XP" for base reserve points
+   - "Attendance Streak" for consecutive games

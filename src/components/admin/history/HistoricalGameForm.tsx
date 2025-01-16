@@ -4,58 +4,244 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { supabaseAdmin } from '../../../utils/supabase'
 import { toast } from 'react-hot-toast'
-import { Player } from '../../../types/player'
 import { useVenues } from '../../../hooks/useVenues'
+import { Player } from '../../../types/player'
+import { GameMessagesParser } from './forms/GameMessagesParser'
+import { TeamPlayerList } from './forms/TeamPlayerList'
+import { PlayerStatusLists } from './forms/PlayerStatusLists'
+import { 
+  TeamPlayer, 
+  ReservePlayer, 
+  DropoutPlayer, 
+  ParsedGameInfo, 
+  ParsedTeams,
+  GameOutcomeType 
+} from './types'
 
 interface Props {
   onGameAdded: () => void
 }
 
-interface TeamPlayer {
-  id: string
-  name: string
-}
-
-type GameOutcome = 'blue_win' | 'orange_win' | 'draw' | null;
-
 const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
+  // Form state
   const [date, setDate] = useState('')
   const [venueId, setVenueId] = useState('')
   const [blueScore, setBlueScore] = useState('')
   const [orangeScore, setOrangeScore] = useState('')
   const [bluePlayers, setBluePlayers] = useState<TeamPlayer[]>([])
   const [orangePlayers, setOrangePlayers] = useState<TeamPlayer[]>([])
+  const [reservePlayers, setReservePlayers] = useState<ReservePlayer[]>([])
+  const [dropoutPlayers, setDropoutPlayers] = useState<DropoutPlayer[]>([])
+  const [outcome, setOutcome] = useState<GameOutcomeType>(null)
+  
+  // UI state
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [outcome, setOutcome] = useState<'blue_win' | 'orange_win' | 'draw' | null>(null)
+  const [parseError, setParseError] = useState<string | null>(null)
+  
   const { venues, isLoading: venuesLoading } = useVenues()
 
   useEffect(() => {
     fetchPlayers()
   }, [])
 
-  useEffect(() => {
-    if (venues.length === 1 && !venueId) {
-      setVenueId(venues[0].id)
-    }
-  }, [venues, venueId])
-
   const fetchPlayers = async () => {
     try {
-      const { data, error } = await supabaseAdmin
+      console.log('Fetching players...')
+      const { data: players, error } = await supabaseAdmin
         .from('players')
-        .select('id, friendly_name')
+        .select('*')
         .order('friendly_name')
 
       if (error) throw error
-      setAvailablePlayers(data)
+      
+      console.log('Fetched players:', players)
+      setAvailablePlayers(players)
     } catch (error) {
-      toast.error('Failed to fetch players')
-      console.error('Error:', error)
+      console.error('Error fetching players:', error)
+      toast.error('Failed to load players')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleMessagesParsed = (parsedGame: ParsedGameInfo, parsedTeams: ParsedTeams) => {
+    // Set form data
+    setDate(parsedGame.date)
+    const venueMatch = venues.find(v => v.name.toLowerCase().includes(parsedGame.venue.toLowerCase()))
+    if (venueMatch) {
+      setVenueId(venueMatch.id)
+    }
+
+    // Clear existing players
+    setBluePlayers([])
+    setOrangePlayers([])
+    setReservePlayers([])
+    setDropoutPlayers([])
+
+    // Map parsed players to available players
+    const mapPlayer = (playerInfo: { name: string; xp: number }) => {
+      console.log('Trying to map player:', playerInfo.name)
+      console.log('Available players:', availablePlayers.map(p => p.friendly_name))
+      
+      // Normalize the search name by replacing non-breaking spaces with regular spaces
+      const normalizeString = (str: string) => 
+        str.toLowerCase()
+           .replace(/\u00A0/g, ' ') // Replace non-breaking spaces with regular spaces
+           .replace(/\s+/g, ' ')    // Replace multiple spaces with single space
+           .trim()                  // Remove leading/trailing spaces
+
+      const searchName = normalizeString(playerInfo.name)
+      
+      // Try exact match first
+      let player = availablePlayers.find(p => {
+        const dbName = normalizeString(p.friendly_name)
+        console.log(`Comparing normalized names:`)
+        console.log(`DB name: "${dbName}"`)
+        console.log(`Search name: "${searchName}"`)
+        return dbName === searchName
+      })
+
+      // If no exact match, try partial match
+      if (!player) {
+        player = availablePlayers.find(p => {
+          const dbName = normalizeString(p.friendly_name)
+          const playerNameParts = searchName.split(' ')
+          
+          // Handle cases like "Ryan J" matching "Ryan"
+          if (playerNameParts.length > 1) {
+            const firstNameMatch = playerNameParts[0] === dbName
+            console.log(`Checking first name match: ${dbName} against ${playerNameParts[0]}: ${firstNameMatch}`)
+            return firstNameMatch
+          }
+          
+          const partialMatch = dbName.includes(searchName) || searchName.includes(dbName)
+          console.log(`Checking partial match: ${dbName} against ${searchName}: ${partialMatch}`)
+          return partialMatch
+        })
+      }
+
+      if (!player) {
+        console.warn(`Could not find player match for: ${playerInfo.name}`)
+      } else {
+        console.log(`Successfully mapped ${playerInfo.name} to ${player.friendly_name}`)
+      }
+      return player
+    }
+
+    // Add merit-selected players
+    const selectedPlayers: TeamPlayer[] = []
+    for (const playerInfo of parsedGame.selectedPlayers) {
+      const player = mapPlayer(playerInfo)
+      if (player) {
+        const teamPlayer = { 
+          id: player.id, 
+          name: player.friendly_name,
+          selectionType: 'merit' as const
+        }
+        selectedPlayers.push(teamPlayer)
+      } else {
+        setParseError(`Could not find player: ${playerInfo.name}`)
+        return
+      }
+    }
+
+    // Add random-selected players
+    for (const playerInfo of parsedGame.randomPlayers) {
+      const player = mapPlayer(playerInfo)
+      if (player) {
+        const teamPlayer = { 
+          id: player.id, 
+          name: player.friendly_name,
+          selectionType: 'random' as const
+        }
+        selectedPlayers.push(teamPlayer)
+      } else {
+        setParseError(`Could not find player: ${playerInfo.name}`)
+        return
+      }
+    }
+
+    // Add reserve players
+    for (const playerInfo of parsedGame.reservePlayers) {
+      const player = mapPlayer(playerInfo)
+      if (player) {
+        const reservePlayer = {
+          id: player.id,
+          name: player.friendly_name,
+          type: 'whatsapp' as const
+        }
+        setReservePlayers(prev => [...prev, reservePlayer])
+      } else {
+        console.warn(`Could not find reserve player: ${playerInfo.name}`)
+      }
+    }
+
+    // Assign players to teams
+    const assignTeamPlayers = (teamList: string[], team: 'blue' | 'orange') => {
+      teamList.forEach(playerName => {
+        const player = selectedPlayers.find(p => 
+          p.name.toLowerCase() === playerName.toLowerCase()
+        )
+        if (!player) {
+          setParseError(`Player ${playerName} was not in the selected players list`)
+          return
+        }
+        if (team === 'blue') {
+          setBluePlayers(prev => [...prev, player])
+        } else {
+          setOrangePlayers(prev => [...prev, player])
+        }
+      })
+    }
+
+    assignTeamPlayers(parsedTeams.blueTeam, 'blue')
+    assignTeamPlayers(parsedTeams.orangeTeam, 'orange')
+
+    setParseError(null)
+  }
+
+  const addReservePlayer = (player: Player, isWhatsAppMember: boolean) => {
+    const reservePlayer = { 
+      id: player.id, 
+      name: player.friendly_name,
+      isWhatsAppMember 
+    }
+    setReservePlayers([...reservePlayers, reservePlayer])
+  }
+
+  const removeReservePlayer = (playerId: string) => {
+    setReservePlayers(reservePlayers.filter(p => p.id !== playerId))
+  }
+
+  const addDropoutPlayer = (player: Player, reason?: string) => {
+    const dropoutPlayer = { 
+      id: player.id, 
+      name: player.friendly_name,
+      reason 
+    }
+    setDropoutPlayers([...dropoutPlayers, dropoutPlayer])
+  }
+
+  const removeDropoutPlayer = (playerId: string) => {
+    setDropoutPlayers(dropoutPlayers.filter(p => p.id !== playerId))
+  }
+
+  const handleDropoutReasonChange = (playerId: string, reason: string) => {
+    setDropoutPlayers(dropoutPlayers.map(p => 
+      p.id === playerId ? { ...p, reason } : p
+    ))
+  }
+
+  const determineOutcome = (blue: string, orange: string, manualOutcome: GameOutcomeType): GameOutcomeType => {
+    if (manualOutcome) return manualOutcome
+    if (blue === '' || orange === '') return null
+    const blueNum = parseInt(blue)
+    const orangeNum = parseInt(orange)
+    if (blueNum > orangeNum) return 'blue_win'
+    if (orangeNum > blueNum) return 'orange_win'
+    return 'draw'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,7 +264,8 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
         registration_window_start: startDate.toISOString(),
         registration_window_end: endDate.toISOString(),
         max_players: Math.max(bluePlayers.length + orangePlayers.length, 10),
-        random_slots: 0,
+        random_slots: bluePlayers.filter(p => p.selectionType === 'random').length + 
+                     orangePlayers.filter(p => p.selectionType === 'random').length,
         outcome: determineOutcome(blueScore, orangeScore, outcome),
         venue_id: venueId
       }
@@ -91,43 +278,109 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
 
       if (gameError) throw gameError
 
-      if (bluePlayers.length > 0) {
-        const blueRegistrations = bluePlayers.map(player => ({
+      // Insert game selections
+      const selectionData = {
+        game_id: game.id,
+        selected_players: [
+          ...bluePlayers.map(p => ({ 
+            id: p.id, 
+            team: 'blue', 
+            selection_method: p.selectionType || 'merit'
+          })),
+          ...orangePlayers.map(p => ({ 
+            id: p.id, 
+            team: 'orange', 
+            selection_method: p.selectionType || 'merit'
+          }))
+        ],
+        reserve_players: reservePlayers.map(p => ({
+          id: p.id,
+          whatsapp_member: p.isWhatsAppMember
+        })),
+        selection_metadata: {
+          is_historical: true,
+          dropouts: dropoutPlayers.map(p => ({
+            id: p.id,
+            reason: p.reason
+          }))
+        }
+      }
+
+      const { error: selectionError } = await supabaseAdmin
+        .from('game_selections')
+        .insert(selectionData)
+
+      if (selectionError) throw selectionError
+
+      // Insert game registrations for all players
+      const allRegistrations = [
+        // Selected players
+        ...bluePlayers.map(player => ({
           game_id: game.id,
           player_id: player.id,
           team: 'blue',
           status: 'selected'
-        }))
-        
-        const { error: blueError } = await supabaseAdmin
-          .from('game_registrations')
-          .insert(blueRegistrations)
-
-        if (blueError) throw blueError
-      }
-
-      if (orangePlayers.length > 0) {
-        const orangeRegistrations = orangePlayers.map(player => ({
+        })),
+        ...orangePlayers.map(player => ({
           game_id: game.id,
           player_id: player.id,
           team: 'orange',
           status: 'selected'
+        })),
+        // Reserve players
+        ...reservePlayers.map(player => ({
+          game_id: game.id,
+          player_id: player.id,
+          team: null,
+          status: 'reserve'
+        })),
+        // Dropout players
+        ...dropoutPlayers.map(player => ({
+          game_id: game.id,
+          player_id: player.id,
+          team: null,
+          status: 'dropped_out'
         }))
+      ]
 
-        const { error: orangeError } = await supabaseAdmin
-          .from('game_registrations')
-          .insert(orangeRegistrations)
+      const { error: registrationError } = await supabaseAdmin
+        .from('game_registrations')
+        .insert(allRegistrations)
 
-        if (orangeError) throw orangeError
+      if (registrationError) throw registrationError
+
+      // Verify both game_registrations and game_selections were created
+      const { data: verifyData, error: verifyError } = await supabaseAdmin
+        .from('game_selections')
+        .select('id')
+        .eq('game_id', game.id)
+        .single()
+
+      if (verifyError || !verifyData) {
+        throw new Error('Game selections were not created properly')
       }
 
-      // Update caps for all players
+      // Update caps for selected players only
       for (const player of [...bluePlayers, ...orangePlayers]) {
         const { error: capsError } = await supabaseAdmin
-          .rpc('increment_caps', { player_id: player.id })
+          .from('players')
+          .update({ caps: player.caps + 1 })
+          .eq('id', player.id)
 
         if (capsError) {
           console.error(`Error updating caps for player ${player.id}:`, capsError)
+          toast.error(`Failed to update caps for ${player.name}`)
+        } else {
+          // Update the player's caps in the form state
+          if (bluePlayers.find(p => p.id === player.id)) {
+            setBluePlayers(prev => prev.map(p => 
+              p.id === player.id ? { ...p, caps: (p.caps || 0) + 1 } : p
+            ))
+          } else {
+            setOrangePlayers(prev => prev.map(p => 
+              p.id === player.id ? { ...p, caps: (p.caps || 0) + 1 } : p
+            ))
+          }
         }
       }
 
@@ -150,34 +403,9 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
     setOrangeScore('')
     setBluePlayers([])
     setOrangePlayers([])
+    setReservePlayers([])
+    setDropoutPlayers([])
     setOutcome(null)
-  }
-
-  const addPlayer = (player: Player, team: 'blue' | 'orange') => {
-    const teamPlayer = { id: player.id, name: player.friendly_name }
-    if (team === 'blue') {
-      setBluePlayers([...bluePlayers, teamPlayer])
-    } else {
-      setOrangePlayers([...orangePlayers, teamPlayer])
-    }
-  }
-
-  const removePlayer = (playerId: string, team: 'blue' | 'orange') => {
-    if (team === 'blue') {
-      setBluePlayers(bluePlayers.filter(p => p.id !== playerId))
-    } else {
-      setOrangePlayers(orangePlayers.filter(p => p.id !== playerId))
-    }
-  }
-
-  const determineOutcome = (blue: string, orange: string, manualOutcome: GameOutcome): GameOutcome => {
-    if (manualOutcome) return manualOutcome
-    if (blue === '' || orange === '') return null
-    const blueNum = parseInt(blue)
-    const orangeNum = parseInt(orange)
-    if (blueNum > orangeNum) return 'blue_win'
-    if (orangeNum > blueNum) return 'orange_win'
-    return 'draw'
   }
 
   if (isLoading || venuesLoading) {
@@ -200,6 +428,23 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
     >
       <div className="card-body">
         <h2 className="card-title text-2xl font-bold mb-6">Add Historical Game</h2>
+
+        <div className="mb-6">
+          <GameMessagesParser 
+            onParsed={handleMessagesParsed}
+            onError={setParseError}
+          />
+        </div>
+
+        {parseError && (
+          <div className="alert alert-error mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{parseError}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="form-control">
             <label className="label">
@@ -233,23 +478,68 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <TeamSelect
+            <TeamPlayerList
               label="Blue Team"
               players={availablePlayers}
               selectedPlayers={bluePlayers}
-              otherTeamPlayers={orangePlayers}
-              onAddPlayer={(player) => addPlayer(player, 'blue')}
-              onRemovePlayer={(playerId) => removePlayer(playerId, 'blue')}
+              otherTeamPlayers={[...orangePlayers]}
+              onAddPlayer={(player) => {
+                const teamPlayer = { 
+                  id: player.id, 
+                  name: player.friendly_name,
+                  selectionType: 'merit' 
+                }
+                setBluePlayers([...bluePlayers, teamPlayer])
+              }}
+              onRemovePlayer={(playerId) => {
+                setBluePlayers(bluePlayers.filter(p => p.id !== playerId))
+              }}
+              onSelectionTypeChange={(playerId, type) => {
+                setBluePlayers(bluePlayers.map(p => 
+                  p.id === playerId ? { ...p, selectionType: type } : p
+                ))
+              }}
             />
-            <TeamSelect
+            <TeamPlayerList
               label="Orange Team"
               players={availablePlayers}
               selectedPlayers={orangePlayers}
-              otherTeamPlayers={bluePlayers}
-              onAddPlayer={(player) => addPlayer(player, 'orange')}
-              onRemovePlayer={(playerId) => removePlayer(playerId, 'orange')}
+              otherTeamPlayers={[...bluePlayers]}
+              onAddPlayer={(player) => {
+                const teamPlayer = { 
+                  id: player.id, 
+                  name: player.friendly_name,
+                  selectionType: 'merit' 
+                }
+                setOrangePlayers([...orangePlayers, teamPlayer])
+              }}
+              onRemovePlayer={(playerId) => {
+                setOrangePlayers(orangePlayers.filter(p => p.id !== playerId))
+              }}
+              onSelectionTypeChange={(playerId, type) => {
+                setOrangePlayers(orangePlayers.map(p => 
+                  p.id === playerId ? { ...p, selectionType: type } : p
+                ))
+              }}
             />
           </div>
+
+          <PlayerStatusLists
+            availablePlayers={availablePlayers}
+            reservePlayers={reservePlayers}
+            dropoutPlayers={dropoutPlayers}
+            onAddReserve={addReservePlayer}
+            onRemoveReserve={removeReservePlayer}
+            onAddDropout={addDropoutPlayer}
+            onRemoveDropout={removeDropoutPlayer}
+            onDropoutReasonChange={handleDropoutReasonChange}
+            disabledPlayerIds={[
+              ...bluePlayers.map(p => p.id),
+              ...orangePlayers.map(p => p.id),
+              ...reservePlayers.map(p => p.id),
+              ...dropoutPlayers.map(p => p.id)
+            ]}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="form-control">
@@ -286,7 +576,7 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
             <select
               className="select select-bordered w-full"
               value={outcome || ''}
-              onChange={(e) => setOutcome(e.target.value as GameOutcome)}
+              onChange={(e) => setOutcome(e.target.value as GameOutcomeType)}
               disabled={blueScore !== '' || orangeScore !== ''}
             >
               <option value="">Unknown/Use Scores</option>
@@ -311,70 +601,6 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
         </form>
       </div>
     </motion.div>
-  )
-}
-
-interface TeamSelectProps {
-  label: string
-  players: Player[]
-  selectedPlayers: TeamPlayer[]
-  otherTeamPlayers: TeamPlayer[]
-  onAddPlayer: (player: Player) => void
-  onRemovePlayer: (playerId: string) => void
-}
-
-const TeamSelect: React.FC<TeamSelectProps> = ({
-  label,
-  players,
-  selectedPlayers,
-  otherTeamPlayers,
-  onAddPlayer,
-  onRemovePlayer
-}) => {
-  return (
-    <div className="form-control">
-      <label className="label">
-        <span className="label-text">{label}</span>
-      </label>
-      <select
-        className="select select-bordered w-full mb-2"
-        onChange={(e) => {
-          const player = players.find(p => p.id === e.target.value)
-          if (player) onAddPlayer(player)
-        }}
-        value=""
-      >
-        <option value="">Add player...</option>
-        {players
-          .filter(p => !selectedPlayers.some(sp => sp.id === p.id) && 
-                       !otherTeamPlayers.some(op => op.id === p.id))
-          .map(player => (
-            <option key={player.id} value={player.id}>
-              {player.friendly_name}
-            </option>
-          ))}
-      </select>
-      <ul className="space-y-2">
-        {selectedPlayers.map(player => (
-          <motion.li
-            key={player.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="flex justify-between items-center bg-base-200 p-2 rounded-lg"
-          >
-            <span>{player.name}</span>
-            <button
-              type="button"
-              className="btn btn-ghost btn-xs"
-              onClick={() => onRemovePlayer(player.id)}
-            >
-              ×
-            </button>
-          </motion.li>
-        ))}
-      </ul>
-    </div>
   )
 }
 
