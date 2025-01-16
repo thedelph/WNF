@@ -29,27 +29,65 @@ export const GameList = forwardRef<{ fetchGames: () => void }, GameListProps>(({
     const { data: gamesData, error: gamesError } = await supabase
       .from('games')
       .select(`
-        *,
-        venue:venues(*),
-        registrations_count:game_registrations!game_registrations_game_id_fkey(count)
+        id,
+        date,
+        status,
+        max_players,
+        random_slots,
+        registration_window_start,
+        registration_window_end,
+        team_announcement_time,
+        teams_announced,
+        sequence_number,
+        score_blue,
+        score_orange,
+        outcome,
+        pitch_cost,
+        venue:venues(
+          id,
+          name,
+          address,
+          google_maps_url
+        ),
+        game_registrations(
+          id,
+          status,
+          selection_method,
+          player:players!game_registrations_player_id_fkey(
+            id,
+            friendly_name,
+            caps,
+            active_bonuses,
+            active_penalties,
+            current_streak
+          )
+        )
       `)
       .gte('date', new Date().toISOString())
       .neq('status', 'completed')
       .order('date');
 
     if (gamesError) {
+      console.error('Supabase error details:', gamesError);
       toast.error('Failed to fetch games');
       setIsLoading(false);
       return;
     }
 
-    // Transform the data to handle the count properly
-    const transformedGames = gamesData?.map(game => ({
-      ...game,
-      registrations_count: game.registrations_count?.[0]?.count || 0
-    })) || [];
+    if (!gamesData) {
+      console.error('No games data returned');
+      setIsLoading(false);
+      return;
+    }
 
-    setGames(transformedGames);
+    // Add registrations_count to each game
+    const gamesWithCounts = gamesData.map(game => ({
+      ...game,
+      registrations_count: game.game_registrations?.filter(reg => reg.status !== 'dropped_out').length || 0
+    }));
+
+    console.log('Games data:', gamesWithCounts);
+    setGames(gamesWithCounts);
     setIsLoading(false);
   };
 

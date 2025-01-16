@@ -32,9 +32,9 @@ export interface GameRegistration {
   id: string
   game_id: string
   player_id: string
-  status: 'registered' | 'selected' | 'reserve' | 'cancelled'
+  status: 'registered' | 'selected' | 'reserve' | 'dropped_out'
   team?: 'blue' | 'orange' | null
-  randomly_selected: boolean
+  selection_method: 'merit' | 'random' | 'none'
   created_at: string
   player?: Player
 }
@@ -42,7 +42,7 @@ export interface GameRegistration {
 export interface Game {
   id: string
   date: string
-  status: string
+  status: GameStatus
   max_players: number
   random_slots: number
   registration_window_start: string
@@ -61,9 +61,9 @@ export interface Game {
   }
   game_registrations: Array<{
     id: string
-    status: string
-    randomly_selected: boolean
-    registered_player: {
+    status: 'registered' | 'selected' | 'reserve' | 'dropped_out'
+    selection_method: 'merit' | 'random' | 'none'
+    player: {
       id: string
       friendly_name: string
       caps: number
@@ -72,6 +72,7 @@ export interface Game {
       current_streak: number
     }
   }>
+  pitch_cost?: number
 }
 
 export interface AdminPermission {
