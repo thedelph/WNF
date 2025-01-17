@@ -104,6 +104,7 @@ export const useTeamBalancing = () => {
           const freshPlayerData = registrations.find(reg => reg.players.id === assignment.player_id);
           return {
             ...assignment,
+            friendly_name: freshPlayerData?.players.friendly_name,
             attack_rating: freshPlayerData?.players.attack_rating || assignment.attack_rating,
             defense_rating: freshPlayerData?.players.defense_rating || assignment.defense_rating
           };

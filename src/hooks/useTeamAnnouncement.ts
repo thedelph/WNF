@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabaseAdmin } from '../utils/supabase';
 import { balanceTeams } from '../utils/teamBalancing';
@@ -9,43 +9,91 @@ interface UseTeamAnnouncementProps {
 }
 
 export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
-  // All useState hooks first
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isProcessingAnnouncement, setIsProcessingAnnouncement] = useState(false);
   const [hasAnnouncedTeams, setHasAnnouncedTeams] = useState(false);
   const [errorCount, setErrorCount] = useState(0);
   const [isTeamAnnouncementTime, setIsTeamAnnouncementTime] = useState(false);
   
+  // Use refs for values that shouldn't trigger re-renders
+  const processingRef = useRef(false);
+  const errorCountRef = useRef(0);
   const MAX_RETRIES = 3;
 
-  // All useCallback hooks next
+  const acquireLock = async (gameId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('team_announcement_locks')
+        .insert({
+          game_id: gameId,
+          locked_at: new Date().toISOString(),
+          locked_until: new Date(Date.now() + 30000).toISOString() // 30 second lock
+        })
+        .select()
+        .single();
+
+      return !error && !!data;
+    } catch (error) {
+      if (error.message?.includes('team_announcement_locks" does not exist')) {
+        console.log('Team announcement locks table does not exist, skipping lock acquisition');
+        return true;
+      }
+      console.error('Lock acquisition error:', error);
+      return false;
+    }
+  };
+
+  const releaseLock = async (gameId: string) => {
+    try {
+      await supabaseAdmin
+        .from('team_announcement_locks')
+        .delete()
+        .eq('game_id', gameId);
+    } catch (error) {
+      if (!error.message?.includes('team_announcement_locks" does not exist')) {
+        console.error('Lock release error:', error);
+      }
+    }
+  };
+
   const checkIsTeamAnnouncementTime = useCallback(() => {
     if (!props?.game) return false;
     
     const isAfterAnnouncementTime = currentTime > new Date(props.game.team_announcement_time);
-    const isCorrectStatus = props.game.status === 'players_announced' || props.game.status === 'teams_announced';
+    const isCorrectStatus = props.game.status === 'players_announced';
     
     return isAfterAnnouncementTime && isCorrectStatus;
   }, [props?.game, currentTime]);
 
   const handleTeamAnnouncement = useCallback(async () => {
-    if (!props?.game || isProcessingAnnouncement) return;
-
-    // Check if teams are already announced to prevent duplicate processing
-    const { data: currentGame } = await supabaseAdmin
-      .from('games')
-      .select('status')
-      .eq('id', props.game.id)
-      .single();
-
-    if (currentGame?.status === 'teams_announced') {
-      setHasAnnouncedTeams(true);
-      return;
-    }
-
-    setIsProcessingAnnouncement(true);
+    // Use ref to prevent multiple simultaneous executions
+    if (!props?.game || processingRef.current) return;
     
+    processingRef.current = true;
+    setIsProcessingAnnouncement(true);
+    let lockAcquired = false;
+
     try {
+      // Try to acquire lock
+      lockAcquired = await acquireLock(props.game.id);
+      if (!lockAcquired) {
+        console.log('Another instance is processing team announcement');
+        return;
+      }
+
+      // Check current game status
+      const { data: currentGame } = await supabaseAdmin
+        .from('games')
+        .select('status')
+        .eq('id', props.game.id)
+        .single();
+
+      if (currentGame?.status !== 'players_announced') {
+        console.log('Game is no longer in players_announced status');
+        setHasAnnouncedTeams(true);
+        return;
+      }
+
       const { id } = props.game;
 
       // Get selected players
@@ -81,105 +129,78 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
       // Balance teams
       const teams = await balanceTeams(playerRatings);
 
-      if (!teams) {
-        throw new Error('Team balancing returned null');
+      if (!teams || !teams.blueTeam || !teams.orangeTeam) {
+        throw new Error('Invalid team structure returned from balancing');
       }
 
-      if (!teams.blueTeam || !teams.orangeTeam) {
-        throw new Error(`Invalid team structure: ${JSON.stringify(teams)}`);
-      }
-
-      // Update player registrations with team assignments
-      for (const team of ['orange', 'blue'] as const) {
-        const teamPlayers = team === 'orange' ? teams.orangeTeam : teams.blueTeam;
-        if (teamPlayers && teamPlayers.length > 0) {
-          const { error: updateError } = await supabaseAdmin
-            .from('game_registrations')
-            .update({ 
-              team
-            })
-            .eq('game_id', id)
-            .in('player_id', teamPlayers);
-
-          if (updateError) throw updateError;
+      // Call the stored procedure to update everything atomically
+      const { data: result, error: updateError } = await supabaseAdmin.rpc(
+        'update_team_assignments',
+        {
+          p_game_id: id,
+          p_blue_team: teams.blueTeam,
+          p_orange_team: teams.orangeTeam,
+          p_team_assignments: {
+            teams: [
+              ...teams.blueTeam.map(playerId => ({
+                player_id: playerId,
+                team: 'blue'
+              })),
+              ...teams.orangeTeam.map(playerId => ({
+                player_id: playerId,
+                team: 'orange'
+              }))
+            ],
+            stats: teams.stats
+          },
+          p_total_differential: teams.difference,
+          p_attack_differential: teams.stats.blue.attack - teams.stats.orange.attack,
+          p_defense_differential: teams.stats.blue.defense - teams.stats.orange.defense
         }
+      );
+
+      if (updateError) throw updateError;
+
+      if (!result) {
+        throw new Error('Team assignment update failed');
       }
 
-      // Get player details for team assignments
-      const { data: playerDetails, error: playerError } = await supabaseAdmin
-        .from('players')
-        .select('id, friendly_name, attack_rating, defense_rating')
-        .in('id', [...teams.blueTeam, ...teams.orangeTeam]);
-
-      if (playerError) throw playerError;
-
-      const playerMap = new Map(playerDetails.map(player => [player.id, player]));
-
-      // Save balanced team assignments
-      const teamAssignments = {
-        teams: [
-          ...teams.blueTeam.map(playerId => ({
-            player_id: playerId,
-            friendly_name: playerMap.get(playerId)?.friendly_name,
-            attack_rating: playerMap.get(playerId)?.attack_rating,
-            defense_rating: playerMap.get(playerId)?.defense_rating,
-            team: 'blue'
-          })),
-          ...teams.orangeTeam.map(playerId => ({
-            player_id: playerId,
-            friendly_name: playerMap.get(playerId)?.friendly_name,
-            attack_rating: playerMap.get(playerId)?.attack_rating,
-            defense_rating: playerMap.get(playerId)?.defense_rating,
-            team: 'orange'
-          }))
-        ],
-        stats: teams.stats
-      };
-
-      const { error: balancedTeamError } = await supabaseAdmin
-        .from('balanced_team_assignments')
-        .upsert({
-          game_id: id,
-          team_assignments: teamAssignments,
-          total_differential: teams.difference,
-          attack_differential: teams.stats.blue.attack - teams.stats.orange.attack,
-          defense_differential: teams.stats.blue.defense - teams.stats.orange.defense
-        });
-
-      if (balancedTeamError) throw balancedTeamError;
-
-      const { error: statusError } = await supabaseAdmin
-        .from('games')
-        .update({ 
-          status: 'teams_announced',
-          teams_announced: true
-        })
-        .eq('id', id);
-
-      if (statusError) throw statusError;
-      
       await props.onGameUpdated();
-      toast.success('Teams have been announced');
-      setHasAnnouncedTeams(true);
-      setErrorCount(0); // Reset error count on success
+      
+      // Use setTimeout to avoid state updates during render
+      setTimeout(() => {
+        toast.success('Teams have been announced');
+        setHasAnnouncedTeams(true);
+        errorCountRef.current = 0;
+        setErrorCount(0);
+      }, 0);
+
     } catch (error) {
-      setErrorCount(prev => {
-        const newCount = prev + 1;
-        if (newCount >= MAX_RETRIES) {
-          setHasAnnouncedTeams(true); // Stop retrying after max retries
-          toast.error('Failed to announce teams after multiple attempts. Please contact an admin.');
-        } else {
-          toast.error(`Failed to announce teams (attempt ${newCount}/${MAX_RETRIES})`);
-        }
-        return newCount;
-      });
       console.error('Error announcing teams:', error);
+      
+      // Use setTimeout to avoid state updates during render
+      setTimeout(() => {
+        errorCountRef.current += 1;
+        setErrorCount(prev => {
+          const newCount = prev + 1;
+          if (newCount >= MAX_RETRIES) {
+            setHasAnnouncedTeams(true);
+            toast.error('Failed to announce teams after multiple attempts. Please contact an admin.');
+          } else {
+            toast.error(`Failed to announce teams (attempt ${newCount}/${MAX_RETRIES})`);
+          }
+          return newCount;
+        });
+      }, 0);
     } finally {
+      if (lockAcquired && props.game) {
+        await releaseLock(props.game.id);
+      }
+      processingRef.current = false;
       setIsProcessingAnnouncement(false);
     }
-  }, [props, isProcessingAnnouncement, MAX_RETRIES]);
+  }, [props, MAX_RETRIES]);
 
-  // All useEffect hooks last
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -197,9 +218,9 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
     const checkAnnouncementTime = () => {
       const shouldAnnounceTeams = 
         isTeamAnnouncementTime && 
-        !isProcessingAnnouncement && 
+        !processingRef.current && 
         !hasAnnouncedTeams &&
-        errorCount < MAX_RETRIES;
+        errorCountRef.current < MAX_RETRIES;
 
       if (shouldAnnounceTeams) {
         handleTeamAnnouncement();
@@ -209,12 +230,12 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
     // Initial check
     checkAnnouncementTime();
 
-    // Set up polling every 5 seconds
-    const intervalId = setInterval(checkAnnouncementTime, 5000);
+    // Set up polling with random offset to prevent thundering herd
+    const randomOffset = Math.random() * 3000; // Random delay between 0-3 seconds
+    const intervalId = setInterval(checkAnnouncementTime, 5000 + randomOffset);
 
-    // Cleanup interval on unmount
     return () => clearInterval(intervalId);
-  }, [props?.game, isProcessingAnnouncement, hasAnnouncedTeams, errorCount, isTeamAnnouncementTime, handleTeamAnnouncement]);
+  }, [props?.game, isTeamAnnouncementTime, hasAnnouncedTeams, handleTeamAnnouncement]);
 
   return {
     isTeamAnnouncementTime,

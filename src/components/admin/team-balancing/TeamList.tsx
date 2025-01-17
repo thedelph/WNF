@@ -70,8 +70,8 @@ const PlayerCard = ({
               )}
             </div>
             <div className="text-sm space-x-3">
-              <span>Attack: {player.attack_rating.toFixed(1)}</span>
-              <span>Defense: {player.defense_rating.toFixed(1)}</span>
+              <span>Attack: {(player.attack_rating ?? 0).toFixed(1)}</span>
+              <span>Defense: {(player.defense_rating ?? 0).toFixed(1)}</span>
             </div>
           </div>
         </div>
@@ -95,7 +95,12 @@ export function TeamList({ teamId, team, title, selectedPlayer, swapRankings, on
       </h3>
       <div className="space-y-2">
         {team
-          .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
+          .sort((a, b) => {
+            // Handle cases where friendly_name might be undefined
+            const nameA = a?.friendly_name || '';
+            const nameB = b?.friendly_name || '';
+            return nameA.localeCompare(nameB);
+          })
           .map((player) => (
             <PlayerCard
               key={player.player_id}
