@@ -44,17 +44,6 @@ export const PlayerCardFront: React.FC<PlayerCardProps & { rank?: number, isFlip
   const dropoutModifier = dropoutPenalties * -0.5
   const benchWarmerModifier = benchWarmerStreak * 0.05  // 5% per bench warmer streak level
 
-  // Debug logging to track modifier calculations
-  console.log('Player Modifiers:', {
-    name: friendlyName,
-    benchWarmerStreak,
-    benchWarmerModifier,
-    streakModifier,
-    bonusModifier,
-    penaltyModifier,
-    dropoutModifier
-  });
-
   return (
     <div className="card-body p-4">
       {/* Football pitch background watermark */}

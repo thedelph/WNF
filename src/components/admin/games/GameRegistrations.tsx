@@ -108,7 +108,6 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
 
       setRegistrations(transformedRegistrations || []);
     } catch (err) {
-      console.error('Error fetching registrations:', err);
       setError(err instanceof Error ? err.message : 'An error occurred while fetching registrations');
     } finally {
       setLoading(false);
@@ -141,17 +140,11 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
 
       toast.success(`${availableRandomPlayers.length} players selected randomly!`, { id: toastId });
     } catch (err) {
-      console.error('Error selecting random players:', err);
       toast.error('Failed to select random players', { id: toastId });
     } finally {
       setLoading(false);
     }
   };
-
-  React.useEffect(() => {
-    console.log('Session:', session);
-    console.log('User email:', session?.user?.email);
-  }, [session]);
 
   React.useEffect(() => {
     if (gameId) {
@@ -175,7 +168,6 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
         setPlayers(data || []);
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching players:', error);
         setIsLoading(false);
       }
     };
@@ -235,7 +227,6 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
         .in('player_id', selectedPlayerIds);
 
       if (checkError) {
-        console.error('Error checking existing registrations:', checkError);
         toast.error(`Failed to check existing registrations: ${checkError.message}`);
         return;
       }
@@ -275,7 +266,6 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
       setSelectedPlayerIds([]);
       setIsSelectAll(false);
     } catch (error) {
-      console.error('Registration error:', error);
       toast.error(`Failed to register players: ${error.message}`);
     }
   }
@@ -297,7 +287,6 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
       toast.success('Player unregistered successfully');
       fetchRegistrations(); // Refresh registrations
     } catch (error) {
-      console.error('Unregistration error:', error);
       toast.error(`Failed to unregister player: ${error.message}`);
     }
   }

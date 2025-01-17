@@ -46,14 +46,6 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
       player => !meritPlayers.some(mp => mp.id === player.id)
     );
 
-    // Debug log
-    console.log('Player Stats:', playerStats);
-    console.log('Random Pool Players:', randomPool.map(p => ({
-      name: p.friendly_name,
-      id: p.id,
-      stats: playerStats[p.id]
-    })));
-
     // Prepare data for weighted selection explanation
     const eligiblePlayers = randomPool.map(player => ({
       id: player.id,
@@ -264,24 +256,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
           }
         }), {});
 
-        console.log('Debug - Raw Player Data:', playerData?.map(p => ({
-          id: p.id,
-          name: selectedPlayers.find(sp => sp.id === p.id)?.friendly_name || 
-                reservePlayers.find(rp => rp.id === p.id)?.friendly_name,
-          bench_warmer_streak: p.bench_warmer_streak
-        })));
-
-        console.log('Debug - Processed Stats:', Object.entries(stats).map(([id, stat]) => ({
-          id,
-          name: selectedPlayers.find(sp => sp.id === id)?.friendly_name || 
-                reservePlayers.find(rp => rp.id === id)?.friendly_name,
-          benchWarmerStreak: stat.benchWarmerStreak
-        })));
-
         setPlayerStats(stats);
       } catch (err) {
-        console.error('Error fetching player stats:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError('Failed to fetch player stats');
       } finally {
         setLoading(false);
       }
@@ -357,7 +334,6 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         toast.error(result.error || 'Failed to drop out');
       }
     } catch (error) {
-      console.error('Error in handleDropout:', error);
       toast.error('Failed to drop out');
     }
   };

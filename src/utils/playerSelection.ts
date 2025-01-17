@@ -67,9 +67,6 @@ export const handlePlayerSelection = async ({
 
     if (statsError) throw statsError;
 
-    console.log('Debug - Player Details:', playerDetails);
-    console.log('Debug - Player Stats:', playerStats);
-
     // Transform the data to include only what we need
     const players: PlayerStats[] = registeredPlayers.map(reg => {
       const details = playerDetails?.find(p => p.id === reg.player_id);
@@ -87,12 +84,6 @@ export const handlePlayerSelection = async ({
         bench_warmer_streak: details?.bench_warmer_streak || 0
       };
     });
-
-    console.log('All players before sorting:', players.map(p => ({
-      name: p.friendly_name,
-      xp: p.xp,
-      whatsapp: p.whatsapp_group_member
-    })));
 
     // Sort players by XP and tiebreakers
     const sortedPlayers = [...players].sort((a, b) => {
@@ -123,12 +114,6 @@ export const handlePlayerSelection = async ({
       return (a.registration_time || '').localeCompare(b.registration_time || '');
     });
 
-    console.log('Players after sorting:', sortedPlayers.map(p => ({
-      name: p.friendly_name,
-      xp: p.xp,
-      whatsapp: p.whatsapp_group_member
-    })));
-
     // Select players by XP for XP slots
     const xpSelectedPlayers = sortedPlayers.slice(0, xpSlots);
     
@@ -136,17 +121,6 @@ export const handlePlayerSelection = async ({
     const remainingPlayers = sortedPlayers.filter(player => 
       !xpSelectedPlayers.some(xpPlayer => xpPlayer.id === player.id)
     );
-
-    console.log('XP Selected Players:', xpSelectedPlayers.map(p => ({
-      name: p.friendly_name,
-      xp: p.xp,
-      method: 'merit'
-    })));
-
-    console.log('Remaining Players:', remainingPlayers.map(p => ({
-      name: p.friendly_name,
-      xp: p.xp
-    })));
 
     // Handle random selection with WhatsApp priority and weighted probabilities
     const whatsappMembers = remainingPlayers.filter(
@@ -264,14 +238,18 @@ export const handlePlayerSelection = async ({
         nonSelectedPlayerIds
       };
     } catch (error) {
-      console.error('Error updating player selection:', error);
       return {
+        success: false,
+        selectedPlayers: [],
+        nonSelectedPlayerIds: [],
         error: error instanceof Error ? error.message : 'An error occurred during player selection update'
       };
     }
   } catch (error) {
-    console.error('Error in handlePlayerSelection:', error);
     return {
+      success: false,
+      selectedPlayers: [],
+      nonSelectedPlayerIds: [],
       error: error instanceof Error ? error.message : 'An error occurred during player selection'
     };
   }

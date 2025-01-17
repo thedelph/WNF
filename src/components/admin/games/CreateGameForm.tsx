@@ -112,13 +112,10 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
 
   // Function to calculate team announcement time (4 hours before game start)
   const calculateTeamAnnouncementTime = (gameDateTime: string) => {
-    console.log('Calculating team announcement time for:', gameDateTime);
     const gameDate = new Date(gameDateTime);
-    console.log('Game date parsed as:', gameDate);
     
     // Create announcement time by subtracting 4 hours in milliseconds
     const announcementTime = new Date(gameDate.getTime() - (4 * 60 * 60 * 1000));
-    console.log('Announcement time calculated as:', announcementTime);
     
     // Format as YYYY-MM-DDTHH:mm for datetime-local input
     const year = announcementTime.getFullYear();
@@ -127,18 +124,13 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     const hours = announcementTime.getHours().toString().padStart(2, '0');
     const minutes = announcementTime.getMinutes().toString().padStart(2, '0');
     
-    const formattedTime = `${year}-${month}-${day}T${hours}:${minutes}`;
-    console.log('Formatted announcement time:', formattedTime);
-    
-    return formattedTime;
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   // Update team announcement time whenever date or time changes
   useEffect(() => {
     if (gamePhase === GAME_STATUSES.PLAYERS_ANNOUNCED && date && time) {
-      console.log('Effect triggered with date:', date, 'time:', time);
       const gameDateTime = `${date}T${time}`;
-      console.log('Game date time constructed as:', gameDateTime);
       setTeamAnnouncementTime(calculateTeamAnnouncementTime(gameDateTime));
     }
   }, [date, time, gamePhase]);
@@ -160,17 +152,6 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
         registrationStartDate = new Date(gameDate.getTime() - (48 * 60 * 60 * 1000)).toISOString(); // 48 hours before game
         registrationEndDate = new Date(gameDate.getTime() - (24 * 60 * 60 * 1000)).toISOString(); // 24 hours before game
       }
-
-      console.log('Creating game with data:', {
-        date: gameDateTime,
-        venue_id: venueId,
-        pitch_cost: pitchCost,
-        status: gamePhase,
-        max_players: maxPlayers,
-        registration_window_start: registrationStartDate,
-        registration_window_end: registrationEndDate,
-        team_announcement_time: teamAnnouncementTime,
-      });
 
       // Create the game using admin role
       const { data: gameResult, error: gameError } = await supabase.auth.getSession().then(({ data: { session } }) => {
@@ -196,11 +177,6 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
 
       // Register confirmed and random pick players using admin role
       const allSelectedPlayers = [...new Set([...confirmedPlayers, ...randomPickPlayers])];
-      console.log('Registering players:', { 
-        confirmed: confirmedPlayers,
-        random: randomPickPlayers,
-        all: allSelectedPlayers
-      });
 
       if (allSelectedPlayers.length > 0) {
         // First check if any of these players are already registered
@@ -359,12 +335,10 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
             value={gamePhase}
             onChange={(e) => {
               const newPhase = e.target.value as GameStatus;
-              console.log('Phase changed to:', newPhase);
               setGamePhase(newPhase);
               
               // Set team announcement time when switching to Player Selection Phase
               if (newPhase === GAME_STATUSES.PLAYERS_ANNOUNCED && date && time) {
-                console.log('Setting team announcement time on phase change with date:', date, 'time:', time);
                 const gameDateTime = `${date}T${time}`;
                 setTeamAnnouncementTime(calculateTeamAnnouncementTime(gameDateTime));
               }

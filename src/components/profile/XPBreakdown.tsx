@@ -127,9 +127,10 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                           <li>20-29 Games Ago: 10 XP</li>
                           <li>30-39 Games Ago: 5 XP</li>
                           <li>40+ Games Ago: 0 XP</li>
-                          <li>Streak Bonus: Temporary 10% XP for each consecutive game played (resets if you miss a game)</li>
-                          <li>Reserve Bonus: +5 XP each time you're a reserve player in the last 40 games</li>
-                          <li>Reserve Penalty: -10 XP if you decline an available slot after being selected from reserves. Doesn't apply if the offer is on the day of the game.</li>
+                          <li>Reserve XP: +5 XP each time you're a reserve player in the last 40 games</li>
+                          <li>Attendance Streak: Temporary +10% XP for each consecutive game played (resets if you miss a game)</li>
+                          <li>Bench Warmer Streak: Temporary +5% XP for each game where you're a reserve that doesn't get an opportunity to play (resets when you either play or miss a game)</li>
+                          <li>Reserve Penalty: -10 XP if you decline an available slot from someone who dropped out. To prevent people trying to just get free XP. Doesn't apply if the drop out occurs on the day of the game.</li>
                         </ul>
                       </div>
                     </div>
