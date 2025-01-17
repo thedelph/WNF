@@ -516,7 +516,14 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                               {finalXP} XP
                             </div>
                             <div className="text-xs text-base-content/70">
-                              ({baseXP} + {stats.reserveXP || 0})
+                              {(stats.reserveXP || 0) > 0 ? `(${baseXP} + ${stats.reserveXP})` : baseXP}
+                              {attendanceMultiplier > 1 && ` × ${attendanceMultiplier.toFixed(1)}`}
+                              {reserveMultiplier > 1 && ` × ${reserveMultiplier.toFixed(1)}`}
+                            </div>
+                            <div className="text-xs text-base-content/50">
+                              {(stats.reserveXP || 0) > 0 ? '(Base XP + Reserve XP)' : 'Base XP'}
+                              {attendanceMultiplier > 1 && ' × Attendance Streak'}
+                              {reserveMultiplier > 1 && ' × Reserve Streak'}
                             </div>
                           </div>
                         </div>

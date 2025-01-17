@@ -17,6 +17,7 @@ interface XPBreakdownProps {
     xp: number;
     reserveXP?: number;
     reserveCount?: number;
+    benchWarmerStreak?: number;
   };
   showTotal?: boolean;
 }
@@ -33,6 +34,7 @@ interface XPBreakdownProps {
   - `xp`: Total XP points
   - `reserveXP`: XP earned/lost from reserve status
   - `reserveCount`: Number of times player has been a reserve
+  - `benchWarmerStreak`: Current streak of being on reserve/not selected
 - `showTotal`: Boolean to toggle display of total XP
 
 ## XP Weighting System
@@ -99,6 +101,36 @@ const benchWarmerMultiplier = 1 + (benchWarmerStreak * 0.05);
 // 4. Apply multipliers and round at the end
 const finalXP = Math.round(totalBaseXP * streakMultiplier * benchWarmerMultiplier);
 ```
+
+### Display Format
+
+The XP breakdown displays the calculation in a clear, mathematical format:
+
+1. Base Components:
+   - If only Base XP: Shows just the base value (e.g., `336`)
+   - If Base + Reserve XP: Shows both with brackets (e.g., `(336 + 5)`)
+
+2. Multipliers (only shown when > 1.0):
+   - Attendance Streak: Shows `× 1.3` for a 3-game streak
+   - Reserve Streak: Shows `× 1.1` for a 2-game reserve streak
+
+Example displays:
+```
+// Just base XP
+336
+
+// Base XP with attendance streak
+336 × 1.3
+
+// Base + Reserve XP with both multipliers
+(336 + 5) × 1.3 × 1.1
+```
+
+The formula follows BODMAS (Brackets, Order, Division/Multiplication, Addition/Subtraction) to clearly show the order of operations:
+1. Base XP and Reserve XP are added first (within brackets when both present)
+2. Attendance streak multiplier is applied
+3. Reserve streak multiplier is applied
+4. Final result is rounded to whole numbers
 
 ### Example Calculation
 ```

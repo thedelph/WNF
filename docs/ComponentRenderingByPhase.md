@@ -162,6 +162,75 @@ Database Relationships:
 - game_selections (for metadata)
 ```
 
+## Concurrency and Error Handling
+
+### Distributed Locking System
+The application implements a robust distributed locking system to handle concurrent operations during critical game state transitions:
+
+#### Registration Close Process (`useRegistrationClose`)
+```
+Lock Implementation:
+├── Table: registration_locks
+│   ├── game_id (unique)
+│   ├── locked_at (timestamp)
+│   └── locked_until (timestamp)
+Features:
+├── Lock Duration: 30 seconds with automatic expiration
+├── Status Verification: Double-checks game status before updates
+└── Error Recovery: Automatic retry with exponential backoff
+```
+- **Lock Acquisition**: Atomic operation using Supabase's RLS policies
+- **Lock Release**: Automatic via TTL or manual in finally block
+- **Error Recovery**: Automatic retry with exponential backoff
+- **State Management**: Uses React refs to prevent parallel executions
+
+#### Team Announcement Process (`useTeamAnnouncement`)
+```
+Lock Implementation:
+├── Table: team_announcement_locks
+│   ├── game_id (unique)
+│   ├── locked_at (timestamp)
+│   └── locked_until (timestamp)
+Features:
+├── Stored Procedure: update_team_assignments
+├── Transaction Safety: All team updates in single transaction
+└── Error Handling: Maximum 3 retries with increasing delays
+```
+- **Atomic Updates**: Uses stored procedure `update_team_assignments`
+- **Transaction Handling**: All team updates occur in a single transaction
+- **Error Recovery**: Maximum of 3 retries with increasing delays
+- **Race Condition Prevention**: Status verification before updates
+
+### Performance Optimizations
+
+#### Thundering Herd Prevention
+- Random polling offsets (±2 seconds) to prevent synchronized client requests
+- Progressive backoff for failed attempts
+- Staggered lock release times
+
+#### State Management
+- React refs for processing flags to prevent re-renders
+- Memoization of expensive computations
+- Optimistic UI updates with rollback capability
+
+### Error Handling Strategy
+```
+Error Recovery Flow:
+├── Immediate Retry: For transient errors (network issues)
+├── Exponential Backoff: For resource contention
+└── Graceful Degradation: Falls back to read-only mode
+```
+- **Error Classification**: Distinguishes between transient and permanent errors
+- **Automatic Recovery**: Implements retry mechanisms with backoff
+- **User Feedback**: Toast notifications for operation status
+- **Logging**: Detailed error logging for debugging
+
+### Monitoring and Debugging
+- Lock acquisition/release events are logged
+- Error states tracked with error counts
+- Performance metrics for lock durations
+- Detailed transaction logs for debugging
+
 ## State Management
 - Game status transitions are handled automatically by hooks
 - Component visibility is controlled by the game status
