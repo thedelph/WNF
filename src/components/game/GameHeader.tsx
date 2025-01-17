@@ -56,7 +56,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
       <div className="text-center space-y-2">
 
         <h1 className="text-3xl font-bold">WNF #{game.sequence_number || game.game_number || '29'}</h1>
-        <div className="text-sm text-gray-500 mb-2">Register with a thumbs up in the WhatsApp</div>
+        <div className="text-sm text-gray-500 mb-2">Register with a thumbs up 👍 in the WNF WhatsApp Group </div>
         <div className="text-sm text-gray-500 mb-2">DM me with anyone outside of the WhatsApp group who wants to play</div>
         <div className="text-xl text-gray-600">
           <div className="flex items-center justify-center space-x-2">
