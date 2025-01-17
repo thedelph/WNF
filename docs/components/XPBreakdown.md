@@ -59,7 +59,8 @@ The XP breakdown shows various components that contribute to a player's total XP
 ### Base Game XP
 - Weighted based on game recency (see table below)
 - Shows individual game contributions
-- Includes game results (WIN/LOSS/DRAW)
+- Raw XP values are summed WITHOUT multipliers
+- No rounding is done at this stage
 
 ### Reserve XP
 - Shows +5 XP for being reserve
@@ -67,25 +68,62 @@ The XP breakdown shows various components that contribute to a player's total XP
 - Added to base XP before multipliers are applied
 
 ### Multipliers
+Both multipliers are applied to the TOTAL (base + reserve) XP at the END:
+
 1. Streak Multiplier
    - Based on consecutive game participation
    - 10% bonus per streak level
-   - Applied to combined (base + reserve) XP
+   - Formula: 1 + (current_streak * 0.1)
+   - Example: Streak of 13 = 1 + (13 * 0.1) = 2.3x multiplier
 
 2. Bench Warmer Multiplier
    - Based on consecutive reserve/non-selection status
    - 5% bonus per bench warmer streak level
-   - Applied to combined (base + reserve) XP
+   - Formula: 1 + (bench_warmer_streak * 0.05)
+   - Example: Bench streak of 2 = 1 + (2 * 0.05) = 1.1x multiplier
+
+### Final Calculation Order
+```typescript
+// 1. Sum raw base XP (no multipliers)
+const baseXP = gameHistory.reduce((total, game) => {
+  return total + getBaseXPForGame(game);
+}, 0);
+
+// 2. Add reserve XP
+const totalBaseXP = baseXP + (reserveXP || 0);
+
+// 3. Calculate multipliers
+const streakMultiplier = 1 + (currentStreak * 0.1);
+const benchWarmerMultiplier = 1 + (benchWarmerStreak * 0.05);
+
+// 4. Apply multipliers and round at the end
+const finalXP = Math.round(totalBaseXP * streakMultiplier * benchWarmerMultiplier);
+```
 
 ### Example Calculation
 ```
-Base Game XP: 146
-Reserve XP: +5
-Combined Base: 151
-Streak Multiplier: 1.0 (no streak)
-Bench Warmer Multiplier: 1.05 (5% from streak of 1)
-Final XP: 151 * 1.0 * 1.05 = 158.55 (rounded to 159)
+Base XP from games:
+- Most recent (0 ago): 20
+- 1-2 games ago: 18 × 2 = 36
+- 3-4 games ago: 16 × 2 = 32
+- 5-9 games ago: 14 × 5 = 70
+- 10-19 games ago: 12 × 10 = 120
+- 20-29 games ago: 10 × 7 = 70
+Total base = 348
+
+Reserve XP = 0
+Combined total = 348
+
+Streak = 13 (2.3x multiplier)
+Bench streak = 0 (1.0x multiplier)
+
+Final XP = ROUND(348 * 2.3 * 1.0) = 773
 ```
+
+### Common Mistakes
+1. ❌ Don't apply multipliers to each game individually
+2. ❌ Don't round each game's XP before summing
+3. ❌ Don't apply multipliers before adding reserve XP
 
 ## Features
 

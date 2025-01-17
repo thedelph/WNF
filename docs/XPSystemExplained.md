@@ -71,29 +71,63 @@ The bench warmer streak is broken when:
 - The player fails to register for a game
 - There's a gap between their reserve appearances
 
+IMPORTANT: The bench warmer streak multiplier is applied to ALL XP, not just reserve XP. This means:
+- It multiplies both base XP from selected games AND reserve XP
+- A player with base XP of 82 and reserve XP of 5, with a bench warmer streak of 1, would get:
+  (82 + 5) * 1.05 = 91.35, rounded to 91
+
 ##### Final XP Calculation
 ```sql
 final_xp = ROUND((base_xp + reserve_xp) * streak_multiplier * bench_warmer_multiplier)
 ```
-Where:
-- `base_xp`: Sum of weighted XP from selected games
-- `reserve_xp`: Sum of reserve bonuses (+5) and penalties (-10)
-- `streak_multiplier`: Based on consecutive selected games (1 + (current_streak * 0.1))
-- `bench_warmer_multiplier`: Based on bench warmer streak (1 + (bench_warmer_streak * 0.05))
-- Result is rounded to the nearest integer
 
-Important Notes:
-- Reserve XP is added to base XP before any multipliers are applied
-- Both streak and bench warmer multipliers apply to the combined (base + reserve) XP
-- Example calculation:
-  ```
-  Base XP: 146
-  Reserve XP: +5
-  Combined Base: 151
-  Streak Multiplier: 1.0 (no streak)
-  Bench Warmer Multiplier: 1.05 (5% from streak of 1)
-  Final: 151 * 1.0 * 1.05 = 158.55 (rounded to 159)
-  ```
+IMPORTANT: The order of operations is critical:
+1. Sum all base XP from games WITHOUT applying any multipliers
+2. Add any reserve XP to the base XP
+3. Apply BOTH multipliers to the combined total
+4. Round the final result
+
+Example calculation:
+```
+# Step 1: Calculate base XP (no multipliers)
+Most recent game (0 games ago):    20 XP
+1-2 games ago (2 games):          18 × 2 = 36 XP
+3-4 games ago (2 games):          16 × 2 = 32 XP
+5-9 games ago (5 games):          14 × 5 = 70 XP
+10-19 games ago (10 games):       12 × 10 = 120 XP
+20-29 games ago (7 games):        10 × 7 = 70 XP
+Base XP Total = 348 XP
+
+# Step 2: Add reserve XP
+Total = Base XP + Reserve XP
+Total = 348 + 0 = 348 XP
+
+# Step 3: Apply multipliers
+Streak multiplier = 1 + (13 * 0.1) = 2.3
+Bench warmer multiplier = 1 + (0 * 0.05) = 1.0
+
+# Step 4: Calculate final XP
+Final XP = ROUND(348 * 2.3 * 1.0)
+Final XP = ROUND(800.4)
+Final XP = 800
+```
+
+Common Mistakes to Avoid:
+1. ❌ Don't apply multipliers to each game's XP individually
+2. ❌ Don't round each game's XP before summing
+3. ❌ Don't apply multipliers before adding reserve XP
+
+The correct order is always:
+1. ✅ Sum raw base XP from all games
+2. ✅ Add reserve XP to total
+3. ✅ Apply both multipliers to combined total
+4. ✅ Round the final result
+
+### Historical Games
+Only games marked as `is_historical = true` are counted in XP calculations. This ensures that:
+- Only completed games that have actually taken place count towards XP
+- Test games or placeholder games don't affect player XP
+- Games in setup or selection phase don't affect XP calculations
 
 ### Troubleshooting XP Calculations
 When verifying XP calculations:
@@ -102,6 +136,39 @@ When verifying XP calculations:
 3. Confirm both streak and bench warmer streak values
 4. Remember that all XP (including reserve XP) gets multiplied by both streak multipliers
 5. Use the calculate_player_xp() function to recalculate if needed
+
+Example Investigation:
+```sql
+-- Example query to debug a player's XP calculation
+WITH player_games AS (
+    SELECT 
+        g.sequence_number,
+        g.is_historical,
+        gr.status,
+        g.completed
+    FROM game_registrations gr
+    JOIN games g ON g.id = gr.game_id
+    WHERE gr.player_id = '[player_id]'
+    AND g.completed = true
+    ORDER BY g.sequence_number DESC
+)
+SELECT * FROM player_games;
+
+-- This will show:
+-- 1. Which games count (is_historical = true)
+-- 2. Player's status in each game (selected/reserve)
+-- 3. Game completion status
+```
+
+Real Example:
+A player had 82 base XP from selected games, +5 XP from being a reserve, and a bench warmer streak of 1.
+The calculation was:
+1. Base XP from games: 82
+2. Reserve XP: +5
+3. Total before multipliers: 87
+4. Streak multiplier: 1.0 (no streak)
+5. Bench warmer multiplier: 1.05 (streak of 1)
+6. Final calculation: 87 * 1.0 * 1.05 = 91.35, rounded to 91
 
 ### 3. Reserve XP System
 

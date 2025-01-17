@@ -76,6 +76,7 @@ export default function PlayerProfileNew() {
             active_penalties,
             current_streak,
             max_streak,
+            bench_warmer_streak,
             player_xp (
               xp,
               rank,
@@ -274,7 +275,8 @@ export default function PlayerProfileNew() {
           games_played_together: gamesPlayedTogether,
           my_rating: myRating,
           reserveXP: reserveXP,
-          reserveCount: reserveCount
+          reserveCount: reserveCount,
+          bench_warmer_streak: playerData.bench_warmer_streak || 0
         };
 
         // Debug log for final player stats
@@ -437,7 +439,8 @@ export default function PlayerProfileNew() {
             latestSequence: latestSequence,
             xp: player.xp || 0,
             reserveXP: player.reserveXP ?? 0,
-            reserveCount: player.reserveCount ?? 0
+            reserveCount: player.reserveCount ?? 0,
+            benchWarmerStreak: player.bench_warmer_streak || 0
           }} />
         </div>
       </motion.div>
