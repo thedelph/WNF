@@ -63,6 +63,8 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
             active_penalties,
             win_rate,
             bench_warmer_streak,
+            unpaid_games,
+            unpaid_games_modifier,
             player_xp (
               xp,
               rank,
@@ -109,7 +111,9 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
             losses: winRateMap[player.id]?.losses || 0,
             totalGames: winRateMap[player.id]?.totalGames || 0,
             winRate: winRateMap[player.id]?.winRate || 0,
-            rank: player.player_xp?.rank || undefined
+            rank: player.player_xp?.rank || undefined,
+            unpaidGames: player.unpaid_games || 0,
+            unpaidGamesModifier: player.unpaid_games_modifier || 0
           }
         }), {});
 
@@ -166,7 +170,9 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
             losses: 0,
             totalGames: 0,
             winRate: 0,
-            rank: undefined
+            rank: undefined,
+            unpaidGames: 0,
+            unpaidGamesModifier: 0
           };
 
           // Calculate streak bonus
@@ -202,15 +208,12 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
                 draws={stats.draws}
                 losses={stats.losses}
                 totalGames={stats.totalGames}
-                whatsapp_group_member={registration.player.whatsapp_group_member}
                 streakBonus={streakModifier}
-                bonusModifier={bonusModifier}
-                penaltyModifier={penaltyModifier}
                 dropoutPenalty={dropoutModifier}
                 totalModifier={totalModifier}
                 rank={stats.rank}
-                unpaidGames={stats.unpaidGames || 0}
-                unpaidGamesModifier={stats.unpaidGamesModifier || 0}
+                unpaidGames={stats.unpaidGames}
+                unpaidGamesModifier={stats.unpaidGamesModifier}
               />
             </motion.div>
           );
