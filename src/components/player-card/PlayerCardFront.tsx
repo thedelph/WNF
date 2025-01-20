@@ -11,8 +11,14 @@ import { useUser } from '../../hooks/useUser'
 
 /**
  * Displays the front face of the player card with primary information
+ * Note: unpaidGames only includes past games that are unpaid and over 24 hours old
  */
-export const PlayerCardFront: React.FC<PlayerCardProps & { rank?: number, isFlipped?: boolean }> = ({
+export const PlayerCardFront: React.FC<PlayerCardProps & { 
+  rank?: number, 
+  isFlipped?: boolean, 
+  unpaidGames?: number, // Number of past unpaid games
+  unpaidGamesModifier?: number // XP modifier from past unpaid games (-30% per game)
+}> = ({
   id,
   friendlyName,
   xp,
@@ -34,6 +40,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & { rank?: number, isFlip
   rank,
   isFlipped,
   children,
+  unpaidGames = 0,
+  unpaidGamesModifier = 0,
 }) => {
   const { dropoutPenalties } = usePlayerPenalties(id)
   const { player } = useUser()
@@ -174,6 +182,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & { rank?: number, isFlip
         penaltyModifier={penaltyModifier}
         benchWarmerStreak={benchWarmerStreak}
         benchWarmerModifier={benchWarmerModifier}
+        unpaidGames={unpaidGames}
+        unpaidGamesModifier={unpaidGamesModifier}
       />
 
       <div className="mt-auto">

@@ -30,6 +30,8 @@ interface PlayerStats {
   maxStreak: number;
   benchWarmerStreak: number;
   rank: number | undefined;
+  unpaidGames?: number;
+  unpaidGamesModifier?: number;
 }
 
 export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
@@ -207,6 +209,8 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
                 dropoutPenalty={dropoutModifier}
                 totalModifier={totalModifier}
                 rank={stats.rank}
+                unpaidGames={stats.unpaidGames || 0}
+                unpaidGamesModifier={stats.unpaidGamesModifier || 0}
               />
             </motion.div>
           );

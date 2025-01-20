@@ -164,6 +164,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             active_bonuses,
             active_penalties,
             win_rate,
+            unpaid_games,
+            unpaid_games_modifier,
             player_xp (
               xp,
               rank,
@@ -210,7 +212,9 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             losses: winRateMap[player.id]?.losses || 0,
             totalGames: winRateMap[player.id]?.totalGames || 0,
             winRate: winRateMap[player.id]?.winRate || 0,
-            rank: player.player_xp?.rank || undefined
+            rank: player.player_xp?.rank || undefined,
+            unpaidGames: player.unpaid_games || 0,
+            unpaidGamesModifier: player.unpaid_games_modifier || 0
           }
         }), {});
 
@@ -299,19 +303,20 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       caps={playerStats[player.id]?.caps || 0}
                       activeBonuses={playerStats[player.id]?.activeBonuses || 0}
                       activePenalties={playerStats[player.id]?.activePenalties || 0}
-                      currentStreak={playerStats[player.id]?.currentStreak || 0}
-                      maxStreak={playerStats[player.id]?.maxStreak || 0}
-                      benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
-                      avatarSvg={player.avatar_svg}
-                      rarity={playerStats[player.id]?.rarity || 'Amateur'}
+                      winRate={playerStats[player.id]?.winRate || 0}
                       wins={playerStats[player.id]?.wins || 0}
                       draws={playerStats[player.id]?.draws || 0}
                       losses={playerStats[player.id]?.losses || 0}
                       totalGames={playerStats[player.id]?.totalGames || 0}
-                      winRate={playerStats[player.id]?.winRate || 0}
+                      currentStreak={playerStats[player.id]?.currentStreak || 0}
+                      maxStreak={playerStats[player.id]?.maxStreak || 0}
+                      benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
+                      rarity={playerStats[player.id]?.rarity}
+                      avatarSvg={player.avatar_svg}
                       whatsapp_group_member={player.whatsapp_group_member}
-                      isRandomlySelected={false}
                       rank={playerStats[player.id]?.rank}
+                      unpaidGames={playerStats[player.id]?.unpaidGames || 0}
+                      unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier || 0}
                     />
                   </motion.div>
                 ))}
@@ -346,19 +351,20 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       caps={playerStats[player.id]?.caps || 0}
                       activeBonuses={playerStats[player.id]?.activeBonuses || 0}
                       activePenalties={playerStats[player.id]?.activePenalties || 0}
-                      currentStreak={playerStats[player.id]?.currentStreak || 0}
-                      maxStreak={playerStats[player.id]?.maxStreak || 0}
-                      benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
-                      avatarSvg={player.avatar_svg}
-                      rarity={playerStats[player.id]?.rarity || 'Amateur'}
+                      winRate={playerStats[player.id]?.winRate || 0}
                       wins={playerStats[player.id]?.wins || 0}
                       draws={playerStats[player.id]?.draws || 0}
                       losses={playerStats[player.id]?.losses || 0}
                       totalGames={playerStats[player.id]?.totalGames || 0}
-                      winRate={playerStats[player.id]?.winRate || 0}
+                      currentStreak={playerStats[player.id]?.currentStreak || 0}
+                      maxStreak={playerStats[player.id]?.maxStreak || 0}
+                      benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
+                      rarity={playerStats[player.id]?.rarity}
+                      avatarSvg={player.avatar_svg}
                       whatsapp_group_member={player.whatsapp_group_member}
-                      isRandomlySelected={false}
                       rank={playerStats[player.id]?.rank}
+                      unpaidGames={playerStats[player.id]?.unpaidGames || 0}
+                      unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier || 0}
                     />
                   </motion.div>
                 ))}

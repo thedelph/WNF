@@ -1,7 +1,8 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Flame, CircleOff, Star, CircleDot } from 'lucide-react'
+import { Flame, CircleOff, Star, CircleDot, DollarSign } from 'lucide-react'
 import { PlayerCardModifiersProps } from './PlayerCardTypes'
+import { Tooltip } from '../ui/Tooltip'
 
 /**
  * Displays the modifiers section of the player card, including streaks, penalties, and bonuses
@@ -17,7 +18,10 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   penaltyModifier,
   benchWarmerStreak,
   benchWarmerModifier,
+  unpaidGames = 0,
+  unpaidGamesModifier = 0,
 }) => {
+  console.log('Unpaid games props:', { unpaidGames, unpaidGamesModifier });
   return (
     <div className="space-y-2">
       {currentStreak > 0 && (
@@ -84,6 +88,21 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
           </div>
           <span className="text-sm font-bold">+{(benchWarmerModifier * 100).toFixed(0)}%</span>
         </motion.div>
+      )}
+      {Number(unpaidGames) > 0 && (
+        <Tooltip content="XP penalty for unpaid games older than 24 hours">
+          <motion.div 
+            className="flex justify-between items-center bg-red-500/20 rounded-lg p-2"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+          >
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span className="text-sm">{unpaidGames} Unpaid Game{unpaidGames !== 1 ? 's' : ''}</span>
+            </div>
+            <span className="text-sm font-bold text-red-500">{(unpaidGamesModifier * 100).toFixed(0)}%</span>
+          </motion.div>
+        </Tooltip>
       )}
     </div>
   )

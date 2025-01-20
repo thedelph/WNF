@@ -13,10 +13,15 @@ const PaymentSummary: React.FC<Props> = ({ games }) => {
     games.forEach(game => {
       if (new Date(game.date) > new Date()) return; // Skip future games
       
-      const costPerPlayer = game.pitch_cost / (game.game_registrations?.length || 1);
+      // Count only selected (non-reserve) players for cost calculation
+      const selectedPlayers = game.game_registrations?.filter(reg => 
+        reg.status === 'selected' && !reg.is_reserve
+      ) || [];
+      const costPerPlayer = selectedPlayers.length > 0 ? game.pitch_cost / selectedPlayers.length : 0;
       
       game.game_registrations?.forEach(reg => {
-        if (!reg.paid) {
+        // Only consider selected non-reserve players for payment tracking
+        if (!reg.paid && reg.status === 'selected' && !reg.is_reserve) {
           const currentDebt = playerDebts.get(reg.player_id) || {
             name: reg.player.friendly_name,
             totalOwed: 0,

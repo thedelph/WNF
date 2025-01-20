@@ -206,6 +206,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             active_bonuses,
             active_penalties,
             win_rate,
+            unpaid_games,
+            unpaid_games_modifier,
             player_xp (
               xp,
               rank,
@@ -252,7 +254,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             losses: winRateMap[player.id]?.losses || 0,
             totalGames: winRateMap[player.id]?.totalGames || 0,
             winRate: winRateMap[player.id]?.winRate || 0,
-            rank: player.player_xp?.rank || undefined
+            rank: player.player_xp?.rank || undefined,
+            unpaidGames: player.unpaid_games || 0,
+            unpaidGamesModifier: player.unpaid_games_modifier || 0
           }
         }), {});
 
@@ -408,7 +412,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               winRate: playerStats[player.id]?.winRate || 0,
               whatsapp_group_member: player.whatsapp_group_member,
               hasActiveSlotOffers: activeSlotOffers?.length > 0,
-              isRandomlySelected: player.selection_method === 'random'
+              isRandomlySelected: player.selection_method === 'random',
+              unpaidGames: playerStats[player.id]?.unpaidGames || 0,
+              unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0
             }))}
             isExpanded={showSelected}
             onToggle={() => setShowSelected(!showSelected)}
@@ -483,7 +489,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
                 slotOfferExpiresAt: player.slotOffers?.[0]?.expires_at || player.potentialOfferTimes?.next_player_access_time,
                 hasSlotOffer: player.slotOffers?.length > 0,
                 declinedAt: player.slotOffers?.[0]?.declined_at || null,
-                hasActiveSlotOffers: activeSlotOffers?.length > 0
+                hasActiveSlotOffers: activeSlotOffers?.length > 0,
+                unpaidGames: playerStats[player.id]?.unpaidGames || 0,
+                unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0
               }))}
             isExpanded={showReserves}
             onToggle={() => setShowReserves(!showReserves)}
@@ -524,7 +532,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               losses: playerStats[player.id]?.losses || 0,
               totalGames: playerStats[player.id]?.totalGames || 0,
               winRate: playerStats[player.id]?.winRate || 0,
-              hasActiveSlotOffers: activeSlotOffers?.length > 0
+              hasActiveSlotOffers: activeSlotOffers?.length > 0,
+              unpaidGames: playerStats[player.id]?.unpaidGames || 0,
+              unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0
             }))}
             isExpanded={showDroppedOut}
             onToggle={() => setShowDroppedOut(!showDroppedOut)}
@@ -612,7 +622,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             draws: playerStats[player.id]?.draws || 0,
             losses: playerStats[player.id]?.losses || 0,
             totalGames: playerStats[player.id]?.totalGames || 0,
-            winRate: playerStats[player.id]?.winRate || 0
+            winRate: playerStats[player.id]?.winRate || 0,
+            unpaidGames: playerStats[player.id]?.unpaidGames || 0,
+            unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0
           }))}
           playerStats={playerStats}
         />

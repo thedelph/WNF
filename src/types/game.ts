@@ -36,6 +36,14 @@ export interface GameRegistration {
   team?: 'blue' | 'orange' | null
   selection_method: 'merit' | 'random' | 'none'
   created_at: string
+  paid: boolean
+  payment_status?: 'pending' | 'admin_verified' | 'player_verified'
+  payment_received_date?: string
+  payment_verified_at?: string
+  payment_verified_by?: string
+  payment_recipient_id?: string
+  is_reserve: boolean
+  payment_required: boolean
   player?: Player
 }
 
@@ -59,20 +67,10 @@ export interface Game {
     address: string
     google_maps_url: string
   }
-  game_registrations: Array<{
-    id: string
-    status: 'registered' | 'selected' | 'reserve' | 'dropped_out'
-    selection_method: 'merit' | 'random' | 'none'
-    player: {
-      id: string
-      friendly_name: string
-      caps: number
-      active_bonuses: number
-      active_penalties: number
-      current_streak: number
-    }
-  }>
-  pitch_cost?: number
+  game_registrations: Array<GameRegistration>
+  pitch_cost: number
+  payment_link?: string
+  cost_per_person?: number
 }
 
 export interface AdminPermission {

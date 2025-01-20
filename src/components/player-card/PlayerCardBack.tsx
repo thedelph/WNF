@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Trophy, Star, ListChecks, Flame } from 'lucide-react'
+import { Trophy, Star, ListChecks, Flame, DollarSign } from 'lucide-react'
 import { PlayerCardProps } from './PlayerCardTypes'
 import WhatsAppIndicator from '../indicators/WhatsAppIndicator'
 

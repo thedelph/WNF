@@ -18,6 +18,7 @@ interface XPBreakdownProps {
     reserveXP?: number;
     reserveCount?: number;
     benchWarmerStreak?: number;
+    unpaidGamesCount?: number;
   };
   showTotal?: boolean;
 }
@@ -35,6 +36,7 @@ interface XPBreakdownProps {
   - `reserveXP`: XP earned/lost from reserve status
   - `reserveCount`: Number of times player has been a reserve
   - `benchWarmerStreak`: Current streak of being on reserve/not selected
+  - `unpaidGamesCount`: Number of unpaid games (older than 24h)
 - `showTotal`: Boolean to toggle display of total XP
 
 ## XP Weighting System
@@ -69,20 +71,26 @@ The XP breakdown shows various components that contribute to a player's total XP
 - Shows -10 XP for declining slots
 - Added to base XP before multipliers are applied
 
-### Multipliers
-Both multipliers are applied to the TOTAL (base + reserve) XP at the END:
+### Modifiers
+All modifiers are combined and applied to the TOTAL (base + reserve) XP at the END:
 
-1. Streak Multiplier
+1. Streak Modifier
    - Based on consecutive game participation
    - 10% bonus per streak level
-   - Formula: 1 + (current_streak * 0.1)
-   - Example: Streak of 13 = 1 + (13 * 0.1) = 2.3x multiplier
+   - Formula: current_streak * 0.1
+   - Example: Streak of 13 = 13 * 0.1 = +1.3 modifier
 
-2. Bench Warmer Multiplier
+2. Bench Warmer Modifier
    - Based on consecutive reserve/non-selection status
    - 5% bonus per bench warmer streak level
-   - Formula: 1 + (bench_warmer_streak * 0.05)
-   - Example: Bench streak of 2 = 1 + (2 * 0.05) = 1.1x multiplier
+   - Formula: bench_warmer_streak * 0.05
+   - Example: Bench streak of 2 = 2 * 0.05 = +0.1 modifier
+
+3. Unpaid Games Modifier
+   - Based on number of unpaid games (older than 24h)
+   - -30% penalty per unpaid game
+   - Formula: unpaid_games_count * -0.3
+   - Example: 3 unpaid games = 3 * -0.3 = -0.9 modifier
 
 ### Final Calculation Order
 ```typescript
@@ -94,12 +102,14 @@ const baseXP = gameHistory.reduce((total, game) => {
 // 2. Add reserve XP
 const totalBaseXP = baseXP + (reserveXP || 0);
 
-// 3. Calculate multipliers
-const streakMultiplier = 1 + (currentStreak * 0.1);
-const benchWarmerMultiplier = 1 + (benchWarmerStreak * 0.05);
+// 3. Calculate modifiers
+const streakModifier = currentStreak * 0.1;
+const benchWarmerModifier = benchWarmerStreak * 0.05;
+const unpaidGamesModifier = unpaidGamesCount * -0.3;
 
-// 4. Apply multipliers and round at the end
-const finalXP = Math.round(totalBaseXP * streakMultiplier * benchWarmerMultiplier);
+// 4. Combine modifiers and apply to total
+const totalModifier = 1 + streakModifier + benchWarmerModifier + unpaidGamesModifier;
+const finalXP = Math.round(totalBaseXP * totalModifier);
 ```
 
 ### Display Format
@@ -107,49 +117,44 @@ const finalXP = Math.round(totalBaseXP * streakMultiplier * benchWarmerMultiplie
 The XP breakdown displays the calculation in a clear, mathematical format:
 
 1. Base Components:
-   - If only Base XP: Shows just the base value (e.g., `336`)
-   - If Base + Reserve XP: Shows both with brackets (e.g., `(336 + 5)`)
+   - If only Base XP: Shows just the base value (e.g., `286`)
+   - If Base + Reserve XP: Shows both with brackets (e.g., `(286 + 5)`)
 
-2. Multipliers (only shown when > 1.0):
-   - Attendance Streak: Shows `× 1.3` for a 3-game streak
-   - Reserve Streak: Shows `× 1.1` for a 2-game reserve streak
+2. Modifiers (shown with their signs):
+   - Attendance Streak: Shows `+10%` for a 1-game streak
+   - Reserve Streak: Shows `+5%` for a 1-game reserve streak
+   - Unpaid Games: Shows `-30%` per unpaid game
 
 Example displays:
 ```
-// Just base XP
-336
+// Just base XP with unpaid penalty
+286 × (1 - 0.9) = 29
 
-// Base XP with attendance streak
-336 × 1.3
+// Base XP with streak and unpaid penalty
+286 × (1 + 0.1 - 0.9) = 57
 
-// Base + Reserve XP with both multipliers
-(336 + 5) × 1.3 × 1.1
+// Base + Reserve XP with all modifiers
+(286 + 5) × (1 + 0.1 + 0.05 - 0.9) = 73
 ```
 
 The formula follows BODMAS (Brackets, Order, Division/Multiplication, Addition/Subtraction) to clearly show the order of operations:
 1. Base XP and Reserve XP are added first (within brackets when both present)
-2. Attendance streak multiplier is applied
-3. Reserve streak multiplier is applied
-4. Final result is rounded to whole numbers
+2. All modifiers are combined (1 + positive modifiers - negative modifiers)
+3. Final result is rounded to whole numbers
 
 ### Example Calculation
 ```
-Base XP from games:
-- Most recent (0 ago): 20
-- 1-2 games ago: 18 × 2 = 36
-- 3-4 games ago: 16 × 2 = 32
-- 5-9 games ago: 14 × 5 = 70
-- 10-19 games ago: 12 × 10 = 120
-- 20-29 games ago: 10 × 7 = 70
-Total base = 348
-
+Base XP = 286
 Reserve XP = 0
-Combined total = 348
+Total Base = 286
 
-Streak = 13 (2.3x multiplier)
-Bench streak = 0 (1.0x multiplier)
+Modifiers:
+- Streak (1 game): +0.1
+- Bench streak (0): +0.0
+- Unpaid games (3): -0.9
 
-Final XP = ROUND(348 * 2.3 * 1.0) = 773
+Total modifier = 1 + 0.1 + 0.0 - 0.9 = 0.2
+Final XP = ROUND(286 * 0.2) = 57
 ```
 
 ### Common Mistakes
@@ -174,6 +179,11 @@ Final XP = ROUND(348 * 2.3 * 1.0) = 773
   - Yellow: Building streak (1-2 games)
   - Gray: No streak (0 games)
 
+### Unpaid Games Display
+- Shows the number of unpaid games (older than 24h)
+- Color-coded UI:
+  - Red for unpaid games
+
 ### Visual Elements
 - Card-based layout for each XP category
 - Color-coded sections for easy identification
@@ -191,7 +201,8 @@ Final XP = ROUND(348 * 2.3 * 1.0) = 773
     gameHistory: [],
     xp: 100,
     reserveXP: 5,
-    reserveCount: 1
+    reserveCount: 1,
+    unpaidGamesCount: 2
   }}
   showTotal={true}
 />

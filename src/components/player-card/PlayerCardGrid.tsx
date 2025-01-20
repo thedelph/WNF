@@ -29,6 +29,8 @@ interface Player {
   totalModifier: number
   whatsapp_group_member?: string
   rank: number
+  unpaidGames?: number
+  unpaidGamesModifier?: number
 }
 
 interface PlayerStats {
@@ -46,6 +48,8 @@ interface PlayerStats {
     totalGames: number
     winRate: number
     rank: number | undefined
+    unpaidGames: number
+    unpaidGamesModifier: number
   }
 }
 
@@ -113,7 +117,9 @@ export default function PlayerCardGrid() {
             bonusModifier: 0,
             penaltyModifier: 0,
             totalModifier: 0,
-            rank: undefined
+            rank: undefined,
+            unpaidGames: 0,
+            unpaidGamesModifier: 0
           })))
         }
       } catch (error) {
@@ -154,6 +160,35 @@ export default function PlayerCardGrid() {
 
         if (playerError) throw playerError;
 
+        // Get unpaid games count for each player
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+        const { data: unpaidGamesData, error: unpaidError } = await supabase
+          .from('game_registrations')
+          .select(`
+            player_id,
+            games!inner (
+              completed,
+              is_historical,
+              date
+            )
+          `)
+          .in('player_id', playerIds)
+          .eq('paid', false)
+          .lt('games.date', twentyFourHoursAgo.toISOString())
+          .eq('games.completed', true)
+          .eq('games.is_historical', true)
+          .not('status', 'eq', 'reserve');
+
+        if (unpaidError) throw unpaidError;
+
+        // Create a map of unpaid games count per player
+        const unpaidGamesMap = unpaidGamesData?.reduce((acc: {[key: string]: number}, reg) => {
+          acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
+          return acc;
+        }, {});
+
         // Get win rates and game stats
         const { data: winRateData, error: winRateError } = await supabase
           .rpc('get_player_win_rates')
@@ -190,7 +225,9 @@ export default function PlayerCardGrid() {
             losses: winRateMap[player.id]?.losses || 0,
             totalGames: winRateMap[player.id]?.totalGames || 0,
             winRate: winRateMap[player.id]?.winRate || 0,
-            rank: player.player_xp?.rank || undefined
+            rank: player.player_xp?.rank || undefined,
+            unpaidGames: unpaidGamesMap[player.id] || 0,
+            unpaidGamesModifier: (unpaidGamesMap[player.id] || 0) * -0.3 // -30% per unpaid game, stacks linearly
           }
         }), {});
 
@@ -534,6 +571,8 @@ export default function PlayerCardGrid() {
                     avatarSvg={player.avatarSvg}
                     whatsapp_group_member={player.whatsapp_group_member}
                     rank={playerStats[player.id]?.rank || undefined}
+                    unpaidGames={playerStats[player.id]?.unpaidGames || 0}
+                    unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier || 0}
                   />
                 </motion.div>
               ))}

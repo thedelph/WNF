@@ -91,6 +91,34 @@ export default function PlayerProfileNew() {
           throw playerError;
         }
 
+        // Get count of unpaid games over 24 hours old where this player hasn't paid
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+        const { data: unpaidGames, error: unpaidError } = await supabase
+          .from('game_registrations')
+          .select(`
+            id,
+            games!inner (
+              completed,
+              is_historical,
+              date
+            )
+          `)
+          .eq('player_id', id)
+          .eq('paid', false)
+          .lt('games.date', twentyFourHoursAgo.toISOString())
+          .eq('games.completed', true)
+          .eq('games.is_historical', true)
+          .not('status', 'eq', 'reserve');
+
+        if (unpaidError) {
+          console.error('Error fetching unpaid games:', unpaidError);
+          throw unpaidError;
+        }
+
+        const unpaidGamesCount = unpaidGames?.length || 0;
+
         // Get reserve XP data
         const { data: reserveXPData, error: reserveXPError } = await supabase
           .from('reserve_xp_transactions')
@@ -276,7 +304,8 @@ export default function PlayerProfileNew() {
           my_rating: myRating,
           reserveXP: reserveXP,
           reserveCount: reserveCount,
-          bench_warmer_streak: playerData.bench_warmer_streak || 0
+          bench_warmer_streak: playerData.bench_warmer_streak || 0,
+          unpaidGames: unpaidGamesCount,
         };
 
         // Debug log for final player stats
@@ -440,7 +469,8 @@ export default function PlayerProfileNew() {
             xp: player.xp || 0,
             reserveXP: player.reserveXP ?? 0,
             reserveCount: player.reserveCount ?? 0,
-            benchWarmerStreak: player.bench_warmer_streak || 0
+            benchWarmerStreak: player.bench_warmer_streak || 0,
+            unpaidGames: player.unpaidGames || 0
           }} />
         </div>
       </motion.div>

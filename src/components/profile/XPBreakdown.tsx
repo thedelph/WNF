@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import UnpaidGamesPenalty from './UnpaidGamesPenalty';
 
 interface GameHistory {
   sequence: number;
@@ -19,6 +20,7 @@ interface XPBreakdownProps {
     reserveXP?: number;
     reserveCount?: number;
     benchWarmerStreak?: number;
+    unpaidGames?: number; // Number of unpaid games
   };
   showTotal?: boolean;
 }
@@ -48,6 +50,9 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
 
   // Calculate base XP from game history without multipliers
   const baseXP = stats.gameHistory.reduce((total, game) => {
+    // Skip future games
+    if (game.sequence > latestSequence) return total;
+    
     // Calculate how many games ago this game was
     const gamesAgo = latestSequence - game.sequence;
     
@@ -68,14 +73,20 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   // Add reserve XP if any
   const totalBaseXP = baseXP + (stats.reserveXP || 0);
 
-  // Calculate streak multiplier (+10% per streak level)
-  const attendanceMultiplier = 1 + (stats.currentStreak * 0.1);
+  // Calculate streak modifier (+10% per streak level)
+  const streakModifier = stats.currentStreak * 0.1;
   
-  // Calculate bench warmer multiplier (+5% per bench warmer streak level)
-  const reserveMultiplier = 1 + ((stats.benchWarmerStreak || 0) * 0.05);
+  // Calculate bench warmer modifier (+5% per bench warmer streak level)
+  const reserveModifier = (stats.benchWarmerStreak || 0) * 0.05;
 
-  // Apply both multipliers to the total base XP
-  const finalXP = Math.round(totalBaseXP * attendanceMultiplier * reserveMultiplier);
+  // Calculate unpaid games modifier (-30% per unpaid game)
+  const unpaidGamesModifier = -(stats.unpaidGames || 0) * 0.3;
+
+  // Calculate total modifier
+  const totalModifier = 1 + streakModifier + reserveModifier + unpaidGamesModifier;
+
+  // Apply the total modifier to base XP
+  const finalXP = Math.round(totalBaseXP * totalModifier);
 
   // Animation variants
   const contentVariants = {
@@ -129,7 +140,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                           <li>40+ Games Ago: 0 XP</li>
                           <li>Reserve XP: +5 XP each time you're a reserve player in the last 40 games</li>
                           <li>Attendance Streak: Temporary +10% XP for each consecutive game played (resets if you miss a game)</li>
-                          <li>Bench Warmer Streak: Temporary +5% XP for each game where you're a reserve that doesn't get an opportunity to play (resets when you either play or miss a game)</li>
+                          <li>Bench Warmer Streak: Temporary +5% XP for each game where you're a reserve that doesn't get an opportunity to play (resets when you either play or miss a game). As it increases, so do your odds of getting picked in random selection.</li>
                           <li>Reserve Penalty: -10 XP if you decline an available slot from someone who dropped out. To prevent people trying to just get free XP. Doesn't apply if the drop out occurs on the day of the game.</li>
                         </ul>
                       </div>
@@ -496,6 +507,14 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                   </div>
                 )}
 
+                {/* Unpaid Games Penalty - only show if there are unpaid games */}
+                {stats.unpaidGames > 0 && (
+                  <UnpaidGamesPenalty
+                    unpaidGames={stats.unpaidGames}
+                    penaltyPercentage={30}
+                  />
+                )}
+
                 {/* Total XP */}
                 {showTotal && (
                   <div className="space-y-4">
@@ -517,13 +536,19 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                             </div>
                             <div className="text-xs text-base-content/70">
                               {(stats.reserveXP || 0) > 0 ? `(${baseXP} + ${stats.reserveXP})` : baseXP}
-                              {attendanceMultiplier > 1 && ` × ${attendanceMultiplier.toFixed(1)}`}
-                              {reserveMultiplier > 1 && ` × ${reserveMultiplier.toFixed(2)}`}
+                              {(streakModifier !== 0 || reserveModifier !== 0 || unpaidGamesModifier !== 0) && 
+                                ` × (1${streakModifier > 0 ? ` + ${streakModifier.toFixed(2)}` : ''}${
+                                  reserveModifier > 0 ? ` + ${reserveModifier.toFixed(2)}` : ''}${
+                                  unpaidGamesModifier !== 0 ? ` ${unpaidGamesModifier.toFixed(2)}` : ''})`
+                              }
                             </div>
                             <div className="text-xs text-base-content/50">
                               {(stats.reserveXP || 0) > 0 ? '(Base XP + Reserve XP)' : 'Base XP'}
-                              {attendanceMultiplier > 1 && ' × Attendance Streak'}
-                              {reserveMultiplier > 1 && ' × Reserve Streak'}
+                              {(streakModifier !== 0 || reserveModifier !== 0 || unpaidGamesModifier !== 0) && 
+                                ` × (1${streakModifier > 0 ? ' + Attendance Streak Modifier' : ''}${
+                                  reserveModifier > 0 ? ' + Reserve Streak Modifier' : ''}${
+                                  unpaidGamesModifier !== 0 ? ' - Unpaid Games Penalty' : ''})`
+                              }
                             </div>
                           </div>
                         </div>

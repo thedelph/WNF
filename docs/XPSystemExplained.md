@@ -76,52 +76,65 @@ IMPORTANT: The bench warmer streak multiplier is applied to ALL XP, not just res
 - A player with base XP of 82 and reserve XP of 5, with a bench warmer streak of 1, would get:
   (82 + 5) * 1.05 = 91.35, rounded to 91
 
-##### Final XP Calculation
-```sql
-final_xp = ROUND((base_xp + reserve_xp) * streak_multiplier * bench_warmer_multiplier)
-```
+##### Unpaid Games Penalty
+A penalty is applied for each unpaid game that a player has:
+- Only applies to games older than 24 hours
+- -30% penalty per unpaid game
+- Penalties stack linearly (e.g., 3 unpaid games = -90% penalty)
+- Only applies to completed and historical games
+- Does not apply to reserve games
 
-IMPORTANT: The order of operations is critical:
-1. Sum all base XP from games WITHOUT applying any multipliers
-2. Add any reserve XP to the base XP
-3. Apply BOTH multipliers to the combined total
-4. Round the final result
+Example:
+- 1 unpaid game: -30% (-0.3 modifier)
+- 2 unpaid games: -60% (-0.6 modifier)
+- 3 unpaid games: -90% (-0.9 modifier)
+
+##### Final XP Calculation
+The final XP is calculated by combining all modifiers and applying them once to the total base XP:
+
+```sql
+-- 1. Calculate total base XP (no modifiers)
+total_base_xp = base_xp + reserve_xp
+
+-- 2. Calculate and combine all modifiers
+streak_modifier = current_streak * 0.1
+bench_warmer_modifier = bench_warmer_streak * 0.05
+unpaid_games_modifier = unpaid_games_count * -0.3
+
+-- 3. Apply combined modifier to total base XP
+total_modifier = 1 + streak_modifier + bench_warmer_modifier + unpaid_games_modifier
+final_xp = ROUND(total_base_xp * total_modifier)
+```
 
 Example calculation:
 ```
-# Step 1: Calculate base XP (no multipliers)
-Most recent game (0 games ago):    20 XP
-1-2 games ago (2 games):          18 × 2 = 36 XP
-3-4 games ago (2 games):          16 × 2 = 32 XP
-5-9 games ago (5 games):          14 × 5 = 70 XP
-10-19 games ago (10 games):       12 × 10 = 120 XP
-20-29 games ago (7 games):        10 × 7 = 70 XP
-Base XP Total = 348 XP
+# Step 1: Calculate base XP (no modifiers)
+Base XP from games = 286
+Reserve XP = 0
+Total base XP = 286
 
-# Step 2: Add reserve XP
-Total = Base XP + Reserve XP
-Total = 348 + 0 = 348 XP
+# Step 2: Calculate modifiers
+Streak modifier = 1 game = +0.1
+Bench warmer modifier = 0 games = +0.0
+Unpaid games modifier = 3 games = -0.9
 
-# Step 3: Apply multipliers
-Streak multiplier = 1 + (13 * 0.1) = 2.3
-Bench warmer multiplier = 1 + (0 * 0.05) = 1.0
-
-# Step 4: Calculate final XP
-Final XP = ROUND(348 * 2.3 * 1.0)
-Final XP = ROUND(800.4)
-Final XP = 800
+# Step 3: Apply combined modifier
+Total modifier = 1 + 0.1 + 0.0 - 0.9 = 0.2
+Final XP = ROUND(286 * 0.2) = 57
 ```
 
 Common Mistakes to Avoid:
-1. ❌ Don't apply multipliers to each game's XP individually
-2. ❌ Don't round each game's XP before summing
-3. ❌ Don't apply multipliers before adding reserve XP
+1. ❌ Don't multiply modifiers separately (this gives wrong results)
+2. ❌ Don't apply unpaid games penalty before other modifiers
+3. ❌ Don't round between calculations
 
 The correct order is always:
 1. ✅ Sum raw base XP from all games
 2. ✅ Add reserve XP to total
-3. ✅ Apply both multipliers to combined total
-4. ✅ Round the final result
+3. ✅ Calculate all modifiers (streak, bench warmer, unpaid games)
+4. ✅ Add 1 to combined modifiers
+5. ✅ Multiply total XP by final modifier
+6. ✅ Round the final result
 
 ### Historical Games
 Only games marked as `is_historical = true` are counted in XP calculations. This ensures that:

@@ -55,9 +55,26 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       console.log('Parsed date text:', dateText);
       console.log('Parsed time text:', timeText);
 
-      // Extract date components
-      const [, day, month, year] = dateText.match(/(\d+)(?:st|nd|rd|th)?\s+(\w+)\s+(\d+)/) || [];
+      // Extract date components using the date regex
+      const dateRegex = /(\d+)(?:st|nd|rd|th)?\s+(\w+)(?:\s+(\d{4}|\d{2})?)?/;
+      const dateComponents = dateText.match(dateRegex);
       
+      if (!dateComponents) {
+        console.error('Failed to parse date:', dateText);
+        return;
+      }
+
+      let [, day, month, year] = dateComponents;
+      
+      // If year is not provided, use the next occurrence of the date
+      if (!year) {
+        const currentDate = new Date();
+        year = currentDate.getFullYear().toString();
+      } else if (year.length === 2) {
+        // Handle 2-digit year
+        year = '20' + year;
+      }
+
       console.log('Extracted date components:', { day, month, year });
 
       // Convert month name to number
@@ -68,21 +85,40 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       };
       
       const monthNum = months[month];
-      const formattedDay = day.padStart(2, '0');
+      if (!monthNum) {
+        console.error('Invalid month:', month);
+        return;
+      }
+
+      // Ensure day is a valid number
+      const dayNum = parseInt(day);
+      if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
+        console.error('Invalid day:', day);
+        return;
+      }
+      
+      const formattedDay = dayNum.toString().padStart(2, '0');
       
       // Format date as YYYY-MM-DD
       const formattedDate = `${year}-${monthNum}-${formattedDay}`;
 
-      // Extract time (assuming 24-hour format)
-      const [startTime] = timeText.match(/\d+:\d+[ap]m/i) || [];
-      console.log('Extracted start time:', startTime);
+      // Extract time
+      const timeRegex = /(\d+):(\d+)([ap]m)/i;
+      const timeComponents = timeText.match(timeRegex);
+      
+      if (!timeComponents) {
+        console.error('Failed to parse time:', timeText);
+        return;
+      }
 
-      // Convert to 24-hour format if needed
-      const [hours, minutes] = startTime.match(/(\d+):(\d+)([ap]m)/i)?.slice(1) || [];
-      const isPM = startTime.toLowerCase().includes('pm');
+      const [, hours, minutes, period] = timeComponents;
+      const isPM = period.toLowerCase() === 'pm';
       let hour24 = parseInt(hours);
+      
+      // Convert to 24-hour format
       if (isPM && hour24 !== 12) hour24 += 12;
       if (!isPM && hour24 === 12) hour24 = 0;
+      
       const formattedTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
 
       console.log('Formatted date:', formattedDate);

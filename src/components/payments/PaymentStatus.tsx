@@ -55,7 +55,11 @@ export const PaymentStatus: React.FC<Props> = ({ gameId, playerId, onStatusChang
       setLoading(true)
       const { error } = await supabaseAdmin
         .from('game_registrations')
-        .update({ payment_status: 'marked_paid' })
+        .update({ 
+          payment_status: 'marked_paid',
+          paid: true,
+          payment_received_date: new Date().toISOString()
+        })
         .eq('game_id', gameId)
         .eq('player_id', playerId)
 

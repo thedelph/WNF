@@ -44,4 +44,8 @@ export interface PlayerStats {
   } | null;
   reserveXP?: number;
   reserveCount?: number;
+  bench_warmer_streak?: number;
+  unpaidGames?: number;
+  totalGames?: number;
+  wins?: number;
 }

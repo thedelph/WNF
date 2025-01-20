@@ -11,6 +11,7 @@ import { PresetSelector } from '../../components/admin/games/presets/PresetSelec
 import { GameList } from '../../components/admin/games/list/GameList';
 import { VenueForm } from '../../components/admin/games/venues/VenueForm';
 import { VenueEditModal } from '../../components/admin/games/venues/VenueEditModal';
+import { deleteGame } from '../../utils/gameUtils';
 
 /**
  * GameManagement component handles the administration of games, venues, and registrations.
@@ -109,12 +110,10 @@ const GameManagement: React.FC = () => {
     const confirmed = window.confirm('Are you sure you want to delete this game?');
     if (!confirmed) return;
 
-    const { error } = await supabase
-      .from('games')
-      .delete()
-      .eq('id', gameId);
+    const { error } = await deleteGame(gameId);
 
     if (error) {
+      console.error('Error deleting game:', error);
       toast.error('Failed to delete game');
       return;
     }

@@ -41,6 +41,8 @@ interface PlayerCardProps {
   whatsapp_group_member?: string
   children?: React.ReactNode
   rank?: number
+  unpaidGames?: number
+  unpaidGamesModifier?: number
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -71,6 +73,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   whatsapp_group_member,
   children,
   rank,
+  unpaidGames = 0,
+  unpaidGamesModifier = 0,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -128,6 +132,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             whatsapp_group_member={whatsapp_group_member}
             rank={rank}
             isFlipped={isFlipped}
+            unpaidGames={unpaidGames}
+            unpaidGamesModifier={unpaidGamesModifier}
           >
             {children}
           </PlayerCardFront>
@@ -146,8 +152,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             friendlyName={friendlyName}
             xp={xp}
             caps={caps}
-            activeBonuses={activeBonuses}
-            activePenalties={activePenalties}
             winRate={winRate}
             wins={wins}
             draws={draws}
@@ -155,7 +159,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             totalGames={totalGames}
             currentStreak={currentStreak}
             maxStreak={maxStreak}
-            benchWarmerStreak={benchWarmerStreak}
             rarity={rarity}
             avatarSvg={avatarSvg}
             whatsapp_group_member={whatsapp_group_member}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '../../../utils/supabase';
+import { supabase, supabaseAdmin } from '../../../utils/supabase';
 import PaymentSummary from './PaymentSummary';
 import GamePaymentList from './GamePaymentList';
 import { Game } from '../../../types/game';
@@ -27,7 +27,8 @@ const PaymentDashboard: React.FC = () => {
           *,
           venue:venues (*)
         `)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .lte('date', new Date().toISOString()); // Only fetch past games
 
       if (gamesError) throw gamesError;
 
@@ -53,15 +54,32 @@ const PaymentDashboard: React.FC = () => {
             friendly_name
           )
         `)
-        .in('game_id', gamesData?.map(game => game.id) || []);
+        .in('game_id', gamesData?.map(game => game.id) || [])
+        .eq('status', 'selected'); // Only get selected players, we'll filter for payment status in JS
 
       if (regsError) throw regsError;
 
-      // Combine the data
-      const gamesWithRegistrations = gamesData?.map(game => ({
-        ...game,
-        game_registrations: registrationsData?.filter(reg => reg.game_id === game.id) || []
-      })) || [];
+      // Calculate the total amount owed for each registration
+      const gamesWithRegistrations = gamesData?.map(game => {
+        const gameRegistrations = registrationsData?.filter(reg => reg.game_id === game.id) || [];
+        const selectedNonReservePlayers = gameRegistrations.filter(
+          reg => reg.status === 'selected' && !reg.is_reserve
+        );
+        const costPerPerson = selectedNonReservePlayers.length ? 
+          game.pitch_cost / selectedNonReservePlayers.length : 
+          game.pitch_cost;
+
+        return {
+          ...game,
+          cost_per_person: costPerPerson,
+          game_registrations: gameRegistrations.map(reg => ({
+            ...reg,
+            // Only require payment for past games where player was selected and not a reserve
+            payment_required: new Date(game.date) < new Date() && reg.status === 'selected' && !reg.is_reserve,
+            amount_owed: new Date(game.date) < new Date() && reg.status === 'selected' && !reg.is_reserve && !reg.paid ? costPerPerson : 0
+          }))
+        };
+      }) || [];
 
       setGames(gamesWithRegistrations);
     } catch (error: any) {
@@ -74,19 +92,39 @@ const PaymentDashboard: React.FC = () => {
 
   const markAllPaidUpToDate = async (date: Date) => {
     try {
-      const { error } = await supabase
+      const now = new Date().toISOString();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No admin user found');
+
+      // Get the admin player record
+      const { data: adminPlayer } = await supabase
+        .from('players')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!adminPlayer) throw new Error('Admin player record not found');
+
+      // Only update selected non-reserve players
+      const { error } = await supabaseAdmin
         .from('game_registrations')
         .update({ 
           paid: true,
-          payment_received_date: new Date().toISOString()
+          payment_status: 'admin_verified',
+          payment_received_date: now,
+          payment_verified_at: now,
+          payment_verified_by: adminPlayer.id,
+          payment_recipient_id: adminPlayer.id
         })
         .in('game_id', games
           .filter(game => new Date(game.date) <= date)
           .map(game => game.id)
-        );
+        )
+        .eq('status', 'selected')
+        .eq('is_reserve', false);
 
       if (error) throw error;
-      toast.success('Successfully marked all games as paid up to selected date');
+      toast.success('Successfully marked all non-reserve players as paid up to selected date');
       fetchGames();
     } catch (error) {
       console.error('Error updating payments:', error);

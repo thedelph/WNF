@@ -124,17 +124,22 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
                         friendlyName={player.friendly_name}
                         xp={player.xp}
                         caps={player.caps}
-                        preferredPosition={player.preferred_position || ''}
                         activeBonuses={player.active_bonuses}
                         activePenalties={player.active_penalties}
                         winRate={player.win_rate}
+                        wins={player.wins}
+                        draws={player.draws}
+                        losses={player.losses}
+                        totalGames={player.total_games}
                         currentStreak={player.current_streak}
                         maxStreak={player.max_streak}
+                        benchWarmerStreak={player.bench_warmer_streak}
                         rarity={rarity}
+                        avatarSvg={player.avatar_svg}
+                        whatsapp_group_member={player.whatsapp_group_member}
                         rank={player.rank}
-                        avatarSvg={player.avatar_svg || ''}
-                        isRandomlySelected={player.isRandomlySelected}
-                        hasSlotOffer={player.hasSlotOffer}
+                        unpaidGames={player.unpaid_games || 0}
+                        unpaidGamesModifier={player.unpaid_games_modifier || 0}
                       />
                     </motion.div>
                   );

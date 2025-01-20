@@ -26,7 +26,9 @@ export interface PlayerCardProps {
   hasActiveSlotOffers?: boolean
   whatsapp_group_member?: string
   children?: React.ReactNode
-  rank?: number // Player's current rank based on XP (for top 16 display)
+  rank?: number
+  unpaidGames: number
+  unpaidGamesModifier: number
 }
 
 export interface PlayerCardModifiersProps {
@@ -40,6 +42,8 @@ export interface PlayerCardModifiersProps {
   penaltyModifier: number
   benchWarmerStreak: number
   benchWarmerModifier: number
+  unpaidGames: number
+  unpaidGamesModifier: number
 }
 
 export interface PlayerCardStatsProps {
