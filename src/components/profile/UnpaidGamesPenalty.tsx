@@ -35,7 +35,7 @@ const UnpaidGamesPenalty: React.FC<UnpaidGamesPenaltyProps> = ({
         <div className="card-body p-3">
           <div className="flex justify-between items-center">
             <div>
-              <Tooltip content="You have past games that are unpaid and over 24 hours old. Each unpaid past game results in a 30% XP penalty. Future games do not affect this penalty.">
+              <Tooltip content="You have past games that are unpaid and over 24 hours old. Each unpaid past game results in a 50% XP penalty. Future games do not affect this penalty.">
                 <h5 className="font-medium text-base-content flex items-center gap-2">
                   <span>Unpaid Games</span>
                   <span className="text-sm opacity-70">ℹ️</span>
