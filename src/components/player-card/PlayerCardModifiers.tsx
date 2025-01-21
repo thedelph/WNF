@@ -21,7 +21,6 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   unpaidGames = 0,
   unpaidGamesModifier = 0,
 }) => {
-  console.log('Unpaid games props:', { unpaidGames, unpaidGamesModifier });
   return (
     <div className="space-y-2">
       {currentStreak > 0 && (
