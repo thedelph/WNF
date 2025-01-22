@@ -96,17 +96,19 @@ export default function Stats() {
           color="purple"
         />
 
-        {/* Current Streaks */}
-        <AwardCard
-          title="Current Attendance Streaks"
-          winners={stats.currentStreaks.map(player => ({
-            name: player.friendlyName,
-            value: `${player.currentStreak} games`,
-            id: player.id
-          }))}
-          icon={<Flame className="w-6 h-6" />}
-          color="green"
-        />
+        {/* Current Streaks - Only show for current year or all time */}
+        {(selectedYear === 'all' || selectedYear === new Date().getFullYear()) && (
+          <AwardCard
+            title="Current Attendance Streaks"
+            winners={stats.currentStreaks.map(player => ({
+              name: player.friendlyName,
+              value: `${player.currentStreak} games`,
+              id: player.id
+            }))}
+            icon={<Flame className="w-6 h-6" />}
+            color="green"
+          />
+        )}
 
         {/* Most Caps */}
         <AwardCard
