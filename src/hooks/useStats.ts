@@ -66,6 +66,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setStats(prev => ({ ...prev, loading: true, error: null }));
+      
       try {
         // Add a timestamp to force fresh data
         const timestamp = new Date().getTime();
@@ -172,27 +174,25 @@ export const useStats = (year?: number, availableYears?: number[]) => {
         })) || [];
 
         // Fetch best buddies
-        const getBestBuddies = async () => {
-          const { data: bestBuddies, error: bestBuddiesError } = await supabase
-            .rpc('get_best_buddies')
-            .select('*');
+        const { data: bestBuddies, error: bestBuddiesError } = await supabase
+          .rpc('get_best_buddies', {
+            target_year: year || null
+          });
 
-          if (bestBuddiesError) {
-            console.error('Error fetching best buddies:', bestBuddiesError);
-            return [];
-          }
+        if (bestBuddiesError) {
+          console.error('Error fetching best buddies:', bestBuddiesError);
+          throw bestBuddiesError;
+        }
 
-          return bestBuddies?.map(buddy => ({
-            id: buddy.id,
-            friendlyName: buddy.friendly_name,
-            buddyId: buddy.buddy_id,
-            buddyFriendlyName: buddy.buddy_friendly_name,
-            gamesTogether: buddy.games_together
-          })) || [];
-        };
+        const transformedBuddies = bestBuddies?.map(buddy => ({
+          id: buddy.id,
+          friendlyName: buddy.friendly_name,
+          buddyId: buddy.buddy_id,
+          buddyFriendlyName: buddy.buddy_friendly_name,
+          gamesTogether: Number(buddy.games_together)
+        })) || [];
 
         // Process and set stats
-        const bestBuddies = await getBestBuddies();
         setStats({
           luckyBibColor: {
             color: (colorStats?.[0]?.winning_color || 'blue') as 'orange' | 'blue',
@@ -260,7 +260,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
               return sorted.filter(p => p.teamFrequency >= threshold);
             })()
           },
-          bestBuddies,
+          bestBuddies: transformedBuddies.sort((a, b) => b.gamesTogether - a.gamesTogether),
           loading: false,
           error: null,
         });
@@ -275,7 +275,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
     };
 
     fetchStats();
-  }, [year, availableYears]);
+  }, [year]);
 
   return stats;
 };

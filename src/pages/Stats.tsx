@@ -135,7 +135,7 @@ export default function Stats() {
         <AwardCard
           title="Best Buddies"
           winners={stats.bestBuddies.map(buddy => ({
-            id: buddy.id,
+            id: `${buddy.id}-${buddy.buddyId}`,
             name: `${buddy.friendlyName} & ${buddy.buddyFriendlyName}`,
             value: `${buddy.gamesTogether} games`
           }))}
