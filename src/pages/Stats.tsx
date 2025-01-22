@@ -13,9 +13,9 @@ import {
   Flame,
   Heart
 } from 'lucide-react';
-import { StatsCard } from '../components/dashboard/StatsCard';
-import { AwardCard } from '../components/dashboard/AwardCard';
-import { YearSelector } from '../components/dashboard/YearSelector';
+import { StatsCard } from '../components/stats/StatsCard';
+import { AwardCard } from '../components/stats/AwardCard';
+import { YearSelector } from '../components/stats/YearSelector';
 import { useStats } from '../hooks/useStats';
 
 const containerVariants = {
@@ -28,7 +28,7 @@ const containerVariants = {
   }
 };
 
-export default function Dashboard() {
+export default function Stats() {
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   

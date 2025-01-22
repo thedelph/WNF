@@ -13,9 +13,9 @@ import {
   Flame,
   Heart
 } from 'lucide-react';
-import { StatsCard } from '../components/dashboard/StatsCard';
-import { AwardCard } from '../components/dashboard/AwardCard';
-import { YearSelector } from '../components/dashboard/YearSelector';
+import { StatsCard } from '../components/stats/StatsCard';
+import { AwardCard } from '../components/stats/AwardCard';
+import { YearSelector } from '../components/stats/YearSelector';
 import { useStats } from '../hooks/useStats';
 
 // Parallax section component
@@ -81,7 +81,7 @@ const Hero = () => {
   );
 };
 
-export default function StandaloneDashboard() {
+export default function StandaloneStats() {
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
   const stats = useStats(selectedYear === 'all' ? undefined : selectedYear);
   const { scrollYProgress } = useScroll();

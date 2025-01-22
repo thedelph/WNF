@@ -25,25 +25,25 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import NotificationsPage from './pages/NotificationsPage'
 import { SlotOffersPage } from './pages/admin/SlotOffersPage';
-import Dashboard from './pages/Dashboard'
-import StandaloneDashboard from './pages/StandaloneDashboard'
 import EmailVerification from './pages/EmailVerification'
 import Changelog from './pages/Changelog'
+import Stats from './pages/Stats'
+import StandaloneStats from './pages/StandaloneStats'
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <ErrorBoundary>
         <Routes>
-          {/* Redirect root to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Redirect root to stats */}
+          <Route path="/" element={<Navigate to="/stats" replace />} />
           
-          {/* Standalone Dashboard Route */}
+          {/* Standalone Stats Route */}
             <Route 
-              path="/standalone-dashboard" 
+              path="/standalone-stats" 
               element={
                 <StandaloneLayout>
-                  <StandaloneDashboard />
+                  <StandaloneStats />
                 </StandaloneLayout>
               } 
             />
@@ -54,7 +54,7 @@ const App: React.FC = () => {
                 <Outlet />
               </Layout>
             }>
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/stats" element={<Stats />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-email" element={<EmailVerification />} />
