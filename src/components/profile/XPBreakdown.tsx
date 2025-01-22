@@ -79,14 +79,17 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   // Calculate bench warmer modifier (+5% per bench warmer streak level)
   const reserveModifier = (stats.benchWarmerStreak || 0) * 0.05;
 
-  // Calculate unpaid games modifier (-30% per unpaid game)
-  const unpaidGamesModifier = -(stats.unpaidGames || 0) * 0.3;
+  // Calculate unpaid games modifier (-50% per unpaid game)
+  const unpaidGamesModifier = -(stats.unpaidGames || 0) * 0.5;
 
   // Calculate total modifier
   const totalModifier = 1 + streakModifier + reserveModifier + unpaidGamesModifier;
 
-  // Apply the total modifier to base XP
-  const finalXP = Math.round(totalBaseXP * totalModifier);
+  // Calculate raw XP before clamping to check if it would be negative
+  const rawXP = totalBaseXP * totalModifier;
+  
+  // Apply the total modifier to base XP and ensure it's never negative
+  const finalXP = Math.max(0, Math.round(rawXP));
 
   // Animation variants
   const contentVariants = {
@@ -511,7 +514,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                 {stats.unpaidGames > 0 && (
                   <UnpaidGamesPenalty
                     unpaidGames={stats.unpaidGames}
-                    penaltyPercentage={30}
+                    penaltyPercentage={50}
                   />
                 )}
 
@@ -549,6 +552,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                                   reserveModifier > 0 ? ' + Reserve Streak Modifier' : ''}${
                                   unpaidGamesModifier !== 0 ? ' - Unpaid Games Penalty' : ''})`
                               }
+                              {rawXP < 0 && ' (XP will never be less than 0)'}
                             </div>
                           </div>
                         </div>
