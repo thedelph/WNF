@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import UnpaidGamesPenalty from './UnpaidGamesPenalty';
@@ -28,16 +28,6 @@ interface XPBreakdownProps {
 const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-
-  // Debug logs for reserve data
-  useEffect(() => {
-    console.log('XPBreakdown stats:', {
-      reserveXP: stats.reserveXP,
-      reserveCount: stats.reserveCount,
-      typeofReserveXP: typeof stats.reserveXP,
-      typeofReserveCount: typeof stats.reserveCount,
-    });
-  }, [stats]);
 
   // Ensure we have arrays of numbers and use the passed in latestSequence
   const gameHistory = stats.gameHistory || [];

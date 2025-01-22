@@ -87,7 +87,6 @@ export default function PlayerProfileNew() {
           .single();
 
         if (playerError) {
-          console.error('Error fetching player data:', playerError);
           throw playerError;
         }
 
@@ -113,7 +112,6 @@ export default function PlayerProfileNew() {
           .not('status', 'eq', 'reserve');
 
         if (unpaidError) {
-          console.error('Error fetching unpaid games:', unpaidError);
           throw unpaidError;
         }
 
@@ -126,12 +124,8 @@ export default function PlayerProfileNew() {
           .eq('player_id', id);
 
         if (reserveXPError) {
-          console.error('Error fetching reserve XP:', reserveXPError);
           throw reserveXPError;
         }
-
-        // Debug log for reserve data
-        console.log('Reserve XP Data:', reserveXPData);
 
         // Get all registrations for historical games
         const { data: registrations, error: registrationsError } = await supabase
@@ -147,7 +141,6 @@ export default function PlayerProfileNew() {
           .eq('games.is_historical', true);
 
         if (registrationsError) {
-          console.error('Error fetching registrations:', registrationsError);
           throw registrationsError;
         }
 
@@ -156,14 +149,11 @@ export default function PlayerProfileNew() {
         // Each reserve appearance gives 5 XP
         const reserveXP = reserveCount * 5;
 
-        console.log('Calculated from game history:', { reserveCount, reserveXP });
-
         // Get player win rates
         const { data: winRatesData, error: winRatesError } = await supabase
           .rpc('get_player_win_rates');
 
         if (winRatesError) {
-          console.error('Error fetching win rates:', winRatesError);
           throw winRatesError;
         }
 
@@ -308,12 +298,8 @@ export default function PlayerProfileNew() {
           unpaidGames: unpaidGamesCount,
         };
 
-        // Debug log for final player stats
-        console.log('Final Player Stats:', playerStats);
-
         setPlayer(playerStats);
       } catch (error) {
-        console.error('Error fetching player data:', error);
         toast.error('Failed to load player data');
       } finally {
         setLoading(false);
@@ -369,7 +355,7 @@ export default function PlayerProfileNew() {
         .maybeSingle();
 
       if (ratingError) {
-        console.error('Error fetching updated rating:', ratingError);
+        throw ratingError;
       } else if (player) {
         setPlayer({
           ...player,

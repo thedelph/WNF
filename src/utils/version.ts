@@ -17,6 +17,40 @@ export interface ChangelogEntry {
  * Changelog data containing all version information
  */
 export const changelogData: ChangelogEntry[] = [
+
+  {
+    version: '1.0.7',
+    date: '22/01/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Missing Payments',
+            details: "Adding missing payments. Each payment missing is a temporary -50% XP penalty. If a player ever owes for 3 or more games, they're unable to register for a game unless they first clear their debts."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Stats Page',
+            details: 'Fixed the "Best Buddies calculations". Only showing Current Streaks on current year and "all-time" timeframes.'
+          }
+        ]
+      }
+    ]
+  },
   {
     version: '1.0.6',
     date: '16/01/2025',
