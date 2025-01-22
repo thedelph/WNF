@@ -113,25 +113,45 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         // Get the game selection metadata
         const { data: selectionData, error: selectionError } = await supabase
           .from('game_selections')
-          .select('selection_metadata')
+          .select('*')
           .eq('game_id', gameId)
-          .single();
+          .maybeSingle();
 
-        if (selectionError) throw selectionError;
+        // If there's a real error (not just no data found)
+        if (selectionError && selectionError.code !== 'PGRST116') {
+          console.error('Selection fetch error:', selectionError);
+          throw selectionError;
+        }
 
-        setSelection({
+        // Initialize default selection state
+        const defaultSelection = {
           id: gameId,
           game_id: gameId,
-          created_at: new Date().toISOString(), // This might need to come from somewhere else
+          created_at: new Date().toISOString(),
           selected_players: selectedPlayers,
           reserve_players: reservePlayers,
-          selection_metadata: selectionData?.selection_metadata || {
+          selection_metadata: {
             startTime: '',
             endTime: '',
             meritSlots: 0,
             randomSlots: 0,
             selectionNotes: []
           }
+        };
+
+        // If no data found, use default selection
+        if (!selectionData) {
+          console.info('No selection data found for game:', gameId);
+          setSelection(defaultSelection);
+          return;
+        }
+
+        // If we have data, use it
+        setSelection({
+          ...defaultSelection,
+          ...selectionData,
+          selected_players: selectedPlayers,
+          reserve_players: reservePlayers
         });
       } catch (err) {
         console.error('Error fetching team selection:', err);
