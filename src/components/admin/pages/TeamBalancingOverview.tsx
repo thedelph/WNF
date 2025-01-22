@@ -228,20 +228,20 @@ const TeamBalancingOverview: React.FC = () => {
                   <h3 className="card-title text-lg">Recommended Swap {index + 1}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="font-semibold">Move to Blue Team:</p>
-                      <div className="stat bg-base-100 rounded-lg">
-                        <div className="stat-title">{bluePlayer.friendly_name}</div>
-                        <div className="stat-desc">
-                          Attack: {bluePlayer.attack_rating} | Defense: {bluePlayer.defense_rating}
-                        </div>
-                      </div>
-                    </div>
-                    <div>
                       <p className="font-semibold">Move to Orange Team:</p>
                       <div className="stat bg-base-100 rounded-lg">
                         <div className="stat-title">{orangePlayer.friendly_name}</div>
                         <div className="stat-desc">
                           Attack: {orangePlayer.attack_rating} | Defense: {orangePlayer.defense_rating}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Move to Blue Team:</p>
+                      <div className="stat bg-base-100 rounded-lg">
+                        <div className="stat-title">{bluePlayer.friendly_name}</div>
+                        <div className="stat-desc">
+                          Attack: {bluePlayer.attack_rating} | Defense: {bluePlayer.defense_rating}
                         </div>
                       </div>
                     </div>
@@ -287,17 +287,17 @@ const TeamBalancingOverview: React.FC = () => {
       
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <TeamList
-          teamId="blue"
-          team={teams.blueTeam}
-          title="Blue Team"
+          teamId="orange"
+          team={teams.orangeTeam}
+          title="Orange Team"
           selectedPlayer={selectedPlayer}
           swapRankings={swapRankings}
           onPlayerSelect={handlePlayerSelect}
         />
         <TeamList
-          teamId="orange"
-          team={teams.orangeTeam}
-          title="Orange Team"
+          teamId="blue"
+          team={teams.blueTeam}
+          title="Blue Team"
           selectedPlayer={selectedPlayer}
           swapRankings={swapRankings}
           onPlayerSelect={handlePlayerSelect}

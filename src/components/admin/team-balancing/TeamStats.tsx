@@ -43,21 +43,6 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats }) => {
       <h3 className="text-lg font-semibold mb-4">Team Comparison</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Blue Team Stats */}
-        <div className="space-y-2">
-          <h4 className="font-medium">Blue Team ({stats.blue.playerCount} Players)</h4>
-          <div>
-            <p className="text-sm">
-              Attack: {formatStat(stats.blue.attackTotal)} 
-              (Avg: {formatStat(calculateAverage(stats.blue.attackTotal, stats.blue.playerCount))})
-            </p>
-            <p className="text-sm">
-              Defense: {formatStat(stats.blue.defenseTotal)}
-              (Avg: {formatStat(calculateAverage(stats.blue.defenseTotal, stats.blue.playerCount))})
-            </p>
-          </div>
-        </div>
-
         {/* Orange Team Stats */}
         <div className="space-y-2">
           <h4 className="font-medium">Orange Team ({stats.orange.playerCount} Players)</h4>
@@ -69,6 +54,21 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats }) => {
             <p className="text-sm">
               Defense: {formatStat(stats.orange.defenseTotal)}
               (Avg: {formatStat(calculateAverage(stats.orange.defenseTotal, stats.orange.playerCount))})
+            </p>
+          </div>
+        </div>
+
+        {/* Blue Team Stats */}
+        <div className="space-y-2">
+          <h4 className="font-medium">Blue Team ({stats.blue.playerCount} Players)</h4>
+          <div>
+            <p className="text-sm">
+              Attack: {formatStat(stats.blue.attackTotal)} 
+              (Avg: {formatStat(calculateAverage(stats.blue.attackTotal, stats.blue.playerCount))})
+            </p>
+            <p className="text-sm">
+              Defense: {formatStat(stats.blue.defenseTotal)}
+              (Avg: {formatStat(calculateAverage(stats.blue.defenseTotal, stats.blue.playerCount))})
             </p>
           </div>
         </div>
