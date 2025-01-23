@@ -29,6 +29,8 @@ export interface PlayerCardProps {
   rank?: number
   unpaidGames: number
   unpaidGamesModifier: number
+  registrationStreakBonus?: number // Length of current registration streak
+  registrationStreakBonusApplies?: boolean // Whether the bonus should be applied
 }
 
 export interface PlayerCardModifiersProps {
@@ -44,6 +46,8 @@ export interface PlayerCardModifiersProps {
   benchWarmerModifier: number
   unpaidGames: number
   unpaidGamesModifier: number
+  registrationStreakBonus?: number
+  registrationStreakBonusApplies?: boolean
 }
 
 export interface PlayerCardStatsProps {

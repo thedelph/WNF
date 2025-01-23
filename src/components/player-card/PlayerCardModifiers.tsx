@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Flame, CircleOff, Star, CircleDot, DollarSign } from 'lucide-react'
+import { Flame, CircleOff, Star, CircleDot, DollarSign, Calendar } from 'lucide-react'
 import { PlayerCardModifiersProps } from './PlayerCardTypes'
 import { Tooltip } from '../ui/Tooltip'
 
@@ -20,9 +20,31 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   benchWarmerModifier,
   unpaidGames = 0,
   unpaidGamesModifier = 0,
+  registrationStreakBonus = 0,
+  registrationStreakBonusApplies = false,
 }) => {
+  // Calculate registration streak bonus modifier (2.5% per streak level)
+  const registrationStreakModifier = registrationStreakBonus * 0.025
+
   return (
     <div className="space-y-2">
+      {registrationStreakBonusApplies && registrationStreakBonus > 0 && (
+        <Tooltip content={registrationStreakBonus === 1 
+          ? "Bonus for registering this week" 
+          : `Bonus for registering ${registrationStreakBonus} weeks in a row`}>
+          <motion.div 
+            className="flex justify-between items-center bg-blue-500/20 rounded-lg p-2"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm">Keen To Play</span>
+            </div>
+            <span className="text-sm font-bold">+{(registrationStreakModifier * 100).toFixed(1)}%</span>
+          </motion.div>
+        </Tooltip>
+      )}
       {currentStreak > 0 && (
         <motion.div 
           className="flex justify-between items-center bg-green-500/20 rounded-lg p-2"

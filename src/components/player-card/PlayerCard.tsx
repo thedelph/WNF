@@ -43,6 +43,8 @@ interface PlayerCardProps {
   rank?: number
   unpaidGames?: number
   unpaidGamesModifier?: number
+  registrationStreakBonus?: number
+  registrationStreakBonusApplies?: boolean
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -75,6 +77,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   rank,
   unpaidGames = 0,
   unpaidGamesModifier = 0,
+  registrationStreakBonus = 0,
+  registrationStreakBonusApplies = false,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -111,32 +115,54 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           className={`absolute w-full h-full ${getRarityColor(rarity)} text-white rounded-xl p-4`}
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <PlayerCardFront
-            id={id}
-            friendlyName={friendlyName}
-            xp={xp}
-            caps={caps}
-            activeBonuses={activeBonuses}
-            activePenalties={activePenalties}
-            currentStreak={currentStreak}
-            benchWarmerStreak={benchWarmerStreak}
-            rarity={rarity}
-            isRandomlySelected={isRandomlySelected}
-            status={status}
-            hasSlotOffer={hasSlotOffer}
-            slotOfferStatus={slotOfferStatus}
-            slotOfferExpiresAt={slotOfferExpiresAt}
-            slotOfferAvailableAt={slotOfferAvailableAt}
-            potentialOfferTimes={potentialOfferTimes}
-            hasActiveSlotOffers={hasActiveSlotOffers}
-            whatsapp_group_member={whatsapp_group_member}
-            rank={rank}
-            isFlipped={isFlipped}
-            unpaidGames={unpaidGames}
-            unpaidGamesModifier={unpaidGamesModifier}
-          >
-            {children}
-          </PlayerCardFront>
+          {!isFlipped ? (
+            <PlayerCardFront
+              id={id}
+              friendlyName={friendlyName}
+              xp={xp}
+              caps={caps}
+              activeBonuses={activeBonuses}
+              activePenalties={activePenalties}
+              currentStreak={currentStreak}
+              benchWarmerStreak={benchWarmerStreak}
+              rarity={rarity}
+              isRandomlySelected={isRandomlySelected}
+              status={status}
+              hasSlotOffer={hasSlotOffer}
+              slotOfferStatus={slotOfferStatus}
+              slotOfferExpiresAt={slotOfferExpiresAt}
+              slotOfferAvailableAt={slotOfferAvailableAt}
+              potentialOfferTimes={potentialOfferTimes}
+              hasActiveSlotOffers={hasActiveSlotOffers}
+              whatsapp_group_member={whatsapp_group_member}
+              rank={rank}
+              wins={wins}
+              draws={draws}
+              losses={losses}
+              totalGames={totalGames}
+              unpaidGames={unpaidGames}
+              unpaidGamesModifier={unpaidGamesModifier}
+              registrationStreakBonus={registrationStreakBonus}
+              registrationStreakBonusApplies={registrationStreakBonusApplies}
+            />
+          ) : (
+            <PlayerCardBack
+              id={id}
+              friendlyName={friendlyName}
+              xp={xp}
+              caps={caps}
+              winRate={winRate}
+              wins={wins}
+              draws={draws}
+              losses={losses}
+              totalGames={totalGames}
+              currentStreak={currentStreak}
+              maxStreak={maxStreak}
+              rarity={rarity}
+              avatarSvg={avatarSvg}
+              whatsapp_group_member={whatsapp_group_member}
+            />
+          )}
         </div>
 
         {/* Back of card */}

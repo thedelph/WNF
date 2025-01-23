@@ -41,6 +41,8 @@ export interface ExtendedPlayerData extends PlayerStats {
   }[];
   whatsapp_group_member?: string;
   benchWarmerStreak?: number;  // Add this for consistency with PlayerCard props
+  registrationStreakBonus?: number; // Current registration streak length
+  registrationStreakBonusApplies?: boolean; // Whether the bonus should be applied
 }
 
 export interface PlayerSelectionResultsProps {

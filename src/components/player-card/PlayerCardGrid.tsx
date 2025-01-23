@@ -31,6 +31,8 @@ interface Player {
   rank: number
   unpaidGames?: number
   unpaidGamesModifier?: number
+  registrationStreakBonus?: number
+  registrationStreakBonusApplies?: boolean
 }
 
 interface PlayerStats {
@@ -50,6 +52,8 @@ interface PlayerStats {
     rank: number | undefined
     unpaidGames: number
     unpaidGamesModifier: number
+    registrationStreakBonus: number
+    registrationStreakBonusApplies: boolean
   }
 }
 
@@ -160,78 +164,124 @@ export default function PlayerCardGrid() {
 
         if (playerError) throw playerError;
 
-        // Get unpaid games count for each player
-        const twentyFourHoursAgo = new Date();
-        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
-        const { data: unpaidGamesData, error: unpaidError } = await supabase
-          .from('game_registrations')
-          .select(`
-            player_id,
-            games!inner (
-              completed,
-              is_historical,
-              date
-            )
-          `)
-          .in('player_id', playerIds)
-          .eq('paid', false)
-          .lt('games.date', twentyFourHoursAgo.toISOString())
-          .eq('games.completed', true)
-          .eq('games.is_historical', true)
-          .not('status', 'eq', 'reserve');
-
-        if (unpaidError) throw unpaidError;
-
-        // Create a map of unpaid games count per player
-        const unpaidGamesMap = unpaidGamesData?.reduce((acc: {[key: string]: number}, reg) => {
-          acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
+        // Create a map of friendly names to player IDs for lookup
+        const friendlyNameToId = players.reduce((acc: { [key: string]: string }, player) => {
+          acc[player.friendlyName] = player.id;
           return acc;
         }, {});
 
-        // Get win rates and game stats
-        const { data: winRateData, error: winRateError } = await supabase
-          .rpc('get_player_win_rates')
-          .in('id', playerIds);
+        // Fetch registration streak bonus data
+        try {
+          const { data: registrationStreakData, error: registrationStreakError } = await supabase
+            .from('player_current_registration_streak_bonus')
+            .select(`
+              friendly_name,
+              current_streak_length,
+              bonus_applies
+            `);
 
-        if (winRateError) throw winRateError;
-
-        // Create a map of win rate data for easy lookup
-        const winRateMap = winRateData.reduce((acc: any, player: any) => ({
-          ...acc,
-          [player.id]: {
-            wins: player.wins,
-            draws: player.draws,
-            losses: player.losses,
-            totalGames: player.total_games,
-            winRate: player.win_rate
+          if (registrationStreakError) {
+            console.error('Error fetching registration streak data:', registrationStreakError);
+            if (registrationStreakError.code === '42P01') {
+              console.error('View does not exist. Please verify the view name in Supabase.');
+            }
           }
-        }), {});
 
-        // Transform into record for easy lookup
-        const stats = playerData?.reduce((acc, player) => ({
-          ...acc,
-          [player.id]: {
-            xp: player.player_xp?.xp || 0,
-            rarity: player.player_xp?.rarity || 'Amateur',
-            caps: player.caps || 0,
-            activeBonuses: player.active_bonuses || 0,
-            activePenalties: player.active_penalties || 0,
-            currentStreak: player.current_streak || 0,
-            maxStreak: player.max_streak || 0,
-            benchWarmerStreak: player.bench_warmer_streak || 0,
-            wins: winRateMap[player.id]?.wins || 0,
-            draws: winRateMap[player.id]?.draws || 0,
-            losses: winRateMap[player.id]?.losses || 0,
-            totalGames: winRateMap[player.id]?.totalGames || 0,
-            winRate: winRateMap[player.id]?.winRate || 0,
-            rank: player.player_xp?.rank || undefined,
-            unpaidGames: unpaidGamesMap[player.id] || 0,
-            unpaidGamesModifier: (unpaidGamesMap[player.id] || 0) * -0.3 // -30% per unpaid game, stacks linearly
+          // Create a map of registration streak data using player IDs
+          const registrationStreakMap: { [key: string]: { bonus: number, applies: boolean } } = {};
+          
+          if (registrationStreakData) {
+            registrationStreakData.forEach(streak => {
+              const playerId = friendlyNameToId[streak.friendly_name];
+              if (playerId) {
+                registrationStreakMap[playerId] = {
+                  bonus: streak.current_streak_length || 0,
+                  applies: streak.bonus_applies || false
+                };
+              }
+            });
           }
-        }), {});
 
-        setPlayerStats(stats);
+          // Get unpaid games count for each player
+          const twentyFourHoursAgo = new Date();
+          twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+          const { data: unpaidGamesData, error: unpaidError } = await supabase
+            .from('game_registrations')
+            .select(`
+              player_id,
+              games!inner (
+                completed,
+                is_historical,
+                date
+              )
+            `)
+            .in('player_id', playerIds)
+            .eq('paid', false)
+            .lt('games.date', twentyFourHoursAgo.toISOString())
+            .eq('games.completed', true)
+            .eq('games.is_historical', true)
+            .not('status', 'eq', 'reserve');
+
+          if (unpaidError) throw unpaidError;
+
+          // Create a map of unpaid games count per player
+          const unpaidGamesMap = unpaidGamesData?.reduce((acc: {[key: string]: number}, reg) => {
+            acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Get win rates and game stats
+          const { data: winRateData, error: winRateError } = await supabase
+            .rpc('get_player_win_rates')
+            .in('id', playerIds);
+
+          if (winRateError) throw winRateError;
+
+          // Create a map of win rate data for easy lookup
+          const winRateMap = winRateData.reduce((acc: any, player: any) => ({
+            ...acc,
+            [player.id]: {
+              wins: player.wins,
+              draws: player.draws,
+              losses: player.losses,
+              totalGames: player.total_games,
+              winRate: player.win_rate
+            }
+          }), {});
+
+          // Transform into record for easy lookup
+          const stats = playerData?.reduce((acc, player) => ({
+            ...acc,
+            [player.id]: {
+              xp: player.player_xp?.xp || 0,
+              rarity: player.player_xp?.rarity || 'Amateur',
+              caps: player.caps || 0,
+              activeBonuses: player.active_bonuses || 0,
+              activePenalties: player.active_penalties || 0,
+              currentStreak: player.current_streak || 0,
+              maxStreak: player.max_streak || 0,
+              benchWarmerStreak: player.bench_warmer_streak || 0,
+              wins: winRateMap[player.id]?.wins || 0,
+              draws: winRateMap[player.id]?.draws || 0,
+              losses: winRateMap[player.id]?.losses || 0,
+              totalGames: winRateMap[player.id]?.totalGames || 0,
+              winRate: winRateMap[player.id]?.winRate || 0,
+              rank: player.player_xp?.rank || undefined,
+              unpaidGames: unpaidGamesMap[player.id] || 0,
+              unpaidGamesModifier: (unpaidGamesMap[player.id] || 0) * -0.3, // -30% per unpaid game, stacks linearly
+              registrationStreakBonus: registrationStreakMap[player.id]?.bonus || 0,
+              registrationStreakBonusApplies: registrationStreakMap[player.id]?.applies || false
+            }
+          }), {});
+
+          setPlayerStats(stats);
+        } catch (err) {
+          console.error('Error fetching player stats:', err);
+          toast.error('Failed to load player stats');
+        } finally {
+          setLoading(false);
+        }
       } catch (err) {
         console.error('Error fetching player stats:', err);
         toast.error('Failed to load player stats');
@@ -555,24 +605,27 @@ export default function PlayerCardGrid() {
                   <PlayerCard
                     id={player.id}
                     friendlyName={player.friendlyName}
-                    xp={playerStats[player.id]?.xp || 0}
                     caps={playerStats[player.id]?.caps || 0}
                     activeBonuses={playerStats[player.id]?.activeBonuses || 0}
                     activePenalties={playerStats[player.id]?.activePenalties || 0}
                     winRate={playerStats[player.id]?.winRate || 0}
-                    wins={playerStats[player.id]?.wins || 0}
-                    draws={playerStats[player.id]?.draws || 0}
-                    losses={playerStats[player.id]?.losses || 0}
-                    totalGames={playerStats[player.id]?.totalGames || 0}
                     currentStreak={playerStats[player.id]?.currentStreak || 0}
                     maxStreak={playerStats[player.id]?.maxStreak || 0}
                     benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
-                    rarity={playerStats[player.id]?.rarity || 'Amateur'}
                     avatarSvg={player.avatarSvg}
+                    rarity={playerStats[player.id]?.rarity}
+                    wins={playerStats[player.id]?.wins || 0}
+                    draws={playerStats[player.id]?.draws || 0}
+                    losses={playerStats[player.id]?.losses || 0}
                     whatsapp_group_member={player.whatsapp_group_member}
-                    rank={playerStats[player.id]?.rank || undefined}
-                    unpaidGames={playerStats[player.id]?.unpaidGames || 0}
-                    unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier || 0}
+                    isRandomlySelected={player.isRandomlySelected}
+                    rank={playerStats[player.id]?.rank}
+                    xp={playerStats[player.id]?.xp || 0}
+                    totalGames={playerStats[player.id]?.totalGames || 0}
+                    unpaidGames={playerStats[player.id]?.unpaidGames}
+                    unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier}
+                    registrationStreakBonus={playerStats[player.id]?.registrationStreakBonus}
+                    registrationStreakBonusApplies={playerStats[player.id]?.registrationStreakBonusApplies}
                   />
                 </motion.div>
               ))}

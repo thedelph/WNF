@@ -17,7 +17,9 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   rank?: number, 
   isFlipped?: boolean, 
   unpaidGames?: number, // Number of past unpaid games
-  unpaidGamesModifier?: number // XP modifier from past unpaid games (-30% per game)
+  unpaidGamesModifier?: number, // XP modifier from past unpaid games (-30% per game)
+  registrationStreakBonus?: number,
+  registrationStreakBonusApplies?: boolean,
 }> = ({
   id,
   friendlyName,
@@ -42,6 +44,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   children,
   unpaidGames = 0,
   unpaidGamesModifier = 0,
+  registrationStreakBonus = 0,
+  registrationStreakBonusApplies = false,
 }) => {
   const { dropoutPenalties } = usePlayerPenalties(id)
   const { player } = useUser()
@@ -50,7 +54,12 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   const bonusModifier = activeBonuses * 0.1
   const penaltyModifier = activePenalties * -0.1
   const dropoutModifier = dropoutPenalties * -0.5
-  const benchWarmerModifier = benchWarmerStreak * 0.05  // 5% per bench warmer streak level
+  const benchWarmerModifier = benchWarmerStreak * 0.05
+  const registrationStreakModifier = registrationStreakBonus * 0.025
+
+  // Calculate total XP modifier including registration streak bonus
+  const totalXpModifier = (1 + streakModifier + bonusModifier + penaltyModifier + dropoutModifier + benchWarmerModifier + 
+    (registrationStreakBonusApplies ? registrationStreakModifier : 0) + unpaidGamesModifier)
 
   return (
     <div className="card-body p-4">
@@ -184,6 +193,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         benchWarmerModifier={benchWarmerModifier}
         unpaidGames={unpaidGames}
         unpaidGamesModifier={unpaidGamesModifier}
+        registrationStreakBonus={registrationStreakBonus}
+        registrationStreakBonusApplies={registrationStreakBonusApplies}
       />
 
       <div className="mt-auto">
