@@ -208,7 +208,7 @@ export default function Component() {
         friendly_name: friendlyName,
       }))
 
-      toast.success('Profile updated successfully!')
+      toast.success('Profile updated successfully!!')
       setIsEditing(false)
     } catch (error) {
       toast.error('Error updating profile')
