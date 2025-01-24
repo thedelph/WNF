@@ -465,7 +465,11 @@ const Game = () => {
             isProcessingClose={isProcessingClose}
             onRegistrationChange={onGameUpdated}
           />
-          <RegisteredPlayers registrations={playerData.registrations} />
+          <RegisteredPlayers 
+            registrations={playerData.registrations} 
+            maxPlayers={upcomingGame.max_players} 
+            randomSlots={upcomingGame.random_slots} 
+          />
         </>
       )}
 
