@@ -56,7 +56,9 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
 
   return (
     <div className="container mx-auto space-y-4">
-      <ViewToggle view={view} onViewChange={setView} />
+      <div className="flex justify-center">
+        <ViewToggle view={view} onViewChange={setView} />
+      </div>
       {view === 'card' ? (
         <RegisteredPlayerGrid
           registrations={registrations}
