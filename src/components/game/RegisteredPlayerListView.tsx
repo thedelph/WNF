@@ -48,17 +48,17 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
               >
                 <Link 
                   to={`/players/${registration.player.id}`}
-                  className="flex items-center gap-3 flex-1"
+                  className="flex items-center justify-between w-full"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium hover:text-primary">{registration.player.friendly_name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium hover:text-primary">
+                      {registration.player.friendly_name}
+                    </span>
                     {registration.player.id === currentPlayer?.id && (
-                      <span className="text-sm text-base-content/70">You</span>
+                      <span className="badge badge-sm badge-primary">You</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">{xp.toLocaleString()} XP</span>
-                  </div>
+                  <span className="text-sm text-base-content/70">{xp.toLocaleString()} XP</span>
                 </Link>
               </motion.div>
               {isLastXpSlot && (

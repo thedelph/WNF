@@ -83,21 +83,37 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
       {/* Game Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-base-200 rounded-lg p-4 text-center">
-          <div className="text-sm text-gray-600">Total Players</div>
-          <div className="text-4xl font-bold">{game.max_players || 0}</div>
+        <div className="bg-base-200 rounded-lg p-4 md:p-3 grid grid-rows-[1fr_auto] h-28 md:h-24">
+          <div className="text-sm text-gray-600 text-center self-start">
+            Total Players
+          </div>
+          <div className="text-4xl font-bold text-center self-end -mt-1">
+            {game.max_players || 0}
+          </div>
         </div>
-        <div className="bg-base-200 rounded-lg p-4 text-center">
-          <div className="text-sm text-gray-600">XP Slots</div>
-          <div className="text-4xl font-bold">{(game.max_players || 0) - (game.random_slots || 0)}</div>
+        <div className="bg-base-200 rounded-lg p-4 md:p-3 grid grid-rows-[1fr_auto] h-28 md:h-24">
+          <div className="text-sm text-gray-600 text-center self-start">
+            XP Slots
+          </div>
+          <div className="text-4xl font-bold text-center self-end -mt-1">
+            {(game.max_players || 0) - (game.random_slots || 0)}
+          </div>
         </div>
-        <div className="bg-base-200 rounded-lg p-4 text-center">
-          <div className="text-sm text-gray-600">Random Slots</div>
-          <div className="text-4xl font-bold">{game.random_slots || 0}</div>
+        <div className="bg-base-200 rounded-lg p-4 md:p-3 grid grid-rows-[1fr_auto] h-28 md:h-24">
+          <div className="text-sm text-gray-600 text-center self-start">
+            Random Slots
+          </div>
+          <div className="text-4xl font-bold text-center self-end -mt-1">
+            {game.random_slots || 0}
+          </div>
         </div>
-        <div className="bg-base-200 rounded-lg p-4 text-center">
-          <div className="text-sm text-gray-600">Currently Registered</div>
-          <div className="text-4xl font-bold">{currentlyRegistered}</div>
+        <div className="bg-base-200 rounded-lg p-4 md:p-3 grid grid-rows-[1fr_auto] h-28 md:h-24">
+          <div className="text-sm text-gray-600 text-center self-start">
+            Currently Registered
+          </div>
+          <div className="text-4xl font-bold text-center self-end -mt-1">
+            {currentlyRegistered}
+          </div>
         </div>
       </div>
     </motion.div>
