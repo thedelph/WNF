@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Flame, CircleOff, Star, CircleDot, DollarSign, Calendar } from 'lucide-react'
+import { Flame, CircleOff, Star, CircleDot, DollarSign, PenLine, Armchair } from 'lucide-react'
 import { PlayerCardModifiersProps } from './PlayerCardTypes'
 import { Tooltip } from '../ui/Tooltip'
 
@@ -42,8 +42,8 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
             animate={{ x: 0, opacity: 1 }}
           >
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span className="text-sm">Keen To Play</span>
+              <PenLine className="w-4 h-4" />
+              <span className="text-sm">Reg. Streak</span>
             </div>
             <span className="text-sm font-bold">+{(registrationStreakModifier * 100).toFixed(1)}%</span>
           </motion.div>
@@ -102,17 +102,19 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
         </motion.div>
       )}
       {benchWarmerStreak > 0 && (
-        <motion.div 
-          className="flex justify-between items-center bg-purple-500/20 rounded-lg p-2"
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-        >
-          <div className="flex items-center gap-2">
-            <CircleDot className="w-4 h-4" />
-            <span className="text-sm">Bench Warmer</span>
-          </div>
-          <span className="text-sm font-bold">+{(benchWarmerModifier * 100).toFixed(0)}%</span>
-        </motion.div>
+        <Tooltip content={`${benchWarmerStreak} ${benchWarmerStreak === 1 ? 'game' : 'games'} as reserve`}>
+          <motion.div 
+            className="flex justify-between items-center bg-yellow-500/20 rounded-lg p-2"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+          >
+            <div className="flex items-center gap-2">
+              <Armchair className="w-4 h-4" />
+              <span className="text-sm">Bench Warmer</span>
+            </div>
+            <span className="text-sm font-bold">{benchWarmerModifier > 0 ? '+' : ''}{(benchWarmerModifier * 100).toFixed(1)}%</span>
+          </motion.div>
+        </Tooltip>
       )}
       {showUnpaidGames && (
         <motion.div 
