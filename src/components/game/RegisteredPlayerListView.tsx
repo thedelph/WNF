@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Registration } from '../../types/playerSelection';
 import { useUser } from '../../hooks/useUser';
 
@@ -43,17 +44,22 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-between rounded-lg bg-base-300 p-3"
+                className="flex items-center justify-between rounded-lg bg-base-300 p-3 hover:bg-base-200 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <span className="font-medium">{registration.player.friendly_name}</span>
-                  {registration.player.id === currentPlayer?.id && (
-                    <span className="text-sm text-base-content/70">You</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{xp.toLocaleString()} XP</span>
-                </div>
+                <Link 
+                  to={`/players/${registration.player.id}`}
+                  className="flex items-center gap-3 flex-1"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium hover:text-primary">{registration.player.friendly_name}</span>
+                    {registration.player.id === currentPlayer?.id && (
+                      <span className="text-sm text-base-content/70">You</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{xp.toLocaleString()} XP</span>
+                  </div>
+                </Link>
               </motion.div>
               {isLastXpSlot && (
                 <div className="text-xs text-base-content/50 text-center py-1 border-b border-dotted border-base-300">

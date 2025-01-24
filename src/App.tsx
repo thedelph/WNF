@@ -29,11 +29,13 @@ import EmailVerification from './pages/EmailVerification'
 import Changelog from './pages/Changelog'
 import Stats from './pages/Stats'
 import StandaloneStats from './pages/StandaloneStats'
+import { ScrollToTop } from './components/ui/ScrollToTop'
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <ErrorBoundary>
+        <ScrollToTop />
         <Routes>
           {/* Redirect root to stats */}
           <Route path="/" element={<Navigate to="/stats" replace />} />
