@@ -70,36 +70,59 @@ export const usePlayerGrid = () => {
           return acc;
         }, {} as Record<string, number>);
 
+        // Get registration streak data
+        const { data: registrationStreakData, error: registrationStreakError } = await supabase
+          .from('player_current_registration_streak_bonus')
+          .select('friendly_name, current_streak_length, bonus_applies');
+
+        if (registrationStreakError) {
+          toast.error('Error fetching registration streak data');
+          console.error('Error fetching registration streak data:', registrationStreakError);
+          return;
+        }
+
+        // Create a map of registration streak data using friendly names
+        const registrationStreakMap = (registrationStreakData || []).reduce((acc, streak) => {
+          acc[streak.friendly_name] = {
+            bonus: streak.current_streak_length || 0,
+            applies: streak.bonus_applies || false
+          };
+          return acc;
+        }, {} as Record<string, { bonus: number, applies: boolean }>);
+
         if (players) {
-          setPlayers(players.map((player) => ({
-            id: player.id,
-            friendlyName: player.friendly_name,
-            avatarSvg: player.avatar_svg,
-            whatsapp_group_member: player.whatsapp_group_member,
-            caps: player.caps || 0,
-            xp: player.player_xp?.xp || 0,
-            activeBonuses: player.active_bonuses || 0,
-            activePenalties: player.active_penalties || 0,
-            currentStreak: player.current_streak || 0,
-            maxStreak: player.max_streak || 0,
-            benchWarmerStreak: player.bench_warmer_streak || 0,
-            rarity: player.player_xp?.rarity || 'Amateur',
-            rank: player.player_xp?.rank || 0,
-            wins: 0,
-            draws: 0,
-            losses: 0,
-            totalGames: 0,
-            winRate: 0,
-            streakBonus: 0,
-            dropoutPenalty: 0,
-            bonusModifier: 0,
-            penaltyModifier: 0,
-            totalModifier: 0,
-            unpaidGames: unpaidGamesMap[player.id] || 0,
-            unpaidGamesModifier: (unpaidGamesMap[player.id] || 0) * -0.5, // -50% per unpaid game
-            registrationStreakBonus: 0,
-            registrationStreakBonusApplies: false
-          })));
+          setPlayers(players.map((player) => {
+            const streakData = registrationStreakMap[player.friendly_name] || { bonus: 0, applies: false };
+            return {
+              id: player.id,
+              friendlyName: player.friendly_name,
+              avatarSvg: player.avatar_svg,
+              whatsapp_group_member: player.whatsapp_group_member,
+              caps: player.caps || 0,
+              xp: player.player_xp?.xp || 0,
+              activeBonuses: player.active_bonuses || 0,
+              activePenalties: player.active_penalties || 0,
+              currentStreak: player.current_streak || 0,
+              maxStreak: player.max_streak || 0,
+              benchWarmerStreak: player.bench_warmer_streak || 0,
+              rarity: player.player_xp?.rarity || 'Amateur',
+              rank: player.player_xp?.rank || 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              totalGames: 0,
+              winRate: 0,
+              streakBonus: 0,
+              dropoutPenalty: 0,
+              bonusModifier: 0,
+              penaltyModifier: 0,
+              totalModifier: 0,
+              unpaidGames: unpaidGamesMap[player.id] || 0,
+              unpaidGamesModifier: (unpaidGamesMap[player.id] || 0) * -0.5, // -50% per unpaid game
+              registrationStreakBonus: streakData.bonus,
+              registrationStreakBonusApplies: streakData.applies
+            };
+          }));
         }
       } catch (error) {
         console.error('Error in fetchPlayers:', error);
