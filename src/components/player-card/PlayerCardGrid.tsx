@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PlayerCard } from './PlayerCard'
-import { supabase } from '../../utils/supabase'
+import { usePlayerGrid } from '../../hooks/usePlayerGrid'
 import { toast } from 'react-hot-toast'
 
 interface Player {
@@ -58,9 +58,7 @@ interface PlayerStats {
 }
 
 export default function PlayerCardGrid() {
-  const [players, setPlayers] = useState<Player[]>([])
-  const [playerStats, setPlayerStats] = useState<PlayerStats>({})
-  const [loading, setLoading] = useState(true)
+  const { players, loading, setPlayers } = usePlayerGrid();
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Player;
     direction: 'asc' | 'desc';
@@ -78,224 +76,6 @@ export default function PlayerCardGrid() {
     rarity: ''
   })
 
-  useEffect(() => {
-    const fetchPlayers = async () => {
-      try {
-        setLoading(true)
-        // Fetch players with their stats and rank
-        const { data: players, error } = await supabase
-          .from('players')
-          .select(`
-            id,
-            friendly_name,
-            avatar_svg,
-            whatsapp_group_member
-          `)
-          .order('friendly_name')
-
-        if (error) {
-          throw error
-        }
-
-        if (players) {
-          setPlayers(players.map((player) => ({
-            id: player.id,
-            friendlyName: player.friendly_name,
-            avatarSvg: player.avatar_svg,
-            whatsapp_group_member: player.whatsapp_group_member,
-            caps: 0,
-            xp: 0,
-            activeBonuses: 0,
-            activePenalties: 0,
-            currentStreak: 0,
-            maxStreak: 0,
-            winRate: 0,
-            wins: 0,
-            draws: 0,
-            losses: 0,
-            totalGames: 0,
-            preferredPosition: '',
-            benchWarmerStreak: 0,
-            streakBonus: 0,
-            dropoutPenalty: 0,
-            bonusModifier: 0,
-            penaltyModifier: 0,
-            totalModifier: 0,
-            rank: undefined,
-            unpaidGames: 0,
-            unpaidGamesModifier: 0
-          })))
-        }
-      } catch (error) {
-        console.error('Error fetching players:', error)
-        toast.error('Failed to load players')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchPlayers()
-  }, [])
-
-  useEffect(() => {
-    const fetchPlayerStats = async (playerIds: string[]) => {
-      try {
-        setLoading(true);
-
-        // Get player stats and XP data
-        const { data: playerData, error: playerError } = await supabase
-          .from('players')
-          .select(`
-            id,
-            caps,
-            current_streak,
-            max_streak,
-            bench_warmer_streak,
-            active_bonuses,
-            active_penalties,
-            win_rate,
-            player_xp (
-              xp,
-              rank,
-              rarity
-            )
-          `)
-          .in('id', playerIds);
-
-        if (playerError) throw playerError;
-
-        // Create a map of friendly names to player IDs for lookup
-        const friendlyNameToId = players.reduce((acc: { [key: string]: string }, player) => {
-          acc[player.friendlyName] = player.id;
-          return acc;
-        }, {});
-
-        // Fetch registration streak bonus data
-        try {
-          const { data: registrationStreakData, error: registrationStreakError } = await supabase
-            .from('player_current_registration_streak_bonus')
-            .select(`
-              friendly_name,
-              current_streak_length,
-              bonus_applies
-            `);
-
-          if (registrationStreakError) {
-            console.error('Error fetching registration streak data:', registrationStreakError);
-            if (registrationStreakError.code === '42P01') {
-              console.error('View does not exist. Please verify the view name in Supabase.');
-            }
-          }
-
-          // Create a map of registration streak data using player IDs
-          const registrationStreakMap: { [key: string]: { bonus: number, applies: boolean } } = {};
-          
-          if (registrationStreakData) {
-            registrationStreakData.forEach(streak => {
-              const playerId = friendlyNameToId[streak.friendly_name];
-              if (playerId) {
-                registrationStreakMap[playerId] = {
-                  bonus: streak.current_streak_length || 0,
-                  applies: streak.bonus_applies || false
-                };
-              }
-            });
-          }
-
-          // Get unpaid games count for each player
-          const twentyFourHoursAgo = new Date();
-          twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
-          const { data: unpaidGamesData, error: unpaidError } = await supabase
-            .from('game_registrations')
-            .select(`
-              player_id,
-              games!inner (
-                completed,
-                is_historical,
-                date
-              )
-            `)
-            .in('player_id', playerIds)
-            .eq('paid', false)
-            .lt('games.date', twentyFourHoursAgo.toISOString())
-            .eq('games.completed', true)
-            .eq('games.is_historical', true)
-            .not('status', 'eq', 'reserve');
-
-          if (unpaidError) throw unpaidError;
-
-          // Create a map of unpaid games count per player
-          const unpaidGamesMap = unpaidGamesData?.reduce((acc: {[key: string]: number}, reg) => {
-            acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
-            return acc;
-          }, {});
-
-          // Get win rates and game stats
-          const { data: winRateData, error: winRateError } = await supabase
-            .rpc('get_player_win_rates')
-            .in('id', playerIds);
-
-          if (winRateError) throw winRateError;
-
-          // Create a map of win rate data for easy lookup
-          const winRateMap = winRateData.reduce((acc: any, player: any) => ({
-            ...acc,
-            [player.id]: {
-              wins: player.wins,
-              draws: player.draws,
-              losses: player.losses,
-              totalGames: player.total_games,
-              winRate: player.win_rate
-            }
-          }), {});
-
-          // Transform into record for easy lookup
-          const stats = playerData?.reduce((acc, player) => ({
-            ...acc,
-            [player.id]: {
-              xp: player.player_xp?.xp || 0,
-              rarity: player.player_xp?.rarity || 'Amateur',
-              caps: player.caps || 0,
-              activeBonuses: player.active_bonuses || 0,
-              activePenalties: player.active_penalties || 0,
-              currentStreak: player.current_streak || 0,
-              maxStreak: player.max_streak || 0,
-              benchWarmerStreak: player.bench_warmer_streak || 0,
-              wins: winRateMap[player.id]?.wins || 0,
-              draws: winRateMap[player.id]?.draws || 0,
-              losses: winRateMap[player.id]?.losses || 0,
-              totalGames: winRateMap[player.id]?.totalGames || 0,
-              winRate: winRateMap[player.id]?.winRate || 0,
-              rank: player.player_xp?.rank || undefined,
-              unpaidGames: unpaidGamesMap[player.id] || 0,
-              unpaidGamesModifier: (unpaidGamesMap[player.id] || 0) * -0.3, // -30% per unpaid game, stacks linearly
-              registrationStreakBonus: registrationStreakMap[player.id]?.bonus || 0,
-              registrationStreakBonusApplies: registrationStreakMap[player.id]?.applies || false
-            }
-          }), {});
-
-          setPlayerStats(stats);
-        } catch (err) {
-          console.error('Error fetching player stats:', err);
-          toast.error('Failed to load player stats');
-        } finally {
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('Error fetching player stats:', err);
-        toast.error('Failed to load player stats');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (players.length > 0) {
-      const playerIds = players.map(player => player.id);
-      fetchPlayerStats(playerIds);
-    }
-  }, [players]);
-
   const sortedAndFilteredPlayers = players
     .filter(player => {
       // Text search filter (only friendly name)
@@ -304,17 +84,17 @@ export default function PlayerCardGrid() {
       const nameMatch = name.includes(searchTerm);
 
       // Numeric range filters
-      const capsInRange = (filters.minCaps === '' || playerStats[player.id]?.caps >= Number(filters.minCaps)) &&
-                         (filters.maxCaps === '' || playerStats[player.id]?.caps <= Number(filters.maxCaps));
+      const capsInRange = (filters.minCaps === '' || player.caps >= Number(filters.minCaps)) &&
+                         (filters.maxCaps === '' || player.caps <= Number(filters.maxCaps));
       
-      const winRateInRange = (filters.minWinRate === '' || playerStats[player.id]?.winRate >= Number(filters.minWinRate)) &&
-                            (filters.maxWinRate === '' || playerStats[player.id]?.winRate <= Number(filters.maxWinRate));
+      const winRateInRange = (filters.minWinRate === '' || player.winRate >= Number(filters.minWinRate)) &&
+                            (filters.maxWinRate === '' || player.winRate <= Number(filters.maxWinRate));
       
-      const streakInRange = (filters.minStreak === '' || playerStats[player.id]?.currentStreak >= Number(filters.minStreak)) &&
-                           (filters.maxStreak === '' || playerStats[player.id]?.currentStreak <= Number(filters.maxStreak));
+      const streakInRange = (filters.minStreak === '' || player.currentStreak >= Number(filters.minStreak)) &&
+                           (filters.maxStreak === '' || player.currentStreak <= Number(filters.maxStreak));
 
       // Rarity filter
-      const rarityMatch = !filters.rarity || playerStats[player.id]?.rarity === filters.rarity;
+      const rarityMatch = !filters.rarity || player.rarity === filters.rarity;
 
       // WhatsApp members filter
       const whatsAppMatch = !whatsAppMembersOnly || (player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy');
@@ -327,7 +107,7 @@ export default function PlayerCardGrid() {
       // Special handling for numeric fields
       if (sortConfig.key === 'winRate' || sortConfig.key === 'xp' || 
           sortConfig.key === 'caps' || sortConfig.key === 'currentStreak') {
-        return (Number(playerStats[a.id]?.[sortConfig.key] || 0) - Number(playerStats[b.id]?.[sortConfig.key] || 0)) * direction;
+        return (Number(a[sortConfig.key] || 0) - Number(b[sortConfig.key] || 0)) * direction;
       }
       
       // Default string comparison for other fields
@@ -605,27 +385,27 @@ export default function PlayerCardGrid() {
                   <PlayerCard
                     id={player.id}
                     friendlyName={player.friendlyName}
-                    caps={playerStats[player.id]?.caps || 0}
-                    activeBonuses={playerStats[player.id]?.activeBonuses || 0}
-                    activePenalties={playerStats[player.id]?.activePenalties || 0}
-                    winRate={playerStats[player.id]?.winRate || 0}
-                    currentStreak={playerStats[player.id]?.currentStreak || 0}
-                    maxStreak={playerStats[player.id]?.maxStreak || 0}
-                    benchWarmerStreak={playerStats[player.id]?.benchWarmerStreak || 0}
+                    caps={player.caps}
+                    activeBonuses={player.activeBonuses}
+                    activePenalties={player.activePenalties}
+                    winRate={player.winRate}
+                    currentStreak={player.currentStreak}
+                    maxStreak={player.maxStreak}
+                    benchWarmerStreak={player.benchWarmerStreak}
                     avatarSvg={player.avatarSvg}
-                    rarity={playerStats[player.id]?.rarity}
-                    wins={playerStats[player.id]?.wins || 0}
-                    draws={playerStats[player.id]?.draws || 0}
-                    losses={playerStats[player.id]?.losses || 0}
+                    rarity={player.rarity}
+                    wins={player.wins}
+                    draws={player.draws}
+                    losses={player.losses}
                     whatsapp_group_member={player.whatsapp_group_member}
                     isRandomlySelected={player.isRandomlySelected}
-                    rank={playerStats[player.id]?.rank}
-                    xp={playerStats[player.id]?.xp || 0}
-                    totalGames={playerStats[player.id]?.totalGames || 0}
-                    unpaidGames={playerStats[player.id]?.unpaidGames}
-                    unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier}
-                    registrationStreakBonus={playerStats[player.id]?.registrationStreakBonus}
-                    registrationStreakBonusApplies={playerStats[player.id]?.registrationStreakBonusApplies}
+                    rank={player.rank}
+                    xp={player.xp}
+                    totalGames={player.totalGames}
+                    unpaidGames={player.unpaidGames}
+                    unpaidGamesModifier={player.unpaidGamesModifier}
+                    registrationStreakBonus={player.registrationStreakBonus}
+                    registrationStreakBonusApplies={player.registrationStreakBonusApplies}
                   />
                 </motion.div>
               ))}

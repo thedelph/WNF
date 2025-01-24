@@ -48,6 +48,7 @@ export interface PlayerCardModifiersProps {
   unpaidGamesModifier: number
   registrationStreakBonus?: number
   registrationStreakBonusApplies?: boolean
+  status?: string
 }
 
 export interface PlayerCardStatsProps {

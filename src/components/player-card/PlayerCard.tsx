@@ -97,6 +97,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     }
   }
 
+  // Only pass unpaid games data if it's valid (player was selected and didn't drop out)
+  const validUnpaidGames = status !== 'dropped_out' ? unpaidGames : 0;
+  const validUnpaidGamesModifier = status !== 'dropped_out' ? unpaidGamesModifier : 0;
+
   return (
     <motion.div 
       className="card w-64 h-96 cursor-pointer perspective"
@@ -140,8 +144,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               draws={draws}
               losses={losses}
               totalGames={totalGames}
-              unpaidGames={unpaidGames}
-              unpaidGamesModifier={unpaidGamesModifier}
+              unpaidGames={validUnpaidGames}
+              unpaidGamesModifier={validUnpaidGamesModifier}
               registrationStreakBonus={registrationStreakBonus}
               registrationStreakBonusApplies={registrationStreakBonusApplies}
             />

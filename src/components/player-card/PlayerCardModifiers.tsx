@@ -22,9 +22,13 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   unpaidGamesModifier = 0,
   registrationStreakBonus = 0,
   registrationStreakBonusApplies = false,
+  status,
 }) => {
   // Calculate registration streak bonus modifier (2.5% per streak level)
   const registrationStreakModifier = registrationStreakBonus * 0.025
+
+  // Only show unpaid games if player hasn't dropped out
+  const showUnpaidGames = status !== 'dropped_out' && unpaidGames > 0;
 
   return (
     <div className="space-y-2">
@@ -110,20 +114,18 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
           <span className="text-sm font-bold">+{(benchWarmerModifier * 100).toFixed(0)}%</span>
         </motion.div>
       )}
-      {Number(unpaidGames) > 0 && (
-        <Tooltip content="XP penalty for unpaid games older than 24 hours">
-          <motion.div 
-            className="flex justify-between items-center bg-red-500/20 rounded-lg p-2"
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-          >
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
-              <span className="text-sm">{unpaidGames} Unpaid Game{unpaidGames !== 1 ? 's' : ''}</span>
-            </div>
-            <span className="text-sm font-bold text-red-500">-{unpaidGames * 50}%</span>
-          </motion.div>
-        </Tooltip>
+      {showUnpaidGames && (
+        <motion.div 
+          className="flex justify-between items-center bg-red-500/20 rounded-lg p-2"
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+        >
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4" />
+            <span className="text-sm">Unpaid Games</span>
+          </div>
+          <span className="text-sm font-bold text-red-500">-{(unpaidGamesModifier * -100).toFixed(0)}%</span>
+        </motion.div>
       )}
     </div>
   )

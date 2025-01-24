@@ -91,6 +91,7 @@ export default function PlayerProfileNew() {
         }
 
         // Get count of unpaid games over 24 hours old where this player hasn't paid
+        // and didn't drop out
         const twentyFourHoursAgo = new Date();
         twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
@@ -99,17 +100,18 @@ export default function PlayerProfileNew() {
           .select(`
             id,
             games!inner (
+              id,
+              sequence_number,
               completed,
-              is_historical,
-              date
+              created_at
             )
           `)
           .eq('player_id', id)
           .eq('paid', false)
-          .lt('games.date', twentyFourHoursAgo.toISOString())
-          .eq('games.completed', true)
-          .eq('games.is_historical', true)
-          .not('status', 'eq', 'reserve');
+          .eq('status', 'selected') // Only count games where player was selected
+          .neq('status', 'dropped_out') // Exclude dropped out players
+          .gt('games.created_at', twentyFourHoursAgo.toISOString())
+          .eq('games.completed', true);
 
         if (unpaidError) {
           throw unpaidError;

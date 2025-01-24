@@ -58,8 +58,9 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   const registrationStreakModifier = registrationStreakBonus * 0.025
 
   // Calculate total XP modifier including registration streak bonus
+  // Note: unpaidGamesModifier is now calculated in XPBreakdown component to properly handle dropped out players
   const totalXpModifier = (1 + streakModifier + bonusModifier + penaltyModifier + dropoutModifier + benchWarmerModifier + 
-    (registrationStreakBonusApplies ? registrationStreakModifier : 0) + unpaidGamesModifier)
+    (registrationStreakBonusApplies ? registrationStreakModifier : 0))
 
   return (
     <div className="card-body p-4">
@@ -195,6 +196,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         unpaidGamesModifier={unpaidGamesModifier}
         registrationStreakBonus={registrationStreakBonus}
         registrationStreakBonusApplies={registrationStreakBonusApplies}
+        status={status}
       />
 
       <div className="mt-auto">

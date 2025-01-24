@@ -6,6 +6,7 @@ import UnpaidGamesPenalty from './UnpaidGamesPenalty';
 interface GameHistory {
   sequence: number;
   status: string;
+  unpaid?: boolean;
 }
 
 interface XPBreakdownProps {
@@ -40,8 +41,8 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
 
   // Calculate base XP from game history without multipliers
   const baseXP = stats.gameHistory.reduce((total, game) => {
-    // Skip future games
-    if (game.sequence > latestSequence) return total;
+    // Skip future games and games where player dropped out
+    if (game.sequence > latestSequence || game.status === 'dropped_out') return total;
     
     // Calculate how many games ago this game was
     const gamesAgo = latestSequence - game.sequence;
@@ -70,9 +71,12 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   const reserveModifier = (stats.benchWarmerStreak || 0) * 0.05;
 
   // Calculate unpaid games modifier (-50% per unpaid game)
-  const unpaidGamesModifier = -(stats.unpaidGames || 0) * 0.5;
+  // Only apply if the player hasn't dropped out and was selected
+  const unpaidGamesModifier = stats.gameHistory?.some(game => game.status === 'dropped_out') 
+    ? 0 
+    : -(stats.unpaidGames || 0) * 0.5;
 
-  // Calculate total modifier
+  // Calculate total modifier (ensuring we don't apply unpaid games modifier for dropped out players)
   const totalModifier = 1 + streakModifier + reserveModifier + unpaidGamesModifier;
 
   // Calculate raw XP before clamping to check if it would be negative
