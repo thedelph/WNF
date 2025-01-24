@@ -129,6 +129,17 @@ export default function PlayerProfileNew() {
           throw reserveXPError;
         }
 
+        // Get registration streak data
+        const { data: regStreakData, error: regStreakError } = await supabase
+          .from('player_current_registration_streak_bonus')
+          .select('current_streak_length, bonus_applies')
+          .eq('friendly_name', playerData.friendly_name)
+          .maybeSingle();
+
+        if (regStreakError) {
+          throw regStreakError;
+        }
+
         // Get all registrations for historical games
         const { data: registrations, error: registrationsError } = await supabase
           .from('game_registrations')
@@ -298,6 +309,8 @@ export default function PlayerProfileNew() {
           reserveCount: reserveCount,
           bench_warmer_streak: playerData.bench_warmer_streak || 0,
           unpaidGames: unpaidGamesCount,
+          registrationStreak: regStreakData?.current_streak_length || 0,
+          registrationStreakApplies: regStreakData?.bonus_applies || false
         };
 
         setPlayer(playerStats);
@@ -458,6 +471,8 @@ export default function PlayerProfileNew() {
             reserveXP: player.reserveXP ?? 0,
             reserveCount: player.reserveCount ?? 0,
             benchWarmerStreak: player.bench_warmer_streak || 0,
+            registrationStreak: player.registrationStreak || 0,
+            registrationStreakApplies: player.registrationStreakApplies || false,
             unpaidGames: player.unpaidGames || 0
           }} />
         </div>

@@ -21,6 +21,8 @@ interface XPBreakdownProps {
     reserveXP?: number;
     reserveCount?: number;
     benchWarmerStreak?: number;
+    registrationStreak?: number;
+    registrationStreakApplies?: boolean;
     unpaidGames?: number; // Number of unpaid games
   };
   showTotal?: boolean;
@@ -70,6 +72,10 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   // Calculate bench warmer modifier (+5% per bench warmer streak level)
   const reserveModifier = (stats.benchWarmerStreak || 0) * 0.05;
 
+  // Calculate registration streak modifier (+2.5% per registration streak level)
+  // Only apply if registrationStreakApplies is true (all reserve and all registered)
+  const registrationModifier = (stats.registrationStreak && stats.registrationStreakApplies) ? stats.registrationStreak * 0.025 : 0;
+
   // Calculate unpaid games modifier (-50% per unpaid game)
   // Only apply if the player hasn't dropped out and was selected
   const unpaidGamesModifier = stats.gameHistory?.some(game => game.status === 'dropped_out') 
@@ -77,7 +83,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
     : -(stats.unpaidGames || 0) * 0.5;
 
   // Calculate total modifier (ensuring we don't apply unpaid games modifier for dropped out players)
-  const totalModifier = 1 + streakModifier + reserveModifier + unpaidGamesModifier;
+  const totalModifier = 1 + streakModifier + reserveModifier + registrationModifier + unpaidGamesModifier;
 
   // Calculate raw XP before clamping to check if it would be negative
   const rawXP = totalBaseXP * totalModifier;
@@ -124,22 +130,43 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                       How Your XP is Calculated
                     </div>
                     <div className="collapse-content">
-                      <div className="text-sm opacity-70 mb-4">
-                        <p>XP is calculated based on how recently you played in historical games:</p>
-                        <ul className="list-disc list-inside space-y-1 mt-2">
-                          <li>Most Recent Historical Game: 20 XP</li>
-                          <li>1-2 Games Ago: 18 XP</li>
-                          <li>3-4 Games Ago: 16 XP</li>
-                          <li>5-9 Games Ago: 14 XP</li>
-                          <li>10-19 Games Ago: 12 XP</li>
-                          <li>20-29 Games Ago: 10 XP</li>
-                          <li>30-39 Games Ago: 5 XP</li>
-                          <li>40+ Games Ago: 0 XP</li>
-                          <li>Reserve XP: +5 XP each time you're a reserve player in the last 40 games</li>
-                          <li>Attendance Streak: Temporary +10% XP for each consecutive game played (resets if you miss a game)</li>
-                          <li>Bench Warmer Streak: Temporary +5% XP for each game where you're a reserve that doesn't get an opportunity to play (resets when you either play or miss a game). As it increases, so do your odds of getting picked in random selection.</li>
-                          <li>Reserve Penalty: -10 XP if you decline an available slot from someone who dropped out. To prevent people trying to just get free XP. Doesn't apply if the drop out occurs on the day of the game.</li>
-                        </ul>
+                      <div className="text-sm opacity-70 space-y-6">
+                        {/* Base Game Points */}
+                        <div>
+                          <h4 className="font-medium mb-2">Base Game Points</h4>
+                          <p>You earn XP based on when games were played. The points decrease based on how many games have happened since:</p>
+                          <ul className="list-disc list-inside space-y-1 mt-2 ml-4">
+                            <li>Most Recent Game: 20 XP</li>
+                            <li>2-3 Games Back: 18 XP</li>
+                            <li>4-5 Games Back: 16 XP</li>
+                            <li>6-10 Games Back: 14 XP</li>
+                            <li>11-20 Games Back: 12 XP</li>
+                            <li>21-30 Games Back: 10 XP</li>
+                            <li>31-40 Games Back: 5 XP</li>
+                            <li>Over 40 Games Back: 0 XP</li>
+                          </ul>
+                        </div>
+
+                        {/* Reserve Points */}
+                        <div>
+                          <h4 className="font-medium mb-2">Reserve Points</h4>
+                          <ul className="list-disc list-inside space-y-1 mt-2 ml-4">
+                            <li>Being a reserve earns you +5 XP for each game in the last 40 games</li>
+                            <li>If you are a reserve and end up accepting a slot due to a drop out, you get the base game points instead of the reserve points</li>
+                            <li>If you decline a slot that opens up when someone drops out, you'll lose 10 XP (doesn't apply for same-day dropouts)</li>
+                          </ul>
+                        </div>
+
+                        {/* Temporary Modifiers */}
+                        <div>
+                          <h4 className="font-medium mb-2">Temporary Bonuses</h4>
+                          <p className="mb-2">Your XP can be temporarily boosted by maintaining different types of streaks:</p>
+                          <ul className="list-disc list-inside space-y-1 mt-2 ml-4">
+                            <li><span className="font-medium">Attendance Streak:</span> +10% XP per consecutive game played. Resets if you don't play a game.</li>
+                            <li><span className="font-medium">Bench Warmer Streak:</span> +5% XP per consecutive reserve appearance without getting to play. Also increases your chances in random selection. Resets if you play or miss a game.</li>
+                            <li><span className="font-medium">Registration Streak:</span> +2.5% XP per consecutive game you register for. Builds regardless of whether you get selected to play or not, but only applies when you don't get selected to play. Resets if you don't register for a game.</li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -174,7 +201,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                       </div>
                     )}
 
-                    {/* 1-2 Games Ago - 18 XP */}
+                    {/* 2-3 Games Back - 18 XP */}
                     {sortedHistory.filter(game => {
                       const gamesAgo = latestSequence - game.sequence;
                       return gamesAgo >= 1 && gamesAgo <= 2;
@@ -183,7 +210,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">1-2 Games Ago</h5>
+                              <h5 className="font-medium text-base-content">2-3 Games Back</h5>
                               <p className="text-sm opacity-70 text-base-content/70">18 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -209,7 +236,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                       </div>
                     )}
 
-                    {/* 3-4 Games Ago - 16 XP */}
+                    {/* 4-5 Games Back - 16 XP */}
                     {sortedHistory.filter(game => {
                       const gamesAgo = latestSequence - game.sequence;
                       return gamesAgo >= 3 && gamesAgo <= 4;
@@ -218,7 +245,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">3-4 Games Ago</h5>
+                              <h5 className="font-medium text-base-content">4-5 Games Back</h5>
                               <p className="text-sm opacity-70 text-base-content/70">16 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -244,7 +271,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                       </div>
                     )}
 
-                    {/* 5-9 Games Ago - 14 XP */}
+                    {/* 6-10 Games Back - 14 XP */}
                     {sortedHistory.filter(game => {
                       const gamesAgo = latestSequence - game.sequence;
                       return gamesAgo >= 5 && gamesAgo <= 9;
@@ -253,7 +280,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">5-9 Games Ago</h5>
+                              <h5 className="font-medium text-base-content">6-10 Games Back</h5>
                               <p className="text-sm opacity-70 text-base-content/70">14 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -279,7 +306,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                       </div>
                     )}
 
-                    {/* 10-19 Games Ago - 12 XP */}
+                    {/* 11-20 Games Back - 12 XP */}
                     {sortedHistory.filter(game => {
                       const gamesAgo = latestSequence - game.sequence;
                       return gamesAgo >= 10 && gamesAgo <= 19;
@@ -288,7 +315,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">10-19 Games Ago</h5>
+                              <h5 className="font-medium text-base-content">11-20 Games Back</h5>
                               <p className="text-sm opacity-70 text-base-content/70">12 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -314,7 +341,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                       </div>
                     )}
 
-                    {/* 20-29 Games Ago - 10 XP */}
+                    {/* 21-30 Games Back - 10 XP */}
                     {sortedHistory.filter(game => {
                       const gamesAgo = latestSequence - game.sequence;
                       return gamesAgo >= 20 && gamesAgo <= 29;
@@ -323,7 +350,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">20-29 Games Ago</h5>
+                              <h5 className="font-medium text-base-content">21-30 Games Back</h5>
                               <p className="text-sm opacity-70 text-base-content/70">10 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -349,7 +376,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                       </div>
                     )}
 
-                    {/* 30-39 Games Ago - 5 XP */}
+                    {/* 31-40 Games Back - 5 XP */}
                     {sortedHistory.filter(game => {
                       const gamesAgo = latestSequence - game.sequence;
                       return gamesAgo >= 30 && gamesAgo <= 39;
@@ -358,7 +385,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">30-39 Games Ago</h5>
+                              <h5 className="font-medium text-base-content">31-40 Games Back</h5>
                               <p className="text-sm opacity-70 text-base-content/70">5 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -384,7 +411,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                       </div>
                     )}
 
-                    {/* 40+ Games Ago - 0 XP */}
+                    {/* Over 40 Games Back - 0 XP */}
                     {sortedHistory.filter(game => {
                       const gamesAgo = latestSequence - game.sequence;
                       return gamesAgo >= 40;
@@ -393,7 +420,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div className="card-body p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-medium text-base-content">40+ Games Ago</h5>
+                              <h5 className="font-medium text-base-content">Over 40 Games Back</h5>
                               <p className="text-sm opacity-70 text-base-content/70">0 XP per game</p>
                             </div>
                             <div className="text-right">
@@ -504,6 +531,34 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                   </div>
                 )}
 
+                {/* Registration Streak - only show if there's a streak AND it applies */}
+                {(stats.registrationStreak > 0 && stats.registrationStreakApplies) && (
+                  <div className="space-y-4 mb-6">
+                    <h4 className="font-medium text-primary border-b border-base-300 pb-2">
+                      Registration Streak
+                    </h4>
+                    <div className="card shadow-sm bg-success/10">
+                      <div className="card-body p-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h5 className="font-medium text-success-content">
+                              Registration Streak
+                            </h5>
+                            <p className="text-sm text-success-content/70">
+                              {stats.registrationStreak} consecutive reserve registrations (+{(stats.registrationStreak * 2.5)}% XP)
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-mono text-lg font-bold text-success">
+                              +{(stats.registrationStreak * 2.5)}%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Unpaid Games Penalty - only show if there are unpaid games */}
                 {stats.unpaidGames > 0 && (
                   <UnpaidGamesPenalty
@@ -533,17 +588,19 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                             </div>
                             <div className="text-xs text-base-content/70">
                               {(stats.reserveXP || 0) > 0 ? `(${baseXP} + ${stats.reserveXP})` : baseXP}
-                              {(streakModifier !== 0 || reserveModifier !== 0 || unpaidGamesModifier !== 0) && 
+                              {(streakModifier !== 0 || reserveModifier !== 0 || registrationModifier !== 0 || unpaidGamesModifier !== 0) && 
                                 ` × (1${streakModifier > 0 ? ` + ${streakModifier.toFixed(2)}` : ''}${
                                   reserveModifier > 0 ? ` + ${reserveModifier.toFixed(2)}` : ''}${
+                                  registrationModifier > 0 ? ` + ${registrationModifier.toFixed(2)}` : ''}${
                                   unpaidGamesModifier !== 0 ? ` ${unpaidGamesModifier.toFixed(2)}` : ''})`
                               }
                             </div>
                             <div className="text-xs text-base-content/50">
                               {(stats.reserveXP || 0) > 0 ? '(Base XP + Reserve XP)' : 'Base XP'}
-                              {(streakModifier !== 0 || reserveModifier !== 0 || unpaidGamesModifier !== 0) && 
+                              {(streakModifier !== 0 || reserveModifier !== 0 || registrationModifier !== 0 || unpaidGamesModifier !== 0) && 
                                 ` × (1${streakModifier > 0 ? ' + Attendance Streak Modifier' : ''}${
                                   reserveModifier > 0 ? ' + Reserve Streak Modifier' : ''}${
+                                  registrationModifier > 0 ? ' + Registration Streak Modifier' : ''}${
                                   unpaidGamesModifier !== 0 ? ' - Unpaid Games Penalty' : ''})`
                               }
                               {rawXP < 0 && ' (XP will never be less than 0)'}
