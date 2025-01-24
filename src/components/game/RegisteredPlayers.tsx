@@ -43,7 +43,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="container mx-auto space-y-4">
       <RegisteredPlayerGrid
         registrations={registrations}
         playerStats={playerStats}

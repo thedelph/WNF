@@ -11,3 +11,4 @@ Always make re-usable components where possible and search for existing componen
 If a component is too complex - break it up into smaller components.
 All terminal commands should be provided in PowerShell format/syntax.
 Always follow existing naming convention/directory structures for all functions, variables, components and files.
+Never use gaps between every line of code.

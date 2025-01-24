@@ -446,7 +446,7 @@ const Game = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-4 space-y-8">
       <GameHeader
         game={upcomingGame}
         isRegistrationOpen={isRegistrationOpen}
