@@ -196,6 +196,22 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
 
         if (playerError) throw playerError;
 
+        // Get registration streak data using friendly names
+        const { data: regStreakData, error: regStreakError } = await supabase
+          .from('player_current_registration_streak_bonus')
+          .select('friendly_name, current_streak_length, bonus_applies');
+
+        if (regStreakError) throw regStreakError;
+
+        // Create a map of registration streak data for easy lookup by friendly name
+        const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.friendly_name]: {
+            registrationStreak: player.current_streak_length || 0,
+            registrationStreakApplies: player.bonus_applies || false
+          }
+        }), {});
+
         // Get win rates and game stats
         const { data: winRateData, error: winRateError } = await supabase
           .rpc('get_player_win_rates')
@@ -216,27 +232,35 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         }), {});
 
         // Transform into record for easy lookup
-        const stats = playerData?.reduce((acc, player) => ({
-          ...acc,
-          [player.id]: {
-            xp: player.player_xp?.xp || 0,
-            rarity: player.player_xp?.rarity || 'Amateur',
-            caps: player.caps || 0,
-            activeBonuses: player.active_bonuses || 0,
-            activePenalties: player.active_penalties || 0,
-            currentStreak: player.current_streak || 0,
-            maxStreak: player.max_streak || 0,
-            benchWarmerStreak: player.bench_warmer_streak || 0,
-            wins: winRateMap[player.id]?.wins || 0,
-            draws: winRateMap[player.id]?.draws || 0,
-            losses: winRateMap[player.id]?.losses || 0,
-            totalGames: winRateMap[player.id]?.totalGames || 0,
-            winRate: winRateMap[player.id]?.winRate || 0,
-            rank: player.player_xp?.rank || undefined,
-            unpaidGames: player.unpaid_games || 0,
-            unpaidGamesModifier: player.unpaid_games_modifier || 0
-          }
-        }), {});
+        const stats = playerData?.reduce((acc, player) => {
+          // Find the matching player in the selection to get friendly_name
+          const selectedPlayer = [...(selection?.selected_players || []), ...(selection?.reserve_players || [])]
+            .find(p => p.id === player.id);
+          
+          return {
+            ...acc,
+            [player.id]: {
+              xp: player.player_xp?.xp || 0,
+              rarity: player.player_xp?.rarity || 'Amateur',
+              caps: player.caps || 0,
+              activeBonuses: player.active_bonuses || 0,
+              activePenalties: player.active_penalties || 0,
+              currentStreak: player.current_streak || 0,
+              maxStreak: player.max_streak || 0,
+              benchWarmerStreak: player.bench_warmer_streak || 0,
+              wins: winRateMap[player.id]?.wins || 0,
+              draws: winRateMap[player.id]?.draws || 0,
+              losses: winRateMap[player.id]?.losses || 0,
+              totalGames: winRateMap[player.id]?.totalGames || 0,
+              winRate: winRateMap[player.id]?.winRate || 0,
+              rank: player.player_xp?.rank || undefined,
+              unpaidGames: player.unpaid_games || 0,
+              unpaidGamesModifier: player.unpaid_games_modifier || 0,
+              registrationStreakBonus: regStreakMap[selectedPlayer?.friendly_name]?.registrationStreak || 0,
+              registrationStreakBonusApplies: regStreakMap[selectedPlayer?.friendly_name]?.registrationStreakApplies || false
+            }
+          };
+        }, {});
 
         setPlayerStats(stats);
       } catch (err) {
@@ -337,6 +361,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       rank={playerStats[player.id]?.rank}
                       unpaidGames={playerStats[player.id]?.unpaidGames || 0}
                       unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier || 0}
+                      registrationStreakBonus={playerStats[player.id]?.registrationStreakBonus || 0}
+                      registrationStreakBonusApplies={playerStats[player.id]?.registrationStreakBonusApplies}
                     />
                   </motion.div>
                 ))}
@@ -385,6 +411,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       rank={playerStats[player.id]?.rank}
                       unpaidGames={playerStats[player.id]?.unpaidGames || 0}
                       unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier || 0}
+                      registrationStreakBonus={playerStats[player.id]?.registrationStreakBonus || 0}
+                      registrationStreakBonusApplies={playerStats[player.id]?.registrationStreakBonusApplies}
                     />
                   </motion.div>
                 ))}

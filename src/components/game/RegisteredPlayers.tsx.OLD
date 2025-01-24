@@ -1,0 +1,272 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { PlayerCard } from '../player-card/PlayerCard';
+import { supabase } from '../../utils/supabase';
+import { ExtendedPlayerData } from '../../types/playerSelection';
+import { useGlobalXP } from '../../hooks/useGlobalXP';
+
+interface Registration {
+  player: ExtendedPlayerData;
+  status: string;
+  created_at: string;
+}
+
+interface RegisteredPlayersProps {
+  registrations: Registration[];
+}
+
+interface PlayerStats {
+  xp: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  total_games: number;
+  win_rate: number;
+  rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary';
+  caps: number;
+  activeBonuses: number;
+  activePenalties: number;
+  currentStreak: number;
+  maxStreak: number;
+  benchWarmerStreak: number;
+  registrationStreak: number;
+  registrationStreakApplies: boolean;
+  rank: number | undefined;
+  unpaidGames?: number;
+  unpaidGamesModifier?: number;
+}
+
+export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
+  registrations
+}) => {
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [playerStats, setPlayerStats] = React.useState<Record<string, PlayerStats>>({});
+  const [registrationsState, setRegistrations] = React.useState(registrations);
+  const [stats, setStats] = React.useState<Record<string, any>>({});
+  const { xpValues: globalXpValues, loading: globalXpLoading, error: globalXpError } = useGlobalXP();
+
+  React.useEffect(() => {
+    const fetchPlayerStats = async () => {
+      try {
+        setLoading(true);
+        
+        // Get player stats for all players
+        const playerIds = registrations.map(reg => reg.player.id);
+        
+        // Get player stats and XP data
+        const { data: playerData, error: playerError } = await supabase
+          .from('players')
+          .select(`
+            id,
+            caps,
+            current_streak,
+            max_streak,
+            active_bonuses,
+            active_penalties,
+            win_rate,
+            bench_warmer_streak,
+            unpaid_games,
+            unpaid_games_modifier,
+            player_xp (
+              xp,
+              rank,
+              rarity
+            )
+          `)
+          .in('id', playerIds);
+
+        if (playerError) throw playerError;
+
+        // Get registration streak data
+        const { data: regStreakData, error: regStreakError } = await supabase
+          .from('player_current_registration_streak_bonus')
+          .select('friendly_name, current_streak_length, bonus_applies');
+
+        if (regStreakError) throw regStreakError;
+
+        // Create a map of registration streak data for easy lookup
+        const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.friendly_name]: {
+            registrationStreak: player.current_streak_length || 0,
+            registrationStreakApplies: player.bonus_applies || false
+          }
+        }), {});
+
+        // Get win rates and game stats
+        const { data: winRateData, error: winRateError } = await supabase
+          .rpc('get_player_win_rates')
+          .in('id', playerIds);
+
+        if (winRateError) throw winRateError;
+
+        // Create a map of win rate data for easy lookup
+        const winRateMap = winRateData.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.id]: {
+            wins: player.wins,
+            draws: player.draws,
+            losses: player.losses,
+            total_games: player.total_games,
+            win_rate: player.win_rate
+          }
+        }), {});
+
+        // Create a map of registration statuses for easy lookup
+        const registrationStatusMap = registrations.reduce((acc: any, reg: any) => ({
+          ...acc,
+          [reg.player.id]: reg.status
+        }), {});
+
+        // Transform into record for easy lookup
+        const stats = playerData?.reduce((acc, player) => {
+          // Check if player has dropped out
+          const isDroppedOut = registrationStatusMap[player.id] === 'dropped_out';
+          
+          // Only count unpaid games if player hasn't dropped out AND the game is unpaid
+          const shouldCountUnpaidGames = !isDroppedOut && player.unpaid_games > 0;
+
+          return {
+            ...acc,
+            [player.id]: {
+              xp: player.player_xp?.xp || 0,
+              rarity: player.player_xp?.rarity || 'Amateur',
+              caps: player.caps || 0,
+              activeBonuses: player.active_bonuses || 0,
+              activePenalties: player.active_penalties || 0,
+              currentStreak: player.current_streak || 0,
+              maxStreak: player.max_streak || 0,
+              benchWarmerStreak: player.bench_warmer_streak || 0,
+              wins: winRateMap[player.id]?.wins || 0,
+              draws: winRateMap[player.id]?.draws || 0,
+              losses: winRateMap[player.id]?.losses || 0,
+              totalGames: winRateMap[player.id]?.total_games || 0,
+              winRate: winRateMap[player.id]?.win_rate || 0,
+              rank: player.player_xp?.rank || undefined,
+              registrationStreak: regStreakMap[player.friendly_name]?.registrationStreak || 0,
+              registrationStreakApplies: regStreakMap[player.friendly_name]?.registrationStreakApplies || false,
+              // Only show unpaid games if they haven't dropped out
+              unpaidGames: shouldCountUnpaidGames ? player.unpaid_games : 0,
+              unpaidGamesModifier: shouldCountUnpaidGames ? player.unpaid_games_modifier : 0
+            }
+          };
+        }, {});
+
+        const statsMap = registrations.reduce((acc, registration) => {
+          // Get player data from the main stats object
+          const playerData = stats[registration.player.id] || {};
+          
+          const playerStats = {
+            currentStreak: playerData.currentStreak || 0,
+            activeBonuses: playerData.activeBonuses || 0,
+            activePenalties: playerData.activePenalties || 0,
+            unpaidGamesModifier: playerData.unpaidGamesModifier || 0,
+            registrationStreak: regStreakMap[registration.player.friendly_name]?.registrationStreak || 0,
+            registrationStreakApplies: regStreakMap[registration.player.friendly_name]?.registrationStreakApplies || false,
+          };
+
+          return {
+            ...acc,
+            [registration.player.id]: playerStats
+          };
+        }, {});
+
+        setPlayerStats(stats);
+        setStats(statsMap);
+      } catch (err) {
+        console.error('Error fetching player stats:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlayerStats();
+  }, [registrations]);
+
+  if (loading || globalXpLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
+
+  if (error || globalXpError) {
+    return (
+      <div className="text-center text-error p-4">
+        <p>{error || globalXpError}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 justify-items-center sm:justify-items-stretch">
+        {/* Sort registrations by player XP in descending order */}
+        {[...registrationsState]
+          .sort((a, b) => {
+            const aXp = playerStats[a.player.id]?.xp || 0;
+            const bXp = playerStats[b.player.id]?.xp || 0;
+            return bXp - aXp; // Descending order
+          })
+          .map((registration) => {
+            // Debug log for Lee S
+            if (registration.player.friendly_name === 'Lee S') {
+              console.log('Lee S Registration Data:', {
+                regStreakMapData: stats[registration.player.id],
+                registrationStreak: stats[registration.player.id]?.registrationStreak || 0,
+                registrationStreakApplies: stats[registration.player.id]?.registrationStreakApplies || false,
+                regStreakMap: stats,
+              });
+            }
+
+            const streakModifier = stats[registration.player.id].currentStreak * 0.1;
+            const bonusModifier = stats[registration.player.id].activeBonuses * 0.1;
+            const penaltyModifier = stats[registration.player.id].activePenalties * -0.1;
+            // Use 0.025 (2.5%) for registration streak modifier
+            const registrationModifier = stats[registration.player.id].registrationStreakApplies ? stats[registration.player.id].registrationStreak * 0.025 : 0;
+            // Only apply unpaid games modifier if player hasn't dropped out
+            const isDroppedOut = registration.status === 'dropped_out';
+            const unpaidGamesModifier = isDroppedOut ? 0 : stats[registration.player.id].unpaidGamesModifier;
+
+            return (
+              <motion.div
+                key={registration.player.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <PlayerCard
+                  id={registration.player.id}
+                  friendlyName={registration.player.friendly_name}
+                  xp={playerStats[registration.player.id]?.xp || 0}
+                  caps={playerStats[registration.player.id]?.caps || 0}
+                  activeBonuses={stats[registration.player.id].activeBonuses}
+                  activePenalties={stats[registration.player.id].activePenalties}
+                  winRate={playerStats[registration.player.id]?.winRate || 0}
+                  currentStreak={playerStats[registration.player.id]?.currentStreak || 0}
+                  maxStreak={playerStats[registration.player.id]?.maxStreak || 0}
+                  benchWarmerStreak={playerStats[registration.player.id]?.benchWarmerStreak || 0}
+                  rarity={playerStats[registration.player.id]?.rarity || 'Amateur'}
+                  avatarSvg={registration.player.avatar_svg || ''}
+                  status={registration.status}
+                  wins={playerStats[registration.player.id]?.wins || 0}
+                  draws={playerStats[registration.player.id]?.draws || 0}
+                  losses={playerStats[registration.player.id]?.losses || 0}
+                  totalGames={playerStats[registration.player.id]?.totalGames || 0}
+                  rank={playerStats[registration.player.id]?.rank || undefined}
+                  unpaidGames={isDroppedOut ? 0 : playerStats[registration.player.id]?.unpaidGames || 0}
+                  unpaidGamesModifier={unpaidGamesModifier}
+                  registrationStreakBonus={stats[registration.player.id].registrationStreak}
+                  registrationStreakBonusApplies={stats[registration.player.id].registrationStreakApplies}
+                  whatsapp_group_member={registration.player.whatsapp_group_member}
+                />
+              </motion.div>
+            );
+          })}
+      </div>
+    </div>
+  );
+};

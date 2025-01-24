@@ -34,8 +34,44 @@ The player card displays various modifiers that affect XP gain:
 3. **Active Bonuses**: +10% XP per active bonus
 4. **Active Penalties**: -10% XP per active penalty
 5. **Bench Warmer**: +5% XP per consecutive game in reserves
+6. **Registration Streak**: +2.5% XP per consecutive registration (shown as "Reg. Streak")
+7. **Unpaid Games**: -30% XP per unpaid game
 
 Each modifier is displayed in a colored badge with its corresponding percentage:
+- Green badges for positive modifiers (streak bonus, active bonuses)
+- Red badges for negative modifiers (dropout penalty, active penalties, unpaid games)
+- Blue badge for registration streak bonus
+- Yellow badge for bench warmer streak
+
+## Implementation Details
+
+### Registration Streak
+The registration streak bonus is implemented through several components:
+
+1. **Data Flow**:
+   - Registration streak data comes from the `player_current_registration_streak_bonus` table
+   - Key fields: `current_streak_length` and `bonus_applies`
+   - Accessed via player's `friendly_name` in RegisteredPlayers.tsx
+
+2. **State Management**:
+   - Registration streak data is stored in a separate stats map in RegisteredPlayers.tsx
+   - Data is processed during the fetchPlayerStats effect
+   - Each player's stats include:
+     ```typescript
+     {
+       registrationStreak: number,      // From current_streak_length
+       registrationStreakApplies: boolean  // From bonus_applies
+     }
+     ```
+
+3. **Display Logic**:
+   - Only shows when both conditions are true:
+     - registrationStreakBonus > 0
+     - registrationStreakBonusApplies is true
+   - Applies a 2.5% XP bonus per streak level
+   - Rendered in PlayerCardModifiers with a blue background
+
+### Other Modifiers
 - Positive modifiers use specific colors:
   - Streak Bonus: Green background
   - Active Bonuses: Green background
@@ -43,6 +79,7 @@ Each modifier is displayed in a colored badge with its corresponding percentage:
 - Negative modifiers use red backgrounds:
   - Dropout Penalty
   - Active Penalties
+  - Unpaid Games
 
 ## Rank Shield Implementation
 

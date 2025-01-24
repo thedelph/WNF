@@ -98,8 +98,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   }
 
   // Only pass unpaid games data if it's valid (player was selected and didn't drop out)
-  const validUnpaidGames = status !== 'dropped_out' ? unpaidGames : 0;
-  const validUnpaidGamesModifier = status !== 'dropped_out' ? unpaidGamesModifier : 0;
+  const validUnpaidGames = status === 'dropped_out' ? 0 : unpaidGames;
+  const validUnpaidGamesModifier = status === 'dropped_out' ? 0 : unpaidGamesModifier;
 
   return (
     <motion.div 

@@ -46,17 +46,14 @@ export const usePlayerGrid = () => {
           return;
         }
 
-        // Get unpaid games
-        const twentyFourHoursAgo = new Date();
-        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
+        // Get unpaid games from completed games only
         const { data: unpaidGamesData, error: unpaidError } = await supabase
-          .from('game_registrations')
-          .select('player_id')
-          .eq('paid', false)
-          .gt('created_at', twentyFourHoursAgo.toISOString())
-          .not('status', 'eq', 'reserve')
-          .not('status', 'eq', 'dropped_out');
+          .from('players')
+          .select(`
+            id,
+            unpaid_games,
+            unpaid_games_modifier
+          `);
 
         if (unpaidError) {
           toast.error('Error fetching unpaid games');
@@ -64,11 +61,14 @@ export const usePlayerGrid = () => {
           return;
         }
 
-        // Count unpaid games per player
-        const unpaidGamesMap = (unpaidGamesData || []).reduce((acc, reg) => {
-          acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
+        // Create map of unpaid games data
+        const unpaidGamesMap = (unpaidGamesData || []).reduce((acc, player) => {
+          acc[player.id] = {
+            unpaidGames: player.unpaid_games || 0,
+            unpaidGamesModifier: player.unpaid_games_modifier || 0
+          };
           return acc;
-        }, {} as Record<string, number>);
+        }, {} as Record<string, { unpaidGames: number, unpaidGamesModifier: number }>);
 
         // Get registration streak data
         const { data: registrationStreakData, error: registrationStreakError } = await supabase
@@ -117,8 +117,9 @@ export const usePlayerGrid = () => {
               bonusModifier: 0,
               penaltyModifier: 0,
               totalModifier: 0,
-              unpaidGames: unpaidGamesMap[player.id] || 0,
-              unpaidGamesModifier: (unpaidGamesMap[player.id] || 0) * -0.5, // -50% per unpaid game
+              // Use the values directly from the database
+              unpaidGames: unpaidGamesMap[player.id]?.unpaidGames || 0,
+              unpaidGamesModifier: unpaidGamesMap[player.id]?.unpaidGamesModifier || 0,
               registrationStreakBonus: streakData.bonus,
               registrationStreakBonusApplies: streakData.applies
             };

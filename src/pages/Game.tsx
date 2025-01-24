@@ -103,7 +103,11 @@ const Game = () => {
 
               avatar_svg,
 
-              whatsapp_group_member
+              whatsapp_group_member,
+
+              unpaid_games,
+
+              unpaid_games_modifier
 
             )
 
@@ -139,6 +143,22 @@ const Game = () => {
 
       }
 
+      // Get registration streak data for all players
+      const { data: regStreakData, error: regStreakError } = await supabase
+        .from('player_current_registration_streak_bonus')
+        .select('friendly_name, current_streak_length, bonus_applies');
+
+      if (regStreakError) throw regStreakError;
+
+      // Create a map of registration streak data
+      const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
+        ...acc,
+        [player.friendly_name]: {
+          registrationStreak: player.current_streak_length || 0,
+          registrationStreakApplies: player.bonus_applies || false
+        }
+      }), {});
+
       const registrations = game.game_registrations || [];
 
       const allValidRegistrations = registrations.filter(reg => reg && reg.player);
@@ -161,7 +181,11 @@ const Game = () => {
 
       setPlayerData({
         registrations: allValidRegistrations.map(reg => ({
-          player: reg.player,
+          player: {
+            ...reg.player,
+            registrationStreak: regStreakMap?.[reg.player.friendly_name]?.registrationStreak || 0,
+            registrationStreakApplies: regStreakMap?.[reg.player.friendly_name]?.registrationStreakApplies || false
+          },
           status: reg.status,
           created_at: reg.created_at || new Date().toISOString()
         })),

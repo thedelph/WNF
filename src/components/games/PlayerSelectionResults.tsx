@@ -218,6 +218,22 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
 
         if (playerError) throw playerError;
 
+        // Get registration streak data
+        const { data: regStreakData, error: regStreakError } = await supabase
+          .from('player_current_registration_streak_bonus')
+          .select('friendly_name, current_streak_length, bonus_applies');
+
+        if (regStreakError) throw regStreakError;
+
+        // Create a map of registration streak data for easy lookup
+        const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.friendly_name]: {
+            registrationStreak: player.current_streak_length || 0,
+            registrationStreakApplies: player.bonus_applies || false
+          }
+        }), {});
+
         // Get win rates and game stats
         const { data: winRateData, error: winRateError } = await supabase
           .rpc('get_player_win_rates')
@@ -256,7 +272,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             winRate: winRateMap[player.id]?.winRate || 0,
             rank: player.player_xp?.rank || undefined,
             unpaidGames: player.unpaid_games || 0,
-            unpaidGamesModifier: player.unpaid_games_modifier || 0
+            unpaidGamesModifier: player.unpaid_games_modifier || 0,
+            registrationStreakBonus: regStreakMap[selectedPlayers.find(p => p.id === player.id)?.friendly_name || reservePlayers.find(p => p.id === player.id)?.friendly_name || droppedOutPlayers.find(p => p.id === player.id)?.friendly_name]?.registrationStreak || 0,
+            registrationStreakBonusApplies: regStreakMap[selectedPlayers.find(p => p.id === player.id)?.friendly_name || reservePlayers.find(p => p.id === player.id)?.friendly_name || droppedOutPlayers.find(p => p.id === player.id)?.friendly_name]?.registrationStreakApplies || false
           }
         }), {});
 
@@ -414,7 +432,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               hasActiveSlotOffers: activeSlotOffers?.length > 0,
               isRandomlySelected: player.selection_method === 'random',
               unpaidGames: playerStats[player.id]?.unpaidGames || 0,
-              unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0
+              unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
+              registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
+              registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
             }))}
             isExpanded={showSelected}
             onToggle={() => setShowSelected(!showSelected)}
@@ -491,7 +511,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
                 declinedAt: player.slotOffers?.[0]?.declined_at || null,
                 hasActiveSlotOffers: activeSlotOffers?.length > 0,
                 unpaidGames: playerStats[player.id]?.unpaidGames || 0,
-                unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0
+                unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
+                registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
+                registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
               }))}
             isExpanded={showReserves}
             onToggle={() => setShowReserves(!showReserves)}
@@ -534,7 +556,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               winRate: playerStats[player.id]?.winRate || 0,
               hasActiveSlotOffers: activeSlotOffers?.length > 0,
               unpaidGames: playerStats[player.id]?.unpaidGames || 0,
-              unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0
+              unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
+              registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
+              registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
             }))}
             isExpanded={showDroppedOut}
             onToggle={() => setShowDroppedOut(!showDroppedOut)}
@@ -558,7 +582,11 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             draws: playerStats[player.id]?.draws || 0,
             losses: playerStats[player.id]?.losses || 0,
             totalGames: playerStats[player.id]?.totalGames || 0,
-            winRate: playerStats[player.id]?.winRate || 0
+            winRate: playerStats[player.id]?.winRate || 0,
+            unpaidGames: playerStats[player.id]?.unpaidGames || 0,
+            unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
+            registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
+            registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
           }))}
           reservePlayers={[...reservePlayers]
             .sort((a, b) => {
@@ -604,7 +632,11 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               draws: playerStats[player.id]?.draws || 0,
               losses: playerStats[player.id]?.losses || 0,
               totalGames: playerStats[player.id]?.totalGames || 0,
-              winRate: playerStats[player.id]?.winRate || 0
+              winRate: playerStats[player.id]?.winRate || 0,
+              unpaidGames: playerStats[player.id]?.unpaidGames || 0,
+              unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
+              registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
+              registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
             }))}
           droppedOutPlayers={droppedOutPlayers.map(player => ({
             ...getPlayerWithRank(player),
@@ -624,7 +656,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             totalGames: playerStats[player.id]?.totalGames || 0,
             winRate: playerStats[player.id]?.winRate || 0,
             unpaidGames: playerStats[player.id]?.unpaidGames || 0,
-            unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0
+            unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
+            registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
+            registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
           }))}
           playerStats={playerStats}
         />
