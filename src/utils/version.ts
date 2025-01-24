@@ -19,6 +19,39 @@ export interface ChangelogEntry {
 export const changelogData: ChangelogEntry[] = [
 
   {
+    version: '1.0.8',
+    date: '24/01/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Registered Players List View',
+            details: "Added a list view for registered players that just shows name and XP."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          },
+        ]
+      }
+    ]
+  },
+  {
     version: '1.0.7',
     date: '22/01/2025',
     sections: [
