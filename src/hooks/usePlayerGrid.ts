@@ -46,6 +46,28 @@ export const usePlayerGrid = () => {
           return;
         }
 
+        // Get win rates and game stats
+        const { data: winRateData, error: winRateError } = await supabase
+          .rpc('get_player_win_rates');
+
+        if (winRateError) {
+          toast.error('Error fetching win rates');
+          console.error('Error fetching win rates:', winRateError);
+          return;
+        }
+
+        // Create a map of win rate data for easy lookup
+        const winRateMap = (winRateData || []).reduce((acc, player) => {
+          acc[player.id] = {
+            wins: player.wins || 0,
+            draws: player.draws || 0,
+            losses: player.losses || 0,
+            totalGames: player.total_games || 0,
+            winRate: player.win_rate || 0
+          };
+          return acc;
+        }, {} as Record<string, { wins: number, draws: number, losses: number, totalGames: number, winRate: number }>);
+
         // Get unpaid games from completed games only
         const { data: unpaidGamesData, error: unpaidError } = await supabase
           .from('players')
@@ -93,6 +115,7 @@ export const usePlayerGrid = () => {
         if (players) {
           setPlayers(players.map((player) => {
             const streakData = registrationStreakMap[player.friendly_name] || { bonus: 0, applies: false };
+            const winStats = winRateMap[player.id] || { wins: 0, draws: 0, losses: 0, totalGames: 0, winRate: 0 };
             return {
               id: player.id,
               friendlyName: player.friendly_name,
@@ -107,17 +130,16 @@ export const usePlayerGrid = () => {
               benchWarmerStreak: player.bench_warmer_streak || 0,
               rarity: player.player_xp?.rarity || 'Amateur',
               rank: player.player_xp?.rank || 0,
-              wins: 0,
-              draws: 0,
-              losses: 0,
-              totalGames: 0,
-              winRate: 0,
+              wins: winStats.wins,
+              draws: winStats.draws,
+              losses: winStats.losses,
+              totalGames: winStats.totalGames,
+              winRate: winStats.winRate,
               streakBonus: 0,
               dropoutPenalty: 0,
               bonusModifier: 0,
               penaltyModifier: 0,
               totalModifier: 0,
-              // Use the values directly from the database
               unpaidGames: unpaidGamesMap[player.id]?.unpaidGames || 0,
               unpaidGamesModifier: unpaidGamesMap[player.id]?.unpaidGamesModifier || 0,
               registrationStreakBonus: streakData.bonus,
