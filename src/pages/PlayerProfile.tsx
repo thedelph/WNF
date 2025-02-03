@@ -90,34 +90,18 @@ export default function PlayerProfileNew() {
           throw playerError;
         }
 
-        // Get count of unpaid games over 24 hours old where this player hasn't paid
-        // and didn't drop out
-        const twentyFourHoursAgo = new Date();
-        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
-        const { data: unpaidGames, error: unpaidError } = await supabase
-          .from('game_registrations')
-          .select(`
-            id,
-            games!inner (
-              id,
-              sequence_number,
-              completed,
-              created_at
-            )
-          `)
+        // Get count of unpaid games using the player_unpaid_games_view
+        const { data: unpaidGamesData, error: unpaidError } = await supabase
+          .from('player_unpaid_games_view')
+          .select('unpaid_games_count')
           .eq('player_id', id)
-          .eq('paid', false)
-          .eq('status', 'selected') // Only count games where player was selected
-          .neq('status', 'dropped_out') // Exclude dropped out players
-          .gt('games.created_at', twentyFourHoursAgo.toISOString())
-          .eq('games.completed', true);
+          .maybeSingle();
 
         if (unpaidError) {
           throw unpaidError;
         }
 
-        const unpaidGamesCount = unpaidGames?.length || 0;
+        const unpaidGamesCount = unpaidGamesData?.unpaid_games_count || 0;
 
         // Get reserve XP data
         const { data: reserveXPData, error: reserveXPError } = await supabase

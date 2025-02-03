@@ -24,6 +24,10 @@ interface PlayerProfile {
   max_streak: number
   avatar_svg: string | null
   avatar_options: any
+  bench_warmer_streak: number
+  registration_streak: number
+  registration_streak_applies: boolean
+  unpaid_games: number
 }
 
 interface ExtendedPlayerData extends PlayerProfile {
@@ -82,6 +86,10 @@ export default function Component() {
             max_streak,
             avatar_svg,
             avatar_options,
+            bench_warmer_streak,
+            registration_streak,
+            registration_streak_applies,
+            unpaid_games,
             reserve_xp_transactions (
               xp_amount
             )
@@ -385,7 +393,11 @@ export default function Component() {
                       })),
                       latestSequence: latestSequence,
                       xp: profile.xp || 0,
-                      reserveXP: profile.reserveXP
+                      reserveXP: profile.reserveXP || 0,
+                      benchWarmerStreak: profile.bench_warmer_streak || 0,
+                      registrationStreak: profile.registration_streak || 0,
+                      registrationStreakApplies: profile.registration_streak_applies || false,
+                      unpaidGames: profile.unpaid_games || 0
                     }}
                   />
                 </motion.div>

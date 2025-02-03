@@ -59,6 +59,8 @@ export const PlayerGridLayout: React.FC<LayoutProps> = ({ players }) => {
               status={player.status}
               registrationStreakBonus={player.registrationStreakBonus}
               registrationStreakBonusApplies={player.registrationStreakBonusApplies}
+              unpaidGames={player.unpaidGames}
+              unpaidGamesModifier={player.unpaidGamesModifier}
             />
           </motion.div>
         ))}

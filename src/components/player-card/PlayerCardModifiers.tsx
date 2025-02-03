@@ -126,7 +126,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
             <DollarSign className="w-4 h-4" />
             <span className="text-sm">Unpaid Games</span>
           </div>
-          <span className="text-sm font-bold text-red-500">-{(unpaidGamesModifier * -100).toFixed(0)}%</span>
+          <span className="text-sm font-bold text-red-500">{(unpaidGamesModifier * 100).toFixed(0)}%</span>
         </motion.div>
       )}
     </div>

@@ -23,7 +23,7 @@ interface XPBreakdownProps {
     benchWarmerStreak?: number;
     registrationStreak?: number;
     registrationStreakApplies?: boolean;
-    unpaidGames?: number; // Number of unpaid games
+    unpaidGames: number; // Number of unpaid games (required)
   };
   showTotal?: boolean;
 }
@@ -36,11 +36,6 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   const gameHistory = stats.gameHistory || [];
   const latestSequence = stats.latestSequence || 0;
 
-  // Sort sequences by how many games ago they are, excluding only future games
-  const sortedHistory = [...gameHistory]
-    .filter(game => game.sequence <= latestSequence) // Only exclude future games
-    .sort((a, b) => b.sequence - a.sequence);
-
   // Calculate base XP from game history without multipliers
   const baseXP = stats.gameHistory.reduce((total, game) => {
     // Skip future games and games where player dropped out
@@ -49,47 +44,47 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
     // Calculate how many games ago this game was
     const gamesAgo = latestSequence - game.sequence;
     
-    // Get base XP for this game
-    let gameXP = 0;
-    if (gamesAgo === 0) gameXP = 20;  // Most recent game
-    else if (gamesAgo <= 2) gameXP = 18;   // 1-2 games ago
-    else if (gamesAgo <= 4) gameXP = 16;   // 3-4 games ago
-    else if (gamesAgo <= 9) gameXP = 14;   // 5-9 games ago
-    else if (gamesAgo <= 19) gameXP = 12;  // 10-19 games ago
-    else if (gamesAgo <= 29) gameXP = 10;  // 20-29 games ago
-    else if (gamesAgo <= 39) gameXP = 5;   // 30-39 games ago
-    else gameXP = 0;  // 40+ games ago: 0 XP
-
-    return total + gameXP;
+    // Calculate XP based on how many games ago
+    let xp = 0;
+    if (gamesAgo === 0) xp = 20;
+    else if (gamesAgo <= 2) xp = 18;
+    else if (gamesAgo <= 4) xp = 16;
+    else if (gamesAgo <= 9) xp = 14;
+    else if (gamesAgo <= 19) xp = 12;
+    else if (gamesAgo <= 29) xp = 10;
+    else if (gamesAgo <= 39) xp = 5;
+    
+    return total + xp;
   }, 0);
 
-  // Add reserve XP if any
+  // Add reserve XP to base XP
   const totalBaseXP = baseXP + (stats.reserveXP || 0);
 
   // Calculate streak modifier (+10% per streak level)
   const streakModifier = stats.currentStreak * 0.1;
-  
-  // Calculate bench warmer modifier (+5% per bench warmer streak level)
-  const reserveModifier = (stats.benchWarmerStreak || 0) * 0.05;
 
-  // Calculate registration streak modifier (+2.5% per registration streak level)
+  // Calculate reserve modifier (+5% only if reserve in most recent game)
+  const reserveModifier = gameHistory.some(game => 
+    game.sequence === latestSequence && game.status === 'reserve'
+  ) ? 0.05 : 0;
+
+  // Calculate registration streak modifier (+2.5% per streak)
   // Only apply if registrationStreakApplies is true (all reserve and all registered)
   const registrationModifier = (stats.registrationStreak && stats.registrationStreakApplies) ? stats.registrationStreak * 0.025 : 0;
 
   // Calculate unpaid games modifier (-50% per unpaid game)
-  // Only apply if the player hasn't dropped out and was selected
-  const unpaidGamesModifier = stats.gameHistory?.some(game => game.status === 'dropped_out') 
-    ? 0 
-    : -(stats.unpaidGames || 0) * 0.5;
+  const unpaidGamesModifier = stats.unpaidGames ? -0.5 * stats.unpaidGames : 0;
 
-  // Calculate total modifier (ensuring we don't apply unpaid games modifier for dropped out players)
+  // Calculate total modifier by combining all modifiers first
   const totalModifier = 1 + streakModifier + reserveModifier + registrationModifier + unpaidGamesModifier;
 
-  // Calculate raw XP before clamping to check if it would be negative
-  const rawXP = totalBaseXP * totalModifier;
-  
-  // Apply the total modifier to base XP and ensure it's never negative
-  const finalXP = Math.max(0, Math.round(rawXP));
+  // Calculate final XP (ensuring it's never negative)
+  const finalXP = Math.max(0, Math.round(totalBaseXP * totalModifier));
+
+  // Sort sequences by how many games ago they are, excluding only future games
+  const sortedHistory = [...gameHistory]
+    .filter(game => game.sequence <= latestSequence) // Only exclude future games
+    .sort((a, b) => b.sequence - a.sequence);
 
   // Animation variants
   const contentVariants = {
@@ -592,7 +587,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                                 ` × (1${streakModifier > 0 ? ` + ${streakModifier.toFixed(2)}` : ''}${
                                   reserveModifier > 0 ? ` + ${reserveModifier.toFixed(2)}` : ''}${
                                   registrationModifier > 0 ? ` + ${registrationModifier.toFixed(2)}` : ''}${
-                                  unpaidGamesModifier !== 0 ? ` ${unpaidGamesModifier.toFixed(2)}` : ''})`
+                                  unpaidGamesModifier !== 0 ? ` + ${unpaidGamesModifier.toFixed(2)}` : ''})`
                               }
                             </div>
                             <div className="text-xs text-base-content/50">
@@ -601,9 +596,9 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                                 ` × (1${streakModifier > 0 ? ' + Attendance Streak Modifier' : ''}${
                                   reserveModifier > 0 ? ' + Reserve Streak Modifier' : ''}${
                                   registrationModifier > 0 ? ' + Registration Streak Modifier' : ''}${
-                                  unpaidGamesModifier !== 0 ? ' - Unpaid Games Penalty' : ''})`
+                                  unpaidGamesModifier !== 0 ? ' + Unpaid Games Modifier' : ''})`
                               }
-                              {rawXP < 0 && ' (XP will never be less than 0)'}
+                              {totalBaseXP * totalModifier < 0 && ' (XP will never be less than 0)'}
                             </div>
                           </div>
                         </div>

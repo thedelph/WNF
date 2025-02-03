@@ -70,10 +70,10 @@ export const usePlayerGrid = () => {
 
         // Get unpaid games from completed games only
         const { data: unpaidGamesData, error: unpaidError } = await supabase
-          .from('players')
+          .from('player_xp_breakdown')
           .select(`
-            id,
-            unpaid_games,
+            friendly_name,
+            unpaid_games_count,
             unpaid_games_modifier
           `);
 
@@ -83,10 +83,10 @@ export const usePlayerGrid = () => {
           return;
         }
 
-        // Create map of unpaid games data
+        // Create map of unpaid games data by friendly name
         const unpaidGamesMap = (unpaidGamesData || []).reduce((acc, player) => {
-          acc[player.id] = {
-            unpaidGames: player.unpaid_games || 0,
+          acc[player.friendly_name] = {
+            unpaidGames: player.unpaid_games_count || 0,
             unpaidGamesModifier: player.unpaid_games_modifier || 0
           };
           return acc;
@@ -116,6 +116,7 @@ export const usePlayerGrid = () => {
           setPlayers(players.map((player) => {
             const streakData = registrationStreakMap[player.friendly_name] || { bonus: 0, applies: false };
             const winStats = winRateMap[player.id] || { wins: 0, draws: 0, losses: 0, totalGames: 0, winRate: 0 };
+            const unpaidStats = unpaidGamesMap[player.friendly_name] || { unpaidGames: 0, unpaidGamesModifier: 0 };
             return {
               id: player.id,
               friendlyName: player.friendly_name,
@@ -140,8 +141,8 @@ export const usePlayerGrid = () => {
               bonusModifier: 0,
               penaltyModifier: 0,
               totalModifier: 0,
-              unpaidGames: unpaidGamesMap[player.id]?.unpaidGames || 0,
-              unpaidGamesModifier: unpaidGamesMap[player.id]?.unpaidGamesModifier || 0,
+              unpaidGames: unpaidStats.unpaidGames,
+              unpaidGamesModifier: unpaidStats.unpaidGamesModifier,
               registrationStreakBonus: streakData.bonus,
               registrationStreakBonusApplies: streakData.applies
             };

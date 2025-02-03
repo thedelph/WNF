@@ -35,7 +35,7 @@ The player card displays various modifiers that affect XP gain:
 4. **Active Penalties**: -10% XP per active penalty
 5. **Bench Warmer**: +5% XP per consecutive game in reserves
 6. **Registration Streak**: +2.5% XP per consecutive registration (shown as "Reg. Streak")
-7. **Unpaid Games**: -30% XP per unpaid game
+7. **Unpaid Games**: -50% XP per unpaid game
 
 Each modifier is displayed in a colored badge with its corresponding percentage:
 - Green badges for positive modifiers (streak bonus, active bonuses)
