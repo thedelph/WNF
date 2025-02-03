@@ -60,14 +60,14 @@ The `calculate_player_xp_tiered_by_date` function implements the following logic
 3. **Tier Multipliers** (applies to both base and reserve XP):
    - Weekly (tier 1): 1.0x multiplier
    - Bi-weekly (tier 2): 2.0x multiplier
-   - Monthly (tier 3): 4.0x multiplier
+   - Four-weekly (tier 3): 4.0x multiplier
 4. **Eligible Games**:
    - Games are numbered within each tier period
    - A game is eligible if: `MOD(game_number - 1, required_gap) = 0`
-   - Example: For monthly tier (gap=4), eligible games are #1, #5, #9, etc.
+   - Example: For four-weekly tier (gap=4), eligible games are #1, #5, #9, etc.
 
 ### Example
-A player in the monthly tier (4x multiplier):
+A player in the four-weekly tier (4x multiplier):
 - Selected Game #1: 20 * 4.0 = 80 XP (eligible)
 - Selected Game #2: 0 XP (not eligible)
 - Selected Game #3: 0 XP (not eligible)
@@ -179,7 +179,7 @@ Each tier has specific requirements to maintain a streak:
    - Example: Playing every other Wednesday maintains streak
    - A gap of 15 or more days breaks the streak
 
-3. **Monthly Tier (4x multiplier)**
+3. **Four-Weekly Tier (4x multiplier)**
    - Must play at least once every 28 days
    - Example: Playing Jan 1st → Jan 29th → Feb 26th maintains streak
    - A gap of 29 or more days breaks the streak
@@ -199,7 +199,7 @@ Bi-Weekly Tier Example (2x multiplier):
 - 5-game streak bonus (10%): +4
 - Total: 44 XP per game
 
-Monthly Tier Example (4x multiplier):
+Four-Weekly Tier Example (4x multiplier):
 - Base XP: 80 (20 × 4.0)
 - 5-game streak bonus (10%): +8
 - Total: 88 XP per game
@@ -214,7 +214,7 @@ Monthly Tier Example (4x multiplier):
 
 2. **Tier Changes**
    - When changing tiers, streak requirements immediately change to match the new tier
-   - Example: Moving from Weekly to Monthly tier means you now have 28 days between games
+   - Example: Moving from Weekly to Four-weekly tier means you now have 28 days between games
 
 3. **Edge Cases**
    - Playing multiple games within your tier's window counts as normal
