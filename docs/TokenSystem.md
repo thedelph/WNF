@@ -15,7 +15,7 @@ The token system provides players with a guaranteed slot option for games. Each 
   - Day 23+: New token available for next game
 - System enforces the single-token rule via database triggers
 
-## Token Usage
+## Token Usage and Forgiveness
 When a player has an available token:
 1. They can see a priority token toggle with a coin icon during game registration
 2. Using a priority token guarantees them a slot in that game
@@ -23,6 +23,52 @@ When a player has an available token:
 4. The token is only consumed when the game is marked as completed
 5. If a player drops out or the game is cancelled, the token is automatically returned
 6. New tokens are reissued every 4 weeks
+
+### Token Forgiveness Rules
+The system includes a token forgiveness mechanism that works as follows:
+
+1. **Basic Token Forgiveness**
+   - If a player uses their token but would have gotten in by merit anyway (based on XP), their token is returned
+   - This only applies if no other token users affected their merit position
+
+2. **Token Interaction Effects**
+   - If Player A uses a token and would get in by merit, but Player B also uses a token which pushes Player A out of merit position:
+     - Both tokens are consumed
+     - This is because Player A actually needed their token due to Player B's token effect
+   - If Player A uses a token and would still get in by merit even after considering other players' token usage:
+     - Player A's token is returned (forgiven)
+     - This is because they would have gotten in regardless of other token effects
+
+3. **Merit Position Calculation**
+   - Merit positions are calculated AFTER considering all token effects
+   - A player only gets their token returned if they would still be in a merit position after all token slots are allocated
+   - This ensures tokens are only forgiven when they weren't actually needed
+
+### Example Scenarios
+
+1. **Solo Token Usage**
+   ```
+   Player A (high XP) uses token, no one else uses tokens
+   → Player A would get in by merit anyway
+   → Token is returned
+   ```
+
+2. **Competitive Token Usage**
+   ```
+   Player A (high XP) uses token
+   Player B (lower XP) uses token, pushing Player A out of merit spots
+   → Both tokens are consumed
+   → This is fair because both players needed their tokens
+   ```
+
+3. **Multiple Token Usage with Merit**
+   ```
+   Player A (very high XP) uses token
+   Player B (medium XP) uses token
+   → Player A would still get in by merit even after B's token
+   → Player A's token is returned
+   → Player B's token is consumed
+   ```
 
 ## Token States
 
@@ -162,6 +208,7 @@ SELECT * FROM get_token_history(
 1. Token Selection (First)
    - Players using tokens are guaranteed slots
    - Token slots are deducted from XP slots
+   - Token forgiveness is calculated after all token effects are considered
 
 2. XP Selection (Second)
    - Remaining slots (minus random slots) filled by XP

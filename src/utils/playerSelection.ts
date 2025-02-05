@@ -88,7 +88,7 @@ export const handlePlayerSelection = async ({
       };
     });
 
-    // First, select players using tokens
+    // First, select players using tokens - they get guaranteed slots
     const tokenSelectedPlayers = players.filter(player => player.using_token);
     const remainingXpSlots = Math.max(0, xpSlots - tokenSelectedPlayers.length);
 
@@ -120,6 +120,48 @@ export const handlePlayerSelection = async ({
 
       // Same caps - check registration time
       return (a.registration_time || '').localeCompare(b.registration_time || '');
+    });
+
+    // Now check which token users would still get in by merit AFTER considering token effects
+    const allPlayersWithTokenEffects = [...players].sort((a, b) => {
+      // First compare by XP
+      if (b.xp !== a.xp) {
+        return b.xp - a.xp;
+      }
+
+      // If XP is equal, then check WhatsApp status
+      const aIsWhatsApp = a.whatsapp_group_member === 'Yes' || a.whatsapp_group_member === 'Proxy';
+      const bIsWhatsApp = b.whatsapp_group_member === 'Yes' || b.whatsapp_group_member === 'Proxy';
+      
+      if (aIsWhatsApp !== bIsWhatsApp) {
+        return aIsWhatsApp ? -1 : 1;
+      }
+
+      // Both have same XP and WhatsApp status - check streak
+      if (b.current_streak !== a.current_streak) {
+        return (b.current_streak || 0) - (a.current_streak || 0);
+      }
+
+      // Same streak - check caps
+      if (b.caps !== a.caps) {
+        return (b.caps || 0) - (a.caps || 0);
+      }
+
+      // Same caps - check registration time
+      return (a.registration_time || '').localeCompare(b.registration_time || '');
+    });
+
+    // Get who would get in by merit after token effects
+    const remainingMeritSlots = allPlayersWithTokenEffects
+      .filter(player => !player.using_token) // Exclude token users since they already have slots
+      .slice(0, remainingXpSlots); // Take only the remaining merit slots
+
+    // Now check which token users would still get in by merit
+    const tokenUsersSelectedByMerit = tokenSelectedPlayers.filter(tokenPlayer => {
+      // Find their position in the merit-based list (including token effects)
+      const meritPosition = allPlayersWithTokenEffects.findIndex(p => p.id === tokenPlayer.id);
+      // They would get in by merit if their position is within the original xpSlots
+      return meritPosition < xpSlots;
     });
 
     // Select players by XP for remaining XP slots
@@ -193,10 +235,14 @@ export const handlePlayerSelection = async ({
 
     // Combine all selected players
     const selectedPlayers = [
-      ...tokenSelectedPlayers.map(player => ({
-        ...player,
-        selection_method: 'token'
-      })),
+      ...tokenSelectedPlayers.map(player => {
+        const wouldGetInByMerit = tokenUsersSelectedByMerit.some(p => p.id === player.id);
+        return {
+          ...player,
+          selection_method: wouldGetInByMerit ? 'merit' : 'token',
+          using_token: !wouldGetInByMerit // Only consume token if they wouldn't get in by merit
+        };
+      }),
       ...xpSelectedPlayers.map(player => ({
         ...player,
         selection_method: 'merit'
@@ -284,7 +330,12 @@ export const handlePlayerSelection = async ({
 
       // Update token players first
       for (const player of tokenSelectedPlayers) {
-        await updatePlayerStatus(player.id, 'selected', 'token');
+        const wouldGetInByMerit = tokenUsersSelectedByMerit.some(p => p.id === player.id);
+        await updatePlayerStatus(
+          player.id, 
+          'selected', 
+          wouldGetInByMerit ? 'merit' : 'token'
+        );
       }
 
       // Update merit-based selections

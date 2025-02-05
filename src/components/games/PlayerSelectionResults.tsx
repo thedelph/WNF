@@ -33,7 +33,8 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
 
   const generateReasoning = () => {
     const tokenPlayers = selectedPlayers.filter(p => p.using_token);
-    const meritPlayers = selectedPlayers.filter(p => p.selection_method === 'merit' && !p.using_token);
+    const forgivenTokenPlayers = selectedPlayers.filter(p => p.selection_method === 'merit' && p.using_token === false && p.had_token === true);
+    const meritPlayers = selectedPlayers.filter(p => p.selection_method === 'merit' && !p.using_token && !p.had_token);
     const randomPlayers = selectedPlayers.filter(p => p.selection_method === 'random');
     const whatsappReserves = reservePlayers.filter(p => 
       p.whatsapp_group_member === 'Yes' || p.whatsapp_group_member === 'Proxy'
@@ -75,6 +76,26 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
             })}
           </ul>
         </div>
+
+        {forgivenTokenPlayers.length > 0 && (
+          <div>
+            <h4 className="font-bold mb-2">Token Forgiveness ({forgivenTokenPlayers.length} players)</h4>
+            <p className="mb-2">These players used their token but would have been selected by merit anyway, so their tokens were returned:</p>
+            <ul className="list-disc pl-4">
+              {forgivenTokenPlayers.map(player => {
+                const stats = playerStats[player.id];
+                const isWhatsApp = player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy';
+                return (
+                  <li key={player.id} className="mb-2">
+                    <span className="font-semibold">{player.friendly_name}</span>: Token returned
+                    {' '}(Selected by merit with {stats?.xp || 0} XP)
+                    {isWhatsApp && ' (WhatsApp member)'}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         <div>
           <h4 className="font-bold mb-2">Merit Selection ({meritPlayers.length} players)</h4>

@@ -15,19 +15,46 @@ The player selection process is automatically triggered when a game's registrati
    - Token usage is processed before any other selection method
    - Token users are always displayed first in player lists, sorted by XP
    - Visual indicators (coin icon, background) clearly show token usage
+   - Token forgiveness is calculated after all token effects are considered
 
-2. **XP Priority**
+2. **Token Forgiveness**
+   - A player's token may be returned (forgiven) if they would have gotten in by merit
+   - Token forgiveness is calculated AFTER considering all token effects
+   - If Player A uses a token and would get in by merit:
+     - If no other token users affect their position: token is returned
+     - If Player B's token pushes them out of merit: token is consumed
+   - Example scenarios:
+     ```
+     Scenario 1: Solo Token Usage
+     - Player A (high XP) uses token, no other token users
+     → Would get in by merit anyway
+     → Token is returned
+
+     Scenario 2: Competitive Token Usage
+     - Player A (high XP) uses token
+     - Player B (lower XP) uses token, pushing A out of merit spots
+     → Both tokens consumed
+     → Fair because both needed their tokens
+
+     Scenario 3: Multiple Token Usage with Merit
+     - Player A (very high XP) uses token
+     - Player B (medium XP) uses token
+     → A would still get in by merit even after B's token
+     → A's token returned, B's token consumed
+     ```
+
+3. **XP Priority**
    - After token slots are allocated, XP becomes the primary sorting mechanism
    - Tiebreakers (WhatsApp, Streak, Caps, Registration Time) only apply when XP values are exactly equal
    - A lower XP player can never be selected over a higher XP player in merit selection, regardless of other factors
    - Non-token users are displayed after token users, sorted by XP
 
-3. **WhatsApp Status Equivalence**
+4. **WhatsApp Status Equivalence**
    - "Proxy" status is treated exactly the same as "Yes" for all purposes
    - Both statuses receive equal priority in both merit tiebreakers and random selection
    - Only "No" and NULL are treated as non-WhatsApp members
 
-4. **Random Selection Priority**
+5. **Random Selection Priority**
    - **WhatsApp Status Priority**
      - If exact number of WhatsApp members as random slots: all are selected
      - If more WhatsApp members than slots: random selection among WhatsApp members only
