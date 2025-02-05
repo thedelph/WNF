@@ -5,7 +5,7 @@ import { supabase } from '../utils/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { PlayerHeader } from '../components/profile/PlayerHeader';
-import { StatsGrid } from '../components/profile/StatsGrid';
+import StatsGrid from '../components/profile/StatsGrid';
 import { PlayerRating } from '../components/profile/PlayerRating';
 import { FilterHeader } from '../components/profile/GameHistory/FilterHeader';
 import { GameHistoryTable } from '../components/profile/GameHistory/GameHistoryTable';
@@ -462,7 +462,14 @@ export default function PlayerProfileNew() {
         </div>
       </motion.div>
 
-      <StatsGrid player={player} />
+      <StatsGrid profile={{
+        total_xp: player.xp,
+        current_streak: player.current_streak,
+        max_streak: player.max_streak,
+        active_bonuses: player.active_bonuses,
+        active_penalties: player.active_penalties,
+        rarity: player.rarity
+      }} />
 
       {/* Only show PlayerRating if not viewing own profile */}
       {(!user || user.id !== player.user_id) && (

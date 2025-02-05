@@ -18,27 +18,24 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
   playerStats,
   stats,
 }) => {
-  // Sort players by XP
+  // Sort players: Priority Token users first (by XP), then remaining players by XP
   const sortedRegistrations = [...registrations].sort((a, b) => {
     const aXp = playerStats[a.player.id]?.xp || 0;
     const bXp = playerStats[b.player.id]?.xp || 0;
-    return bXp - aXp; // Descending order
+    
+    // If both players are using tokens or neither is, sort by XP
+    if (a.using_token === b.using_token) {
+      return bXp - aXp;
+    }
+    
+    // If only one player is using a token, they come first
+    return a.using_token ? -1 : 1;
   });
 
   return (
     <div className="container mx-auto px-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 justify-items-center place-items-center">
         {sortedRegistrations.map((registration) => {
-          // Debug log for Lee S
-          if (registration.player.friendly_name === 'Lee S') {
-            console.log('Lee S Registration Data:', {
-              regStreakMapData: stats[registration.player.id],
-              registrationStreak: stats[registration.player.id]?.registrationStreak || 0,
-              registrationStreakApplies: stats[registration.player.id]?.registrationStreakApplies || false,
-              regStreakMap: stats,
-            });
-          }
-
           const streakModifier = stats[registration.player.id].currentStreak * 0.1;
           const bonusModifier = stats[registration.player.id].activeBonuses * 0.1;
           const penaltyModifier = stats[registration.player.id].activePenalties * -0.1;
@@ -79,6 +76,7 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
                 registrationStreakBonus={stats[registration.player.id].registrationStreak}
                 registrationStreakBonusApplies={stats[registration.player.id].registrationStreakApplies}
                 whatsapp_group_member={registration.player.whatsapp_group_member}
+                usingToken={registration.using_token}
               />
             </motion.div>
           );

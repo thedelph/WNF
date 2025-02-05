@@ -11,6 +11,8 @@ import { FaCheckSquare, FaSquare, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
 import { useAdmin } from '../../../hooks/useAdmin';
+import { usePlayerToken } from '../../../hooks/usePlayerToken';
+import { Tooltip } from '../../ui/Tooltip';
 
 interface GameRegistrationsProps {
   gameId: string;
@@ -50,6 +52,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
           status,
           selection_method,
           team,
+          using_token,
           player_stats!game_registrations_player_id_fkey (
             id,
             friendly_name,
@@ -91,6 +94,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
         status: reg.status,
         selectionMethod: reg.selection_method,
         team: reg.team,
+        usingToken: reg.using_token,
         player: {
           id: reg.player_stats.id,
           friendlyName: reg.player_stats.friendly_name,
@@ -143,6 +147,69 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
       toast.error('Failed to select random players', { id: toastId });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTokenToggle = async (registrationId: string, playerId: string, currentValue: boolean) => {
+    try {
+      if (!session) {
+        toast.error('You must be logged in to modify token usage');
+        return;
+      }
+
+      // If enabling token, check if player has one available
+      if (!currentValue) {
+        const { data: tokenValid } = await supabase
+          .rpc('check_player_token', { p_player_id: playerId });
+        
+        if (!tokenValid?.[0]?.has_token) {
+          toast.error('Player has no token available');
+          return;
+        }
+
+        // Use the token
+        const { data: tokenUsed } = await supabase
+          .rpc('use_player_token', { 
+            p_player_id: playerId,
+            p_game_id: gameId
+          });
+
+        if (!tokenUsed) {
+          toast.error('Failed to use token');
+          return;
+        }
+      }
+
+      // Update the registration
+      const { error } = await supabaseAdmin
+        .from('game_registrations')
+        .update({ using_token: !currentValue })
+        .eq('id', registrationId);
+
+      if (error) throw error;
+
+      toast.success(`Token ${!currentValue ? 'enabled' : 'disabled'} successfully`);
+      fetchRegistrations(); // Refresh registrations
+    } catch (error) {
+      toast.error(`Failed to update token status: ${error.message}`);
+    }
+  };
+
+  // Function to issue a token for a player
+  const handleIssueToken = async (playerId: string) => {
+    try {
+      if (!session || !isAdmin) {
+        toast.error('You must be an admin to issue tokens');
+        return;
+      }
+
+      const { error } = await supabaseAdmin.rpc('issue_player_tokens');
+      if (error) throw error;
+
+      toast.success('Token issued successfully');
+      fetchRegistrations(); // Refresh the view
+    } catch (error) {
+      toast.error(`Failed to issue token: ${error.message}`);
     }
   };
 
@@ -378,15 +445,33 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                     >
                       <div className="flex items-center space-x-2 flex-grow mr-2">
                         <span className="font-medium truncate">{player.player.friendlyName}</span>
-                        {player.status === 'selected' && (
-                          <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
-                            player.selectionMethod === 'random'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {player.selectionMethod === 'random' ? 'Random' : 'Merit'}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {player.status === 'selected' && (
+                            <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
+                              player.selectionMethod === 'random'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {player.selectionMethod === 'random' ? 'Random' : 'Merit'}
+                            </span>
+                          )}
+                          <Tooltip content="Toggle guaranteed slot token">
+                            <button
+                              onClick={() => handleTokenToggle(player.id, player.playerId, player.usingToken)}
+                              className={`btn btn-xs ${player.usingToken ? 'btn-primary' : 'btn-ghost'}`}
+                            >
+                              🎟️
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Issue new token">
+                            <button
+                              onClick={() => handleIssueToken(player.playerId)}
+                              className="text-primary hover:text-primary-focus"
+                            >
+                              🎟️
+                            </button>
+                          </Tooltip>
+                        </div>
                       </div>
                       <button
                         onClick={() => handleUnregister(player.id)}

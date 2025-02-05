@@ -4,21 +4,30 @@ This document explains how the automatic player selection process works in the W
 
 ## Overview
 
-The player selection process is automatically triggered when a game's registration window closes. It combines merit-based (XP), random selection, and WhatsApp group membership priority to ensure a fair and balanced player selection.
+The player selection process is automatically triggered when a game's registration window closes. It combines token-based priority, merit-based (XP), random selection, and WhatsApp group membership priority to ensure a fair and balanced player selection.
 
 ## Important Selection Rules
 
-1. **XP Priority**
-   - XP is always the primary sorting mechanism
+1. **Token Priority**
+   - Players using their monthly token are guaranteed a slot
+   - Token slots are deducted from the available merit slots
+   - Each player can only use one token per game
+   - Token usage is processed before any other selection method
+   - Token users are always displayed first in player lists, sorted by XP
+   - Visual indicators (coin icon, background) clearly show token usage
+
+2. **XP Priority**
+   - After token slots are allocated, XP becomes the primary sorting mechanism
    - Tiebreakers (WhatsApp, Streak, Caps, Registration Time) only apply when XP values are exactly equal
    - A lower XP player can never be selected over a higher XP player in merit selection, regardless of other factors
+   - Non-token users are displayed after token users, sorted by XP
 
-2. **WhatsApp Status Equivalence**
+3. **WhatsApp Status Equivalence**
    - "Proxy" status is treated exactly the same as "Yes" for all purposes
    - Both statuses receive equal priority in both merit tiebreakers and random selection
    - Only "No" and NULL are treated as non-WhatsApp members
 
-3. **Random Selection Priority**
+4. **Random Selection Priority**
    - **WhatsApp Status Priority**
      - If exact number of WhatsApp members as random slots: all are selected
      - If more WhatsApp members than slots: random selection among WhatsApp members only
@@ -169,9 +178,17 @@ This function performs the actual player selection using the following process:
    - Retrieves player XP data from `player_stats`
    - Gets WhatsApp group membership status (`whatsapp_group_member`) from `players` table
      - Possible values: "Yes", "Proxy", "No", or NULL (treated same as "No")
+   - Gets token usage status from `game_registrations.using_token`
    - Combines data into unified player list
 
-2. **Merit-based Selection**
+2. **Token-based Selection**
+   - Identifies all players who are using their monthly token
+   - Automatically selects these players for guaranteed slots
+   - Marks selected players with `selection_method: 'token'`
+   - Deducts token slots from available merit slots
+
+3. **Merit-based Selection**
+   - Uses remaining slots after token allocation
    - Sorts players by XP (highest to lowest)
    - In case of XP ties:
      1. First checks WhatsApp group membership status
@@ -180,83 +197,39 @@ This function performs the actual player selection using the following process:
      2. Current Streak (highest wins)
      3. Caps (highest wins)
      4. Registration Time (earliest wins)
-   - Selects top players for merit slots
+   - Selects top players for remaining merit slots
    - Marks selected players with `selection_method: 'merit'`
 
-### XP Tiebreak Examples
-
-Given 3 merit slots and the following players:
-
-**Scenario 1 - Mixed WhatsApp Status:**
-```
-Players tied at 100 XP:
-- Player A: WhatsApp = Yes
-- Player B: WhatsApp = No
-Result: Player A wins the tie (WhatsApp member priority)
-```
-
-**Scenario 2 - Same WhatsApp Status, Different Streaks:**
-```
-Players tied at 100 XP (both WhatsApp = Yes):
-- Player A: Streak = 3, Caps = 10, Registered: 9:00 AM
-- Player B: Streak = 5, Caps = 8, Registered: 8:00 AM
-Result: Player B wins the tie (higher streak)
-```
-
-**Scenario 3 - Same WhatsApp & Streak, Different Caps:**
-```
-Players tied at 100 XP (both WhatsApp = No):
-- Player A: Streak = 3, Caps = 15, Registered: 9:00 AM
-- Player B: Streak = 3, Caps = 10, Registered: 8:00 AM
-Result: Player A wins the tie (more caps)
-```
-
-**Scenario 4 - Only Registration Time Differs:**
-```
-Players tied at 100 XP (both WhatsApp = Yes):
-- Player A: Streak = 3, Caps = 10, Registered: 9:00 AM
-- Player B: Streak = 3, Caps = 10, Registered: 8:00 AM
-Result: Player B wins the tie (earlier registration)
-```
-
-3. **Random Selection with WhatsApp Priority**
-   - Identifies WhatsApp group members (`whatsapp_group_member` = 'Yes' or 'Proxy') in remaining players
-   - If WhatsApp group members exist:
-     - Prioritizes them for random slots
-     - If enough WhatsApp group members: selects randomly from only WhatsApp group members
-     - If not enough: fills remaining slots from non-WhatsApp members (where `whatsapp_group_member` is 'No' or NULL)
-   - If no WhatsApp group members: performs regular random selection
+4. **Random Selection**
+   - Always reserves 2 slots for random selection
+   - Excludes players already selected by token or merit
+   - Applies WhatsApp priority and weighted selection as described above
    - Marks selected players with `selection_method: 'random'`
 
-### WhatsApp Priority Examples
+### Selection Examples
 
-Given 18 max players (16 merit, 2 random) and 21 registered:
+**Scenario 1 - Mixed Selection Methods:**
+```
+18-player game (9v9):
+- 3 players using tokens
+- 13 players selected by XP (merit)
+- 2 players selected randomly
 
-**Scenario 1 - All Non-WhatsApp:**
-```
-Bottom 5 by XP (all have whatsapp_group_member = 'No' or NULL):
-- Regular random selection applies
-- Any 2 randomly selected
-- 3 to reserves
-```
-
-**Scenario 2 - Mixed with WhatsApp Priority:**
-```
-Bottom 5 by XP:
-- 2 WhatsApp group members (whatsapp_group_member = 'Yes' or 'Proxy')
-- 3 non-WhatsApp members (whatsapp_group_member = 'No' or NULL)
-- WhatsApp group members automatically get the 2 slots
-- Others to reserves
+Selection order:
+1. Token users get first priority (3 slots)
+2. Highest XP players fill remaining merit slots (13 slots)
+3. Random selection fills final slots (2 slots)
 ```
 
-**Scenario 3 - One WhatsApp Member:**
+**Scenario 2 - Token and XP Tie:**
 ```
-Bottom 5 by XP:
-- 1 WhatsApp group member (whatsapp_group_member = 'Yes' or 'Proxy')
-- 4 non-WhatsApp members (whatsapp_group_member = 'No' or NULL)
-- WhatsApp group member gets 1 slot
-- 1 randomly selected from others
-- 3 to reserves
+Players:
+- Player A: Using token, 80 XP
+- Player B: No token, 100 XP
+- Player C: Using token, 60 XP
+Result: 
+1. Players A and C are selected first (token priority)
+2. Player B is considered for remaining merit slots
 ```
 
 ## Data Storage and Access
@@ -273,6 +246,7 @@ The player selection process involves several key tables:
      - `status`: Selected/Reserve/Registered
      - `team`: Team assignment (for selected players)
      - Registration metadata (timestamps, etc.)
+     - `using_token`: Token usage status
 
 2. **game_selections**
    - Stores selection process metadata

@@ -1,6 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { PiCoinDuotone } from "react-icons/pi";
 import { Game } from '../../types/game';
 import CountdownTimer from '../../components/CountdownTimer';
 
@@ -21,6 +22,9 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 }) => {
   // Get the total number of registrations
   const currentlyRegistered = game.game_registrations?.length || 0;
+
+  // Count priority token users
+  const priorityTokenCount = game.game_registrations?.filter(reg => reg.using_token)?.length || 0;
 
   // Format the date and time
   const formattedDate = game.date ? format(new Date(game.date), 'EEEE, do MMMM yyyy') : '';
@@ -82,7 +86,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
       )}
 
       {/* Game Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className={`grid ${priorityTokenCount > 0 ? 'grid-cols-5' : 'grid-cols-4'} gap-4`}>
         <div className="bg-base-200 rounded-lg p-4 md:p-3 grid grid-rows-[1fr_auto] h-28 md:h-24">
           <div className="text-sm text-gray-600 text-center self-start">
             Total Players
@@ -96,9 +100,20 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             XP Slots
           </div>
           <div className="text-4xl font-bold text-center self-end -mt-1">
-            {(game.max_players || 0) - (game.random_slots || 0)}
+            {(game.max_players || 0) - (game.random_slots || 0) - priorityTokenCount}
           </div>
         </div>
+        {priorityTokenCount > 0 && (
+          <div className="bg-base-200 rounded-lg p-4 md:p-3 grid grid-rows-[1fr_auto] h-28 md:h-24">
+            <div className="text-sm text-gray-600 text-center self-start flex items-center justify-center gap-2">
+              Priority Tokens Used
+              <PiCoinDuotone size={16} className="text-gray-600" />
+            </div>
+            <div className="text-4xl font-bold text-center self-end -mt-1">
+              {priorityTokenCount}
+            </div>
+          </div>
+        )}
         <div className="bg-base-200 rounded-lg p-4 md:p-3 grid grid-rows-[1fr_auto] h-28 md:h-24">
           <div className="text-sm text-gray-600 text-center self-start">
             Random Slots

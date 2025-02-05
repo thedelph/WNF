@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Medal, Sparkles } from 'lucide-react'
+import { PiCoinDuotone } from "react-icons/pi"
 import { PlayerCardProps } from './PlayerCardTypes'
 import { PlayerCardModifiers } from './PlayerCardModifiers'
 import { PlayerCardBadges } from './PlayerCardBadges'
@@ -8,6 +9,7 @@ import WhatsAppIndicator from '../indicators/WhatsAppIndicator'
 import RankShield from './RankShield'
 import { usePlayerPenalties } from '../../hooks/usePlayerPenalties'
 import { useUser } from '../../hooks/useUser'
+import { Tooltip } from '../ui/Tooltip'
 
 /**
  * Displays the front face of the player card with primary information
@@ -20,6 +22,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   unpaidGamesModifier?: number, // XP modifier from past unpaid games (-30% per game)
   registrationStreakBonus?: number,
   registrationStreakBonusApplies?: boolean,
+  usingToken?: boolean,
 }> = ({
   id,
   friendlyName,
@@ -46,6 +49,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   unpaidGamesModifier = 0,
   registrationStreakBonus = 0,
   registrationStreakBonusApplies = false,
+  usingToken = false,
 }) => {
   const { dropoutPenalties } = usePlayerPenalties(id)
   const { player } = useUser()
@@ -130,6 +134,20 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         <WhatsAppIndicator 
           variant={whatsapp_group_member === "Proxy" ? "proxy" : "solid"} 
         />
+      )}
+      
+      {/* Token indicator at top */}
+      {usingToken && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
+          <Tooltip content="Using Priority Token">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+            >
+              <PiCoinDuotone size={24} className="text-yellow-400" />
+            </motion.div>
+          </Tooltip>
+        </div>
       )}
       
       {/* Rank Shield */}

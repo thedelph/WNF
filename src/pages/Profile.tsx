@@ -10,29 +10,46 @@ import AvatarCreator from '../components/AvatarCreator'
 import PaymentHistory from '../components/profile/PaymentHistory'
 import XPBreakdown from '../components/profile/XPBreakdown'
 import StatsGrid from '../components/profile/StatsGrid'
+import TokenStatus from '../components/profile/TokenStatus'
 
 interface PlayerProfile {
-  id: string
-  user_id: string
-  friendly_name: string
-  xp: number
-  caps: number
-  active_bonuses: number
-  active_penalties: number
-  win_rate: number
-  current_streak: number
-  max_streak: number
-  avatar_svg: string | null
-  avatar_options: any
-  bench_warmer_streak: number
-  registration_streak: number
-  registration_streak_applies: boolean
-  unpaid_games: number
+  friendly_name: string;
+  current_stored_xp: number;
+  base_xp: number;
+  reserve_xp: number;
+  reserve_games: number;
+  subtotal_before_modifiers: number;
+  attendance_streak: number;
+  attendance_streak_modifier: number;
+  reserve_game_modifier: number;
+  registration_streak: number;
+  registration_streak_modifier: number;
+  unpaid_games_count: number;
+  unpaid_games_modifier: number;
+  total_xp: number;
+  rarity?: number;
+  active_bonuses?: number;
+  active_penalties?: number;
+  current_streak?: number;
+  max_streak?: number;
+  avatar_svg?: string | null;
+  avatar_options?: any;
+  token?: {
+    status: string;
+    last_used_at: string | null;
+    next_token_at: string | null;
+    created_at: string;
+  };
 }
 
 interface ExtendedPlayerData extends PlayerProfile {
-  rarity: number
+  xp: number
   reserveXP: number
+  gameSequences?: Array<{
+    sequence: number;
+    status: string;
+    team: string;
+  }>;
 }
 
 // Calculate rarity percentile based on player's XP compared to all players
@@ -71,86 +88,124 @@ export default function Component() {
         if (latestSeqError) throw latestSeqError;
         setLatestSequence(latestSeqData?.sequence_number || 0);
 
-        // Get player stats from the updated player_stats view that includes XP
-        const { data: profileData, error: profileError } = await supabase
-          .from('player_stats')
+        // First get the player data to get the friendly_name and UI fields
+        const { data: playerData, error: playerError } = await supabase
+          .from('players')
           .select(`
             id,
-            user_id,
             friendly_name,
-            xp,
-            caps,
             active_bonuses,
             active_penalties,
             current_streak,
             max_streak,
             avatar_svg,
-            avatar_options,
-            bench_warmer_streak,
-            registration_streak,
-            registration_streak_applies,
-            unpaid_games,
-            reserve_xp_transactions (
-              xp_amount
-            )
+            avatar_options
           `)
           .eq('user_id', user!.id)
           .single();
 
+        if (playerError) throw playerError;
+        if (!playerData) throw new Error('Player not found');
+
+        // Get token status
+        const { data: tokenData, error: tokenError } = await supabase
+          .from('player_tokens')
+          .select('*')
+          .eq('player_id', playerData.id)
+          .single();
+
+        console.log('Token debug:', {
+          playerId: playerData.id,
+          tokenData,
+          tokenError
+        });
+
+        if (tokenError && tokenError.code !== 'PGRST116') throw tokenError;
+
+        // Then get the XP breakdown using the friendly_name
+        const { data: xpData, error: profileError } = await supabase
+          .from('player_xp_breakdown')
+          .select(`
+            friendly_name,
+            current_stored_xp,
+            base_xp,
+            reserve_xp,
+            reserve_games,
+            subtotal_before_modifiers,
+            attendance_streak,
+            attendance_streak_modifier,
+            reserve_game_modifier,
+            registration_streak,
+            registration_streak_modifier,
+            unpaid_games_count,
+            unpaid_games_modifier,
+            total_xp
+          `)
+          .eq('friendly_name', playerData.friendly_name)
+          .single();
+
         if (profileError) throw profileError;
-        if (!profileData) throw new Error('Player not found');
+        if (!xpData) throw new Error('Player not found');
 
-        // Get win rate data
-        const { data: winRatesData, error: winRatesError } = await supabase
-          .rpc('get_player_win_rates');
+        // Combine all data
+        const combinedProfile: ExtendedPlayerData = {
+          ...playerData,
+          ...xpData,
+          token: tokenData ? {
+            status: tokenData.used_at ? 'USED' : tokenData.expires_at ? 'EXPIRED' : 'AVAILABLE',
+            last_used_at: tokenData.used_at,
+            next_token_at: tokenData.used_at ? new Date(tokenData.used_at).getTime() + (22 * 24 * 60 * 60 * 1000) : null,
+            created_at: tokenData.issued_at
+          } : {
+            status: 'NO_TOKEN',
+            last_used_at: null,
+            next_token_at: null,
+            created_at: new Date().toISOString()
+          }
+        };
 
-        if (winRatesError) throw winRatesError;
+        // Get all players' XP for rarity calculation
+        const { data: allXPData, error: xpError } = await supabase
+          .from('player_xp_breakdown')
+          .select('total_xp');
 
-        const playerWinRate = winRatesData?.find(wr => wr.id === profileData.id)?.win_rate || 0;
+        if (xpError) throw xpError;
 
-        // Calculate total reserve XP
-        const totalReserveXP = profileData.reserve_xp_transactions?.reduce((sum, tx) => sum + (tx.xp_amount || 0), 0) || 0;
+        const allXP = allXPData.map(p => p.total_xp || 0);
+        const rarity = calculateRarity(combinedProfile.total_xp, allXP);
 
         // Get game sequences for the player
         const { data: gameData, error: gameError } = await supabase
           .from('game_registrations')
           .select(`
-            games (
+            game_id,
+            games!inner (
               sequence_number,
               is_historical
             ),
-            status
+            status,
+            team
           `)
-          .eq('player_id', profileData.id)
-          .order('games(sequence_number)', { ascending: false });
+          .eq('player_id', combinedProfile.id)
+          .order('game_id', { ascending: false });
 
         if (gameError) throw gameError;
-        
-        const sequences = gameData
-          ?.filter(reg => reg.games?.is_historical)
-          .map(reg => ({
-            sequence: reg.games?.sequence_number,
-            status: reg.status || 'selected'
-          }))
-          .filter(game => game.sequence !== undefined) || [];
-        setGameSequences(sequences);
 
-        // Calculate rarity based on all players' XP
-        const { data: allXPData, error: xpError } = await supabase
-          .from('player_stats')
-          .select('xp')
-
-        if (xpError) throw xpError
-
-        const allXP = allXPData.map(p => p.xp || 0)
-        const rarity = calculateRarity(profileData.xp, allXP)
+        const sequences = gameData?.map(reg => ({
+          sequence: reg.games?.sequence_number || 0,
+          status: reg.status,
+          team: reg.team
+        })).filter(seq => seq.sequence > 0) || [];
 
         setProfile({
-          ...profileData,
-          win_rate: playerWinRate,
+          ...combinedProfile,
           rarity,
-          reserveXP: totalReserveXP
-        })
+          gameSequences: sequences,
+          xp: combinedProfile.total_xp,
+          reserveXP: combinedProfile.reserve_xp
+        });
+
+        setGameSequences(sequences);
       } catch (err) {
         console.error('Error fetching player data:', err)
         setError(err instanceof Error ? err.message : 'An error occurred while fetching player data')
@@ -387,7 +442,7 @@ export default function Component() {
                       activeBonuses: profile.active_bonuses || 0,
                       activePenalties: profile.active_penalties || 0,
                       currentStreak: profile.current_streak || 0,
-                      gameHistory: gameSequences.map(sequence => ({
+                      gameHistory: profile.gameSequences.map(sequence => ({
                         sequence: sequence.sequence,
                         status: sequence.status
                       })),
@@ -417,6 +472,15 @@ export default function Component() {
                 transition={{ delay: 0.4, duration: 0.5 }}
                 className="space-y-4 sm:space-y-8"
               >
+                {profile && <StatsGrid profile={profile} />}
+                {profile && (
+                  <TokenStatus 
+                    status={profile.token?.status || 'NO_TOKEN'}
+                    lastUsedAt={profile.token?.last_used_at}
+                    nextTokenAt={profile.token?.next_token_at}
+                    createdAt={profile.token?.created_at || new Date().toISOString()}
+                  />
+                )}
                 <PaymentHistory />
               </motion.div>
             </div>

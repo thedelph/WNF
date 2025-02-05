@@ -6,21 +6,24 @@ interface UseGameRegistrationProps {
   gameId: string | undefined;
   isUserRegistered: boolean;
   onRegistrationChange: () => Promise<void>;
+  useToken: boolean;
+  setUseToken: (value: boolean) => void;
 }
 
 export const useGameRegistration = ({
   gameId,
   isUserRegistered,
-  onRegistrationChange
+  onRegistrationChange,
+  useToken,
+  setUseToken
 }: UseGameRegistrationProps) => {
   const [isRegistering, setIsRegistering] = useState(false);
 
   const handleRegistration = async () => {
     if (!gameId) return;
-    
-    try {
-      setIsRegistering(true);
+    setIsRegistering(true);
 
+    try {
       // Get current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -42,7 +45,7 @@ export const useGameRegistration = ({
       }
 
       if (!playerProfile) {
-        toast.error('No player profile found');
+        console.error('No player profile found');
         return;
       }
 
@@ -61,22 +64,36 @@ export const useGameRegistration = ({
           toast.error('Failed to unregister from game');
         } else {
           toast.success('Successfully unregistered from game');
+          setUseToken(false); // Reset token usage on unregister
         }
       } else {
+        // Verify token availability if trying to use one
+        if (useToken) {
+          const { data } = await supabase
+            .rpc('check_player_token', { p_player_id: playerProfile.id });
+
+          const hasToken = !!data?.[0]?.has_token;
+          if (!hasToken) {
+            toast.error('No priority token available');
+            return;
+          }
+        }
+
         // Register
         const { error } = await supabase
           .from('game_registrations')
           .insert({
             game_id: gameId,
             player_id: playerProfile.id,
-            status: 'registered'
+            status: 'registered',
+            using_token: useToken
           });
 
         if (error) {
           console.error('Error registering:', error);
           toast.error('Failed to register for game');
         } else {
-          toast.success('Successfully registered for game');
+          toast.success(`Successfully registered for game${useToken ? ' using token' : ''}`);
         }
       }
 

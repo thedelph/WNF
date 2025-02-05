@@ -43,6 +43,7 @@ export const GameDetails: React.FC<GameDetailsProps> = ({
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(true);
   const [playerStats, setPlayerStats] = useState<Record<string, { xp: number }>>({});
+  const [priorityTokenCount, setPriorityTokenCount] = useState(0);
 
   useEffect(() => {
     const fetchPlayerStats = async () => {
@@ -56,6 +57,18 @@ export const GameDetails: React.FC<GameDetailsProps> = ({
           .in('id', game.game_registrations?.map(player => player.id) || []);
 
         if (statsError) throw statsError;
+
+        // Get count of players using priority tokens
+        const { data: tokenData, error: tokenError } = await supabase
+          .from('game_registrations')
+          .select('id')
+          .eq('game_id', game.id)
+          .eq('used_token', true);
+
+        if (tokenError) throw tokenError;
+
+        // Set priority token count
+        setPriorityTokenCount(tokenData?.length || 0);
 
         // Transform into a lookup object
         const statsLookup = statsData.reduce((acc, player) => {
@@ -74,7 +87,7 @@ export const GameDetails: React.FC<GameDetailsProps> = ({
     if (game.game_registrations?.length > 0) {
       fetchPlayerStats();
     }
-  }, [game.game_registrations]);
+  }, [game.game_registrations, game.id]);
 
   const handleRegisterClick = async () => {
     try {
@@ -139,7 +152,13 @@ export const GameDetails: React.FC<GameDetailsProps> = ({
           </div>
           <div className="stat bg-base-200 rounded-lg p-4">
             <div className="stat-title">XP Slots</div>
-            <div className="stat-value">{game.max_players - game.random_slots}</div>
+            <div className="stat-value">{game.max_players - game.random_slots - priorityTokenCount}</div>
+            <div className="stat-desc">After deducting token & random slots</div>
+          </div>
+          <div className="stat bg-base-200 rounded-lg p-4">
+            <div className="stat-title">Priority Token Slots</div>
+            <div className="stat-value text-primary">{priorityTokenCount}</div>
+            <div className="stat-desc">Guaranteed slots</div>
           </div>
           <div className="stat bg-base-200 rounded-lg p-4">
             <div className="stat-title">Random Slots</div>
