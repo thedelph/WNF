@@ -19,6 +19,39 @@ export interface ChangelogEntry {
 export const changelogData: ChangelogEntry[] = [
 
   {
+    version: '1.0.9',
+    date: '05/02/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Priority Token Feature',
+            details: "Gives players a guaranteed slot in games when they use a priority token. Priority tokens are reissued every 4 weeks. The amount of XP slots are reduced by the number of tokens used."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          },
+        ]
+      }
+    ]
+  },
+  {
     version: '1.0.8',
     date: '24/01/2025',
     sections: [
