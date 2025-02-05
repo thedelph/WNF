@@ -17,18 +17,18 @@ The token system provides players with a guaranteed slot option for games. Each 
 
 ## Token Usage
 When a player has an available token:
-1. They can see a token toggle during game registration
-2. Using a token guarantees them a slot in that game
+1. They can see a priority token toggle with a coin icon during game registration
+2. Using a priority token guarantees them a slot in that game
 3. Token slots are deducted from XP slots (not random slots)
 4. The token is only consumed when the game is marked as completed
 5. If a player drops out or the game is cancelled, the token is automatically returned
-6. After using a token, there's a 22-day cooldown before getting a new one
+6. New tokens are reissued every 4 weeks
 
 ## Token States
 
 1. **Available**
    - Token can be used for any game
-   - No expiration date
+   - Reissued every 4 weeks
    - Remains valid until used
 
 2. **Reserved**
@@ -180,14 +180,17 @@ SELECT * FROM get_token_history(
 
 ### TokenToggle
 Located in: `src/components/game/TokenToggle.tsx`
-- Shows token availability
-- Displays expiration date
-- Provides usage tooltip
+- Shows token availability with a coin icon
+- Icon changes color when token is selected (yellow when active, gray when inactive)
+- Provides usage tooltip explaining:
+  - "Using a token guarantees you a slot in this game"
+  - "Tokens are reissued every 4 weeks"
+- Uses React Icons (PiCoinDuotone) for consistent icon styling
 
 ### Token Indicator
 Located in: `src/components/player-card/PlayerCardFront.tsx`
 - Shows a yellow coin icon at the top of the player card
-- Indicates when a player is using their token for the current game
+- Indicates when a player is using their priority token for the current game
 - Includes a tooltip explaining "Using Priority Token"
 - Animated entrance effect using Framer Motion
 
