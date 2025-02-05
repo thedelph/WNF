@@ -52,40 +52,110 @@ CREATE INDEX idx_players_current_tier ON players(current_tier_period_id);
 - Tier changes are tracked automatically via database triggers
 - When a player changes tiers, the previous tier period is closed with an end_date
 
-### XP Calculation
-The `calculate_player_xp_tiered_by_date` function implements the following logic:
+### XP Calculation Logic
 
-1. **Base Game XP**: 20 points per eligible game
-2. **Reserve Game XP**: 5 points per reserve game
-3. **Tier Multipliers** (applies to both base and reserve XP):
-   - Weekly (tier 1): 1.0x multiplier
-   - Bi-weekly (tier 2): 2.0x multiplier
-   - Four-weekly (tier 3): 4.0x multiplier
-4. **Eligible Games**:
-   - Games are numbered within each tier period
-   - A game is eligible if: `MOD(game_number - 1, required_gap) = 0`
-   - Example: For four-weekly tier (gap=4), eligible games are #1, #5, #9, etc.
+The XP calculation follows these steps:
 
-### Example
-A player in the four-weekly tier (4x multiplier):
-- Selected Game #1: 20 * 4.0 = 80 XP (eligible)
-- Selected Game #2: 0 XP (not eligible)
-- Selected Game #3: 0 XP (not eligible)
-- Selected Game #4: 0 XP (not eligible)
-- Selected Game #5: 20 * 4.0 = 80 XP (eligible)
-- Reserve games: 5 * 4.0 = 20 XP each
+1. **Base Points Calculation**
+   - Games are ordered by sequence number (most recent first)
+   - Base points are assigned based on games_ago:
+     - 0 games ago: 20 points
+     - 1-2 games ago: 18 points
+     - 3-4 games ago: 16 points
+     - 5-9 games ago: 14 points
+     - 10-19 games ago: 12 points
+     - 20-29 games ago: 10 points
+     - 30-39 games ago: 5 points
+     - 40+ games ago: 0 points
 
-### Database Schema Updates
-- Added `start_date` and `end_date` to `player_tiers` table
-- Modified triggers to work with dates instead of game sequences
-- Each tier defines its `required_gap` for eligible game calculation
+2. **Tier Multipliers**
+   - Base points are multiplied by the tier's XP multiplier:
+     - Weekly: 1.0x
+     - Bi-Weekly: 2.0x
+     - Monthly: 4.0x
 
-### Migration Notes
-- Successfully migrated Mike M. as test case from weekly to 4-weekly tier
-- Tier change date: January 22, 2025
-- First game under new tier earned 80 XP (20 base * 4.0 multiplier)
+3. **Modifiers**
+   All modifiers are calculated based on the current state and apply to the total XP:
+   
+   a. **Streak Modifier**
+   - +10% per game in the streak
+   - Streak is calculated based on consecutive game sequence numbers and tier requirements
+   - A streak is broken when there's a gap in sequence numbers that exceeds the tier's required gap
+   - Streak rules are determined by the tier in effect at the time of each game:
+     - Weekly tier: Gap must be ≤ 1
+     - Monthly tier: Gap must be ≤ 4
+   - When a player changes tiers:
+     - Their streak continues if they meet the required gap for their tier at the time of each game
+     - Example: A player with a 6-game streak in Weekly tier can extend it to 7 games after moving to Monthly tier if they play within 4 weeks
+     - The streak breaks if any gap exceeds the required gap for the tier at that time
+   
+   Implementation in `update_player_streaks()`:
+   ```sql
+   -- Determine required gap based on game date
+   SELECT 
+       g.sequence_number,
+       g.date,
+       CASE 
+           WHEN g.date >= '2025-01-22 00:00:00+00'::timestamptz THEN 4  -- Monthly tier
+           ELSE 1  -- Weekly tier
+       END as required_gap,
+       LAG(g.sequence_number) OVER (ORDER BY g.sequence_number DESC) - g.sequence_number as gap
+   FROM players p
+   JOIN game_registrations gr ON gr.player_id = p.id
+   JOIN games g ON g.id = gr.game_id
+   WHERE gr.status = 'selected'
+   AND g.completed = true
 
-## XP Calculation Implementation
+   -- Calculate streak by finding first gap that breaks the streak
+   SELECT 
+       player_id,
+       COALESCE((
+           SELECT rn - 1
+           FROM player_games pg2
+           WHERE pg2.player_id = player_games.player_id
+           AND (
+               -- Break streak if gap > required_gap for that game's tier
+               pg2.gap > pg2.required_gap
+           )
+           ORDER BY pg2.sequence_number DESC
+           LIMIT 1
+       ), (
+           SELECT COUNT(*)
+           FROM player_games pg3
+           WHERE pg3.player_id = player_games.player_id
+       )) as streak
+   ```
+   
+   b. **Reserve Modifier**
+   - +5% if the player was on reserve for the most recent game
+   
+   c. **Registration Modifier**
+   - +2.5% per game in the registration streak
+   
+   d. **Unpaid Modifier**
+   - -50% per unpaid game
+
+4. **Final XP Calculation**
+   ```
+   Final XP = ROUND(Total Base Points × (1 + Sum of All Modifiers))
+   ```
+   Where:
+   - Total Base Points = Sum of (Base Points × Tier Multiplier) for all games
+   - Sum of All Modifiers = Streak + Reserve + Registration + Unpaid modifiers
+
+### Example Calculation
+
+For a player in Monthly tier with:
+- Total base points across all games = 295.0
+- Current streak of 1 game (+10%)
+- No reserve bonus
+- No registration bonus
+- No unpaid penalty
+- Total modifier = 1.0 + 0.1 = 1.1
+
+Final XP = ROUND(295.0 × 1.1) = 325
+
+### XP Calculation Implementation
 
 ```sql
 CREATE OR REPLACE FUNCTION calculate_player_xp_tiered_by_date(p_player_id UUID)
@@ -158,10 +228,51 @@ BEGIN
         WHERE player_id = p_player_id
     );
 
+    -- Apply modifiers
+    total_xp := ROUND(total_xp * (1 + (
+        -- Streak modifier
+        (SELECT COUNT(*) FROM games WHERE player_id = p_player_id AND game_date > (CURRENT_DATE - INTERVAL '28 days')) * 0.1 +
+        -- Reserve modifier
+        (SELECT COUNT(*) FROM reserve_xp_transactions WHERE player_id = p_player_id AND game_date > (CURRENT_DATE - INTERVAL '28 days')) * 0.05 +
+        -- Registration modifier
+        (SELECT COUNT(*) FROM game_registrations WHERE player_id = p_player_id AND game_date > (CURRENT_DATE - INTERVAL '28 days')) * 0.025 +
+        -- Unpaid modifier
+        -(SELECT COUNT(*) FROM unpaid_games WHERE player_id = p_player_id AND game_date > (CURRENT_DATE - INTERVAL '28 days')) * 0.5
+    )));
+
     RETURN GREATEST(0, total_xp);
 END;
 $$ LANGUAGE plpgsql;
-```
+
+## Recent Updates
+
+### Streak Calculation Improvements
+- Updated streak calculation to use game sequence numbers instead of dates
+- This change ensures streaks are maintained even when games are cancelled due to venue closures or holidays
+- Implemented in the `update_player_streaks()` function which handles both regular and bench warmer streaks
+- Streaks are now properly tracked across all tier types (Weekly, Bi-Weekly, Monthly)
+
+## Next Steps
+
+1. **XP Calculation Review**
+   - Review and update the XP calculation function to use the new streak calculation logic
+   - Ensure XP multipliers are correctly applied based on player tiers
+   - Add comprehensive tests for XP calculations with different streak scenarios
+
+2. **UI Updates**
+   - Update the PlayerCard component to display both regular and bench warmer streaks
+   - Add tooltips to explain streak calculation logic to players
+   - Show visual indicators for streak progress
+
+3. **Documentation**
+   - Add API documentation for the updated streak calculation functions
+   - Update the XP system explanation document with the new streak logic
+   - Create example scenarios showing how streaks are maintained across game cancellations
+
+4. **Testing**
+   - Add test cases for streak calculations with various sequence number gaps
+   - Verify streak calculations work correctly for all tier types
+   - Test edge cases like long streaks and streaks across tier changes
 
 ## Streak System
 
@@ -191,17 +302,17 @@ Streak bonuses are percentage-based and naturally scale with each tier's XP mult
 ```
 Weekly Tier Example (1x multiplier):
 - Base XP: 20
-- 5-game streak bonus (10%): +2
+- Streak bonus (10%): +2
 - Total: 22 XP per game
 
 Bi-Weekly Tier Example (2x multiplier):
 - Base XP: 40 (20 × 2.0)
-- 5-game streak bonus (10%): +4
+- Streak bonus (10%): +4
 - Total: 44 XP per game
 
 Four-Weekly Tier Example (4x multiplier):
 - Base XP: 80 (20 × 4.0)
-- 5-game streak bonus (10%): +8
+- Streak bonus (10%): +8
 - Total: 88 XP per game
 ```
 
@@ -220,6 +331,93 @@ Four-Weekly Tier Example (4x multiplier):
    - Playing multiple games within your tier's window counts as normal
    - Only the gap between games matters, not the specific day of the week
    - Streaks break immediately if you exceed your tier's maximum gap
+
+## Streak Calculation
+
+### Overview
+Streaks are calculated differently based on a player's tier:
+
+1. **Weekly Tier**
+   - Streak counts consecutive games played (based on sequence numbers)
+   - A gap of 1 between games maintains the streak (e.g., games 1->2->3)
+   - A gap > 1 breaks the streak (e.g., games 1->3 would break it)
+   - Streak is the count of games until a gap > 1 is found
+
+2. **Monthly/Bi-weekly Tiers**
+   - Each game that is exactly required_gap after ANY previous game increases the streak
+   - In-between games don't increase the streak but can be used as base games for future streak games
+   - Required gaps:
+     - Bi-weekly: Every 2nd game (gap = 2)
+     - Monthly: Every 4th game (gap = 4)
+
+### Examples
+
+1. **Weekly Player Example**
+   ```
+   Games: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+   Gaps:  1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1
+   Streak = 15 (counts until gap > 1)
+   ```
+
+2. **Monthly Player Example 1**
+   ```
+   Games: 1, 5, 6, 9, 10
+   #1  -> Streak = 1 (first game)
+   #5  -> Streak = 2 (good, exactly 4 after #1)
+   #6  -> Streak = 2 (in-between game)
+   #9  -> Streak = 3 (good, exactly 4 after #5)
+   #10 -> Streak = 3 (in-between game)
+   ```
+
+3. **Monthly Player Example 2**
+   ```
+   Games: 1, 5, 6, 10
+   #1  -> Streak = 1 (first game)
+   #5  -> Streak = 2 (good, exactly 4 after #1)
+   #6  -> Streak = 2 (in-between game)
+   #10 -> Streak = 3 (good, exactly 4 after #6!)
+   ```
+
+4. **Bi-weekly Player Example 1**
+   ```
+   Games: 1, 3, 4, 5, 7
+   #1  -> Streak = 1 (first game)
+   #3  -> Streak = 2 (good, exactly 2 after #1)
+   #4  -> Streak = 2 (in-between game)
+   #5  -> Streak = 3 (good, exactly 2 after #3)
+   #7  -> Streak = 4 (good, exactly 2 after #5)
+   ```
+
+5. **Bi-weekly Player Example 2**
+   ```
+   Games: 1, 2, 3, 6
+   #1  -> Streak = 1 (first game)
+   #2  -> Streak = 1 (in-between game)
+   #3  -> Streak = 2 (good, exactly 2 after #1)
+   #6  -> Streak = 0 (breaks streak, gap > 2)
+   ```
+
+6. **Bi-weekly Player Example 3**
+   ```
+   Games: 1, 2, 4, 5, 6, 8
+   #1  -> Streak = 1 (first game)
+   #2  -> Streak = 1 (in-between game)
+   #4  -> Streak = 2 (good, exactly 2 after #2)
+   #5  -> Streak = 2 (in-between game)
+   #6  -> Streak = 3 (good, exactly 2 after #4)
+   #8  -> Streak = 4 (good, exactly 2 after #6)
+   ```
+
+### Implementation Notes
+- Streaks are updated via the `update_player_streaks()` trigger function
+- Function uses sequence numbers to calculate gaps between games
+- For Monthly/Bi-weekly tiers, any game can be used as a base for future streak games
+- Separate calculations for regular streaks and bench warmer streaks
+
+### Recent Updates
+- Changed from date-based to sequence-based calculation
+- Updated Monthly/Bi-weekly logic to allow in-between games as valid bases
+- Added support for bench warmer streaks using same logic
 
 ## Frontend Integration
 
