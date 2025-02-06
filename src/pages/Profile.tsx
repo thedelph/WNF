@@ -11,6 +11,7 @@ import PaymentHistory from '../components/profile/PaymentHistory'
 import XPBreakdown from '../components/profile/XPBreakdown'
 import StatsGrid from '../components/profile/StatsGrid'
 import TokenStatus from '../components/profile/TokenStatus'
+import { executeWithRetry, executeBatchQueries } from '../utils/network'
 
 interface PlayerProfile {
   friendly_name: string;
@@ -74,48 +75,122 @@ export default function Component() {
         setLoading(true)
         setError(null)
 
-        // First get the latest sequence number from completed games
-        const { data: latestSeqData, error: latestSeqError } = await supabase
-          .from('games')
-          .select('sequence_number')
-          .eq('completed', true)
-          .order('sequence_number', { ascending: false })
-          .limit(1)
-          .single();
+        // Get player data first
+        const { data: playerData, error: playerError } = await executeWithRetry(
+          () => supabase
+            .from('players')
+            .select(`
+              id,
+              user_id,
+              friendly_name,
+              avatar_svg,
+              avatar_options,
+              current_streak,
+              max_streak,
+              player_xp (
+                xp,
+                rank,
+                rarity
+              )
+            `)
+            .eq('user_id', user?.id)
+            .single()
+        );
 
-        if (latestSeqError) throw latestSeqError;
+        if (playerError) {
+          console.error('Error fetching player data:', playerError);
+          toast.error('Failed to load player data');
+          return;
+        }
+
+        if (!playerData) {
+          toast.error('Player not found');
+          return;
+        }
+
+        // Get XP breakdown from player_xp table
+        const { data: xpData, error: xpError } = await executeWithRetry(
+          () => supabase
+            .from('player_xp')
+            .select('*')
+            .eq('player_id', playerData.id)
+            .single()
+        );
+
+        if (xpError) {
+          console.error('Error fetching XP data:', xpError);
+          toast.error('Failed to load XP data');
+          return;
+        }
+
+        // Combine the data
+        const profileData: ExtendedPlayerData = {
+          friendly_name: playerData.friendly_name,
+          current_stored_xp: xpData?.current_stored_xp || 0,
+          base_xp: xpData?.base_xp || 0,
+          reserve_xp: xpData?.reserve_xp || 0,
+          reserve_games: xpData?.reserve_games || 0,
+          subtotal_before_modifiers: xpData?.subtotal_before_modifiers || 0,
+          attendance_streak: xpData?.attendance_streak || 0,
+          attendance_streak_modifier: xpData?.attendance_streak_modifier || 0,
+          reserve_game_modifier: xpData?.reserve_game_modifier || 0,
+          registration_streak: xpData?.registration_streak || 0,
+          registration_streak_modifier: xpData?.registration_streak_modifier || 0,
+          unpaid_games_count: xpData?.unpaid_games_count || 0,
+          unpaid_games_modifier: xpData?.unpaid_games_modifier || 0,
+          total_xp: playerData.player_xp?.xp || 0,
+          rarity: playerData.player_xp?.rarity || 'Amateur',
+          current_streak: playerData.current_streak || 0,
+          max_streak: playerData.max_streak || 0,
+          avatar_svg: playerData.avatar_svg,
+          avatar_options: playerData.avatar_options,
+          xp: playerData.player_xp?.xp || 0,
+          reserveXP: xpData?.reserve_xp || 0
+        };
+
+        setProfile(profileData);
+        setFriendlyName(profileData.friendly_name || '');
+
+        // Now that we have the player data, get the latest sequence number
+        const { data: latestSeqData, error: latestSeqError } = await executeWithRetry(
+          () => supabase
+            .from('games')
+            .select('sequence_number')
+            .eq('completed', true)
+            .order('sequence_number', { ascending: false })
+            .limit(1)
+            .single()
+        );
+
+        if (latestSeqError) {
+          console.error('Error fetching latest sequence:', latestSeqError);
+        }
+
         setLatestSequence(latestSeqData?.sequence_number || 0);
 
-        // First get the player data to get the friendly_name and UI fields
-        const { data: playerData, error: playerError } = await supabase
-          .from('players')
-          .select(`
-            id,
-            friendly_name,
-            current_streak,
-            max_streak,
-            avatar_svg,
-            avatar_options,
-            player_xp (
-              xp,
-              rarity
-            )
-          `)
-          .eq('user_id', user?.id)
-          .single();
+        // Get token status with separate retry logic since it's optional
+        const { data: tokenData, error: tokenError } = await executeWithRetry(
+          () => supabase
+            .from('player_tokens') // Using correct table name
+            .select('*')
+            .eq('player_id', playerData.id)
+            .order('issued_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          { 
+            shouldToast: false,
+            maxRetries: 2 // Reduce retries for optional data
+          }
+        );
 
-        if (playerError) throw playerError;
-
-        // Get token status - get the most recent token
-        const { data: tokenData, error: tokenError } = await supabase
-          .from('player_tokens')
-          .select('*')
-          .eq('player_id', playerData.id)
-          .order('issued_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (tokenError && tokenError.code !== 'PGRST116') throw tokenError;
+        if (tokenError) {
+          // Only log 404s, don't show to user as it's expected when no token exists
+          if (tokenError.code === '404' || tokenError.message?.includes('404')) {
+            console.log('No token found for user');
+          } else {
+            console.error('Error fetching token data:', tokenError);
+          }
+        }
 
         // Determine token status
         const tokenStatus = tokenData ? {
@@ -130,120 +205,51 @@ export default function Component() {
           created_at: new Date().toISOString()
         };
 
-        // Get player's XP breakdown
-        const { data: xpBreakdown, error: xpError } = await supabase
-          .from('player_xp_breakdown')
-          .select('*')
-          .eq('friendly_name', playerData.friendly_name)
-          .single();
-
-        if (xpError) throw xpError;
-
-        // Get all registrations for historical games
-        const { data: registrations, error: registrationsError } = await supabase
-          .from('game_registrations')
-          .select(`
-            status,
-            games!inner (
-              sequence_number,
-              is_historical
-            )
-          `)
-          .eq('player_id', playerData.id)
-          .eq('games.is_historical', true);
+        // Get all registrations for historical games with retry
+        const { data: registrations, error: registrationsError } = await executeWithRetry(
+          () => supabase
+            .from('game_registrations')
+            .select(`
+              status,
+              games!inner (
+                sequence_number,
+                is_historical
+              )
+            `)
+            .eq('player_id', playerData.id),
+          { shouldToast: false }
+        );
 
         if (registrationsError) {
-          throw registrationsError;
+          console.error('Error fetching registrations:', registrationsError);
         }
-
-        // Count reserve appearances
-        const reserveCount = registrations?.filter(reg => reg.status === 'reserve').length || 0;
-        // Each reserve appearance gives 5 XP
-        const reserveXP = reserveCount * 5;
-
-        // Get registration streak data
-        const { data: regStreakData, error: regStreakError } = await supabase
-          .from('player_current_registration_streak_bonus')
-          .select('current_streak_length, bonus_applies')
-          .eq('friendly_name', playerData.friendly_name)
-          .maybeSingle();
-
-        if (regStreakError) {
-          throw regStreakError;
-        }
-
-        // Get count of unpaid games using the player_unpaid_games_view
-        const { data: unpaidGamesData, error: unpaidError } = await supabase
-          .from('player_unpaid_games_view')
-          .select('unpaid_games_count')
-          .eq('player_id', playerData.id)
-          .maybeSingle();
-
-        if (unpaidError) {
-          throw unpaidError;
-        }
-
-        const unpaidGamesCount = unpaidGamesData?.unpaid_games_count || 0;
-
-        // Get game sequences
-        const { data: gameSeqData, error: gameSeqError } = await supabase
-          .from('game_registrations')
-          .select(`
-            status,
-            team,
-            game:game_id(
-              sequence_number
-            )
-          `)
-          .eq('player_id', playerData.id)
-          .eq('game.is_historical', true)
-          .eq('game.completed', true)
-          .order('game(sequence_number)', { ascending: false });
-
-        if (gameSeqError) throw gameSeqError;
-
-        const sequences = gameSeqData
-          ?.filter(reg => reg.game !== null)
-          .map(reg => ({
-            sequence: reg.game.sequence_number,
-            status: reg.status,
-            team: reg.team
-          })) || [];
-
-        setGameSequences(sequences);
 
         // Combine all the data
-        const combinedProfile: ExtendedPlayerData = {
-          ...xpBreakdown,
-          friendly_name: playerData.friendly_name,
-          current_streak: playerData.current_streak || 0,
-          max_streak: playerData.max_streak || 0,
-          avatar_svg: playerData.avatar_svg,
-          avatar_options: playerData.avatar_options,
+        const updatedProfileData: ExtendedPlayerData = {
+          ...profileData,
           token: tokenStatus,
-          xp: playerData.player_xp?.xp || 0,
-          rarity: playerData.player_xp?.rarity || 'Amateur',
-          reserveXP: reserveXP,
-          gameSequences: sequences,
-          registrationStreak: regStreakData?.current_streak_length || 0,
-          registrationStreakApplies: regStreakData?.bonus_applies || false,
-          unpaidGames: unpaidGamesCount
+          gameSequences: registrations?.map(reg => ({
+            sequence: reg.games.sequence_number,
+            status: reg.status,
+            is_historical: reg.games.is_historical
+          })) || []
         };
 
-        setProfile(combinedProfile);
-        setFriendlyName(playerData.friendly_name);
-      } catch (err) {
-        console.error('Error fetching player data:', err)
-        setError(err instanceof Error ? err.message : 'An error occurred while fetching player data')
-      } finally {
-        setLoading(false)
-      }
-    }
+        setProfile(updatedProfileData);
 
-    if (user) {
-      fetchProfile()
+      } catch (err: any) {
+        console.error('Error in fetchProfile:', err);
+        setError(err.message || 'Failed to load profile data');
+        toast.error('Error loading profile data. Please try refreshing the page.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchProfile();
     }
-  }, [user])
+  }, [user?.id]);
 
   // Set up real-time subscription for profile updates
   useEffect(() => {

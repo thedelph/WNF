@@ -33,19 +33,19 @@ const StatsGrid: React.FC<StatsGridProps> = ({ profile }) => {
   const stats = [
     { 
       label: 'Total XP', 
-      value: profile.total_xp.toLocaleString()
+      value: (profile.total_xp || 0).toLocaleString()
     },
     { 
       label: 'Current Streak', 
-      value: profile.current_streak
+      value: profile.current_streak || 0
     },
     { 
       label: 'Max Streak', 
-      value: profile.max_streak
+      value: profile.max_streak || 0
     },
     { 
       label: 'Rarity', 
-      value: profile.rarity || 'N/A',
+      value: profile.rarity || 'Amateur',
       tooltip: profile.rarity ? getRarityDescription(profile.rarity) : 'Rarity not available'
     }
   ];

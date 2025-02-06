@@ -19,6 +19,8 @@ import clsx from 'clsx';
 import { Tooltip } from '../components/ui/Tooltip';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { fromUrlFriendly } from '../utils/urlHelpers';
+import TokenStatus from '../components/profile/TokenStatus';
+import { executeWithRetry } from '../utils/network';
 
 /**
  * PlayerProfile component displays detailed information about a player
@@ -53,15 +55,21 @@ export default function PlayerProfileNew() {
         setLoading(true);
         
         // Get the latest sequence number from completed games
-        const { data: latestSeqData, error: latestSeqError } = await supabase
-          .from('games')
-          .select('sequence_number')
-          .eq('completed', true)
-          .order('sequence_number', { ascending: false })
-          .limit(1)
-          .single();
+        const { data: latestSeqData, error: latestSeqError } = await executeWithRetry(
+          () => supabase
+            .from('games')
+            .select('sequence_number')
+            .eq('completed', true)
+            .order('sequence_number', { ascending: false })
+            .limit(1)
+            .single()
+        );
 
-        if (latestSeqError) throw latestSeqError;
+        if (latestSeqError) {
+          console.error('Error fetching latest sequence:', latestSeqError);
+          toast.error('Failed to load game sequence data');
+          return;
+        }
         setLatestSequence(latestSeqData?.sequence_number || 0);
 
         // Get player stats - using either ID or friendly name
@@ -86,77 +94,69 @@ export default function PlayerProfileNew() {
           `);
 
         // Apply the appropriate filter based on the parameter we received
-        const { data: playerData, error: playerError } = await (params.id 
-          ? playerQuery.eq('id', params.id)
-          : playerQuery.ilike('friendly_name', fromUrlFriendly(params.friendlyName || ''))
-        ).single();
+        const { data: playerData, error: playerError } = await executeWithRetry(
+          () => params.id 
+            ? playerQuery.eq('id', params.id)
+            : playerQuery.ilike('friendly_name', fromUrlFriendly(params.friendlyName || '')).single()
+        );
 
         if (playerError) {
-          throw playerError;
+          console.error('Error fetching player data:', playerError);
+          toast.error('Failed to load player data. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        if (!playerData) {
+          toast.error('Player not found');
+          setLoading(false);
+          return;
         }
 
         // Get count of unpaid games using the player_unpaid_games_view
-        const { data: unpaidGamesData, error: unpaidError } = await supabase
-          .from('player_unpaid_games_view')
-          .select('unpaid_games_count')
-          .eq('player_id', playerData.id)
-          .maybeSingle();
+        const { data: unpaidGamesData, error: unpaidError } = await executeWithRetry(
+          () => supabase
+            .from('player_unpaid_games_view')
+            .select('count')
+            .eq('player_id', playerData.id)
+            .single()
+        );
 
         if (unpaidError) {
-          throw unpaidError;
+          console.error('Error fetching unpaid games:', unpaidError);
+          toast.error('Failed to load unpaid games data');
+          return;
         }
 
-        const unpaidGamesCount = unpaidGamesData?.unpaid_games_count || 0;
+        const unpaidGamesCount = unpaidGamesData?.count || 0;
 
-        // Get reserve XP data
-        const { data: reserveXPData, error: reserveXPError } = await supabase
-          .from('reserve_xp_transactions')
-          .select('xp_amount')
-          .eq('player_id', playerData.id);
+        // Get reserve XP from transactions
+        const { data: reserveData, error: reserveError } = await executeWithRetry(
+          () => supabase
+            .from('reserve_xp_transactions')
+            .select('xp_amount')
+            .eq('player_id', playerData.id)
+        );
 
-        if (reserveXPError) {
-          throw reserveXPError;
+        if (reserveError) {
+          console.error('Error fetching reserve XP:', reserveError);
+          toast.error('Failed to load reserve XP data');
+          return;
         }
 
-        // Get registration streak data
-        const { data: regStreakData, error: regStreakError } = await supabase
-          .from('player_current_registration_streak_bonus')
-          .select('current_streak_length, bonus_applies')
-          .eq('friendly_name', playerData.friendly_name)
-          .maybeSingle();
-
-        if (regStreakError) {
-          throw regStreakError;
-        }
-
-        // Get all registrations for historical games
-        const { data: registrations, error: registrationsError } = await supabase
-          .from('game_registrations')
-          .select(`
-            status,
-            games!inner (
-              sequence_number,
-              is_historical
-            )
-          `)
-          .eq('player_id', playerData.id)
-          .eq('games.is_historical', true);
-
-        if (registrationsError) {
-          throw registrationsError;
-        }
-
-        // Count reserve appearances
-        const reserveCount = registrations?.filter(reg => reg.status === 'reserve').length || 0;
-        // Each reserve appearance gives 5 XP
-        const reserveXP = reserveCount * 5;
+        // Sum up all reserve XP transactions
+        const reserveXP = reserveData?.reduce((sum, transaction) => 
+          sum + (transaction.xp_amount || 0), 0) || 0;
 
         // Get player win rates
-        const { data: winRatesData, error: winRatesError } = await supabase
-          .rpc('get_player_win_rates');
+        const { data: winRatesData, error: winRatesError } = await executeWithRetry(
+          () => supabase.rpc('get_player_win_rates')
+        );
 
         if (winRatesError) {
-          throw winRatesError;
+          console.error('Error fetching win rates:', winRatesError);
+          toast.error('Failed to load win rate data');
+          return;
         }
 
         // Find win rate data for this player
@@ -165,11 +165,19 @@ export default function PlayerProfileNew() {
         // Get current user's player ID if logged in
         let currentPlayerId = null;
         if (user) {
-          const { data: currentPlayer } = await supabase
-            .from('players')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
+          const { data: currentPlayer, error: currentPlayerError } = await executeWithRetry(
+            () => supabase
+              .from('players')
+              .select('id')
+              .eq('user_id', user.id)
+              .single()
+          );
+
+          if (currentPlayerError) {
+            console.error('Error fetching current player:', currentPlayerError);
+            toast.error('Failed to load current player data');
+            return;
+          }
           currentPlayerId = currentPlayer?.id;
         }
 
@@ -179,52 +187,73 @@ export default function PlayerProfileNew() {
         
         if (currentPlayerId) {
           // Get games played together using a raw count query
-          const { data: gamesCount } = await supabase
-            .rpc('count_games_played_together', {
+          const { data: gamesCount, error: gamesCountError } = await executeWithRetry(
+            () => supabase.rpc('count_games_played_together', {
               player_one_id: currentPlayerId,
               player_two_id: playerData.id
-            });
+            })
+          );
             
+          if (gamesCountError) {
+            console.error('Error fetching games played together:', gamesCountError);
+            toast.error('Failed to load games played together');
+            return;
+          }
+
           gamesPlayedTogether = gamesCount || 0;
 
           // Get current user's rating for this player
-          const { data: ratingData } = await supabase
-            .from('player_ratings')
-            .select('attack_rating, defense_rating')
-            .eq('rater_id', currentPlayerId)
-            .eq('rated_player_id', playerData.id)
-            .maybeSingle();
+          const { data: ratingData, error: ratingError } = await executeWithRetry(
+            () => supabase
+              .from('player_ratings')
+              .select('attack_rating, defense_rating')
+              .eq('rater_id', currentPlayerId)
+              .eq('rated_player_id', playerData.id)
+              .maybeSingle()
+          );
             
+          if (ratingError && !ratingError.message?.includes('404')) {
+            console.error('Error fetching rating:', ratingError);
+            toast.error('Failed to load rating data');
+            return;
+          }
+
           myRating = ratingData;
         }
 
         // Get game history with team sizes and status
-        const { data: gameData, error: gameError } = await supabase
-          .from('game_registrations')
-          .select(`
-            team,
-            status,
-            game:game_id(
-              id,
-              sequence_number,
-              date,
-              outcome,
-              score_blue,
-              score_orange,
-              is_historical,
-              needs_completion,
-              completed
-            )
-          `)
-          .eq('player_id', playerData.id)
-          .eq('game.is_historical', true)
-          .eq('game.needs_completion', false)
-          .eq('game.completed', true)
-          // Only show games where player was on blue or orange team
-          .in('team', ['blue', 'orange'])
-          .order('game(sequence_number)', { ascending: false });
+        const { data: gameData, error: gameError } = await executeWithRetry(
+          () => supabase
+            .from('game_registrations')
+            .select(`
+              team,
+              status,
+              game:game_id(
+                id,
+                sequence_number,
+                date,
+                outcome,
+                score_blue,
+                score_orange,
+                is_historical,
+                needs_completion,
+                completed
+              )
+            `)
+            .eq('player_id', playerData.id)
+            .eq('game.is_historical', true)
+            .eq('game.needs_completion', false)
+            .eq('game.completed', true)
+            // Only show games where player was on blue or orange team
+            .in('team', ['blue', 'orange'])
+            .order('game(sequence_number)', { ascending: false })
+        );
 
-        if (gameError) throw gameError;
+        if (gameError) {
+          console.error('Error fetching game history:', gameError);
+          toast.error('Failed to load game history data');
+          return;
+        }
 
         // Get team sizes for each game
         const validGames = gameData?.filter(g => g.game !== null) || [];
@@ -235,13 +264,19 @@ export default function PlayerProfileNew() {
           return;
         }
 
-        const { data: teamSizes, error: teamSizesError } = await supabase
-          .from('game_registrations')
-          .select('game_id, team')
-          .in('game_id', gameIds)
-          .eq('status', 'selected');
+        const { data: teamSizes, error: teamSizesError } = await executeWithRetry(
+          () => supabase
+            .from('game_registrations')
+            .select('game_id, team')
+            .in('game_id', gameIds)
+            .eq('status', 'selected')
+        );
 
-        if (teamSizesError) throw teamSizesError;
+        if (teamSizesError) {
+          console.error('Error fetching team sizes:', teamSizesError);
+          toast.error('Failed to load team sizes data');
+          return;
+        }
 
         // Calculate team sizes for each game
         const teamSizeMap = teamSizes?.reduce((acc, reg) => {
@@ -270,6 +305,43 @@ export default function PlayerProfileNew() {
 
         setGames(gamesWithTeamSizes);
 
+        // Get token status
+        const { data: tokenData, error: tokenError } = await executeWithRetry(
+          () => supabase
+            .from('player_tokens')
+            .select('*')
+            .eq('player_id', playerData.id)
+            .order('issued_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          { 
+            shouldToast: false,
+            maxRetries: 2 // Reduce retries for optional data
+          }
+        );
+
+        if (tokenError) {
+          // Only log 404s, don't show to user as it's expected when no token exists
+          if (tokenError.code === '404' || tokenError.message?.includes('404')) {
+            console.log('No token found for user:', playerData.friendly_name);
+          } else {
+            console.error('Error fetching token data:', tokenError);
+          }
+        }
+
+        // Determine token status
+        const tokenStatus = tokenData ? {
+          status: tokenData.used_at ? 'USED' : 'AVAILABLE',
+          last_used_at: tokenData.used_at,
+          next_token_at: tokenData.used_at ? new Date(new Date(tokenData.used_at).getTime() + (22 * 24 * 60 * 60 * 1000)).toISOString() : null,
+          created_at: tokenData.issued_at
+        } : {
+          status: 'NO_TOKEN',
+          last_used_at: null,
+          next_token_at: null,
+          created_at: new Date().toISOString()
+        };
+
         // Transform player data
         const playerStats: PlayerStats = {
           id: playerData.id,
@@ -296,16 +368,18 @@ export default function PlayerProfileNew() {
           games_played_together: gamesPlayedTogether,
           my_rating: myRating,
           reserveXP: reserveXP,
-          reserveCount: reserveCount,
+          reserveCount: 0,
           bench_warmer_streak: playerData.bench_warmer_streak || 0,
           unpaidGames: unpaidGamesCount,
-          registrationStreak: regStreakData?.current_streak_length || 0,
-          registrationStreakApplies: regStreakData?.bonus_applies || false
+          registrationStreak: 0,
+          registrationStreakApplies: false,
+          token_status: tokenStatus
         };
 
         setPlayer(playerStats);
-      } catch (error) {
-        toast.error('Failed to load player data');
+      } catch (error: any) {
+        console.error('Error loading player profile:', error);
+        toast.error('Failed to load player data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -314,7 +388,7 @@ export default function PlayerProfileNew() {
     if (params.id || params.friendlyName) {
       fetchPlayerData();
     }
-  }, [params.id, params.friendlyName]);
+  }, [params.id, params.friendlyName, user]);
 
   const handleRatingSubmit = async () => {
     if (!user?.id || !player) return;
@@ -400,82 +474,45 @@ export default function PlayerProfileNew() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <TooltipPrimitive.Provider>
-              {!user ? (
-                <Tooltip 
-                  content="You must be logged in to rate players"
-                  side="bottom"
-                >
-                  <motion.button 
-                    onClick={() => {
-                      toast.error('You must be logged in to rate players');
-                    }}
-                    className="btn h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none btn-disabled bg-gray-400 text-gray-600 cursor-not-allowed"
-                  >
-                    <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-                    <span className="font-medium">RATE PLAYER</span>
-                  </motion.button>
-                </Tooltip>
-              ) : (
-                <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    document.getElementById('player-rating')?.scrollIntoView({ 
-                      behavior: 'smooth',
-                      block: 'start'
-                    });
-                  }}
-                  className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-none"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-                  <span className="font-medium">PLAYER RATING</span>
-                </motion.button>
-              )}
-            </TooltipPrimitive.Provider>
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                document.getElementById('game-history')?.scrollIntoView({ 
-                  behavior: 'smooth',
-                  block: 'start'
-                });
-              }}
-              className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto order-2 sm:order-none"
-            >
-              <span className="inline-flex items-center justify-center w-4 h-4">📜</span>
-              <span className="font-medium">GAME HISTORY</span>
-            </motion.button>
-          </div>
-          <XPBreakdown stats={{
-            caps: player.caps || 0,
-            activeBonuses: player.active_bonuses || 0,
-            activePenalties: player.active_penalties || 0,
-            currentStreak: player.current_streak || 0,
-            gameHistory: player.gameHistory || [],
-            latestSequence: latestSequence,
-            xp: player.xp || 0,
-            reserveXP: player.reserveXP ?? 0,
-            reserveCount: player.reserveCount ?? 0,
-            benchWarmerStreak: player.bench_warmer_streak || 0,
-            registrationStreak: player.registrationStreak || 0,
-            registrationStreakApplies: player.registrationStreakApplies || false,
-            unpaidGames: player.unpaidGames || 0
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <StatsGrid profile={{
+            total_xp: player.xp,
+            current_streak: player.current_streak,
+            max_streak: player.max_streak,
+            active_bonuses: player.active_bonuses,
+            active_penalties: player.active_penalties,
+            rarity: player.rarity
           }} />
+          {player && player.player_xp && (
+            <XPBreakdown
+              xp={player.xp}
+              rank={player.player_xp.rank}
+              rarity={player.rarity}
+              caps={player.caps || 0}
+              activeBonuses={player.active_bonuses || 0}
+              activePenalties={player.active_penalties || 0}
+              currentStreak={player.current_streak || 0}
+              gameHistory={player.gameHistory || []}
+              latestSequence={latestSequence}
+              reserveXP={player.reserveXP ?? 0}
+              reserveCount={player.reserveCount ?? 0}
+              benchWarmerStreak={player.bench_warmer_streak || 0}
+              registrationStreak={player.registrationStreak || 0}
+              registrationStreakApplies={player.registrationStreakApplies || false}
+              unpaidGames={player.unpaidGames || 0}
+            />
+          )}
+          {player && (
+            <TokenStatus
+              status={player.token_status?.status}
+              lastUsedAt={player.token_status?.last_used_at}
+              nextTokenAt={player.token_status?.next_token_at}
+              createdAt={player.token_status?.created_at}
+              playerName={player.friendly_name}
+            />
+          )}
         </div>
       </motion.div>
-
-      <StatsGrid profile={{
-        total_xp: player.xp,
-        current_streak: player.current_streak,
-        max_streak: player.max_streak,
-        active_bonuses: player.active_bonuses,
-        active_penalties: player.active_penalties,
-        rarity: player.rarity
-      }} />
 
       {/* Only show PlayerRating if not viewing own profile */}
       {(!user || user.id !== player.user_id) && (

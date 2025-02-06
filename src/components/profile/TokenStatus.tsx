@@ -9,10 +9,11 @@ interface TokenStatusProps {
   lastUsedAt: string | null;
   nextTokenAt: string | null;
   createdAt: string;
+  playerName?: string; // Optional player name for public profile view
 }
 
 // Component to display token status with animations and tooltips
-export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt }: TokenStatusProps) {
+export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt, playerName }: TokenStatusProps) {
   // Format dates for display
   const formatDate = (date: string) => {
     return format(new Date(date), 'MMM d, yyyy');
@@ -48,7 +49,7 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
       
       <div className="flex flex-col gap-2">
         {/* Current Status */}
-        <Tooltip content="Your current token status">
+        <Tooltip content={playerName ? `${playerName}'s token status` : "Your current token status"}>
           <div className="flex items-center gap-2">
             <span className="text-sm">Status:</span>
             <span className={`px-2 py-1 rounded-md text-sm font-medium ${getStatusColor()}`}>
@@ -59,7 +60,7 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
 
         {/* Last Used Date */}
         {lastUsedAt && (
-          <Tooltip content="When you last used your priority token">
+          <Tooltip content={playerName ? `When ${playerName} last used their priority token` : "When you last used your priority token"}>
             <div className="text-sm">
               Last Used: {formatDate(lastUsedAt)}
             </div>
@@ -68,7 +69,7 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
 
         {/* Next Token Date */}
         {nextTokenAt && (
-          <Tooltip content="When your next priority token will be available">
+          <Tooltip content={playerName ? `When ${playerName}'s next priority token will be available` : "When your next priority token will be available"}>
             <div className="text-sm">
               Next Token: {formatDate(nextTokenAt)} 
               <span className="text-xs opacity-75 ml-2">
@@ -80,7 +81,7 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
 
         {/* Token Age */}
         {status === 'AVAILABLE' && (
-          <Tooltip content="When this token was issued">
+          <Tooltip content={playerName ? `When ${playerName}'s token was issued` : "When this token was issued"}>
             <div className="text-xs opacity-75">
               Token issued: {formatDate(createdAt)}
             </div>
