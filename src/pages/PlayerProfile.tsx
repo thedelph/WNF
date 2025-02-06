@@ -277,6 +277,7 @@ export default function PlayerProfileNew() {
           current_streak: playerData.current_streak || 0,
           max_streak: playerData.max_streak || 0,
           xp: playerData.player_xp?.xp || 0,
+          rarity: playerData.player_xp?.rarity || 'Amateur',
           wins: playerWinRates?.wins || 0,
           totalGames: (playerWinRates?.wins || 0) + (playerWinRates?.draws || 0) + (playerWinRates?.losses || 0),
           win_rate: playerWinRates?.win_rate || 0,

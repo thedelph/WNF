@@ -33,15 +33,35 @@ const AdminPortal: React.FC = () => {
       </motion.h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <GameManagementCard />
-        <PlayerManagementCard />
-        <TeamGenerationCard />
-        <PaymentManagementCard />
-        <TokenManagementCard />
-        <AdminManagementCard />
-        <HistoricalDataCard />
-        <SlotOffersCard />
-        {isSuperAdmin && <RatingsCard />}
+        {[
+          <GameManagementCard key="game" />,
+          <PlayerManagementCard key="player" />,
+          <TeamGenerationCard key="team" />,
+          <PaymentManagementCard key="payment" />,
+          <TokenManagementCard key="token" />,
+          <AdminManagementCard key="admin" />,
+          <HistoricalDataCard key="historical" />,
+          <SlotOffersCard key="slots" />,
+          isSuperAdmin && <RatingsCard key="ratings" />
+        ].filter(Boolean).map((card, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              duration: 0.2,
+              delay: index * 0.05,
+              ease: "easeOut"
+            }}
+            whileHover={{
+              scale: 1.02,
+              transition: { duration: 0.2 }
+            }}
+            className="h-full"
+          >
+            {card}
+          </motion.div>
+        ))}
       </div>
     </div>
   )

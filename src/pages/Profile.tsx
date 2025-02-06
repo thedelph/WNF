@@ -27,9 +27,7 @@ interface PlayerProfile {
   unpaid_games_count: number;
   unpaid_games_modifier: number;
   total_xp: number;
-  rarity?: number;
-  active_bonuses?: number;
-  active_penalties?: number;
+  rarity?: string;
   current_streak?: number;
   max_streak?: number;
   avatar_svg?: string | null;
@@ -94,63 +92,119 @@ export default function Component() {
           .select(`
             id,
             friendly_name,
-            active_bonuses,
-            active_penalties,
             current_streak,
             max_streak,
             avatar_svg,
-            avatar_options
+            avatar_options,
+            player_xp (
+              xp,
+              rarity
+            )
           `)
-          .eq('user_id', user!.id)
+          .eq('user_id', user?.id)
           .single();
 
         if (playerError) throw playerError;
-        if (!playerData) throw new Error('Player not found');
 
         // Get token status
         const { data: tokenData, error: tokenError } = await supabase
           .from('player_tokens')
           .select('*')
           .eq('player_id', playerData.id)
-          .single();
-
-        console.log('Token debug:', {
-          playerId: playerData.id,
-          tokenData,
-          tokenError
-        });
+          .maybeSingle();
 
         if (tokenError && tokenError.code !== 'PGRST116') throw tokenError;
 
-        // Then get the XP breakdown using the friendly_name
-        const { data: xpData, error: profileError } = await supabase
+        // Get player's XP breakdown
+        const { data: xpBreakdown, error: xpError } = await supabase
           .from('player_xp_breakdown')
-          .select(`
-            friendly_name,
-            current_stored_xp,
-            base_xp,
-            reserve_xp,
-            reserve_games,
-            subtotal_before_modifiers,
-            attendance_streak,
-            attendance_streak_modifier,
-            reserve_game_modifier,
-            registration_streak,
-            registration_streak_modifier,
-            unpaid_games_count,
-            unpaid_games_modifier,
-            total_xp
-          `)
+          .select('*')
           .eq('friendly_name', playerData.friendly_name)
           .single();
 
-        if (profileError) throw profileError;
-        if (!xpData) throw new Error('Player not found');
+        if (xpError) throw xpError;
 
-        // Combine all data
+        // Get all registrations for historical games
+        const { data: registrations, error: registrationsError } = await supabase
+          .from('game_registrations')
+          .select(`
+            status,
+            games!inner (
+              sequence_number,
+              is_historical
+            )
+          `)
+          .eq('player_id', playerData.id)
+          .eq('games.is_historical', true);
+
+        if (registrationsError) {
+          throw registrationsError;
+        }
+
+        // Count reserve appearances
+        const reserveCount = registrations?.filter(reg => reg.status === 'reserve').length || 0;
+        // Each reserve appearance gives 5 XP
+        const reserveXP = reserveCount * 5;
+
+        // Get registration streak data
+        const { data: regStreakData, error: regStreakError } = await supabase
+          .from('player_current_registration_streak_bonus')
+          .select('current_streak_length, bonus_applies')
+          .eq('friendly_name', playerData.friendly_name)
+          .maybeSingle();
+
+        if (regStreakError) {
+          throw regStreakError;
+        }
+
+        // Get count of unpaid games using the player_unpaid_games_view
+        const { data: unpaidGamesData, error: unpaidError } = await supabase
+          .from('player_unpaid_games_view')
+          .select('unpaid_games_count')
+          .eq('player_id', playerData.id)
+          .maybeSingle();
+
+        if (unpaidError) {
+          throw unpaidError;
+        }
+
+        const unpaidGamesCount = unpaidGamesData?.unpaid_games_count || 0;
+
+        // Get game sequences
+        const { data: gameSeqData, error: gameSeqError } = await supabase
+          .from('game_registrations')
+          .select(`
+            status,
+            team,
+            game:game_id(
+              sequence_number
+            )
+          `)
+          .eq('player_id', playerData.id)
+          .eq('game.is_historical', true)
+          .eq('game.completed', true)
+          .order('game(sequence_number)', { ascending: false });
+
+        if (gameSeqError) throw gameSeqError;
+
+        const sequences = gameSeqData
+          ?.filter(reg => reg.game !== null)
+          .map(reg => ({
+            sequence: reg.game.sequence_number,
+            status: reg.status,
+            team: reg.team
+          })) || [];
+
+        setGameSequences(sequences);
+
+        // Combine all the data
         const combinedProfile: ExtendedPlayerData = {
-          ...playerData,
-          ...xpData,
+          ...xpBreakdown,
+          friendly_name: playerData.friendly_name,
+          current_streak: playerData.current_streak || 0,
+          max_streak: playerData.max_streak || 0,
+          avatar_svg: playerData.avatar_svg,
+          avatar_options: playerData.avatar_options,
           token: tokenData ? {
             status: tokenData.used_at ? 'USED' : tokenData.expires_at ? 'EXPIRED' : 'AVAILABLE',
             last_used_at: tokenData.used_at,
@@ -161,51 +215,18 @@ export default function Component() {
             last_used_at: null,
             next_token_at: null,
             created_at: new Date().toISOString()
-          }
+          },
+          xp: playerData.player_xp?.xp || 0,
+          rarity: playerData.player_xp?.rarity || 'Amateur',
+          reserveXP: reserveXP,
+          gameSequences: sequences,
+          registrationStreak: regStreakData?.current_streak_length || 0,
+          registrationStreakApplies: regStreakData?.bonus_applies || false,
+          unpaidGames: unpaidGamesCount
         };
 
-        // Get all players' XP for rarity calculation
-        const { data: allXPData, error: xpError } = await supabase
-          .from('player_xp_breakdown')
-          .select('total_xp');
-
-        if (xpError) throw xpError;
-
-        const allXP = allXPData.map(p => p.total_xp || 0);
-        const rarity = calculateRarity(combinedProfile.total_xp, allXP);
-
-        // Get game sequences for the player
-        const { data: gameData, error: gameError } = await supabase
-          .from('game_registrations')
-          .select(`
-            game_id,
-            games!inner (
-              sequence_number,
-              is_historical
-            ),
-            status,
-            team
-          `)
-          .eq('player_id', combinedProfile.id)
-          .order('game_id', { ascending: false });
-
-        if (gameError) throw gameError;
-
-        const sequences = gameData?.map(reg => ({
-          sequence: reg.games?.sequence_number || 0,
-          status: reg.status,
-          team: reg.team
-        })).filter(seq => seq.sequence > 0) || [];
-
-        setProfile({
-          ...combinedProfile,
-          rarity,
-          gameSequences: sequences,
-          xp: combinedProfile.total_xp,
-          reserveXP: combinedProfile.reserve_xp
-        });
-
-        setGameSequences(sequences);
+        setProfile(combinedProfile);
+        setFriendlyName(playerData.friendly_name);
       } catch (err) {
         console.error('Error fetching player data:', err)
         setError(err instanceof Error ? err.message : 'An error occurred while fetching player data')
@@ -303,245 +324,209 @@ export default function Component() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    )
-  }
-
-  if (error || !profile) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-2xl font-bold text-error mb-4">Error</h1>
-        <p className="text-gray-600">{error || 'Player not found'}</p>
-      </div>
-    )
-  }
-
-  const stats = [
-    { 
-      label: 'XP', 
-      value: profile.xp.toLocaleString()
-    },
-    {
-      label: 'Caps',
-      value: profile.caps?.toLocaleString() || '0'
-    },
-    {
-      label: 'Win Rate',
-      value: `${profile.win_rate?.toLocaleString() || '0'}%`
-    },
-    {
-      label: 'Active Bonuses',
-      value: profile.active_bonuses ?? 'N/A'
-    },
-    {
-      label: 'Active Penalties',
-      value: profile.active_penalties ?? 'N/A'
-    },
-    {
-      label: 'Current Streak',
-      value: profile.current_streak?.toLocaleString() || '0'
-    },
-    {
-      label: 'Longest Streak',
-      value: profile.max_streak?.toLocaleString() || '0'
-    }
-  ]
-
   return (
-    <div className="container mx-auto mt-4 sm:mt-8 p-2 sm:p-4">
+    <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-base-200 shadow-xl rounded-lg overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-6 sm:space-y-8"
       >
-        <div className="p-4 sm:p-6 bg-primary text-primary-content">
-          <h2 className="text-2xl sm:text-3xl font-bold">My Player Profile</h2>
-        </div>
-        <div className="p-4 sm:p-6">
-          <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="space-y-4 sm:space-y-8"
-              >
-                <div>
-                  <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4">Personal Information</h3>
-                  <div className="space-y-3 sm:space-y-4">
-                    <div>
-                      <label className="label">
-                        <span className="label-text font-medium flex items-center gap-1">
-                          Friendly Name
-                          <Tooltip content="This is the name that will show up on the team sheets">
-                            <span className="cursor-help">ℹ️</span>
-                          </Tooltip>
-                        </span>
-                      </label>
-                      {isEditing ? (
-                        <input 
-                          type="text" 
-                          value={friendlyName} 
-                          onChange={(e) => setFriendlyName(e.target.value)} 
-                          className="input input-bordered w-full"
-                          placeholder="Enter your friendly name"
-                        />
-                      ) : (
-                        <p className="text-base sm:text-lg">{profile.friendly_name}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="label">
-                        <span className="label-text font-medium">Email</span>
-                      </label>
-                      <p className="text-base sm:text-lg break-all">{user.email}</p>
-                    </div>
-                    <div>
-                      <label className="label">
-                        <span className="label-text font-medium">Avatar</span>
-                      </label>
-                      <div className="flex flex-col sm:flex-row items-center gap-4">
-                        <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <img 
-                            src={profile.avatar_svg || '/src/assets/default-avatar.svg'} 
-                            alt="Avatar" 
-                            className="w-16 sm:w-20 h-16 sm:h-20 rounded-full cursor-pointer"
-                            onClick={() => setIsAvatarEditorOpen(true)}
-                          />
-                        </motion.div>
-                        <motion.button 
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setIsAvatarEditorOpen(true)} 
-                          className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
-                        >
-                          <span className="inline-flex items-center justify-center w-4 h-4">🎨</span>
-                          <span className="font-medium">EDIT AVATAR</span>
-                        </motion.button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="alert alert-error"
+          >
+            <span>{error}</span>
+          </motion.div>
+        )}
 
+        {loading ? (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center items-center min-h-[60vh]"
+          >
+            <span className="loading loading-spinner loading-lg"></span>
+          </motion.div>
+        ) : profile ? (
+          <>
+            {/* Profile Header Section */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-base-200 rounded-box p-6 shadow-lg"
+            >
+              <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                {/* Avatar Section */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 sm:mb-8"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="relative group"
                 >
-                  <XPBreakdown 
-                    stats={{
-                      caps: profile.caps || 0,
-                      activeBonuses: profile.active_bonuses || 0,
-                      activePenalties: profile.active_penalties || 0,
-                      currentStreak: profile.current_streak || 0,
-                      gameHistory: profile.gameSequences.map(sequence => ({
-                        sequence: sequence.sequence,
-                        status: sequence.status
-                      })),
-                      latestSequence: latestSequence,
-                      xp: profile.xp || 0,
-                      reserveXP: profile.reserveXP || 0,
-                      benchWarmerStreak: profile.bench_warmer_streak || 0,
-                      registrationStreak: profile.registration_streak || 0,
-                      registrationStreakApplies: profile.registration_streak_applies || false,
-                      unpaidGames: profile.unpaid_games || 0
-                    }}
+                  <img 
+                    src={profile.avatar_svg || '/src/assets/default-avatar.svg'} 
+                    alt="Avatar" 
+                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-full cursor-pointer shadow-md transition-transform"
+                    onClick={() => setIsAvatarEditorOpen(true)}
                   />
+                  <div 
+                    className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center"
+                    onClick={() => setIsAvatarEditorOpen(true)}
+                  >
+                    <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity">Edit</span>
+                  </div>
                 </motion.div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-8">
-                  {stats.map((stat, index) => (
-                    <div key={index} className="bg-base-100 rounded-lg p-3 sm:p-4 shadow-lg">
-                      <h2 className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2">{stat.label}</h2>
-                      <p className="text-base sm:text-xl">{stat.value}</p>
-                    </div>
-                  ))}
+                {/* Name and Email Section */}
+                <div className="flex-grow space-y-3">
+                  <div className="flex items-center gap-3">
+                    {isEditing ? (
+                      <motion.input 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        type="text" 
+                        value={friendlyName} 
+                        onChange={(e) => setFriendlyName(e.target.value)} 
+                        className="input input-bordered text-xl sm:text-2xl font-bold w-full max-w-xs"
+                        placeholder="Enter your friendly name"
+                      />
+                    ) : (
+                      <motion.h1 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-2xl sm:text-3xl font-bold"
+                      >
+                        {profile.friendly_name}
+                      </motion.h1>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setIsEditing(true)}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-4 h-4"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                        />
+                      </svg>
+                    </motion.button>
+                  </div>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-base-content/70"
+                  >
+                    {user.email}
+                  </motion.p>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="badge badge-primary">{profile.rarity}</span>
+                  </motion.div>
                 </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-                className="space-y-4 sm:space-y-8"
-              >
-                {profile && <StatsGrid profile={profile} />}
-                {profile && (
-                  <TokenStatus 
-                    status={profile.token?.status || 'NO_TOKEN'}
-                    lastUsedAt={profile.token?.last_used_at}
-                    nextTokenAt={profile.token?.next_token_at}
-                    createdAt={profile.token?.created_at || new Date().toISOString()}
-                  />
-                )}
-                <PaymentHistory />
-              </motion.div>
-            </div>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            className="mt-4 sm:mt-8 flex flex-col sm:flex-row justify-end gap-2 sm:gap-4"
-          >
-            {isEditing ? (
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-                <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleSaveProfile} 
-                  className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4">💾</span>
-                  <span className="font-medium">SAVE PROFILE</span>
-                </motion.button>
-                <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsEditing(false)} 
-                  className="btn bg-base-200 hover:bg-base-300 text-base-content h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
-                >
-                  <span className="inline-flex items-center justify-center w-4 h-4">✖️</span>
-                  <span className="font-medium">CANCEL</span>
-                </motion.button>
               </div>
-            ) : (
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleEditProfile} 
-                className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2 w-full sm:w-auto"
-              >
-                <span className="inline-flex items-center justify-center w-4 h-4">✏️</span>
-                <span className="font-medium">EDIT PROFILE</span>
-              </motion.button>
-            )}
-          </motion.div>
-        </div>
-      </motion.div>
+            </motion.div>
 
-      {isAvatarEditorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            {/* Stats Grid Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <StatsGrid profile={{
+                total_xp: profile.xp,
+                current_streak: profile.current_streak || 0,
+                max_streak: profile.max_streak || 0,
+                rarity: profile.rarity
+              }} />
+            </motion.div>
+
+            {/* XP Breakdown Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-base-200 rounded-box p-6 shadow-lg"
+            >
+              <h2 className="text-xl sm:text-2xl font-bold mb-4">XP Breakdown</h2>
+              <XPBreakdown stats={{
+                caps: profile.caps || 0,
+                activeBonuses: 0,
+                activePenalties: 0,
+                currentStreak: profile.current_streak || 0,
+                gameHistory: profile.gameSequences?.map(seq => ({
+                  sequence: seq.sequence,
+                  status: seq.status,
+                  unpaid: false
+                })) || [],
+                latestSequence: latestSequence,
+                xp: profile.xp || 0,
+                reserveXP: profile.reserveXP || 0,
+                reserveCount: profile.reserve_games || 0,
+                benchWarmerStreak: profile.bench_warmer_streak || 0,
+                registrationStreak: profile.registrationStreak || 0,
+                registrationStreakApplies: profile.registrationStreakApplies || false,
+                unpaidGames: profile.unpaidGames || 0
+              }} />
+            </motion.div>
+
+            {/* Token Status Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-base-200 rounded-box p-6 shadow-lg"
+            >
+              <h2 className="text-xl sm:text-2xl font-bold mb-4">Token Status</h2>
+              <TokenStatus 
+                status={profile.token?.status || 'NO_TOKEN'}
+                lastUsedAt={profile.token?.last_used_at}
+                nextTokenAt={profile.token?.next_token_at}
+                createdAt={profile.token?.created_at}
+              />
+            </motion.div>
+
+            {/* Payment History Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-base-200 rounded-box p-6 shadow-lg"
+            >
+              <h2 className="text-xl sm:text-2xl font-bold mb-4">Payment History</h2>
+              <PaymentHistory playerId={profile.id} />
+            </motion.div>
+          </>
+        ) : null}
+
+        {isAvatarEditorOpen && (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-base-100 rounded-lg p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
             <AvatarCreator
-              onSave={handleAvatarSave}
+              playerId={profile?.id}
               onClose={() => setIsAvatarEditorOpen(false)}
-              initialOptions={profile.avatar_options}
+              currentAvatar={profile?.avatar_svg}
+              currentOptions={profile?.avatar_options}
             />
           </motion.div>
-        </div>
-      )}
+        )}
+      </motion.div>
     </div>
-  )
+  );
 }

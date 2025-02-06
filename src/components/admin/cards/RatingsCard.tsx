@@ -1,16 +1,10 @@
 import React from 'react'
-import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { FaStar } from 'react-icons/fa'
 
 const RatingsCard: React.FC = () => {
   return (
-    <motion.div
-      className="card bg-base-100 shadow-xl"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="card bg-base-100 shadow-xl">
       <div className="card-body">
         <h2 className="card-title">
           <FaStar className="text-yellow-500" />
@@ -28,7 +22,7 @@ const RatingsCard: React.FC = () => {
           </Link>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 

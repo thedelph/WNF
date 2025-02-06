@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tooltip } from '../../ui/Tooltip';
 import { TokenData } from '../../../types/tokens';
+import { PiCoinDuotone } from "react-icons/pi";
 
 interface TokenTableProps {
   tokens: TokenData[];
@@ -106,9 +107,15 @@ export const TokenTable: React.FC<TokenTableProps> = ({
               <tr key={token.player_id}>
                 <td>{token.friendly_name}</td>
                 <td>
-                  <span className={`badge ${tokenStatus.badge}`}>
-                    {tokenStatus.status}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <PiCoinDuotone 
+                      size={20} 
+                      className={token.used_at ? 'text-gray-400' : 'text-yellow-400'} 
+                    />
+                    <span className={`badge ${tokenStatus.badge}`}>
+                      {tokenStatus.status}
+                    </span>
+                  </div>
                 </td>
                 <td>{formatDate(token.issued_at)}</td>
                 <td>

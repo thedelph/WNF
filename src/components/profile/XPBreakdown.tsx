@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import clsx from 'clsx';
 import UnpaidGamesPenalty from './UnpaidGamesPenalty';
+import GamePointsSection from './xp/GamePointsSection';
+import ReserveXPSection from './xp/ReserveXPSection';
+import StreakSection from './xp/StreakSection';
+import TotalXPSection from './xp/TotalXPSection';
 
 interface GameHistory {
   sequence: number;
@@ -30,7 +33,6 @@ interface XPBreakdownProps {
 
 const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   // Ensure we have arrays of numbers and use the passed in latestSequence
   const gameHistory = stats.gameHistory || [];
@@ -64,9 +66,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   const streakModifier = stats.currentStreak * 0.1;
 
   // Calculate reserve modifier (+5% only if reserve in most recent game)
-  const reserveModifier = gameHistory.some(game => 
-    game.sequence === latestSequence && game.status === 'reserve'
-  ) ? 0.05 : 0;
+  const reserveModifier = stats.benchWarmerStreak ? stats.benchWarmerStreak * 0.05 : 0;
 
   // Calculate registration streak modifier (+2.5% per streak)
   // Only apply if registrationStreakApplies is true (all reserve and all registered)
@@ -80,17 +80,6 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
 
   // Calculate final XP (ensuring it's never negative)
   const finalXP = Math.max(0, Math.round(totalBaseXP * totalModifier));
-
-  // Sort sequences by how many games ago they are, excluding only future games
-  const sortedHistory = [...gameHistory]
-    .filter(game => game.sequence <= latestSequence) // Only exclude future games
-    .sort((a, b) => b.sequence - a.sequence);
-
-  // Animation variants
-  const contentVariants = {
-    collapsed: { height: 0, opacity: 0 },
-    expanded: { height: "auto", opacity: 1 },
-  };
 
   return (
     <div className="mt-4">
@@ -114,7 +103,6 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
             className="overflow-hidden"
           >
             <div className="mt-4 p-4 bg-base-200 rounded-lg shadow-lg">
-              <h3 className="text-lg font-semibold mb-4">XP Breakdown</h3>
 
               <div className="space-y-4">
                 {/* How XP is Calculated Section */}
@@ -167,394 +155,50 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                   </div>
                 </div>
 
-                {/* Base XP from Games */}
-                <div className="space-y-4 mb-6">
-                  <h4 className="font-medium text-primary border-b border-base-300 pb-2">
-                    Game Points ({baseXP} Total Base XP)
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Most Recent Game - 20 XP */}
-                    {sortedHistory.filter(game => latestSequence - game.sequence === 0).length > 0 && (
-                      <div className={clsx("card shadow-sm", "bg-base-100")}>
-                        <div className="card-body p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h5 className="font-medium text-base-content">Most Recent Game</h5>
-                              <p className="text-sm opacity-70 text-base-content/70">20 XP per game</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-base-content">
-                                {sortedHistory.filter(game => latestSequence - game.sequence === 0).length * 20} XP
-                              </div>
-                              <div className="text-xs opacity-70 text-base-content/70">
-                                {sortedHistory.filter(game => latestSequence - game.sequence === 0).length} game
-                                {sortedHistory.filter(game => latestSequence - game.sequence === 0).length !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                {/* Game Points Section */}
+                <GamePointsSection
+                  gameHistory={gameHistory}
+                  latestSequence={latestSequence}
+                  baseXP={baseXP}
+                />
 
-                    {/* 2-3 Games Back - 18 XP */}
-                    {sortedHistory.filter(game => {
-                      const gamesAgo = latestSequence - game.sequence;
-                      return gamesAgo >= 1 && gamesAgo <= 2;
-                    }).length > 0 && (
-                      <div className={clsx("card shadow-sm", "bg-base-100")}>
-                        <div className="card-body p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h5 className="font-medium text-base-content">2-3 Games Back</h5>
-                              <p className="text-sm opacity-70 text-base-content/70">18 XP per game</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-base-content">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 1 && gamesAgo <= 2;
-                                }).length * 18} XP
-                              </div>
-                              <div className="text-xs opacity-70 text-base-content/70">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 1 && gamesAgo <= 2;
-                                }).length} game
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 1 && gamesAgo <= 2;
-                                }).length !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                {/* Reserve XP Section */}
+                <ReserveXPSection
+                  reserveXP={stats.reserveXP || 0}
+                  reserveCount={stats.reserveCount || 0}
+                />
 
-                    {/* 4-5 Games Back - 16 XP */}
-                    {sortedHistory.filter(game => {
-                      const gamesAgo = latestSequence - game.sequence;
-                      return gamesAgo >= 3 && gamesAgo <= 4;
-                    }).length > 0 && (
-                      <div className={clsx("card shadow-sm", "bg-base-100")}>
-                        <div className="card-body p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h5 className="font-medium text-base-content">4-5 Games Back</h5>
-                              <p className="text-sm opacity-70 text-base-content/70">16 XP per game</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-base-content">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 3 && gamesAgo <= 4;
-                                }).length * 16} XP
-                              </div>
-                              <div className="text-xs opacity-70 text-base-content/70">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 3 && gamesAgo <= 4;
-                                }).length} game
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 3 && gamesAgo <= 4;
-                                }).length !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 6-10 Games Back - 14 XP */}
-                    {sortedHistory.filter(game => {
-                      const gamesAgo = latestSequence - game.sequence;
-                      return gamesAgo >= 5 && gamesAgo <= 9;
-                    }).length > 0 && (
-                      <div className={clsx("card shadow-sm", "bg-base-100")}>
-                        <div className="card-body p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h5 className="font-medium text-base-content">6-10 Games Back</h5>
-                              <p className="text-sm opacity-70 text-base-content/70">14 XP per game</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-base-content">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 5 && gamesAgo <= 9;
-                                }).length * 14} XP
-                              </div>
-                              <div className="text-xs opacity-70 text-base-content/70">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 5 && gamesAgo <= 9;
-                                }).length} game
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 5 && gamesAgo <= 9;
-                                }).length !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 11-20 Games Back - 12 XP */}
-                    {sortedHistory.filter(game => {
-                      const gamesAgo = latestSequence - game.sequence;
-                      return gamesAgo >= 10 && gamesAgo <= 19;
-                    }).length > 0 && (
-                      <div className={clsx("card shadow-sm", "bg-base-100")}>
-                        <div className="card-body p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h5 className="font-medium text-base-content">11-20 Games Back</h5>
-                              <p className="text-sm opacity-70 text-base-content/70">12 XP per game</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-base-content">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 10 && gamesAgo <= 19;
-                                }).length * 12} XP
-                              </div>
-                              <div className="text-xs opacity-70 text-base-content/70">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 10 && gamesAgo <= 19;
-                                }).length} game
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 10 && gamesAgo <= 19;
-                                }).length !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 21-30 Games Back - 10 XP */}
-                    {sortedHistory.filter(game => {
-                      const gamesAgo = latestSequence - game.sequence;
-                      return gamesAgo >= 20 && gamesAgo <= 29;
-                    }).length > 0 && (
-                      <div className={clsx("card shadow-sm", "bg-base-100")}>
-                        <div className="card-body p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h5 className="font-medium text-base-content">21-30 Games Back</h5>
-                              <p className="text-sm opacity-70 text-base-content/70">10 XP per game</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-base-content">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 20 && gamesAgo <= 29;
-                                }).length * 10} XP
-                              </div>
-                              <div className="text-xs opacity-70 text-base-content/70">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 20 && gamesAgo <= 29;
-                                }).length} game
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 20 && gamesAgo <= 29;
-                                }).length !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 31-40 Games Back - 5 XP */}
-                    {sortedHistory.filter(game => {
-                      const gamesAgo = latestSequence - game.sequence;
-                      return gamesAgo >= 30 && gamesAgo <= 39;
-                    }).length > 0 && (
-                      <div className={clsx("card shadow-sm", "bg-base-100")}>
-                        <div className="card-body p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h5 className="font-medium text-base-content">31-40 Games Back</h5>
-                              <p className="text-sm opacity-70 text-base-content/70">5 XP per game</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-base-content">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 30 && gamesAgo <= 39;
-                                }).length * 5} XP
-                              </div>
-                              <div className="text-xs opacity-70 text-base-content/70">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 30 && gamesAgo <= 39;
-                                }).length} game
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 30 && gamesAgo <= 39;
-                                }).length !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Over 40 Games Back - 0 XP */}
-                    {sortedHistory.filter(game => {
-                      const gamesAgo = latestSequence - game.sequence;
-                      return gamesAgo >= 40;
-                    }).length > 0 && (
-                      <div className={clsx("card shadow-sm", "bg-base-100")}>
-                        <div className="card-body p-3">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h5 className="font-medium text-base-content">Over 40 Games Back</h5>
-                              <p className="text-sm opacity-70 text-base-content/70">0 XP per game</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-base-content">0 XP</div>
-                              <div className="text-xs opacity-70 text-base-content/70">
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 40;
-                                }).length} game
-                                {sortedHistory.filter(game => {
-                                  const gamesAgo = latestSequence - game.sequence;
-                                  return gamesAgo >= 40;
-                                }).length !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Reserve XP if any */}
-                {console.log('Rendering Reserve XP section:', stats.reserveXP, stats.reserveCount) || 
-                (stats.reserveXP > 0 && (
-                  <div className="space-y-4 mb-6">
-                    <h4 className="font-medium text-primary border-b border-base-300 pb-2">
-                      Reserve XP
-                    </h4>
-                    <div className={clsx(
-                      "card shadow-sm",
-                      "bg-success/10"
-                    )}>
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium text-success-content">
-                              Reserve Bonus
-                            </h5>
-                            <p className="text-sm text-success-content/70">
-                              For being a reserve ({stats.reserveCount} time{stats.reserveCount !== 1 ? 's' : ''})
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg font-bold text-success">
-                              +{stats.reserveXP} XP
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Streak Multiplier - only show if there is a streak */}
+                {/* Attendance Streak Section */}
                 {stats.currentStreak > 0 && (
-                  <div className="space-y-4 mb-6">
-                    <h4 className="font-medium text-primary border-b border-base-300 pb-2">
-                      Attendance Streak
-                    </h4>
-                    <div className="card shadow-sm bg-success/10">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium text-success-content">
-                              Attendance Streak
-                            </h5>
-                            <p className="text-sm text-success-content/70">
-                              {stats.currentStreak} game streak (+{(stats.currentStreak * 10)}% XP)
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg font-bold text-success">
-                              +{(stats.currentStreak * 10)}%
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <StreakSection
+                    title="Attendance Streak"
+                    streakCount={stats.currentStreak}
+                    bonusPerStreak={10}
+                    description={`${stats.currentStreak} game streak (+${(stats.currentStreak * 10)}% XP)`}
+                  />
                 )}
 
-                {/* Bench Warmer Bonus - only show if there's no attendance streak */}
-                {stats.reserveCount > 0 && stats.currentStreak === 0 && (
-                  <div className="space-y-4 mb-6">
-                    <h4 className="font-medium text-primary border-b border-base-300 pb-2">
-                      Reserve Streak
-                    </h4>
-                    <div className="card shadow-sm bg-success/10">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium text-success-content">
-                              Reserve Streak
-                            </h5>
-                            <p className="text-sm text-success-content/70">
-                              {stats.reserveCount} reserve appearance{stats.reserveCount !== 1 ? 's' : ''} (+{(stats.reserveCount * 5)}% XP)
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg font-bold text-success">
-                              +{(stats.reserveCount * 5)}%
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {/* Bench Warmer Streak Section */}
+                {stats.benchWarmerStreak > 0 && stats.currentStreak === 0 && (
+                  <StreakSection
+                    title="Reserve Streak"
+                    streakCount={stats.benchWarmerStreak}
+                    bonusPerStreak={5}
+                    description={`${stats.benchWarmerStreak} consecutive reserve appearance${stats.benchWarmerStreak !== 1 ? 's' : ''} (+${(stats.benchWarmerStreak * 5)}% XP)`}
+                  />
                 )}
 
-                {/* Registration Streak - only show if there's a streak AND it applies */}
-                {(stats.registrationStreak > 0 && stats.registrationStreakApplies) && (
-                  <div className="space-y-4 mb-6">
-                    <h4 className="font-medium text-primary border-b border-base-300 pb-2">
-                      Registration Streak
-                    </h4>
-                    <div className="card shadow-sm bg-success/10">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium text-success-content">
-                              Registration Streak
-                            </h5>
-                            <p className="text-sm text-success-content/70">
-                              {stats.registrationStreak} consecutive reserve registrations (+{(stats.registrationStreak * 2.5)}% XP)
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg font-bold text-success">
-                              +{(stats.registrationStreak * 2.5)}%
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {/* Registration Streak Section */}
+                {stats.registrationStreak > 0 && stats.registrationStreakApplies && (
+                  <StreakSection
+                    title="Registration Streak"
+                    streakCount={stats.registrationStreak}
+                    bonusPerStreak={2.5}
+                    description={`${stats.registrationStreak} consecutive registration${stats.registrationStreak !== 1 ? 's' : ''} (+${(stats.registrationStreak * 2.5)}% XP)`}
+                  />
                 )}
 
-                {/* Unpaid Games Penalty - only show if there are unpaid games */}
+                {/* Unpaid Games Penalty */}
                 {stats.unpaidGames > 0 && (
                   <UnpaidGamesPenalty
                     unpaidGames={stats.unpaidGames}
@@ -562,49 +206,17 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                   />
                 )}
 
-                {/* Total XP */}
+                {/* Total XP Section */}
                 {showTotal && (
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-primary border-b border-base-300 pb-2">
-                      Total XP
-                    </h4>
-                    <div className="card bg-base-100 shadow-sm">
-                      <div className="card-body p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h5 className="font-medium">Final XP</h5>
-                            <p className="text-sm text-base-content/70">
-                              Including Streak & Reserve XP
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-mono text-lg font-bold">
-                              {finalXP} XP
-                            </div>
-                            <div className="text-xs text-base-content/70">
-                              {(stats.reserveXP || 0) > 0 ? `(${baseXP} + ${stats.reserveXP})` : baseXP}
-                              {(streakModifier !== 0 || reserveModifier !== 0 || registrationModifier !== 0 || unpaidGamesModifier !== 0) && 
-                                ` × (1${streakModifier > 0 ? ` + ${streakModifier.toFixed(2)}` : ''}${
-                                  reserveModifier > 0 ? ` + ${reserveModifier.toFixed(2)}` : ''}${
-                                  registrationModifier > 0 ? ` + ${registrationModifier.toFixed(2)}` : ''}${
-                                  unpaidGamesModifier !== 0 ? ` + ${unpaidGamesModifier.toFixed(2)}` : ''})`
-                              }
-                            </div>
-                            <div className="text-xs text-base-content/50">
-                              {(stats.reserveXP || 0) > 0 ? '(Base XP + Reserve XP)' : 'Base XP'}
-                              {(streakModifier !== 0 || reserveModifier !== 0 || registrationModifier !== 0 || unpaidGamesModifier !== 0) && 
-                                ` × (1${streakModifier > 0 ? ' + Attendance Streak Modifier' : ''}${
-                                  reserveModifier > 0 ? ' + Reserve Streak Modifier' : ''}${
-                                  registrationModifier > 0 ? ' + Registration Streak Modifier' : ''}${
-                                  unpaidGamesModifier !== 0 ? ' + Unpaid Games Modifier' : ''})`
-                              }
-                              {totalBaseXP * totalModifier < 0 && ' (XP will never be less than 0)'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <TotalXPSection
+                    baseXP={baseXP}
+                    reserveXP={stats.reserveXP || 0}
+                    streakModifier={streakModifier}
+                    reserveModifier={reserveModifier}
+                    registrationModifier={registrationModifier}
+                    unpaidGamesModifier={unpaidGamesModifier}
+                    finalXP={finalXP}
+                  />
                 )}
               </div>
             </div>
@@ -613,6 +225,6 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
       </AnimatePresence>
     </div>
   );
-}
+};
 
 export default XPBreakdown;

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../../utils/supabase';
-import { FaCoins } from 'react-icons/fa';
+import { PiCoinDuotone } from "react-icons/pi";
 import { toast } from 'react-hot-toast';
 import { useAdmin } from '../../hooks/useAdmin';
 import { TokenTable } from '../../components/admin/tokens/TokenTable';
@@ -162,7 +162,7 @@ const TokenManagement: React.FC = () => {
         className="mb-6"
       >
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <FaCoins className="text-yellow-500" />
+          <PiCoinDuotone className="text-yellow-500" />
           Token Management
         </h1>
       </motion.div>

@@ -35,7 +35,7 @@ interface XPBreakdownProps {
   - `xp`: Total XP points
   - `reserveXP`: XP earned/lost from reserve status
   - `reserveCount`: Number of times player has been a reserve
-  - `benchWarmerStreak`: Current streak of being on reserve/not selected
+  - `benchWarmerStreak`: Current streak of consecutive reserve appearances (resets if player gets selected or misses a game)
   - `unpaidGamesCount`: Number of unpaid games (older than 24h)
 - `showTotal`: Boolean to toggle display of total XP
 
@@ -76,7 +76,7 @@ The XP calculation follows these steps:
 
 3. Modifiers
    - Attendance Streak: +10% per consecutive game played
-   - Reserve Streak: +5% per consecutive reserve appearance
+   - Bench Warmer Streak: +5% per consecutive reserve appearance (must be consecutive, resets if selected or miss a game)
    - Unpaid Games: -50% per unpaid game (only applies to games older than 24h)
 
 > **Important**: XP will never be negative. If the calculation would result in a negative value, it will be clamped to 0.
@@ -106,7 +106,7 @@ The component shows:
 2. Reserve XP (if any)
 3. Modifiers (with their signs):
    - Attendance Streak: Shows `+10%` for a 1-game streak
-   - Reserve Streak: Shows `+5%` for a 1-game reserve streak
+   - Bench Warmer Streak: Shows `+5%` for a 1-game reserve streak
    - Unpaid Games: Shows `-50%` per unpaid game
 
 A note "(XP will never be less than 0)" is displayed when the calculation would result in negative XP.
@@ -116,9 +116,20 @@ A note "(XP will never be less than 0)" is displayed when the calculation would 
 ### Reserve XP Display
 - Shows the total Reserve XP earned or lost
 - Displays the number of times a player has been a reserve
+- Shows bench warmer streak bonus if player has consecutive reserve appearances
 - Color-coded UI:
   - Green for positive Reserve XP (being a reserve)
   - Red for negative Reserve XP (declining slots)
+
+### Bench Warmer Streak
+- Only shows when player has an active streak of consecutive reserve appearances
+- Streak is broken when:
+  - Player gets selected for a game
+  - Player misses registering for a game
+  - Player declines a slot offer
+- Provides +5% XP bonus per consecutive reserve appearance
+- Example: 3 consecutive reserve appearances = +15% XP bonus
+- Helps compensate players who consistently show up as reserves but don't get selected
 
 ### Streak Display
 - Shows the current streak based on consecutive participation in past games

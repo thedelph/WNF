@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaCoins } from 'react-icons/fa';
+import { PiCoinDuotone } from "react-icons/pi";
 
 export const TokenManagementCard: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ export const TokenManagementCard: React.FC = () => {
     >
       <div className="card-body">
         <h2 className="card-title flex items-center gap-2">
-          <FaCoins className="text-yellow-500" />
+          <PiCoinDuotone className="text-yellow-500" />
           Token Management
         </h2>
         <p>Manage player tokens, view usage statistics, and handle token distribution</p>
