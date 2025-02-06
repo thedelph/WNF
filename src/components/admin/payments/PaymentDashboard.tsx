@@ -63,7 +63,7 @@ const PaymentDashboard: React.FC = () => {
       const gamesWithRegistrations = gamesData?.map(game => {
         const gameRegistrations = registrationsData?.filter(reg => reg.game_id === game.id) || [];
         const selectedNonReservePlayers = gameRegistrations.filter(
-          reg => reg.status === 'selected' && !reg.is_reserve
+          reg => reg.status === 'selected' 
         );
         const costPerPerson = selectedNonReservePlayers.length ? 
           game.pitch_cost / selectedNonReservePlayers.length : 
@@ -74,9 +74,9 @@ const PaymentDashboard: React.FC = () => {
           cost_per_person: costPerPerson,
           game_registrations: gameRegistrations.map(reg => ({
             ...reg,
-            // Only require payment for past games where player was selected and not a reserve
-            payment_required: new Date(game.date) < new Date() && reg.status === 'selected' && !reg.is_reserve,
-            amount_owed: new Date(game.date) < new Date() && reg.status === 'selected' && !reg.is_reserve && !reg.paid ? costPerPerson : 0
+            // Only require payment for past games where player was selected 
+            payment_required: new Date(game.date) < new Date() && reg.status === 'selected',
+            amount_owed: new Date(game.date) < new Date() && reg.status === 'selected' && !reg.paid ? costPerPerson : 0
           }))
         };
       }) || [];
@@ -105,7 +105,7 @@ const PaymentDashboard: React.FC = () => {
 
       if (!adminPlayer) throw new Error('Admin player record not found');
 
-      // Only update selected non-reserve players
+      // Only update selected players
       const { error } = await supabaseAdmin
         .from('game_registrations')
         .update({ 
@@ -120,11 +120,10 @@ const PaymentDashboard: React.FC = () => {
           .filter(game => new Date(game.date) <= date)
           .map(game => game.id)
         )
-        .eq('status', 'selected')
-        .eq('is_reserve', false);
+        .eq('status', 'selected');
 
       if (error) throw error;
-      toast.success('Successfully marked all non-reserve players as paid up to selected date');
+      toast.success('Successfully marked all selected players as paid up to selected date');
       fetchGames();
     } catch (error) {
       console.error('Error updating payments:', error);

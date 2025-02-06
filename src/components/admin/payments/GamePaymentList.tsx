@@ -52,7 +52,7 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
 
       if (!adminPlayer) throw new Error('Admin player record not found');
 
-      // Only update selected non-reserve players
+      // Only update selected players
       const { error } = await supabaseAdmin
         .from('game_registrations')
         .update({ 
@@ -64,8 +64,7 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
           payment_recipient_id: adminPlayer.id
         })
         .eq('game_id', gameId)
-        .eq('status', 'selected')
-        .eq('is_reserve', false);
+        .eq('status', 'selected');
 
       if (error) throw error;
       
@@ -86,8 +85,7 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
           payment_received_date: paid ? new Date().toISOString() : null
         })
         .in('game_id', Array.from(selectedGames))
-        .eq('status', 'selected')
-        .eq('is_reserve', false);
+        .eq('status', 'selected');
 
       if (error) throw error;
       
