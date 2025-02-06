@@ -45,6 +45,7 @@ interface PlayerCardProps {
   unpaidGamesModifier?: number
   registrationStreakBonus?: number
   registrationStreakBonusApplies?: boolean
+  usingToken?: boolean
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -79,6 +80,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   unpaidGamesModifier = 0,
   registrationStreakBonus = 0,
   registrationStreakBonusApplies = false,
+  usingToken = false,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -148,6 +150,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               unpaidGamesModifier={validUnpaidGamesModifier}
               registrationStreakBonus={registrationStreakBonus}
               registrationStreakBonusApplies={registrationStreakBonusApplies}
+              usingToken={usingToken}
             />
           ) : (
             <PlayerCardBack

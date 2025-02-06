@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Game } from '../../types/game';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { useAuth } from '../../context/AuthContext';
 import { useGameRegistration } from '../../hooks/useGameRegistration';
+import { TokenToggle } from './TokenToggle';
+import { supabase } from '../../utils/supabase';
 
 interface GameRegistrationProps {
   game: Game;
@@ -12,6 +14,8 @@ interface GameRegistrationProps {
   isProcessingOpen: boolean;
   isProcessingClose: boolean;
   onRegistrationChange: () => Promise<void>;
+  useToken: boolean;
+  setUseToken: (value: boolean) => void;
 }
 
 export const GameRegistration: React.FC<GameRegistrationProps> = ({
@@ -21,14 +25,37 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
   isUserRegistered,
   isProcessingOpen,
   isProcessingClose,
-  onRegistrationChange
+  onRegistrationChange,
+  useToken,
+  setUseToken
 }) => {
   const { session } = useAuth();
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const { isRegistering, handleRegistration } = useGameRegistration({
     gameId: game.id,
     isUserRegistered,
-    onRegistrationChange
+    onRegistrationChange,
+    useToken,
+    setUseToken
   });
+
+  useEffect(() => {
+    const fetchPlayerId = async () => {
+      if (!session?.user) return;
+      
+      const { data: playerProfile } = await supabase
+        .from('players')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (playerProfile) {
+        setPlayerId(playerProfile.id);
+      }
+    };
+
+    fetchPlayerId();
+  }, [session?.user]);
 
   if (!session?.user || isProcessingOpen || isProcessingClose) {
     return null;
@@ -39,7 +66,15 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
   }
 
   return (
-    <div className="flex justify-center my-4">
+    <div className="flex flex-col items-center gap-4 my-4">
+      {!isUserRegistered && playerId && (
+        <TokenToggle
+          playerId={playerId}
+          disabled={isRegistering}
+          value={useToken}
+          onChange={setUseToken}
+        />
+      )}
       <button
         onClick={handleRegistration}
         disabled={isRegistering}

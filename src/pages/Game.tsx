@@ -49,6 +49,8 @@ const Game = () => {
 
   });
 
+  const [useToken, setUseToken] = useState(false);
+
   const fetchGameData = useCallback(async () => {
 
     try {
@@ -84,7 +86,7 @@ const Game = () => {
             team,
 
             selection_method,
-
+            using_token,
             player:players!game_registrations_player_id_fkey (
 
               id,
@@ -187,6 +189,7 @@ const Game = () => {
             registrationStreakApplies: regStreakMap?.[reg.player.friendly_name]?.registrationStreakApplies || false
           },
           status: reg.status,
+          using_token: reg.using_token,
           created_at: reg.created_at || new Date().toISOString()
         })),
         selectedPlayers: transformedPlayers,
@@ -395,17 +398,48 @@ const Game = () => {
           });
 
         if (error) throw error;
+        
+        // Reset token usage
+        setUseToken(false);
       } else {
+        // If using token, verify and reserve it
+        if (useToken) {
+          const { data: tokenReserved } = await supabase
+            .rpc('handle_game_token', { 
+              p_player_id: playerProfile.id,
+              p_game_id: upcomingGame.id,
+              p_action: 'reserve'
+            });
+
+          if (!tokenReserved) {
+            console.error('Failed to reserve token');
+            return;
+          }
+        }
+
         // Register
         const { error } = await supabase
           .from('game_registrations')
           .insert({
             game_id: upcomingGame.id,
             player_id: playerProfile.id,
-            status: 'registered'
+            status: 'registered',
+            using_token: useToken,
+            selection_method: useToken ? 'token' : null
           });
 
-        if (error) throw error;
+        if (error) {
+          // If registration failed and we reserved a token, release it
+          if (useToken) {
+            await supabase
+              .rpc('handle_game_token', { 
+                p_player_id: playerProfile.id,
+                p_game_id: upcomingGame.id,
+                p_action: 'return'
+              });
+          }
+          throw error;
+        }
       }
 
       // Refresh game data
@@ -464,6 +498,8 @@ const Game = () => {
             isProcessingOpen={isProcessingOpen}
             isProcessingClose={isProcessingClose}
             onRegistrationChange={onGameUpdated}
+            useToken={useToken}
+            setUseToken={setUseToken}
           />
           <RegisteredPlayers 
             registrations={playerData.registrations} 

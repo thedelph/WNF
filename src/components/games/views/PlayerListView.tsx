@@ -1,10 +1,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaUser, FaUserClock, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { PiCoinDuotone } from "react-icons/pi";
 import { useAdminPermissions } from '../../../hooks/useAdminPermissions';
 import { handlePlayerDropoutAndOffers } from '../../../utils/dropout';
 import { toast } from 'react-hot-toast';
 import { useUser } from '../../../hooks/useUser';
+import { Tooltip } from '../../ui/Tooltip';
 
 interface PlayerSectionProps {
   title: string;
@@ -15,6 +17,7 @@ interface PlayerSectionProps {
     xp: number;
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
+    using_token?: boolean;
   }[];
   icon: React.ComponentType;
   isExpanded: boolean;
@@ -30,6 +33,7 @@ interface PlayerListViewProps {
     xp: number;
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
+    using_token?: boolean;
   }[];
   reservePlayers: {
     id: string;
@@ -38,6 +42,7 @@ interface PlayerListViewProps {
     xp: number;
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
+    using_token?: boolean;
   }[];
   droppedOutPlayers: {
     id: string;
@@ -46,6 +51,7 @@ interface PlayerListViewProps {
     xp: number;
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
+    using_token?: boolean;
   }[];
   playerStats: Record<string, { xp: number }>;
 }
@@ -100,6 +106,16 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
                   {player.isRandomlySelected && (
                     <div className="badge badge-secondary badge-sm">Random Pick</div>
                   )}
+                  {player.using_token && (
+                    <Tooltip content="Using Priority Token">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                      >
+                        <PiCoinDuotone size={24} className="text-yellow-400" />
+                      </motion.div>
+                    </Tooltip>
+                  )}
                 </div>
                 <div className="flex items-center">
                   <span className="text-sm">
@@ -126,15 +142,45 @@ export const PlayerListView: React.FC<PlayerListViewProps> = ({
   playerStats
 }) => {
   const [showSelected, setShowSelected] = React.useState(true);
-  const [showReserves, setShowReserves] = React.useState(true);
+  const [showReserve, setShowReserve] = React.useState(true);
   const [showDroppedOut, setShowDroppedOut] = React.useState(false);
+
+  // Sort selected players by token usage first, then by XP
+  const sortedSelectedPlayers = [...selectedPlayers].sort((a, b) => {
+    // First sort by token usage
+    if (a.using_token !== b.using_token) {
+      return a.using_token ? -1 : 1;
+    }
+    // Then by XP within each group (token users and non-token users)
+    return (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0);
+  });
+
+  // Sort reserve players by token usage first, then by XP
+  const sortedReservePlayers = [...reservePlayers].sort((a, b) => {
+    // First sort by token usage
+    if (a.using_token !== b.using_token) {
+      return a.using_token ? -1 : 1;
+    }
+    // Then by XP within each group (token users and non-token users)
+    return (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0);
+  });
+
+  // Sort dropped out players by token usage first, then by XP
+  const sortedDroppedOutPlayers = [...droppedOutPlayers].sort((a, b) => {
+    // First sort by token usage
+    if (a.using_token !== b.using_token) {
+      return a.using_token ? -1 : 1;
+    }
+    // Then by XP within each group (token users and non-token users)
+    return (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0);
+  });
 
   return (
     <div className="space-y-4">
       {selectedPlayers.length > 0 && (
         <PlayerSection
-          title="Selected players"
-          players={selectedPlayers}
+          title="Selected Players"
+          players={sortedSelectedPlayers}
           icon={FaUser}
           isExpanded={showSelected}
           onToggle={() => setShowSelected(!showSelected)}
@@ -143,18 +189,18 @@ export const PlayerListView: React.FC<PlayerListViewProps> = ({
       )}
       {reservePlayers.length > 0 && (
         <PlayerSection
-          title="Reserve players"
-          players={reservePlayers}
+          title="Reserve Players"
+          players={sortedReservePlayers}
           icon={FaUserClock}
-          isExpanded={showReserves}
-          onToggle={() => setShowReserves(!showReserves)}
+          isExpanded={showReserve}
+          onToggle={() => setShowReserve(!showReserve)}
           allXpValues={[]}
         />
       )}
       {droppedOutPlayers.length > 0 && (
         <PlayerSection
-          title="Dropped out players"
-          players={droppedOutPlayers}
+          title="Dropped out Players"
+          players={sortedDroppedOutPlayers}
           icon={FaUserClock}
           isExpanded={showDroppedOut}
           onToggle={() => setShowDroppedOut(!showDroppedOut)}

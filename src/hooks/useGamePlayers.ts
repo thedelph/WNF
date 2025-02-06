@@ -41,6 +41,8 @@ export const useGamePlayers = (gameId: string) => {
           status,
           selection_method,
           game_id,
+          using_token,
+          had_token,
           player:players!game_registrations_player_id_fkey (
             id,
             friendly_name,
@@ -73,6 +75,8 @@ export const useGamePlayers = (gameId: string) => {
           whatsapp_group_member: reg.player.whatsapp_group_member,
           status: reg.status,
           selection_method: reg.selection_method,
+          using_token: reg.using_token,
+          had_token: reg.had_token,
           registration_id: reg.id,
           caps: reg.player_stats?.caps || 0,
           xp: reg.player_stats?.xp || 0,
@@ -180,6 +184,8 @@ export const useGamePlayers = (gameId: string) => {
             win_rate: reg.win_rate,
             status: reg.status,
             selection_method: reg.selection_method,
+            using_token: reg.using_token,
+            had_token: reg.had_token,
             isRandomlySelected: reg.selection_method === 'random',
             // Only set hasSlotOffer if there's an actual offer
             hasSlotOffer: !!latestOffer,

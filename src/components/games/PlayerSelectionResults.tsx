@@ -32,7 +32,9 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const generateReasoning = () => {
-    const meritPlayers = selectedPlayers.filter(p => p.selection_method === 'merit');
+    const tokenPlayers = selectedPlayers.filter(p => p.using_token);
+    const forgivenTokenPlayers = selectedPlayers.filter(p => p.selection_method === 'merit' && p.using_token === false && p.had_token === true);
+    const meritPlayers = selectedPlayers.filter(p => p.selection_method === 'merit' && !p.using_token && !p.had_token);
     const randomPlayers = selectedPlayers.filter(p => p.selection_method === 'random');
     const whatsappReserves = reservePlayers.filter(p => 
       p.whatsapp_group_member === 'Yes' || p.whatsapp_group_member === 'Proxy'
@@ -41,9 +43,9 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
       p.whatsapp_group_member === 'No' || !p.whatsapp_group_member
     );
 
-    // Get the random pool (players not selected by merit)
+    // Get the random pool (players not selected by merit or token)
     const randomPool = [...reservePlayers, ...randomPlayers].filter(
-      player => !meritPlayers.some(mp => mp.id === player.id)
+      player => !meritPlayers.some(mp => mp.id === player.id) && !tokenPlayers.some(tp => tp.id === player.id)
     );
 
     // Prepare data for weighted selection explanation
@@ -59,8 +61,45 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
     return (
       <div className="space-y-4 text-sm">
         <div>
+          <h4 className="font-bold mb-2">Token Selection ({tokenPlayers.length} players)</h4>
+          <p className="mb-2">Players using their monthly token are guaranteed a slot:</p>
+          <ul className="list-disc pl-4">
+            {tokenPlayers.map(player => {
+              const stats = playerStats[player.id];
+              const isWhatsApp = player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy';
+              return (
+                <li key={player.id} className="mb-2">
+                  <span className="font-semibold">{player.friendly_name}</span>: Selected by token
+                  {isWhatsApp && ' (WhatsApp member)'}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {forgivenTokenPlayers.length > 0 && (
+          <div>
+            <h4 className="font-bold mb-2">Token Forgiveness ({forgivenTokenPlayers.length} players)</h4>
+            <p className="mb-2">These players used their token but would have been selected by merit anyway, so their tokens were returned:</p>
+            <ul className="list-disc pl-4">
+              {forgivenTokenPlayers.map(player => {
+                const stats = playerStats[player.id];
+                const isWhatsApp = player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy';
+                return (
+                  <li key={player.id} className="mb-2">
+                    <span className="font-semibold">{player.friendly_name}</span>: Token returned
+                    {' '}(Selected by merit with {stats?.xp || 0} XP)
+                    {isWhatsApp && ' (WhatsApp member)'}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        <div>
           <h4 className="font-bold mb-2">Merit Selection ({meritPlayers.length} players)</h4>
-          <p className="mb-2">Players were selected by XP (highest first). In case of equal XP, the following tiebreakers were used in order:</p>
+          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). In case of equal XP, the following tiebreakers were used in order:</p>
           <ol className="list-decimal pl-4 mb-4">
             <li>WhatsApp membership (members won)</li>
             <li>Current streak (highest won)</li>
@@ -94,7 +133,7 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
 
         <div>
           <h4 className="font-bold mb-2">Random Selection ({randomPlayers.length} players)</h4>
-          <p className="mb-2">WhatsApp members were prioritized in the random selection pool according to these rules:</p>
+          <p className="mb-2">After token and merit slots were filled, 2 slots were reserved for random selection. WhatsApp members were prioritized according to these rules:</p>
           <ul className="list-disc pl-4 mb-4">
             <li>If there were enough WhatsApp members for all slots: only WhatsApp members were considered</li>
             <li>If there were fewer WhatsApp members than slots: all WhatsApp members were selected, remaining slots filled from non-WhatsApp members</li>
@@ -411,31 +450,41 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
           <PlayerSelectionSection
             title="Selected Players"
             icon={FaUser}
-            players={selectedPlayers.map(player => ({
-              ...getPlayerWithRank(player),
-              friendlyName: player.friendly_name,
-              avatarSvg: player.avatar_svg,
-              xp: playerStats[player.id]?.xp || 0,
-              rarity: playerStats[player.id]?.rarity || 'Amateur',
-              caps: playerStats[player.id]?.caps || 0,
-              activeBonuses: playerStats[player.id]?.activeBonuses || 0,
-              activePenalties: playerStats[player.id]?.activePenalties || 0,
-              currentStreak: playerStats[player.id]?.currentStreak || 0,
-              maxStreak: playerStats[player.id]?.maxStreak || 0,
-              benchWarmerStreak: playerStats[player.id]?.benchWarmerStreak || 0,
-              wins: playerStats[player.id]?.wins || 0,
-              draws: playerStats[player.id]?.draws || 0,
-              losses: playerStats[player.id]?.losses || 0,
-              totalGames: playerStats[player.id]?.totalGames || 0,
-              winRate: playerStats[player.id]?.winRate || 0,
-              whatsapp_group_member: player.whatsapp_group_member,
-              hasActiveSlotOffers: activeSlotOffers?.length > 0,
-              isRandomlySelected: player.selection_method === 'random',
-              unpaidGames: playerStats[player.id]?.unpaidGames || 0,
-              unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
-              registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
-              registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
-            }))}
+            players={selectedPlayers
+              .sort((a, b) => {
+                // First sort by token usage
+                if (a.using_token !== b.using_token) {
+                  return a.using_token ? -1 : 1;
+                }
+                // Then by XP within each group (token users and non-token users)
+                return (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0);
+              })
+              .map(player => ({
+                ...getPlayerWithRank(player),
+                friendlyName: player.friendly_name,
+                avatarSvg: player.avatar_svg,
+                xp: playerStats[player.id]?.xp || 0,
+                rarity: playerStats[player.id]?.rarity || 'Amateur',
+                caps: playerStats[player.id]?.caps || 0,
+                activeBonuses: playerStats[player.id]?.activeBonuses || 0,
+                activePenalties: playerStats[player.id]?.activePenalties || 0,
+                currentStreak: playerStats[player.id]?.currentStreak || 0,
+                maxStreak: playerStats[player.id]?.maxStreak || 0,
+                benchWarmerStreak: playerStats[player.id]?.benchWarmerStreak || 0,
+                wins: playerStats[player.id]?.wins || 0,
+                draws: playerStats[player.id]?.draws || 0,
+                losses: playerStats[player.id]?.losses || 0,
+                totalGames: playerStats[player.id]?.totalGames || 0,
+                winRate: playerStats[player.id]?.winRate || 0,
+                whatsapp_group_member: player.whatsapp_group_member,
+                hasActiveSlotOffers: activeSlotOffers?.length > 0,
+                isRandomlySelected: player.selection_method === 'random',
+                unpaidGames: playerStats[player.id]?.unpaidGames || 0,
+                unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
+                registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
+                registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false,
+                usingToken: player.using_token
+              }))}
             isExpanded={showSelected}
             onToggle={() => setShowSelected(!showSelected)}
           >
@@ -513,7 +562,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
                 unpaidGames: playerStats[player.id]?.unpaidGames || 0,
                 unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
                 registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
-                registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
+                registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false,
+                usingToken: player.using_token
               }))}
             isExpanded={showReserves}
             onToggle={() => setShowReserves(!showReserves)}
@@ -558,7 +608,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               unpaidGames: playerStats[player.id]?.unpaidGames || 0,
               unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
               registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
-              registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
+              registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false,
+              usingToken: player.using_token
             }))}
             isExpanded={showDroppedOut}
             onToggle={() => setShowDroppedOut(!showDroppedOut)}
@@ -658,7 +709,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             unpaidGames: playerStats[player.id]?.unpaidGames || 0,
             unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
             registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
-            registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
+            registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false,
+            usingToken: player.using_token
           }))}
           playerStats={playerStats}
         />

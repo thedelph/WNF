@@ -18,14 +18,9 @@ BEGIN
             g.id,
             g.sequence_number,
             gr.status,
-            t.required_gap,
-            t.xp_multiplier,
             (v_latest_game_number - g.sequence_number) as games_ago
         FROM game_registrations gr
         JOIN games g ON g.id = gr.game_id
-        LEFT JOIN player_tiers pt ON g.date BETWEEN pt.start_date AND COALESCE(pt.end_date, NOW())
-            AND pt.player_id = gr.player_id
-        LEFT JOIN tiers t ON t.id = pt.tier_id
         WHERE gr.player_id = p_player_id
         AND g.completed = true
         AND gr.status = 'selected'
@@ -36,44 +31,30 @@ BEGIN
             id,
             sequence_number,
             games_ago,
-            required_gap,
-            xp_multiplier,
             CASE
-                -- For tier 1 (weekly): 0=20xp, 1-2=18xp, etc.
-                -- For tier 2 (bi-weekly): 0-1=20xp, 2-5=18xp, etc.
-                -- For tier 3 (4-weekly): 0-3=20xp, 4-11=18xp, etc.
-                WHEN games_ago <= (COALESCE(required_gap, 1) - 1) THEN 20
-                WHEN games_ago <= (COALESCE(required_gap, 1) * 3 - 1) THEN 18
-                WHEN games_ago <= (COALESCE(required_gap, 1) * 5 - 1) THEN 16
-                WHEN games_ago <= (COALESCE(required_gap, 1) * 10 - 1) THEN 14
-                WHEN games_ago <= (COALESCE(required_gap, 1) * 20 - 1) THEN 12
-                WHEN games_ago <= (COALESCE(required_gap, 1) * 30 - 1) THEN 10
-                WHEN games_ago <= (COALESCE(required_gap, 1) * 40 - 1) THEN 5
+                WHEN games_ago = 0 THEN 20
+                WHEN games_ago BETWEEN 1 AND 2 THEN 18
+                WHEN games_ago BETWEEN 3 AND 4 THEN 16
+                WHEN games_ago BETWEEN 5 AND 9 THEN 14
+                WHEN games_ago BETWEEN 10 AND 19 THEN 12
+                WHEN games_ago BETWEEN 20 AND 29 THEN 10
+                WHEN games_ago BETWEEN 30 AND 39 THEN 5
                 ELSE 0
-            END * COALESCE(xp_multiplier::numeric, 1.0) as weight
+            END as weight
         FROM player_games
     )
     SELECT COALESCE(SUM(weight), 0)
     INTO v_base_xp 
     FROM game_weights;
 
-    -- Calculate reserve XP (5 XP per reserve game, multiplied by tier multiplier)
-    WITH reserve_games AS (
-        SELECT 
-            g.id,
-            t.xp_multiplier
-        FROM game_registrations gr
-        JOIN games g ON g.id = gr.game_id
-        LEFT JOIN player_tiers pt ON g.date BETWEEN pt.start_date AND COALESCE(pt.end_date, NOW())
-            AND pt.player_id = gr.player_id
-        LEFT JOIN tiers t ON t.id = pt.tier_id
-        WHERE gr.player_id = p_player_id
-        AND g.completed = true
-        AND gr.status = 'reserve'
-    )
-    SELECT COALESCE(SUM(5 * COALESCE(xp_multiplier::numeric, 1.0)), 0)
-    INTO v_reserve_xp 
-    FROM reserve_games;
+    -- Calculate reserve XP (5 XP per reserve game)
+    SELECT COUNT(*) * 5
+    INTO v_reserve_xp
+    FROM game_registrations gr
+    JOIN games g ON g.id = gr.game_id
+    WHERE gr.player_id = p_player_id
+    AND gr.status = 'reserve'
+    AND g.completed = true;
 
     -- Add reserve XP to base XP before multipliers
     v_base_xp := v_base_xp + v_reserve_xp;
@@ -112,7 +93,7 @@ BEGIN
     LEFT JOIN player_current_registration_streak_bonus rs ON rs.friendly_name = p.friendly_name
     WHERE p.id = p_player_id;
 
-    -- Calculate unpaid games modifier (-50% per unpaid game, excluding dropped out games)
+        -- Calculate unpaid games modifier (-50% per unpaid game, excluding dropped out games)
     WITH unpaid_games AS (
         SELECT COUNT(*) as unpaid_count
         FROM game_registrations gr

@@ -43,6 +43,8 @@ export interface ExtendedPlayerData extends PlayerStats {
   benchWarmerStreak?: number;  // Add this for consistency with PlayerCard props
   registrationStreakBonus?: number; // Current registration streak length
   registrationStreakBonusApplies?: boolean; // Whether the bonus should be applied
+  using_token?: boolean; // Whether the player is using a token for this game
+  had_token?: boolean; // Whether the player used a token but had it returned due to merit selection
   status?: 'selected' | 'reserve' | 'dropped_out' | 'none'; // Player's status in the latest game
 }
 

@@ -66,6 +66,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 status={player.status}
                 registrationStreakBonus={player.registrationStreakBonus}
                 registrationStreakBonusApplies={player.registrationStreakBonusApplies}
+                usingToken={player.using_token}
               />
               {renderPlayerExtra && renderPlayerExtra(player)}
             </div>

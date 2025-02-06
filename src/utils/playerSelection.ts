@@ -18,6 +18,7 @@ interface PlayerStats {
   caps?: number;
   registration_time?: string;
   bench_warmer_streak?: number;
+  using_token?: boolean;
 }
 
 interface PlayerSelectionResult {
@@ -40,7 +41,8 @@ export const handlePlayerSelection = async ({
         player_id,
         status,
         selection_method,
-        created_at
+        created_at,
+        using_token
       `)
       .eq('game_id', gameId)
       .eq('status', 'registered');
@@ -81,12 +83,18 @@ export const handlePlayerSelection = async ({
         current_streak: stats?.current_streak || 0,
         caps: stats?.caps || 0,
         registration_time: reg.created_at,
-        bench_warmer_streak: details?.bench_warmer_streak || 0
+        bench_warmer_streak: details?.bench_warmer_streak || 0,
+        using_token: reg.using_token || false
       };
     });
 
-    // Sort players by XP and tiebreakers
-    const sortedPlayers = [...players].sort((a, b) => {
+    // First, select players using tokens - they get guaranteed slots
+    const tokenSelectedPlayers = players.filter(player => player.using_token);
+    const remainingXpSlots = Math.max(0, xpSlots - tokenSelectedPlayers.length);
+
+    // Sort remaining players by XP and tiebreakers (excluding token users)
+    const remainingPlayers = players.filter(player => !player.using_token);
+    const sortedPlayers = [...remainingPlayers].sort((a, b) => {
       // First compare by XP
       if (b.xp !== a.xp) {
         return b.xp - a.xp;
@@ -114,16 +122,58 @@ export const handlePlayerSelection = async ({
       return (a.registration_time || '').localeCompare(b.registration_time || '');
     });
 
-    // Select players by XP for XP slots
-    const xpSelectedPlayers = sortedPlayers.slice(0, xpSlots);
+    // Now check which token users would still get in by merit AFTER considering token effects
+    const allPlayersWithTokenEffects = [...players].sort((a, b) => {
+      // First compare by XP
+      if (b.xp !== a.xp) {
+        return b.xp - a.xp;
+      }
+
+      // If XP is equal, then check WhatsApp status
+      const aIsWhatsApp = a.whatsapp_group_member === 'Yes' || a.whatsapp_group_member === 'Proxy';
+      const bIsWhatsApp = b.whatsapp_group_member === 'Yes' || b.whatsapp_group_member === 'Proxy';
+      
+      if (aIsWhatsApp !== bIsWhatsApp) {
+        return aIsWhatsApp ? -1 : 1;
+      }
+
+      // Both have same XP and WhatsApp status - check streak
+      if (b.current_streak !== a.current_streak) {
+        return (b.current_streak || 0) - (a.current_streak || 0);
+      }
+
+      // Same streak - check caps
+      if (b.caps !== a.caps) {
+        return (b.caps || 0) - (a.caps || 0);
+      }
+
+      // Same caps - check registration time
+      return (a.registration_time || '').localeCompare(b.registration_time || '');
+    });
+
+    // Get who would get in by merit after token effects
+    const remainingMeritSlots = allPlayersWithTokenEffects
+      .filter(player => !player.using_token) // Exclude token users since they already have slots
+      .slice(0, remainingXpSlots); // Take only the remaining merit slots
+
+    // Now check which token users would still get in by merit
+    const tokenUsersSelectedByMerit = tokenSelectedPlayers.filter(tokenPlayer => {
+      // Find their position in the merit-based list (including token effects)
+      const meritPosition = allPlayersWithTokenEffects.findIndex(p => p.id === tokenPlayer.id);
+      // They would get in by merit if their position is within the original xpSlots
+      return meritPosition < xpSlots;
+    });
+
+    // Select players by XP for remaining XP slots
+    const xpSelectedPlayers = sortedPlayers.slice(0, remainingXpSlots);
     
-    // The remaining players should be everyone NOT selected by XP
-    const remainingPlayers = sortedPlayers.filter(player => 
+    // The remaining players should be everyone NOT selected by XP or token
+    const playersForRandomSelection = sortedPlayers.filter(player => 
       !xpSelectedPlayers.some(xpPlayer => xpPlayer.id === player.id)
     );
 
     // Handle random selection with WhatsApp priority and weighted probabilities
-    const whatsappMembers = remainingPlayers.filter(
+    const whatsappMembers = playersForRandomSelection.filter(
       p => p.whatsapp_group_member === 'Yes' || p.whatsapp_group_member === 'Proxy'
     );
     
@@ -175,7 +225,7 @@ export const handlePlayerSelection = async ({
       randomSelectedPlayers = [...whatsappMembers];
       
       // Fill remaining slots from non-WhatsApp members using weights
-      const nonWhatsappMembers = remainingPlayers.filter(
+      const nonWhatsappMembers = playersForRandomSelection.filter(
         p => p.whatsapp_group_member === 'No' || p.whatsapp_group_member === null
       );
       const remainingSlots = randomSlots - whatsappMembers.length;
@@ -183,8 +233,16 @@ export const handlePlayerSelection = async ({
       randomSelectedPlayers = [...randomSelectedPlayers, ...additionalPlayers];
     }
 
-    // Combine selected players
+    // Combine all selected players
     const selectedPlayers = [
+      ...tokenSelectedPlayers.map(player => {
+        const wouldGetInByMerit = tokenUsersSelectedByMerit.some(p => p.id === player.id);
+        return {
+          ...player,
+          selection_method: wouldGetInByMerit ? 'merit' : 'token',
+          using_token: !wouldGetInByMerit // Only consume token if they wouldn't get in by merit
+        };
+      }),
       ...xpSelectedPlayers.map(player => ({
         ...player,
         selection_method: 'merit'
@@ -195,41 +253,110 @@ export const handlePlayerSelection = async ({
       }))
     ];
 
-    try {
-      // First update all selected players
-      for (const player of selectedPlayers) {
-        const { error: updateError } = await supabaseAdmin
+    // Helper function to update player status with retry
+    const updatePlayerStatus = async (
+      playerId: string,
+      status: 'selected' | 'reserve',
+      selectionMethod: 'token' | 'merit' | 'random' | 'none'
+    ) => {
+      try {
+        console.log(`Updating player ${playerId} to status: ${status}, method: ${selectionMethod}`);
+        
+        // First check if the player is already in the desired state
+        const { data: current } = await supabaseAdmin
+          .from('game_registrations')
+          .select('status, selection_method')
+          .eq('game_id', gameId)
+          .eq('player_id', playerId)
+          .single();
+
+        if (current?.status === status && current?.selection_method === selectionMethod) {
+          console.log(`Player ${playerId} already in desired state`);
+          return current;
+        }
+
+        // Try direct update first
+        const { error: directError } = await supabaseAdmin
           .from('game_registrations')
           .update({
-            status: 'selected',
-            selection_method: player.selection_method
+            status,
+            selection_method: selectionMethod
           })
           .eq('game_id', gameId)
-          .eq('player_id', player.id);
+          .eq('player_id', playerId);
 
-        if (updateError) {
-          throw new Error(`Failed to update selected player ${player.id}: ${updateError.message}`);
+        if (!directError) {
+          console.log(`Successfully updated player ${playerId} directly`);
+          return { status, selection_method: selectionMethod };
         }
+
+        console.log(`Direct update failed for ${playerId}, trying RPC...`, directError);
+
+        // If direct update fails, try the RPC
+        const { data, error } = await supabaseAdmin.rpc('update_game_registration', {
+          p_game_id: gameId,
+          p_player_id: playerId,
+          p_status: status,
+          p_selection_method: selectionMethod
+        });
+
+        if (error) {
+          console.error(`Error updating player ${playerId}:`, {
+            error,
+            details: error.details,
+            hint: error.hint,
+            message: error.message
+          });
+          throw error;
+        }
+
+        console.log(`Successfully updated player ${playerId} via RPC`, data);
+        return data;
+      } catch (error) {
+        console.error(`Failed to update player ${playerId}:`, {
+          error,
+          message: error.message,
+          stack: error.stack
+        });
+        throw error;
+      }
+    };
+
+    try {
+      console.log('Starting player selection process...');
+      console.log('Token players:', tokenSelectedPlayers.length);
+      console.log('XP players:', xpSelectedPlayers.length);
+      console.log('Random players:', randomSelectedPlayers.length);
+
+      // Update token players first
+      for (const player of tokenSelectedPlayers) {
+        const wouldGetInByMerit = tokenUsersSelectedByMerit.some(p => p.id === player.id);
+        await updatePlayerStatus(
+          player.id, 
+          'selected', 
+          wouldGetInByMerit ? 'merit' : 'token'
+        );
       }
 
-      // Then update non-selected players
+      // Update merit-based selections
+      for (const player of xpSelectedPlayers) {
+        await updatePlayerStatus(player.id, 'selected', 'merit');
+      }
+
+      // Update random selections
+      for (const player of randomSelectedPlayers) {
+        await updatePlayerStatus(player.id, 'selected', 'random');
+      }
+
+      // Update non-selected players to reserve
       const nonSelectedPlayerIds = players
         .filter(p => !selectedPlayers.find(sp => sp.id === p.id))
         .map(p => p.id);
 
-      if (nonSelectedPlayerIds.length > 0) {
-        const { error: reserveError } = await supabaseAdmin
-          .from('game_registrations')
-          .update({
-            status: 'reserve',
-            selection_method: 'none'
-          })
-          .eq('game_id', gameId)
-          .in('player_id', nonSelectedPlayerIds);
+      console.log('Non-selected players:', nonSelectedPlayerIds.length);
 
-        if (reserveError) {
-          throw new Error(`Failed to update reserve players: ${reserveError.message}`);
-        }
+      for (const playerId of nonSelectedPlayerIds) {
+        await updatePlayerStatus(playerId, 'reserve', 'none');
       }
 
       return {
@@ -238,11 +365,21 @@ export const handlePlayerSelection = async ({
         nonSelectedPlayerIds
       };
     } catch (error) {
+      console.error('Error in player selection:', {
+        error,
+        message: error.message,
+        stack: error.stack,
+        context: {
+          tokenPlayers: tokenSelectedPlayers.length,
+          xpPlayers: xpSelectedPlayers.length,
+          randomPlayers: randomSelectedPlayers.length
+        }
+      });
       return {
         success: false,
+        error: `Failed to update player statuses: ${error.message}`,
         selectedPlayers: [],
-        nonSelectedPlayerIds: [],
-        error: error instanceof Error ? error.message : 'An error occurred during player selection update'
+        nonSelectedPlayerIds: []
       };
     }
   } catch (error) {
