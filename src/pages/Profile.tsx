@@ -106,14 +106,29 @@ export default function Component() {
 
         if (playerError) throw playerError;
 
-        // Get token status
+        // Get token status - get the most recent token
         const { data: tokenData, error: tokenError } = await supabase
           .from('player_tokens')
           .select('*')
           .eq('player_id', playerData.id)
+          .order('issued_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (tokenError && tokenError.code !== 'PGRST116') throw tokenError;
+
+        // Determine token status
+        const tokenStatus = tokenData ? {
+          status: tokenData.used_at ? 'USED' : 'AVAILABLE',
+          last_used_at: tokenData.used_at,
+          next_token_at: tokenData.used_at ? new Date(new Date(tokenData.used_at).getTime() + (22 * 24 * 60 * 60 * 1000)).toISOString() : null,
+          created_at: tokenData.issued_at
+        } : {
+          status: 'NO_TOKEN',
+          last_used_at: null,
+          next_token_at: null,
+          created_at: new Date().toISOString()
+        };
 
         // Get player's XP breakdown
         const { data: xpBreakdown, error: xpError } = await supabase
@@ -205,17 +220,7 @@ export default function Component() {
           max_streak: playerData.max_streak || 0,
           avatar_svg: playerData.avatar_svg,
           avatar_options: playerData.avatar_options,
-          token: tokenData ? {
-            status: tokenData.used_at ? 'USED' : tokenData.expires_at ? 'EXPIRED' : 'AVAILABLE',
-            last_used_at: tokenData.used_at,
-            next_token_at: tokenData.used_at ? new Date(tokenData.used_at).getTime() + (22 * 24 * 60 * 60 * 1000) : null,
-            created_at: tokenData.issued_at
-          } : {
-            status: 'NO_TOKEN',
-            last_used_at: null,
-            next_token_at: null,
-            created_at: new Date().toISOString()
-          },
+          token: tokenStatus,
           xp: playerData.player_xp?.xp || 0,
           rarity: playerData.player_xp?.rarity || 'Amateur',
           reserveXP: reserveXP,
