@@ -26,12 +26,13 @@ import TeamBalancingOverview from './components/admin/pages/TeamBalancingOvervie
 import Login from './pages/Login'
 import Register from './pages/Register'
 import NotificationsPage from './pages/NotificationsPage'
-import { SlotOffersPage } from './pages/admin/SlotOffersPage';
+import { SlotOffersPage } from './pages/admin/SlotOffersPage'
 import EmailVerification from './pages/EmailVerification'
 import Changelog from './pages/Changelog'
 import Stats from './pages/Stats'
 import StandaloneStats from './pages/StandaloneStats'
 import { ScrollToTop } from './components/ui/ScrollToTop'
+import TokenManagement from './pages/admin/TokenManagement'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -92,6 +93,7 @@ const App: React.FC = () => {
                 <Route path="/admin/teams/:gameId" element={<Teams />} />
                 <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
                 <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
+                <Route path="/admin/tokens" element={<TokenManagement />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/changelog" element={<Changelog />} />
               </Route>

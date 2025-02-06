@@ -21,8 +21,13 @@ export const usePlayerToken = (playerId: string | undefined) => {
         return { hasToken: false, expiresAt: null };
       }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .rpc('check_player_token', { p_player_id: playerId });
+
+      if (error) {
+        console.error('Error checking token:', error);
+        throw new Error('Failed to check token availability');
+      }
 
       return {
         hasToken: !!data?.[0]?.has_token,

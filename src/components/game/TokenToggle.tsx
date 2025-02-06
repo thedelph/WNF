@@ -19,8 +19,29 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
 }) => {
   const { data: tokenInfo, isLoading, isError } = usePlayerToken(playerId);
 
-  // Don't render anything if there's an error or no token available
-  if (isError || !tokenInfo?.hasToken) return null;
+  // If there's an error, show an error state but still allow toggling
+  if (isError) {
+    console.error('Error loading token info');
+    return (
+      <div className="form-control">
+        <label className="label cursor-pointer gap-4">
+          <span className="flex items-center gap-2 text-error">
+            <PiCoinDuotone size={20} className="text-gray-400" />
+            <span className="label-text">Error checking token</span>
+          </span>
+          <input
+            type="checkbox"
+            className="toggle toggle-error"
+            checked={false}
+            disabled={true}
+          />
+        </label>
+      </div>
+    );
+  }
+
+  // Don't render if no token available
+  if (!isLoading && !tokenInfo?.hasToken) return null;
 
   // Show loading state
   if (isLoading) {
