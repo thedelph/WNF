@@ -5,6 +5,7 @@ import { PiCoinDuotone } from "react-icons/pi";
 import { Registration } from '../../types/playerSelection';
 import { useUser } from '../../hooks/useUser';
 import { Tooltip } from '../ui/Tooltip';
+import { toUrlFriendly } from '../../utils/urlHelpers';
 
 interface RegisteredPlayerListViewProps {
   registrations: Registration[];
@@ -67,8 +68,8 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
                 className={`flex items-center justify-between rounded-lg ${registration.using_token ? 'bg-base-200' : 'bg-base-300'} p-3 hover:bg-base-200 transition-colors`}
               >
                 <Link 
-                  to={`/players/${registration.player.id}`}
-                  className="flex items-center justify-between w-full"
+                  to={`/player/${toUrlFriendly(registration.player.friendly_name)}`}
+                  className="text-blue-500 hover:text-blue-600"
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-medium hover:text-primary">

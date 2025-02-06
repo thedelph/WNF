@@ -87,6 +87,8 @@ const App: React.FC = () => {
                 <Route path="/admin/history" element={<HistoricalGames />} />
                 <Route path="/players" element={<PlayerList />} />
                 <Route path="/players/:id" element={<PlayerProfile />} />
+                <Route path="/player/:friendlyName" element={<PlayerProfile />} />
+                <Route path="/players/:id" element={<PlayerProfile />} />
                 <Route path="/admin/payments" element={<PaymentDashboard />} />
                 <Route path="/ratings" element={<Ratings />} />
                 <Route path="/admin/ratings" element={<RatingsView />} />

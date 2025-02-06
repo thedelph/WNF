@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Trophy, Star, ListChecks, Flame, DollarSign } from 'lucide-react'
 import { PlayerCardProps } from './PlayerCardTypes'
 import WhatsAppIndicator from '../indicators/WhatsAppIndicator'
+import { toUrlFriendly } from '../../utils/urlHelpers'
 
 /**
  * Displays the back face of the player card with detailed statistics in a compact format
@@ -153,7 +154,7 @@ export const PlayerCardBack: React.FC<PlayerCardProps> = ({
 
       <div className="mt-2 flex justify-center">
         <Link 
-          to={`/players/${id}`} 
+          to={`/player/${toUrlFriendly(friendlyName)}`} 
           className="badge badge-lg badge-outline hover:bg-white/10 px-4 py-3 text-sm font-semibold z-10"
           onClick={(e) => e.stopPropagation()}
         >

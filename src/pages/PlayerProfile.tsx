@@ -18,13 +18,14 @@ import { GameHistory } from '../types/game';
 import clsx from 'clsx';
 import { Tooltip } from '../components/ui/Tooltip';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import { fromUrlFriendly } from '../utils/urlHelpers';
 
 /**
  * PlayerProfile component displays detailed information about a player
  * including their stats, ratings, and game history.
  */
 export default function PlayerProfileNew() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id?: string; friendlyName?: string }>();
   const [player, setPlayer] = useState<PlayerStats | null>(null);
   const [games, setGames] = useState<GameHistory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,8 +64,8 @@ export default function PlayerProfileNew() {
         if (latestSeqError) throw latestSeqError;
         setLatestSequence(latestSeqData?.sequence_number || 0);
 
-        // Get player stats
-        const { data: playerData, error: playerError } = await supabase
+        // Get player stats - using either ID or friendly name
+        const playerQuery = supabase
           .from('players')
           .select(`
             id,
@@ -82,9 +83,13 @@ export default function PlayerProfileNew() {
               rank,
               rarity
             )
-          `)
-          .eq('id', id)
-          .single();
+          `);
+
+        // Apply the appropriate filter based on the parameter we received
+        const { data: playerData, error: playerError } = await (params.id 
+          ? playerQuery.eq('id', params.id)
+          : playerQuery.ilike('friendly_name', fromUrlFriendly(params.friendlyName || ''))
+        ).single();
 
         if (playerError) {
           throw playerError;
@@ -94,7 +99,7 @@ export default function PlayerProfileNew() {
         const { data: unpaidGamesData, error: unpaidError } = await supabase
           .from('player_unpaid_games_view')
           .select('unpaid_games_count')
-          .eq('player_id', id)
+          .eq('player_id', playerData.id)
           .maybeSingle();
 
         if (unpaidError) {
@@ -107,7 +112,7 @@ export default function PlayerProfileNew() {
         const { data: reserveXPData, error: reserveXPError } = await supabase
           .from('reserve_xp_transactions')
           .select('xp_amount')
-          .eq('player_id', id);
+          .eq('player_id', playerData.id);
 
         if (reserveXPError) {
           throw reserveXPError;
@@ -134,7 +139,7 @@ export default function PlayerProfileNew() {
               is_historical
             )
           `)
-          .eq('player_id', id)
+          .eq('player_id', playerData.id)
           .eq('games.is_historical', true);
 
         if (registrationsError) {
@@ -155,7 +160,7 @@ export default function PlayerProfileNew() {
         }
 
         // Find win rate data for this player
-        const playerWinRates = winRatesData?.find(wr => wr.id === id);
+        const playerWinRates = winRatesData?.find(wr => wr.id === playerData.id);
 
         // Get current user's player ID if logged in
         let currentPlayerId = null;
@@ -177,7 +182,7 @@ export default function PlayerProfileNew() {
           const { data: gamesCount } = await supabase
             .rpc('count_games_played_together', {
               player_one_id: currentPlayerId,
-              player_two_id: id
+              player_two_id: playerData.id
             });
             
           gamesPlayedTogether = gamesCount || 0;
@@ -187,7 +192,7 @@ export default function PlayerProfileNew() {
             .from('player_ratings')
             .select('attack_rating, defense_rating')
             .eq('rater_id', currentPlayerId)
-            .eq('rated_player_id', id)
+            .eq('rated_player_id', playerData.id)
             .maybeSingle();
             
           myRating = ratingData;
@@ -211,7 +216,7 @@ export default function PlayerProfileNew() {
               completed
             )
           `)
-          .eq('player_id', id)
+          .eq('player_id', playerData.id)
           .eq('game.is_historical', true)
           .eq('game.needs_completion', false)
           .eq('game.completed', true)
@@ -306,13 +311,13 @@ export default function PlayerProfileNew() {
       }
     };
 
-    if (id) {
+    if (params.id || params.friendlyName) {
       fetchPlayerData();
     }
-  }, [id]);
+  }, [params.id, params.friendlyName]);
 
   const handleRatingSubmit = async () => {
-    if (!user?.id || !id) return;
+    if (!user?.id || !player) return;
 
     try {
       // Get current player's ID
@@ -332,7 +337,7 @@ export default function PlayerProfileNew() {
         .upsert(
           {
             rater_id: currentPlayer.id,
-            rated_player_id: id,
+            rated_player_id: player.id,
             attack_rating: ratings.attack,
             defense_rating: ratings.defense
           },
@@ -343,7 +348,7 @@ export default function PlayerProfileNew() {
 
       if (error) throw error;
 
-      toast.success(`Successfully rated ${player?.friendly_name}`);
+      toast.success(`Successfully rated ${player.friendly_name}`);
       setShowRatingModal(false);
       
       // Refresh player data to update ratings
@@ -351,7 +356,7 @@ export default function PlayerProfileNew() {
         .from('player_ratings')
         .select('attack_rating, defense_rating')
         .eq('rater_id', currentPlayer.id)
-        .eq('rated_player_id', id)
+        .eq('rated_player_id', player.id)
         .maybeSingle();
 
       if (ratingError) {
