@@ -34,6 +34,8 @@ interface XPBreakdownProps {
 const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  console.log('XPBreakdown rendered with stats:', stats);
+
   // Ensure we have arrays of numbers and use the passed in latestSequence
   const gameHistory = stats.gameHistory || [];
   const latestSequence = stats.latestSequence || 0;
@@ -82,7 +84,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   const finalXP = Math.max(0, Math.round(totalBaseXP * totalModifier));
 
   return (
-    <div className="mt-4">
+    <div className="w-full">
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -100,10 +102,9 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            className="mt-4 bg-base-100 rounded-lg shadow-lg overflow-hidden"
           >
-            <div className="mt-4 p-4 bg-base-200 rounded-lg shadow-lg">
-
+            <div className="p-6 space-y-6">
               <div className="space-y-4">
                 {/* How XP is Calculated Section */}
                 <div className="space-y-4">

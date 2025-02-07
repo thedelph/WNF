@@ -472,9 +472,10 @@ export default function PlayerProfileNew() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="space-y-6"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        {/* Stats Grid - Full Width */}
+        <div className="w-full">
           <StatsGrid profile={{
             total_xp: player.xp,
             current_streak: player.current_streak,
@@ -483,26 +484,35 @@ export default function PlayerProfileNew() {
             active_penalties: player.active_penalties,
             rarity: player.rarity
           }} />
-          {player && player.player_xp && (
+        </div>
+
+        {/* XP Breakdown - Full Width */}
+        {player && (
+          <div className="w-full">
             <XPBreakdown
-              xp={player.xp}
-              rank={player.player_xp.rank}
-              rarity={player.rarity}
-              caps={player.caps || 0}
-              activeBonuses={player.active_bonuses || 0}
-              activePenalties={player.active_penalties || 0}
-              currentStreak={player.current_streak || 0}
-              gameHistory={player.gameHistory || []}
-              latestSequence={latestSequence}
-              reserveXP={player.reserveXP ?? 0}
-              reserveCount={player.reserveCount ?? 0}
-              benchWarmerStreak={player.bench_warmer_streak || 0}
-              registrationStreak={player.registrationStreak || 0}
-              registrationStreakApplies={player.registrationStreakApplies || false}
-              unpaidGames={player.unpaidGames || 0}
+              stats={{
+                caps: player.caps || 0,
+                activeBonuses: player.active_bonuses || 0,
+                activePenalties: player.active_penalties || 0,
+                currentStreak: player.current_streak || 0,
+                gameHistory: player.gameHistory || [],
+                latestSequence: latestSequence,
+                xp: player.xp,
+                reserveXP: player.reserveXP ?? 0,
+                reserveCount: player.reserveCount ?? 0,
+                benchWarmerStreak: player.bench_warmer_streak || 0,
+                registrationStreak: player.registrationStreak || 0,
+                registrationStreakApplies: player.registrationStreakApplies || false,
+                unpaidGames: player.unpaidGames || 0
+              }}
+              showTotal={true}
             />
-          )}
-          {player && (
+          </div>
+        )}
+
+        {/* Priority Token Status - Full Width */}
+        {player && (
+          <div className="w-full">
             <TokenStatus
               status={player.token_status?.status}
               lastUsedAt={player.token_status?.last_used_at}
@@ -510,13 +520,13 @@ export default function PlayerProfileNew() {
               createdAt={player.token_status?.created_at}
               playerName={player.friendly_name}
             />
-          )}
-        </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Only show PlayerRating if not viewing own profile */}
       {(!user || user.id !== player.user_id) && (
-        <div id="player-rating">
+        <div id="player-rating" className="mt-12">
           <PlayerRating
             player={player}
             user={user}
@@ -539,7 +549,7 @@ export default function PlayerProfileNew() {
           id="player-rating"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card bg-base-100 shadow-xl mb-8"
+          className="card bg-base-100 shadow-xl mt-12"
         >
           <div className="card-body">
             <h2 className="card-title">Player Rating</h2>
