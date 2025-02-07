@@ -19,7 +19,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   rank?: number, 
   isFlipped?: boolean, 
   unpaidGames?: number, // Number of past unpaid games
-  unpaidGamesModifier?: number, // XP modifier from past unpaid games (-30% per game)
+  unpaidGamesModifier?: number, // XP modifier from past unpaid games (-50% per game)
   registrationStreakBonus?: number,
   registrationStreakBonusApplies?: boolean,
   usingToken?: boolean,

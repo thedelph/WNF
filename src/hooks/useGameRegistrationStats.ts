@@ -145,7 +145,7 @@ export const useGameRegistrationStats = (
               registrationStreak: regStreakMap[player.friendly_name]?.registrationStreak || 0,
               registrationStreakApplies: regStreakMap[player.friendly_name]?.registrationStreakApplies || false,
               unpaidGames: shouldCountUnpaidGames ? player.unpaid_games : 0,
-              unpaidGamesModifier: shouldCountUnpaidGames ? player.unpaid_games_modifier : 0
+              unpaidGamesModifier: shouldCountUnpaidGames ? player.unpaid_games * -0.5 : 0
             }
           };
         }, {});
