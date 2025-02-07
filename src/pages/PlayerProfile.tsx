@@ -55,7 +55,7 @@ export default function PlayerProfileNew() {
         setLoading(true);
         
         // Get the latest sequence number from completed games
-        const { data: latestSeqData, error: latestSeqError } = await executeWithRetry(
+        const { data: latestSequenceData } = await executeWithRetry(
           () => supabase
             .from('games')
             .select('sequence_number')
@@ -65,12 +65,8 @@ export default function PlayerProfileNew() {
             .single()
         );
 
-        if (latestSeqError) {
-          console.error('Error fetching latest sequence:', latestSeqError);
-          toast.error('Failed to load game sequence data');
-          return;
-        }
-        setLatestSequence(latestSeqData?.sequence_number || 0);
+        const latestSequence = latestSequenceData?.sequence_number || 0;
+        console.log('[PlayerProfile] Latest sequence:', latestSequence);
 
         // Get player stats - using either ID or friendly name
         const playerQuery = supabase
@@ -113,6 +109,28 @@ export default function PlayerProfileNew() {
           return;
         }
 
+        // Get player XP breakdown data using friendly_name
+        const { data: xpBreakdownData, error: xpBreakdownError } = await executeWithRetry(
+          () => supabase
+            .from('player_xp_breakdown')
+            .select('reserve_games, reserve_xp')
+            .eq('friendly_name', playerData.friendly_name)
+            .single()
+        );
+
+        if (xpBreakdownError) {
+          console.error('Error fetching XP breakdown:', xpBreakdownError);
+          toast.error('Failed to load XP breakdown data');
+          return;
+        }
+
+        console.log('[PlayerProfile] Player data:', { 
+          id: playerData?.id,
+          friendly_name: playerData?.friendly_name,
+          xp_breakdown: xpBreakdownData,
+          params: { id: params.id, friendlyName: params.friendlyName }
+        });
+
         // Get count of unpaid games using the player_unpaid_games_view
         const { data: unpaidGamesData, error: unpaidError } = await executeWithRetry(
           () => supabase
@@ -129,24 +147,6 @@ export default function PlayerProfileNew() {
         }
 
         const unpaidGamesCount = unpaidGamesData?.count || 0;
-
-        // Get reserve XP from transactions
-        const { data: reserveData, error: reserveError } = await executeWithRetry(
-          () => supabase
-            .from('reserve_xp_transactions')
-            .select('xp_amount')
-            .eq('player_id', playerData.id)
-        );
-
-        if (reserveError) {
-          console.error('Error fetching reserve XP:', reserveError);
-          toast.error('Failed to load reserve XP data');
-          return;
-        }
-
-        // Sum up all reserve XP transactions
-        const reserveXP = reserveData?.reduce((sum, transaction) => 
-          sum + (transaction.xp_amount || 0), 0) || 0;
 
         // Get player win rates
         const { data: winRatesData, error: winRatesError } = await executeWithRetry(
@@ -358,17 +358,17 @@ export default function PlayerProfileNew() {
           wins: playerWinRates?.wins || 0,
           totalGames: (playerWinRates?.wins || 0) + (playerWinRates?.draws || 0) + (playerWinRates?.losses || 0),
           win_rate: playerWinRates?.win_rate || 0,
-          gameHistory: gamesWithTeamSizes
-            ?.filter(reg => reg.games?.is_historical)
+          gameHistory: validGames
+            .filter(reg => reg.game?.is_historical)
             .map(reg => ({
-              sequence: reg.games?.sequence_number,
+              sequence: reg.game?.sequence_number,
               status: reg.status
             }))
             .filter(game => game.sequence !== undefined) || [],
           games_played_together: gamesPlayedTogether,
           my_rating: myRating,
-          reserveXP: reserveXP,
-          reserveCount: 0,
+          reserveXP: xpBreakdownData?.reserve_xp || 0,
+          reserveCount: xpBreakdownData?.reserve_games || 0,
           bench_warmer_streak: playerData.bench_warmer_streak || 0,
           unpaidGames: unpaidGamesCount,
           registrationStreak: 0,
@@ -376,7 +376,15 @@ export default function PlayerProfileNew() {
           token_status: tokenStatus
         };
 
+        console.log('[PlayerProfile] Setting player stats:', { 
+          playerStats: {
+            ...playerStats,
+            gameHistory: playerStats.gameHistory.length + ' games'
+          }
+        });
+
         setPlayer(playerStats);
+        setLatestSequence(latestSequence);
       } catch (error: any) {
         console.error('Error loading player profile:', error);
         toast.error('Failed to load player data. Please try again.');

@@ -34,16 +34,31 @@ interface XPBreakdownProps {
 const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  console.log('XPBreakdown rendered with stats:', stats);
+  console.log('[XPBreakdown] Initial stats:', stats);
 
   // Ensure we have arrays of numbers and use the passed in latestSequence
   const gameHistory = stats.gameHistory || [];
   const latestSequence = stats.latestSequence || 0;
 
+  console.log('[XPBreakdown] Game history:', { 
+    gameHistory,
+    latestSequence,
+    totalGames: gameHistory.length
+  });
+
   // Calculate base XP from game history without multipliers
   const baseXP = stats.gameHistory.reduce((total, game) => {
     // Skip future games and games where player dropped out
-    if (game.sequence > latestSequence || game.status === 'dropped_out') return total;
+    if (game.sequence > latestSequence || game.status === 'dropped_out') {
+      console.log(`[XPBreakdown] Skipping game ${game.sequence} - ${game.status === 'dropped_out' ? 'dropped out' : 'future game'}`);
+      return total;
+    }
+    
+    // Skip reserve games as they're handled separately
+    if (game.status === 'reserve') {
+      console.log(`[XPBreakdown] Skipping game ${game.sequence} - reserve game`);
+      return total;
+    }
     
     // Calculate how many games ago this game was
     const gamesAgo = latestSequence - game.sequence;
@@ -58,11 +73,21 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
     else if (gamesAgo <= 29) xp = 10;
     else if (gamesAgo <= 39) xp = 5;
     
+    console.log(`[XPBreakdown] Game ${game.sequence} (${gamesAgo} games ago) - Adding ${xp} XP`);
     return total + xp;
   }, 0);
 
+  console.log('[XPBreakdown] Base XP calculation:', { baseXP });
+
   // Add reserve XP to base XP
   const totalBaseXP = baseXP + (stats.reserveXP || 0);
+  console.log('[XPBreakdown] Total Base XP:', { 
+    baseXP, 
+    reserveXP: stats.reserveXP, 
+    totalBaseXP,
+    reserveCount: stats.reserveCount,
+    fullStats: stats
+  });
 
   // Calculate streak modifier (+10% per streak level)
   const streakModifier = stats.currentStreak * 0.1;
@@ -135,8 +160,9 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         <div>
                           <h4 className="font-medium mb-2">Reserve Points</h4>
                           <ul className="list-disc list-inside space-y-1 mt-2 ml-4">
-                            <li>Being a reserve earns you +5 XP for each game in the last 40 games</li>
-                            <li>If you are a reserve and end up accepting a slot due to a drop out, you get the base game points instead of the reserve points</li>
+                            <li>Being a reserve (provided you registered within the registration window) earns you +5 XP for each game in the last 40 games</li>
+                            <li>Late reserves (registered after the registration window) do not get XP if they don't play</li>
+                            <li> If you are a reserve and end up accepting a slot due to a drop out, you get the base game points instead of the reserve points</li>
                             <li>If you decline a slot that opens up when someone drops out, you'll lose 10 XP (doesn't apply for same-day dropouts)</li>
                           </ul>
                         </div>
@@ -168,6 +194,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                   reserveXP={stats.reserveXP || 0}
                   reserveCount={stats.reserveCount || 0}
                 />
+                {console.log('[XPBreakdown] ReserveXPSection props:', { reserveXP: stats.reserveXP, reserveCount: stats.reserveCount })}
 
                 {/* Attendance Streak Section */}
                 {stats.currentStreak > 0 && (

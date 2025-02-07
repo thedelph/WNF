@@ -10,7 +10,12 @@ const ReserveXPSection: React.FC<ReserveXPSectionProps> = ({
   reserveXP,
   reserveCount,
 }) => {
-  if (reserveXP <= 0) return null;
+  console.log('[ReserveXPSection] Props:', { reserveXP, reserveCount });
+  
+  if (reserveXP <= 0) {
+    console.log('[ReserveXPSection] Not rendering due to reserveXP <= 0');
+    return null;
+  }
 
   return (
     <div className="space-y-4 mb-6">
