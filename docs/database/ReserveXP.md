@@ -24,6 +24,30 @@ CREATE TABLE reserve_xp_transactions (
 - `transaction_type`: Type of transaction ('RESERVE_REWARD' or 'RESERVE_PENALTY')
 - `created_at`: Timestamp of the transaction
 
+## Views
+
+### player_xp_breakdown
+A materialized view that provides a comprehensive breakdown of a player's XP, including reserve XP and games.
+
+#### Columns
+- `friendly_name`: Player's friendly name (used for querying)
+- `reserve_xp`: Total XP earned/lost from reserve status
+- `reserve_games`: Number of times player has been a reserve
+- `reserve_game_modifier`: Modifier applied to XP based on reserve status
+- `total_xp`: Total XP after all modifiers
+
+#### Usage
+```typescript
+// Example: Fetching reserve XP data
+const { data } = await supabase
+  .from('player_xp_breakdown')
+  .select('reserve_games, reserve_xp')
+  .eq('friendly_name', playerName)
+  .single();
+```
+
+Note: Query this view using `friendly_name` rather than `player_id` as it's denormalized for performance.
+
 ## Functions
 
 ### get_player_with_reserve_xp
