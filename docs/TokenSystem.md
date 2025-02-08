@@ -1,18 +1,18 @@
 # Token System Documentation
 
 ## Overview
-The token system provides players with a guaranteed slot option for games. Each player can have exactly one active token at any time, which they can use to secure a spot in any game, bypassing the normal XP-based selection process. Tokens remain valid until used, ensuring players never lose their token due to inactivity.
+The token system provides players with a guaranteed slot option for games. Each player can have exactly one active token at any time, which they can use to secure a spot in any game, bypassing the normal XP-based selection process. Tokens are issued to players who have missed multiple consecutive games, ensuring they have an opportunity to rejoin the player pool.
 
 ## Token Distribution and Lifecycle
 - Each player can have **exactly one active token** at any time
+- Tokens are issued automatically when a player:
+  - Has not been selected (merit, random, or token) for 3 consecutive games
+  - This includes games where they registered but weren't selected
+  - This also includes games they didn't register for
 - Tokens remain valid indefinitely until used
 - After a token is used:
-  - 22-day cooldown period begins
-  - New token is issued after cooldown ends
-- The 22-day cooldown ensures tokens are ready for the next game in the 4-week rotation:
-  - Day 1: Use token for current game
-  - Days 1-22: Cooldown period
-  - Day 23+: New token available for next game
+  - Player must meet the eligibility criteria again to receive a new token
+  - No fixed cooldown period, based purely on game participation
 - System enforces the single-token rule via database triggers
 
 ## Token Usage and Forgiveness
@@ -22,7 +22,7 @@ When a player has an available token:
 3. Token slots are deducted from XP slots (not random slots)
 4. The token is only consumed when the game is marked as completed
 5. If a player drops out or the game is cancelled, the token is automatically returned
-6. New tokens are reissued every 4 weeks
+6. New tokens are reissued based on the eligibility criteria
 
 ### Token Forgiveness Rules
 The system includes a token forgiveness mechanism that works as follows:
@@ -74,7 +74,7 @@ The system includes a token forgiveness mechanism that works as follows:
 
 1. **Available**
    - Token can be used for any game
-   - Reissued every 4 weeks
+   - Reissued based on eligibility criteria
    - Remains valid until used
 
 2. **Reserved**
@@ -84,18 +84,15 @@ The system includes a token forgiveness mechanism that works as follows:
 
 3. **Consumed**
    - Token has been used for a completed game
-   - 22-day cooldown begins
-   - New token will be issued after cooldown
+   - Player must meet eligibility criteria again to receive a new token
 
 4. **Cooldown**
-   - Period after token consumption
-   - Lasts 22 days
-   - Prevents token usage for next few weeks
+   - No fixed cooldown period, based purely on game participation
 
 ## Token Lifecycle Example
 
 1. **Initial State**
-   - Player receives token
+   - Player receives token based on eligibility criteria
    - Token remains valid indefinitely
    - Can be used at any time
 
@@ -107,10 +104,10 @@ The system includes a token forgiveness mechanism that works as follows:
 3. **Game Completion**
    - Game is marked as completed
    - Token is consumed
-   - 22-day cooldown begins
+   - Player must meet eligibility criteria again to receive a new token
 
 4. **Next Token**
-   - After 22-day cooldown
+   - Player meets eligibility criteria again
    - New token automatically issued
    - Ready for next game cycle
 
@@ -125,8 +122,8 @@ The system includes a token forgiveness mechanism that works as follows:
 ```
 Week 1, Day 1:  Use token for Game A
               → Token consumed
-              → Cooldown begins
-Week 4, Day 23: Cooldown ends
+              → Player must meet eligibility criteria again
+Week 4, Day 28: Player meets eligibility criteria again
               → New token issued
 Week 4, Day 28: Next game available
 ```
@@ -231,7 +228,7 @@ Located in: `src/components/game/TokenToggle.tsx`
 - Icon changes color when token is selected (yellow when active, gray when inactive)
 - Provides usage tooltip explaining:
   - "Using a token guarantees you a slot in this game"
-  - "Tokens are reissued every 4 weeks"
+  - "Tokens are reissued based on eligibility criteria"
 - Uses React Icons (PiCoinDuotone) for consistent icon styling
 
 ### Token Indicator
@@ -283,7 +280,7 @@ Located in: `src/components/admin/games/GameRegistrations.tsx`
 ### Token Not Available
 1. Check token consumption in `player_tokens` table
 2. Verify no active tokens exist for the player
-3. Check if token is in cooldown period
+3. Check if player meets eligibility criteria
 
 ### Token Used But Registration Failed
 1. Check `player_tokens.used_at` and `used_game_id`

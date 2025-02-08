@@ -59,7 +59,8 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
     <Tooltip content={
       <div className="space-y-2 max-w-xs">
         <p>Using a token guarantees you a slot in this game.</p>
-        <p>Tokens are reissued every 4 weeks.</p>
+        <p>Tokens are issued to WhatsApp group members who haven't been selected to play in any of the last 3 games.</p>
+        <p className="text-sm text-base-content/70">You can still get a token even if you registered, were a reserve, or dropped out - only being selected to play counts against you.</p>
       </div>
     }>
       <div className="form-control">

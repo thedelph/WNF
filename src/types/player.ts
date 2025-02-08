@@ -28,24 +28,31 @@ export interface PlayerStats {
   id: string;
   user_id: string;
   friendly_name: string;
-  avatar_svg?: string;
+  avatar_svg: string;
   caps: number;
-  active_bonuses: number;
-  active_penalties: number;
+  active_bonuses: string[];
+  active_penalties: string[];
   current_streak: number;
   max_streak: number;
-  xp: number;
-  win_rate: number;
-  gameHistory: GameHistoryItem[];
-  games_played_together?: number;
-  my_rating?: {
-    attack_rating: number;
-    defense_rating: number;
-  } | null;
-  reserveXP?: number;
-  reserveCount?: number;
-  bench_warmer_streak?: number;
-  unpaidGames?: number;
-  totalGames?: number;
-  wins?: number;
+  bench_warmer_streak: number;
+  player_xp: PlayerXP;
+  xp_breakdown: XPBreakdown | null;
+  unpaid_games: number;
+  win_rates: WinRates | null;
+  games_played_together: number;
+  my_rating: PlayerRating | null;
+  registrationStreak: number;
+  registrationStreakApplies: boolean;
+  token: {
+    status: string;
+    lastUsedAt: string | null;
+    nextTokenAt: string | null;
+    createdAt: string;
+    isEligible: boolean;
+    recentGames: Array<{
+      id: string;
+      sequence_number: number;
+      date: string;
+    }>;
+  };
 }

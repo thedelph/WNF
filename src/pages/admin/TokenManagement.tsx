@@ -19,10 +19,11 @@ const TokenManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      // First get all players
+      // First get all WhatsApp group members
       const { data: players, error: playersError } = await supabase
-        .from('player_stats')
-        .select('id, friendly_name')
+        .from('players')
+        .select('id, friendly_name, whatsapp_group_member')
+        .in('whatsapp_group_member', ['Yes', 'Proxy'])
         .order('friendly_name');
 
       if (playersError) {
@@ -41,24 +42,80 @@ const TokenManagement: React.FC = () => {
         throw tokensError;
       }
 
+      // Get the 3 most recently completed games
+      const { data: latestGames, error: gamesError } = await supabase
+        .from('games')
+        .select('id, date, sequence_number')
+        .eq('status', 'completed')
+        .order('date', { ascending: false })
+        .limit(3);
+
+      if (gamesError) {
+        console.error('Error fetching games:', gamesError);
+        throw gamesError;
+      }
+
+      console.log('Latest games:', latestGames);
+
+      // Get registrations for these games
+      const { data: gameRegistrations, error: registrationsError } = await supabase
+        .from('game_registrations')
+        .select('player_id, game_id, status')
+        .in('game_id', latestGames?.map(g => g.id) || []);
+
+      if (registrationsError) {
+        console.error('Error fetching registrations:', registrationsError);
+        throw registrationsError;
+      }
+
+      console.log('Game registrations:', gameRegistrations);
+
+      // Create a map of player IDs to their eligibility status and played games
+      const eligibilityMap = new Map();
+      players.forEach(player => {
+        const playerGames = gameRegistrations?.filter(gr => gr.player_id === player.id) || [];
+        const selectedGames = playerGames
+          .filter(g => g.status === 'selected')
+          .map(g => {
+            const game = latestGames?.find(lg => lg.id === g.game_id);
+            return {
+              id: game?.id,
+              date: game?.date,
+              // Format as "WNF #123"
+              display: game?.sequence_number ? `WNF #${game.sequence_number}` : 'Unknown Game'
+            };
+          });
+        
+        eligibilityMap.set(player.id, {
+          is_eligible: selectedGames.length === 0,
+          selected_games: selectedGames
+        });
+      });
+
       // Create a map of player IDs to their most recent token
       const tokenMap = new Map();
-      tokens.forEach(token => {
+      tokens?.forEach(token => {
         if (!tokenMap.has(token.player_id)) {
           tokenMap.set(token.player_id, token);
         }
       });
 
-      // Combine player data with their token status
-      const formattedData = players.map(player => ({
-        id: tokenMap.get(player.id)?.id || player.id, // Use token ID if exists, otherwise player ID
-        player_id: player.id,
-        friendly_name: player.friendly_name,
-        issued_at: tokenMap.get(player.id)?.issued_at || null,
-        expires_at: tokenMap.get(player.id)?.expires_at || null,
-        used_at: tokenMap.get(player.id)?.used_at || null,
-        used_game_id: tokenMap.get(player.id)?.used_game_id || null
-      }));
+      // Combine player data with their token and eligibility status
+      const formattedData = players.map(player => {
+        const eligibility = eligibilityMap.get(player.id);
+        return {
+          id: tokenMap.get(player.id)?.id || player.id,
+          player_id: player.id,
+          friendly_name: player.friendly_name,
+          whatsapp_group_member: player.whatsapp_group_member,
+          is_eligible: eligibility.is_eligible,
+          selected_games: eligibility.selected_games,
+          issued_at: tokenMap.get(player.id)?.issued_at || null,
+          expires_at: tokenMap.get(player.id)?.expires_at || null,
+          used_at: tokenMap.get(player.id)?.used_at || null,
+          used_game_id: tokenMap.get(player.id)?.used_game_id || null
+        };
+      });
 
       setTokenData(formattedData);
     } catch (error) {

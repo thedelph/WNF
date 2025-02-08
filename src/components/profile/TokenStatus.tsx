@@ -9,17 +9,37 @@ interface TokenStatusProps {
   lastUsedAt: string | null;
   nextTokenAt: string | null;
   createdAt: string;
-  playerName?: string; // Optional player name for public profile view
+  playerName?: string;
+  isEligible?: boolean;
+  recentGames?: Array<{
+    id: string;
+    sequence_number: number;
+    date: string;
+  }>;
 }
 
 // Component to display token status with animations and tooltips
-export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt, playerName }: TokenStatusProps) {
+export default function TokenStatus({ 
+  status, 
+  lastUsedAt, 
+  nextTokenAt, 
+  createdAt, 
+  playerName,
+  isEligible,
+  recentGames 
+}: TokenStatusProps) {
   // Format dates for display
   const formatDate = (date: string) => {
     return format(new Date(date), 'MMM d, yyyy');
   };
 
   const getStatusColor = () => {
+    if (status === 'AVAILABLE' && isEligible) {
+      return 'bg-success text-success-content';
+    }
+    if (!isEligible) {
+      return 'bg-error text-error-content';
+    }
     switch (status) {
       case 'AVAILABLE':
         return 'bg-success text-success-content';
@@ -33,6 +53,13 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
     }
   };
 
+  const getDisplayStatus = () => {
+    if (!isEligible) {
+      return 'INELIGIBLE';
+    }
+    return status;
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -42,7 +69,7 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
       <div className="flex items-center gap-2 mb-4">
         <PiCoinDuotone 
           size={24} 
-          className={status === 'AVAILABLE' ? 'text-yellow-400' : 'text-gray-400'} 
+          className={status === 'AVAILABLE' && isEligible ? 'text-yellow-400' : 'text-gray-400'} 
         />
         <h3 className="text-lg font-bold">Priority Token Status</h3>
       </div>
@@ -53,7 +80,7 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
           <div className="flex items-center gap-2">
             <span className="text-sm">Status:</span>
             <span className={`px-2 py-1 rounded-md text-sm font-medium ${getStatusColor()}`}>
-              {status}
+              {getDisplayStatus()}
             </span>
           </div>
         </Tooltip>
@@ -67,8 +94,17 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
           </Tooltip>
         )}
 
-        {/* Next Token Date */}
-        {nextTokenAt && (
+        {/* Recent Games - Show if ineligible */}
+        {!isEligible && recentGames && recentGames.length > 0 && (
+          <Tooltip content="Recent games played">
+            <div className="text-sm text-error/80">
+              Played: {recentGames.map(g => `WNF #${g.sequence_number}`).join(', ')}
+            </div>
+          </Tooltip>
+        )}
+
+        {/* Next Token Date - Only show if eligible */}
+        {nextTokenAt && isEligible && (
           <Tooltip content={playerName ? `When ${playerName}'s next priority token will be available` : "When your next priority token will be available"}>
             <div className="text-sm">
               Next Token: {formatDate(nextTokenAt)} 
@@ -80,7 +116,7 @@ export default function TokenStatus({ status, lastUsedAt, nextTokenAt, createdAt
         )}
 
         {/* Token Age */}
-        {status === 'AVAILABLE' && (
+        {status === 'AVAILABLE' && isEligible && (
           <Tooltip content={playerName ? `When ${playerName}'s token was issued` : "When this token was issued"}>
             <div className="text-xs opacity-75">
               Token issued: {formatDate(createdAt)}
