@@ -24,14 +24,45 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       .map(line => {
         // Remove numbering (e.g., "17. ")
         line = line.replace(/^\d+\.\s*/, '');
-        // Remove any emojis at the start (e.g., "🔄 ")
-        line = line.replace(/^[\u{1F300}-\u{1F9FF}]\s*/u, '');
         // Remove XP info
         line = line.replace(/\s*\(\d+\s*XP\).*$/, '');
+        // Remove any emojis at the start (e.g., "🔄 ")
+        line = line.replace(/^[\u{1F300}-\u{1F9FF}]\s*/u, '');
         
         console.log('Parsed player name from line:', { original: line, parsed: line.trim() });
         return line.trim();
       });
+  };
+
+  // Function to parse player names and identify random selections
+  const parseSelectedPlayers = (text: string) => {
+    const selectedPlayers: string[] = [];
+    const randomPlayers: string[] = [];
+
+    text.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .forEach(line => {
+        // Remove numbering (e.g., "17. ")
+        let processedLine = line.replace(/^\d+\.\s*/, '');
+        // Remove XP info
+        processedLine = processedLine.replace(/\s*\(\d+\s*XP\).*$/, '');
+        
+        // Check if the line starts with a dice emoji
+        const isRandom = processedLine.startsWith('🎲');
+        // Remove the dice emoji if present
+        processedLine = processedLine.replace(/^🎲\s*/, '');
+        
+        const playerName = processedLine.trim();
+        if (playerName) {
+          selectedPlayers.push(playerName);
+          if (isRandom) {
+            randomPlayers.push(playerName);
+          }
+        }
+      });
+
+    return { selectedPlayers, randomPlayers };
   };
 
   // Function to parse the full game details text
@@ -128,19 +159,18 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     }
 
     // Find the sections by their headers
-    const selectedPlayersMatch = text.match(/✅\s*Selected Players:\s*\n\n([\s\S]*?)(?=\n\n🎲|\n\n🔄|\n\n❌|$)/);
-    const randomPlayersMatch = text.match(/🎲\s*Randomly Selected:\s*\n\n([\s\S]*?)(?=\n\n🔄|\n\n❌|$)/);
+    const selectedPlayersMatch = text.match(/✅\s*Selected Players:\s*\n\n([\s\S]*?)(?=\n\n🔄|\n\n❌|$)/);
     const reservesMatch = text.match(/🔄\s*Reserves[^:]*:\s*\n\n([\s\S]*?)(?=\n\n❌|$)/);
     const droppedOutMatch = text.match(/❌\s*Dropped Out\s*\n\n([\s\S]*?)$/);
 
     console.log('Selected players section:', selectedPlayersMatch?.[1]);
-    console.log('Random players section:', randomPlayersMatch?.[1]);
     console.log('Reserves section:', reservesMatch?.[1]);
     console.log('Dropped out section:', droppedOutMatch?.[1]);
 
     // Parse player names from each section
-    const selectedPlayers = selectedPlayersMatch ? parsePlayerNamesFromSection(selectedPlayersMatch[1]) : [];
-    const randomPlayers = randomPlayersMatch ? parsePlayerNamesFromSection(randomPlayersMatch[1]) : [];
+    const { selectedPlayers, randomPlayers } = selectedPlayersMatch 
+      ? parseSelectedPlayers(selectedPlayersMatch[1]) 
+      : { selectedPlayers: [], randomPlayers: [] };
     const reservePlayers = reservesMatch ? parsePlayerNamesFromSection(reservesMatch[1]) : [];
     const droppedOutPlayers = droppedOutMatch ? parsePlayerNamesFromSection(droppedOutMatch[1]) : [];
 

@@ -72,27 +72,16 @@ export const GameCard: React.FC<Props> = ({
         break;
 
       case GAME_STATUSES.PLAYERS_ANNOUNCED:
-        // Add selected players section (merit-based)
-        const meritSelected = game.game_registrations?.filter(reg => reg.status === 'selected' && reg.selection_method === 'merit');
-        if (meritSelected?.length > 0) {
+        // Get all selected players (both merit and random)
+        const selectedPlayers = game.game_registrations?.filter(reg => reg.status === 'selected');
+        if (selectedPlayers?.length > 0) {
           message += '\n\n✅ Selected Players:\n';
-          meritSelected
+          selectedPlayers
             .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
             .forEach(reg => {
               const xp = playerXpMap.get(reg.player.id) || 0;
-              message += `\n${reg.player.friendly_name} (${xp} XP)`;
-            });
-        }
-
-        // Add randomly selected players section
-        const randomlySelected = game.game_registrations?.filter(reg => reg.status === 'selected' && reg.selection_method === 'random');
-        if (randomlySelected?.length > 0) {
-          message += '\n\n🎲 Randomly Selected:\n';
-          randomlySelected
-            .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
-            .forEach(reg => {
-              const xp = playerXpMap.get(reg.player.id) || 0;
-              message += `\n${reg.player.friendly_name} (${xp} XP)`;
+              const isRandom = reg.selection_method === 'random';
+              message += `\n${isRandom ? '🎲' : ''}${reg.player.friendly_name} (${xp} XP)`;
             });
         }
 
@@ -125,15 +114,15 @@ export const GameCard: React.FC<Props> = ({
         message += '\n\n▶️ Starting teams for tonight:\n';
         
         // Get all selected players
-        const selectedPlayers = game.game_registrations?.filter(reg => reg.status === 'selected') || [];
+        const selectedPlayersTeams = game.game_registrations?.filter(reg => reg.status === 'selected') || [];
         
         // Sort players by team and then by name
-        const orangeTeam = selectedPlayers
+        const orangeTeam = selectedPlayersTeams
           .filter(reg => reg.team === 'orange')
           .map(reg => reg.player.friendly_name)
           .sort();
           
-        const blueTeam = selectedPlayers
+        const blueTeam = selectedPlayersTeams
           .filter(reg => reg.team === 'blue')
           .map(reg => reg.player.friendly_name)
           .sort();
