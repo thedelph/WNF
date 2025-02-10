@@ -50,7 +50,7 @@ export default function PlayerProfileNew() {
     getGameOutcome
   } = useGameHistory();
 
-  const { tokenStatus } = useTokenStatus(player?.id);
+  const { tokenStatus, loading: tokenLoading } = useTokenStatus(player?.id || '');
 
   useEffect(() => {
     const fetchPlayerData = async () => {
@@ -487,16 +487,18 @@ export default function PlayerProfileNew() {
         {/* Priority Token Status - Full Width */}
         {player && tokenStatus && (
           <div className="w-full">
-            <TokenStatus
-              status={tokenStatus.status}
-              lastUsedAt={tokenStatus.lastUsedAt}
-              nextTokenAt={tokenStatus.nextTokenAt}
-              createdAt={tokenStatus.createdAt}
-              playerName={player.friendly_name}
-              isEligible={tokenStatus.isEligible}
-              recentGames={tokenStatus.recentGames}
-              hasPlayedInLastTenGames={tokenStatus.hasPlayedInLastTenGames}
-              hasRecentSelection={tokenStatus.hasRecentSelection}
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">Token Status</h2>
+            <TokenStatus 
+              status={tokenStatus?.status || 'NO_TOKEN'}
+              lastUsedAt={tokenStatus?.lastUsedAt}
+              nextTokenAt={tokenStatus?.nextTokenAt}
+              createdAt={tokenStatus?.createdAt}
+              isEligible={tokenStatus?.isEligible}
+              recentGames={tokenStatus?.recentGames}
+              hasPlayedInLastTenGames={tokenStatus?.hasPlayedInLastTenGames}
+              hasRecentSelection={tokenStatus?.hasRecentSelection}
+              isLoading={tokenLoading}
+              playerName={player?.friendly_name}
             />
           </div>
         )}

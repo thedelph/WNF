@@ -15,6 +15,7 @@ interface TokenStatusProps {
   recentGames?: string[];
   hasPlayedInLastTenGames?: boolean;
   hasRecentSelection?: boolean;
+  isLoading?: boolean;
 }
 
 // Component to display token status with animations and tooltips
@@ -27,7 +28,8 @@ export default function TokenStatus({
   isEligible,
   recentGames,
   hasPlayedInLastTenGames,
-  hasRecentSelection
+  hasRecentSelection,
+  isLoading
 }: TokenStatusProps) {
   // Format dates for display
   const formatDate = (date: string) => {
@@ -42,6 +44,24 @@ export default function TokenStatus({
     hasRecentSelection,
     recentGames
   });
+
+  if (isLoading) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card bg-base-200 shadow-xl p-4"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <PiCoinDuotone size={24} className="text-gray-400" />
+          <h3 className="text-lg font-bold">Priority Token Status</h3>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <span className="loading loading-spinner loading-md"></span>
+        </div>
+      </motion.div>
+    );
+  }
 
   const getStatusColor = () => {
     if (status === 'AVAILABLE' && isEligible) {
@@ -142,16 +162,19 @@ export default function TokenStatus({
           </Tooltip>
         )}
 
-        {/* Next Token Date - Only show if eligible */}
-        {nextTokenAt && isEligible && (
-          <Tooltip content={playerName ? `When ${playerName}'s next priority token will be available` : "When your next priority token will be available"}>
-            <div className="text-sm">
-              Next Token: {formatDate(nextTokenAt)} 
-              <span className="text-xs opacity-75 ml-2">
-                ({formatDistanceToNow(new Date(nextTokenAt), { addSuffix: true })})
-              </span>
-            </div>
-          </Tooltip>
+        {/* Eligibility Message */}
+        {!isEligible && status !== 'AVAILABLE' && (
+          <div className="text-sm mt-2">
+            <p>To receive a new token, you must:</p>
+            <ul className="list-disc list-inside mt-1 space-y-1">
+              {!hasPlayedInLastTenGames && (
+                <li>Play in at least one of the last 10 games</li>
+              )}
+              {hasRecentSelection && (
+                <li>Not be selected in any of the last 3 games</li>
+              )}
+            </ul>
+          </div>
         )}
 
         {/* Token Age */}
