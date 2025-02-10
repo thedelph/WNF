@@ -42,20 +42,18 @@ const TokenManagement: React.FC = () => {
         throw tokensError;
       }
 
-      // Get the 3 most recently completed games
+      // Get the 10 most recently completed games for checking recent activity
       const { data: latestGames, error: gamesError } = await supabase
         .from('games')
         .select('id, date, sequence_number')
         .eq('status', 'completed')
-        .order('date', { ascending: false })
-        .limit(3);
+        .order('sequence_number', { ascending: false })
+        .limit(10);
 
       if (gamesError) {
         console.error('Error fetching games:', gamesError);
         throw gamesError;
       }
-
-      console.log('Latest games:', latestGames);
 
       // Get registrations for these games
       const { data: gameRegistrations, error: registrationsError } = await supabase
@@ -68,12 +66,12 @@ const TokenManagement: React.FC = () => {
         throw registrationsError;
       }
 
-      console.log('Game registrations:', gameRegistrations);
-
       // Create a map of player IDs to their eligibility status and played games
       const eligibilityMap = new Map();
       players.forEach(player => {
         const playerGames = gameRegistrations?.filter(gr => gr.player_id === player.id) || [];
+        
+        // Get all selected games for this player, sorted by sequence number descending
         const selectedGames = playerGames
           .filter(g => g.status === 'selected')
           .map(g => {
@@ -81,14 +79,39 @@ const TokenManagement: React.FC = () => {
             return {
               id: game?.id,
               date: game?.date,
-              // Format as "WNF #123"
+              sequence_number: game?.sequence_number,
               display: game?.sequence_number ? `WNF #${game.sequence_number}` : 'Unknown Game'
             };
-          });
+          })
+          .sort((a, b) => (b.sequence_number || 0) - (a.sequence_number || 0));
+
+        // Check if player has played in at least one of the last 10 games
+        const hasRecentActivity = playerGames.some(g => g.status === 'selected');
+
+        // Get the 3 most recent games
+        const lastThreeGames = latestGames?.slice(0, 3) || [];
+
+        // Check if player was selected in any of the last 3 games
+        const lastThreeGameIds = new Set(lastThreeGames.map(g => g.id));
+        const selectedInLastThree = playerGames.some(g => 
+          lastThreeGameIds.has(g.game_id) && g.status === 'selected'
+        );
+
+        // Debug logging for Mike M
+        if (player.friendly_name === 'Mike M') {
+          console.log('Debug Mike M:');
+          console.log('Latest games:', latestGames?.map(g => g.sequence_number));
+          console.log('Last 3 games:', lastThreeGames.map(g => g.sequence_number));
+          console.log('Selected in last 3:', selectedInLastThree);
+          console.log('Selected games:', selectedGames);
+          console.log('Has recent activity:', hasRecentActivity);
+        }
         
         eligibilityMap.set(player.id, {
-          is_eligible: selectedGames.length === 0,
-          selected_games: selectedGames
+          is_eligible: hasRecentActivity && !selectedInLastThree,
+          selected_games: selectedGames,
+          reason: !hasRecentActivity ? 'No recent activity in last 10 games' :
+                 selectedInLastThree ? `Selected in one of the last 3 games (${lastThreeGames.map(g => `WNF #${g.sequence_number}`).join(', ')})` : null
         });
       });
 
@@ -110,6 +133,7 @@ const TokenManagement: React.FC = () => {
           whatsapp_group_member: player.whatsapp_group_member,
           is_eligible: eligibility.is_eligible,
           selected_games: eligibility.selected_games,
+          reason: eligibility.reason,
           issued_at: tokenMap.get(player.id)?.issued_at || null,
           expires_at: tokenMap.get(player.id)?.expires_at || null,
           used_at: tokenMap.get(player.id)?.used_at || null,

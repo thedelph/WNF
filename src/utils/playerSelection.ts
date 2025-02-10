@@ -19,6 +19,7 @@ interface PlayerStats {
   registration_time?: string;
   bench_warmer_streak?: number;
   using_token?: boolean;
+  used_token_last_game?: boolean;
 }
 
 interface PlayerSelectionResult {
@@ -73,6 +74,7 @@ export const handlePlayerSelection = async ({
     const players: PlayerStats[] = registeredPlayers.map(reg => {
       const details = playerDetails?.find(p => p.id === reg.player_id);
       const stats = playerStats?.find(p => p.id === reg.player_id);
+      const usedTokenLastGame = previousGameTokenUsers?.some(u => u.player_id === reg.player_id) ?? false;
       return {
         id: reg.player_id,
         friendly_name: details?.friendly_name,
@@ -84,9 +86,21 @@ export const handlePlayerSelection = async ({
         caps: stats?.caps || 0,
         registration_time: reg.created_at,
         bench_warmer_streak: details?.bench_warmer_streak || 0,
-        using_token: reg.using_token || false
+        using_token: reg.using_token || false,
+        used_token_last_game: usedTokenLastGame
       };
     });
+
+    // First, get the previous game's token usage
+    const { data: previousGameTokenUsers, error: tokenError } = await supabaseAdmin.rpc(
+      'check_previous_game_token_usage',
+      { current_game_id: gameId }
+    );
+
+    if (tokenError) {
+      console.error('Error fetching previous game token usage:', tokenError);
+      throw tokenError;
+    }
 
     // First, select players using tokens - they get guaranteed slots
     const tokenSelectedPlayers = players.filter(player => player.using_token);
@@ -95,6 +109,16 @@ export const handlePlayerSelection = async ({
     // Sort remaining players by XP and tiebreakers (excluding token users)
     const remainingPlayers = players.filter(player => !player.using_token);
     const sortedPlayers = [...remainingPlayers].sort((a, b) => {
+      // First check if either player used a token in the previous game
+      const aUsedTokenPreviously = previousGameTokenUsers?.some(u => u.player_id === a.id) ?? false;
+      const bUsedTokenPreviously = previousGameTokenUsers?.some(u => u.player_id === b.id) ?? false;
+
+      // If either used a token in the previous game, they go to the bottom
+      if (aUsedTokenPreviously !== bUsedTokenPreviously) {
+        return aUsedTokenPreviously ? 1 : -1;
+      }
+
+      // If both used tokens in previous game, or neither did, use normal sorting
       // First compare by XP
       if (b.xp !== a.xp) {
         return b.xp - a.xp;

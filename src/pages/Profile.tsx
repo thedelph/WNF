@@ -12,6 +12,7 @@ import XPBreakdown from '../components/profile/XPBreakdown'
 import StatsGrid from '../components/profile/StatsGrid'
 import TokenStatus from '../components/profile/TokenStatus'
 import { executeWithRetry, executeBatchQueries } from '../utils/network'
+import { useTokenStatus } from '../hooks/useTokenStatus'
 
 interface PlayerProfile {
   friendly_name: string;
@@ -68,6 +69,8 @@ export default function Component() {
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
   const [gameSequences, setGameSequences] = useState<any[]>([])
   const [latestSequence, setLatestSequence] = useState<number>(0)
+  const [playerId, setPlayerId] = useState<string | null>(null)
+  const { tokenStatus } = useTokenStatus(playerId || '')
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -107,6 +110,9 @@ export default function Component() {
           toast.error('Player not found');
           return;
         }
+
+        // Store player ID for token status hook
+        setPlayerId(playerData.id);
 
         // Get XP breakdown from player_xp table
         const { data: xpData, error: xpError } = await executeWithRetry(
@@ -168,43 +174,6 @@ export default function Component() {
 
         setLatestSequence(latestSeqData?.sequence_number || 0);
 
-        // Get token status with separate retry logic since it's optional
-        const { data: tokenData, error: tokenError } = await executeWithRetry(
-          () => supabase
-            .from('player_tokens') // Using correct table name
-            .select('*')
-            .eq('player_id', playerData.id)
-            .order('issued_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-          { 
-            shouldToast: false,
-            maxRetries: 2 // Reduce retries for optional data
-          }
-        );
-
-        if (tokenError) {
-          // Only log 404s, don't show to user as it's expected when no token exists
-          if (tokenError.code === '404' || tokenError.message?.includes('404')) {
-            console.log('No token found for user');
-          } else {
-            console.error('Error fetching token data:', tokenError);
-          }
-        }
-
-        // Determine token status
-        const tokenStatus = tokenData ? {
-          status: tokenData.used_at ? 'USED' : 'AVAILABLE',
-          last_used_at: tokenData.used_at,
-          next_token_at: tokenData.used_at ? new Date(new Date(tokenData.used_at).getTime() + (22 * 24 * 60 * 60 * 1000)).toISOString() : null,
-          created_at: tokenData.issued_at
-        } : {
-          status: 'NO_TOKEN',
-          last_used_at: null,
-          next_token_at: null,
-          created_at: new Date().toISOString()
-        };
-
         // Get all registrations for historical games with retry
         const { data: registrations, error: registrationsError } = await executeWithRetry(
           () => supabase
@@ -227,7 +196,6 @@ export default function Component() {
         // Combine all the data
         const updatedProfileData: ExtendedPlayerData = {
           ...profileData,
-          token: tokenStatus,
           gameSequences: registrations?.map(reg => ({
             sequence: reg.games.sequence_number,
             status: reg.status,
@@ -502,12 +470,18 @@ export default function Component() {
               className="bg-base-200 rounded-box p-6 shadow-lg"
             >
               <h2 className="text-xl sm:text-2xl font-bold mb-4">Token Status</h2>
-              <TokenStatus 
-                status={profile.token?.status || 'NO_TOKEN'}
-                lastUsedAt={profile.token?.last_used_at}
-                nextTokenAt={profile.token?.next_token_at}
-                createdAt={profile.token?.created_at}
-              />
+              {tokenStatus && (
+                <TokenStatus 
+                  status={tokenStatus.status}
+                  lastUsedAt={tokenStatus.lastUsedAt}
+                  nextTokenAt={tokenStatus.nextTokenAt}
+                  createdAt={tokenStatus.createdAt}
+                  isEligible={tokenStatus.isEligible}
+                  recentGames={tokenStatus.recentGames}
+                  hasPlayedInLastTenGames={tokenStatus.hasPlayedInLastTenGames}
+                  hasRecentSelection={tokenStatus.hasRecentSelection}
+                />
+              )}
             </motion.div>
 
             {/* Payment History Section */}

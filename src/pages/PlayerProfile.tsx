@@ -21,6 +21,7 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { fromUrlFriendly } from '../utils/urlHelpers';
 import TokenStatus from '../components/profile/TokenStatus';
 import { executeWithRetry } from '../utils/network';
+import { useTokenStatus } from '../hooks/useTokenStatus';
 
 /**
  * PlayerProfile component displays detailed information about a player
@@ -48,6 +49,8 @@ export default function PlayerProfileNew() {
     sortAndFilterGames,
     getGameOutcome
   } = useGameHistory();
+
+  const { tokenStatus } = useTokenStatus(player?.id);
 
   useEffect(() => {
     const fetchPlayerData = async () => {
@@ -305,43 +308,6 @@ export default function PlayerProfileNew() {
 
         setGames(gamesWithTeamSizes);
 
-        // Get token status
-        const { data: tokenData, error: tokenError } = await executeWithRetry(
-          () => supabase
-            .from('player_tokens')
-            .select('*')
-            .eq('player_id', playerData.id)
-            .order('issued_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-          { 
-            shouldToast: false,
-            maxRetries: 2 // Reduce retries for optional data
-          }
-        );
-
-        if (tokenError) {
-          // Only log 404s, don't show to user as it's expected when no token exists
-          if (tokenError.code === '404' || tokenError.message?.includes('404')) {
-            console.log('No token found for user:', playerData.friendly_name);
-          } else {
-            console.error('Error fetching token data:', tokenError);
-          }
-        }
-
-        // Determine token status
-        const tokenStatus = tokenData ? {
-          status: tokenData.used_at ? 'USED' : 'AVAILABLE',
-          last_used_at: tokenData.used_at,
-          next_token_at: tokenData.used_at ? new Date(new Date(tokenData.used_at).getTime() + (22 * 24 * 60 * 60 * 1000)).toISOString() : null,
-          created_at: tokenData.issued_at
-        } : {
-          status: 'NO_TOKEN',
-          last_used_at: null,
-          next_token_at: null,
-          created_at: new Date().toISOString()
-        };
-
         // Transform player data
         const playerStats: PlayerStats = {
           id: playerData.id,
@@ -519,14 +485,18 @@ export default function PlayerProfileNew() {
         )}
 
         {/* Priority Token Status - Full Width */}
-        {player && (
+        {player && tokenStatus && (
           <div className="w-full">
             <TokenStatus
-              status={player.token_status?.status}
-              lastUsedAt={player.token_status?.last_used_at}
-              nextTokenAt={player.token_status?.next_token_at}
-              createdAt={player.token_status?.created_at}
+              status={tokenStatus.status}
+              lastUsedAt={tokenStatus.lastUsedAt}
+              nextTokenAt={tokenStatus.nextTokenAt}
+              createdAt={tokenStatus.createdAt}
               playerName={player.friendly_name}
+              isEligible={tokenStatus.isEligible}
+              recentGames={tokenStatus.recentGames}
+              hasPlayedInLastTenGames={tokenStatus.hasPlayedInLastTenGames}
+              hasRecentSelection={tokenStatus.hasRecentSelection}
             />
           </div>
         )}

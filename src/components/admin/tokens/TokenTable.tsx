@@ -114,13 +114,14 @@ export const TokenTable: React.FC<TokenTableProps> = ({
 
   const getIneligibilityReason = (token: TokenData) => {
     if (token.is_eligible) return null;
-    if (!token.selected_games?.length) return null;
+    return token.reason || 'Not eligible for a token';
+  };
 
-    const gameList = token.selected_games
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .map(g => g.display);
-
-    return `Selected in: ${gameList.join(', ')}`;
+  const getEligibilityTooltip = (token: TokenData) => {
+    if (token.is_eligible) {
+      return "Player has played in at least one of the last 10 games and has not been selected in any of the last 3 games";
+    }
+    return token.reason || 'Not eligible for a token';
   };
 
   if (loading) {
@@ -217,18 +218,16 @@ export const TokenTable: React.FC<TokenTableProps> = ({
                               </span>
                             )}
                           </div>
-                          {!token.is_eligible && token.selected_games?.length > 0 && (
+                          {!token.is_eligible && (
                             <div className="text-error/80 font-medium">
-                              Played: {token.selected_games.map(g => g.display).join(', ')}
+                              {getIneligibilityReason(token)}
                             </div>
                           )}
                         </div>
                       </div>
                     </td>
                     <td className="hidden sm:table-cell">
-                      <Tooltip content={token.is_eligible 
-                        ? "Player hasn't been selected in any of the last 3 games" 
-                        : getIneligibilityReason(token)}>
+                      <Tooltip content={getEligibilityTooltip(token)}>
                         <div className="flex items-center gap-2">
                           <PiCoinDuotone 
                             size={20} 
@@ -237,9 +236,9 @@ export const TokenTable: React.FC<TokenTableProps> = ({
                           <span className={`badge ${tokenStatus.badge}`}>
                             {tokenStatus.status}
                           </span>
-                          {!token.is_eligible && token.selected_games?.length > 0 && (
+                          {!token.is_eligible && (
                             <span className="text-xs text-error/80 font-medium">
-                              {token.selected_games.map(g => g.display).join(', ')}
+                              {getIneligibilityReason(token)}
                             </span>
                           )}
                         </div>
@@ -248,9 +247,7 @@ export const TokenTable: React.FC<TokenTableProps> = ({
                     <td className="hidden sm:table-cell">{formatDate(token.issued_at)}</td>
                     <td className="hidden sm:table-cell">
                       {token.used_at ? (
-                        <Tooltip content={token.is_eligible 
-                          ? "Player hasn't been selected in any of the last 3 games" 
-                          : getIneligibilityReason(token)}>
+                        <Tooltip content={getEligibilityTooltip(token)}>
                           <span>{formatDate(token.used_at)}</span>
                         </Tooltip>
                       ) : (
@@ -258,9 +255,7 @@ export const TokenTable: React.FC<TokenTableProps> = ({
                       )}
                     </td>
                     <td className="hidden sm:table-cell">
-                      <Tooltip content={token.is_eligible 
-                        ? "Player hasn't been selected in any of the last 3 games and is eligible for a token" 
-                        : "Player has been selected in one or more of the last 3 games and is not currently eligible"}>
+                      <Tooltip content={getEligibilityTooltip(token)}>
                         <span className={token.is_eligible ? 'text-success' : 'text-error'}>
                           {formatAvailabilityDate(token)}
                         </span>

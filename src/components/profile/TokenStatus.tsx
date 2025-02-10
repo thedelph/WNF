@@ -3,6 +3,7 @@ import { Tooltip } from '../ui/Tooltip';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow, format } from 'date-fns';
 import { PiCoinDuotone } from "react-icons/pi";
+import { BsCheckCircle, BsXCircle } from "react-icons/bs";
 
 interface TokenStatusProps {
   status: string;
@@ -11,11 +12,9 @@ interface TokenStatusProps {
   createdAt: string;
   playerName?: string;
   isEligible?: boolean;
-  recentGames?: Array<{
-    id: string;
-    sequence_number: number;
-    date: string;
-  }>;
+  recentGames?: string[];
+  hasPlayedInLastTenGames?: boolean;
+  hasRecentSelection?: boolean;
 }
 
 // Component to display token status with animations and tooltips
@@ -26,12 +25,23 @@ export default function TokenStatus({
   createdAt, 
   playerName,
   isEligible,
-  recentGames 
+  recentGames,
+  hasPlayedInLastTenGames,
+  hasRecentSelection
 }: TokenStatusProps) {
   // Format dates for display
   const formatDate = (date: string) => {
     return format(new Date(date), 'MMM d, yyyy');
   };
+
+  // Debug logging
+  console.log('[TokenStatus] Props:', {
+    status,
+    isEligible,
+    hasPlayedInLastTenGames,
+    hasRecentSelection,
+    recentGames
+  });
 
   const getStatusColor = () => {
     if (status === 'AVAILABLE' && isEligible) {
@@ -85,6 +95,35 @@ export default function TokenStatus({
           </div>
         </Tooltip>
 
+        {/* Eligibility Criteria */}
+        <div className="mt-2 text-sm">
+          <h4 className="font-medium mb-1">Eligibility Requirements:</h4>
+          <div className="flex items-center gap-2 mb-1">
+            {hasPlayedInLastTenGames ? (
+              <BsCheckCircle className="text-success" />
+            ) : (
+              <BsXCircle className="text-error" />
+            )}
+            <Tooltip content="Must have played in at least one of the last 10 games">
+              <span className={hasPlayedInLastTenGames ? "text-success" : "text-error"}>
+                Recent Activity
+              </span>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasRecentSelection ? (
+              <BsXCircle className="text-error" />
+            ) : (
+              <BsCheckCircle className="text-success" />
+            )}
+            <Tooltip content="Must not have been selected in any of the last 3 games">
+              <span className={!hasRecentSelection ? "text-success" : "text-error"}>
+                Selection Cooldown
+              </span>
+            </Tooltip>
+          </div>
+        </div>
+
         {/* Last Used Date */}
         {lastUsedAt && (
           <Tooltip content={playerName ? `When ${playerName} last used their priority token` : "When you last used your priority token"}>
@@ -94,11 +133,11 @@ export default function TokenStatus({
           </Tooltip>
         )}
 
-        {/* Recent Games - Show if ineligible */}
-        {!isEligible && recentGames && recentGames.length > 0 && (
-          <Tooltip content="Recent games played">
+        {/* Recent Games - Show if ineligible due to recent selection */}
+        {hasRecentSelection && (
+          <Tooltip content="Selected in one of the last 3 games">
             <div className="text-sm text-error/80">
-              Played: {recentGames.map(g => `WNF #${g.sequence_number}`).join(', ')}
+              Selected in: {recentGames?.join(', ')}
             </div>
           </Tooltip>
         )}

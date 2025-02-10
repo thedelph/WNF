@@ -62,7 +62,7 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
       <div className="space-y-4 text-sm">
         <div>
           <h4 className="font-bold mb-2">Token Selection ({tokenPlayers.length} players)</h4>
-          <p className="mb-2">Players using their monthly token are guaranteed a slot:</p>
+          <p className="mb-2">Players using a priority token are guaranteed a slot:</p>
           <ul className="list-disc pl-4">
             {tokenPlayers.map(player => {
               const stats = playerStats[player.id];
@@ -99,8 +99,9 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
 
         <div>
           <h4 className="font-bold mb-2">Merit Selection ({meritPlayers.length} players)</h4>
-          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). In case of equal XP, the following tiebreakers were used in order:</p>
+          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). Players who used a token in the previous game were moved to the bottom of the list. For players with the same token status, the following tiebreakers were used in order:</p>
           <ol className="list-decimal pl-4 mb-4">
+            <li>Token cooldown (players who used a token last game moved to bottom)</li>
             <li>WhatsApp membership (members won)</li>
             <li>Current streak (highest won)</li>
             <li>Caps (highest won)</li>
@@ -110,11 +111,15 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
             {meritPlayers.map(player => {
               const stats = playerStats[player.id];
               const isWhatsApp = player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy';
+              const usedTokenLastGame = player.used_token_last_game;
               return (
                 <li key={player.id} className="mb-2">
                   <span className="font-semibold">{player.friendly_name}</span>: Selected by merit with 
                   {' '}{stats?.xp || 0} XP
                   {isWhatsApp && ' (WhatsApp member)'}
+                  {usedTokenLastGame && (
+                    <span className="text-warning"> (Used token in previous game)</span>
+                  )}
                   {player.tiebreaker && (
                     <span className="text-info">
                       {' '}(Won tiebreaker: {

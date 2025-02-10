@@ -5,24 +5,44 @@ The token system provides players with a guaranteed slot option for games. Each 
 
 ## Token Distribution and Lifecycle
 - Each player can have **exactly one active token** at any time
-- Tokens are issued automatically when a player:
-  - Has not been selected (merit, random, or token) for 3 consecutive games
-  - This includes games where they registered but weren't selected
-  - This also includes games they didn't register for
+- Tokens are issued automatically when a player meets **both** of these criteria:
+  1. Has played (been selected) in at least one of the last 10 games
+  2. Has not been selected in any of the 3 most recently completed games
+     - For example, if games #32, #31, and #30 are the most recent games:
+       - Player must not have been selected in any of these games
+       - It doesn't matter if they registered and weren't selected
+       - It doesn't matter if they didn't register at all
+       - Being selected in even one of these games makes them ineligible
 - Tokens remain valid indefinitely until used
 - After a token is used:
   - Player must meet the eligibility criteria again to receive a new token
   - No fixed cooldown period, based purely on game participation
 - System enforces the single-token rule via database triggers
 
+### Related Database Functions
+- `check_token_eligibility(player_uuid UUID)`: Checks if a player meets both eligibility criteria
+- `issue_priority_tokens()`: Issues tokens to all eligible players who don't have an active token
+- `enforce_single_active_token()`: Trigger function that prevents multiple active tokens per player
+- `handle_game_token(player_id UUID, game_id UUID, action TEXT)`: Handles token consumption and returns
+- `use_player_token(player_id UUID, game_id UUID)`: Marks a token as used for a specific game
+- `get_token_history(player_id UUID, game_id UUID, start_date TIMESTAMP, end_date TIMESTAMP)`: Retrieves token action history
+
 ## Token Usage and Forgiveness
 When a player has an available token:
 1. They can see a priority token toggle with a coin icon during game registration
-2. Using a priority token guarantees them a slot in that game
+2. Using a token guarantees them a slot in that game
 3. Token slots are deducted from XP slots (not random slots)
 4. The token is only consumed when the game is marked as completed
-5. If a player drops out or the game is cancelled, the token is automatically returned
-6. New tokens are reissued based on the eligibility criteria
+5. If a player drops out or game is cancelled, the token is returned
+
+### Token Cooldown Effect
+Using a token has a balancing effect on the next game:
+1. After using a token, the player is pushed to the bottom of the selection list for the next sequential game
+2. This applies to both merit selection and reserve list ordering
+3. They will be placed below ALL other players, including non-WhatsApp members
+4. If multiple players used tokens, they are sorted among themselves by the usual criteria (XP, WhatsApp status, etc.)
+5. This only affects the immediate next game in sequence, not any games after that
+6. This prevents token usage from snowballing into streaks and makes tokens more strategic for occasional use
 
 ### Token Forgiveness Rules
 The system includes a token forgiveness mechanism that works as follows:

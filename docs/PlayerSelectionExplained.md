@@ -45,8 +45,11 @@ The player selection process is automatically triggered when a game's registrati
 
 3. **XP Priority**
    - After token slots are allocated, XP becomes the primary sorting mechanism
-   - Tiebreakers (WhatsApp, Streak, Caps, Registration Time) only apply when XP values are exactly equal
-   - A lower XP player can never be selected over a higher XP player in merit selection, regardless of other factors
+   - Players who used a token in the previous sequential game are pushed to the bottom of the list
+   - Among token-cooldown players, normal sorting rules apply (XP, WhatsApp, etc.)
+   - For all other players:
+     - Tiebreakers (WhatsApp, Streak, Caps, Registration Time) only apply when XP values are exactly equal
+     - A lower XP player can never be selected over a higher XP player in merit selection
    - Non-token users are displayed after token users, sorted by XP
 
 4. **WhatsApp Status Equivalence**
