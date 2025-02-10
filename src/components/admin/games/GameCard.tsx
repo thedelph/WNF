@@ -44,6 +44,60 @@ export const GameCard: React.FC<Props> = ({
       return;
     }
 
+    // Get the last completed game's ID
+    const { data: lastGame, error: lastGameError } = await supabase
+      .from('games')
+      .select('id, sequence_number')
+      .eq('status', 'completed')
+      .order('sequence_number', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (lastGameError) {
+      console.error('Error fetching last game:', lastGameError);
+      toast.error('Failed to get last game data');
+      return;
+    }
+
+    // Get players who used their token in the last game
+    const { data: tokenCooldowns, error: cooldownError } = await supabase
+      .from('player_tokens')
+      .select(`
+        player_id,
+        players:player_id (
+          friendly_name
+        )
+      `)
+      .eq('used_game_id', lastGame?.id);
+
+    if (cooldownError) {
+      console.error('Error fetching token cooldowns:', cooldownError);
+      toast.error('Failed to get token cooldown data');
+      return;
+    }
+
+    // Get players with active tokens
+    const { data: activeTokens, error: tokenError } = await supabase
+      .from('player_tokens')
+      .select(`
+        player_id,
+        players:player_id (
+          friendly_name
+        )
+      `)
+      .is('used_at', null)
+      .is('used_game_id', null)
+      .is('expires_at', null);
+
+    if (tokenError) {
+      console.error('Error fetching active tokens:', tokenError);
+      toast.error('Failed to get token data');
+      return;
+    }
+
+    console.log('Active tokens:', activeTokens);
+    console.log('Token cooldowns:', tokenCooldowns);
+
     // Create a map of player IDs to XP
     const playerXpMap = new Map(
       playerXpData?.map(({ player_id, xp }) => [player_id, xp]) || []
@@ -63,12 +117,44 @@ export const GameCard: React.FC<Props> = ({
 📍 ${game.venue?.name}
 📍 ${game.venue?.google_maps_url || ''}
 🔗 Game Details: https://wnf.app/games
-⚽ ${game.max_players} players / ${game.max_players / 2}-a-side ${pricePerPerson}`;
+⚽ ${game.max_players} players / ${game.max_players / 2}-a-side${pricePerPerson ? ` ${pricePerPerson}` : ''}`;
 
     // Add status-specific messages
     switch (game.status) {
+      case GAME_STATUSES.UPCOMING:
       case GAME_STATUSES.OPEN:
-        message += `\n\n🎮 Registration is OPEN!\nRegister your interest by reacting with a thumbs up\nRegistration closes ${formatWhatsAppDate(game.registration_window_end)} at ${formatWhatsAppTime(game.registration_window_end)}`;
+        message += `\n\n🎮 Registration is OPEN!\nRegister your interest by reacting with a thumbs up 👍\nRegistration closes ${formatWhatsAppDate(game.registration_window_end)} at ${formatWhatsAppTime(game.registration_window_end)}`;
+
+        // Add token information if there are players with active tokens
+        const playersWithTokens = activeTokens?.filter(token => token.players?.friendly_name) || [];
+        if (playersWithTokens.length > 0) {
+          message += '\n\n🪙 Priority Token System\nThe following players have a priority token available:\n';
+          playersWithTokens
+            .sort((a, b) => {
+              const nameA = a.players?.friendly_name || '';
+              const nameB = b.players?.friendly_name || '';
+              return nameA.localeCompare(nameB);
+            })
+            .forEach(token => {
+              message += `\n${token.players.friendly_name}`;
+            });
+          message += '\n\nTo use your priority token, react to this message with 🪙\nUsing a token guarantees your spot in this game, but you will be moved to the bottom of the XP list for the next game.';
+        }
+
+        // Add token cooldown information if there are players on cooldown
+        const playersOnCooldown = tokenCooldowns?.filter(token => token.players?.friendly_name) || [];
+        if (playersOnCooldown.length > 0) {
+          message += '\n\n⏳ Token Cooldown\nThe following players used their token in WNF #' + lastGame.sequence_number + ' and will be moved to the bottom of the XP list for this game only, should they register:\n';
+          playersOnCooldown
+            .sort((a, b) => {
+              const nameA = a.players?.friendly_name || '';
+              const nameB = b.players?.friendly_name || '';
+              return nameA.localeCompare(nameB);
+            })
+            .forEach(token => {
+              message += `\n${token.players.friendly_name}`;
+            });
+        }
         break;
 
       case GAME_STATUSES.PLAYERS_ANNOUNCED:
@@ -108,6 +194,9 @@ export const GameCard: React.FC<Props> = ({
               message += `\n${reg.player.friendly_name} (${xp} XP)`;
             });
         }
+
+        // Add drop-out message
+        message += '\n\nAnyone needs to drop out (inc reserves) please let me know 👍';
         break;
 
       case GAME_STATUSES.TEAMS_ANNOUNCED:
