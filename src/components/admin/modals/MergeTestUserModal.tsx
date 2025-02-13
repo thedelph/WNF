@@ -63,228 +63,26 @@ export default function MergeTestUserModal({
     setLoading(true);
 
     try {
-      // First, fetch the test user's stats
-      const { data: testUserData, error: testUserError } = await supabaseAdmin
-        .from('players')
-        .select('caps, win_rate, active_bonuses, active_penalties, attack_rating, defense_rating, current_streak, max_streak, whatsapp_group_member, whatsapp_mobile_number')
-        .eq('id', testUser.id)
-        .single();
+      // Handle the merge using the database function
+      const { data: mergeResult, error: mergeError } = await supabaseAdmin
+        .rpc('merge_players', {
+          source_player_id: testUser.id,
+          target_player_id: selectedUserId
+        });
 
-      if (testUserError) throw testUserError;
+      if (mergeError) throw mergeError;
 
-      // Start a batch of operations
-
-      // 1. Update player_ratings to point to the new user (as rated player)
-      const { error: ratingsError } = await supabaseAdmin
-        .from('player_ratings')
-        .update({ rated_player_id: selectedUserId })
-        .eq('rated_player_id', testUser.id);
-
-      if (ratingsError) throw ratingsError;
-
-      // 2. Update player_ratings given by the test user
-      const { error: raterError } = await supabaseAdmin
-        .from('player_ratings')
-        .update({ rater_id: selectedUserId })
-        .eq('rater_id', testUser.id);
-
-      if (raterError) throw raterError;
-
-      // 3. Update notifications related to the test user
-      const { error: notificationsError } = await supabaseAdmin
-        .from('notifications')
-        .update({ player_id: selectedUserId })
-        .eq('player_id', testUser.id);
-
-      if (notificationsError) throw notificationsError;
-
-      // 4. Update game_registrations
-      const { error: gameRegError } = await supabaseAdmin
-        .from('game_registrations')
-        .update({ player_id: selectedUserId })
-        .eq('player_id', testUser.id);
-
-      if (gameRegError) throw gameRegError;
-
-      // 5. Update game_selections - fetch all selections that include the test user
-      const { data: selections, error: selectionsError } = await supabaseAdmin
-        .from('game_selections')
-        .select('*');
-
-      if (selectionsError) throw selectionsError;
-
-      // Update each selection that contains the test user
-      for (const selection of selections) {
-        const selectedPlayers = selection.selected_players || [];
-        const reservePlayers = selection.reserve_players || [];
-
-        // Check and update selected_players
-        const updatedSelectedPlayers = selectedPlayers.map((playerId: string) =>
-          playerId === testUser.id ? selectedUserId : playerId
-        );
-
-        // Check and update reserve_players
-        const updatedReservePlayers = reservePlayers.map((playerId: string) =>
-          playerId === testUser.id ? selectedUserId : playerId
-        );
-
-        // Only update if changes were made
-        if (
-          JSON.stringify(selectedPlayers) !== JSON.stringify(updatedSelectedPlayers) ||
-          JSON.stringify(reservePlayers) !== JSON.stringify(updatedReservePlayers)
-        ) {
-          const { error: updateSelectionError } = await supabaseAdmin
-            .from('game_selections')
-            .update({
-              selected_players: updatedSelectedPlayers,
-              reserve_players: updatedReservePlayers,
-            })
-            .eq('id', selection.id);
-
-          if (updateSelectionError) throw updateSelectionError;
-        }
+      if (!mergeResult) {
+        throw new Error('Merge operation failed');
       }
 
-      // 6. Update player_penalties
-      const { error: penaltiesError } = await supabaseAdmin
-        .from('player_penalties')
-        .update({ player_id: selectedUserId })
-        .eq('player_id', testUser.id);
-
-      if (penaltiesError) throw penaltiesError;
-
-      // Update player_xp records - fetch test user's XP records first
-      const { data: testUserXp, error: fetchXpError } = await supabaseAdmin
-        .from('player_xp')
-        .select('*')
-        .eq('player_id', testUser.id);
-
-      if (fetchXpError) throw fetchXpError;
-
-      // Fetch real user's existing XP records
-      const { data: realUserXp, error: fetchRealXpError } = await supabaseAdmin
-        .from('player_xp')
-        .select('*')
-        .eq('player_id', selectedUserId);
-
-      if (fetchRealXpError) throw fetchRealXpError;
-
-      // Create a map of existing real user XP records by game_id
-      const realUserXpMap = new Map(
-        realUserXp?.map(record => [record.game_id, record]) || []
-      );
-
-      // Process each test user XP record
-      for (const xpRecord of testUserXp || []) {
-        if (!xpRecord.game_id) continue; // Skip records without game_id
-
-        if (realUserXpMap.has(xpRecord.game_id)) {
-          // Update existing XP record
-          const existingRecord = realUserXpMap.get(xpRecord.game_id);
-          const { error: updateXpError } = await supabaseAdmin
-            .from('player_xp')
-            .update({
-              xp_earned: (existingRecord.xp_earned || 0) + (xpRecord.xp_earned || 0),
-              updated_at: new Date().toISOString()
-            })
-            .eq('player_id', selectedUserId)
-            .eq('game_id', xpRecord.game_id);
-
-          if (updateXpError) throw updateXpError;
-        } else {
-          // Create new XP record for the real user
-          const { error: insertXpError } = await supabaseAdmin
-            .from('player_xp')
-            .insert({
-              player_id: selectedUserId,
-              game_id: xpRecord.game_id,
-              xp_earned: xpRecord.xp_earned || 0,
-              updated_at: new Date().toISOString()
-            });
-
-          if (insertXpError) throw insertXpError;
-        }
-      }
-
-      // Delete test user's XP records
-      const { error: deleteXpError } = await supabaseAdmin
-        .from('player_xp')
-        .delete()
-        .eq('player_id', testUser.id);
-
-      if (deleteXpError) throw deleteXpError;
-
-      // Recalculate XP for the real user
-      const { error: recalcError } = await supabaseAdmin
-        .rpc('calculate_player_xp', {
+      // Update token status for the target user
+      const { error: debugTargetUserError } = await supabaseAdmin
+        .rpc('debug_player_token_status', {
           p_player_id: selectedUserId
         });
 
-      if (recalcError) throw recalcError;
-
-      // 7. Update balanced_team_assignments
-      const { data: teamAssignments, error: teamAssignmentsError } = await supabaseAdmin
-        .from('balanced_team_assignments')
-        .select('*');
-
-      if (teamAssignmentsError) throw teamAssignmentsError;
-
-      // Update each team assignment that contains the test user
-      for (const assignment of teamAssignments) {
-        const teamAssigns = assignment.team_assignments || {};
-        let needsUpdate = false;
-        const updatedTeamAssigns = { ...teamAssigns };
-
-        // Check each team in the assignments
-        for (const teamKey in updatedTeamAssigns) {
-          if (Array.isArray(updatedTeamAssigns[teamKey])) {
-            updatedTeamAssigns[teamKey] = updatedTeamAssigns[teamKey].map((playerId: string) => {
-              if (playerId === testUser.id) {
-                needsUpdate = true;
-                return selectedUserId;
-              }
-              return playerId;
-            });
-          }
-        }
-
-        // Only update if changes were made
-        if (needsUpdate) {
-          const { error: updateAssignmentError } = await supabaseAdmin
-            .from('balanced_team_assignments')
-            .update({ team_assignments: updatedTeamAssigns })
-            .eq('game_id', assignment.game_id);
-
-          if (updateAssignmentError) throw updateAssignmentError;
-        }
-      }
-
-      // 8. Update the real user with the test user's stats
-      const { error: updateError } = await supabaseAdmin
-        .from('players')
-        .update({
-          caps: testUserData.caps,
-          win_rate: testUserData.win_rate,
-          active_bonuses: testUserData.active_bonuses,
-          active_penalties: testUserData.active_penalties,
-          attack_rating: testUserData.attack_rating,
-          defense_rating: testUserData.defense_rating,
-          current_streak: testUserData.current_streak,
-          max_streak: testUserData.max_streak,
-          whatsapp_group_member: testUserData.whatsapp_group_member,
-          whatsapp_mobile_number: testUserData.whatsapp_mobile_number,
-        })
-        .eq('id', selectedUserId);
-
-      if (updateError) throw updateError;
-
-      // 9. Finally, delete the test user
-      const { error: deleteError } = await supabaseAdmin
-        .from('players')
-        .delete()
-        .eq('id', testUser.id);
-
-      if (deleteError) throw deleteError;
+      if (debugTargetUserError) throw debugTargetUserError;
 
       toast.success('Successfully merged users');
       onMergeCompleted();
