@@ -45,6 +45,7 @@ interface PlayerProfile {
 interface ExtendedPlayerData extends PlayerProfile {
   xp: number
   reserveXP: number
+  whatsapp_group_member?: string
   gameSequences?: Array<{
     sequence: number;
     status: string;
@@ -90,6 +91,7 @@ export default function Component() {
               avatar_options,
               current_streak,
               max_streak,
+              whatsapp_group_member,
               player_xp (
                 xp,
                 rank,
@@ -151,7 +153,8 @@ export default function Component() {
           avatar_svg: playerData.avatar_svg,
           avatar_options: playerData.avatar_options,
           xp: playerData.player_xp?.xp || 0,
-          reserveXP: xpData?.reserve_xp || 0
+          reserveXP: xpData?.reserve_xp || 0,
+          whatsapp_group_member: playerData.whatsapp_group_member
         };
 
         setProfile(profileData);
@@ -480,6 +483,7 @@ export default function Component() {
                   recentGames={tokenStatus.recentGames}
                   hasPlayedInLastTenGames={tokenStatus.hasPlayedInLastTenGames}
                   hasRecentSelection={tokenStatus.hasRecentSelection}
+                  whatsappGroupMember={profile?.whatsapp_group_member}
                 />
               )}
             </motion.div>
@@ -492,7 +496,7 @@ export default function Component() {
               className="bg-base-200 rounded-box p-6 shadow-lg"
             >
               <h2 className="text-xl sm:text-2xl font-bold mb-4">Payment History</h2>
-              <PaymentHistory playerId={profile.id} />
+              <PaymentHistory playerId={profile?.id} />
             </motion.div>
           </>
         ) : null}

@@ -1,6 +1,20 @@
 import React from 'react'
-import { Tooltip } from '../../ui/Tooltip'
-import { TeamSectionProps } from './types'
+import { motion } from 'framer-motion'
+import { format } from 'date-fns'
+import { TeamSectionProps, PlayerWithTeam, StatusChange } from './types'
+import { Tooltip } from '../../../components/ui/Tooltip'
+import { StatusChangeForm } from './StatusChangeForm'
+
+export interface TeamSectionProps {
+  players: PlayerWithTeam[]
+  teamColor?: 'blue' | 'orange'
+  showUnassigned?: boolean
+  gameDate: Date
+  onTeamChange: (playerId: string, team: 'blue' | 'orange' | null) => void
+  onStatusChange: (playerId: string, status: PlayerWithTeam['status'], changeDate: Date, isGameDay: boolean, wasReserve?: boolean) => void
+  onPaymentStatusChange: (playerId: string, status: 'unpaid' | 'marked_paid' | 'admin_verified') => void
+  onRemovePlayer: (playerId: string) => void
+}
 
 export const TeamSection: React.FC<TeamSectionProps> = ({
   players,
@@ -8,106 +22,113 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
   onTeamChange,
   onStatusChange,
   onPaymentStatusChange,
-  showUnassigned
+  onRemovePlayer,
+  showUnassigned,
+  gameDate
 }) => {
-  // Filter players based on team and status
-  const teamPlayers = players.filter(p => p.team === teamColor)
-  const reservePlayers = players.filter(p => p.status?.startsWith('reserve_'))
-  const unassignedPlayers = players.filter(p => !p.team && !p.status?.startsWith('reserve_'))
+  const filteredPlayers = showUnassigned
+    ? players.filter(p => !p.team)
+    : players.filter(p => p.team === teamColor)
 
-  const handleTeamStatusChange = (playerId: string, value: string) => {
-    if (value === 'reserve_no_offer' || value === 'reserve_declined') {
-      onTeamChange(playerId, null)
-      onStatusChange(playerId, value)
-    } else if (value === '') {
-      onTeamChange(playerId, null)
-      onStatusChange(playerId, 'registered')
-    } else {
-      onTeamChange(playerId, value as 'blue' | 'orange')
-      onStatusChange(playerId, 'selected')
-    }
-  }
-
-  const renderPlayerRow = (player: any) => (
-    <div key={player.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
-      <div className="w-32">
-        <span>{player.friendly_name}</span>
-      </div>
-      <div className="w-40">
-        <Tooltip content={
-          player.status === 'reserve_no_offer' ? "Player is on reserve list - no slot offered yet" :
-          player.status === 'reserve_declined' ? "Player was offered a slot but declined" :
-          player.team ? `Playing on ${player.team} team` :
-          "Assign player to a team or set reserve status"
-        }>
-          <select
-            value={player.status?.startsWith('reserve_') ? player.status : player.team || ''}
-            onChange={(e) => handleTeamStatusChange(player.id, e.target.value)}
-            className={`select select-bordered select-sm w-full ${
-              player.team === teamColor ? 'select-primary' : ''
-            }`}
-          >
-            <option value="">Not Playing</option>
-            <option value="blue">Blue Team</option>
-            <option value="orange">Orange Team</option>
-            <option value="reserve_no_offer">Reserve - No Slot Offer</option>
-            <option value="reserve_declined">Reserve - Declined Slot</option>
-          </select>
-        </Tooltip>
-      </div>
-      <div className="w-40">
-        <Tooltip content="Player's payment status">
-          <select
-            value={player.payment_status}
-            onChange={(e) => onPaymentStatusChange(player.id, e.target.value as 'unpaid' | 'marked_paid' | 'admin_verified')}
-            className="select select-bordered select-sm w-full"
-          >
-            <option value="unpaid">Unpaid</option>
-            <option value="marked_paid">Marked Paid</option>
-            <option value="admin_verified">Admin Verified</option>
-          </select>
-        </Tooltip>
-      </div>
-    </div>
-  )
-
-  if (showUnassigned) {
+  if (filteredPlayers.length === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        {/* Unassigned Players */}
-        {unassignedPlayers.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-600">Available Players</h4>
-            {unassignedPlayers.map(renderPlayerRow)}
-          </div>
-        )}
-
-        {/* Reserve Players */}
-        {reservePlayers.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-600">Reserve Players</h4>
-            {reservePlayers.map(renderPlayerRow)}
-          </div>
-        )}
-      </div>
+      <div className="text-sm opacity-70">No players</div>
     )
   }
 
+  const getStatusChangeInfo = (player: PlayerWithTeam) => {
+    if (!player.statusChanges?.length) return null
+
+    return player.statusChanges.map((change, index) => {
+      let description = ''
+      if (change.changeType === 'dropout') {
+        description = `Dropped out ${change.isGameDay ? 'on' : 'before'} game day`
+      } else if (change.changeType === 'slot_response') {
+        if (change.toStatus === 'selected') {
+          description = `Accepted slot ${change.isGameDay ? 'on' : 'before'} game day`
+        } else {
+          description = `Declined slot ${change.isGameDay ? 'on' : 'before'} game day`
+        }
+      }
+
+      return (
+        <div key={index} className="mb-1">
+          <span>{description}</span>
+          <span className="text-sm text-gray-500 ml-2">
+            {format(new Date(change.timestamp), 'MMM d, HH:mm')}
+          </span>
+        </div>
+      )
+    })
+  }
+
+  const formatStatus = (status?: string): string => {
+    if (!status) return 'Registered'
+    return status
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
   return (
-    <div className="flex flex-col gap-4 p-4 border rounded-lg">
-      <h3 className={`text-lg font-semibold ${teamColor === 'blue' ? 'text-blue-500' : 'text-orange-500'}`}>
-        {teamColor === 'blue' ? 'Blue Team' : 'Orange Team'} ({teamPlayers.length})
-      </h3>
-      
-      <div className="flex flex-col gap-4">
-        {/* Team Players */}
-        {teamPlayers.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium">Selected Players</h4>
-            {teamPlayers.map(renderPlayerRow)}
+    <div className="flex flex-col gap-4">
+      {filteredPlayers.map((player) => (
+        <div key={player.id} className="card bg-base-200 shadow-md">
+          <div className="card-body p-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-lg font-semibold">{player.friendly_name}</h3>
+                <div className="text-sm opacity-70">Status: {formatStatus(player.status)}</div>
+              </div>
+              <div className="flex flex-col gap-2">
+                {/* Team selection dropdown */}
+                <select
+                  value={player.team || ''}
+                  onChange={(e) => onTeamChange(player.id, e.target.value as 'blue' | 'orange' | null)}
+                  className="select select-sm"
+                >
+                  <option value="">Unassigned</option>
+                  <option value="blue">Blue Team</option>
+                  <option value="orange">Orange Team</option>
+                </select>
+
+                {/* Payment status dropdown */}
+                <select
+                  value={player.payment_status || 'unpaid'}
+                  onChange={(e) => onPaymentStatusChange(player.id, e.target.value as 'unpaid' | 'marked_paid' | 'admin_verified')}
+                  className="select select-sm"
+                >
+                  <option value="unpaid">Unpaid</option>
+                  <option value="marked_paid">Marked Paid</option>
+                  <option value="admin_verified">Admin Verified</option>
+                </select>
+
+                {/* Status change form */}
+                <StatusChangeForm
+                  currentStatus={player.status || 'registered'}
+                  playerName={player.friendly_name}
+                  gameDate={gameDate}
+                  onStatusChange={(newStatus, changeDate, isGameDay, wasReserve) => 
+                    onStatusChange(player.id, newStatus, changeDate, isGameDay, wasReserve)
+                  }
+                />
+
+                {/* Remove button */}
+                <Tooltip content="Remove player from game">
+                  <button
+                    onClick={() => onRemovePlayer(player.id)}
+                    className="btn btn-error btn-sm"
+                  >
+                    Remove
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ))}
     </div>
   )
 }
+
+export default TeamSection

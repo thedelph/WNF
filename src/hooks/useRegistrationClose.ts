@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { supabaseAdmin } from '../utils/supabase';
+import { supabase, supabaseAdmin } from '../utils/supabase';
 import { handlePlayerSelection } from '../utils/playerSelection';
 
 interface UseRegistrationCloseProps {
@@ -44,39 +44,61 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
 
   const acquireLock = async (gameId: string): Promise<boolean> => {
     try {
-      // Try to acquire a lock using a unique lock record
-      const { data, error } = await supabaseAdmin
-        .from('registration_locks')
-        .insert({
-          game_id: gameId,
-          locked_at: new Date().toISOString(),
-          locked_until: new Date(Date.now() + 30000).toISOString() // 30 second lock
-        })
-        .select()
-        .single();
-
-      return !error && !!data;
-    } catch (error) {
-      if (error.message.includes('table "registration_locks" does not exist')) {
-        console.log('Registration locks table does not exist, skipping lock acquisition');
-        return true;
+      // Get the current user ID using the regular supabase client
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error('Error getting user:', userError);
+        return false;
       }
-      throw error;
+      
+      if (!user) {
+        console.error('No authenticated user found. Please ensure you are logged in.');
+        return false;
+      }
+
+      // Try to acquire a lock using a unique lock record
+      const { data, error } = await supabaseAdmin.rpc('acquire_registration_lock', {
+        p_game_id: gameId,
+        p_lock_duration: 30, // seconds
+        p_user_id: user.id
+      });
+
+      if (error) {
+        // Check for specific error cases
+        if (error.message?.includes('Another instance is processing registration close')) {
+          console.log('Registration close is already being processed by another instance');
+        } else if (error.message?.includes('permission denied')) {
+          console.error('Permission denied. You may not have the required permissions.');
+        } else {
+          console.error('Error acquiring lock:', error.message || error);
+        }
+        return false;
+      }
+
+      if (!data?.acquired) {
+        console.log('Could not acquire lock - another process may be running');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to acquire lock:', error);
+      return false;
     }
   };
 
   const releaseLock = async (gameId: string) => {
     try {
-      await supabaseAdmin
-        .from('registration_locks')
-        .delete()
-        .eq('game_id', gameId);
+      // Get the current user ID
+      const { data: { user } } = await supabaseAdmin.auth.getUser();
+      if (!user) return;
+
+      await supabaseAdmin.rpc('release_registration_lock', {
+        p_game_id: gameId,
+        p_user_id: user.id
+      });
     } catch (error) {
-      if (error.message.includes('table "registration_locks" does not exist')) {
-        console.log('Registration locks table does not exist, skipping lock release');
-      } else {
-        throw error;
-      }
+      console.error('Error releasing lock:', error);
     }
   };
 
@@ -84,10 +106,21 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
     if (!props?.game) return;
     
     setIsProcessingClose(true);
+    let lockAcquired = false;
     
     try {
+      // Get current user and check role
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        throw new Error('Failed to get user information');
+      }
+      
+      if (!user) {
+        throw new Error('You must be logged in to perform this action');
+      }
+
       // Try to acquire lock
-      const lockAcquired = await acquireLock(props.game.id);
+      lockAcquired = await acquireLock(props.game.id);
       if (!lockAcquired) {
         console.log('Another instance is processing registration close');
         return;
@@ -95,71 +128,33 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
 
       const { id, max_players, random_slots } = props.game;
       
-      // Start a transaction for atomic updates
-      const { data: gameCheck, error: checkError } = await supabaseAdmin
-        .from('games')
-        .select('status')
-        .eq('id', id)
-        .single();
-
-      if (checkError) throw checkError;
-
-      // Double check game is still in 'open' status
-      if (gameCheck.status !== 'open') {
-        console.log('Game already processed by another instance');
-        return;
-      }
-
-      // Update game status
-      const { error: statusError } = await supabaseAdmin
-        .from('games')
-        .update({ status: 'players_announced' })
-        .eq('id', id)
-        .eq('status', 'open'); // Only update if still open
-
-      if (statusError) throw statusError;
-
-      const result = await handlePlayerSelection({
-        gameId: id,
-        xpSlots: max_players - random_slots,
-        randomSlots: random_slots
+      // Use a transaction to ensure atomic updates
+      const { data: result, error: txError } = await supabase.rpc('process_registration_close', {
+        p_game_id: id,
+        p_max_players: max_players,
+        p_random_slots: random_slots
       });
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to select players');
+      if (txError) {
+        if (txError.message?.includes('permission')) {
+          throw new Error('You do not have permission to close registration. Please contact an administrator.');
+        }
+        throw txError;
       }
 
-      // Store selection results
-      const { error: selectionError } = await supabaseAdmin
-        .from('game_selections')
-        .insert({
-          game_id: id,
-          selected_players: result.selectedPlayers.map(p => p.id),
-          reserve_players: result.nonSelectedPlayerIds,
-          selection_metadata: {
-            merit_selected: result.selectedPlayers.filter(p => p.selection_method === 'merit').map(p => p.id),
-            random_selected: result.selectedPlayers.filter(p => p.selection_method === 'random').map(p => p.id),
-            timestamp: new Date().toISOString()
-          }
-        })
-        .select()
-        .single();
-
-      if (selectionError) throw selectionError;
-      
       if (props.onGameUpdated) {
         await props.onGameUpdated();
       }
-      
-      toast.success('Players have been selected');
-      setHasPassedWindowEnd(true);
 
+      setHasPassedWindowEnd(true);
+      toast.success('Player selection completed successfully');
     } catch (error) {
       console.error('Registration close error:', error);
-      toast.error('Failed to close registration');
+      const errorMessage = error.message || 'An unknown error occurred';
+      toast.error(`Failed to process registration close: ${errorMessage}`);
+      throw error;
     } finally {
-      // Release lock if we acquired it
-      if (props.game) {
+      if (lockAcquired) {
         await releaseLock(props.game.id);
       }
       setIsProcessingClose(false);

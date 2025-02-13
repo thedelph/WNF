@@ -45,7 +45,7 @@ export default function HistoricalGames() {
             )
           )
         `)
-        .or('status.eq.teams_announced,and(status.eq.completed,completed.eq.false)')
+        .eq('status', 'teams_announced')
         .gt('created_at', '2023-11-15')
         .lte('date', new Date().toISOString()) // Only show games where kickoff time has passed
         .order('date', { ascending: false })
@@ -198,8 +198,9 @@ export default function HistoricalGames() {
               {pendingGames.map(game => (
                 <GameCompletionForm 
                   key={game.id} 
-                  game={game} 
-                  onComplete={handleGameComplete} 
+                  game={game}
+                  date={game.date}
+                  onComplete={handleGameComplete}
                 />
               ))}
             </div>

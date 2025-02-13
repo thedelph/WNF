@@ -16,6 +16,7 @@ interface TokenStatusProps {
   hasPlayedInLastTenGames?: boolean;
   hasRecentSelection?: boolean;
   isLoading?: boolean;
+  whatsappGroupMember?: string;
 }
 
 // Component to display token status with animations and tooltips
@@ -29,7 +30,8 @@ export default function TokenStatus({
   recentGames,
   hasPlayedInLastTenGames,
   hasRecentSelection,
-  isLoading
+  isLoading,
+  whatsappGroupMember
 }: TokenStatusProps) {
   // Format dates for display
   const formatDate = (date: string) => {
@@ -119,6 +121,18 @@ export default function TokenStatus({
         <div className="mt-2 text-sm">
           <h4 className="font-medium mb-1">Eligibility Requirements:</h4>
           <div className="flex items-center gap-2 mb-1">
+            {whatsappGroupMember && ['Yes', 'Proxy'].includes(whatsappGroupMember) ? (
+              <BsCheckCircle className="text-success" />
+            ) : (
+              <BsXCircle className="text-error" />
+            )}
+            <Tooltip content="Must be a member of the WhatsApp group">
+              <span className={whatsappGroupMember && ['Yes', 'Proxy'].includes(whatsappGroupMember) ? "text-success" : "text-error"}>
+                WhatsApp Member
+              </span>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-2 mb-1">
             {hasPlayedInLastTenGames ? (
               <BsCheckCircle className="text-success" />
             ) : (
@@ -167,6 +181,9 @@ export default function TokenStatus({
           <div className="text-sm mt-2">
             <p>To receive a new token, you must:</p>
             <ul className="list-disc list-inside mt-1 space-y-1">
+              {!whatsappGroupMember || !['Yes', 'Proxy'].includes(whatsappGroupMember) && (
+                <li>Be a member of the WNF WhatsApp group</li>
+              )}
               {!hasPlayedInLastTenGames && (
                 <li>Play in at least one of the last 10 games</li>
               )}

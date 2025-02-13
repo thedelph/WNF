@@ -35,23 +35,11 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
 
     setIsDeleting(true)
     try {
-      // First delete all game registrations
-      const { error: registrationsError } = await supabaseAdmin
-        .from('game_registrations')
-        .delete()
-        .eq('game_id', game.id)
+      const { error } = await supabaseAdmin
+        .rpc('delete_game', { p_game_id: game.id })
 
-      if (registrationsError) throw registrationsError
+      if (error) throw error
 
-      // Then delete the game
-      const { error: gameError } = await supabaseAdmin
-        .from('games')
-        .delete()
-        .eq('id', game.id)
-
-      if (gameError) throw gameError
-
-      // Refresh the UI
       toast.success('Game deleted successfully')
       onGameDeleted()
     } catch (error) {

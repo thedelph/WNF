@@ -172,7 +172,117 @@ The calculation was:
 5. Bench warmer multiplier: 1.05 (streak of 1)
 6. Final calculation: 87 * 1.0 * 1.05 = 91.35, rounded to 91
 
+### Status Changes and XP System
+
+#### Player Status Lifecycle
+1. **Initial Registration**
+   - Players can register as 'selected' or 'reserve'
+   - Initial registration has no XP impact
+
+2. **Status Changes**
+   - Selected → dropped_out (dropout)
+   - Reserve → selected (slot acceptance)
+   - Reserve → dropped_out (slot decline)
+   - All status changes are tracked in `player_status_changes` table
+
+3. **Game Registration States**
+   - 'registered': Initial state
+   - 'selected': Chosen to play
+   - 'reserve': On reserve list
+   - 'dropped_out': No longer participating
+
+#### XP Rules for Status Changes
+
+##### Selected Players
+1. **Dropping Out Before Game Day**
+   - No XP penalty
+   - Status changes to 'dropped_out'
+   - Game day is determined by calendar date
+
+2. **Dropping Out On Game Day**
+   - -10 XP penalty
+   - Status changes to 'dropped_out'
+   - Penalty recorded in `reserve_xp_transactions`
+
+##### Reserve Players
+1. **Slot Offers Before Game Day**
+   - Accepting: Status changes to 'selected'
+   - Declining: 
+     - -10 XP penalty
+     - Status changes to 'dropped_out'
+     - Breaks bench warmer streak
+     - Cannot receive further slot offers for this game
+
+2. **Slot Offers On Game Day**
+   - Accepting:
+     - +10 XP bonus
+     - Status changes to 'selected'
+   - Declining:
+     - No XP penalty
+     - Status changes to 'dropped_out'
+     - Maintains bench warmer streak
+     - Cannot receive further slot offers for this game
+
+#### Implementation Details
+- All status changes trigger automatic XP calculations
+- Only one penalty of each type per player per game
+- Status changes are permanent within a game
+- Game day is determined by comparing calendar dates:
+  ```
+  Game Date: 2025-02-14 21:00:00
+  Action at: 2025-02-14 09:00:00 → On game day
+  Action at: 2025-02-13 23:59:59 → Before game day
+  ```
+
+#### Database Implementation
+1. **Tables**
+   - `game_registrations`: Current player status
+   - `player_status_changes`: History of all changes
+   - `reserve_xp_transactions`: XP penalties and rewards
+
+2. **Constraints**
+   - One XP transaction type per player per game
+   - Valid statuses: ['registered', 'selected', 'reserve', 'dropped_out']
+
+3. **Triggers**
+   - Automatically update XP on status changes
+   - Maintain data consistency across tables
+   - Handle game day calculations
+
 ### 3. Reserve XP System
+
+#### Player Status Changes and Penalties
+
+##### Selected Player Rules
+- **Dropping Out Before Game Day**: No XP penalty
+- **Dropping Out On Game Day**: -10 XP penalty
+- Game day is determined by comparing the calendar date of the dropout with the game date
+- Penalties are tracked in `reserve_xp_transactions` table with type 'SLOT_DECLINE_PENALTY'
+
+##### Reserve Player Rules
+1. **Slot Offers Before Game Day**:
+   - Accepting: No XP bonus
+   - Declining: -10 XP penalty and breaks bench warmer streak
+   - This encourages reserves to only sign up if they're genuinely available
+
+2. **Slot Offers On Game Day**:
+   - Accepting: +10 XP bonus (rewards last-minute availability)
+   - Declining: No penalty (understanding that plans may be made)
+   - Bench warmer streak continues if declined on game day
+   - "Game day" is determined by comparing the calendar date of the response with the game date
+
+##### Implementation Details
+- All status changes are tracked in the `player_status_changes` table
+- XP transactions are automatically created by database triggers
+- The system uses UTC dates for all comparisons
+- A change is considered "on game day" if it occurs on the same calendar date as the game
+
+Example:
+```
+Game Date: 2025-02-14 21:00:00
+Dropout at: 2025-02-14 09:00:00 → On game day (-10 XP)
+Dropout at: 2025-02-13 23:59:59 → Before game day (no penalty)
+```
 
 #### Reserve Rewards
 - Players who remain in the reserve list receive +5 XP

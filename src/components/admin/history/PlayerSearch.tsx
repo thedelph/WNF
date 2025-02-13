@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Tooltip } from '../../ui/Tooltip'
 import { supabaseAdmin } from '../../../utils/supabase'
 import { toast } from 'react-hot-toast'
+import { format } from 'date-fns'
 
 interface Player {
   id: string
@@ -10,16 +11,23 @@ interface Player {
 
 interface PlayerSearchProps {
   onPlayerAdd: (player: Player, team: 'blue' | 'orange' | null, status: string) => void
-  existingPlayerIds: string[]  // To filter out already added players
+  existingPlayerIds: string[]
+  gameDate: Date | string
+  gameId: string
 }
 
-export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existingPlayerIds }) => {
+export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existingPlayerIds, gameDate, gameId }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [selectedTeam, setSelectedTeam] = useState<'blue' | 'orange' | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<string>('selected')
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+
+  // Parse gameDate to ensure it's a Date object
+  const parsedGameDate = typeof gameDate === 'string' ? new Date(gameDate) : gameDate
 
   useEffect(() => {
     if (searchQuery.length >= 2) {
@@ -28,6 +36,11 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
       setPlayers([])
     }
   }, [searchQuery])
+
+  useEffect(() => {
+    // Set initial selected date to game date when component mounts
+    setSelectedDate(format(parsedGameDate, 'yyyy-MM-dd'))
+  }, [parsedGameDate])
 
   const searchPlayers = async () => {
     setLoading(true)
@@ -49,13 +62,72 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
     }
   }
 
-  const handleAddPlayer = () => {
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const status = e.target.value
+    setSelectedStatus(status)
+    if (status === 'reserve_declined') {
+      setShowDatePicker(true)
+      // Set initial date to game date when showing picker
+      setSelectedDate(format(parsedGameDate, 'yyyy-MM-dd'))
+    } else {
+      setShowDatePicker(false)
+    }
+  }
+
+  const handleAddPlayer = async () => {
     if (selectedPlayer) {
-      onPlayerAdd(selectedPlayer, selectedTeam, selectedStatus)
-      setSearchQuery('')
-      setSelectedPlayer(null)
-      setSelectedTeam(null)
-      setSelectedStatus('selected')
+      try {
+        // If it's a reserve decline, record the status change first
+        if (selectedStatus === 'reserve_declined') {
+          const changeDate = new Date(selectedDate)
+          const isGameDay = format(changeDate, 'yyyy-MM-dd') === format(parsedGameDate, 'yyyy-MM-dd')
+
+          // Check if a status change already exists for this player and game
+          const { data: existingChanges, error: checkError } = await supabaseAdmin
+            .from('player_status_changes')
+            .select('*')
+            .eq('game_id', gameId)
+            .eq('player_id', selectedPlayer.id)
+            .eq('change_type', 'slot_response')
+            .eq('to_status', 'reserve_declined')
+
+          if (checkError) throw checkError
+
+          // Only create a new status change if one doesn't exist
+          if (!existingChanges || existingChanges.length === 0) {
+            // Record the status change
+            const { error: statusError } = await supabaseAdmin
+              .from('player_status_changes')
+              .insert({
+                player_id: selectedPlayer.id,
+                game_id: gameId,
+                from_status: 'reserve_no_offer',
+                to_status: 'reserve_declined',
+                change_type: 'slot_response',
+                is_game_day: isGameDay,
+                created_at: changeDate.toISOString()
+              })
+
+            if (statusError) {
+              console.error('Error recording status change:', statusError)
+              throw statusError
+            }
+          }
+        }
+
+        // Now add the player to the game
+        onPlayerAdd(selectedPlayer, selectedTeam, selectedStatus)
+        
+        // Reset form
+        setSearchQuery('')
+        setSelectedPlayer(null)
+        setSelectedTeam(null)
+        setSelectedStatus('selected')
+        setShowDatePicker(false)
+      } catch (error) {
+        console.error('Error adding player:', error)
+        toast.error('Failed to add player')
+      }
     }
   }
 
@@ -128,7 +200,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
                   <select
                     className="select select-bordered"
                     value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    onChange={handleStatusChange}
                   >
                     {!selectedTeam ? (
                       <>
@@ -141,6 +213,27 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
                     )}
                   </select>
                 </div>
+
+                {showDatePicker && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      When did they decline the slot?
+                    </label>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      max={format(new Date(), 'yyyy-MM-dd')}
+                      className="input input-bordered w-full"
+                    />
+                    <p className="text-sm text-base-content/70 mt-1">
+                      {format(new Date(selectedDate), 'yyyy-MM-dd') === format(parsedGameDate, 'yyyy-MM-dd')
+                        ? 'This was on game day'
+                        : 'This was before game day'
+                      }
+                    </p>
+                  </div>
+                )}
 
                 <button
                   className="btn btn-primary"

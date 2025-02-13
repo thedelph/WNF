@@ -54,6 +54,17 @@ export const handlePlayerSelection = async ({
     // Get player IDs
     const playerIds = registeredPlayers.map(reg => reg.player_id);
 
+    // First, get the previous game's token usage
+    const { data: previousGameTokenUsers, error: tokenError } = await supabaseAdmin.rpc(
+      'check_previous_game_token_usage',
+      { current_game_id: gameId }
+    );
+
+    if (tokenError) {
+      console.error('Error fetching previous game token usage:', tokenError);
+      throw tokenError;
+    }
+
     // Get player details including bench_warmer_streak
     const { data: playerDetails, error: playerError } = await supabaseAdmin
       .from('players')
@@ -90,21 +101,6 @@ export const handlePlayerSelection = async ({
         used_token_last_game: usedTokenLastGame
       };
     });
-
-    // First, get the previous game's token usage
-    const { data: previousGameTokenUsers, error: tokenError } = await supabaseAdmin.rpc(
-      'check_previous_game_token_usage',
-      { current_game_id: gameId }
-    );
-
-    if (tokenError) {
-      console.error('Error fetching previous game token usage:', tokenError);
-      throw tokenError;
-    }
-
-    // First, select players using tokens - they get guaranteed slots
-    const tokenSelectedPlayers = players.filter(player => player.using_token);
-    const remainingXpSlots = Math.max(0, xpSlots - tokenSelectedPlayers.length);
 
     // Sort remaining players by XP and tiebreakers (excluding token users)
     const remainingPlayers = players.filter(player => !player.using_token);
@@ -178,10 +174,10 @@ export const handlePlayerSelection = async ({
     // Get who would get in by merit after token effects
     const remainingMeritSlots = allPlayersWithTokenEffects
       .filter(player => !player.using_token) // Exclude token users since they already have slots
-      .slice(0, remainingXpSlots); // Take only the remaining merit slots
+      .slice(0, Math.max(0, xpSlots - players.filter(player => player.using_token).length)); // Take only the remaining merit slots
 
     // Now check which token users would still get in by merit
-    const tokenUsersSelectedByMerit = tokenSelectedPlayers.filter(tokenPlayer => {
+    const tokenUsersSelectedByMerit = players.filter(player => player.using_token).filter(tokenPlayer => {
       // Find their position in the merit-based list (including token effects)
       const meritPosition = allPlayersWithTokenEffects.findIndex(p => p.id === tokenPlayer.id);
       // They would get in by merit if their position is within the original xpSlots
@@ -189,7 +185,7 @@ export const handlePlayerSelection = async ({
     });
 
     // Select players by XP for remaining XP slots
-    const xpSelectedPlayers = sortedPlayers.slice(0, remainingXpSlots);
+    const xpSelectedPlayers = sortedPlayers.slice(0, Math.max(0, xpSlots - players.filter(player => player.using_token).length));
     
     // The remaining players should be everyone NOT selected by XP or token
     const playersForRandomSelection = sortedPlayers.filter(player => 
@@ -197,7 +193,14 @@ export const handlePlayerSelection = async ({
     );
 
     // Handle random selection with WhatsApp priority and weighted probabilities
-    const whatsappMembers = playersForRandomSelection.filter(
+    // First, separate WhatsApp members who used tokens in the previous game
+    const tokenCooldownPlayers = playersForRandomSelection.filter(
+      p => p.used_token_last_game && (p.whatsapp_group_member === 'Yes' || p.whatsapp_group_member === 'Proxy')
+    );
+    const eligiblePlayers = playersForRandomSelection.filter(p => !p.used_token_last_game);
+    
+    // Split eligible players by WhatsApp status
+    const whatsappMembers = eligiblePlayers.filter(
       p => p.whatsapp_group_member === 'Yes' || p.whatsapp_group_member === 'Proxy'
     );
     
@@ -249,17 +252,33 @@ export const handlePlayerSelection = async ({
       randomSelectedPlayers = [...whatsappMembers];
       
       // Fill remaining slots from non-WhatsApp members using weights
-      const nonWhatsappMembers = playersForRandomSelection.filter(
+      const nonWhatsappMembers = eligiblePlayers.filter(
         p => p.whatsapp_group_member === 'No' || p.whatsapp_group_member === null
       );
+      
       const remainingSlots = randomSlots - whatsappMembers.length;
-      const additionalPlayers = selectWithWeights(nonWhatsappMembers, remainingSlots);
-      randomSelectedPlayers = [...randomSelectedPlayers, ...additionalPlayers];
+      
+      // If we still need more players after using all eligible players
+      if (nonWhatsappMembers.length >= remainingSlots) {
+        // We have enough non-WhatsApp members
+        const additionalPlayers = selectWithWeights(nonWhatsappMembers, remainingSlots);
+        randomSelectedPlayers = [...randomSelectedPlayers, ...additionalPlayers];
+      } else {
+        // Add all available non-WhatsApp members first
+        randomSelectedPlayers = [...randomSelectedPlayers, ...nonWhatsappMembers];
+        
+        // If we still need more players, only then consider WhatsApp members on token cooldown
+        const stillNeeded = randomSlots - randomSelectedPlayers.length;
+        if (stillNeeded > 0 && tokenCooldownPlayers.length > 0) {
+          const cooldownPlayers = selectWithWeights(tokenCooldownPlayers, stillNeeded);
+          randomSelectedPlayers = [...randomSelectedPlayers, ...cooldownPlayers];
+        }
+      }
     }
 
     // Combine all selected players
     const selectedPlayers = [
-      ...tokenSelectedPlayers.map(player => {
+      ...players.filter(player => player.using_token).map(player => {
         const wouldGetInByMerit = tokenUsersSelectedByMerit.some(p => p.id === player.id);
         return {
           ...player,
@@ -286,37 +305,7 @@ export const handlePlayerSelection = async ({
       try {
         console.log(`Updating player ${playerId} to status: ${status}, method: ${selectionMethod}`);
         
-        // First check if the player is already in the desired state
-        const { data: current } = await supabaseAdmin
-          .from('game_registrations')
-          .select('status, selection_method')
-          .eq('game_id', gameId)
-          .eq('player_id', playerId)
-          .single();
-
-        if (current?.status === status && current?.selection_method === selectionMethod) {
-          console.log(`Player ${playerId} already in desired state`);
-          return current;
-        }
-
-        // Try direct update first
-        const { error: directError } = await supabaseAdmin
-          .from('game_registrations')
-          .update({
-            status,
-            selection_method: selectionMethod
-          })
-          .eq('game_id', gameId)
-          .eq('player_id', playerId);
-
-        if (!directError) {
-          console.log(`Successfully updated player ${playerId} directly`);
-          return { status, selection_method: selectionMethod };
-        }
-
-        console.log(`Direct update failed for ${playerId}, trying RPC...`, directError);
-
-        // If direct update fails, try the RPC
+        // Use the SECURITY DEFINER RPC function to update the registration
         const { data, error } = await supabaseAdmin.rpc('update_game_registration', {
           p_game_id: gameId,
           p_player_id: playerId,
@@ -348,12 +337,12 @@ export const handlePlayerSelection = async ({
 
     try {
       console.log('Starting player selection process...');
-      console.log('Token players:', tokenSelectedPlayers.length);
+      console.log('Token players:', players.filter(player => player.using_token).length);
       console.log('XP players:', xpSelectedPlayers.length);
       console.log('Random players:', randomSelectedPlayers.length);
 
       // Update token players first
-      for (const player of tokenSelectedPlayers) {
+      for (const player of players.filter(player => player.using_token)) {
         const wouldGetInByMerit = tokenUsersSelectedByMerit.some(p => p.id === player.id);
         await updatePlayerStatus(
           player.id, 
@@ -394,7 +383,7 @@ export const handlePlayerSelection = async ({
         message: error.message,
         stack: error.stack,
         context: {
-          tokenPlayers: tokenSelectedPlayers.length,
+          tokenPlayers: players.filter(player => player.using_token).length,
           xpPlayers: xpSelectedPlayers.length,
           randomPlayers: randomSelectedPlayers.length
         }

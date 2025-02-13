@@ -48,6 +48,7 @@ export interface PlayerStats {
   unpaidGames: number;
   registrationStreak: number;
   registrationStreakApplies: boolean;
+  whatsapp_group_member?: string;
   token_status?: {
     status: string;
     last_used_at: string | null;

@@ -85,6 +85,7 @@ export default function PlayerProfileNew() {
             current_streak,
             max_streak,
             bench_warmer_streak,
+            whatsapp_group_member,
             player_xp (
               xp,
               rank,
@@ -319,6 +320,7 @@ export default function PlayerProfileNew() {
           active_penalties: playerData.active_penalties || 0,
           current_streak: playerData.current_streak || 0,
           max_streak: playerData.max_streak || 0,
+          whatsapp_group_member: playerData.whatsapp_group_member,
           xp: playerData.player_xp?.xp || 0,
           rarity: playerData.player_xp?.rarity || 'Amateur',
           wins: playerWinRates?.wins || 0,
@@ -499,6 +501,7 @@ export default function PlayerProfileNew() {
               hasRecentSelection={tokenStatus?.hasRecentSelection}
               isLoading={tokenLoading}
               playerName={player?.friendly_name}
+              whatsappGroupMember={player?.whatsapp_group_member}
             />
           </div>
         )}

@@ -34,42 +34,7 @@ export function useTokenStatus(playerId: string) {
       try {
         setLoading(true);
         
-        // Get token status from public view
-        const { data: publicTokenStatus, error: publicTokenError } = await executeWithRetry(
-          () => supabase
-            .from('public_player_token_status')
-            .select('*')
-            .eq('player_id', playerId)
-            .single(),
-          { 
-            shouldToast: false,
-            maxRetries: 2
-          }
-        );
-
-        if (publicTokenError) {
-          console.error('Error fetching public token status:', publicTokenError);
-        }
-
-        // Get recent games where player was selected (for display only)
-        const { data: recentGames, error: recentGamesError } = await executeWithRetry(
-          () => supabase
-            .from('public_player_game_history')
-            .select('sequence_number')
-            .eq('player_id', playerId)
-            .eq('status', 'selected')
-            .order('sequence_number', { ascending: false })
-            .limit(10),
-          {
-            shouldToast: false
-          }
-        );
-
-        if (recentGamesError) {
-          console.error('Error fetching recent games:', recentGamesError);
-        }
-
-        // Get latest sequence number to determine last 3 games
+        // Get latest sequence number first
         const { data: latestGame } = await executeWithRetry(
           () => supabase
             .from('games')
@@ -90,21 +55,63 @@ export function useTokenStatus(playerId: string) {
           (_, i) => latestSequence - i
         );
 
+        // Get token status from public view
+        const { data: publicTokenStatus, error: publicTokenError } = await executeWithRetry(
+          () => supabase
+            .from('public_player_token_status')
+            .select('*')
+            .eq('player_id', playerId)
+            .single(),
+          { 
+            shouldToast: false,
+            maxRetries: 2
+          }
+        );
+
+        if (publicTokenError) {
+          console.error('Error fetching public token status:', publicTokenError);
+        }
+
+        // Get recent games where player was selected, using sequence number range
+        const { data: recentGames, error: recentGamesError } = await executeWithRetry(
+          () => supabase
+            .from('public_player_game_history')
+            .select('sequence_number')
+            .eq('player_id', playerId)
+            .eq('status', 'selected')
+            .gt('sequence_number', latestSequence - 10)  // Get all games in last 10 sequence numbers
+            .order('sequence_number', { ascending: false }),
+          {
+            shouldToast: false
+          }
+        );
+
+        if (recentGamesError) {
+          console.error('Error fetching recent games:', recentGamesError);
+        }
+
+        // Debug logging
+        console.log('[useTokenStatus] Sequence numbers:', {
+          latestSequence,
+          lastThreeSequences,
+          playerGames: recentGames?.map(g => g.sequence_number)
+        });
+
         // Check if player was selected in any of the last 3 games
         const recentSelections = recentGames?.filter(g => 
           lastThreeSequences.includes(g.sequence_number)
         ) || [];
         const hasRecentSelection = recentSelections.length > 0;
 
-        // Format recent games, only including those that make player ineligible
-        const formattedRecentGames = recentSelections
-          .map(g => `WNF #${g.sequence_number}`)
-          .sort((a, b) => parseInt(b.split('#')[1]) - parseInt(a.split('#')[1]));
-
         // Check if player has played in last 10 games
         const hasPlayedInLastTenGames = recentGames?.some(g => 
           lastTenSequences.includes(g.sequence_number)
         ) || false;
+
+        // Format recent games, only including those that make player ineligible
+        const formattedRecentGames = recentSelections
+          .map(g => `WNF #${g.sequence_number}`)
+          .sort((a, b) => parseInt(b.split('#')[1]) - parseInt(a.split('#')[1]));
 
         // Debug logging
         console.log('[useTokenStatus] Raw Data:', {
@@ -112,23 +119,19 @@ export function useTokenStatus(playerId: string) {
           publicTokenStatus,
           recentGames,
           latestSequence,
-          lastTenSequences
-        });
-
-        console.log('[useTokenStatus] Processed Data:', {
-          isEligible: publicTokenStatus?.is_eligible,
+          lastTenSequences,
+          lastThreeSequences,
           hasPlayedInLastTenGames,
-          hasRecentSelection,
-          recentGames: formattedRecentGames
+          hasRecentSelection
         });
 
         // Construct token status object
         const status = publicTokenStatus ? {
-          status: publicTokenStatus.token_status,
+          status: hasPlayedInLastTenGames && !hasRecentSelection ? 'AVAILABLE' : 'INELIGIBLE',
           lastUsedAt: publicTokenStatus.last_used_at,
           nextTokenAt: publicTokenStatus.next_token_at,
           createdAt: publicTokenStatus.created_at,
-          isEligible: publicTokenStatus.is_eligible,
+          isEligible: hasPlayedInLastTenGames && !hasRecentSelection,  
           recentGames: formattedRecentGames,
           hasPlayedInLastTenGames,
           hasRecentSelection
@@ -142,6 +145,13 @@ export function useTokenStatus(playerId: string) {
           hasPlayedInLastTenGames,
           hasRecentSelection
         };
+
+        console.log('[useTokenStatus] Processed Data:', {
+          isEligible: hasPlayedInLastTenGames && !hasRecentSelection,
+          hasPlayedInLastTenGames,
+          hasRecentSelection,
+          recentGames: formattedRecentGames
+        });
 
         setTokenStatus(status);
         setError(null);

@@ -13,7 +13,7 @@ The token system provides players with a guaranteed slot option for games. Each 
        - It doesn't matter if they registered and weren't selected
        - It doesn't matter if they didn't register at all
        - Being selected in even one of these games makes them ineligible
-- Tokens remain valid indefinitely until used
+- Tokens expire 7 days after issuance if unused
 - After a token is used:
   - Player must meet the eligibility criteria again to receive a new token
   - No fixed cooldown period, based purely on game participation
@@ -43,52 +43,6 @@ Using a token has a balancing effect on the next game:
 4. If multiple players used tokens, they are sorted among themselves by the usual criteria (XP, WhatsApp status, etc.)
 5. This only affects the immediate next game in sequence, not any games after that
 6. This prevents token usage from snowballing into streaks and makes tokens more strategic for occasional use
-
-### Token Forgiveness Rules
-The system includes a token forgiveness mechanism that works as follows:
-
-1. **Basic Token Forgiveness**
-   - If a player uses their token but would have gotten in by merit anyway (based on XP), their token is returned
-   - This only applies if no other token users affected their merit position
-
-2. **Token Interaction Effects**
-   - If Player A uses a token and would get in by merit, but Player B also uses a token which pushes Player A out of merit position:
-     - Both tokens are consumed
-     - This is because Player A actually needed their token due to Player B's token effect
-   - If Player A uses a token and would still get in by merit even after considering other players' token usage:
-     - Player A's token is returned (forgiven)
-     - This is because they would have gotten in regardless of other token effects
-
-3. **Merit Position Calculation**
-   - Merit positions are calculated AFTER considering all token effects
-   - A player only gets their token returned if they would still be in a merit position after all token slots are allocated
-   - This ensures tokens are only forgiven when they weren't actually needed
-
-### Example Scenarios
-
-1. **Solo Token Usage**
-   ```
-   Player A (high XP) uses token, no one else uses tokens
-   → Player A would get in by merit anyway
-   → Token is returned
-   ```
-
-2. **Competitive Token Usage**
-   ```
-   Player A (high XP) uses token
-   Player B (lower XP) uses token, pushing Player A out of merit spots
-   → Both tokens are consumed
-   → This is fair because both players needed their tokens
-   ```
-
-3. **Multiple Token Usage with Merit**
-   ```
-   Player A (very high XP) uses token
-   Player B (medium XP) uses token
-   → Player A would still get in by merit even after B's token
-   → Player A's token is returned
-   → Player B's token is consumed
-   ```
 
 ## Token States
 
@@ -311,3 +265,69 @@ Located in: `src/components/admin/games/GameRegistrations.tsx`
 1. Compare `game_selections.token_slots_used`
 2. Count `game_registrations` with `using_token = true`
 3. Verify player selection process completed successfully
+
+## Token System
+
+The token system is designed for casual players who want to join a game every now and then, while still maintaining priority for regular players through the XP system.
+
+## Eligibility
+
+Token eligibility is determined by the `check_token_eligibility(player_uuid)` function, which checks:
+1. Player has played in at least 1 of the last 5 games
+2. Player has not been selected in any of the last 3 games
+
+## Token Lifecycle
+
+### Issuance
+- Tokens are issued via the `issue_player_tokens()` function
+- Only eligible players receive tokens
+- Each token expires 7 days after issuance
+- Players can only have one active token at a time (enforced by `enforce_single_active_token()` trigger)
+
+### Usage
+- When registering for a game, players can use their token via `handle_game_token(p_player_id, p_game_id, p_action)`
+- Using a token guarantees a spot in that game
+
+### Effects
+- After using a token, players are de-prioritized in the next game's merit selection
+- This is checked via `check_previous_game_token_usage(current_game_id)` during player selection
+- Players who used a token in the previous game are moved to the bottom of the merit selection list
+
+## Token Status
+
+Token status is tracked in the `public_player_token_status` materialized view, which shows:
+- AVAILABLE: Player has an unused token and is currently eligible
+- INELIGIBLE: Player either has no token or is not currently eligible
+- USED: Token has been used in a game
+
+The view is automatically refreshed by the `refresh_player_token_status()` trigger.
+
+## Database Functions
+
+### Core Functions
+- `check_token_eligibility(player_uuid)`: Checks if a player is eligible for a token
+- `issue_player_tokens()`: Issues tokens to eligible players
+- `check_player_token(p_player_id)`: Checks if a player has a valid token
+- `handle_game_token(p_player_id, p_game_id, p_action)`: Handles token usage in games
+
+### Support Functions
+- `enforce_single_active_token()`: Trigger to prevent multiple active tokens
+- `refresh_player_token_status()`: Trigger to refresh token status view
+- `check_previous_game_token_usage(current_game_id)`: Checks token usage in previous game
+
+## Implementation Details
+
+### Token Expiry
+Tokens expire in two ways:
+1. Automatically after 7 days from issuance
+2. When a player becomes ineligible (checked via materialized view)
+
+### Merit Selection Impact
+The selection process (implemented in `playerSelection.ts`) follows this order:
+1. Token users get guaranteed slots
+2. Remaining slots filled by XP, with token cooldown as first tiebreaker:
+   - Players who used a token in previous game moved to bottom
+   - WhatsApp membership as second tiebreaker
+   - Current streak as third tiebreaker
+   - Caps as fourth tiebreaker
+   - Registration time as final tiebreaker
