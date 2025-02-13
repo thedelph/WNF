@@ -9,16 +9,13 @@ interface RankShieldProps {
 }
 
 /**
- * A shield-shaped icon component that displays a player's rank if they are in the top 16.
+ * A shield-shaped icon component that displays a player's current rank.
  * The shield includes the player's numerical rank and provides additional context via tooltip.
  * 
  * @param rank - The player's current rank based on XP
  * @param className - Optional additional CSS classes
  */
 const RankShield: React.FC<RankShieldProps> = ({ rank, className = '' }) => {
-  // Only show for top 16 players
-  if (rank > 16) return null;
-
   const tooltipContent = `Ranked #${rank} in XP`;
 
   return (

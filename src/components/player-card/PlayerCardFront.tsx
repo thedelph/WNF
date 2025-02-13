@@ -151,7 +151,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
       )}
       
       {/* Rank Shield */}
-      {rank && rank <= 16 && !isFlipped && (
+      {rank && !isFlipped && (
         <div className="absolute top-2 right-2 z-10">
           <RankShield rank={rank} />
         </div>

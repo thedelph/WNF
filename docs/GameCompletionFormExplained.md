@@ -10,6 +10,7 @@ The Game Completion Form is used to record the final details of a completed game
 - Manages scores, team assignments, and player statuses
 - Provides interfaces for payment tracking
 - Allows last-minute player additions and changes
+- Tracks status changes (dropouts and reserve responses)
 
 #### Key Features
 1. **Score Management**
@@ -34,6 +35,10 @@ The Game Completion Form is used to record the final details of a completed game
      - "Reserve - Declined Slot": For players who declined an offered slot
    - Automatic team removal when marked as reserve
 
+5. **Status Change Tracking**
+   - Tracks player status transitions including dropouts and reserve responses
+   - Prevents duplicate status changes for the same player and status
+
 ### Team Section (`TeamSection.tsx`)
 - Displays team-specific information
 - Handles player status changes
@@ -54,6 +59,8 @@ The Game Completion Form is used to record the final details of a completed game
 - Enables adding new players to the game
 - Provides real-time search functionality
 - Allows immediate team/status assignment
+- Prevents duplicate status changes for the same player and status
+- Shows whether changes occurred on game day or pre-game
 
 #### Features
 1. **Search Functionality**
@@ -65,6 +72,38 @@ The Game Completion Form is used to record the final details of a completed game
    - Team assignment (Blue/Orange)
    - Status selection
    - Initial payment status setting
+
+### Status Change History (`StatusChangeHistory.tsx`)
+- Displays a chronological history of player status changes, including:
+  - Player dropouts (with game day vs pre-game indicators)
+  - Reserve slot responses (accepted/declined with timing indicators)
+  - Visual indicators for game day vs pre-game changes
+
+### Status Management (`StatusChangeForm.tsx`)
+- Handles player status transitions including:
+  - Dropouts: When selected players drop out of the game
+  - Reserve Responses: When reserve players accept or decline slot offers
+  - Status History: Tracks all status changes with timestamps and game day information
+
+#### Key Features
+1. **Status Change Types**
+   - Dropout: Selected players who can't make the game
+   - Slot Offer: When a reserve player is offered a slot
+   - Slot Response: When a reserve player accepts or declines a slot
+
+2. **Game Day Tracking**
+   - Automatically detects if changes occur on game day
+   - Important for analytics and player reliability tracking
+
+3. **Status Change History**
+   - Records all status changes in the `player_status_changes` table
+   - Tracks previous and new status
+   - Maintains audit trail of all changes
+
+4. **UI Components**
+   - Context-aware status change buttons
+   - Tooltips explaining each action
+   - Clear status display and history
 
 ## Data Flow
 
@@ -94,6 +133,19 @@ interface PlayerWithTeam {
    - Creates new game registration
    - Sets initial team and status
    - Establishes payment tracking
+
+## Database Constraints
+The `player_status_changes` table includes:
+- Unique constraint on (player_id, game_id, to_status, change_type) to prevent duplicate entries
+- Foreign key constraints to players and games tables
+- Timestamps for tracking when changes occur
+
+## Visual Indicators
+Status changes use color-coded badges:
+- Game Day changes: Red background
+- Pre-Game changes: Yellow background
+- Accepted slots: Green background
+- Declined slots: Red background
 
 ## Usage Guidelines
 
@@ -128,6 +180,10 @@ interface PlayerWithTeam {
 - Prevents duplicate player assignments
 - Handles network errors gracefully
 - Provides feedback through toast notifications
+- Prevents duplicate status changes both in UI and database
+- Validates game scores match outcome
+- Ensures all required fields are filled
+- Maintains data consistency with database constraints
 
 ## Future Enhancements
 - Enhanced payment tracking features

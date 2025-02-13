@@ -6,28 +6,32 @@ export interface GameCompletionFormProps {
 }
 
 export interface StatusChange {
+  id: string
   playerId: string
-  fromStatus: 'selected' | 'reserve' | 'registered'
-  toStatus: 'dropped_out' | 'selected' | 'rejected'
-  changeType: 'dropout' | 'slot_response'
-  timestamp: string
+  fromStatus: string
+  toStatus: string
+  changeType: 'dropout' | 'slot_offer' | 'slot_response'
+  createdAt: string
   isGameDay: boolean
 }
 
+export type PlayerStatus = 'selected' | 'registered' | 'reserve_no_offer' | 'reserve_declined' | 'dropped_out'
+
 export interface PlayerWithTeam extends Player {
   team?: 'blue' | 'orange' | null
-  status?: 'selected' | 'registered' | 'reserve_no_offer' | 'reserve_declined'
+  status?: PlayerStatus
   payment_status?: 'unpaid' | 'marked_paid' | 'admin_verified'
   statusChanges?: StatusChange[]
 }
 
 export interface TeamSectionProps {
   players: PlayerWithTeam[]
-  teamColor: 'blue' | 'orange' | null
+  teamColor?: 'blue' | 'orange'
+  showUnassigned?: boolean
+  gameDate: Date
   onTeamChange: (playerId: string, team: 'blue' | 'orange' | null) => void
-  onStatusChange: (playerId: string, status: PlayerWithTeam['status'], statusChange?: StatusChange) => void
+  onStatusChange: (playerId: string, status: PlayerStatus, changeDate: Date, isGameDay: boolean) => void
   onPaymentStatusChange: (playerId: string, status: 'unpaid' | 'marked_paid' | 'admin_verified') => void
-  showUnassigned: boolean
 }
 
 export interface ScoreInputProps {

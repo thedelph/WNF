@@ -13,7 +13,7 @@ The token system provides players with a guaranteed slot option for games. Each 
        - It doesn't matter if they registered and weren't selected
        - It doesn't matter if they didn't register at all
        - Being selected in even one of these games makes them ineligible
-- Tokens remain valid indefinitely until used
+- Tokens expire 7 days after issuance if unused
 - After a token is used:
   - Player must meet the eligibility criteria again to receive a new token
   - No fixed cooldown period, based purely on game participation
