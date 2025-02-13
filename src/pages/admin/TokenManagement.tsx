@@ -31,10 +31,12 @@ const TokenManagement: React.FC = () => {
         throw playersError;
       }
 
-      // Then get active or recently used tokens
+      // Then get active tokens only
       const { data: tokens, error: tokensError } = await supabase
         .from('player_tokens')
         .select('*')
+        .is('used_at', null)
+        .or('expires_at.is.null,expires_at.gt.now()')
         .order('issued_at', { ascending: false });
 
       if (tokensError) {
@@ -85,40 +87,44 @@ const TokenManagement: React.FC = () => {
           })
           .sort((a, b) => (b.sequence_number || 0) - (a.sequence_number || 0));
 
-        // Check if player has played in at least one of the last 10 games
-        const hasRecentActivity = playerGames.some(g => g.status === 'selected');
-
         // Get the 3 most recent games
         const lastThreeGames = latestGames?.slice(0, 3) || [];
-
-        // Check if player was selected in any of the last 3 games
         const lastThreeGameIds = new Set(lastThreeGames.map(g => g.id));
-        const selectedInLastThree = playerGames.some(g => 
-          lastThreeGameIds.has(g.game_id) && g.status === 'selected'
+
+        // Find which of the last 3 games the player was selected in
+        const selectedInLastThree = selectedGames.filter(g => 
+          lastThreeGameIds.has(g.id)
         );
 
-        // Debug logging for Mike M
-        if (player.friendly_name === 'Mike M') {
-          console.log('Debug Mike M:');
+        // Check if player has played in at least one of the last 10 games
+        const lastTenGameIds = new Set(latestGames?.map(g => g.id) || []);
+        const hasRecentActivity = playerGames.some(g => 
+          lastTenGameIds.has(g.game_id) && g.status === 'selected'
+        );
+
+        // Debug logging for Mike M, Mike B, and Lee S
+        if (['Mike M', 'Mike B', 'Lee S'].includes(player.friendly_name)) {
+          console.log(`Debug ${player.friendly_name}:`);
           console.log('Latest games:', latestGames?.map(g => g.sequence_number));
           console.log('Last 3 games:', lastThreeGames.map(g => g.sequence_number));
-          console.log('Selected in last 3:', selectedInLastThree);
+          console.log('Selected in games:', selectedInLastThree.map(g => g.sequence_number));
+          console.log('Has activity in last 10:', hasRecentActivity);
           console.log('Selected games:', selectedGames);
-          console.log('Has recent activity:', hasRecentActivity);
         }
         
         eligibilityMap.set(player.id, {
-          is_eligible: hasRecentActivity && !selectedInLastThree,
+          is_eligible: hasRecentActivity && selectedInLastThree.length === 0,
           selected_games: selectedGames,
-          reason: !hasRecentActivity ? 'No recent activity in last 10 games' :
-                 selectedInLastThree ? `Selected in one of the last 3 games (${lastThreeGames.map(g => `WNF #${g.sequence_number}`).join(', ')})` : null
+          reason: !hasRecentActivity ? 'No activity in last 10 games' :
+                 selectedInLastThree.length > 0 ? `Selected in ${selectedInLastThree.map(g => g.display).join(', ')}` : null
         });
       });
 
       // Create a map of player IDs to their most recent token
       const tokenMap = new Map();
       tokens?.forEach(token => {
-        if (!tokenMap.has(token.player_id)) {
+        const isActive = !token.used_at && (!token.expires_at || new Date(token.expires_at) > new Date());
+        if (!tokenMap.has(token.player_id) && isActive) {
           tokenMap.set(token.player_id, token);
         }
       });
@@ -126,18 +132,29 @@ const TokenManagement: React.FC = () => {
       // Combine player data with their token and eligibility status
       const formattedData = players.map(player => {
         const eligibility = eligibilityMap.get(player.id);
+        const token = tokenMap.get(player.id);
+        
+        // If player is eligible, they should get a fresh token
+        // If not eligible, any existing token should be expired
+        const shouldHaveToken = eligibility?.is_eligible;
+        
+        // A token is only valid if:
+        // 1. The player is currently eligible
+        // 2. The token exists and hasn't been used
+        const hasValidToken = shouldHaveToken && token && !token.used_at;
+
         return {
-          id: tokenMap.get(player.id)?.id || player.id,
+          id: token?.id || player.id,
           player_id: player.id,
           friendly_name: player.friendly_name,
           whatsapp_group_member: player.whatsapp_group_member,
-          is_eligible: eligibility.is_eligible,
-          selected_games: eligibility.selected_games,
-          reason: eligibility.reason,
-          issued_at: tokenMap.get(player.id)?.issued_at || null,
-          expires_at: tokenMap.get(player.id)?.expires_at || null,
-          used_at: tokenMap.get(player.id)?.used_at || null,
-          used_game_id: tokenMap.get(player.id)?.used_game_id || null
+          is_eligible: eligibility?.is_eligible,
+          selected_games: eligibility?.selected_games,
+          reason: eligibility?.reason,
+          issued_at: hasValidToken ? token?.issued_at : null,
+          expires_at: hasValidToken ? token?.expires_at : null,
+          used_at: token?.used_at || null,
+          used_game_id: token?.used_game_id || null
         };
       });
 
@@ -220,12 +237,23 @@ const TokenManagement: React.FC = () => {
     }
   };
 
+  // Initial load
   useEffect(() => {
     if (!isAdmin) {
       return;
     }
     fetchTokenData();
   }, [isAdmin]);
+
+  // Debug logging for token data
+  useEffect(() => {
+    if (tokenData.length > 0) {
+      console.log('Token data loaded:', tokenData.length, 'players');
+      console.log('Active tokens:', tokenData.filter(token => 
+        !token.used_at && (!token.expires_at || new Date(token.expires_at) > new Date())
+      ).length);
+    }
+  }, [tokenData]);
 
   const filteredTokenData = tokenData.filter(player =>
     player.friendly_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -237,16 +265,22 @@ const TokenManagement: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <PiCoinDuotone className="text-yellow-500" />
           Token Management
         </h1>
-      </motion.div>
+        <button
+          onClick={() => {
+            setLoading(true);
+            fetchTokenData();
+          }}
+          className="btn btn-primary"
+          disabled={loading}
+        >
+          {loading ? 'Refreshing...' : 'Refresh Data'}
+        </button>
+      </div>
 
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
@@ -261,7 +295,7 @@ const TokenManagement: React.FC = () => {
               />
             </div>
 
-            <TokenStats tokens={tokenData} />
+            <TokenStats tokens={tokenData.filter(t => t.issued_at !== null)} />
           </div>
 
           <TokenTable 

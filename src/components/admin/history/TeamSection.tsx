@@ -1,6 +1,8 @@
 import React from 'react'
-import { Tooltip } from '../../ui/Tooltip'
-import { TeamSectionProps } from './types'
+import { motion } from 'framer-motion'
+import { format } from 'date-fns'
+import { TeamSectionProps, PlayerWithTeam, StatusChange } from './types'
+import { Tooltip } from '../../../components/ui/Tooltip'
 
 export const TeamSection: React.FC<TeamSectionProps> = ({
   players,
@@ -10,104 +12,138 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
   onPaymentStatusChange,
   showUnassigned
 }) => {
-  // Filter players based on team and status
-  const teamPlayers = players.filter(p => p.team === teamColor)
-  const reservePlayers = players.filter(p => p.status?.startsWith('reserve_'))
-  const unassignedPlayers = players.filter(p => !p.team && !p.status?.startsWith('reserve_'))
+  const filteredPlayers = showUnassigned
+    ? players.filter(p => !p.team)
+    : players.filter(p => p.team === teamColor)
 
-  const handleTeamStatusChange = (playerId: string, value: string) => {
-    if (value === 'reserve_no_offer' || value === 'reserve_declined') {
-      onTeamChange(playerId, null)
-      onStatusChange(playerId, value)
-    } else if (value === '') {
-      onTeamChange(playerId, null)
-      onStatusChange(playerId, 'registered')
-    } else {
-      onTeamChange(playerId, value as 'blue' | 'orange')
-      onStatusChange(playerId, 'selected')
+  const handleStatusChange = (player: PlayerWithTeam, newStatus: PlayerWithTeam['status']) => {
+    const now = new Date().toISOString()
+    const isGameDay = true // This will be determined by comparing with game date
+
+    // Create status change object if needed
+    let statusChange: StatusChange | undefined
+
+    if (player.status === 'selected' && newStatus === 'reserve_declined') {
+      statusChange = {
+        playerId: player.id,
+        fromStatus: 'selected',
+        toStatus: 'dropped_out',
+        changeType: 'dropout',
+        timestamp: now,
+        isGameDay
+      }
+    } else if (player.status === 'reserve_no_offer') {
+      if (newStatus === 'selected') {
+        statusChange = {
+          playerId: player.id,
+          fromStatus: 'reserve',
+          toStatus: 'selected',
+          changeType: 'slot_response',
+          timestamp: now,
+          isGameDay
+        }
+      } else if (newStatus === 'reserve_declined') {
+        statusChange = {
+          playerId: player.id,
+          fromStatus: 'reserve',
+          toStatus: 'rejected',
+          changeType: 'slot_response',
+          timestamp: now,
+          isGameDay
+        }
+      }
     }
+
+    onStatusChange(player.id, newStatus, statusChange)
   }
 
-  const renderPlayerRow = (player: any) => (
-    <div key={player.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
-      <div className="w-32">
-        <span>{player.friendly_name}</span>
-      </div>
-      <div className="w-40">
-        <Tooltip content={
-          player.status === 'reserve_no_offer' ? "Player is on reserve list - no slot offered yet" :
-          player.status === 'reserve_declined' ? "Player was offered a slot but declined" :
-          player.team ? `Playing on ${player.team} team` :
-          "Assign player to a team or set reserve status"
-        }>
-          <select
-            value={player.status?.startsWith('reserve_') ? player.status : player.team || ''}
-            onChange={(e) => handleTeamStatusChange(player.id, e.target.value)}
-            className={`select select-bordered select-sm w-full ${
-              player.team === teamColor ? 'select-primary' : ''
-            }`}
-          >
-            <option value="">Not Playing</option>
-            <option value="blue">Blue Team</option>
-            <option value="orange">Orange Team</option>
-            <option value="reserve_no_offer">Reserve - No Slot Offer</option>
-            <option value="reserve_declined">Reserve - Declined Slot</option>
-          </select>
-        </Tooltip>
-      </div>
-      <div className="w-40">
-        <Tooltip content="Player's payment status">
-          <select
-            value={player.payment_status}
-            onChange={(e) => onPaymentStatusChange(player.id, e.target.value as 'unpaid' | 'marked_paid' | 'admin_verified')}
-            className="select select-bordered select-sm w-full"
-          >
-            <option value="unpaid">Unpaid</option>
-            <option value="marked_paid">Marked Paid</option>
-            <option value="admin_verified">Admin Verified</option>
-          </select>
-        </Tooltip>
-      </div>
-    </div>
-  )
+  const getStatusChangeInfo = (player: PlayerWithTeam) => {
+    if (!player.statusChanges?.length) return null
 
-  if (showUnassigned) {
-    return (
-      <div className="flex flex-col gap-4">
-        {/* Unassigned Players */}
-        {unassignedPlayers.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-600">Available Players</h4>
-            {unassignedPlayers.map(renderPlayerRow)}
-          </div>
-        )}
+    return player.statusChanges.map((change, index) => {
+      let description = ''
+      if (change.changeType === 'dropout') {
+        description = `Dropped out ${change.isGameDay ? 'on' : 'before'} game day`
+      } else if (change.changeType === 'slot_response') {
+        if (change.toStatus === 'selected') {
+          description = `Accepted slot ${change.isGameDay ? 'on' : 'before'} game day`
+        } else {
+          description = `Declined slot ${change.isGameDay ? 'on' : 'before'} game day`
+        }
+      }
 
-        {/* Reserve Players */}
-        {reservePlayers.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-600">Reserve Players</h4>
-            {reservePlayers.map(renderPlayerRow)}
-          </div>
-        )}
-      </div>
-    )
+      return (
+        <div key={index} className="mb-1">
+          <span>{description}</span>
+          <span className="text-sm text-gray-500 ml-2">
+            {format(new Date(change.timestamp), 'MMM d, HH:mm')}
+          </span>
+        </div>
+      )
+    })
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 border rounded-lg">
-      <h3 className={`text-lg font-semibold ${teamColor === 'blue' ? 'text-blue-500' : 'text-orange-500'}`}>
-        {teamColor === 'blue' ? 'Blue Team' : 'Orange Team'} ({teamPlayers.length})
-      </h3>
-      
-      <div className="flex flex-col gap-4">
-        {/* Team Players */}
-        {teamPlayers.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium">Selected Players</h4>
-            {teamPlayers.map(renderPlayerRow)}
+    <div className="space-y-4">
+      {filteredPlayers.map(player => (
+        <motion.div
+          key={player.id}
+          className="bg-white rounded-lg shadow p-4"
+          layout
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="flex items-center justify-between">
+            <Tooltip content={getStatusChangeInfo(player)}>
+              <div className="font-medium">{player.friendly_name}</div>
+            </Tooltip>
+
+            <div className="flex space-x-2">
+              {/* Team Selection */}
+              <select
+                value={player.team || ''}
+                onChange={(e) => onTeamChange(player.id, e.target.value as 'blue' | 'orange' | null)}
+                className="rounded border p-1"
+              >
+                <option value="">No Team</option>
+                <option value="blue">Blue</option>
+                <option value="orange">Orange</option>
+              </select>
+
+              {/* Status Selection */}
+              <select
+                value={player.status}
+                onChange={(e) => handleStatusChange(player, e.target.value as PlayerWithTeam['status'])}
+                className="rounded border p-1"
+              >
+                <option value="selected">Selected</option>
+                <option value="reserve_no_offer">Reserve - No Slot Offer</option>
+                <option value="reserve_declined">Reserve - Declined Slot</option>
+              </select>
+
+              {/* Payment Status */}
+              <select
+                value={player.payment_status}
+                onChange={(e) => onPaymentStatusChange(player.id, e.target.value as 'unpaid' | 'marked_paid' | 'admin_verified')}
+                className="rounded border p-1"
+              >
+                <option value="unpaid">Unpaid</option>
+                <option value="marked_paid">Marked Paid</option>
+                <option value="admin_verified">Admin Verified</option>
+              </select>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Status Change History */}
+          {player.statusChanges?.length > 0 && (
+            <div className="mt-2 text-sm text-gray-600">
+              <div className="font-medium mb-1">Status Changes:</div>
+              {getStatusChangeInfo(player)}
+            </div>
+          )}
+        </motion.div>
+      ))}
     </div>
   )
 }

@@ -4,11 +4,12 @@ import { format } from 'date-fns'
 import { toast } from 'react-hot-toast'
 import { supabaseAdmin } from '../../../utils/supabase'
 import { Notification } from '../../../types/game'
-import { GameCompletionFormProps, PlayerWithTeam } from './types'
+import { GameCompletionFormProps, PlayerWithTeam, StatusChange } from './types'
 import { ScoreInput } from './ScoreInput'
 import { GameOutcome } from './GameOutcome'
 import { TeamSection } from './TeamSection'
 import { PlayerSearch } from './PlayerSearch'
+import { Tooltip } from '../../../components/ui/Tooltip'
 
 const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplete }) => {
   const [scoreBlue, setScoreBlue] = useState<number | undefined>(game.score_blue)
@@ -20,12 +21,12 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
 
   useEffect(() => {
     fetchGamePlayers()
-  }, [game.id]) // Add game.id as dependency
+  }, [game.id])
 
   const fetchGamePlayers = async () => {
     setLoading(true)
     try {
-      // First get the game registrations
+      // First get the game registrations and status changes
       const { data: teamData, error: teamError } = await supabaseAdmin
         .from('game_registrations')
         .select(`
@@ -37,6 +38,14 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
         .eq('game_id', game.id)
 
       if (teamError) throw teamError
+
+      // Get status changes for this game
+      const { data: statusChanges, error: statusError } = await supabaseAdmin
+        .from('player_status_changes')
+        .select('*')
+        .eq('game_id', game.id)
+
+      if (statusError) throw statusError
 
       if (!teamData?.length) {
         setPlayers([])
@@ -55,6 +64,20 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
       // Create a map of player details for easy lookup
       const playerMap = new Map(playerData?.map(p => [p.id, p]))
 
+      // Create a map of status changes by player
+      const statusChangeMap = new Map()
+      statusChanges?.forEach(change => {
+        const changes = statusChangeMap.get(change.player_id) || []
+        changes.push({
+          fromStatus: change.from_status,
+          toStatus: change.to_status,
+          changeType: change.change_type,
+          timestamp: change.created_at,
+          isGameDay: change.is_game_day
+        })
+        statusChangeMap.set(change.player_id, changes)
+      })
+
       // Transform the data into the required format
       const playersWithTeam = teamData.map(reg => {
         let status = reg.status || 'registered'
@@ -65,17 +88,18 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
         }
 
         const playerDetails = playerMap.get(reg.player_id)
+        const playerStatusChanges = statusChangeMap.get(reg.player_id) || []
 
         return {
           id: reg.player_id,
           friendly_name: playerDetails?.friendly_name || 'Unknown Player',
           team: reg.team as 'blue' | 'orange' | null,
           status,
-          payment_status: reg.payment_status || 'unpaid'
+          payment_status: reg.payment_status || 'unpaid',
+          statusChanges: playerStatusChanges
         }
       })
 
-      console.log('Fetched players:', playersWithTeam)
       setPlayers(playersWithTeam)
     } catch (error) {
       console.error('Error fetching game players:', error)
@@ -90,21 +114,44 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
       p.id === playerId ? { 
         ...p, 
         team,
-        // Update status based on team assignment
         status: team ? 'selected' : p.status === 'selected' ? 'registered' : p.status
       } : p
     ))
   }
 
-  const handleStatusChange = (playerId: string, status: PlayerWithTeam['status']) => {
-    setPlayers(prev => prev.map(p => 
-      p.id === playerId ? { 
-        ...p, 
-        status,
-        // Clear team if player is set to reserve
-        team: status === 'reserve_no_offer' || status === 'reserve_declined' ? null : p.team
-      } : p
-    ))
+  const handleStatusChange = async (playerId: string, status: PlayerWithTeam['status'], statusChange?: StatusChange) => {
+    try {
+      // If this is a status change that needs to be tracked
+      if (statusChange) {
+        const { error: changeError } = await supabaseAdmin
+          .from('player_status_changes')
+          .insert({
+            game_id: game.id,
+            player_id: playerId,
+            from_status: statusChange.fromStatus,
+            to_status: statusChange.toStatus,
+            change_type: statusChange.changeType,
+            created_at: statusChange.timestamp,
+            is_game_day: statusChange.isGameDay
+          })
+
+        if (changeError) throw changeError
+      }
+
+      setPlayers(prev => prev.map(p => 
+        p.id === playerId ? { 
+          ...p, 
+          status,
+          team: status === 'reserve_no_offer' || status === 'reserve_declined' ? null : p.team,
+          statusChanges: statusChange ? 
+            [...(p.statusChanges || []), statusChange] : 
+            p.statusChanges
+        } : p
+      ))
+    } catch (error) {
+      console.error('Error updating player status:', error)
+      toast.error('Failed to update player status')
+    }
   }
 
   const handlePaymentStatusChange = async (playerId: string, status: 'unpaid' | 'marked_paid' | 'admin_verified') => {
@@ -199,13 +246,13 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
     }
 
     if (!isOutcomeValid()) {
-      toast.error('Selected outcome does not match the scores')
+      toast.error('Game outcome does not match the scores')
       return
     }
 
+    setLoading(true)
     try {
-      setLoading(true)
-
+      // Update game details
       const { error: gameError } = await supabaseAdmin
         .from('games')
         .update({
@@ -213,53 +260,29 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
           score_orange: scoreOrange,
           outcome,
           payment_link: paymentLink,
-          status: 'completed',
-          needs_completion: false,
           completed: true,
-          is_historical: true
+          completed_at: new Date().toISOString()
         })
         .eq('id', game.id)
 
       if (gameError) throw gameError
 
-      // Update each player with their final status
-      for (const player of players) {
-        const { error: updateError } = await supabaseAdmin
+      // Update player registrations and status changes
+      const updates = players.map(player => {
+        const registration = {
+          team: player.team,
+          status: player.status === 'reserve_no_offer' || player.status === 'reserve_declined' ? 'reserve' : player.status,
+          payment_status: player.payment_status
+        }
+
+        return supabaseAdmin
           .from('game_registrations')
-          .update({
-            status: ['reserve_no_offer', 'reserve_declined'].includes(player.status || '') ? 'reserve' : player.status,
-            team: player.team,
-            payment_status: player.payment_status
-          })
+          .update(registration)
           .eq('game_id', game.id)
           .eq('player_id', player.id)
+      })
 
-        if (updateError) throw updateError
-      }
-
-      // Send payment notifications to selected players
-      const selectedPlayers = players.filter(p => p.status === 'selected')
-      const notifications: Notification[] = selectedPlayers.map(player => ({
-        player_id: player.id,
-        type: 'payment_request',
-        title: 'Payment Required',
-        message: `Payment required for game #${game.sequence_number}. Click the Monzo link to pay.`,
-        action_url: paymentLink,
-        icon: 'currency-pound',
-        priority: 2,
-        metadata: {
-          game_id: game.id,
-          payment_link: paymentLink,
-          amount: game.cost_per_person || 5,
-          action: 'payment_request'
-        }
-      }))
-
-      const { error: notificationError } = await supabaseAdmin
-        .from('notifications')
-        .insert(notifications)
-
-      if (notificationError) throw notificationError
+      await Promise.all(updates)
 
       toast.success('Game completed successfully')
       onComplete()

@@ -3,6 +3,64 @@
 ## Overview
 The XPBreakdown component displays a detailed breakdown of a player's XP (Experience Points) from various sources, including game participation, streaks, and reserve status. The streak calculation is based solely on past games and is not affected by future game registrations or team selections.
 
+## XP Penalties and Bonuses
+
+### Status Change Rules
+The XP system includes penalties and bonuses for player status changes:
+
+#### Selected Players
+- Dropping out before game day: No penalty
+- Dropping out on game day: -10 XP penalty
+
+#### Reserve Players
+- Declining slot before game day: -10 XP penalty
+- Declining slot on game day: No penalty
+- Accepting slot on game day: +10 XP bonus
+
+"Game day" is determined by comparing the calendar date of the action with the game date. For example, if a game is on Friday at 21:00, any action taken on Friday (00:00-23:59) is considered "on game day."
+
+### Display Format
+The XPBreakdown component shows these penalties and bonuses:
+- Red text for penalties (-10 XP)
+- Green text for bonuses (+10 XP)
+- Tooltips explaining the timing of the status change
+
+## Status Changes and XP
+
+### Player Status Rules
+The XP system tracks and responds to player status changes:
+
+#### Selected Players
+- **Before Game Day**
+  - Can drop out without penalty
+  - Status changes to 'dropped_out'
+
+- **On Game Day**
+  - -10 XP penalty for dropping out
+  - Status changes to 'dropped_out'
+  - Shown in red in the XP breakdown
+
+#### Reserve Players
+- **Before Game Day**
+  - -10 XP for declining a slot
+  - Status changes to 'dropped_out'
+  - Breaks bench warmer streak
+  - Cannot receive more slot offers
+
+- **On Game Day**
+  - No penalty for declining
+  - +10 XP for accepting
+  - Status changes to 'dropped_out' if declined
+  - Maintains bench warmer streak
+
+### Display Format
+- Red text (-10 XP): Penalties for dropouts/declines
+- Green text (+10 XP): Rewards for accepting slots
+- Tooltips show:
+  - When the change occurred
+  - Whether it was on game day
+  - Impact on streaks
+
 ## Props
 
 ```typescript
