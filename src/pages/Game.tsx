@@ -3,8 +3,6 @@ import { useParams } from 'react-router-dom';
 
 import { supabase } from '../utils/supabase';
 
-import { GameDetails } from '../components/game/GameDetails';
-
 import { GameHeader } from '../components/game/GameHeader';
 
 import { GameRegistration } from '../components/game/GameRegistration';
