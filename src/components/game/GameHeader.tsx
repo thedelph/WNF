@@ -179,7 +179,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <div className="text-center">
               <div className="text-2xl font-bold mb-1 flex items-center justify-center gap-1">
                 {priorityTokenCount}
-                <PiCoinDuotone size={20} className="text-primary" />
+                <PiCoinDuotone size={20} className="text-yellow-500" />
               </div>
               <div className="text-xs text-gray-600 uppercase tracking-wide">
                 Priority
