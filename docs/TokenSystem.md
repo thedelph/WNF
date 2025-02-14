@@ -35,6 +35,17 @@ When a player has an available token:
 4. The token is only consumed when the game is marked as completed
 5. If a player drops out or game is cancelled, the token is returned
 
+### Token Forgiveness
+The system includes a token forgiveness mechanism:
+1. When a player uses a token, the system checks if they would have been selected by XP anyway
+2. If their XP would have qualified them for merit selection:
+   - Their token is automatically returned
+   - They are marked for merit selection instead
+   - The token slot becomes available for another player
+3. This prevents unnecessary token usage by high-XP players
+4. Token forgiveness is calculated after all token effects are considered
+5. The merit cutoff is based on the remaining slots after token usage
+
 ### Token Cooldown Effect
 Using a token has a balancing effect on the next game:
 1. After using a token, the player is pushed to the bottom of the selection list for the next sequential game
@@ -122,6 +133,14 @@ Result: Token stays valid, ready to use anytime
    - No cooldown period
    - Can be used for other games immediately
 
+3. Game deleted by admin
+   - All tokens used in the game are marked as returned in history
+   - Token usage record is cleared (used_game_id set to NULL)
+   - System automatically checks affected players for token eligibility
+   - If a player is eligible and has no active token, a new token is issued
+   - Token history is maintained for audit purposes
+   - No cooldown period for newly issued tokens
+
 ## Database Schema
 
 ### player_tokens Table
@@ -190,9 +209,11 @@ SELECT * FROM get_token_history(
      4. Registration time
 
 3. Random Selection (Last)
-   - WhatsApp priority maintained
-   - Weighted by bench warmer streak
-   - 2 slots reserved for random selection
+   - Random slots are filled in two phases:
+     1. WhatsApp members are selected first
+     2. Non-WhatsApp members are only selected if slots remain
+   - Within each phase, selection is weighted by bench_warmer_streak
+   - This maintains WhatsApp priority while ensuring fair random distribution
 
 ## Frontend Components
 
