@@ -10,12 +10,12 @@ import { Player } from '../../../../types/player'
 interface Props {
   game: Game
   onClose: () => void
-  onSaved: () => void
+  onGameUpdated: () => void
 }
 
 type GameOutcome = 'blue_win' | 'orange_win' | 'draw' | null;
 
-const EditGameModal: React.FC<Props> = ({ game, onClose, onSaved }) => {
+const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
   const [date, setDate] = useState(game.date.split('T')[0])
   const [blueScore, setBlueScore] = useState(game.score_blue?.toString() || '')
   const [orangeScore, setOrangeScore] = useState(game.score_orange?.toString() || '')
@@ -75,18 +75,31 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onSaved }) => {
       const regEnd = new Date(date)
       regEnd.setUTCHours(23, 59, 58, 999)
 
+      // Prepare the update object with proper type handling
+      const updateData = {
+        date: gameDate.toISOString(),
+        registration_window_start: regStart.toISOString(),
+        registration_window_end: regEnd.toISOString(),
+        max_players: Math.max(bluePlayers.length + orangePlayers.length, 10)
+      } as any // Use any temporarily to avoid type issues
+
+      // Only add scores and outcome if they are valid
+      if (blueScore !== '') {
+        updateData.score_blue = parseInt(blueScore)
+      }
+      if (orangeScore !== '') {
+        updateData.score_orange = parseInt(orangeScore)
+      }
+
+      const calculatedOutcome = determineOutcome(blueScore, orangeScore, outcome)
+      if (calculatedOutcome) {
+        updateData.outcome = calculatedOutcome
+      }
+
       // Update game details
       const { error: gameError } = await supabaseAdmin
         .from('games')
-        .update({
-          date: gameDate.toISOString(),
-          score_blue: blueScore === '' ? null : parseInt(blueScore),
-          score_orange: orangeScore === '' ? null : parseInt(orangeScore),
-          outcome: determineOutcome(blueScore, orangeScore, outcome),
-          registration_window_start: regStart.toISOString(),
-          registration_window_end: regEnd.toISOString(),
-          max_players: Math.max(bluePlayers.length + orangePlayers.length, 10)
-        })
+        .update(updateData)
         .eq('id', game.id)
 
       if (gameError) throw gameError
@@ -130,7 +143,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onSaved }) => {
       }
 
       toast.success('Game updated successfully')
-      onSaved()
+      onGameUpdated()
     } catch (error) {
       console.error('Error updating game:', error)
       toast.error('Failed to update game')
