@@ -21,6 +21,7 @@ export default function HistoricalGames() {
   const { isAdmin } = useAdmin()
   const [outcome, setOutcome] = useState<GameOutcome>(null)
   const [isRecalculating, setIsRecalculating] = useState(false)
+  const [isSnapshotting, setIsSnapshotting] = useState(false)
 
   useEffect(() => {
     fetchGames()
@@ -171,6 +172,27 @@ export default function HistoricalGames() {
     }
   }
 
+  const takeXPSnapshot = async () => {
+    try {
+      setIsSnapshotting(true)
+      
+      // Call the database function to take a snapshot of current XP values
+      const { data, error } = await supabaseAdmin
+        .rpc('take_xp_snapshot')
+      
+      if (error) throw error
+      
+      // Show success message including how many players were snapshotted
+      toast.success(data)
+      console.log('XP Snapshot taken:', data)
+    } catch (error) {
+      console.error('Error taking XP snapshot:', error)
+      toast.error('Failed to take XP snapshot')
+    } finally {
+      setIsSnapshotting(false)
+    }
+  }
+
   if (!isAdmin) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -186,7 +208,16 @@ export default function HistoricalGames() {
       transition={{ duration: 0.5 }}
       className="container mx-auto px-4 py-8"
     >
-      <h1 className="text-3xl font-bold mb-8">Historical Games</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Historical Games</h1>
+        <button 
+          onClick={takeXPSnapshot}
+          disabled={isSnapshotting}
+          className={`btn btn-primary ${isSnapshotting ? 'loading' : ''}`}
+        >
+          {isSnapshotting ? 'Snapshotting...' : 'Snapshot XP'}
+        </button>
+      </div>
 
       {loading ? (
         <div>Loading...</div>

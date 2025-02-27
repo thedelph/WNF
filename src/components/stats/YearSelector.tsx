@@ -12,11 +12,31 @@ export const YearSelector = ({ selectedYear, onYearChange, onYearsLoaded }: Year
 
   useEffect(() => {
     const fetchYears = async () => {
-      const { data: years, error } = await supabase.rpc('get_game_years');
-      if (!error && years) {
-        const yearsList = years.map(y => y.year);
-        setAvailableYears(yearsList);
-        onYearsLoaded?.(yearsList);
+      // Get years from regular games
+      const { data: gameYears, error: gameError } = await supabase.rpc('get_game_years');
+      
+      // Get years from XP snapshots
+      const { data: snapshotYears, error: snapshotError } = await supabase
+        .from('player_xp_snapshots')
+        .select('snapshot_date');
+      
+      if (!gameError && gameYears) {
+        // Extract unique years from both sources
+        const gameYearsList = gameYears.map((y: any) => y.year);
+        
+        // Extract years from snapshot dates
+        const snapshotYearsList = snapshotYears 
+          ? [...new Set(snapshotYears.map((s: any) => new Date(s.snapshot_date).getFullYear()))]
+          : [];
+        
+        // Combine and deduplicate years
+        const allYears = [...new Set([...gameYearsList, ...snapshotYearsList])];
+        
+        // Sort years descending (newest first)
+        const sortedYears = allYears.sort((a, b) => b - a);
+        
+        setAvailableYears(sortedYears);
+        onYearsLoaded?.(sortedYears);
       }
     };
 
