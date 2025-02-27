@@ -146,8 +146,10 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
             {highestXP.map((record, index) => (
               <div key={`${record.player_id}-${record.snapshot_date}`} className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  {index < 3 && (
+                  {index < 3 ? (
                     <Medal className={medals[index].color} size={18} />
+                  ) : (
+                    <span className="w-[18px]">{/* Empty space to maintain alignment */}</span>
                   )}
                   <span>{record.friendly_name}</span>
                 </div>

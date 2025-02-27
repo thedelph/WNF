@@ -75,9 +75,13 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Medal 
-                    className={`w-5 h-5 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
-                  />
+                  {medalIndex < 3 ? (
+                    <Medal 
+                      className={`w-5 h-5 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
+                    />
+                  ) : (
+                    <span className="w-5 h-5">{/* Empty space to maintain alignment */}</span>
+                  )}
                   <span className="drop-shadow-[0_0_1px_rgba(0,0,0,0.5)]">{winner.name}</span>
                 </div>
                 <span className="font-bold drop-shadow-[0_0_1px_rgba(0,0,0,0.5)]">{winner.value}</span>

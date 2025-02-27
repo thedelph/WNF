@@ -202,9 +202,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
             const sorted = allPlayers
               .filter(p => p.maxStreak > 0)
               .sort((a, b) => b.maxStreak - a.maxStreak);
-            const threshold = sorted[2]?.maxStreak || 0;
-            const result = sorted.filter(p => p.maxStreak >= threshold);
-            return result;
+            return sorted.slice(0, 10);
           })(),
           currentStreaks: (() => {
             // Only show current streaks for ALL TIME or latest year
@@ -223,13 +221,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
                 return b.caps - a.caps;
               });
 
-            // Get the threshold from the third highest streak (if it exists)
-            const threshold = sorted.length >= 3 ? sorted[2].currentStreak : 1;
-            
-            // Include all players that meet or exceed the threshold
-            const result = sorted.filter(p => p.currentStreak >= threshold);
-            
-            return result;
+            return sorted.slice(0, 10);
           })(),
           mostCaps: (() => {
             const sorted = allPlayers

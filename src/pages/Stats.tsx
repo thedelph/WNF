@@ -79,15 +79,6 @@ export default function Stats() {
         {/* Highest XP Records */}
         <HighestXPCard selectedYear={selectedYear} />
 
-        {/* Lucky Bib Colour */}
-        <StatsCard
-          title="Lucky Bib Colour"
-          value={stats.luckyBibColor.color.toUpperCase()}
-          description={`${stats.luckyBibColor.winRate.toFixed(1)}% Win Rate`}
-          color={stats.luckyBibColor.color as 'blue' | 'orange'}
-          icon={<ShirtIcon className="w-6 h-6" />}
-        />
-
         {/* Top All-Time Streaks */}
         <AwardCard
           title="Longest Attendance Streaks"
@@ -113,6 +104,15 @@ export default function Stats() {
             color="green"
           />
         )}
+
+        {/* Lucky Bib Colour */}
+        <StatsCard
+          title="Lucky Bib Colour"
+          value={stats.luckyBibColor.color.toUpperCase()}
+          description={`${stats.luckyBibColor.winRate.toFixed(1)}% Win Rate`}
+          color={stats.luckyBibColor.color as 'blue' | 'orange'}
+          icon={<ShirtIcon className="w-6 h-6" />}
+        />
 
         {/* Most Caps */}
         <AwardCard
