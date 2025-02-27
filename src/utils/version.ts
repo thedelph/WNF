@@ -19,6 +19,40 @@ export interface ChangelogEntry {
 export const changelogData: ChangelogEntry[] = [
 
   {
+    version: '1.1.0',
+    date: '27/02/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'XP Leaderboard',
+            details: "Added XP Leaderboard on stats page to show highest XP achieved on what date."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          },
+        ]
+      }
+    ]
+  },
+
+  {
     version: '1.0.9',
     date: '05/02/2025',
     sections: [
