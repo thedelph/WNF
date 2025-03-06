@@ -271,7 +271,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
   // Animation for the pull-down effect
   const expandVariants = {
     collapsed: { 
-      height: '40px', 
+      height: '0px', 
       overflow: 'hidden'
     },
     expanded: { 

@@ -28,11 +28,11 @@ export const useWeatherCard = (props: UseWeatherCardProps = {}) => {
       
       // Otherwise use the global preference
       const savedState = localStorage.getItem('weather_card_visible');
-      return savedState === null ? true : savedState === 'true'; // Default to visible
+      return savedState === null ? false : savedState === 'true'; // Default to collapsed (false)
     } catch (error) {
-      // If localStorage fails, default to visible
+      // If localStorage fails, default to collapsed
       console.error('Error reading localStorage for weather card state:', error);
-      return true;
+      return false;
     }
   };
 
