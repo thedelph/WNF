@@ -5,11 +5,20 @@ import { PiCoinDuotone } from "react-icons/pi";
 import { IoLocationOutline, IoTimeOutline, IoCalendarClearOutline } from "react-icons/io5";
 import { Game } from '../../types/game';
 import CountdownTimer from '../../components/CountdownTimer';
+import WeatherCard from '../../components/weather/WeatherCard';
+import { Tooltip } from '../../components/ui/Tooltip';
 
 interface GameHeaderProps {
   game: Game;
   isRegistrationOpen: boolean;
   isRegistrationClosed: boolean;
+  weatherCardProps?: {
+    venueAddress: string;
+    venueName: string;
+    gameDateTime: string;
+    isVisible: boolean;
+    onToggle: () => void;
+  };
 }
 
 /**
@@ -20,6 +29,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   game,
   isRegistrationOpen,
   isRegistrationClosed,
+  weatherCardProps
 }) => {
   // Get the total number of registrations
   const currentlyRegistered = game.game_registrations?.length || 0;
@@ -103,6 +113,23 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             )}
           </div>
         </div>
+
+        {/* Weather Card - Positioned right after location details */}
+        {weatherCardProps && (
+          <div>
+            <Tooltip content="Weather forecast for game day">
+              <div className="bg-base-200 rounded-lg overflow-hidden">
+                <WeatherCard
+                  venueAddress={weatherCardProps.venueAddress}
+                  venueName={weatherCardProps.venueName}
+                  gameDateTime={weatherCardProps.gameDateTime}
+                  isVisible={weatherCardProps.isVisible}
+                  onToggle={weatherCardProps.onToggle}
+                />
+              </div>
+            </Tooltip>
+          </div>
+        )}
 
         {/* Next Event Card */}
         {nextEvent && (

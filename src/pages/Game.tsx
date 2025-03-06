@@ -25,6 +25,9 @@ import { useRegistrationOpen } from '../hooks/useRegistrationOpen';
 
 import { Game as GameType } from '../types/game';
 
+import WeatherCard from '../components/weather/WeatherCard';
+import { useWeatherCard } from '../hooks/useWeatherCard';
+
 const Game = () => {
 
   const { id } = useParams();
@@ -272,6 +275,8 @@ const Game = () => {
 
   });
 
+  const useWeatherCardHook = useWeatherCard({ gameId: upcomingGame?.id });
+
   // Determine if registration is open based on window times and game status
   const now = new Date();
   const isRegistrationOpen = upcomingGame && 
@@ -483,8 +488,15 @@ const Game = () => {
         game={upcomingGame}
         isRegistrationOpen={isRegistrationOpen}
         isRegistrationClosed={isRegistrationClosed}
+        weatherCardProps={upcomingGame.venue ? {
+          venueAddress: upcomingGame.venue.address || '',
+          venueName: upcomingGame.venue.name || '',
+          gameDateTime: upcomingGame.date,
+          isVisible: useWeatherCardHook.isVisible,
+          onToggle: useWeatherCardHook.toggleVisibility
+        } : undefined}
       />
-
+      
       {/* Show GameRegistration and RegisteredPlayers only during registration window */}
       {isRegistrationOpen && (
         <>
