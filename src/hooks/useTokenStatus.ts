@@ -164,7 +164,7 @@ export function useTokenStatus(playerId: string) {
 
         // Format recent games, only including those that make player ineligible
         const formattedRecentGames = recentSelections
-          .map((g: GameRecord) => `WNF #${g.sequence_number}`)
+          .map((g: GameRecord) => `WNF #${g.sequence_number.toString().padStart(3, '0')}`)
           .sort((a: string, b: string) => parseInt(b.split('#')[1]) - parseInt(a.split('#')[1]));
 
         // Debug logging

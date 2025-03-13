@@ -9,7 +9,7 @@ interface TokenStatusProps {
   lastUsedAt?: string | null;
   createdAt?: string;
   isEligible?: boolean;
-  recentGames?: { id: string; sequence_number: number; date: string; }[];
+  recentGames?: string[];
   hasPlayedInLastTenGames?: boolean;
   hasRecentSelection?: boolean;
   hasOutstandingPayments?: boolean;
@@ -41,21 +41,6 @@ export default function TokenStatus({
       return format(new Date(date), 'dd MMM yyyy');
     } catch (e) {
       return date || 'N/A';
-    }
-  };
-
-  // Safe formatter for mapping over arrays
-  const safeFormatDate = (date: string | undefined) => {
-    if (!date) return 'Unknown date';
-    try {
-      const parsedDate = new Date(date);
-      // Check if the date is valid
-      if (isNaN(parsedDate.getTime())) {
-        return 'Invalid date';
-      }
-      return format(parsedDate, 'MMM d, yyyy');
-    } catch (e) {
-      return 'Invalid date';
     }
   };
 
@@ -202,11 +187,11 @@ export default function TokenStatus({
           </Tooltip>
         )}
 
-        {/* Recent Games - Show if ineligible due to recent selection */}
-        {hasRecentSelection && (
-          <Tooltip content="Selected in one of the last 3 games">
-            <div className="text-sm text-error/80">
-              Selected in: {recentGames?.map(game => safeFormatDate(game.date)).join(', ')}
+        {/* Recent Selections */}
+        {hasRecentSelection && recentGames && recentGames.length > 0 && (
+          <Tooltip content="You must not have been selected in any of the last 3 games to be eligible">
+            <div className="text-sm text-error">
+              Selected in: {recentGames.join(', ')}
             </div>
           </Tooltip>
         )}
@@ -223,7 +208,7 @@ export default function TokenStatus({
         {/* Eligibility Message */}
         {!isEligible && status !== 'AVAILABLE' && (
           <div className="text-sm mt-2">
-            <p>To receive a new token, you must:</p>
+            <p>To be eligible for a new token, you must:</p>
             <ul className="list-disc list-inside mt-1 space-y-1">
               {!whatsappGroupMember && (
                 <li>Be a member of the WNF WhatsApp group</li>
