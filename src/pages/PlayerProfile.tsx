@@ -488,21 +488,24 @@ export default function PlayerProfileNew() {
 
         {/* Priority Token Status - Full Width */}
         {player && tokenStatus && (
-          <div className="w-full">
-            <h2 className="text-xl sm:text-2xl font-bold mb-4">Token Status</h2>
-            <TokenStatus 
-              status={tokenStatus?.status || 'NO_TOKEN'}
-              lastUsedAt={tokenStatus?.lastUsedAt}
-              nextTokenAt={tokenStatus?.nextTokenAt}
-              createdAt={tokenStatus?.createdAt}
-              isEligible={tokenStatus?.isEligible}
-              recentGames={tokenStatus?.recentGames}
-              hasPlayedInLastTenGames={tokenStatus?.hasPlayedInLastTenGames}
-              hasRecentSelection={tokenStatus?.hasRecentSelection}
-              isLoading={tokenLoading}
-              playerName={player?.friendly_name}
-              whatsappGroupMember={player?.whatsapp_group_member}
-            />
+          <div className="col-span-12 lg:col-span-4 xl:col-span-3">
+            <div className="sticky top-4">
+              <TokenStatus 
+                status={tokenStatus?.status || 'NO_TOKEN'}
+                lastUsedAt={tokenStatus?.lastUsedAt}
+                nextTokenAt={tokenStatus?.nextTokenAt}
+                createdAt={tokenStatus?.createdAt}
+                isEligible={tokenStatus?.isEligible}
+                recentGames={tokenStatus?.recentGames}
+                hasPlayedInLastTenGames={tokenStatus?.hasPlayedInLastTenGames}
+                hasRecentSelection={tokenStatus?.hasRecentSelection}
+                hasOutstandingPayments={tokenStatus?.hasOutstandingPayments}
+                outstandingPaymentsCount={tokenStatus?.outstandingPaymentsCount}
+                playerName={player.friendly_name}
+                whatsappGroupMember={player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy'}
+                isLoading={tokenLoading}
+              />
+            </div>
           </div>
         )}
       </motion.div>

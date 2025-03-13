@@ -19,6 +19,38 @@ export interface ChangelogEntry {
 export const changelogData: ChangelogEntry[] = [
 
   {
+    version: '1.1.1',
+    date: '13/03/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'N/A',
+            details: "Nothing added in this release"
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Token Eligibility Changes',
+            details: "You now need to be up to date with payments to have token eligibility."
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          },
+        ]
+      }
+    ]
+  },{
     version: '1.1.0',
     date: '27/02/2025',
     sections: [

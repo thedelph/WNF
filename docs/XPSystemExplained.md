@@ -271,11 +271,19 @@ The calculation was:
    - Bench warmer streak continues if declined on game day
    - "Game day" is determined by comparing the calendar date of the response with the game date
 
+3. **Late Reserves**:
+   - Players who register after the registration window closes are marked as 'late_reserve'
+   - Do not receive the standard +5 XP reserve bonus
+   - Do not contribute to the reserve streak modifier
+   - Can still be selected to play if needed
+   - All other rules (slot offers, penalties) apply normally
+
 ##### Implementation Details
 - All status changes are tracked in the `player_status_changes` table
 - XP transactions are automatically created by database triggers
 - The system uses UTC dates for all comparisons
 - A change is considered "on game day" if it occurs on the same calendar date as the game
+- Late reserve status is stored in `game_registrations.late_reserve` boolean field
 
 Example:
 ```
@@ -283,30 +291,6 @@ Game Date: 2025-02-14 21:00:00
 Dropout at: 2025-02-14 09:00:00 → On game day (-10 XP)
 Dropout at: 2025-02-13 23:59:59 → Before game day (no penalty)
 ```
-
-#### Reserve Rewards
-- Players who remain in the reserve list receive +5 XP
-- This applies even if they never received a slot offer
-- The reward is stored in the `reserve_xp_transactions` table
-
-#### Slot Decline Penalties
-- If a reserve player declines a slot offer, they receive a -10 XP penalty
-- Exception: No penalty if the slot offer is made on the same day as the game
-- Penalties are tracked in `reserve_xp_transactions` with negative values
-
-## Reserve XP System
-
-Players can earn or lose XP based on their reserve status in games:
-
-- **Reserve Bonus**: +5 XP for being a reserve player in a game
-- **Reserve Penalty**: -10 XP for declining a slot after being selected from reserves
-
-The XP Breakdown section in a player's profile shows:
-- Total Reserve XP accumulated
-- Number of times they have been a reserve
-- Color-coded display (green for bonuses, red for penalties)
-
-This system encourages players to participate as reserves and helps maintain a healthy player pool for games.
 
 ### 4. Database Implementation
 
@@ -397,15 +381,18 @@ The XP system relies on these tables:
 
 ## Implementation Notes
 1. Always fetch reserve status from `game_registrations` rather than transactions
-2. Use nullish coalescing (`??`) instead of OR (`||`) for XP values to handle zero values correctly
-3. Check for undefined before applying multipliers
-4. Round down final XP values using `Math.floor()`
+2. Check `late_reserve` flag when calculating reserve XP and modifiers
+3. Use nullish coalescing (`??`) instead of OR (`||`) for XP values to handle zero values correctly
+4. Check for undefined before applying multipliers
+5. Round down final XP values using `Math.floor()`
 
 ## Component Display Guidelines
 1. Show streaks as percentages rather than XP values
 2. Display the full XP calculation formula
 3. Clearly indicate which streak type is active
-4. Use consistent terminology:
+4. Indicate late reserve status in the UI when applicable
+5. Use consistent terminology:
    - "Bench Warmer" for reserve streak UI
    - "Reserve XP" for base reserve points
+   - "Late Reserve" for players who joined after registration closed
    - "Attendance Streak" for consecutive games

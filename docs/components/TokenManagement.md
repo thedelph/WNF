@@ -126,3 +126,34 @@ These components implement the token system as described in `docs/TokenSystem.md
 - Eligibility requires:
   1. Played in at least 1 of last 5 games
   2. Not selected in last 3 games
+  3. No outstanding payments (unpaid games)
+
+## Implementation Notes
+
+### Unpaid Games Check
+
+The TokenManagement component implements the unpaid games check as follows:
+
+```typescript
+// Direct query to game_registrations table
+const { data: unpaidRegistrations } = await supabase
+  .from('game_registrations')
+  .select('player_id')
+  .eq('status', 'selected')
+  .eq('paid', false);
+
+// Count unpaid games for each player
+const unpaidGamesMap = new Map();
+unpaidRegistrations?.forEach(registration => {
+  const playerId = registration.player_id;
+  const currentCount = unpaidGamesMap.get(playerId) || 0;
+  unpaidGamesMap.set(playerId, currentCount + 1);
+});
+```
+
+This approach:
+- Directly queries the game_registrations table
+- Avoids SQL errors related to database views
+- Calculates unpaid games count in JavaScript
+- Provides consistent results with the useTokenStatus hook
+- Ensures real-time payment status checks

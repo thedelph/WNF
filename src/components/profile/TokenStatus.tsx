@@ -1,41 +1,62 @@
-import React from 'react';
-import { Tooltip } from '../ui/Tooltip';
-import { motion } from 'framer-motion';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { PiCoinDuotone } from "react-icons/pi";
 import { BsCheckCircle, BsXCircle } from "react-icons/bs";
+import { motion } from 'framer-motion';
+import { Tooltip } from '../ui/Tooltip';
 
 interface TokenStatusProps {
   status: string;
-  lastUsedAt: string | null;
-  nextTokenAt: string | null;
-  createdAt: string;
-  playerName?: string;
+  lastUsedAt?: string | null;
+  createdAt?: string;
   isEligible?: boolean;
-  recentGames?: string[];
+  recentGames?: { id: string; sequence_number: number; date: string; }[];
   hasPlayedInLastTenGames?: boolean;
   hasRecentSelection?: boolean;
+  hasOutstandingPayments?: boolean;
+  outstandingPaymentsCount?: number;
   isLoading?: boolean;
-  whatsappGroupMember?: string;
+  playerName?: string;
+  whatsappGroupMember?: boolean;
 }
 
 // Component to display token status with animations and tooltips
 export default function TokenStatus({ 
   status, 
   lastUsedAt, 
-  nextTokenAt, 
   createdAt, 
-  playerName,
   isEligible,
   recentGames,
   hasPlayedInLastTenGames,
   hasRecentSelection,
-  isLoading,
-  whatsappGroupMember
+  hasOutstandingPayments,
+  outstandingPaymentsCount,
+  isLoading = false,
+  playerName,
+  whatsappGroupMember,
 }: TokenStatusProps) {
-  // Format dates for display
-  const formatDate = (date: string) => {
-    return format(new Date(date), 'MMM d, yyyy');
+  // Format dates for display with safety checks
+  const formatDate = (date: string | undefined) => {
+    if (!date) return 'N/A';
+    try {
+      return format(new Date(date), 'dd MMM yyyy');
+    } catch (e) {
+      return date || 'N/A';
+    }
+  };
+
+  // Safe formatter for mapping over arrays
+  const safeFormatDate = (date: string | undefined) => {
+    if (!date) return 'Unknown date';
+    try {
+      const parsedDate = new Date(date);
+      // Check if the date is valid
+      if (isNaN(parsedDate.getTime())) {
+        return 'Invalid date';
+      }
+      return format(parsedDate, 'MMM d, yyyy');
+    } catch (e) {
+      return 'Invalid date';
+    }
   };
 
   // Debug logging
@@ -44,6 +65,8 @@ export default function TokenStatus({
     isEligible,
     hasPlayedInLastTenGames,
     hasRecentSelection,
+    hasOutstandingPayments,
+    outstandingPaymentsCount,
     recentGames
   });
 
@@ -121,13 +144,13 @@ export default function TokenStatus({
         <div className="mt-2 text-sm">
           <h4 className="font-medium mb-1">Eligibility Requirements:</h4>
           <div className="flex items-center gap-2 mb-1">
-            {whatsappGroupMember && ['Yes', 'Proxy'].includes(whatsappGroupMember) ? (
+            {whatsappGroupMember ? (
               <BsCheckCircle className="text-success" />
             ) : (
               <BsXCircle className="text-error" />
             )}
             <Tooltip content="Must be a member of the WhatsApp group">
-              <span className={whatsappGroupMember && ['Yes', 'Proxy'].includes(whatsappGroupMember) ? "text-success" : "text-error"}>
+              <span className={whatsappGroupMember ? "text-success" : "text-error"}>
                 WhatsApp Member
               </span>
             </Tooltip>
@@ -144,7 +167,7 @@ export default function TokenStatus({
               </span>
             </Tooltip>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-1">
             {hasRecentSelection ? (
               <BsXCircle className="text-error" />
             ) : (
@@ -153,6 +176,18 @@ export default function TokenStatus({
             <Tooltip content="Must not have been selected in any of the last 3 games">
               <span className={!hasRecentSelection ? "text-success" : "text-error"}>
                 Selection Cooldown
+              </span>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasOutstandingPayments ? (
+              <BsXCircle className="text-error" />
+            ) : (
+              <BsCheckCircle className="text-success" />
+            )}
+            <Tooltip content="Must have no outstanding payments for previous games">
+              <span className={!hasOutstandingPayments ? "text-success" : "text-error"}>
+                No Outstanding Payments {outstandingPaymentsCount && outstandingPaymentsCount > 0 ? `(${outstandingPaymentsCount} unpaid)` : ''}
               </span>
             </Tooltip>
           </div>
@@ -171,7 +206,16 @@ export default function TokenStatus({
         {hasRecentSelection && (
           <Tooltip content="Selected in one of the last 3 games">
             <div className="text-sm text-error/80">
-              Selected in: {recentGames?.join(', ')}
+              Selected in: {recentGames?.map(game => safeFormatDate(game.date)).join(', ')}
+            </div>
+          </Tooltip>
+        )}
+
+        {/* Outstanding Payments - Show if ineligible due to outstanding payments */}
+        {hasOutstandingPayments && (
+          <Tooltip content="Has unpaid games">
+            <div className="text-sm text-error/80">
+              Outstanding payments: {outstandingPaymentsCount} unpaid {outstandingPaymentsCount === 1 ? 'game' : 'games'}
             </div>
           </Tooltip>
         )}
@@ -181,7 +225,7 @@ export default function TokenStatus({
           <div className="text-sm mt-2">
             <p>To receive a new token, you must:</p>
             <ul className="list-disc list-inside mt-1 space-y-1">
-              {!whatsappGroupMember || !['Yes', 'Proxy'].includes(whatsappGroupMember) && (
+              {!whatsappGroupMember && (
                 <li>Be a member of the WNF WhatsApp group</li>
               )}
               {!hasPlayedInLastTenGames && (
@@ -189,6 +233,9 @@ export default function TokenStatus({
               )}
               {hasRecentSelection && (
                 <li>Not be selected in any of the last 3 games</li>
+              )}
+              {hasOutstandingPayments && (
+                <li>Pay outstanding balance for {outstandingPaymentsCount} unpaid {outstandingPaymentsCount === 1 ? 'game' : 'games'}</li>
               )}
             </ul>
           </div>

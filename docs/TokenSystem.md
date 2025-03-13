@@ -5,7 +5,7 @@ The token system provides players with a guaranteed slot option for games. Each 
 
 ## Token Distribution and Lifecycle
 - Each player can have **exactly one active token** at any time
-- Tokens are issued automatically when a player meets **both** of these criteria:
+- Tokens are issued automatically when a player meets **all** of these criteria:
   1. Has played (been selected) in at least one of the last 10 games
   2. Has not been selected in any of the 3 most recently completed games
      - For example, if games #32, #31, and #30 are the most recent games:
@@ -13,6 +13,10 @@ The token system provides players with a guaranteed slot option for games. Each 
        - It doesn't matter if they registered and weren't selected
        - It doesn't matter if they didn't register at all
        - Being selected in even one of these games makes them ineligible
+  3. Has no outstanding payments (unpaid games)
+     - Players with any unpaid games are ineligible for tokens
+     - This encourages timely payment for games
+     - Payment status is checked in real-time during eligibility determination
 - Tokens expire 7 days after issuance if unused
 - After a token is used:
   - Player must meet the eligibility criteria again to receive a new token
@@ -26,6 +30,30 @@ The token system provides players with a guaranteed slot option for games. Each 
 - `handle_game_token(player_id UUID, game_id UUID, action TEXT)`: Handles token consumption and returns
 - `use_player_token(player_id UUID, game_id UUID)`: Marks a token as used for a specific game
 - `get_token_history(player_id UUID, game_id UUID, start_date TIMESTAMP, end_date TIMESTAMP)`: Retrieves token action history
+
+## Implementation Details
+
+### Unpaid Games Check
+The system checks for unpaid games in real-time during token eligibility determination:
+
+1. **Client-side Implementation**:
+   - In the `useTokenStatus` hook, we directly query the `game_registrations` table with filters:
+     - `player_id` = current player
+     - `status` = 'selected'
+     - `paid` = false
+   - The count of unpaid games is calculated from the query results
+   - If the count is greater than 0, the player is marked as ineligible for tokens
+
+2. **Admin Interface**:
+   - The `TokenManagement` component also directly queries the `game_registrations` table
+   - Creates a map of player IDs to their unpaid games count
+   - This approach avoids SQL errors and provides consistent results
+
+3. **Benefits**:
+   - Real-time payment status check
+   - No dependency on database views
+   - Consistent implementation across components
+   - Improved error handling
 
 ## Token Usage and Forgiveness
 When a player has an available token:
@@ -296,6 +324,7 @@ The token system is designed for casual players who want to join a game every no
 Token eligibility is determined by the `check_token_eligibility(player_uuid)` function, which checks:
 1. Player has played in at least 1 of the last 5 games
 2. Player has not been selected in any of the last 3 games
+3. Player has no outstanding payments (unpaid games)
 
 ## Token Lifecycle
 

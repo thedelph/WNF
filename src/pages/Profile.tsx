@@ -483,7 +483,9 @@ export default function Component() {
                   recentGames={tokenStatus.recentGames}
                   hasPlayedInLastTenGames={tokenStatus.hasPlayedInLastTenGames}
                   hasRecentSelection={tokenStatus.hasRecentSelection}
-                  whatsappGroupMember={profile?.whatsapp_group_member}
+                  hasOutstandingPayments={tokenStatus.hasOutstandingPayments}
+                  outstandingPaymentsCount={tokenStatus.outstandingPaymentsCount}
+                  whatsappGroupMember={profile?.whatsapp_group_member === 'Yes' || profile?.whatsapp_group_member === 'Proxy'}
                 />
               )}
             </motion.div>

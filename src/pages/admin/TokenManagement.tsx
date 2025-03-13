@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../../utils/supabase';
 import { PiCoinDuotone } from "react-icons/pi";
 import { toast } from 'react-hot-toast';
@@ -67,6 +66,29 @@ const TokenManagement: React.FC = () => {
         console.error('Error fetching registrations:', registrationsError);
         throw registrationsError;
       }
+      
+      // Get unpaid games data - calculate directly instead of using the view
+      // This replaces the problematic player_unpaid_games_view query
+      const { data: unpaidRegistrations, error: unpaidRegistrationsError } = await supabase
+        .from('game_registrations')
+        .select('player_id')
+        .eq('status', 'selected')
+        .eq('paid', false);
+        
+      if (unpaidRegistrationsError) {
+        console.error('Error fetching unpaid registrations:', unpaidRegistrationsError);
+        throw unpaidRegistrationsError;
+      }
+      
+      // Create a map of player IDs to their unpaid games count
+      const unpaidGamesMap = new Map();
+      
+      // Count unpaid games for each player
+      unpaidRegistrations?.forEach(registration => {
+        const playerId = registration.player_id;
+        const currentCount = unpaidGamesMap.get(playerId) || 0;
+        unpaidGamesMap.set(playerId, currentCount + 1);
+      });
 
       // Create a map of player IDs to their eligibility status and played games
       const eligibilityMap = new Map();
@@ -101,6 +123,10 @@ const TokenManagement: React.FC = () => {
         const hasRecentActivity = playerGames.some(g => 
           lastTenGameIds.has(g.game_id) && g.status === 'selected'
         );
+        
+        // Check if player has any outstanding payments
+        const hasOutstandingPayments = unpaidGamesMap.has(player.id) && unpaidGamesMap.get(player.id) > 0;
+        const unpaidCount = unpaidGamesMap.get(player.id) || 0;
 
         // Debug logging for Mike M, Mike B, and Lee S
         if (['Mike M', 'Mike B', 'Lee S'].includes(player.friendly_name)) {
@@ -109,14 +135,18 @@ const TokenManagement: React.FC = () => {
           console.log('Last 3 games:', lastThreeGames.map(g => g.sequence_number));
           console.log('Selected in games:', selectedInLastThree.map(g => g.sequence_number));
           console.log('Has activity in last 10:', hasRecentActivity);
+          console.log('Has outstanding payments:', hasOutstandingPayments);
+          console.log('Unpaid count:', unpaidCount);
           console.log('Selected games:', selectedGames);
         }
         
         eligibilityMap.set(player.id, {
-          is_eligible: hasRecentActivity && selectedInLastThree.length === 0,
+          is_eligible: hasRecentActivity && selectedInLastThree.length === 0 && !hasOutstandingPayments,
           selected_games: selectedGames,
+          unpaid_games: unpaidCount,
           reason: !hasRecentActivity ? 'No activity in last 10 games' :
-                 selectedInLastThree.length > 0 ? `Selected in ${selectedInLastThree.map(g => g.display).join(', ')}` : null
+                 selectedInLastThree.length > 0 ? `Selected in ${selectedInLastThree.map(g => g.display).join(', ')}` :
+                 hasOutstandingPayments ? `Has ${unpaidCount} unpaid game(s)` : null
         });
       });
 
@@ -150,6 +180,7 @@ const TokenManagement: React.FC = () => {
           whatsapp_group_member: player.whatsapp_group_member,
           is_eligible: eligibility?.is_eligible,
           selected_games: eligibility?.selected_games,
+          unpaid_games: eligibility?.unpaid_games,
           reason: eligibility?.reason,
           issued_at: hasValidToken ? token?.issued_at : null,
           expires_at: hasValidToken ? token?.expires_at : null,
