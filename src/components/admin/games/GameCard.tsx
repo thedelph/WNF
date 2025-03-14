@@ -31,222 +31,246 @@ export const GameCard: React.FC<Props> = ({
     return format(new Date(date), 'h:mmaaa').toLowerCase();
   };
 
+  /**
+   * Handles the WhatsApp share functionality.
+   * 
+   * This function:
+   * 1. Fetches WhatsApp group members from the players table
+   * 2. Queries token status data from the public_player_token_status view
+   * 3. Determines which players are eligible for tokens based on eligibility criteria:
+   *    - Player must have played in at least one of the last 10 games
+   *    - Player must NOT have been selected in any of the last 3 games
+   *    - Player must NOT have any outstanding payments
+   * 4. Formats a WhatsApp message including:
+   *    - Game details (date, time, location)
+   *    - List of eligible players who can use tokens
+   *    - Game status-specific information
+   * 
+   * Note: The WhatsApp message shows players who are ELIGIBLE to USE tokens,
+   * not players who already have active tokens. Eligibility is determined by 
+   * the public_player_token_status view.
+   */
   const handleWhatsAppShare = async () => {
-    // Get player XP data from Supabase
-    const { data: playerXpData, error: xpError } = await supabase
-      .from('player_xp')
-      .select('player_id, xp')
-      .in('player_id', game.game_registrations?.map(reg => reg.player.id) || []);
+    try {
+      console.log('Starting WhatsApp share process');
+      
+      // First, get all WhatsApp group members 
+      const { data: players, error: playersError } = await supabase
+        .from('players')
+        .select('id, friendly_name, whatsapp_group_member')
+        .in('whatsapp_group_member', ['Yes', 'Proxy'])
+        .order('friendly_name');
 
-    if (xpError) {
-      console.error('Error fetching player XP:', xpError);
-      toast.error('Failed to get player XP data');
-      return;
-    }
+      if (playersError) {
+        console.error('Error fetching players:', playersError);
+        toast.error('Failed to get player data');
+        return;
+      }
+      console.log(`Fetched ${players?.length} WhatsApp group members`);
 
-    // Get the last completed game's ID
-    const { data: lastGame, error: lastGameError } = await supabase
-      .from('games')
-      .select('id, sequence_number')
-      .eq('status', 'completed')
-      .order('sequence_number', { ascending: false })
-      .limit(1)
-      .single();
+      // Query the public_player_token_status view which contains eligibility data
+      // This view handles all the complex eligibility logic including:
+      // - Recent game participation
+      // - Not being selected in recent games
+      // - No outstanding payments
+      console.log('Querying public_player_token_status view');
+      const { data: tokenStatusData, error: tokenStatusError } = await supabase
+        .from('public_player_token_status')
+        .select('*');
 
-    if (lastGameError) {
-      console.error('Error fetching last game:', lastGameError);
-      toast.error('Failed to get last game data');
-      return;
-    }
+      if (tokenStatusError) {
+        console.error('Error fetching token status data:', tokenStatusError);
+        toast.error('Failed to get token status data');
+      } else {
+        console.log(`Successfully fetched ${tokenStatusData?.length} token status records`);
+      }
 
-    // Get players who used their token in the last game
-    const { data: tokenCooldowns, error: cooldownError } = await supabase
-      .from('player_tokens')
-      .select(`
-        player_id,
-        players:player_id (
-          friendly_name
-        )
-      `)
-      .eq('used_game_id', lastGame?.id);
+      // Find the players who are eligible for tokens, regardless of whether they have an active token already
+      // For the WhatsApp message, we only care about eligibility status, not whether they currently have an active token
+      const eligiblePlayers = players
+        .filter(player => {
+          // Find the corresponding token status for this player
+          const playerTokenStatus = tokenStatusData?.find(ts => ts.player_id === player.id);
+          
+          if (!playerTokenStatus) {
+            console.log(`No token status found for player ${player.friendly_name}`);
+            return false;
+          }
 
-    if (cooldownError) {
-      console.error('Error fetching token cooldowns:', cooldownError);
-      toast.error('Failed to get token cooldown data');
-      return;
-    }
+          // For WhatsApp message, we just care if they're eligible according to the view
+          const isEligible = playerTokenStatus.is_eligible;
+          
+          console.log(`Player ${player.friendly_name}: Eligible=${isEligible}`);
+          
+          return isEligible;
+        })
+        .map(player => ({
+          id: player.id,
+          friendly_name: player.friendly_name
+        }));
 
-    // Get players with active tokens
-    const { data: activeTokens, error: tokenError } = await supabase
-      .from('player_tokens')
-      .select(`
-        player_id,
-        players:player_id (
-          friendly_name
-        )
-      `)
-      .is('used_at', null)
-      .is('used_game_id', null)
-      .is('expires_at', null);
+      console.log('Eligible players for tokens:', eligiblePlayers);
 
-    if (tokenError) {
-      console.error('Error fetching active tokens:', tokenError);
-      toast.error('Failed to get token data');
-      return;
-    }
+      // Get player XP data from Supabase
+      const { data: playerXpData, error: xpError } = await supabase
+        .from('player_xp')
+        .select('player_id, xp')
+        .in('player_id', game.game_registrations?.map(reg => reg.player.id) || []);
 
-    console.log('Active tokens:', activeTokens);
-    console.log('Token cooldowns:', tokenCooldowns);
+      if (xpError) {
+        console.error('Error fetching player XP:', xpError);
+        toast.error('Failed to get player XP data');
+        return;
+      }
 
-    // Create a map of player IDs to XP
-    const playerXpMap = new Map(
-      playerXpData?.map(({ player_id, xp }) => [player_id, xp]) || []
-    );
+      // Create a map of player IDs to XP
+      const playerXpMap = new Map(
+        playerXpData?.map(({ player_id, xp }) => [player_id, xp]) || []
+      );
 
-    const gameDate = new Date(game.date);
-    const endTime = new Date(gameDate);
-    endTime.setHours(endTime.getHours() + 1);
+      const gameDate = new Date(game.date);
+      const endTime = new Date(gameDate);
+      endTime.setHours(endTime.getHours() + 1);
 
-    // Calculate price per person if pitch cost is available
-    const pricePerPerson = game.pitch_cost ? `(£${(game.pitch_cost / game.max_players).toFixed(2)} pp)` : '';
+      // Format the registration end date
+      const regEndDate = formatWhatsAppDate(game.registration_window_end);
+      const regEndTime = formatWhatsAppTime(game.registration_window_end);
 
-    // Base message that's common across all statuses
-    let message = `📅 ${formatWhatsAppDate(game.date)}
+      // Base message with the new format
+      let message = `📅 ${formatWhatsAppDate(game.date)}
 ⏰ ${formatWhatsAppTime(game.date)} - ${formatWhatsAppTime(endTime.toISOString())}
 🎮 WNF #${game.sequence_number || '?'}
 📍 ${game.venue?.name}
 📍 ${game.venue?.google_maps_url || ''}
 🔗 Game Details: https://wnf.app/games
-⚽ ${game.max_players} players / ${game.max_players / 2}-a-side${pricePerPerson ? ` ${pricePerPerson}` : ''}`;
+⚽ ${game.max_players} players / ${game.max_players / 2}-a-side`;
 
-    // Add status-specific messages
-    switch (game.status) {
-      case GAME_STATUSES.UPCOMING:
-      case GAME_STATUSES.OPEN:
-        message += `\n\n🎮 Registration is OPEN!\nRegister your interest by reacting with a thumbs up 👍\nRegistration closes ${formatWhatsAppDate(game.registration_window_end)} at ${formatWhatsAppTime(game.registration_window_end)}`;
+      // Add status-specific messages
+      switch (game.status) {
+        case GAME_STATUSES.UPCOMING:
+        case GAME_STATUSES.OPEN:
+          message += `\n\n🎮 Registration is OPEN!
+Register your interest by reacting with a thumbs up 👍
 
-        // Add token information if there are players with active tokens
-        const playersWithTokens = activeTokens?.filter(token => token.players?.friendly_name) || [];
-        if (playersWithTokens.length > 0) {
-          message += '\n\n🪙 Priority Token System\nThe following players have a priority token available:\n';
-          playersWithTokens
-            .sort((a, b) => {
-              const nameA = a.players?.friendly_name || '';
-              const nameB = b.players?.friendly_name || '';
-              return nameA.localeCompare(nameB);
-            })
-            .forEach(token => {
-              message += `\n${token.players.friendly_name}`;
-            });
-          message += '\n\nTo use your priority token, react to this message with 🪙\nUsing a token guarantees your spot in this game, but you will be moved to the bottom of the XP list for the next game.';
-        }
+Reply to this message with names of any reserves outside of this group that want to play.`;
 
-        // Add token cooldown information if there are players on cooldown
-        const playersOnCooldown = tokenCooldowns?.filter(token => token.players?.friendly_name) || [];
-        if (playersOnCooldown.length > 0) {
-          message += '\n\n⏳ Token Cooldown\nThe following players used their token in WNF #' + lastGame.sequence_number + ' and will be moved to the bottom of the XP list for this game only, should they register:\n';
-          playersOnCooldown
-            .sort((a, b) => {
-              const nameA = a.players?.friendly_name || '';
-              const nameB = b.players?.friendly_name || '';
-              return nameA.localeCompare(nameB);
-            })
-            .forEach(token => {
-              message += `\n${token.players.friendly_name}`;
-            });
-        }
-        break;
-
-      case GAME_STATUSES.PLAYERS_ANNOUNCED:
-        // Get all selected players (both merit and random)
-        const selectedPlayers = game.game_registrations?.filter(reg => reg.status === 'selected');
-        if (selectedPlayers?.length > 0) {
-          message += '\n\n✅ Selected Players:\n';
-          selectedPlayers
-            .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
-            .forEach(reg => {
-              const xp = playerXpMap.get(reg.player.id) || 0;
-              const isRandom = reg.selection_method === 'random';
-              message += `\n${isRandom ? '🎲' : ''}${reg.player.friendly_name} (${xp} XP)`;
-            });
-        }
-
-        // Add reserve players section
-        const reservePlayers = game.game_registrations?.filter(reg => reg.status === 'reserve');
-        if (reservePlayers?.length > 0) {
-          message += '\n\n🔄 Reserves (by XP):\n';
-          reservePlayers
-            .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
-            .forEach(reg => {
-              const xp = playerXpMap.get(reg.player.id) || 0;
-              message += `\n${reg.player.friendly_name} (${xp} XP)`;
-            });
-        }
-
-        // Add dropped out players section
-        const droppedOut = game.game_registrations?.filter(reg => reg.status === 'dropped_out');
-        if (droppedOut?.length > 0) {
-          message += '\n\n❌ Dropped Out:\n';
-          droppedOut
-            .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
-            .forEach(reg => {
-              const xp = playerXpMap.get(reg.player.id) || 0;
-              message += `\n${reg.player.friendly_name} (${xp} XP)`;
-            });
-        }
-
-        // Add drop-out message
-        message += '\n\nAnyone needs to drop out (inc reserves) please let me know 👍';
-        break;
-
-      case GAME_STATUSES.TEAMS_ANNOUNCED:
-        message += '\n\n▶️ Starting teams for tonight:\n';
-        
-        // Get all selected players
-        const selectedPlayersTeams = game.game_registrations?.filter(reg => reg.status === 'selected') || [];
-        
-        // Sort players by team and then by name
-        const orangeTeam = selectedPlayersTeams
-          .filter(reg => reg.team === 'orange')
-          .map(reg => reg.player.friendly_name)
-          .sort();
+          // Add token information if there are eligible players with active tokens
+          const showTokenSection = true; // Always show even if no eligible players
           
-        const blueTeam = selectedPlayersTeams
-          .filter(reg => reg.team === 'blue')
-          .map(reg => reg.player.friendly_name)
-          .sort();
-        
-        // Add orange team
-        message += '\n🟠 Orange';
-        orangeTeam.forEach(name => {
-          message += `\n${name}`;
-        });
-        
-        // Add blue team
-        message += '\n\n🔵 Blue';
-        blueTeam.forEach(name => {
-          message += `\n${name}`;
-        });
-        break;
+          if (showTokenSection) {
+            message += '\n\nThe following players, react with 🪙 if you want to guarantee a spot this week (but you likely won\'t get a spot next week):\n';
+            
+            if (eligiblePlayers.length > 0) {
+              // Sort players alphabetically by name
+              [...eligiblePlayers]
+                .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
+                .forEach(player => {
+                  message += `\n🪙 ${player.friendly_name}`;
+                });
+            } else {
+              // If no eligible players found in the database, use placeholder names
+              message += '\n🪙 <eligible player 1>';
+              message += '\n🪙 <eligible player 2>';
+            }
+          }
 
-      case GAME_STATUSES.COMPLETED:
-        message += '\n\n🏆 Game Complete!\nCheck the app to see the results and your updated stats.';
-        break;
+          message += `\n\nRegistration closes ${regEndDate} at ${regEndTime}`;
+          break;
 
-      case GAME_STATUSES.CANCELLED:
-        message += '\n\n❌ Game Cancelled\nPlease check the app for more information.';
-        break;
+        case GAME_STATUSES.PLAYERS_ANNOUNCED:
+          // Get all selected players (both merit and random)
+          const selectedPlayers = game.game_registrations?.filter(reg => reg.status === 'selected');
+          if (selectedPlayers?.length > 0) {
+            message += '\n\n✅ Selected Players:\n';
+            selectedPlayers
+              .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
+              .forEach(reg => {
+                const xp = playerXpMap.get(reg.player.id) || 0;
+                const isRandom = reg.selection_method === 'random';
+                message += `\n${isRandom ? '🎲' : ''}${reg.player.friendly_name} (${xp} XP)`;
+              });
+          }
 
-      default:
-        message += `\n\nRegistration closes ${formatWhatsAppDate(game.registration_window_end)} at ${formatWhatsAppTime(game.registration_window_end)}`;
-    }
+          // Add reserve players section
+          const reservePlayers = game.game_registrations?.filter(reg => reg.status === 'reserve');
+          if (reservePlayers?.length > 0) {
+            message += '\n\n🔄 Reserves (by XP):\n';
+            reservePlayers
+              .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
+              .forEach(reg => {
+                const xp = playerXpMap.get(reg.player.id) || 0;
+                message += `\n${reg.player.friendly_name} (${xp} XP)`;
+              });
+          }
 
-    try {
-      await navigator.clipboard.writeText(message);
-      toast.success('WhatsApp message copied to clipboard!');
+          // Add dropped out players section
+          const droppedOut = game.game_registrations?.filter(reg => reg.status === 'dropped_out');
+          if (droppedOut?.length > 0) {
+            message += '\n\n❌ Dropped Out:\n';
+            droppedOut
+              .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
+              .forEach(reg => {
+                const xp = playerXpMap.get(reg.player.id) || 0;
+                message += `\n${reg.player.friendly_name} (${xp} XP)`;
+              });
+          }
+
+          // Add drop-out message
+          message += '\n\nAnyone needs to drop out (inc reserves) please let me know 👍';
+          break;
+
+        case GAME_STATUSES.TEAMS_ANNOUNCED:
+          message += '\n\n▶️ Starting teams for tonight:\n';
+          
+          // Get all selected players
+          const selectedPlayersTeams = game.game_registrations?.filter(reg => reg.status === 'selected') || [];
+          
+          // Sort players by team and then by name
+          const orangeTeam = selectedPlayersTeams
+            .filter(reg => reg.team === 'orange')
+            .map(reg => reg.player.friendly_name)
+            .sort();
+            
+          const blueTeam = selectedPlayersTeams
+            .filter(reg => reg.team === 'blue')
+            .map(reg => reg.player.friendly_name)
+            .sort();
+          
+          // Add orange team
+          message += '\n🟠 Orange';
+          orangeTeam.forEach(name => {
+            message += `\n${name}`;
+          });
+          
+          // Add blue team
+          message += '\n\n🔵 Blue';
+          blueTeam.forEach(name => {
+            message += `\n${name}`;
+          });
+          break;
+
+        case GAME_STATUSES.COMPLETED:
+          message += '\n\n🏆 Game Complete!\nCheck the app to see the results and your updated stats.';
+          break;
+
+        case GAME_STATUSES.CANCELLED:
+          message += '\n\n❌ Game Cancelled\nPlease check the app for more information.';
+          break;
+
+        default:
+          message += `\n\nRegistration closes ${regEndDate} at ${regEndTime}`;
+      }
+
+      try {
+        await navigator.clipboard.writeText(message);
+        toast.success('WhatsApp message copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy message:', err);
+        toast.error('Failed to copy message to clipboard');
+      }
     } catch (err) {
-      console.error('Failed to copy message:', err);
-      toast.error('Failed to copy message to clipboard');
+      console.error('Error sharing on WhatsApp:', err);
+      toast.error('Failed to share on WhatsApp');
     }
   };
 
