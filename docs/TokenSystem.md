@@ -163,7 +163,7 @@ Result: Token stays valid, ready to use anytime
 
 3. Game deleted by admin
    - All tokens used in the game are marked as returned in history
-   - Token usage record is cleared (used_game_id set to NULL)
+   - Token usage record is cleared (used_game_id AND used_at set to NULL)
    - System automatically checks affected players for token eligibility
    - If a player is eligible and has no active token, a new token is issued
    - Token history is maintained for audit purposes
