@@ -122,10 +122,13 @@ export function useTokenStatus(playerId: string) {
           async () => {
             const result = await supabase
               .from('game_registrations')
-              .select('id')
+              .select('id, games!inner(id, date, is_historical, completed)')
               .eq('player_id', playerId)
               .eq('status', 'selected')
-              .eq('paid', false);
+              .eq('paid', false)
+              .filter('games.is_historical', 'eq', true)
+              .filter('games.completed', 'eq', true)
+              .filter('games.date', 'lt', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
             return result;
           },
           {

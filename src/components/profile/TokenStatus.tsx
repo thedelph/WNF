@@ -172,7 +172,7 @@ export default function TokenStatus({
             )}
             <Tooltip content="Must have no outstanding payments for previous games">
               <span className={!hasOutstandingPayments ? "text-success" : "text-error"}>
-                No Outstanding Payments {outstandingPaymentsCount && outstandingPaymentsCount > 0 ? `(${outstandingPaymentsCount} unpaid)` : ''}
+                No Outstanding Payments {hasOutstandingPayments && outstandingPaymentsCount && outstandingPaymentsCount > 0 ? `(${outstandingPaymentsCount} unpaid)` : ''}
               </span>
             </Tooltip>
           </div>
@@ -197,7 +197,7 @@ export default function TokenStatus({
         )}
 
         {/* Outstanding Payments - Show if ineligible due to outstanding payments */}
-        {hasOutstandingPayments && (
+        {hasOutstandingPayments && outstandingPaymentsCount && outstandingPaymentsCount > 0 && (
           <Tooltip content="Has unpaid games">
             <div className="text-sm text-error/80">
               Outstanding payments: {outstandingPaymentsCount} unpaid {outstandingPaymentsCount === 1 ? 'game' : 'games'}
