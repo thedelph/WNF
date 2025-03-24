@@ -14,6 +14,7 @@ export interface TeamAssignment {
   friendly_name: string;
   attack_rating: number;
   defense_rating: number;
+  win_rate?: number; // Added recent win rate as optional property
   team: 'blue' | 'orange' | null;
 }
 

@@ -28,6 +28,18 @@ Their win rate would be: (9/15) × 100 = 60%
 
 Note: The other 5 games where teams were uneven are completely excluded from the calculation.
 
+Recent Win Rate:
+--------------
+In addition to overall win rate, WNF also calculates a "Recent Win Rate" based on a player's last 10 games. This provides insight into a player's current form.
+
+- Recent Win Rate = (Number of Wins in Last 10 Games / 10) × 100
+- Form Indicator: Shows the difference between recent and overall win rates
+  - indicates better recent form (e.g.,  2.0% means recent win rate is 2% higher than overall)
+  - indicates worse recent form (e.g.,  3.5% means recent win rate is 3.5% lower than overall)
+  - indicates unchanged form (recent win rate equals overall win rate)
+
+The recent win rate helps identify players who are improving or declining in performance, regardless of their overall win rate.
+
 Display Rules:
 ------------
 - Win rates are rounded to 1 decimal place
@@ -36,23 +48,31 @@ Display Rules:
 - Win rates and W/D/L records are displayed on the back of player cards
 - For players with less than 10 games, "Pending (X/10)" is shown instead of a win rate percentage
 - Win rates are consistently formatted across all components using the same database function
+- The StatsGrid component displays both overall win rate and recent win rate in the same cell, with a form indicator showing the difference
 
 Technical Implementation:
 ----------------------
 
 1. Win Rate Display Components:
-The following components use the `get_player_win_rates` function to display win rates:
+The following components use the `get_player_win_rates` and `get_player_recent_win_rates` functions to display win rates:
 - PlayerCardBack: Shows detailed W/D/L stats and win rate
 - PlayerSelectionResults: Displays win rates for selected and reserve players
 - RegisteredPlayers: Shows win rates for all registered players
 - TeamSelectionResults: Displays win rates for selected team members
+- StatsGrid: Shows both overall and recent win rates with form indicator
 
-2. Win Rate Calculation Function:
-The `get_player_win_rates` function calculates win rates for all players based on their game history. This function:
-- Only counts games where the player was selected to play
-- Only includes games with recorded outcomes
-- Only counts games with even teams (same number of players on both sides)
-- Requires at least 10 eligible games for a win rate to be calculated
+2. Win Rate Calculation Functions:
+   
+   a. The `get_player_win_rates` function calculates overall win rates for all players based on their game history. This function:
+   - Only counts games where the player was selected to play
+   - Only includes games with recorded outcomes
+   - Only counts games with even teams (same number of players on both sides)
+   - Requires at least 10 eligible games for a win rate to be calculated
+
+   b. The `get_player_recent_win_rates` function calculates win rates for the last 10 games for each player. This function:
+   - Uses ROW_NUMBER() to select only the 10 most recent games for each player
+   - Follows the same win/loss/draw determination logic as the overall win rate function
+   - Returns results even for players with fewer than 10 recent games
 
 3. Automatic Updates:
 Win rates are automatically updated in the following scenarios:
@@ -128,7 +148,84 @@ BEGIN
 END;
 $function$;
 
-```
+```sql
+CREATE OR REPLACE FUNCTION public.get_player_recent_win_rates()
+RETURNS TABLE(
+    id uuid, 
+    friendly_name text, 
+    recent_total_games bigint, 
+    recent_wins bigint, 
+    recent_draws bigint, 
+    recent_losses bigint, 
+    recent_win_rate numeric
+)
+LANGUAGE plpgsql
+AS $function$
+BEGIN
+  RETURN QUERY
+  WITH player_recent_games AS (
+    SELECT
+      p.id AS player_id,
+      p.friendly_name AS player_friendly_name,
+      gr.team AS player_team,
+      g.outcome,
+      g.score_blue,
+      g.score_orange,
+      ROW_NUMBER() OVER (PARTITION BY p.id ORDER BY g.sequence_number DESC) AS row_num
+    FROM
+      players p
+    JOIN
+      game_registrations gr ON p.id = gr.player_id
+    JOIN
+      games g ON gr.game_id = g.id
+    WHERE
+      g.is_historical = TRUE
+      AND g.needs_completion = FALSE
+      AND g.completed = TRUE
+      AND gr.status = 'selected'
+      AND gr.team IN ('blue', 'orange')
+  ),
+  player_recent_stats AS (
+    SELECT
+      player_id,
+      player_friendly_name,
+      COUNT(*) AS total_games,
+      SUM(CASE
+          WHEN (player_team = 'blue' AND outcome = 'blue_win') OR (player_team = 'orange' AND outcome = 'orange_win') THEN 1
+          ELSE 0
+          END) AS wins,
+      SUM(CASE
+          WHEN outcome = 'draw' THEN 1
+          ELSE 0
+          END) AS draws,
+      SUM(CASE
+          WHEN (player_team = 'blue' AND outcome = 'orange_win') OR (player_team = 'orange' AND outcome = 'blue_win') THEN 1
+          ELSE 0
+          END) AS losses
+    FROM
+      player_recent_games
+    WHERE
+      row_num <= 10
+    GROUP BY
+      player_id, player_friendly_name
+  )
+  SELECT
+    prs.player_id AS id,
+    prs.player_friendly_name AS friendly_name,
+    prs.total_games AS recent_total_games,
+    prs.wins AS recent_wins,
+    prs.draws AS recent_draws,
+    prs.losses AS recent_losses,
+    CASE
+      WHEN prs.total_games > 0 THEN ROUND(prs.wins * 100.0 / prs.total_games, 1)
+      ELSE 0
+    END AS recent_win_rate
+  FROM
+    player_recent_stats prs
+  ORDER BY
+    recent_win_rate DESC, recent_total_games DESC;
+END;
+$function$;
 
 Database Schema Dependencies:
 --------------------------
@@ -144,6 +241,7 @@ The win rate calculation relies on these key tables:
    - id: uuid (PK)
    - outcome: text ('blue_win', 'orange_win', 'draw')
    - date: timestamp with time zone
+   - sequence_number: integer (used for ordering games chronologically)
 
 3. game_registrations
    - id: uuid (PK)
@@ -154,11 +252,12 @@ The win rate calculation relies on these key tables:
 
 Key Points About Implementation:
 -----------------------------
-1. Security: The get_player_win_rates function uses SECURITY DEFINER to ensure consistent permissions
+1. Security: The win rate functions use SECURITY DEFINER to ensure consistent permissions
 2. Performance: 
    - Uses CTEs (Common Table Expressions) for better query organization
    - Indexes on game_registrations(game_id, player_id, status)
    - Filters applied early in the query to reduce the dataset
+   - ROW_NUMBER() for efficient selection of most recent games
 3. Accuracy:
    - NULLIF used to prevent division by zero
    - Results rounded to 1 decimal place
@@ -167,9 +266,11 @@ Key Points About Implementation:
    - Modular React components
    - Type-safe interfaces
    - Clear separation of concerns between database and frontend logic
+   - Consistent outcome checking between overall and recent win rate functions
 
 This calculation method ensures that:
 1. Win rates are only based on fair matches where teams were balanced in numbers
-2. Players need a significant number of games (10+) to be eligible, preventing high win rates from small sample sizes
-3. The system accounts for draws and different team colors fairly
-4. The implementation is efficient, secure, and maintainable
+2. Players need a significant number of games (10+) to be eligible for overall win rate calculations
+3. Recent win rates provide insight into current form regardless of overall performance
+4. The system accounts for draws and different team colors fairly
+5. The implementation is efficient, secure, and maintainable

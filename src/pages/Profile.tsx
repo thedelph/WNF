@@ -42,15 +42,27 @@ interface PlayerProfile {
   };
 }
 
-interface ExtendedPlayerData extends PlayerProfile {
-  xp: number
-  reserveXP: number
-  whatsapp_group_member?: string
+interface ExtendedPlayerData {
+  id: string;
+  user_id: string;
+  friendly_name: string;
+  avatar_svg: string | null;
+  avatar_options: any;
+  current_streak: number;
+  max_streak: number;
+  xp: number;
+  rank: number;
+  rarity: string;
+  reserveXP: number;
+  whatsapp_group_member?: string;
+  registration_streak?: number;
   gameSequences?: Array<{
     sequence: number;
     status: string;
     team: string;
   }>;
+  win_rate?: number;
+  recent_win_rate?: number;
 }
 
 // Calculate rarity percentile based on player's XP compared to all players
@@ -116,6 +128,32 @@ export default function Component() {
         // Store player ID for token status hook
         setPlayerId(playerData.id);
 
+        // Fetch player win rates
+        const winRatesPromise = supabase.rpc('get_player_win_rates');
+        const recentWinRatesPromise = supabase.rpc('get_player_recent_win_rates');
+
+        const [winRatesResult, recentWinRatesResult] = await Promise.all([
+          winRatesPromise,
+          recentWinRatesPromise
+        ]);
+
+        let winRate = null;
+        let recentWinRate = null;
+
+        if (winRatesResult.data) {
+          const playerWinRate = winRatesResult.data.find((wr: any) => wr.id === playerData?.id);
+          if (playerWinRate) {
+            winRate = playerWinRate.win_rate;
+          }
+        }
+
+        if (recentWinRatesResult.data) {
+          const playerRecentWinRate = recentWinRatesResult.data.find((wr: any) => wr.id === playerData?.id);
+          if (playerRecentWinRate) {
+            recentWinRate = playerRecentWinRate.recent_win_rate;
+          }
+        }
+
         // Get XP breakdown from player_xp table
         const { data: xpData, error: xpError } = await executeWithRetry(
           () => supabase
@@ -133,28 +171,21 @@ export default function Component() {
 
         // Combine the data
         const profileData: ExtendedPlayerData = {
+          id: playerData.id,
+          user_id: playerData.user_id,
           friendly_name: playerData.friendly_name,
-          current_stored_xp: xpData?.current_stored_xp || 0,
-          base_xp: xpData?.base_xp || 0,
-          reserve_xp: xpData?.reserve_xp || 0,
-          reserve_games: xpData?.reserve_games || 0,
-          subtotal_before_modifiers: xpData?.subtotal_before_modifiers || 0,
-          attendance_streak: xpData?.attendance_streak || 0,
-          attendance_streak_modifier: xpData?.attendance_streak_modifier || 0,
-          reserve_game_modifier: xpData?.reserve_game_modifier || 0,
-          registration_streak: xpData?.registration_streak || 0,
-          registration_streak_modifier: xpData?.registration_streak_modifier || 0,
-          unpaid_games_count: xpData?.unpaid_games_count || 0,
-          unpaid_games_modifier: xpData?.unpaid_games_modifier || 0,
-          total_xp: playerData.player_xp?.xp || 0,
-          rarity: playerData.player_xp?.rarity || 'Amateur',
-          current_streak: playerData.current_streak || 0,
-          max_streak: playerData.max_streak || 0,
           avatar_svg: playerData.avatar_svg,
           avatar_options: playerData.avatar_options,
           xp: playerData.player_xp?.xp || 0,
           reserveXP: xpData?.reserve_xp || 0,
-          whatsapp_group_member: playerData.whatsapp_group_member
+          rank: playerData.player_xp?.rank || 0,
+          rarity: playerData.player_xp?.rarity || '',
+          current_streak: playerData.current_streak || 0,
+          max_streak: playerData.max_streak || 0,
+          whatsapp_group_member: playerData.whatsapp_group_member,
+          win_rate: winRate,
+          recent_win_rate: recentWinRate,
+          registration_streak: playerData.registration_streak
         };
 
         setProfile(profileData);
@@ -428,11 +459,17 @@ export default function Component() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <StatsGrid profile={{
-                total_xp: profile.xp,
+              <StatsGrid stats={{
+                id: profile.id,
+                friendly_name: profile.friendly_name,
+                xp: profile.xp,
                 current_streak: profile.current_streak || 0,
                 max_streak: profile.max_streak || 0,
-                rarity: profile.rarity
+                rarity: profile.rarity,
+                win_rate: profile.win_rate,
+                recent_win_rate: profile.recent_win_rate,
+                active_bonuses: 0, // Default values if not present in profile
+                active_penalties: 0
               }} />
             </motion.div>
 

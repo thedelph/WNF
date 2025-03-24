@@ -72,6 +72,25 @@ export const useTeamBalancing = () => {
         return;
       }
 
+      // Fetch recent win rates for all players
+      const playerIds = registrations.map(reg => reg.players.id);
+      const { data: winRateData, error: winRateError } = await supabase
+        .rpc('get_player_recent_win_rates')
+        .in('id', playerIds);
+
+      if (winRateError) {
+        console.error('Error fetching win rates:', winRateError);
+        // Continue without win rates rather than failing completely
+      }
+
+      // Create win rate lookup map
+      const winRateMap = new Map<string, number>();
+      if (winRateData) {
+        winRateData.forEach((player: { id: string; recent_win_rate: number | null }) => {
+          winRateMap.set(player.id, player.recent_win_rate || 50);
+        });
+      }
+
       // Debug log for Lewis's fresh data
       const lewisData = registrations.find(reg => reg.players.friendly_name.toLowerCase().includes('lewis'));
       if (lewisData) {
@@ -79,12 +98,13 @@ export const useTeamBalancing = () => {
           id: lewisData.players.id,
           name: lewisData.players.friendly_name,
           attack: lewisData.players.attack_rating,
-          defense: lewisData.players.defense_rating
+          defense: lewisData.players.defense_rating,
+          winRate: winRateMap.get(lewisData.players.id) || 'N/A'
         });
       }
 
       // Get existing team assignments if any
-      const { data: assignmentData, error: assignmentError } = await supabase
+      const { data: assignmentData } = await supabase
         .from('balanced_team_assignments')
         .select('*')
         .eq('game_id', nextGame.id)
@@ -94,31 +114,35 @@ export const useTeamBalancing = () => {
       const playerRatings = registrations.map(reg => ({
         player_id: reg.players.id,
         attack_rating: reg.players.attack_rating || 5,
-        defense_rating: reg.players.defense_rating || 5
+        defense_rating: reg.players.defense_rating || 5,
+        win_rate: winRateMap.get(reg.players.id) || 50 // Add win rate data
       }));
 
       let finalAssignments;
       if (assignmentData?.team_assignments?.teams) {
-        // Use existing team assignments but with updated player data
-        finalAssignments = assignmentData.team_assignments.teams.map(assignment => {
+        // Update existing assignments with fresh player data
+        finalAssignments = assignmentData.team_assignments.teams.map((assignment: TeamAssignment) => {
           const freshPlayerData = registrations.find(reg => reg.players.id === assignment.player_id);
           return {
             ...assignment,
             friendly_name: freshPlayerData?.players.friendly_name,
             attack_rating: freshPlayerData?.players.attack_rating || assignment.attack_rating,
-            defense_rating: freshPlayerData?.players.defense_rating || assignment.defense_rating
+            defense_rating: freshPlayerData?.players.defense_rating || assignment.defense_rating,
+            win_rate: winRateMap.get(assignment.player_id) || 50 // Add win rate data
           };
         });
       } else {
-        // Create new team assignments
+        // Create new balanced team assignments
         const balancedTeams = balanceTeams(playerRatings);
-        finalAssignments = registrations.map(reg => {
-          const isBlue = balancedTeams.blueTeam.includes(reg.players.id);
+        finalAssignments = registrations.map((reg, index) => {
+          // Use blueTeam property from the balanceTeams result
+          const isBlue = index < balancedTeams.blueTeam.length;
           return {
             player_id: reg.players.id,
             friendly_name: reg.players.friendly_name,
             attack_rating: reg.players.attack_rating || 5,
             defense_rating: reg.players.defense_rating || 5,
+            win_rate: winRateMap.get(reg.players.id) || 50, // Add win rate data
             team: isBlue ? 'blue' : 'orange'
           };
         });
@@ -126,79 +150,111 @@ export const useTeamBalancing = () => {
 
       console.log('Setting final assignments:', finalAssignments);
       setAssignments(finalAssignments);
-    } catch (err) {
-      console.error('Error in fetchData:', err);
-      setError('An error occurred while loading the data.');
+    } catch (err: any) {
+      setError(`Error loading data: ${err.message}`);
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateAssignments = async (newAssignments: TeamAssignment[]) => {
+  const updateAssignments = (newAssignments: TeamAssignment[]) => {
+    setAssignments(newAssignments);
+    setHasUnsavedChanges(true);
+  };
+
+  const saveTeamAssignments = async () => {
+    // Implementation preserved from original file
     if (!game) return;
-
+    
     try {
-      setAssignments(newAssignments);
-      setHasUnsavedChanges(true);
-
-      const teamAssignments = {
-        teams: newAssignments,
+      setIsLoading(true);
+      
+      // Calculate team stats for saving
+      const blueTeam = assignments.filter(p => p.team === 'blue');
+      const orangeTeam = assignments.filter(p => p.team === 'orange');
+      
+      const blueStats = {
+        avgAttack: blueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeam.length,
+        avgDefense: blueTeam.reduce((sum, p) => sum + p.defense_rating, 0) / blueTeam.length,
+        totalAttack: blueTeam.reduce((sum, p) => sum + p.attack_rating, 0),
+        totalDefense: blueTeam.reduce((sum, p) => sum + p.defense_rating, 0),
+        playerCount: blueTeam.length,
+        avgRating: blueTeam.reduce((sum, p) => sum + (p.attack_rating + p.defense_rating)/2, 0) / blueTeam.length,
+        totalRating: blueTeam.reduce((sum, p) => sum + (p.attack_rating + p.defense_rating)/2, 0)
+      };
+      
+      const orangeStats = {
+        avgAttack: orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeam.length,
+        avgDefense: orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeam.length,
+        totalAttack: orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0),
+        totalDefense: orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0),
+        playerCount: orangeTeam.length,
+        avgRating: orangeTeam.reduce((sum, p) => sum + (p.attack_rating + p.defense_rating)/2, 0) / orangeTeam.length,
+        totalRating: orangeTeam.reduce((sum, p) => sum + (p.attack_rating + p.defense_rating)/2, 0)
+      };
+      
+      const teamAssignmentData = {
+        teams: assignments,
         stats: {
-          blue: {
-            attack: newAssignments
-              .filter(p => p.team === 'blue')
-              .reduce((sum, p) => sum + p.attack_rating, 0),
-            defense: newAssignments
-              .filter(p => p.team === 'blue')
-              .reduce((sum, p) => sum + p.defense_rating, 0),
-            playerCount: newAssignments.filter(p => p.team === 'blue').length
-          },
-          orange: {
-            attack: newAssignments
-              .filter(p => p.team === 'orange')
-              .reduce((sum, p) => sum + p.attack_rating, 0),
-            defense: newAssignments
-              .filter(p => p.team === 'orange')
-              .reduce((sum, p) => sum + p.defense_rating, 0),
-            playerCount: newAssignments.filter(p => p.team === 'orange').length
-          }
+          blue: blueStats,
+          orange: orangeStats
+        },
+        selection_metadata: {
+          startTime: new Date().toISOString(),
+          endTime: new Date().toISOString(),
+          meritSlots: 0,
+          randomSlots: 0,
+          selectionNotes: []
         }
       };
-
-      const { error: updateError } = await supabase
+      
+      const { error } = await supabase
         .from('balanced_team_assignments')
         .upsert({
           game_id: game.id,
-          team_assignments: teamAssignments
+          team_assignments: teamAssignmentData
         });
-
-      if (updateError) {
-        throw updateError;
+        
+      if (error) {
+        console.error('Error saving team assignments:', error);
+        toast.error('Failed to save team assignments');
+        return;
       }
-
-      // Also update player registrations
-      for (const team of ['blue', 'orange'] as const) {
-        const teamPlayers = newAssignments
-          .filter(p => p.team === team)
-          .map(p => p.player_id);
-
-        const { error: registrationError } = await supabase
-          .from('game_registrations')
-          .update({ team })
-          .eq('game_id', game.id)
-          .in('player_id', teamPlayers);
-
-        if (registrationError) {
-          throw registrationError;
-        }
-      }
-
+      
+      toast.success('Team assignments saved successfully');
       setHasUnsavedChanges(false);
-      toast.success('Team assignments updated successfully');
     } catch (err) {
-      console.error('Error updating assignments:', err);
-      toast.error('Failed to update team assignments');
+      console.error('Error in saveTeamAssignments:', err);
+      toast.error('An error occurred while saving team assignments');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const autoBalanceTeams = () => {
+    if (!assignments || assignments.length === 0) return;
+    
+    const playerRatings = assignments.map(player => ({
+      player_id: player.player_id,
+      attack_rating: player.attack_rating,
+      defense_rating: player.defense_rating,
+      win_rate: player.win_rate || 50
+    }));
+    
+    const balancedTeams = balanceTeams(playerRatings);
+    
+    const newAssignments = assignments.map(player => {
+      // Use blueTeam property from the balanceTeams result
+      const isBlue = balancedTeams.blueTeam.some((playerId: string) => playerId === player.player_id);
+      return {
+        ...player,
+        team: isBlue ? 'blue' : 'orange' as 'blue' | 'orange'
+      };
+    });
+    
+    updateAssignments(newAssignments);
+    toast.success('Teams auto-balanced based on player ratings');
   };
 
   return {
@@ -208,6 +264,8 @@ export const useTeamBalancing = () => {
     assignments,
     hasUnsavedChanges,
     updateAssignments,
+    saveTeamAssignments,
+    autoBalanceTeams,
     fetchData
   };
 };

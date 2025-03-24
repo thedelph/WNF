@@ -1,18 +1,32 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { Tooltip } from '../ui/Tooltip';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 
 interface StatsGridProps {
-  profile: {
-    total_xp: number;
-    current_streak: number;
-    max_streak: number;
+  stats: {
+    id?: string;
+    friendly_name?: string;
+    xp?: number;
+    total_xp?: number;
+    current_streak?: number;
+    max_streak?: number;
     rarity?: string;
+    win_rate?: number;
+    recent_win_rate?: number;
+    caps?: number;
+    active_bonuses?: number;
+    active_penalties?: number;
   };
 }
 
-const StatsGrid: React.FC<StatsGridProps> = ({ profile }) => {
+interface StatItem {
+  label: string;
+  value: ReactNode;
+  tooltip?: string;
+}
+
+const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
   const getRarityDescription = (rarity: string) => {
     switch (rarity) {
       case 'Legendary':
@@ -30,54 +44,102 @@ const StatsGrid: React.FC<StatsGridProps> = ({ profile }) => {
     }
   };
 
-  const stats = [
+  // Calculate the form indicator
+  const getFormIndicator = () => {
+    if (!stats || stats.win_rate === undefined || stats.win_rate === null || stats.recent_win_rate === undefined || stats.recent_win_rate === null) {
+      return null;
+    }
+
+    const difference = Number(stats.recent_win_rate) - Number(stats.win_rate);
+    
+    // Always show the indicator with the difference
+    if (difference > 0) {
+      return (
+        <span className="ml-2 text-green-500 font-bold" title="Better recent form">
+          ▲ {difference.toFixed(1)}%
+        </span>
+      );
+    } else if (difference < 0) {
+      return (
+        <span className="ml-2 text-red-500 font-bold" title="Worse recent form">
+          ▼ {Math.abs(difference).toFixed(1)}%
+        </span>
+      );
+    } else {
+      return (
+        <span className="ml-2 text-gray-500" title="Same recent form">
+          ⟷ 0.0%
+        </span>
+      );
+    }
+  };
+
+  const statsItems: StatItem[] = [
     { 
       label: 'Total XP', 
-      value: (profile.total_xp || 0).toLocaleString()
+      value: ((stats.xp ?? stats.total_xp) || 0).toLocaleString()
     },
     { 
       label: 'Current Streak', 
-      value: profile.current_streak || 0
+      value: stats.current_streak || 0
     },
     { 
       label: 'Max Streak', 
-      value: profile.max_streak || 0
+      value: stats.max_streak || 0
     },
     { 
       label: 'Rarity', 
-      value: profile.rarity || 'Amateur',
-      tooltip: profile.rarity ? getRarityDescription(profile.rarity) : 'Rarity not available'
+      value: stats.rarity || 'Amateur',
+      tooltip: stats.rarity ? getRarityDescription(stats.rarity) : 'Rarity not available'
     }
   ];
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-    >
-      {stats.map((stat, index) => (
-        <TooltipPrimitive.Provider key={index}>
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body p-3">
-              {stat.tooltip ? (
-                <Tooltip content={stat.tooltip}>
-                  <div>
-                    <h3 className="text-sm opacity-70">{stat.label}</h3>
-                    <p className="font-mono text-lg font-bold">{stat.value}</p>
-                  </div>
-                </Tooltip>
-              ) : (
-                <div>
-                  <h3 className="text-sm opacity-70">{stat.label}</h3>
-                  <p className="font-mono text-lg font-bold">{stat.value}</p>
-                </div>
-              )}
-            </div>
+  // Add win rate stats if available
+  if (stats.win_rate !== undefined && stats.win_rate !== null) {
+    statsItems.push({
+      label: 'Win Rate',
+      value: (
+        <div className="flex flex-col items-center">
+          <div className="flex items-center">
+            <span className="font-semibold">{Number(stats.win_rate).toFixed(1)}%</span>
+            {getFormIndicator()}
           </div>
-        </TooltipPrimitive.Provider>
+          {stats.recent_win_rate !== undefined && stats.recent_win_rate !== null && (
+            <div className="text-sm mt-1 text-gray-600 dark:text-gray-400">
+              Recent: {Number(stats.recent_win_rate).toFixed(1)}%
+            </div>
+          )}
+        </div>
+      ),
+      tooltip: stats.recent_win_rate !== undefined && stats.recent_win_rate !== null
+        ? `Overall win rate: ${Number(stats.win_rate).toFixed(1)}%\nRecent form (last 10 games): ${Number(stats.recent_win_rate).toFixed(1)}%` 
+        : undefined
+    });
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {statsItems.map((stat, index) => (
+        <motion.div 
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 + index * 0.05 }}
+          className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 text-center"
+        >
+          {stat.tooltip ? (
+            <TooltipPrimitive.Provider>
+              <Tooltip content={stat.tooltip}>
+                <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{stat.label}</h3>
+              </Tooltip>
+            </TooltipPrimitive.Provider>
+          ) : (
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{stat.label}</h3>
+          )}
+          <div className="mt-1 text-lg font-semibold">{stat.value}</div>
+        </motion.div>
       ))}
-    </motion.div>
+    </div>
   );
 };
 

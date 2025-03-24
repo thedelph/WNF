@@ -1,75 +1,105 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { TeamList } from '../team-balancing/TeamList';
 import { TeamStats } from '../team-balancing/TeamStats';
 import { toast } from 'react-hot-toast';
 import { useTeamBalancing } from '../team-balancing/useTeamBalancing';
-import { calculateBestSwaps, findOptimalTeamBalance } from '../team-balancing/teamBalanceUtils';
-import { calculateBalanceScore } from '../../../utils/teamBalancing';
+import { TeamAssignment } from '../team-balancing/types';
+import { calculateBestSwaps } from '../team-balancing/teamBalanceUtils';
 
-const TeamBalancingOverview: React.FC = () => {
-  const {
-    isLoading,
-    error,
+/**
+ * TeamBalancingOverview component
+ * Main page for team balancing functionality
+ * Allows admins to view and modify team assignments
+ */
+const TeamBalancingOverview = () => {
+  const { 
+    isLoading, 
+    error, 
     assignments,
     updateAssignments,
+    saveTeamAssignments,
+    hasUnsavedChanges,
     fetchData
   } = useTeamBalancing();
 
-  // Track selected players for swapping
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-
-  // Calculate optimal team balance
-  const optimalBalance = useMemo(() => {
-    if (!assignments || assignments.length === 0) return null;
-    return findOptimalTeamBalance(assignments);
-  }, [assignments]);
+  const [selectedSwap, setSelectedSwap] = useState<any | null>(null);
+  const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
+  
+  // Track preview state
+  const [previewState, setPreviewState] = useState<{
+    player1: string | null;
+    player2: string | null;
+    active: boolean;
+  }>({
+    player1: null,
+    player2: null,
+    active: false
+  });
 
   // Memoize filtered teams to prevent unnecessary recalculations
   const teams = useMemo(() => {
     if (!assignments) return { blueTeam: [], orangeTeam: [] };
-    return {
-      blueTeam: assignments.filter((p) => p.team === 'blue'),
-      orangeTeam: assignments.filter((p) => p.team === 'orange'),
-    };
+    
+    // Filter out null teams and only include players assigned to a specific team
+    const blueTeam = assignments.filter(p => p.team === 'blue');
+    const orangeTeam = assignments.filter(p => p.team === 'orange');
+    
+    return { blueTeam, orangeTeam };
   }, [assignments]);
 
   // Calculate team stats for display
   const teamStats = useMemo(() => {
+    if (!assignments || assignments.length === 0) {
+      return {
+        blue: { attack: 0, defense: 0, winRate: 0, playerCount: 0 },
+        orange: { attack: 0, defense: 0, winRate: 0, playerCount: 0 },
+        attackDiff: 0,
+        defenseDiff: 0,
+        winRateDiff: 0,
+        currentScore: 0
+      };
+    }
+
     const { blueTeam, orangeTeam } = teams;
-    const blueStats = {
-      attackTotal: blueTeam.reduce((sum, p) => sum + p.attack_rating, 0),
-      defenseTotal: blueTeam.reduce((sum, p) => sum + p.defense_rating, 0),
-      playerCount: blueTeam.length,
-    };
-
-    const orangeStats = {
-      attackTotal: orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0),
-      defenseTotal: orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0),
-      playerCount: orangeTeam.length,
-    };
-
-    // Calculate average ratings per player for each team
-    const blueAvgAttack = blueStats.attackTotal / blueStats.playerCount;
-    const blueAvgDefense = blueStats.defenseTotal / blueStats.playerCount;
-    const orangeAvgAttack = orangeStats.attackTotal / orangeStats.playerCount;
-    const orangeAvgDefense = orangeStats.defenseTotal / orangeStats.playerCount;
-
-    const attackDiff = Math.abs(blueStats.attackTotal - orangeStats.attackTotal);
-    const defenseDiff = Math.abs(blueStats.defenseTotal - orangeStats.defenseTotal);
-    const avgAttackDiff = Math.abs(blueAvgAttack - orangeAvgAttack);
-    const avgDefenseDiff = Math.abs(blueAvgDefense - orangeAvgDefense);
-
-    // Calculate current balance score using same formula as teamBalanceUtils
-    const currentScore = attackDiff + defenseDiff + (avgAttackDiff + avgDefenseDiff) * 10;
-
+    
+    // Calculate average stats for each team
+    const blueAttack = blueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeam.length;
+    const blueDefense = blueTeam.reduce((sum, p) => sum + p.defense_rating, 0) / blueTeam.length;
+    const blueWinRate = blueTeam.reduce((sum, p) => sum + (p.win_rate || 50), 0) / blueTeam.length;
+    
+    const orangeAttack = orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeam.length;
+    const orangeDefense = orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeam.length;
+    const orangeWinRate = orangeTeam.reduce((sum, p) => sum + (p.win_rate || 50), 0) / orangeTeam.length;
+    
+    // Calculate differences between teams
+    const attackDiff = Math.abs(blueAttack - orangeAttack);
+    const defenseDiff = Math.abs(blueDefense - orangeDefense);
+    const rawWinRateDiff = Math.abs(blueWinRate - orangeWinRate);
+    const weightedWinRateDiff = rawWinRateDiff * 5; // Apply weight to win rate for scoring
+    
+    // Calculate overall balance score (lower is better)
+    const currentScore = attackDiff + defenseDiff + weightedWinRateDiff;
+    
     return {
-      blue: blueStats,
-      orange: orangeStats,
+      blue: { 
+        attack: blueAttack, 
+        defense: blueDefense, 
+        winRate: blueWinRate,
+        playerCount: blueTeam.length 
+      },
+      orange: { 
+        attack: orangeAttack, 
+        defense: orangeDefense, 
+        winRate: orangeWinRate,
+        playerCount: orangeTeam.length
+      },
       attackDiff,
       defenseDiff,
+      winRateDiff: rawWinRateDiff, // Store unweighted diff for display
       currentScore
     };
-  }, [teams]);
+  }, [teams, assignments]);
 
   // Calculate swap rankings when a player is selected
   const swapRankings = useMemo(() => {
@@ -81,76 +111,246 @@ const TeamBalancingOverview: React.FC = () => {
     return calculateBestSwaps(selectedPlayerData, assignments);
   }, [selectedPlayer, assignments]);
 
-  // Calculate recommended swaps based on optimal balance
+  // Calculate recommended swaps based on current team assignments
   const recommendedSwaps = useMemo(() => {
-    if (!optimalBalance || !assignments) return null;
+    if (!assignments || assignments.length === 0) return [];
     
-    const currentTeams = {
-      blue: assignments.filter(p => p.team === 'blue'),
-      orange: assignments.filter(p => p.team === 'orange')
-    };
-
-    const optimalTeams = {
-      blue: optimalBalance.blueTeam,
-      orange: optimalBalance.orangeTeam
-    };
-
-    // Find players that are in different teams in the optimal balance
-    const swaps: Array<{
-      bluePlayer: typeof assignments[0],
-      orangePlayer: typeof assignments[0],
-      improvementScore: number
+    const blueTeam = assignments.filter(p => p.team === 'blue');
+    const orangeTeam = assignments.filter(p => p.team === 'orange');
+    
+    // Generate all possible swap pairs
+    const possibleSwaps: Array<{
+      bluePlayer: TeamAssignment,
+      orangePlayer: TeamAssignment,
+      improvementScore: number,
+      newScore: number
     }> = [];
-
-    // For each player currently in blue team
-    currentTeams.blue.forEach(currentBluePlayer => {
-      // If they should be in orange according to optimal balance
-      if (optimalTeams.orange.find(p => p.player_id === currentBluePlayer.player_id)) {
-        // Find a player from orange team that should be in blue
-        const potentialOrangeSwap = currentTeams.orange.find(orangePlayer => 
-          optimalTeams.blue.find(op => op.player_id === orangePlayer.player_id)
-        );
+    
+    for (const bluePlayer of blueTeam) {
+      for (const orangePlayer of orangeTeam) {
+        // Calculate improvement score - how much this swap improves balance
+        const blueTeamCopy = [...blueTeam].filter(p => p.player_id !== bluePlayer.player_id).concat([orangePlayer]);
+        const orangeTeamCopy = [...orangeTeam].filter(p => p.player_id !== orangePlayer.player_id).concat([bluePlayer]);
         
-        if (potentialOrangeSwap) {
-          // Calculate the improvement in balance from this swap
-          const updatedAssignments = assignments.map(player => {
-            if (player.player_id === currentBluePlayer.player_id) return { ...player, team: 'orange' };
-            if (player.player_id === potentialOrangeSwap.player_id) return { ...player, team: 'blue' };
-            return player;
+        // Ensure teams remain the same size
+        if (blueTeamCopy.length !== orangeTeamCopy.length) {
+          continue;
+        }
+        
+        const blueAttack = blueTeamCopy.reduce((sum, p) => sum + p.attack_rating, 0);
+        const blueDefense = blueTeamCopy.reduce((sum, p) => sum + p.defense_rating, 0);
+        const blueWinRate = blueTeamCopy.reduce((sum, p) => sum + (p.win_rate || 50), 0);
+        
+        const orangeAttack = orangeTeamCopy.reduce((sum, p) => sum + p.attack_rating, 0);
+        const orangeDefense = orangeTeamCopy.reduce((sum, p) => sum + p.defense_rating, 0);
+        const orangeWinRate = orangeTeamCopy.reduce((sum, p) => sum + (p.win_rate || 50), 0);
+        
+        // Calculate diffs
+        const attackDiff = Math.abs((blueAttack / blueTeamCopy.length) - (orangeAttack / orangeTeamCopy.length));
+        const defenseDiff = Math.abs((blueDefense / blueTeamCopy.length) - (orangeDefense / orangeTeamCopy.length));
+        const winRateDiff = Math.abs((blueWinRate / blueTeamCopy.length) - (orangeWinRate / orangeTeamCopy.length));
+        const weightedWinRateDiff = winRateDiff * 5; // Apply weight to win rate
+        
+        // Lower score is better
+        const newScore = attackDiff + defenseDiff + weightedWinRateDiff;
+        const improvementScore = teamStats.currentScore - newScore;
+        
+        if (improvementScore > 0) {
+          possibleSwaps.push({
+            bluePlayer,
+            orangePlayer,
+            improvementScore,
+            newScore
           });
-
-          const currentScore = teamStats.currentScore;
-          const newScore = calculateBalanceScore(
-            updatedAssignments.filter(p => p.team === 'blue'),
-            updatedAssignments.filter(p => p.team === 'orange')
-          );
-
-          const improvement = currentScore - newScore;
-          
-          // Only suggest swaps that actually improve the balance
-          if (improvement > 0) {
-            swaps.push({
-              bluePlayer: potentialOrangeSwap, // The orange player that should move to blue
-              orangePlayer: currentBluePlayer, // The blue player that should move to orange
-              improvementScore: improvement
-            });
-          }
         }
       }
-    });
-
-    // Remove duplicate swaps and sort by improvement score
-    const uniqueSwaps = swaps.filter((swap, index, self) => 
-      index === self.findIndex(s => 
-        (s.bluePlayer.player_id === swap.bluePlayer.player_id && 
-         s.orangePlayer.player_id === swap.orangePlayer.player_id) ||
-        (s.bluePlayer.player_id === swap.orangePlayer.player_id && 
-         s.orangePlayer.player_id === swap.bluePlayer.player_id)
-      )
-    );
-
+    }
+    
+    // Get unique swaps (avoid duplicates)
+    const uniqueSwaps: Array<{
+      bluePlayer: TeamAssignment,
+      orangePlayer: TeamAssignment,
+      improvementScore: number,
+      newScore: number
+    }> = [];
+    const swapSet = new Set<string>();
+    
+    for (const swap of possibleSwaps) {
+      const key = `${swap.bluePlayer.player_id}_${swap.orangePlayer.player_id}`;
+      if (!swapSet.has(key)) {
+        swapSet.add(key);
+        uniqueSwaps.push(swap);
+      }
+    }
+    
     return uniqueSwaps.sort((a, b) => b.improvementScore - a.improvementScore);
-  }, [optimalBalance, assignments, teamStats.currentScore]);
+  }, [assignments, teamStats.currentScore]);
+
+  // Calculate the expected stats for a recommended swap
+  const calculateSwapStats = (swapToCalculate: { bluePlayer: TeamAssignment, orangePlayer: TeamAssignment }) => {
+    if (!assignments) return null;
+    
+    // Create a copy of assignments with the swap applied
+    const updatedAssignments = assignments.map(player => {
+      if (player.player_id === swapToCalculate.bluePlayer.player_id) {
+        return { ...player, team: 'orange' as 'orange' }; // Move blue player to orange
+      } else if (player.player_id === swapToCalculate.orangePlayer.player_id) {
+        return { ...player, team: 'blue' as 'blue' }; // Move orange player to blue
+      }
+      return player;
+    });
+    
+    // Recalculate team stats with the updated assignments
+    const blueTeam = updatedAssignments.filter(p => p.team === 'blue');
+    const orangeTeam = updatedAssignments.filter(p => p.team === 'orange');
+    
+    // Verify teams are still the same size
+    if (blueTeam.length !== orangeTeam.length) {
+      console.warn('Team sizes are not equal after swap!');
+    }
+    
+    const blueAttack = blueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeam.length;
+    const blueDefense = blueTeam.reduce((sum, p) => sum + p.defense_rating, 0) / blueTeam.length;
+    const blueWinRate = blueTeam.reduce((sum, p) => sum + (p.win_rate || 50), 0) / blueTeam.length;
+    
+    const orangeAttack = orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeam.length;
+    const orangeDefense = orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeam.length;
+    const orangeWinRate = orangeTeam.reduce((sum, p) => sum + (p.win_rate || 50), 0) / orangeTeam.length;
+    
+    // Calculate differences between teams
+    const attackDiff = Math.abs(blueAttack - orangeAttack);
+    const defenseDiff = Math.abs(blueDefense - orangeDefense);
+    const rawWinRateDiff = Math.abs(blueWinRate - orangeWinRate);
+    const winRateDiff = rawWinRateDiff * 5; // Apply weight to win rate for the score
+    
+    // Lower score is better
+    const newScore = attackDiff + defenseDiff + winRateDiff;
+    
+    return {
+      blue: {
+        attack: blueAttack,
+        defense: blueDefense,
+        winRate: blueWinRate,
+        playerCount: blueTeam.length
+      },
+      orange: {
+        attack: orangeAttack,
+        defense: orangeDefense,
+        winRate: orangeWinRate,
+        playerCount: orangeTeam.length
+      },
+      attackDiff,
+      defenseDiff,
+      winRateDiff: rawWinRateDiff, // Return the unweighted diff for display
+      totalDiff: newScore,
+      improvement: teamStats.currentScore - newScore
+    };
+  };
+
+  // Calculate stats for a potential manual swap
+  const calculateManualSwapStats = useCallback((player1Id: string, player2Id: string) => {
+    if (!assignments) return null;
+    
+    const player1 = assignments.find(p => p.player_id === player1Id);
+    const player2 = assignments.find(p => p.player_id === player2Id);
+    
+    if (!player1 || !player2) return null;
+    
+    return calculateSwapStats({
+      bluePlayer: player1.team === 'blue' ? player1 : player2,
+      orangePlayer: player1.team === 'orange' ? player1 : player2
+    });
+  }, [assignments, calculateSwapStats]);
+
+  // Preview stats for a potential manual swap
+  const [previewSwapStats, setPreviewSwapStats] = useState<any>(null);
+
+  // Handle direct preview request from a player card
+  const handlePreviewRequest = useCallback((playerId: string) => {
+    // If a player is already temporarily selected for preview, preview swap with that player
+    if (previewState.player1 && previewState.player1 !== playerId) {
+      // Get the teams of both players
+      const player1 = assignments?.find(p => p.player_id === previewState.player1);
+      const player2 = assignments?.find(p => p.player_id === playerId);
+      
+      // Only proceed if players are from different teams
+      if (player1 && player2 && player1.team !== player2.team) {
+        // Calculate the preview stats
+        const stats = calculateManualSwapStats(previewState.player1, playerId);
+        
+        // Update the preview state
+        setPreviewState({
+          player1: previewState.player1,
+          player2: playerId,
+          active: true
+        });
+        
+        // Show the preview stats
+        setPreviewSwapStats(stats);
+      } else {
+        // If same team, just update the first player
+        setPreviewState({
+          player1: playerId,
+          player2: null,
+          active: false
+        });
+        setPreviewSwapStats(null);
+      }
+    } 
+    // If a player is formally selected, preview swap with that player
+    else if (selectedPlayer && selectedPlayer !== playerId) {
+      // Calculate the preview stats
+      const stats = calculateManualSwapStats(selectedPlayer, playerId);
+      
+      // Show the preview stats
+      setPreviewSwapStats(stats);
+    } 
+    // If no player is selected yet, temporarily select this one
+    else {
+      setPreviewState({
+        player1: playerId,
+        player2: null,
+        active: false
+      });
+    }
+  }, [selectedPlayer, previewState, assignments, calculateManualSwapStats]);
+
+  // Handle canceling a preview
+  const handleCancelPreview = useCallback(() => {
+    setPreviewState({
+      player1: null,
+      player2: null,
+      active: false
+    });
+    setPreviewSwapStats(null);
+  }, []);
+
+  // Update preview when player is selected
+  useEffect(() => {
+    if (selectedPlayer && hoveredPlayer && selectedPlayer !== hoveredPlayer) {
+      // Get the players
+      const player1 = assignments?.find(p => p.player_id === selectedPlayer);
+      const player2 = assignments?.find(p => p.player_id === hoveredPlayer);
+      
+      // Only proceed if players are from different teams
+      if (player1 && player2 && player1.team !== player2.team) {
+        const stats = calculateManualSwapStats(selectedPlayer, hoveredPlayer);
+        setPreviewSwapStats(stats);
+      } else {
+        setPreviewSwapStats(null);
+      }
+    } else {
+      // Don't clear preview if it's coming from the preview state
+      if (!previewState.active) {
+        setPreviewSwapStats(null);
+      }
+    }
+  }, [selectedPlayer, hoveredPlayer, assignments, calculateManualSwapStats, previewState.active]);
+
+  // Update hoveredPlayer state
+  const handlePlayerHover = useCallback((playerId: string | null) => {
+    setHoveredPlayer(playerId);
+  }, []);
 
   const handlePlayerSelect = useCallback((playerId: string) => {
     if (selectedPlayer === playerId) {
@@ -192,8 +392,72 @@ const TeamBalancingOverview: React.FC = () => {
 
     updateAssignments(updatedAssignments);
     setSelectedPlayer(null);
-    toast.success('Players swapped successfully');
+    toast.success(`Swapped ${player1.friendly_name} with ${player2.friendly_name}`);
   }, [selectedPlayer, assignments, updateAssignments]);
+
+  // Handle swap selection for before/after comparison
+  const handleSwapSelect = useCallback((swap: any) => {
+    setSelectedSwap(swap);
+  }, []);
+
+  // Compute the comparison stats for selected swap
+  const comparisonStats = useMemo(() => {
+    return selectedSwap ? calculateSwapStats(selectedSwap) : null;
+  }, [selectedSwap, calculateSwapStats]);
+
+  const handleSwapPlayers = (swap: any) => {
+    // Create a new array of assignments with the swap applied
+    if (!assignments) return;
+    
+    const updatedAssignments = assignments.map(player => {
+      if (player.player_id === swap.bluePlayer.player_id) {
+        return { ...player, team: 'orange' as 'orange' }; // Move blue player to orange
+      } else if (player.player_id === swap.orangePlayer.player_id) {
+        return { ...player, team: 'blue' as 'blue' }; // Move orange player to blue
+      }
+      return player;
+    });
+    
+    // Update assignments with the new array that includes both swapped players
+    updateAssignments(updatedAssignments);
+    toast.success('Players swapped!');
+    setSelectedSwap(null);
+  };
+
+  // Handle executing a previewed swap
+  const handleExecutePreviewSwap = useCallback(() => {
+    if (previewState.player1 && previewState.player2 && previewState.active) {
+      // Get the players
+      const player1 = assignments?.find(p => p.player_id === previewState.player1);
+      const player2 = assignments?.find(p => p.player_id === previewState.player2);
+      
+      if (player1 && player2) {
+        // Execute the swap
+        const newAssignments = assignments.map(p => {
+          if (p.player_id === player1.player_id) {
+            return { ...p, team: player2.team };
+          } else if (p.player_id === player2.player_id) {
+            return { ...p, team: player1.team };
+          }
+          return p;
+        });
+        
+        // Update assignments
+        updateAssignments(newAssignments);
+        
+        // Show success toast
+        toast.success(`Swapped ${player1.friendly_name} with ${player2.friendly_name}`);
+        
+        // Clear preview state
+        setPreviewState({
+          player1: null,
+          player2: null,
+          active: false
+        });
+        setPreviewSwapStats(null);
+      }
+    }
+  }, [previewState, assignments, updateAssignments]);
 
   if (isLoading) {
     return <div className="text-center p-4">Loading teams...</div>;
@@ -211,60 +475,103 @@ const TeamBalancingOverview: React.FC = () => {
     <div className="p-4 space-y-6">
       <h2 className="text-2xl font-bold mb-6">Team Balance Overview</h2>
       
-      <TeamStats stats={teamStats} />
+      <TeamStats stats={teamStats} comparisonStats={comparisonStats} previewSwapStats={previewSwapStats} />
 
-      {optimalBalance && optimalBalance.score < teamStats.currentScore - 0.5 && (
+      {recommendedSwaps && recommendedSwaps.length > 0 && (
         <div className="space-y-4">
           <div className="alert alert-info">
             <div>
-              <span>A better team balance is possible! Here are the recommended swaps:</span>
+              <h3 className="font-bold">Recommended Player Swaps</h3>
+              <p className="text-sm">The following swaps would improve team balance. Lower balance score is better.</p>
             </div>
           </div>
           
-          <div className="grid gap-4">
-            {recommendedSwaps?.map(({ bluePlayer, orangePlayer, improvementScore }, index) => (
-              <div key={index} className="card bg-base-200">
-                <div className="card-body">
-                  <h3 className="card-title text-lg">Recommended Swap {index + 1}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {recommendedSwaps.slice(0, 4).map((swap, index) => {
+              const swapStats = calculateSwapStats(swap);
+              return (
+                <div 
+                  key={`${swap.bluePlayer.player_id}_${swap.orangePlayer.player_id}`}
+                  className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                    selectedSwap === swap ? 'border-primary bg-primary bg-opacity-10' : 'border-base-300 hover:border-primary'
+                  }`}
+                  onClick={() => handleSwapSelect(swap)}
+                >
+                  <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-semibold">Move to Orange Team:</p>
-                      <div className="stat bg-base-100 rounded-lg">
-                        <div className="stat-title">{orangePlayer.friendly_name}</div>
-                        <div className="stat-desc">
-                          Attack: {orangePlayer.attack_rating} | Defense: {orangePlayer.defense_rating}
-                        </div>
+                      <h4 className="font-medium">Swap #{index + 1}</h4>
+                      <p className="text-sm opacity-70">
+                        Improvement: {swap.improvementScore.toFixed(1)} points (Higher is better)
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs bg-success text-success-content px-2 py-1 rounded-full bg-opacity-20">
+                        Score: {teamStats.currentScore.toFixed(1)} → {swap.newScore.toFixed(1)} (Lower is better)
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between gap-4 mb-3">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-500">Blue → Orange</p>
+                      <p>{swap.bluePlayer.friendly_name}</p>
+                      <div className="text-xs opacity-70">
+                        <p>Attack: {swap.bluePlayer.attack_rating.toFixed(1)}</p>
+                        <p>Defense: {swap.bluePlayer.defense_rating.toFixed(1)}</p>
+                        <p>Win Rate: {(swap.bluePlayer.win_rate || 0).toFixed(1)}%</p>
                       </div>
                     </div>
-                    <div>
-                      <p className="font-semibold">Move to Blue Team:</p>
-                      <div className="stat bg-base-100 rounded-lg">
-                        <div className="stat-title">{bluePlayer.friendly_name}</div>
-                        <div className="stat-desc">
-                          Attack: {bluePlayer.attack_rating} | Defense: {bluePlayer.defense_rating}
-                        </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-orange-500">Orange → Blue</p>
+                      <p>{swap.orangePlayer.friendly_name}</p>
+                      <div className="text-xs opacity-70">
+                        <p>Attack: {swap.orangePlayer.attack_rating.toFixed(1)}</p>
+                        <p>Defense: {swap.orangePlayer.defense_rating.toFixed(1)}</p>
+                        <p>Win Rate: {(swap.orangePlayer.win_rate || 0).toFixed(1)}%</p>
                       </div>
                     </div>
                   </div>
-                  <div className="mt-2">
-                    <p className="text-success">
-                      Balance improvement: {improvementScore.toFixed(2)} points
-                    </p>
-                  </div>
-                  <div className="card-actions justify-end mt-4">
-                    <button 
-                      className="btn btn-primary btn-sm"
-                      onClick={() => {
-                        handlePlayerSelect(bluePlayer.player_id);
-                        setTimeout(() => handlePlayerSelect(orangePlayer.player_id), 100);
+                  
+                  {swapStats && (
+                    <div className="text-xs border-t pt-2">
+                      <p className="font-medium mb-1">Balance Improvements:</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        <div>
+                          <p>Attack: {teamStats.attackDiff.toFixed(1)} → {swapStats.attackDiff.toFixed(1)}</p>
+                          <p className={`${swapStats.attackDiff < teamStats.attackDiff ? 'text-success' : 'text-error'}`}>
+                            {swapStats.attackDiff < teamStats.attackDiff ? '✓ Better' : '✗ Worse'}
+                          </p>
+                        </div>
+                        <div>
+                          <p>Defense: {teamStats.defenseDiff.toFixed(1)} → {swapStats.defenseDiff.toFixed(1)}</p>
+                          <p className={`${swapStats.defenseDiff < teamStats.defenseDiff ? 'text-success' : 'text-error'}`}>
+                            {swapStats.defenseDiff < teamStats.defenseDiff ? '✓ Better' : '✗ Worse'}
+                          </p>
+                        </div>
+                        <div>
+                          <p>Win Rate: {teamStats.winRateDiff.toFixed(1)} → {swapStats.winRateDiff.toFixed(1)}</p>
+                          <p className={`${swapStats.winRateDiff < teamStats.winRateDiff ? 'text-success' : 'text-error'}`}>
+                            {swapStats.winRateDiff < teamStats.winRateDiff ? '✓ Better' : '✗ Worse'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end mt-2">
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSwapPlayers(swap);
                       }}
                     >
-                      Make This Swap
+                      Apply Swap
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -291,16 +598,26 @@ const TeamBalancingOverview: React.FC = () => {
           team={teams.orangeTeam}
           title="Orange Team"
           selectedPlayer={selectedPlayer}
+          previewState={previewState}
           swapRankings={swapRankings}
           onPlayerSelect={handlePlayerSelect}
+          onPlayerHover={handlePlayerHover}
+          onPreviewRequest={handlePreviewRequest}
+          onCancelPreview={handleCancelPreview}
+          onExecutePreviewSwap={handleExecutePreviewSwap}
         />
         <TeamList
           teamId="blue"
           team={teams.blueTeam}
           title="Blue Team"
           selectedPlayer={selectedPlayer}
+          previewState={previewState}
           swapRankings={swapRankings}
           onPlayerSelect={handlePlayerSelect}
+          onPlayerHover={handlePlayerHover}
+          onPreviewRequest={handlePreviewRequest}
+          onCancelPreview={handleCancelPreview}
+          onExecutePreviewSwap={handleExecutePreviewSwap}
         />
       </div>
       <div className="flex justify-center mt-8">
@@ -320,6 +637,31 @@ const TeamBalancingOverview: React.FC = () => {
         >
           {isLoading ? 'Refreshing...' : 'Refresh Team Data'}
         </button>
+        {hasUnsavedChanges && (
+          <button
+            className="btn btn-primary ml-2"
+            onClick={() => {
+              toast.promise(
+                saveTeamAssignments(),
+                {
+                  loading: 'Saving team assignments...',
+                  success: 'Team assignments saved successfully',
+                  error: 'Failed to save team assignments'
+                }
+              );
+            }}
+          >
+            Save Changes
+          </button>
+        )}
+        {previewState.active && (
+          <button
+            className="btn btn-primary ml-2"
+            onClick={handleExecutePreviewSwap}
+          >
+            Execute Previewed Swap
+          </button>
+        )}
       </div>
     </div>
   );

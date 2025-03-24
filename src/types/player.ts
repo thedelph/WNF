@@ -28,37 +28,43 @@ export interface PlayerStats {
   id: string;
   user_id: string;
   friendly_name: string;
-  avatar_svg: string;
+  avatar_svg: string | null;
   caps: number;
   active_bonuses: number;
   active_penalties: number;
   current_streak: number;
   max_streak: number;
   xp: number;
+  wins?: number;
+  totalGames?: number;
+  win_rate?: number;
+  recent_win_rate?: number;
+  recent_wins?: number; 
+  recent_draws?: number;
+  recent_losses?: number;
   rarity: string;
-  wins: number;
-  totalGames: number;
-  win_rate: number;
-  gameHistory: GameHistoryItem[];
-  games_played_together: number;
-  my_rating: PlayerRating | null;
-  reserveXP: number;
-  reserveCount: number;
-  bench_warmer_streak: number;
-  unpaidGames: number;
-  registrationStreak: number;
-  registrationStreakApplies: boolean;
   whatsapp_group_member?: string;
+  gameHistory?: {
+    sequence?: number;
+    status: string;
+  }[];
+  games_played_together?: number;
+  my_rating?: {
+    attack_rating: number;
+    defense_rating: number;
+  } | null;
+  reserveXP?: number;
+  reserveCount?: number;
+  bench_warmer_streak?: number;
+  unpaidGames?: number;
+  registrationStreak?: number;
+  registrationStreakApplies?: boolean;
   token_status?: {
     status: string;
     last_used_at: string | null;
     next_token_at: string | null;
     created_at: string;
     is_eligible?: boolean;
-    recent_games?: Array<{
-      id: string;
-      sequence_number: number;
-      date: string;
-    }>;
+    recent_games?: { id: string; sequence_number: number; date: string }[];
   };
 }

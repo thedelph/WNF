@@ -152,19 +152,25 @@ export default function PlayerProfileNew() {
 
         const unpaidGamesCount = unpaidGamesData?.count || 0;
 
-        // Get player win rates
-        const { data: winRatesData, error: winRatesError } = await executeWithRetry(
-          () => supabase.rpc('get_player_win_rates')
-        );
-
-        if (winRatesError) {
-          console.error('Error fetching win rates:', winRatesError);
-          toast.error('Failed to load win rate data');
-          return;
+        // Get win rates for player
+        const { data: winRates } = await supabase.rpc('get_player_win_rates');
+        let winRate = null;
+        if (winRates) {
+          const playerWinRate = winRates.find((wr: any) => wr.id === playerData.id);
+          if (playerWinRate) {
+            winRate = playerWinRate.win_rate;
+          }
         }
 
-        // Find win rate data for this player
-        const playerWinRates = winRatesData?.find(wr => wr.id === playerData.id);
+        // Get recent win rates (last 10 games)
+        const { data: recentWinRates } = await supabase.rpc('get_player_recent_win_rates');
+        let recentWinRate = null;
+        if (recentWinRates) {
+          const playerRecentWinRate = recentWinRates.find((wr: any) => wr.id === playerData.id);
+          if (playerRecentWinRate) {
+            recentWinRate = playerRecentWinRate.recent_win_rate;
+          }
+        }
 
         // Get current user's player ID if logged in
         let currentPlayerId = null;
@@ -323,25 +329,24 @@ export default function PlayerProfileNew() {
           whatsapp_group_member: playerData.whatsapp_group_member,
           xp: playerData.player_xp?.xp || 0,
           rarity: playerData.player_xp?.rarity || 'Amateur',
-          wins: playerWinRates?.wins || 0,
-          totalGames: (playerWinRates?.wins || 0) + (playerWinRates?.draws || 0) + (playerWinRates?.losses || 0),
-          win_rate: playerWinRates?.win_rate || 0,
-          gameHistory: validGames
-            .filter(reg => reg.game?.is_historical)
-            .map(reg => ({
-              sequence: reg.game?.sequence_number,
-              status: reg.status
-            }))
-            .filter(game => game.sequence !== undefined) || [],
-          games_played_together: gamesPlayedTogether,
-          my_rating: myRating,
-          reserveXP: xpBreakdownData?.reserve_xp || 0,
-          reserveCount: xpBreakdownData?.reserve_games || 0,
+          win_rate: winRate,
+          recent_win_rate: recentWinRate,
+          reserve_xp: xpBreakdownData?.reserve_xp || 0,
+          reserve_games: xpBreakdownData?.reserve_games || 0,
           bench_warmer_streak: playerData.bench_warmer_streak || 0,
+          token_status: tokenStatus,
+          games_played_together: gamesPlayedTogether,
+          my_rating: myRating as { attack_rating: number; defense_rating: number; } | null,
           unpaidGames: unpaidGamesCount,
           registrationStreak: 0,
           registrationStreakApplies: false,
-          token_status: tokenStatus
+          gameHistory: validGames
+            .filter((reg: any) => reg.game?.is_historical)
+            .map((reg: any) => ({
+              sequence: reg.game?.sequence_number || 0,
+              status: reg.status
+            }))
+            .filter((game: any) => game.sequence !== undefined) || []
         };
 
         console.log('[PlayerProfile] Setting player stats:', { 
@@ -452,13 +457,17 @@ export default function PlayerProfileNew() {
       >
         {/* Stats Grid - Full Width */}
         <div className="w-full">
-          <StatsGrid profile={{
-            total_xp: player.xp,
+          <StatsGrid stats={{
+            id: player.id,
+            friendly_name: player.friendly_name,
+            xp: player.xp,
             current_streak: player.current_streak,
             max_streak: player.max_streak,
             active_bonuses: player.active_bonuses,
             active_penalties: player.active_penalties,
-            rarity: player.rarity
+            rarity: player.rarity,
+            win_rate: player.win_rate,
+            recent_win_rate: player.recent_win_rate
           }} />
         </div>
 
@@ -474,8 +483,8 @@ export default function PlayerProfileNew() {
                 gameHistory: player.gameHistory || [],
                 latestSequence: latestSequence,
                 xp: player.xp,
-                reserveXP: player.reserveXP ?? 0,
-                reserveCount: player.reserveCount ?? 0,
+                reserveXp: player.reserve_xp ?? 0,
+                reserveCount: player.reserve_games ?? 0,
                 benchWarmerStreak: player.bench_warmer_streak || 0,
                 registrationStreak: player.registrationStreak || 0,
                 registrationStreakApplies: player.registrationStreakApplies || false,

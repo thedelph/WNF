@@ -6,6 +6,7 @@ interface PlayerStats {
   friendlyName: string;
   caps: number;
   winRate: number;
+  recentWinRate?: number;
   currentStreak: number;
   maxStreak: number;
   currentWinStreak: number;
@@ -16,6 +17,9 @@ interface PlayerStats {
   wins: number;
   draws: number;
   losses: number;
+  recentWins?: number;
+  recentDraws?: number;
+  recentLosses?: number;
 }
 
 interface TeamColorStats {
@@ -95,6 +99,33 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           });
 
         if (statsError) throw statsError;
+
+        // Fetch recent win rates (last 10 games)
+        const { data: recentWinRates, error: recentWinRatesError } = await supabase
+          .rpc('get_player_recent_win_rates');
+
+        if (recentWinRatesError) throw recentWinRatesError;
+
+        // Create a map of recent win rates
+        const recentWinRateMap = new Map<string, { 
+          recent_win_rate: number, 
+          recent_wins: number, 
+          recent_draws: number, 
+          recent_losses: number 
+        }>(
+          recentWinRates?.map((r: { 
+            id: string, 
+            recent_win_rate: number, 
+            recent_wins: number, 
+            recent_draws: number, 
+            recent_losses: number 
+          }) => [r.id, { 
+            recent_win_rate: Number(r.recent_win_rate), 
+            recent_wins: Number(r.recent_wins),
+            recent_draws: Number(r.recent_draws),
+            recent_losses: Number(r.recent_losses)
+          }]) || []
+        );
 
         // Fetch player caps (includes all games)
         const { data: playerCaps, error: capsError } = await supabase
@@ -177,7 +208,11 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           recentGames: 0,
           wins: Number(p.wins),
           draws: Number(p.draws),
-          losses: Number(p.losses)
+          losses: Number(p.losses),
+          recentWins: recentWinRateMap.get(p.id)?.recent_wins,
+          recentDraws: recentWinRateMap.get(p.id)?.recent_draws,
+          recentLosses: recentWinRateMap.get(p.id)?.recent_losses,
+          recentWinRate: recentWinRateMap.get(p.id)?.recent_win_rate
         })) || [];
 
         // Create a list of all players with caps
@@ -195,7 +230,11 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           recentGames: 0,
           wins: 0,
           draws: 0,
-          losses: 0
+          losses: 0,
+          recentWins: recentWinRateMap.get(p.id)?.recent_wins,
+          recentDraws: recentWinRateMap.get(p.id)?.recent_draws,
+          recentLosses: recentWinRateMap.get(p.id)?.recent_losses,
+          recentWinRate: recentWinRateMap.get(p.id)?.recent_win_rate
         })) || [];
 
         // Combine the lists, preferring win rate data when available
