@@ -19,6 +19,40 @@ export interface ChangelogEntry {
 export const changelogData: ChangelogEntry[] = [
 
   {
+    version: '1.1.2',
+    date: '24/03/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Winning Streaks',
+            details: "Added Winning Streaks feature to show consecutive wins for each player."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'No changes in this release',
+            details: "No changes in this release."
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          },
+        ]
+      }
+    ]
+  },
+
+  {
     version: '1.1.1',
     date: '13/03/2025',
     sections: [

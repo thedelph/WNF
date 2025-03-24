@@ -12,6 +12,8 @@ interface PlayerStats {
   wins: number;
   draws: number;
   losses: number;
+  currentWinStreak?: number;
+  maxWinStreak?: number;
 }
 
 interface TeamColorStats {
@@ -44,6 +46,8 @@ interface Stats {
     orange: TeamColorStats[];
   };
   bestBuddies: BestBuddies[];
+  topWinningStreaks: PlayerStats[];
+  currentWinningStreaks: PlayerStats[];
   loading: boolean;
   error: string | null;
 }
@@ -60,6 +64,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
       orange: []
     },
     bestBuddies: [],
+    topWinningStreaks: [],
+    currentWinningStreaks: [],
     loading: true,
     error: null,
   });
@@ -104,11 +110,27 @@ export const useStats = (year?: number, availableYears?: number[]) => {
 
         if (streakError) throw streakError;
 
+        // Fetch winning streaks
+        const { data: winStreakStats, error: winStreakError } = await supabase
+          .rpc('get_player_winning_streaks', { 
+            target_year: year || null
+          });
+
+        if (winStreakError) throw winStreakError;
+
         // Create a map of player streaks
         const streakMap = new Map(
           streakStats?.map(s => [s.id, { 
             current_streak: Number(s.current_streak), 
             max_streak: Number(s.max_streak) 
+          }]) || []
+        );
+
+        // Create a map of player winning streaks
+        const winStreakMap = new Map<string, { current_win_streak: number, max_win_streak: number }>(
+          winStreakStats?.map((s: { id: string, current_win_streak: number, max_win_streak: number }) => [s.id, { 
+            current_win_streak: Number(s.current_win_streak), 
+            max_win_streak: Number(s.max_win_streak) 
           }]) || []
         );
 
@@ -125,6 +147,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           winRate: Number(p.win_rate),
           currentStreak: streakMap.get(p.id)?.current_streak || 0,
           maxStreak: streakMap.get(p.id)?.max_streak || 0,
+          currentWinStreak: winStreakMap.get(p.id)?.current_win_streak || 0,
+          maxWinStreak: winStreakMap.get(p.id)?.max_win_streak || 0,
           recentGames: 0,
           wins: Number(p.wins),
           draws: Number(p.draws),
@@ -139,6 +163,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           winRate: 0,
           currentStreak: 0,
           maxStreak: 0,
+          currentWinStreak: 0,
+          maxWinStreak: 0,
           recentGames: 0,
           wins: 0,
           draws: 0,
@@ -216,6 +242,31 @@ export const useStats = (year?: number, availableYears?: number[]) => {
               .sort((a, b) => {
                 // First sort by current streak
                 const streakDiff = b.currentStreak - a.currentStreak;
+                if (streakDiff !== 0) return streakDiff;
+                // If streaks are equal, sort by caps as a tiebreaker
+                return b.caps - a.caps;
+              });
+
+            return sorted.slice(0, 10);
+          })(),
+          topWinningStreaks: (() => {
+            const sorted = allPlayers
+              .filter(p => p.maxWinStreak > 0)
+              .sort((a, b) => b.maxWinStreak - a.maxWinStreak);
+            return sorted.slice(0, 10);
+          })(),
+          currentWinningStreaks: (() => {
+            // Only show current streaks for ALL TIME or latest year
+            if (year !== undefined && year !== Math.max(...availableYears)) {
+              return [];
+            }
+            
+            // Filter out players with no current streak
+            const sorted = allPlayers
+              .filter(p => p.currentWinStreak > 0)
+              .sort((a, b) => {
+                // First sort by current streak
+                const streakDiff = b.currentWinStreak - a.currentWinStreak;
                 if (streakDiff !== 0) return streakDiff;
                 // If streaks are equal, sort by caps as a tiebreaker
                 return b.caps - a.caps;

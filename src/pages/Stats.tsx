@@ -2,16 +2,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Trophy, 
-  Medal, 
   Star, 
   TrendingUp, 
-  Timer, 
   Crown, 
   Percent, 
-  Users, 
   ShirtIcon,
   Flame,
-  Heart
+  Heart,
+  Award
 } from 'lucide-react';
 import { StatsCard } from '../components/stats/StatsCard';
 import { AwardCard } from '../components/stats/AwardCard';
@@ -79,6 +77,32 @@ export default function Stats() {
         {/* Highest XP Records */}
         <HighestXPCard selectedYear={selectedYear} />
 
+        {/* Top All-Time Winning Streaks */}
+        <AwardCard
+          title="Longest Winning Streaks"
+          winners={stats.topWinningStreaks.map(player => ({
+            name: player.friendlyName,
+            value: `${player.maxWinStreak} wins`,
+            id: player.id
+          }))}
+          icon={<Award className="w-6 h-6" />}
+          color="green"
+        />
+
+        {/* Current Winning Streaks - Only show for current year or all time */}
+        {(selectedYear === 'all' || selectedYear === new Date().getFullYear()) && (
+          <AwardCard
+            title="Current Winning Streaks"
+            winners={stats.currentWinningStreaks.map(player => ({
+              name: player.friendlyName,
+              value: `${player.currentWinStreak} wins`,
+              id: player.id
+            }))}
+            icon={<TrendingUp className="w-6 h-6" />}
+            color="teal"
+          />
+        )}
+
         {/* Top All-Time Streaks */}
         <AwardCard
           title="Longest Attendance Streaks"
@@ -129,6 +153,7 @@ export default function Stats() {
         {/* Best Win Rates */}
         <StatsCard
           title="Best Win Rates"
+          value=""
           stats={stats.bestWinRates}
           icon={<Percent className="w-6 h-6" />}
           description="Stats based on games with known outcomes and even teams only"
