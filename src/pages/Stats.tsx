@@ -80,11 +80,31 @@ export default function Stats() {
         {/* Top All-Time Winning Streaks */}
         <AwardCard
           title="Longest Winning Streaks"
-          winners={stats.topWinningStreaks.map(player => ({
-            name: player.friendlyName,
-            value: `${player.maxWinStreak} wins`,
-            id: player.id
-          }))}
+          winners={stats.topWinningStreaks
+            // Sort by maxWinStreak in descending order to ensure correct medal assignment
+            .sort((a, b) => (b?.maxWinStreak || 0) - (a?.maxWinStreak || 0))
+            .map(player => {
+              return {
+                name: player?.friendlyName,
+                value: (
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="font-bold text-right w-20">{player?.maxWinStreak} wins</span>
+                    {player?.maxStreakDate && (
+                      <span className="text-xs opacity-80 text-right w-24">
+                        {new Intl.DateTimeFormat('en-GB', { 
+                          day: 'numeric', 
+                          month: 'short', 
+                          year: 'numeric' 
+                        }).format(new Date(player?.maxStreakDate))}
+                      </span>
+                    )}
+                  </div>
+                ),
+                // Add the raw win streak value for medal calculation
+                rawValue: player?.maxWinStreak,
+                id: player?.id
+              }
+            })}
           icon={<Award className="w-6 h-6" />}
           color="green"
         />
@@ -95,7 +115,12 @@ export default function Stats() {
             title="Current Winning Streaks"
             winners={stats.currentWinningStreaks.map(player => ({
               name: player.friendlyName,
-              value: `${player.currentWinStreak} wins`,
+              value: (
+                <div className="flex items-center justify-end gap-2">
+                  <span className="font-bold text-right w-20">{player.currentWinStreak} wins</span>
+                </div>
+              ),
+              rawValue: player.currentWinStreak,
               id: player.id
             }))}
             icon={<TrendingUp className="w-6 h-6" />}
@@ -108,7 +133,21 @@ export default function Stats() {
           title="Longest Attendance Streaks"
           winners={stats.topAttendanceStreaks.map(player => ({
             name: player.friendlyName,
-            value: `${player.maxStreak} games`,
+            value: (
+              <div className="flex items-center justify-end gap-2">
+                <span className="font-bold text-right w-20">{player.maxStreak} games</span>
+                {player.maxAttendanceStreakDate && (
+                  <span className="text-xs opacity-80 text-right w-24">
+                    {new Intl.DateTimeFormat('en-GB', { 
+                      day: 'numeric', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    }).format(new Date(player.maxAttendanceStreakDate))}
+                  </span>
+                )}
+              </div>
+            ),
+            rawValue: player.maxStreak,
             id: player.id
           }))}
           icon={<Crown className="w-6 h-6" />}
@@ -121,7 +160,12 @@ export default function Stats() {
             title="Current Attendance Streaks"
             winners={stats.currentStreaks.map(player => ({
               name: player.friendlyName,
-              value: `${player.currentStreak} games`,
+              value: (
+                <div className="flex items-center justify-end gap-2">
+                  <span className="font-bold text-right w-20">{player.currentStreak} games</span>
+                </div>
+              ),
+              rawValue: player.currentStreak,
               id: player.id
             }))}
             icon={<Flame className="w-6 h-6" />}

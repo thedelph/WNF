@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
 import { Trophy, Medal } from 'lucide-react';
+import { ReactNode } from 'react';
 
 interface Winner {
   id: string;
   name: string;
-  value: string | number;
+  value: string | number | ReactNode;
+  rawValue?: number | string; // Optional raw value for medal calculation
 }
 
 interface AwardCardProps {
@@ -44,11 +46,40 @@ const shadowColors = {
 
 export const AwardCard = ({ title, winners, description, className, icon, color = 'blue' }: AwardCardProps) => {
   // Determine medal positions considering ties
-  const getMedalIndex = (currentIndex: number, currentValue: string | number, winners: Winner[]) => {
-    // Find the first occurrence of this value
-    const firstIndex = winners.findIndex(w => w.value === currentValue);
-    // Return that index as the medal index
-    return firstIndex;
+  const getMedalPosition = (currentIndex: number, winners: Winner[]) => {
+    const currentWinner = winners[currentIndex];
+    
+    // Use rawValue if available, otherwise fall back to value
+    const currentValue = currentWinner.rawValue !== undefined 
+      ? currentWinner.rawValue 
+      : currentWinner.value;
+    
+    // For ReactNode values without rawValue, we need to use a different approach
+    if (typeof currentValue !== 'string' && typeof currentValue !== 'number') {
+      // For React elements, we can't compare values directly, so use index-based logic
+      return currentIndex < 3 ? currentIndex : null;
+    }
+    
+    // Count how many distinct values are higher than the current one
+    let position = 0;
+    const seenValues = new Set<string | number>();
+    
+    for (let i = 0; i < winners.length; i++) {
+      const winner = winners[i];
+      const value = winner.rawValue !== undefined ? winner.rawValue : winner.value;
+      
+      // Skip ReactNode values in comparison
+      if (typeof value !== 'string' && typeof value !== 'number') continue;
+      
+      // If we haven't seen this value before and it's higher than current
+      if (!seenValues.has(value) && value > currentValue) {
+        seenValues.add(value);
+        position++;
+      }
+    }
+    
+    // Return medal position (0, 1, 2) or null if beyond medals
+    return position < 3 ? position : null;
   };
 
   return (
@@ -65,7 +96,7 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
         </div>
         <div className="space-y-1 mb-4">
           {winners.map((winner, index) => {
-            const medalIndex = getMedalIndex(index, winner.value, winners);
+            const medalIndex = getMedalPosition(index, winners);
             return (
               <motion.div
                 key={winner.id}
@@ -75,7 +106,7 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  {medalIndex < 3 ? (
+                  {medalIndex !== null ? (
                     <Medal 
                       className={`w-5 h-5 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
                     />

@@ -8,12 +8,14 @@ interface PlayerStats {
   winRate: number;
   currentStreak: number;
   maxStreak: number;
+  currentWinStreak: number;
+  maxWinStreak: number;
+  maxStreakDate?: string;
+  maxAttendanceStreakDate?: string;
   recentGames: number;
   wins: number;
   draws: number;
   losses: number;
-  currentWinStreak?: number;
-  maxWinStreak?: number;
 }
 
 interface TeamColorStats {
@@ -102,6 +104,11 @@ export const useStats = (year?: number, availableYears?: number[]) => {
 
         if (capsError) throw capsError;
 
+        // Create a map of player caps
+        const capsMap = new Map<string, number>(
+          playerCaps?.map(p => [p.id, Number(p.total_games)])
+        );
+
         // Fetch attendance streaks
         const { data: streakStats, error: streakError } = await supabase
           .rpc('get_player_attendance_streaks', { 
@@ -109,6 +116,14 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           });
 
         if (streakError) throw streakError;
+
+        // Create a map of player streaks
+        const streakMap = new Map<string, { current_streak: number, max_streak: number }>(
+          streakStats?.map((s: { id: string, current_streak: number, max_streak: number }) => [s.id, { 
+            current_streak: Number(s.current_streak), 
+            max_streak: Number(s.max_streak) 
+          }]) || []
+        );
 
         // Fetch winning streaks
         const { data: winStreakStats, error: winStreakError } = await supabase
@@ -118,29 +133,37 @@ export const useStats = (year?: number, availableYears?: number[]) => {
 
         if (winStreakError) throw winStreakError;
 
-        // Create a map of player streaks
-        const streakMap = new Map(
-          streakStats?.map(s => [s.id, { 
-            current_streak: Number(s.current_streak), 
-            max_streak: Number(s.max_streak) 
-          }]) || []
-        );
-
         // Create a map of player winning streaks
-        const winStreakMap = new Map<string, { current_win_streak: number, max_win_streak: number }>(
-          winStreakStats?.map((s: { id: string, current_win_streak: number, max_win_streak: number }) => [s.id, { 
+        const winStreakMap = new Map<string, { current_win_streak: number, max_win_streak: number, max_streak_date?: string }>(
+          winStreakStats?.map((s: { id: string, current_win_streak: number, max_win_streak: number, max_streak_date?: string }) => [s.id, { 
             current_win_streak: Number(s.current_win_streak), 
-            max_win_streak: Number(s.max_win_streak) 
+            max_win_streak: Number(s.max_win_streak),
+            max_streak_date: s.max_streak_date
           }]) || []
         );
 
-        // Create a map of player caps
-        const capsMap = new Map(
-          playerCaps?.map(p => [p.id, Number(p.total_games)])
-        );
+        // Fetch player streak stats for attendance streak dates
+        const { data: playerStreakStats, error: playerStreakStatsError } = await supabase
+          .from('player_streak_stats')
+          .select('friendly_name, longest_streak, longest_streak_period');
+        
+        if (playerStreakStatsError) {
+          console.error('Error fetching player streak stats:', playerStreakStatsError);
+          // Continue without streak dates rather than failing completely
+        }
+
+        // Create a map of player streak periods
+        const streakPeriodMap = new Map<string, { end_date: string }>();
+        if (playerStreakStats) {
+          playerStreakStats.forEach((stat: { friendly_name: string, longest_streak_period: { end_date: string } }) => {
+            streakPeriodMap.set(stat.friendly_name, { 
+              end_date: stat.longest_streak_period.end_date 
+            });
+          });
+        }
 
         // Transform player stats to match our interface
-        const transformedPlayerStats = playerStats?.map(p => ({
+        const transformedPlayerStats = playerStats?.map((p: { id: string, friendly_name: string, total_games: number, win_rate: number, wins: number, draws: number, losses: number }) => ({
           id: p.id,
           friendlyName: p.friendly_name,
           caps: capsMap.get(p.id) || Number(p.total_games),
@@ -149,6 +172,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           maxStreak: streakMap.get(p.id)?.max_streak || 0,
           currentWinStreak: winStreakMap.get(p.id)?.current_win_streak || 0,
           maxWinStreak: winStreakMap.get(p.id)?.max_win_streak || 0,
+          maxStreakDate: winStreakMap.get(p.id)?.max_streak_date ? winStreakMap.get(p.id)?.max_streak_date : undefined,
+          maxAttendanceStreakDate: streakPeriodMap.get(p.friendly_name)?.end_date,
           recentGames: 0,
           wins: Number(p.wins),
           draws: Number(p.draws),
@@ -156,15 +181,17 @@ export const useStats = (year?: number, availableYears?: number[]) => {
         })) || [];
 
         // Create a list of all players with caps
-        const playersWithCaps = playerCaps?.map(p => ({
+        const playersWithCaps = playerCaps?.map((p: { id: string, friendly_name: string, total_games: number }) => ({
           id: p.id,
           friendlyName: p.friendly_name,
           caps: Number(p.total_games),
           winRate: 0,
-          currentStreak: 0,
-          maxStreak: 0,
-          currentWinStreak: 0,
-          maxWinStreak: 0,
+          currentStreak: streakMap.get(p.id)?.current_streak || 0,
+          maxStreak: streakMap.get(p.id)?.max_streak || 0,
+          currentWinStreak: winStreakMap.get(p.id)?.current_win_streak || 0,
+          maxWinStreak: winStreakMap.get(p.id)?.max_win_streak || 0,
+          maxStreakDate: winStreakMap.get(p.id)?.max_streak_date ? winStreakMap.get(p.id)?.max_streak_date : undefined,
+          maxAttendanceStreakDate: streakPeriodMap.get(p.friendly_name)?.end_date,
           recentGames: 0,
           wins: 0,
           draws: 0,
@@ -191,7 +218,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
         if (teamColorError) throw teamColorError;
 
         // Transform team color stats
-        const transformedTeamColorStats = teamColorStats?.map(p => ({
+        const transformedTeamColorStats = teamColorStats?.map((p: { id: string, friendly_name: string, team: string, team_frequency: number, caps: number }) => ({
           id: p.id,
           friendlyName: p.friendly_name,
           team: p.team,
@@ -210,7 +237,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           throw bestBuddiesError;
         }
 
-        const transformedBuddies = bestBuddies?.map(buddy => ({
+        const transformedBuddies = bestBuddies?.map((buddy: { id: string, friendly_name: string, buddy_id: string, buddy_friendly_name: string, games_together: number }) => ({
           id: buddy.id,
           friendlyName: buddy.friendly_name,
           buddyId: buddy.buddy_id,

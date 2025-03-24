@@ -3,7 +3,8 @@ RETURNS TABLE(
     id uuid, 
     friendly_name text, 
     current_win_streak integer, 
-    max_win_streak integer
+    max_win_streak integer,
+    max_streak_date date
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -46,7 +47,25 @@ BEGIN
       AND g.outcome <> 'draw' -- Exclude draws as they're not wins
     ORDER BY p.id, g.sequence_number
   ),
-  -- Identify consecutive win sequences
+  -- Add a flag for when win status changes
+  win_status_change AS (
+    SELECT 
+      player_id,
+      player_friendly_name,
+      date,
+      sequence_number,
+      is_win,
+      in_target_year,
+      CASE 
+        WHEN LAG(is_win, 1, NULL) OVER (PARTITION BY player_id ORDER BY sequence_number) IS NULL 
+          OR is_win <> LAG(is_win, 1) OVER (PARTITION BY player_id ORDER BY sequence_number) 
+        THEN 1
+        ELSE 0
+      END as status_changed
+    FROM player_game_results
+    WHERE in_target_year
+  ),
+  -- Create group IDs for streaks
   win_groups AS (
     SELECT 
       player_id,
@@ -54,11 +73,8 @@ BEGIN
       date,
       sequence_number,
       is_win,
-      -- Create a new group when a win streak starts or ends
-      SUM(CASE WHEN is_win <> lag(is_win, 1, is_win) OVER (PARTITION BY player_id ORDER BY sequence_number) THEN 1 ELSE 0 END) 
-        OVER (PARTITION BY player_id ORDER BY sequence_number) as group_id
-    FROM player_game_results
-    WHERE in_target_year
+      SUM(status_changed) OVER (PARTITION BY player_id ORDER BY sequence_number) as group_id
+    FROM win_status_change
   ),
   -- Calculate streak lengths
   win_streak_lengths AS (
@@ -79,8 +95,14 @@ BEGIN
     SELECT 
       player_id,
       player_friendly_name,
-      CAST(MAX(streak_length) AS integer) as max_win_streak
-    FROM win_streak_lengths
+      CAST(MAX(streak_length) AS integer) as max_win_streak,
+      (SELECT last_game_date 
+       FROM win_streak_lengths wsl2 
+       WHERE wsl2.player_id = wsl.player_id 
+         AND wsl2.streak_length = MAX(wsl.streak_length) 
+       ORDER BY last_game_date DESC 
+       LIMIT 1) as max_streak_date
+    FROM win_streak_lengths wsl
     WHERE is_win = true
     GROUP BY player_id, player_friendly_name
   ),
@@ -101,7 +123,8 @@ BEGIN
     ms.player_id as id,
     ms.player_friendly_name as friendly_name,
     COALESCE(cs.current_win_streak, 0) as current_win_streak,
-    COALESCE(ms.max_win_streak, 0) as max_win_streak
+    COALESCE(ms.max_win_streak, 0) as max_win_streak,
+    ms.max_streak_date
   FROM max_win_streaks ms
   LEFT JOIN current_win_streaks cs ON cs.player_id = ms.player_id
   WHERE COALESCE(ms.max_win_streak, 0) > 0 OR COALESCE(cs.current_win_streak, 0) > 0
