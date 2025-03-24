@@ -44,7 +44,7 @@ export const changelogData: ChangelogEntry[] = [
         type: 'Fixed',
         items: [
           {
-            title: 'No fixes in this release',
+            title: 'N/A',
             details: "No fixes in this release."
           },
         ]
