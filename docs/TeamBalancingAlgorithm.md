@@ -10,6 +10,7 @@ The Team Balancing algorithm creates optimally balanced Blue and Orange teams ba
 - **Interactive Team Management**: Visual interface for manual player swapping between teams
 - **Smart Swap Recommendations**: Suggests player swaps to improve team balance
 - **Balance Scoring**: Quantifies team balance using a numerical score (lower is better)
+- **Preview Functionality**: Visualize the impact of potential player swaps before committing to changes
 
 ## Technical Implementation
 
@@ -52,7 +53,27 @@ When a player is selected, the `calculateBestSwaps()` function:
 - Ranks the swaps by their resulting score (lower is better)
 - Returns the top 3 swap candidates
 
-### User Interface Components
+## Preview Functionality
+
+The team balancing interface includes a powerful preview system that allows administrators to:
+
+1. Select players to preview potential swaps
+2. See the impact on team balance metrics in real-time
+3. Execute or cancel the swap based on the preview results
+
+For detailed information about the preview system, see [PlayerSwapPreview.md](./PlayerSwapPreview.md).
+
+## Win Rate Integration
+
+The team balancing system takes into account both overall and recent win rates:
+
+- **Overall Win Rate**: Historical performance across all games
+- **Recent Form**: Performance in the last 10 games
+- **Form Indicators**: Visual indicators showing if a player's recent form is better or worse than their overall performance
+
+This integration helps create more balanced teams by considering both long-term skill and current form. For more details on the win rate system, see [WinRateExplainer.md](./WinRateExplainer.md).
+
+## User Interface Components
 
 The Team Balancing interface provides:
 
