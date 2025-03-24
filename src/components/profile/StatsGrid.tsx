@@ -55,19 +55,19 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
     // Always show the indicator with the difference
     if (difference > 0) {
       return (
-        <span className="ml-2 text-green-500 font-bold" title="Better recent form">
+        <span className="text-green-500 font-bold" title="Better recent form">
           ▲ {difference.toFixed(1)}%
         </span>
       );
     } else if (difference < 0) {
       return (
-        <span className="ml-2 text-red-500 font-bold" title="Worse recent form">
+        <span className="text-red-500 font-bold" title="Worse recent form">
           ▼ {Math.abs(difference).toFixed(1)}%
         </span>
       );
     } else {
       return (
-        <span className="ml-2 text-gray-500" title="Same recent form">
+        <span className="text-gray-500" title="Same recent form">
           ⟷ 0.0%
         </span>
       );
@@ -100,13 +100,17 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
       label: 'Win Rate',
       value: (
         <div className="flex flex-col items-center">
-          <div className="flex items-center">
-            <span className="font-semibold">{Number(stats.win_rate).toFixed(1)}%</span>
-            {getFormIndicator()}
+          <div className="text-lg font-semibold">
+            {Number(stats.win_rate).toFixed(1)}%
           </div>
           {stats.recent_win_rate !== undefined && stats.recent_win_rate !== null && (
-            <div className="text-sm mt-1 text-gray-600 dark:text-gray-400">
-              Recent: {Number(stats.recent_win_rate).toFixed(1)}%
+            <div className="mt-1">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Recent: {Number(stats.recent_win_rate).toFixed(1)}%
+              </div>
+              <div className="text-center">
+                {getFormIndicator()}
+              </div>
             </div>
           )}
         </div>
