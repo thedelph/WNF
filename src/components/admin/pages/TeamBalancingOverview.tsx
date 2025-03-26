@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useTeamBalancing } from '../team-balancing/useTeamBalancing';
 import { TeamAssignment } from '../team-balancing/types';
 import { calculateBestSwaps } from '../team-balancing/teamBalanceUtils';
+import { FaWhatsapp } from 'react-icons/fa';
 
 /**
  * TeamBalancingOverview component
@@ -137,18 +138,18 @@ const TeamBalancingOverview = () => {
           continue;
         }
         
-        const blueAttack = blueTeamCopy.reduce((sum, p) => sum + p.attack_rating, 0);
-        const blueDefense = blueTeamCopy.reduce((sum, p) => sum + p.defense_rating, 0);
-        const blueWinRate = blueTeamCopy.reduce((sum, p) => sum + (p.win_rate || 50), 0);
+        const blueAttack = blueTeamCopy.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeamCopy.length;
+        const blueDefense = blueTeamCopy.reduce((sum, p) => sum + p.defense_rating, 0) / blueTeamCopy.length;
+        const blueWinRate = blueTeamCopy.reduce((sum, p) => sum + (p.win_rate || 50), 0) / blueTeamCopy.length;
         
-        const orangeAttack = orangeTeamCopy.reduce((sum, p) => sum + p.attack_rating, 0);
-        const orangeDefense = orangeTeamCopy.reduce((sum, p) => sum + p.defense_rating, 0);
-        const orangeWinRate = orangeTeamCopy.reduce((sum, p) => sum + (p.win_rate || 50), 0);
+        const orangeAttack = orangeTeamCopy.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeamCopy.length;
+        const orangeDefense = orangeTeamCopy.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeamCopy.length;
+        const orangeWinRate = orangeTeamCopy.reduce((sum, p) => sum + (p.win_rate || 50), 0) / orangeTeamCopy.length;
         
         // Calculate diffs
-        const attackDiff = Math.abs((blueAttack / blueTeamCopy.length) - (orangeAttack / orangeTeamCopy.length));
-        const defenseDiff = Math.abs((blueDefense / blueTeamCopy.length) - (orangeDefense / orangeTeamCopy.length));
-        const winRateDiff = Math.abs((blueWinRate / blueTeamCopy.length) - (orangeWinRate / orangeTeamCopy.length));
+        const attackDiff = Math.abs(blueAttack - orangeAttack);
+        const defenseDiff = Math.abs(blueDefense - orangeDefense);
+        const winRateDiff = Math.abs(blueWinRate - orangeWinRate);
         const weightedWinRateDiff = winRateDiff * 5; // Apply weight to win rate
         
         // Lower score is better
@@ -459,6 +460,62 @@ const TeamBalancingOverview = () => {
     }
   }, [previewState, assignments, updateAssignments]);
 
+  // Handle copying team balance information to clipboard for WhatsApp
+  const handleWhatsAppShare = useCallback(() => {
+    if (!assignments || assignments.length === 0 || !teamStats) {
+      toast.error('No team data available to share');
+      return;
+    }
+
+    try {
+      // Get team members
+      const orangeTeam = assignments.filter(p => p.team === 'orange')
+        .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name));
+      const blueTeam = assignments.filter(p => p.team === 'blue')
+        .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name));
+
+      // Format the message
+      let message = `📋 *Proposed Teams For Next Game*\n\n`;
+      
+      // Orange Team Stats
+      message += `🟠 *Orange Team*\n`;
+      message += `⚔️ Attack: ${teamStats.orange.attack.toFixed(1)}\n`;
+      message += `🛡️ Defense: ${teamStats.orange.defense.toFixed(1)}\n`;
+      message += `🏆 Win Rate: ${teamStats.orange.winRate.toFixed(1)}%\n\n`;
+      
+      // Blue Team Stats
+      message += `🔵 *Blue Team*\n`;
+      message += `⚔️ Attack: ${teamStats.blue.attack.toFixed(1)}\n`;
+      message += `🛡️ Defense: ${teamStats.blue.defense.toFixed(1)}\n`;
+      message += `🏆 Win Rate: ${teamStats.blue.winRate.toFixed(1)}%\n\n`;
+      
+      // Differences
+      message += `📊 *Differences*\n`;
+      message += `⚔️ Attack Diff: ${teamStats.attackDiff.toFixed(1)}\n`;
+      message += `🛡️ Defense Diff: ${teamStats.defenseDiff.toFixed(1)}\n`;
+      message += `🏆 Win Rate Diff: ${teamStats.winRateDiff.toFixed(1)}%\n`;
+      message += `⚖️ Balance Score: ${teamStats.currentScore.toFixed(1)}\n\n`;
+      
+      // Orange Team Players
+      message += `🟠 *Orange Team (${orangeTeam.length})*:\n`;
+      orangeTeam.forEach(player => {
+        message += `👤 ${player.friendly_name}\n`;
+      });
+      
+      message += `\n🔵 *Blue Team (${blueTeam.length})*:\n`;
+      blueTeam.forEach(player => {
+        message += `👤 ${player.friendly_name}\n`;
+      });
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(message);
+      toast.success('Team balance information copied to clipboard!');
+    } catch (err) {
+      console.error('Error copying to clipboard:', err);
+      toast.error('Failed to copy message to clipboard');
+    }
+  }, [assignments, teamStats]);
+
   if (isLoading) {
     return <div className="text-center p-4">Loading teams...</div>;
   }
@@ -473,7 +530,18 @@ const TeamBalancingOverview = () => {
 
   return (
     <div className="p-4 space-y-6">
-      <h2 className="text-2xl font-bold mb-6">Team Balance Overview</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Team Balance Overview</h2>
+        {assignments && assignments.length > 0 && (
+          <button
+            className="btn btn-sm btn-success"
+            aria-label="Share on WhatsApp"
+            onClick={handleWhatsAppShare}
+          >
+            <FaWhatsapp className="text-lg mr-2" /> Share Teams
+          </button>
+        )}
+      </div>
       
       <TeamStats stats={teamStats} comparisonStats={comparisonStats} previewSwapStats={previewSwapStats} />
 

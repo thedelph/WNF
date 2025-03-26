@@ -134,14 +134,14 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
                   <div className="flex items-center">
                     <span className="mr-2">{formatStat(comparisonStats.totalDiff)}</span>
                     <StarRating score={comparisonStats.totalDiff} />
-                    <span className="ml-2 text-xs text-success">
-                      {comparisonStats.improvement > 0 
-                        ? `Improved by ${formatStat(comparisonStats.improvement)}`
-                        : comparisonStats.improvement < 0
-                          ? `Worsened by ${formatStat(Math.abs(comparisonStats.improvement))}`
-                          : 'No change'
-                      }
-                    </span>
+                    {comparisonStats.improvement !== 0 && (
+                      <span className={`ml-2 text-xs ${comparisonStats.improvement > 0 ? 'text-success' : 'text-error'}`}>
+                        {comparisonStats.improvement > 0 
+                          ? `Improved by ${formatStat(comparisonStats.improvement)}`
+                          : `Worsened by ${formatStat(Math.abs(comparisonStats.improvement))}`
+                        }
+                      </span>
+                    )}
                   </div>
                 </td>
               )}
@@ -150,14 +150,14 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
                   <div className="flex items-center">
                     <span className="mr-2">{formatStat(previewSwapStats.totalDiff)}</span>
                     <StarRating score={previewSwapStats.totalDiff} />
-                    <span className="ml-2 text-xs text-success">
-                      {previewSwapStats.improvement > 0 
-                        ? `Improved by ${formatStat(previewSwapStats.improvement)}`
-                        : previewSwapStats.improvement < 0
-                          ? `Worsened by ${formatStat(Math.abs(previewSwapStats.improvement))}`
-                          : 'No change'
-                      }
-                    </span>
+                    {previewSwapStats.improvement !== 0 && (
+                      <span className={`ml-2 text-xs ${previewSwapStats.improvement > 0 ? 'text-success' : 'text-error'}`}>
+                        {previewSwapStats.improvement > 0 
+                          ? `Improved by ${formatStat(previewSwapStats.improvement)}`
+                          : `Worsened by ${formatStat(Math.abs(previewSwapStats.improvement))}`
+                        }
+                      </span>
+                    )}
                   </div>
                 </td>
               )}
@@ -215,14 +215,14 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
                   <StarRating score={comparisonStats.totalDiff} />
                 </div>
               </div>
-              <p className="text-xs text-green-700 mt-1">
-                {comparisonStats.improvement > 0 
-                  ? `Improved by ${formatStat(comparisonStats.improvement)}`
-                  : comparisonStats.improvement < 0
-                    ? `Worsened by ${formatStat(Math.abs(comparisonStats.improvement))}`
-                    : 'No change'
-                }
-              </p>
+              {comparisonStats.improvement !== 0 && (
+                <p className={`text-xs ${comparisonStats.improvement > 0 ? 'text-success' : 'text-error'}`}>
+                  {comparisonStats.improvement > 0 
+                    ? `Improved by ${formatStat(comparisonStats.improvement)}`
+                    : `Worsened by ${formatStat(Math.abs(comparisonStats.improvement))}`
+                  }
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -242,14 +242,14 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
                   <StarRating score={previewSwapStats.totalDiff} />
                 </div>
               </div>
-              <p className="text-xs text-white mt-1">
-                {previewSwapStats.improvement > 0 
-                  ? `Improved by ${formatStat(previewSwapStats.improvement)}`
-                  : previewSwapStats.improvement < 0
-                    ? `Worsened by ${formatStat(Math.abs(previewSwapStats.improvement))}`
-                    : 'No change'
-                }
-              </p>
+              {previewSwapStats.improvement !== 0 && (
+                <p className={`text-xs text-white`}>
+                  {previewSwapStats.improvement > 0 
+                    ? `Improved by ${formatStat(previewSwapStats.improvement)}`
+                    : `Worsened by ${formatStat(Math.abs(previewSwapStats.improvement))}`
+                  }
+                </p>
+              )}
             </div>
           </div>
         )}
