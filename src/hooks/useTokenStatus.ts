@@ -13,6 +13,7 @@ interface TokenStatus {
   hasRecentSelection: boolean;
   hasOutstandingPayments: boolean;
   outstandingPaymentsCount: number;
+  whatsappGroupMember?: boolean;
 }
 
 interface GameRecord {
@@ -95,6 +96,30 @@ export function useTokenStatus(playerId: string) {
         if (tokenStatusError) {
           console.error('Error fetching public token status:', tokenStatusError);
         }
+
+        // Get player data to check WhatsApp member status
+        const { data: playerData, error: playerError } = await executeWithRetry(
+          async () => {
+            const result = await supabase
+              .from('players')
+              .select('whatsapp_group_member')
+              .eq('id', playerId)
+              .single();
+            return result;
+          },
+          {
+            shouldToast: false,
+            maxRetries: 2
+          }
+        );
+
+        if (playerError) {
+          console.error('Error fetching player data:', playerError);
+        }
+
+        // Check if player is a WhatsApp group member
+        const whatsappGroupMember = playerData?.whatsapp_group_member === 'Yes' || 
+                                    playerData?.whatsapp_group_member === 'Proxy';
 
         // Get recent games where player was selected, using sequence number range
         const { data: recentGamesData, error: recentGamesError } = await executeWithRetry(
@@ -181,37 +206,41 @@ export function useTokenStatus(playerId: string) {
           hasPlayedInLastTenGames,
           hasRecentSelection,
           hasOutstandingPayments,
-          outstandingPaymentsCount
+          outstandingPaymentsCount,
+          whatsappGroupMember
         });
 
         // Construct token status object
         const publicTokenStatus = tokenStatusData as TokenStatusRecord | null;
+        const isEligible = hasPlayedInLastTenGames && !hasRecentSelection && !hasOutstandingPayments && whatsappGroupMember;
         const status: TokenStatus = publicTokenStatus ? {
-          status: hasPlayedInLastTenGames && !hasRecentSelection && !hasOutstandingPayments ? 'AVAILABLE' : 'INELIGIBLE',
+          status: isEligible ? 'AVAILABLE' : 'INELIGIBLE',
           lastUsedAt: publicTokenStatus.last_used_at,
           nextTokenAt: publicTokenStatus.next_token_at,
           createdAt: publicTokenStatus.created_at,
-          isEligible: hasPlayedInLastTenGames && !hasRecentSelection && !hasOutstandingPayments,  
+          isEligible,  
           recentGames: formattedRecentGames,
           hasPlayedInLastTenGames,
           hasRecentSelection,
           hasOutstandingPayments,
-          outstandingPaymentsCount
+          outstandingPaymentsCount,
+          whatsappGroupMember
         } : {
           status: 'NO_TOKEN',
           lastUsedAt: null,
           nextTokenAt: null,
           createdAt: new Date().toISOString(),
-          isEligible: false,
+          isEligible: whatsappGroupMember && hasPlayedInLastTenGames && !hasRecentSelection && !hasOutstandingPayments,
           recentGames: formattedRecentGames,
           hasPlayedInLastTenGames,
           hasRecentSelection,
           hasOutstandingPayments,
-          outstandingPaymentsCount
+          outstandingPaymentsCount,
+          whatsappGroupMember
         };
 
         console.log('[useTokenStatus] Processed Data:', {
-          isEligible: hasPlayedInLastTenGames && !hasRecentSelection && !hasOutstandingPayments,
+          isEligible,
           hasPlayedInLastTenGames,
           hasRecentSelection,
           hasOutstandingPayments,

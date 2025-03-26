@@ -100,6 +100,7 @@ interface ExtendedPlayerData {
   registrationStreak?: number;
   registrationStreakApplies?: boolean;
   unpaidGames?: number;
+  latestSequence?: number;
 }
 
 // Calculate rarity percentile based on player's XP compared to all players
@@ -314,11 +315,11 @@ export default function Component() {
           avatar_svg: playerData.avatar_svg,
           avatar_options: playerData.avatar_options,
           // Fix XP access - use player_xp data directly if available, otherwise use xpData
-          xp: xpData?.total_xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
-          total_xp: xpData?.total_xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
+          xp: xpData?.xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
+          total_xp: xpData?.xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
           reserveXP: xpData?.reserve_xp || 0,
           rank: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rank : 0,
-          rarity: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rarity : '',
+          rarity: xpData?.rarity || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rarity : 'Amateur'),
           current_streak: playerData.current_streak || 0,
           max_streak: correctMaxStreak,
           maxStreakDate: maxStreakDate || undefined,
@@ -332,7 +333,7 @@ export default function Component() {
         // Add debug logs to track XP data
         console.log('Player XP data:', {
           playerXP: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 'No player_xp data',
-          xpDataTotal: xpData?.total_xp || 'No total_xp in xpData',
+          xpDataTotal: xpData?.xp || 'No total_xp in xpData',
           finalXP: profileData.xp,
           finalTotalXP: profileData.total_xp
         });
@@ -350,6 +351,9 @@ export default function Component() {
               .limit(1)
           );
 
+          // Get the latest sequence number from the result
+          const latestSequence = latestSeqData && latestSeqData.length > 0 ? latestSeqData[0].sequence_number : 0;
+          
           // Get player's game registrations
           const { data: registrationsData } = await executeWithRetry(
             () => supabase
@@ -373,7 +377,8 @@ export default function Component() {
               sequence: reg.games.sequence_number,
               status: reg.status,
               is_historical: reg.games.is_historical
-            })) || []
+            })) || [],
+            latestSequence: latestSequence // Add latest sequence to profile data
           };
 
           setProfile(updatedProfileData);
@@ -625,7 +630,8 @@ export default function Component() {
                 active_bonuses: 0, // Default values if not present in profile
                 active_penalties: 0,
                 highest_xp: profile.highestXP,
-                highest_xp_date: profile.highestXPSnapshotDate || undefined
+                highest_xp_date: profile.highestXPSnapshotDate || undefined,
+                latestSequence: profile.latestSequence || 0 // Pass latest sequence to StatsGrid
               }} />
             </motion.div>
 
@@ -647,7 +653,7 @@ export default function Component() {
                   status: reg.status,
                   unpaid: false
                 })) || [],
-                latestSequence: 0, // No latest sequence available
+                latestSequence: profile.latestSequence || 0, // Pass latest sequence to XPBreakdown
                 xp: profile.xp || 0,
                 reserveXP: profile.reserveXP || 0,
                 reserveCount: profile.reserve_games || 0,

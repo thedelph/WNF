@@ -71,7 +71,7 @@ interface XPBreakdownProps {
     activePenalties: number;
     currentStreak: number;
     gameHistory?: GameHistory[];
-    latestSequence?: number;
+    latestSequence?: number; // Required for proper XP calculation
     xp: number;
     reserveXP?: number;
     reserveCount?: number;
@@ -89,7 +89,7 @@ interface XPBreakdownProps {
   - `activePenalties`: Current active XP penalties
   - `currentStreak`: Current attendance streak (based on past games only)
   - `gameHistory`: Array of past games and their details
-  - `latestSequence`: Most recent game sequence number
+  - `latestSequence`: Most recent game sequence number (critical for XP calculation - determines which games are considered "past" vs "future")
   - `xp`: Total XP points
   - `reserveXP`: XP earned/lost from reserve status
   - `reserveCount`: Number of times player has been a reserve
@@ -119,14 +119,18 @@ This weighting system ensures that recent participation is valued more highly wh
 The XP calculation follows these steps:
 
 1. Base XP Calculation
-   - Most Recent Game: 20 XP
-   - 1-2 Games Ago: 18 XP
-   - 3-4 Games Ago: 16 XP
-   - 5-9 Games Ago: 14 XP
-   - 10-19 Games Ago: 12 XP
-   - 20-29 Games Ago: 10 XP
-   - 30-39 Games Ago: 5 XP
-   - 40+ Games Ago: 0 XP
+   - The component uses `latestSequence` to determine which games are in the past vs. future
+   - Games where `game.sequence > latestSequence` are considered future games and skipped
+   - Games where player dropped out are also skipped
+   - XP is calculated for past games based on how many games ago they occurred:
+     - Most Recent Game: 20 XP
+     - 1-2 Games Ago: 18 XP
+     - 3-4 Games Ago: 16 XP
+     - 5-9 Games Ago: 14 XP
+     - 10-19 Games Ago: 12 XP
+     - 20-29 Games Ago: 10 XP
+     - 30-39 Games Ago: 5 XP
+     - 40+ Games Ago: 0 XP
 
 2. Reserve XP
    - +5 XP for each game where player was a reserve
@@ -206,6 +210,65 @@ A note "(XP will never be less than 0)" is displayed when the calculation would 
 - Card-based layout for each XP category
 - Color-coded sections for easy identification
 - Clear labeling of XP sources and amounts
+
+## Troubleshooting
+
+### Common Issues
+
+#### Empty XP Breakdown / All Games Skipped as "Future Games"
+If the XP Breakdown component appears empty or shows 0 XP despite having game history, check the following:
+
+1. Ensure the `latestSequence` property is correctly set and passed to the component
+   - In Profile.tsx, this should be fetched from the database (most recent completed game's sequence number)
+   - Setting `latestSequence: 0` will cause all games to be treated as future games and skipped
+   - Console logs will show "[XPBreakdown] Skipping game X - future game" for all games
+
+2. Verify the game history data structure
+   - Each game should have a `sequence` number and `status` property
+   - Games with status 'dropped_out' are skipped in XP calculation
+
+3. Check the console for debugging information
+   - The component logs detailed information about its calculations
+   - Look for "[XPBreakdown]" prefixed logs to trace the calculation process
+
+#### Differences Between Personal and Public Profiles
+If the XP Breakdown shows different values on personal vs. public profiles:
+
+1. Compare the props being passed to the component in both Profile.tsx and PlayerProfile.tsx
+2. Ensure both are using the same `latestSequence` value
+3. Verify that game history data is structured the same way in both components
+
+### Implementation Notes
+
+When implementing the XPBreakdown component in different views:
+
+1. Always fetch the latest sequence number from completed games:
+   ```typescript
+   const { data: latestSeqData } = await supabase
+     .from('games')
+     .select('sequence_number')
+     .eq('completed', true)
+     .order('sequence_number', { ascending: false })
+     .limit(1);
+   
+   const latestSequence = latestSeqData && latestSeqData.length > 0 
+     ? latestSeqData[0].sequence_number 
+     : 0;
+   ```
+
+2. Pass this value to the XPBreakdown component:
+   ```tsx
+   <XPBreakdown
+     stats={{
+       // other stats...
+       gameHistory: gameHistoryArray,
+       latestSequence: latestSequence,
+       // remaining stats...
+     }}
+   />
+   ```
+
+This ensures consistent XP calculation across different views of the same player data.
 
 ## Usage Example
 
