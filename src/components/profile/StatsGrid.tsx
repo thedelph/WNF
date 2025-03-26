@@ -1,3 +1,13 @@
+/**
+ * StatsGrid Component
+ * 
+ * Displays player statistics in a grid layout including XP, streaks, win rates, caps (games played), 
+ * and highest XP achievements.
+ * 
+ * Comprehensive documentation for this component can be found at:
+ * /docs/components/StatsGrid.md
+ */
+
 import { FC, ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { Tooltip } from '../ui/Tooltip';
@@ -203,8 +213,21 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
         </div>
       ),
       tooltip: stats.recent_win_rate !== undefined && stats.recent_win_rate !== null
-        ? `Overall win rate: ${Number(stats.win_rate).toFixed(1)}%\nRecent form (last 10 games): ${Number(stats.recent_win_rate).toFixed(1)}%` 
-        : undefined
+        ? `Overall Win Rate: ${Number(stats.win_rate).toFixed(1)}%\nRecent Win Rate (last 10 games): ${Number(stats.recent_win_rate).toFixed(1)}%`
+        : `Win Rate: ${Number(stats.win_rate).toFixed(1)}%`
+    });
+  }
+
+  // Add caps (games played) stat if available
+  if (stats.caps !== undefined && stats.caps !== null) {
+    statsItems.push({
+      label: 'Caps',
+      value: (
+        <div className="text-lg font-semibold">
+          {stats.caps.toLocaleString()}
+        </div>
+      ),
+      tooltip: `Games played: ${stats.caps.toLocaleString()}`
     });
   }
 

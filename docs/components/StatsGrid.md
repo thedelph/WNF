@@ -1,7 +1,7 @@
 # StatsGrid Component
 
 ## Overview
-The StatsGrid component displays various player statistics in a grid layout. It is used in both the Profile and PlayerProfile pages to show player information such as XP, streaks, win rates, and highest XP achievements.
+The StatsGrid component displays various player statistics in a grid layout. It is used in both the Profile and PlayerProfile pages to show player information such as XP, streaks, win rates, caps (games played), and highest XP achievements.
 
 ## Features
 
@@ -24,6 +24,11 @@ The StatsGrid component displays various player statistics in a grid layout. It 
 - Includes a form indicator showing the difference between recent and overall win rates (▲ for improvement, ▼ for decline)
 - Displays the recent win rate (last 10 games) below in a smaller font
 - Provides a tooltip that shows both values on hover
+
+### Caps Display
+- Shows the total number of games played by the player
+- Includes a tooltip explaining that "Caps" represents the number of games played
+- Formatted with thousands separators for better readability
 
 ## Implementation Details
 
@@ -48,6 +53,44 @@ const { data: highestXPData, error: highestXPError } = await executeWithRetry(
   // Other stats...
   highest_xp: profile.highestXP,
   highest_xp_date: profile.highestXPSnapshotDate ? new Date(profile.highestXPSnapshotDate).toLocaleDateString('en-GB') : undefined
+}} />
+```
+
+### Caps Data
+The caps data (number of games played) is fetched directly from the `players` table in the database. This data is passed to the StatsGrid component as the `caps` property.
+
+```typescript
+// Example of fetching player data including caps
+const { data: playerData, error: playerError } = await executeWithRetry(
+  () => supabase
+    .from('players')
+    .select(`
+      id,
+      user_id,
+      friendly_name,
+      avatar_svg,
+      avatar_options,
+      current_streak,
+      max_streak,
+      caps,
+      whatsapp_group_member,
+      player_xp (
+        xp,
+        rank,
+        rarity
+      )
+    `)
+    .eq('user_id', user?.id)
+    .single()
+);
+
+// Example of passing caps data to StatsGrid
+<StatsGrid stats={{
+  id: profile.id,
+  friendly_name: profile.friendly_name,
+  xp: profile.xp,
+  // Other stats...
+  caps: profile.caps || 0
 }} />
 ```
 
@@ -78,7 +121,26 @@ The StatsGrid component uses conditional rendering to display the highest XP inf
     No highest XP data
   </div>
 )}
+
+// Example of Caps display logic
+{
+  label: 'Caps',
+  value: (
+    <div className="flex flex-col items-center">
+      <div className="text-lg font-semibold">
+        {(stats.caps || 0).toLocaleString()}
+      </div>
+      <Tooltip content="Number of games played">
+        <div className="text-xs opacity-70 cursor-help">
+          Games Played
+        </div>
+      </Tooltip>
+    </div>
+  ),
+}
 ```
+
+The `toLocaleString()` method is used to format the number with thousands separators, making it more readable for users. A tooltip is also provided to explain that "Caps" represents the number of games played.
 
 ## Usage
 The StatsGrid component is used in both the Profile and PlayerProfile pages:
@@ -96,6 +158,17 @@ Fixed an issue where the highest XP data was not being displayed consistently be
 2. **Solution**: Updated the Profile page to fetch the highest XP data from the `highest_xp_records_view` and pass it to the StatsGrid component with the correct property names (`highest_xp` and `highest_xp_date`).
 
 3. **Result**: Both the Profile and PlayerProfile pages now correctly display the player's highest XP value and the date it was achieved, as well as showing "New Personal Best! 🎉" when applicable.
+
+### Caps Display Issue (March 26, 2025)
+Fixed an issue where the "Caps" metric (games played) was not displaying correctly:
+
+1. **Issue**: The "Caps" value was showing as 0 on the personal profile page and not displaying at all on the public profile page.
+
+2. **Solution**: 
+   - Updated the Profile page to include the `caps` field in the player data query and pass it to the StatsGrid component.
+   - Updated the PlayerProfile page to pass the `caps` field to the StatsGrid component.
+
+3. **Result**: Both the Profile and PlayerProfile pages now correctly display the player's total number of games played.
 
 ### XP Calculation Dependency on Latest Sequence (March 26, 2025)
 Fixed an issue where the XP calculation in the StatsGrid component was inconsistent with the XPBreakdown component:

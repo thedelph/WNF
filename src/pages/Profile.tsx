@@ -148,6 +148,7 @@ export default function Component() {
               avatar_options,
               current_streak,
               max_streak,
+              caps,
               whatsapp_group_member,
               player_xp (
                 xp,
@@ -327,7 +328,8 @@ export default function Component() {
           win_rate: winRate,
           recent_win_rate: recentWinRate,
           highestXP: highestXPData?.xp,
-          highestXPSnapshotDate: highestXPData?.snapshot_date ? formatDate(highestXPData.snapshot_date) : undefined
+          highestXPSnapshotDate: highestXPData?.snapshot_date ? formatDate(highestXPData.snapshot_date) : undefined,
+          caps: playerData.caps || 0
         };
 
         // Add debug logs to track XP data
@@ -631,6 +633,7 @@ export default function Component() {
                 active_penalties: 0,
                 highest_xp: profile.highestXP,
                 highest_xp_date: profile.highestXPSnapshotDate || undefined,
+                caps: profile.caps || 0,
                 latestSequence: profile.latestSequence || 0 // Pass latest sequence to StatsGrid
               }} />
             </motion.div>

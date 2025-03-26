@@ -537,7 +537,8 @@ export default function PlayerProfileNew() {
             active_penalties: player.active_penalties,
             rarity: player.rarity,
             win_rate: player.win_rate,
-            recent_win_rate: player.recent_win_rate
+            recent_win_rate: player.recent_win_rate,
+            caps: player.caps
           })}
           <StatsGrid stats={{
             id: player.id,
@@ -552,7 +553,8 @@ export default function PlayerProfileNew() {
             active_penalties: player.active_penalties,
             rarity: player.rarity,
             win_rate: player.win_rate,
-            recent_win_rate: player.recent_win_rate
+            recent_win_rate: player.recent_win_rate,
+            caps: player.caps
           }} />
         </div>
 
