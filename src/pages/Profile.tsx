@@ -1,18 +1,45 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 import { motion } from 'framer-motion'
-import { Tooltip } from '../components/ui/Tooltip'
 import AvatarCreator from '../components/AvatarCreator'
 import PaymentHistory from '../components/profile/PaymentHistory'
 import XPBreakdown from '../components/profile/XPBreakdown'
 import StatsGrid from '../components/profile/StatsGrid'
 import TokenStatus from '../components/profile/TokenStatus'
-import { executeWithRetry, executeBatchQueries } from '../utils/network'
 import { useTokenStatus } from '../hooks/useTokenStatus'
+
+// Helper function to format date
+const formatDate = (dateString: string | null): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+// Helper function to retry Supabase queries
+async function executeWithRetry<T>(queryFn: () => Promise<T>, options = { maxRetries: 3, shouldToast: true }): Promise<T> {
+  const { maxRetries, shouldToast } = options;
+  let lastError: any = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await queryFn();
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${attempt + 1} failed:`, error);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+  
+  if (shouldToast) {
+    toast.error('Failed to load data after multiple attempts');
+  }
+  
+  throw lastError;
+}
 
 interface PlayerProfile {
   friendly_name: string;
@@ -51,10 +78,11 @@ interface ExtendedPlayerData {
   current_streak: number;
   max_streak: number;
   xp: number;
+  total_xp?: number;
   rank: number;
   rarity: string;
   reserveXP: number;
-  whatsapp_group_member?: string;
+  whatsapp_group_member: boolean;
   registration_streak?: number;
   gameSequences?: Array<{
     sequence: number;
@@ -63,6 +91,15 @@ interface ExtendedPlayerData {
   }>;
   win_rate?: number;
   recent_win_rate?: number;
+  highestXP?: number;
+  highestXPSnapshotDate?: string;
+  maxStreakDate?: string;
+  caps?: number;
+  reserve_games?: number;
+  bench_warmer_streak?: number;
+  registrationStreak?: number;
+  registrationStreakApplies?: boolean;
+  unpaidGames?: number;
 }
 
 // Calculate rarity percentile based on player's XP compared to all players
@@ -75,23 +112,30 @@ const calculateRarity = (playerXP: number, allXP: number[]): number => {
 export default function Component() {
   const { user } = useAuth()
   const [profile, setProfile] = useState<ExtendedPlayerData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [friendlyName, setFriendlyName] = useState('')
-  const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
+  const [playerId, setPlayerId] = useState<string>()
   const [gameSequences, setGameSequences] = useState<any[]>([])
-  const [latestSequence, setLatestSequence] = useState<number>(0)
-  const [playerId, setPlayerId] = useState<string | null>(null)
+  const [isLoading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showAvatarCreator, setShowAvatarCreator] = useState(false)
+  const [showEditModal, setShowEditModal] = useState<string | null>(null)
+  const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
   const { tokenStatus } = useTokenStatus(playerId || '')
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true)
-        setError(null)
+  // Function to load profile data
+  const loadProfile = async () => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
-        // Get player data first
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Wrap everything in try/catch blocks to prevent null errors
+      try {
+        // Get player data
         const { data: playerData, error: playerError } = await executeWithRetry(
           () => supabase
             .from('players')
@@ -116,29 +160,83 @@ export default function Component() {
 
         if (playerError) {
           console.error('Error fetching player data:', playerError);
-          toast.error('Failed to load player data');
-          return;
-        }
-
-        if (!playerData) {
-          toast.error('Player not found');
+          toast.error('Failed to load profile data');
+          setLoading(false);
           return;
         }
 
         // Store player ID for token status hook
+        if (!playerData) {
+          toast.error('Player not found');
+          setLoading(false);
+          return;
+        }
+
         setPlayerId(playerData.id);
 
-        // Fetch player win rates
-        const winRatesPromise = supabase.rpc('get_player_win_rates');
-        const recentWinRatesPromise = supabase.rpc('get_player_recent_win_rates');
+        // Get max streak date from the winning streaks function
+        interface StreakDataType {
+          id: string;
+          friendly_name: string;
+          current_win_streak: number;
+          max_win_streak: number;
+          max_streak_date: string | null;
+        }
 
-        const [winRatesResult, recentWinRatesResult] = await Promise.all([
-          winRatesPromise,
-          recentWinRatesPromise
-        ]);
+        let streakData = null;
+        let maxStreakDate = null;
+
+        try {
+          const streakResponse = await executeWithRetry(() => 
+            supabase
+              .rpc('get_player_winning_streaks')
+              .eq('id', playerData.id)
+              .single()
+          );
+
+          if (streakResponse.error) {
+            console.error('Error fetching streak data:', streakResponse.error);
+            // Continue without streak date data
+          } else if (streakResponse.data) {
+            // Type assertion for streak data
+            streakData = streakResponse.data;
+            maxStreakDate = streakData?.max_streak_date ? formatDate(streakData.max_streak_date) : null;
+            console.log('Max streak date:', maxStreakDate);
+          }
+        } catch (streakError) {
+          console.error('Error in streak data processing:', streakError);
+          // Continue without streak data
+        }
+
+        // Fetch player win rates and other data with better error handling
+        let winRatesResult = { data: null };
+        let recentWinRatesResult = { data: null };
+        let streakStatsResult = { data: null, error: null };
+
+        try {
+          const winRatesPromise = supabase.rpc('get_player_win_rates');
+          const recentWinRatesPromise = supabase.rpc('get_player_recent_win_rates');
+
+          // Fetch player streak stats for the correct max streak value
+          const streakStatsPromise = supabase
+            .from('player_streak_stats')
+            .select('friendly_name, longest_streak, longest_streak_period')
+            .eq('friendly_name', playerData.friendly_name)
+            .single();
+
+          [winRatesResult, recentWinRatesResult, streakStatsResult] = await Promise.all([
+            winRatesPromise,
+            recentWinRatesPromise,
+            streakStatsPromise
+          ]);
+        } catch (dataFetchError) {
+          console.error('Error fetching additional player data:', dataFetchError);
+          // Continue with partial data
+        }
 
         let winRate = null;
         let recentWinRate = null;
+        let correctMaxStreak = playerData.max_streak || 0; // Default to the value from players table
 
         if (winRatesResult.data) {
           const playerWinRate = winRatesResult.data.find((wr: any) => wr.id === playerData?.id);
@@ -154,140 +252,195 @@ export default function Component() {
           }
         }
 
-        // Get XP breakdown from player_xp table
-        const { data: xpData, error: xpError } = await executeWithRetry(
-          () => supabase
-            .from('player_xp')
-            .select('*')
-            .eq('player_id', playerData.id)
-            .single()
-        );
-
-        if (xpError) {
-          console.error('Error fetching XP data:', xpError);
-          toast.error('Failed to load XP data');
-          return;
+        // Use the max streak from player_streak_stats if available
+        if (streakStatsResult.data && streakStatsResult.data.longest_streak) {
+          correctMaxStreak = streakStatsResult.data.longest_streak;
+          console.log('Using max streak from player_streak_stats:', correctMaxStreak);
+        } else if (streakStatsResult.error) {
+          console.error('Error fetching streak stats:', streakStatsResult.error);
         }
 
-        // Combine the data
+        // Get highest XP record for the player with better error handling
+        let highestXPData = null;
+        try {
+          const highestXPResult = await executeWithRetry(
+            () => supabase
+              .from('highest_xp_records_view')
+              .select('xp, snapshot_date')
+              .eq('player_id', playerData.id)
+              .single()
+          );
+
+          if (highestXPResult.error) {
+            if (!highestXPResult.error.message?.includes('404')) {
+              console.error('Error fetching highest XP data:', highestXPResult.error);
+            }
+            // Continue without highest XP data
+          } else {
+            highestXPData = highestXPResult.data;
+          }
+        } catch (highestXPError) {
+          console.error('Error processing highest XP data:', highestXPError);
+          // Continue without highest XP data
+        }
+
+        // Get XP breakdown from player_xp table with better error handling
+        let xpData = null;
+        try {
+          const xpResult = await executeWithRetry(
+            () => supabase
+              .from('player_xp')
+              .select('*')
+              .eq('player_id', playerData.id)
+              .single()
+          );
+
+          if (xpResult.error) {
+            console.error('Error fetching XP data:', xpResult.error);
+            toast.error('Failed to load XP data');
+          } else {
+            xpData = xpResult.data;
+          }
+        } catch (xpError) {
+          console.error('Error processing XP data:', xpError);
+          toast.error('Failed to process XP data');
+        }
+
+        // Combine the data with safe access
         const profileData: ExtendedPlayerData = {
           id: playerData.id,
           user_id: playerData.user_id,
           friendly_name: playerData.friendly_name,
           avatar_svg: playerData.avatar_svg,
           avatar_options: playerData.avatar_options,
-          xp: playerData.player_xp?.xp || 0,
+          // Fix XP access - use player_xp data directly if available, otherwise use xpData
+          xp: xpData?.total_xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
+          total_xp: xpData?.total_xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
           reserveXP: xpData?.reserve_xp || 0,
-          rank: playerData.player_xp?.rank || 0,
-          rarity: playerData.player_xp?.rarity || '',
+          rank: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rank : 0,
+          rarity: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rarity : '',
           current_streak: playerData.current_streak || 0,
-          max_streak: playerData.max_streak || 0,
-          whatsapp_group_member: playerData.whatsapp_group_member,
+          max_streak: correctMaxStreak,
+          maxStreakDate: maxStreakDate || undefined,
+          whatsapp_group_member: playerData.whatsapp_group_member || false,
           win_rate: winRate,
           recent_win_rate: recentWinRate,
-          registration_streak: playerData.registration_streak
+          highestXP: highestXPData?.xp,
+          highestXPSnapshotDate: highestXPData?.snapshot_date ? formatDate(highestXPData.snapshot_date) : undefined
         };
+
+        // Add debug logs to track XP data
+        console.log('Player XP data:', {
+          playerXP: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 'No player_xp data',
+          xpDataTotal: xpData?.total_xp || 'No total_xp in xpData',
+          finalXP: profileData.xp,
+          finalTotalXP: profileData.total_xp
+        });
 
         setProfile(profileData);
-        setFriendlyName(profileData.friendly_name || '');
 
-        // Now that we have the player data, get the latest sequence number
-        const { data: latestSeqData, error: latestSeqError } = await executeWithRetry(
-          () => supabase
-            .from('games')
-            .select('sequence_number')
-            .eq('completed', true)
-            .order('sequence_number', { ascending: false })
-            .limit(1)
-            .single()
-        );
+        // Now that we have the player data, get the latest sequence number and registrations
+        try {
+          const { data: latestSeqData } = await executeWithRetry(
+            () => supabase
+              .from('games')
+              .select('sequence_number')
+              .eq('completed', true)
+              .order('sequence_number', { ascending: false })
+              .limit(1)
+          );
 
-        if (latestSeqError) {
-          console.error('Error fetching latest sequence:', latestSeqError);
+          // Get player's game registrations
+          const { data: registrationsData } = await executeWithRetry(
+            () => supabase
+              .from('game_registrations')
+              .select(`
+                status,
+                games (
+                  sequence_number,
+                  is_historical
+                )
+              `)
+              .eq('player_id', playerData.id)
+              .order('created_at', { ascending: false })
+          );
+
+          // Update the profile with game sequences
+          const registrations = registrationsData || [];
+          const updatedProfileData = {
+            ...profileData,
+            gameSequences: registrations?.map((reg: any) => ({
+              sequence: reg.games.sequence_number,
+              status: reg.status,
+              is_historical: reg.games.is_historical
+            })) || []
+          };
+
+          setProfile(updatedProfileData);
+        } catch (gameDataError) {
+          console.error('Error fetching game data:', gameDataError);
+          // Continue with partial profile data
         }
-
-        setLatestSequence(latestSeqData?.sequence_number || 0);
-
-        // Get all registrations for historical games with retry
-        const { data: registrations, error: registrationsError } = await executeWithRetry(
-          () => supabase
-            .from('game_registrations')
-            .select(`
-              status,
-              games!inner (
-                sequence_number,
-                is_historical
-              )
-            `)
-            .eq('player_id', playerData.id),
-          { shouldToast: false }
-        );
-
-        if (registrationsError) {
-          console.error('Error fetching registrations:', registrationsError);
-        }
-
-        // Combine all the data
-        const updatedProfileData: ExtendedPlayerData = {
-          ...profileData,
-          gameSequences: registrations?.map(reg => ({
-            sequence: reg.games.sequence_number,
-            status: reg.status,
-            is_historical: reg.games.is_historical
-          })) || []
-        };
-
-        setProfile(updatedProfileData);
-
-      } catch (err: any) {
-        console.error('Error in fetchProfile:', err);
-        setError(err.message || 'Failed to load profile data');
+      } catch (innerError) {
+        console.error('Inner error in loadProfile:', innerError);
+        const errorMessage = innerError && typeof innerError === 'object' && 'message' in innerError 
+          ? innerError.message 
+          : 'Failed to load profile data';
+        setError(errorMessage);
         toast.error('Error loading profile data. Please try refreshing the page.');
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (outerError) {
+      console.error('Outer error in loadProfile:', outerError);
+      // Use a safe way to extract the error message
+      const errorMessage = 'Failed to load profile data';
+      setError(errorMessage);
+      toast.error('Error loading profile data. Please try refreshing the page.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (user?.id) {
-      fetchProfile();
+      loadProfile();
     }
   }, [user?.id]);
 
   // Set up real-time subscription for profile updates
   useEffect(() => {
-    if (!user) return
+    if (!user?.id) return;
 
-    const channel = supabase
-      .channel('profile_changes')
+    const subscription = supabase
+      .channel('profile-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
-          table: 'player_stats',
+          table: 'players',
           filter: `user_id=eq.${user.id}`
         },
-        () => {
-          fetchProfile()
+        (_reg: any) => {
+          loadProfile()
         }
       )
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      subscription.unsubscribe()
     }
-  }, [user])
+  }, [user?.id])
 
   const handleEditProfile = () => setIsEditing(true)
 
   const handleSaveProfile = async () => {
-    if (!friendlyName) {
+    if (!profile) {
       toast.error('Please fill in all fields.')
       return
     }
 
     const restrictedNames = ['admin', 'administrator']
-    if (restrictedNames.includes(friendlyName.toLowerCase())) {
+    if (restrictedNames.includes(profile.friendly_name.toLowerCase())) {
       toast.error('Friendly name cannot be "admin" or "administrator".')
       return
     }
@@ -295,14 +448,14 @@ export default function Component() {
     try {
       const { error } = await supabase
         .from('players')
-        .update({ friendly_name: friendlyName })
+        .update({ friendly_name: profile.friendly_name })
         .eq('user_id', user!.id)
 
       if (error) throw error
 
       setProfile((prevProfile) => ({
         ...prevProfile!,
-        friendly_name: friendlyName,
+        friendly_name: profile.friendly_name,
       }))
 
       toast.success('Profile updated successfully!!')
@@ -354,7 +507,7 @@ export default function Component() {
           </motion.div>
         )}
 
-        {loading ? (
+        {isLoading ? (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -399,8 +552,8 @@ export default function Component() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         type="text" 
-                        value={friendlyName} 
-                        onChange={(e) => setFriendlyName(e.target.value)} 
+                        value={profile.friendly_name} 
+                        onChange={(e) => setProfile((prevProfile) => ({ ...prevProfile!, friendly_name: e.target.value }))} 
                         className="input input-bordered text-xl sm:text-2xl font-bold w-full max-w-xs"
                         placeholder="Enter your friendly name"
                       />
@@ -465,11 +618,14 @@ export default function Component() {
                 xp: profile.xp,
                 current_streak: profile.current_streak || 0,
                 max_streak: profile.max_streak || 0,
+                max_streak_date: profile.maxStreakDate || undefined,
                 rarity: profile.rarity,
                 win_rate: profile.win_rate,
                 recent_win_rate: profile.recent_win_rate,
                 active_bonuses: 0, // Default values if not present in profile
-                active_penalties: 0
+                active_penalties: 0,
+                highest_xp: profile.highestXP,
+                highest_xp_date: profile.highestXPSnapshotDate || undefined
               }} />
             </motion.div>
 
@@ -486,12 +642,12 @@ export default function Component() {
                 activeBonuses: 0,
                 activePenalties: 0,
                 currentStreak: profile.current_streak || 0,
-                gameHistory: profile.gameSequences?.map(seq => ({
-                  sequence: seq.sequence,
-                  status: seq.status,
+                gameHistory: profile.gameSequences?.map((reg: any) => ({
+                  sequence: reg.sequence,
+                  status: reg.status,
                   unpaid: false
                 })) || [],
-                latestSequence: latestSequence,
+                latestSequence: 0, // No latest sequence available
                 xp: profile.xp || 0,
                 reserveXP: profile.reserveXP || 0,
                 reserveCount: profile.reserve_games || 0,
@@ -514,7 +670,6 @@ export default function Component() {
                 <TokenStatus 
                   status={tokenStatus.status}
                   lastUsedAt={tokenStatus.lastUsedAt}
-                  nextTokenAt={tokenStatus.nextTokenAt}
                   createdAt={tokenStatus.createdAt}
                   isEligible={tokenStatus.isEligible}
                   recentGames={tokenStatus.recentGames}
@@ -522,7 +677,7 @@ export default function Component() {
                   hasRecentSelection={tokenStatus.hasRecentSelection}
                   hasOutstandingPayments={tokenStatus.hasOutstandingPayments}
                   outstandingPaymentsCount={tokenStatus.outstandingPaymentsCount}
-                  whatsappGroupMember={profile?.whatsapp_group_member === 'Yes' || profile?.whatsapp_group_member === 'Proxy'}
+                  whatsappGroupMember={tokenStatus.whatsappGroupMember}
                 />
               )}
             </motion.div>
@@ -551,6 +706,7 @@ export default function Component() {
               onClose={() => setIsAvatarEditorOpen(false)}
               currentAvatar={profile?.avatar_svg}
               currentOptions={profile?.avatar_options}
+              onSave={handleAvatarSave}
             />
           </motion.div>
         )}

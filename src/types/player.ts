@@ -34,7 +34,10 @@ export interface PlayerStats {
   active_penalties: number;
   current_streak: number;
   max_streak: number;
+  max_streak_date?: string;
   xp: number;
+  highest_xp?: number;
+  highest_xp_date?: string;
   wins?: number;
   totalGames?: number;
   win_rate?: number;

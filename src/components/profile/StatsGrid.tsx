@@ -1,7 +1,21 @@
-import React, { ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { Tooltip } from '../ui/Tooltip';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+
+// Helper function to format date consistently as "12 Mar 2025"
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString) return '';
+  
+  // If the date is already in the correct format, return it
+  if (/^\d{1,2} [A-Z][a-z]{2} \d{4}$/.test(dateString)) {
+    return dateString;
+  }
+  
+  // Otherwise, format it
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
 interface StatsGridProps {
   stats: {
@@ -9,8 +23,11 @@ interface StatsGridProps {
     friendly_name?: string;
     xp?: number;
     total_xp?: number;
+    highest_xp?: number;
+    highest_xp_date?: string;
     current_streak?: number;
-    max_streak?: number;
+    max_streak?: number; // NOTE: This value may be inconsistent with player_streak_stats view
+    max_streak_date?: string; 
     rarity?: string;
     win_rate?: number;
     recent_win_rate?: number;
@@ -26,7 +43,19 @@ interface StatItem {
   tooltip?: string;
 }
 
-const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
+export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
+  // Debug log to see what data is being passed to the component
+  console.log('StatsGrid received stats:', stats);
+  console.log('Highest XP data:', { 
+    highest_xp: stats.highest_xp, 
+    highest_xp_date: stats.highest_xp_date 
+  });
+  console.log('Streak data:', {
+    current_streak: stats.current_streak,
+    max_streak: stats.max_streak,
+    max_streak_date: stats.max_streak_date
+  });
+
   const getRarityDescription = (rarity: string) => {
     switch (rarity) {
       case 'Legendary':
@@ -77,15 +106,73 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
   const statsItems: StatItem[] = [
     { 
       label: 'Total XP', 
-      value: ((stats.xp ?? stats.total_xp) || 0).toLocaleString()
+      value: (
+        <div className="flex flex-col items-center">
+          <div className="text-lg font-semibold">
+            {((stats.xp ?? stats.total_xp) || 0).toLocaleString()}
+          </div>
+          {stats.highest_xp ? (
+            <div className="mt-1">
+              {stats.xp === stats.highest_xp ? (
+                <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  New Personal Best! 🎉
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                  Highest: {stats.highest_xp.toLocaleString()}
+                </div>
+              )}
+              {stats.highest_xp_date && stats.xp !== stats.highest_xp && (
+                <div className="text-xs text-gray-500 dark:text-gray-500">
+                  {formatDate(stats.highest_xp_date)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+              No highest XP data
+            </div>
+          )}
+        </div>
+      ),
+      tooltip: stats.highest_xp
+        ? `Current XP: ${((stats.xp ?? stats.total_xp) || 0).toLocaleString()}\nHighest XP: ${stats.highest_xp.toLocaleString()}${stats.highest_xp_date ? ` (${formatDate(stats.highest_xp_date)})` : ''}`
+        : undefined
     },
     { 
-      label: 'Current Streak', 
-      value: stats.current_streak || 0
-    },
-    { 
-      label: 'Max Streak', 
-      value: stats.max_streak || 0
+      label: 'Streak', 
+      value: (
+        <div className="flex flex-col items-center">
+          <div className="text-lg font-semibold">
+            {stats.current_streak || 0}
+          </div>
+          {stats.max_streak ? (
+            <div className="mt-1">
+              {stats.current_streak === stats.max_streak ? (
+                <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  New Personal Best! 🎉
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                  Max: {stats.max_streak}
+                </div>
+              )}
+              {stats.max_streak_date && stats.current_streak !== stats.max_streak && (
+                <div className="text-xs text-gray-500 dark:text-gray-500">
+                  {formatDate(stats.max_streak_date)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+              No max streak data
+            </div>
+          )}
+        </div>
+      ),
+      tooltip: stats.max_streak
+        ? `Current Streak: ${stats.current_streak || 0}\nMax Streak: ${stats.max_streak}${stats.max_streak_date ? ` (${formatDate(stats.max_streak_date)})` : ''}`
+        : undefined
     },
     { 
       label: 'Rarity', 

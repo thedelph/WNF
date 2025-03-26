@@ -23,6 +23,13 @@ import TokenStatus from '../components/profile/TokenStatus';
 import { executeWithRetry } from '../utils/network';
 import { useTokenStatus } from '../hooks/useTokenStatus';
 
+// Helper function to format date consistently as "12 Mar 2025"
+const formatDate = (dateString: string | null): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 /**
  * PlayerProfile component displays detailed information about a player
  * including their stats, ratings, and game history.
@@ -71,7 +78,7 @@ export default function PlayerProfileNew() {
         const latestSequence = latestSequenceData?.sequence_number || 0;
         console.log('[PlayerProfile] Latest sequence:', latestSequence);
 
-        // Get player stats - using either ID or friendly name
+        // Fetch player data
         const playerQuery = supabase
           .from('players')
           .select(`
@@ -112,6 +119,21 @@ export default function PlayerProfileNew() {
           setLoading(false);
           return;
         }
+
+        // Get max streak date from the winning streaks function
+        const { data: streakData, error: streakError } = await executeWithRetry(
+          () => supabase
+            .rpc('get_player_winning_streaks')
+            .eq('id', playerData.id)
+            .single()
+        );
+
+        if (streakError) {
+          console.error('Error fetching streak data:', streakError);
+          // Continue without streak date data
+        }
+
+        const maxStreakDate = streakData?.max_streak_date || null;
 
         // Get player XP breakdown data using friendly_name
         const { data: xpBreakdownData, error: xpBreakdownError } = await executeWithRetry(
@@ -170,6 +192,48 @@ export default function PlayerProfileNew() {
           if (playerRecentWinRate) {
             recentWinRate = playerRecentWinRate.recent_win_rate;
           }
+        }
+        
+        // Fetch player streak stats for the correct max streak value
+        const { data: streakStatsData, error: streakStatsError } = await executeWithRetry(
+          () => supabase
+            .from('player_streak_stats')
+            .select('friendly_name, longest_streak, longest_streak_period')
+            .eq('friendly_name', playerData.friendly_name)
+            .single()
+        );
+        
+        if (streakStatsError && !streakStatsError.message?.includes('404')) {
+          console.error('Error fetching streak stats:', streakStatsError);
+          // Continue without streak stats rather than failing completely
+        }
+        
+        // Use the max streak from player_streak_stats if available
+        const correctMaxStreak = streakStatsData?.longest_streak || playerData.max_streak || 0;
+        console.log('Max streak comparison:', {
+          from_players_table: playerData.max_streak,
+          from_streak_stats: streakStatsData?.longest_streak,
+          using: correctMaxStreak
+        });
+
+        // Get highest XP record for the player
+        const { data: highestXPData, error: highestXPError } = await executeWithRetry(
+          () => supabase
+            .from('highest_xp_records_view')
+            .select('xp, snapshot_date')
+            .eq('player_id', playerData.id)
+            .single()
+        );
+
+        if (highestXPError) {
+          console.error('Error fetching highest XP data:', highestXPError);
+          // Continue without highest XP data rather than failing completely
+        }
+
+        // Format the highest XP date if available
+        let highestXPDate = null;
+        if (highestXPData?.snapshot_date) {
+          highestXPDate = formatDate(highestXPData.snapshot_date);
         }
 
         // Get current user's player ID if logged in
@@ -325,7 +389,8 @@ export default function PlayerProfileNew() {
           active_bonuses: playerData.active_bonuses || 0,
           active_penalties: playerData.active_penalties || 0,
           current_streak: playerData.current_streak || 0,
-          max_streak: playerData.max_streak || 0,
+          max_streak: correctMaxStreak,
+          max_streak_date: maxStreakDate ? formatDate(maxStreakDate) : null,
           whatsapp_group_member: playerData.whatsapp_group_member,
           xp: playerData.player_xp?.xp || 0,
           rarity: playerData.player_xp?.rarity || 'Amateur',
@@ -346,7 +411,9 @@ export default function PlayerProfileNew() {
               sequence: reg.game?.sequence_number || 0,
               status: reg.status
             }))
-            .filter((game: any) => game.sequence !== undefined) || []
+            .filter((game: any) => game.sequence !== undefined) || [],
+          highest_xp: highestXPData?.xp || 0,
+          highest_xp_date: highestXPDate
         };
 
         console.log('[PlayerProfile] Setting player stats:', { 
@@ -457,12 +524,30 @@ export default function PlayerProfileNew() {
       >
         {/* Stats Grid - Full Width */}
         <div className="w-full">
+          {console.log('Player data being passed to StatsGrid:', {
+            id: player.id,
+            friendly_name: player.friendly_name,
+            xp: player.xp,
+            highest_xp: player.highest_xp,
+            highest_xp_date: player.highest_xp_date,
+            current_streak: player.current_streak,
+            max_streak: player.max_streak,
+            max_streak_date: player.max_streak_date,
+            active_bonuses: player.active_bonuses,
+            active_penalties: player.active_penalties,
+            rarity: player.rarity,
+            win_rate: player.win_rate,
+            recent_win_rate: player.recent_win_rate
+          })}
           <StatsGrid stats={{
             id: player.id,
             friendly_name: player.friendly_name,
             xp: player.xp,
+            highest_xp: player.highest_xp,
+            highest_xp_date: player.highest_xp_date,
             current_streak: player.current_streak,
             max_streak: player.max_streak,
+            max_streak_date: player.max_streak_date,
             active_bonuses: player.active_bonuses,
             active_penalties: player.active_penalties,
             rarity: player.rarity,

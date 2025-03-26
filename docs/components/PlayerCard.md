@@ -45,6 +45,36 @@ Each modifier is displayed in a colored badge with its corresponding percentage:
 
 ## Implementation Details
 
+### Attendance Streak Data
+The player card displays attendance streak information with the following implementation:
+
+1. **Data Source**:
+   - Max streak values are fetched from the `player_streak_stats` view rather than the `players` table
+   - This ensures consistency with the Stats page and other components
+   - The `player_streak_stats` view provides accurate longest attendance streak data
+
+2. **Data Flow**:
+   - The `usePlayerGrid` hook fetches streak data from both sources:
+     - `players` table (legacy source)
+     - `player_streak_stats` view (source of truth)
+   - The hook prioritizes the value from `player_streak_stats` view
+   - Fallback logic is in place if streak stats are unavailable
+
+3. **Implementation Details**:
+   ```typescript
+   // In usePlayerGrid.ts
+   const streakStatsMap = (streakStatsData || []).reduce((acc, player) => {
+     acc[player.friendly_name] = {
+       longestStreak: player.longest_streak || 0,
+       longestStreakPeriod: player.longest_streak_period
+     };
+     return acc;
+   }, {});
+   
+   // Use the longest_streak from player_streak_stats if available
+   const correctMaxStreak = streakStatsMap[player.friendly_name]?.longestStreak || 0;
+   ```
+
 ### Registration Streak
 The registration streak bonus is implemented through several components:
 

@@ -33,7 +33,6 @@ export const usePlayerGrid = () => {
               active_bonuses,
               active_penalties,
               current_streak,
-              max_streak,
               bench_warmer_streak,
               player_xp (
                 xp,
@@ -58,7 +57,12 @@ export const usePlayerGrid = () => {
           // Registration streak query
           () => supabase
             .from('player_current_registration_streak_bonus')
-            .select('friendly_name, current_streak_length, bonus_applies')
+            .select('friendly_name, current_streak_length, bonus_applies'),
+            
+          // Player streak stats (for correct max streak values)
+          () => supabase
+            .from('player_streak_stats')
+            .select('friendly_name, longest_streak, longest_streak_period')
         ];
 
         // Execute all queries with retry logic
@@ -72,7 +76,8 @@ export const usePlayerGrid = () => {
           playersData,
           winRateData,
           unpaidGamesData,
-          registrationStreakData
+          registrationStreakData,
+          streakStatsData
         ] = results;
 
         // Create maps for efficient lookups
@@ -102,37 +107,60 @@ export const usePlayerGrid = () => {
           };
           return acc;
         }, {} as Record<string, { registrationStreak: number, registrationStreakApplies: boolean }>);
+        
+        // Create map for streak stats data
+        const streakStatsMap = (streakStatsData || []).reduce((acc, player) => {
+          acc[player.friendly_name] = {
+            longestStreak: player.longest_streak || 0,
+            longestStreakPeriod: player.longest_streak_period
+          };
+          return acc;
+        }, {} as Record<string, { longestStreak: number, longestStreakPeriod: any }>);
 
         // Combine all data
-        const combinedPlayers = (playersData || []).map(player => ({
-          id: player.id,
-          friendlyName: player.friendly_name,
-          avatarSvg: player.avatar_svg,
-          whatsapp_group_member: player.whatsapp_group_member,
-          caps: player.caps || 0,
-          xp: player.player_xp?.xp || 0,
-          activeBonuses: player.active_bonuses || 0,
-          activePenalties: player.active_penalties || 0,
-          currentStreak: player.current_streak || 0,
-          maxStreak: player.max_streak || 0,
-          benchWarmerStreak: player.bench_warmer_streak || 0,
-          rarity: player.player_xp?.rarity || 'Amateur',
-          rank: player.player_xp?.rank || 0,
-          wins: winRateMap[player.id]?.wins || 0,
-          draws: winRateMap[player.id]?.draws || 0,
-          losses: winRateMap[player.id]?.losses || 0,
-          totalGames: winRateMap[player.id]?.totalGames || 0,
-          winRate: winRateMap[player.id]?.winRate || 0,
-          streakBonus: 0,
-          dropoutPenalty: 0,
-          bonusModifier: 0,
-          penaltyModifier: 0,
-          totalModifier: 0,
-          unpaidGames: unpaidGamesMap[player.friendly_name]?.unpaidGames || 0,
-          unpaidGamesModifier: unpaidGamesMap[player.friendly_name]?.unpaidGamesModifier || 0,
-          registrationStreakBonus: registrationStreakMap[player.friendly_name]?.registrationStreak || 0,
-          registrationStreakBonusApplies: registrationStreakMap[player.friendly_name]?.registrationStreakApplies || false
-        }));
+        const combinedPlayers = (playersData || []).map(player => {
+          // Use the longest_streak from player_streak_stats if available, otherwise fall back to max_streak from players table
+          const correctMaxStreak = streakStatsMap[player.friendly_name]?.longestStreak || 0;
+          
+          // Log for debugging if there's a discrepancy
+          if (streakStatsMap[player.friendly_name]?.longestStreak !== correctMaxStreak) {
+            console.log(`Max streak discrepancy for ${player.friendly_name}:`, {
+              from_players_table: 0,
+              from_streak_stats: streakStatsMap[player.friendly_name]?.longestStreak,
+              using: correctMaxStreak
+            });
+          }
+          
+          return {
+            id: player.id,
+            friendlyName: player.friendly_name,
+            avatarSvg: player.avatar_svg,
+            whatsapp_group_member: player.whatsapp_group_member,
+            caps: player.caps || 0,
+            xp: player.player_xp?.xp || 0,
+            activeBonuses: player.active_bonuses || 0,
+            activePenalties: player.active_penalties || 0,
+            currentStreak: player.current_streak || 0,
+            maxStreak: correctMaxStreak,
+            benchWarmerStreak: player.bench_warmer_streak || 0,
+            rarity: player.player_xp?.rarity || 'Amateur',
+            rank: player.player_xp?.rank || 0,
+            wins: winRateMap[player.id]?.wins || 0,
+            draws: winRateMap[player.id]?.draws || 0,
+            losses: winRateMap[player.id]?.losses || 0,
+            totalGames: winRateMap[player.id]?.totalGames || 0,
+            winRate: winRateMap[player.id]?.winRate || 0,
+            streakBonus: 0,
+            dropoutPenalty: 0,
+            bonusModifier: 0,
+            penaltyModifier: 0,
+            totalModifier: 0,
+            unpaidGames: unpaidGamesMap[player.friendly_name]?.unpaidGames || 0,
+            unpaidGamesModifier: unpaidGamesMap[player.friendly_name]?.unpaidGamesModifier || 0,
+            registrationStreakBonus: registrationStreakMap[player.friendly_name]?.registrationStreak || 0,
+            registrationStreakBonusApplies: registrationStreakMap[player.friendly_name]?.registrationStreakApplies || false
+          };
+        });
 
         setPlayers(combinedPlayers);
       } catch (err: any) {
