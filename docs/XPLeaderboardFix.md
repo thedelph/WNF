@@ -238,7 +238,7 @@ BEGIN
         JOIN 
             player_xp px ON pmxr.player_id = px.player_id
         WHERE 
-            px.xp < pmxr.max_xp
+            px.xp < pmxr.xp  -- Changed from pmxr.max_xp to pmxr.xp
     )
     INSERT INTO player_xp_snapshots (player_id, xp, rank, rarity, snapshot_date)
     SELECT 
@@ -290,3 +290,38 @@ After implementing the fix:
 3. Dave now correctly appears with 833 XP from March 12, 2025
 
 The XP leaderboard now correctly shows both each player's highest ever XP score and the correct date when they achieved it.
+
+## Column Reference Fix (March 27, 2025)
+
+### Issue
+The XP snapshot functionality stopped working with the following error:
+```
+Error taking XP snapshot: {code: '42703', details: null, hint: null, message: 'column pmxr.max_xp does not exist'}
+```
+
+The issue was in the `take_xp_snapshot` function where it was referencing a non-existent column `pmxr.max_xp` in the WHERE clause of the `players_to_preserve` CTE. The `player_max_xp_record` CTE (aliased as `pmxr`) has an `xp` column but not a `max_xp` column.
+
+### Solution
+The issue was fixed by updating the `take_xp_snapshot` function to reference the correct column name:
+
+```sql
+CREATE OR REPLACE FUNCTION public.take_xp_snapshot()
+ RETURNS text
+ LANGUAGE plpgsql
+AS $function$
+-- Function body remains the same except for this line:
+        WHERE 
+            px.xp < pmxr.xp  -- Changed from pmxr.max_xp to pmxr.xp
+$function$;
+```
+
+### How It Works
+The fix simply corrects the column reference in the WHERE clause of the `players_to_preserve` CTE. The `player_max_xp_record` CTE already contains the maximum XP value in its `xp` column, so we just need to reference it correctly.
+
+This ensures that the XP snapshot functionality continues to work properly, preserving historical high scores with their original timestamps and taking new snapshots of current XP values.
+
+### Testing
+After implementing the fix:
+1. The "Snapshot XP" button on the HistoricalGames page works correctly again
+2. Historical high scores continue to be preserved with their original timestamps
+3. New snapshots are created for all current player XP values
