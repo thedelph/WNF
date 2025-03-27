@@ -210,7 +210,7 @@ const TokenManagement: React.FC = () => {
         .eq('player_id', playerId)
         .is('used_at', null)
         .is('used_game_id', null)
-        .gt('expires_at', new Date().toISOString());
+        .or('expires_at.is.null,expires_at.gt.now()');
 
       if (checkError) {
         console.error('Error checking existing tokens:', checkError);
@@ -222,14 +222,10 @@ const TokenManagement: React.FC = () => {
         return;
       }
 
-      // Issue new token
+      // Use a direct RPC call to issue_token function instead of inserting directly
+      // This bypasses the materialized view permission issue
       const { error: insertError } = await supabaseAdmin
-        .from('player_tokens')
-        .insert({
-          player_id: playerId,
-          issued_at: new Date().toISOString(),
-          expires_at: null
-        });
+        .rpc('issue_player_token', { player_uuid: playerId });
 
       if (insertError) {
         console.error('Supabase insert error:', insertError);
