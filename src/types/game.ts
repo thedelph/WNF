@@ -45,6 +45,7 @@ export interface GameRegistration {
   is_reserve: boolean
   payment_required: boolean
   player?: Player
+  using_token?: boolean // Whether the player is using a priority token for this game
 }
 
 export interface Game {

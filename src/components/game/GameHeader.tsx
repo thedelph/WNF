@@ -1,5 +1,4 @@
 import React from 'react';
-import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { PiCoinDuotone } from "react-icons/pi";
 import { IoLocationOutline, IoTimeOutline, IoCalendarClearOutline } from "react-icons/io5";
@@ -7,6 +6,7 @@ import { Game } from '../../types/game';
 import CountdownTimer from '../../components/CountdownTimer';
 import WeatherCard from '../../components/weather/WeatherCard';
 import { Tooltip } from '../../components/ui/Tooltip';
+import { formatDate, formatTime, utcToUkTime } from '../../utils/dateUtils';
 
 interface GameHeaderProps {
   game: Game;
@@ -24,6 +24,12 @@ interface GameHeaderProps {
 /**
  * GameHeader component displays the game title and key statistics
  * Shows game number, date, time, venue, and registration stats
+ * 
+ * IMPORTANT TIMEZONE NOTES:
+ * - Game times are stored in UTC in the database
+ * - When creating a game, the input time (UK local time) is converted to UTC for storage
+ * - When displaying, we convert from UTC back to UK time (which adds +1 hour during BST)
+ * - This ensures times are always displayed correctly regardless of daylight saving time
  */
 export const GameHeader: React.FC<GameHeaderProps> = ({
   game,
@@ -35,11 +41,13 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   const currentlyRegistered = game.game_registrations?.length || 0;
 
   // Count priority token users
-  const priorityTokenCount = game.game_registrations?.filter(reg => reg.using_token)?.length || 0;
+  const priorityTokenCount = game.game_registrations?.filter(reg => reg.using_token === true)?.length || 0;
 
-  // Format the date and time
-  const formattedDate = game.date ? format(new Date(game.date), 'EEE, MMM do') : '';
-  const kickoffTime = game.date ? format(new Date(game.date), 'h:mm a') : '';
+  // Format the date and time using timezone-aware utility functions
+  const formattedDate = game.date ? formatDate(utcToUkTime(new Date(game.date))) : '';
+  
+  // Note: formatTime already handles timezone conversion internally
+  const kickoffTime = game.date ? formatTime(game.date) : '';
 
   // Determine which countdown to show based on game status and dates
   const now = new Date();
@@ -65,6 +73,22 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
     nextEventColor = 'text-green-500';
   }
 
+  // Determine the status text based on registration state and game status
+  const getStatusText = () => {
+    if (isRegistrationOpen) return 'Open';
+    if (isRegistrationClosed) return 'Closed';
+    if (game.status === 'players_announced') return 'Players Selected';
+    if (game.status === 'teams_announced') return 'Teams Announced';
+    return 'Not Open Yet';
+  };
+
+  // Determine the status color based on registration state
+  const getStatusColor = () => {
+    if (isRegistrationOpen) return 'text-success';
+    if (isRegistrationClosed) return 'text-error';
+    return 'text-warning';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -78,7 +102,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           animate={{ scale: 1 }}
           className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60"
         >
-          WNF #{game.sequence_number || game.game_number || '29'}
+          WNF #{game.sequence_number || '29'}
         </motion.h1>
       </div>
 
@@ -94,21 +118,26 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <div className="flex items-center gap-2 text-sm">
               <IoTimeOutline className="text-primary" size={18} />
               <span>{kickoffTime}</span>
+              <Tooltip content="Game times are displayed in UK time (GMT/BST)">
+                <span className="text-xs text-gray-500 cursor-help">UK time</span>
+              </Tooltip>
             </div>
             {game.venue?.name && (
               <div className="flex items-center gap-2 text-sm">
                 <IoLocationOutline className="text-primary" size={18} />
-                <span>{game.venue.name}</span>
-                {game.venue.google_maps_url && (
-                  <a
-                    href={game.venue.google_maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-auto text-primary hover:text-primary/80"
-                  >
-                    View Map
-                  </a>
-                )}
+                <span>
+                  {game.venue.name}
+                  {game.venue.google_maps_url && (
+                    <a 
+                      href={game.venue.google_maps_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 text-xs text-primary hover:underline"
+                    >
+                      Map
+                    </a>
+                  )}
+                </span>
               </div>
             )}
           </div>
@@ -141,13 +170,21 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
               <CountdownTimer targetDate={nextEvent} />
             </div>
             <div className="text-xs text-gray-500">
-              {format(nextEvent, 'EEEE, MMM do • h:mm a')}
+              {formatDate(utcToUkTime(nextEvent))}
             </div>
           </div>
         )}
 
         {/* Game Stats */}
         <div className="bg-base-200 rounded-lg p-4">
+          {/* Registration Status */}
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-sm font-medium">Registration Status:</span>
+            <span className={`text-sm font-medium ${getStatusColor()}`}>
+              {getStatusText()}
+            </span>
+          </div>
+          
           {/* Progress Bar */}
           <div className="mb-4">
             <div className="flex justify-between items-center mb-1.5">
@@ -199,30 +236,18 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 {game.random_slots || 0}
               </div>
               <div className="text-xs text-gray-600 uppercase tracking-wide">
-                Random
+                Random Slots
               </div>
             </div>
 
             <div className="text-center">
               <div className="text-2xl font-bold mb-1 flex items-center justify-center gap-1">
                 {priorityTokenCount}
-                <PiCoinDuotone size={20} className="text-yellow-500" />
+                <PiCoinDuotone className="text-yellow-500" />
               </div>
               <div className="text-xs text-gray-600 uppercase tracking-wide">
-                Priority
+                Priority Tokens
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Instructions Card */}
-        <div className="bg-base-200 rounded-lg p-4">
-          <div className="space-y-2">
-            <div className="text-sm text-gray-600">
-              Register your interest by reacting with 👍 in WhatsApp
-            </div>
-            <div className="text-sm text-gray-600">
-              DM for reserve players outside the group
             </div>
           </div>
         </div>

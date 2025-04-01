@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
+import { utcToUkTime } from '../utils/dateUtils';
 
 interface CountdownTimerProps {
   targetDate: Date;
 }
 
+/**
+ * CountdownTimer component displays a countdown to a target date
+ * Automatically handles timezone conversion from UTC to UK time
+ */
 const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate }) => {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -15,7 +20,9 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate }) => {
   // Re-calculate time left when component mounts and every second
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const difference = targetDate.getTime() - new Date().getTime();
+      // Convert target date to UK timezone for proper comparison
+      const ukTargetDate = utcToUkTime(targetDate);
+      const difference = ukTargetDate.getTime() - new Date().getTime();
       
       if (difference <= 0) {
         return {

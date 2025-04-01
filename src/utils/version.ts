@@ -19,6 +19,40 @@ export interface ChangelogEntry {
 export const changelogData: ChangelogEntry[] = [
 
   {
+    version: '1.1.3',
+    date: '01/04/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Timezone Handling',
+            details: "Added timezone handling/support to game display."
+          },
+        ]
+      }
+    ]
+  },
+
+  {
     version: '1.1.2',
     date: '24/03/2025',
     sections: [

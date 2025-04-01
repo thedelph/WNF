@@ -25,6 +25,28 @@ The application enforces strict date constraints through database validation:
 registration_window_start < registration_window_end AND registration_window_end <= date
 ```
 
+## Timezone Handling
+
+### Important: UK Time vs. UTC Storage
+All game times are input in UK local time (GMT/BST) but stored in UTC in the database:
+
+- During GMT (winter): UK time = UTC time
+- During BST (summer): UK time = UTC + 1 hour
+
+The application automatically handles this conversion:
+
+```typescript
+// When creating a game
+const localGameDateTime = `${date}T${time}`;
+const gameDateTime = convertToUtcForStorage(localGameDateTime);
+```
+
+### Best Practices for Time Input
+- Always input times in UK local time (the time you want the game to actually start in the UK)
+- The system will automatically convert to UTC for storage
+- When viewing game times, they will be converted back to UK time for display
+- For more details, see the [Timezone Handling documentation](./TimezoneHandling.md)
+
 ## Game Phases
 
 ### 1. Upcoming Game Phase
@@ -101,6 +123,29 @@ if (gamePhase !== GAME_STATUSES.UPCOMING) {
   registrationStartDate = new Date(gameDate.getTime() - (48 * 60 * 60 * 1000));
   registrationEndDate = new Date(gameDate.getTime() - (24 * 60 * 60 * 1000));
 }
+
+// Calculate team announcement time (4 hours before game start)
+const calculateTeamAnnouncementTime = (gameDateTime: string) => {
+  const gameDate = new Date(gameDateTime);
+  const announcementTime = new Date(gameDate.getTime() - (4 * 60 * 60 * 1000));
+  // Format as YYYY-MM-DDTHH:mm for datetime-local input
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+```
+
+### Timezone Conversion
+```typescript
+// Convert local UK time to UTC for storage
+const convertToUtcForStorage = (localDateTimeStr: string): string => {
+  // Parse the local date time string
+  const localDateTime = new Date(localDateTimeStr);
+  
+  // Convert to UTC using our utility function
+  const utcDateTime = ukTimeToUtc(localDateTime);
+  
+  // Format as ISO string and return
+  return utcDateTime.toISOString();
+};
 ```
 
 ### Player Registration

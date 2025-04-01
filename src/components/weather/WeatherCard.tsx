@@ -18,6 +18,7 @@ import {
 } from '../../services/weatherService';
 import { Tooltip } from '../ui/Tooltip';
 import './WeatherAnimations.css';
+import { utcToUkTime } from '../../utils/dateUtils';
 
 interface WeatherCardProps {
   venueAddress: string;
@@ -27,6 +28,10 @@ interface WeatherCardProps {
   onToggle: () => void; // Function to toggle the visibility
 }
 
+/**
+ * WeatherCard component displays weather forecast for game venues
+ * Handles timezone conversion for proper display of game date/time
+ */
 const WeatherCard: React.FC<WeatherCardProps> = ({
   venueAddress,
   venueName,
@@ -68,7 +73,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
       }
       
       // Step 2: Get weather forecast for the game date/time and location
-      const gameDateObj = new Date(gameDateTime);
+      // Convert the game date to UK timezone for proper weather forecasting
+      const gameDateObj = utcToUkTime(new Date(gameDateTime));
       const forecast = await getWeatherForecast(
         geoData.lat,
         geoData.lon,
@@ -105,9 +111,9 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
     // Skip if we don't have the required props
     if (!venueAddress || !gameDateTime) return;
     
-    // Determine if it's game day
+    // Determine if it's game day - use UK timezone for proper date comparison
     const now = new Date();
-    const gameDate = new Date(gameDateTime);
+    const gameDate = utcToUkTime(new Date(gameDateTime));
     const isGameDay = 
       now.getFullYear() === gameDate.getFullYear() && 
       now.getMonth() === gameDate.getMonth() && 
@@ -213,7 +219,8 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
   // Format the forecast date for display - using the game date instead of forecast date
   const getFormattedForecastDate = () => {
     // Use the game date directly instead of the weather forecast date
-    const date = new Date(gameDateTime);
+    // Convert to UK timezone for proper display
+    const date = utcToUkTime(new Date(gameDateTime));
     
     // Format the date with ordinal suffix for the day
     const day = date.getDate();
