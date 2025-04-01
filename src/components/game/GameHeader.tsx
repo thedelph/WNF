@@ -118,9 +118,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <div className="flex items-center gap-2 text-sm">
               <IoTimeOutline className="text-primary" size={18} />
               <span>{kickoffTime}</span>
-              <Tooltip content="Game times are displayed in UK time (GMT/BST)">
-                <span className="text-xs text-gray-500 cursor-help">UK time</span>
-              </Tooltip>
             </div>
             {game.venue?.name && (
               <div className="flex items-center gap-2 text-sm">
