@@ -80,7 +80,17 @@ const PlayerCard = ({
             <h3 className="text-lg font-semibold">{player.friendly_name}</h3>
             <div className="text-sm opacity-70">
               <p>Attack: {player.attack_rating.toFixed(1)} | Defense: {player.defense_rating.toFixed(1)}</p>
-              <p>Recent Win Rate: {(player.win_rate || 50).toFixed(1)}%</p>
+              <p>
+                {
+                  player.win_rate !== null && 
+                  player.win_rate !== undefined && 
+                  player.total_games !== undefined && 
+                  player.total_games !== null && 
+                  player.total_games >= 10 
+                    ? `Recent Win Rate: ${player.win_rate.toFixed(1)}%` 
+                    : `Recent Win Rate: N/A${player.total_games !== undefined && player.total_games !== null ? ` (${player.total_games} ${player.total_games === 1 ? 'game' : 'games'})` : ''}`
+                }
+              </p>
             </div>
           </div>
         </div>
