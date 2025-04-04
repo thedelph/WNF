@@ -200,10 +200,10 @@ export default function PlayerProfileNew() {
             .from('player_streak_stats')
             .select('friendly_name, longest_streak, longest_streak_period')
             .eq('friendly_name', playerData.friendly_name)
-            .single()
+            .maybeSingle()
         );
         
-        if (streakStatsError && !streakStatsError.message?.includes('404')) {
+        if (streakStatsError) {
           console.error('Error fetching streak stats:', streakStatsError);
           // Continue without streak stats rather than failing completely
         }
