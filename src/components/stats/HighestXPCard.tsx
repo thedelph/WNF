@@ -151,9 +151,9 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
                   <span className="truncate">{record.friendly_name}</span>
                 </div>
                 {/* XP and date - right side, stacked on mobile, side-by-side on larger screens */}
-                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 flex-shrink-0">
-                  <span className="font-bold whitespace-nowrap">{record.xp} XP</span>
-                  <span className="text-xs opacity-80 whitespace-nowrap">{record.formatted_date}</span>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
+                  <span className="font-bold whitespace-nowrap text-right w-24">{record.xp} XP</span>
+                  <span className="text-xs opacity-80 whitespace-nowrap text-right w-24">{record.formatted_date}</span>
                 </div>
               </div>
             ))}

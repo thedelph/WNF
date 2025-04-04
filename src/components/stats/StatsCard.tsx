@@ -69,9 +69,9 @@ export const StatsCard = ({ title, value, description, icon, color = 'blue', cla
                   />
                   <span className="truncate">{player.friendlyName}</span>
                 </div>
-                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 flex-shrink-0">
-                  <span className="font-bold whitespace-nowrap">{player.winRate.toFixed(1)}%</span>
-                  <span className="text-sm opacity-70 whitespace-nowrap">
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 flex-shrink-0 w-full sm:w-auto justify-end">
+                  <span className="font-bold whitespace-nowrap text-right w-14">{player.winRate.toFixed(1)}%</span>
+                  <span className="text-sm opacity-70 whitespace-nowrap text-right w-24">
                     {player.wins}W/{player.draws}D/{player.losses}L
                   </span>
                 </div>
