@@ -69,7 +69,7 @@ export const changelogData: ChangelogEntry[] = [
         type: 'Changed',
         items: [
           {
-            title: 'No changes in this release',
+            title: 'N/A',
             details: "No changes in this release."
           },
         ]
