@@ -142,16 +142,16 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
             {highestXP.map((record, index) => (
               <div key={`${record.player_id}-${record.snapshot_date}`} className="flex justify-between items-center gap-2">
                 {/* Player name with medal - left side */}
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
                   {index < 3 ? (
                     <Medal className={`flex-shrink-0 ${medals[index].color}`} size={18} />
                   ) : (
                     <span className="w-[18px] flex-shrink-0">{/* Empty space to maintain alignment */}</span>
                   )}
-                  <span className="truncate">{record.friendly_name}</span>
+                  <span className="truncate block">{record.friendly_name}</span>
                 </div>
                 {/* XP and date - right side, stacked on mobile, side-by-side on larger screens */}
-                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 flex-shrink-0 justify-end">
                   <span className="font-bold whitespace-nowrap text-right w-24">{record.xp} XP</span>
                   <span className="text-xs opacity-80 whitespace-nowrap text-right w-24">{record.formatted_date}</span>
                 </div>
