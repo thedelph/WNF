@@ -239,7 +239,7 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 + index * 0.05 }}
-          className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 text-center"
+          className="bg-base-200 shadow rounded-lg p-4 text-center"
         >
           {stat.tooltip ? (
             <TooltipPrimitive.Provider>
