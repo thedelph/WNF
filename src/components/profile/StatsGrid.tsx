@@ -124,22 +124,22 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
           {stats.highest_xp ? (
             <div className="mt-1">
               {stats.xp === stats.highest_xp ? (
-                <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                <div className="text-sm text-green-600 font-medium">
                   New Personal Best! 🎉
                 </div>
               ) : (
-                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                <div className="text-sm text-gray-600 font-medium">
                   Highest: {stats.highest_xp.toLocaleString()}
                 </div>
               )}
               {stats.highest_xp_date && stats.xp !== stats.highest_xp && (
-                <div className="text-xs text-gray-500 dark:text-gray-500">
+                <div className="text-xs text-gray-500">
                   {formatDate(stats.highest_xp_date)}
                 </div>
               )}
             </div>
           ) : (
-            <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+            <div className="mt-1 text-xs text-gray-500">
               No highest XP data
             </div>
           )}
@@ -159,22 +159,22 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
           {stats.max_streak ? (
             <div className="mt-1">
               {stats.current_streak === stats.max_streak ? (
-                <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                <div className="text-sm text-green-600 font-medium">
                   New Personal Best! 🎉
                 </div>
               ) : (
-                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                <div className="text-sm text-gray-600 font-medium">
                   Max: {stats.max_streak}
                 </div>
               )}
               {stats.max_streak_date && stats.current_streak !== stats.max_streak && (
-                <div className="text-xs text-gray-500 dark:text-gray-500">
+                <div className="text-xs text-gray-500">
                   {formatDate(stats.max_streak_date)}
                 </div>
               )}
             </div>
           ) : (
-            <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+            <div className="mt-1 text-xs text-gray-500">
               No max streak data
             </div>
           )}
@@ -202,7 +202,7 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
           </div>
           {stats.recent_win_rate !== undefined && stats.recent_win_rate !== null && (
             <div className="mt-1">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-gray-600">
                 Recent: {Number(stats.recent_win_rate).toFixed(1)}%
               </div>
               <div className="text-center">
@@ -244,7 +244,7 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
           {stat.tooltip ? (
             <TooltipPrimitive.Provider>
               <Tooltip content={stat.tooltip}>
-                <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">{stat.label}</h3>
+                <h3 className="text-gray-500 text-sm font-medium">{stat.label}</h3>
               </Tooltip>
             </TooltipPrimitive.Provider>
           ) : (
