@@ -26,12 +26,14 @@ export const toUrlFriendly = (friendlyName: string): string => {
  * - Replaces hyphens with spaces
  * - Capitalizes words
  * @param slug The URL-safe slug to convert
- * @returns A more readable version of the slug
+ * @returns A more readable version of the slug with a % wildcard for ILIKE queries
  */
 export const fromUrlFriendly = (slug: string): string => {
   return slug
     // Replace hyphens with spaces
     .replace(/-/g, ' ')
     // Capitalize first letter of each word
-    .replace(/\b\w/g, letter => letter.toUpperCase());
+    .replace(/\b\w/g, letter => letter.toUpperCase())
+    // Add a wildcard to handle potential trailing spaces
+    + '%';
 };

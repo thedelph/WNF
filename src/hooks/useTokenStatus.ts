@@ -83,8 +83,8 @@ export function useTokenStatus(playerId: string) {
             const result = await supabase
               .from('public_player_token_status')
               .select('*')
-              .eq('player_id', playerId)
-              .single();
+              .eq('player_id', playerId);
+              // Removed .single() to avoid 406 errors when no data exists
             return result;
           },
           { 
@@ -96,6 +96,11 @@ export function useTokenStatus(playerId: string) {
         if (tokenStatusError) {
           console.error('Error fetching public token status:', tokenStatusError);
         }
+        
+        // Get the first record if available, otherwise null
+        const tokenStatusRecord = Array.isArray(tokenStatusData) && tokenStatusData.length > 0 
+          ? tokenStatusData[0] 
+          : null;
 
         // Get player data to check WhatsApp member status
         const { data: playerData, error: playerError } = await executeWithRetry(
@@ -211,7 +216,7 @@ export function useTokenStatus(playerId: string) {
         });
 
         // Construct token status object
-        const publicTokenStatus = tokenStatusData as TokenStatusRecord | null;
+        const publicTokenStatus = tokenStatusRecord as TokenStatusRecord | null;
         const isEligible = hasPlayedInLastTenGames && !hasRecentSelection && !hasOutstandingPayments && whatsappGroupMember;
         const status: TokenStatus = publicTokenStatus ? {
           status: isEligible ? 'AVAILABLE' : 'INELIGIBLE',

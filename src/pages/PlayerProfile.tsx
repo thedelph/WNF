@@ -222,18 +222,21 @@ export default function PlayerProfileNew() {
             .from('highest_xp_records_view')
             .select('xp, snapshot_date')
             .eq('player_id', playerData.id)
-            .single()
+            // Don't use single() to avoid 406 errors when no data exists
         );
 
         if (highestXPError) {
           console.error('Error fetching highest XP data:', highestXPError);
           // Continue without highest XP data rather than failing completely
         }
+        
+        // Check if we got any data back (will be an array)
+        const highestXPRecord = Array.isArray(highestXPData) && highestXPData.length > 0 ? highestXPData[0] : null;
 
         // Format the highest XP date if available
         let highestXPDate = null;
-        if (highestXPData?.snapshot_date) {
-          highestXPDate = formatDate(highestXPData.snapshot_date);
+        if (highestXPRecord?.snapshot_date) {
+          highestXPDate = formatDate(highestXPRecord.snapshot_date);
         }
 
         // Get current user's player ID if logged in
@@ -412,7 +415,7 @@ export default function PlayerProfileNew() {
               status: reg.status
             }))
             .filter((game: any) => game.sequence !== undefined) || [],
-          highest_xp: highestXPData?.xp || 0,
+          highest_xp: highestXPRecord?.xp || 0,
           highest_xp_date: highestXPDate
         };
 
