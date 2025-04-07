@@ -55,6 +55,26 @@ The system checks for unpaid games in real-time during token eligibility determi
    - Consistent implementation across components
    - Improved error handling
 
+### Token Issuance Implementation
+The system uses a secure approach for issuing tokens through the admin interface:
+
+1. **Database Function**:
+   - Uses a `SECURITY DEFINER` SQL function called `issue_player_token`
+   - Takes a player UUID as input and handles token creation
+   - Properly logs token issuance in the token_history table
+   - Refreshes the materialized view with elevated permissions
+   - See [TokenSystemIssuanceFix.md](./TokenSystemIssuanceFix.md) for details
+
+2. **Frontend Implementation**:
+   - The `TokenManagement` component uses an RPC call to the database function
+   - This bypasses permission issues with materialized views
+   - Provides better error handling and user feedback
+
+3. **Benefits**:
+   - Secure token issuance with proper permissions
+   - Consistent token history logging
+   - Improved reliability of the admin interface
+
 ## Token Usage and Forgiveness
 When a player has an available token:
 1. They can see a priority token toggle with a coin icon during game registration

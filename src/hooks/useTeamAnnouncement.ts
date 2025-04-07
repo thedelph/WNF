@@ -2,12 +2,17 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabaseAdmin } from '../utils/supabase';
 import { balanceTeams } from '../utils/teamBalancing';
+import { utcToUkTime } from '../utils/dateUtils';
 
 interface UseTeamAnnouncementProps {
   game?: any;
   onGameUpdated: () => Promise<void>;
 }
 
+/**
+ * Hook to handle team announcements
+ * Uses timezone-aware date handling for proper time comparison
+ */
 export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isProcessingAnnouncement, setIsProcessingAnnouncement] = useState(false);
@@ -33,7 +38,7 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
         .single();
 
       return !error && !!data;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message?.includes('team_announcement_locks" does not exist')) {
         console.log('Team announcement locks table does not exist, skipping lock acquisition');
         return true;
@@ -49,7 +54,7 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
         .from('team_announcement_locks')
         .delete()
         .eq('game_id', gameId);
-    } catch (error) {
+    } catch (error: any) {
       if (!error.message?.includes('team_announcement_locks" does not exist')) {
         console.error('Lock release error:', error);
       }
@@ -59,7 +64,9 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
   const checkIsTeamAnnouncementTime = useCallback(() => {
     if (!props?.game) return false;
     
-    const isAfterAnnouncementTime = currentTime > new Date(props.game.team_announcement_time);
+    // Convert UTC timestamp to UK timezone for proper comparison
+    const announcementTime = utcToUkTime(new Date(props.game.team_announcement_time));
+    const isAfterAnnouncementTime = currentTime > announcementTime;
     const isCorrectStatus = props.game.status === 'players_announced';
     
     return isAfterAnnouncementTime && isCorrectStatus;
@@ -175,7 +182,7 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
         setErrorCount(0);
       }, 0);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error announcing teams:', error);
       
       // Use setTimeout to avoid state updates during render

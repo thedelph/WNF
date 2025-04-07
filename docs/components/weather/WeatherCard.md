@@ -9,6 +9,7 @@ The Weather Card component provides real-time weather forecasts for upcoming gam
 - Detailed information including temperature, humidity, wind speed, and precipitation chance
 - Expandable/collapsible card that remembers user preference
 - Responsive design that works on all screen sizes
+- Timezone-aware forecasting that handles GMT/BST transitions
 
 ## Technical Implementation
 
@@ -17,12 +18,14 @@ The Weather Card component provides real-time weather forecasts for upcoming gam
 - Framer Motion for animations
 - React Hot Toast for notifications
 - Radix UI Tooltip component
+- date-fns and date-fns-tz for timezone handling
 
 ### Files
 - `src/components/weather/WeatherCard.tsx` - Main component
 - `src/components/weather/WeatherAnimations.css` - CSS animations for weather effects
 - `src/services/weatherService.ts` - Service for API calls and data processing
 - `src/hooks/useWeatherCard.ts` - Custom hook for managing card state
+- `src/utils/dateUtils.ts` - Utility functions for timezone handling
 
 ## Usage
 
@@ -54,10 +57,22 @@ You can obtain an API key by signing up at [OpenWeatherMap](https://openweatherm
 
 ## How It Works
 1. The component geocodes the venue address to get coordinates
-2. It fetches weather forecast data for the game time from OpenWeather API
-3. Based on weather conditions, it applies appropriate CSS animations
-4. The card displays temperature, conditions, and other weather metrics
-5. User can toggle the card open/closed and state is remembered
+2. It converts the game time from UTC to UK timezone (GMT/BST) using `utcToUkTime()`
+3. It fetches weather forecast data for the converted game time from OpenWeather API
+4. Based on weather conditions, it applies appropriate CSS animations
+5. The card displays temperature, conditions, and other weather metrics
+6. User can toggle the card open/closed and state is remembered
+
+## Timezone Handling
+The WeatherCard component is timezone-aware and handles the UK's transitions between GMT and BST:
+
+```typescript
+// Example of timezone handling in WeatherCard
+const gameDateObj = utcToUkTime(new Date(gameDateTime));
+const formattedGameTime = format(gameDateObj, 'h:mm a');
+```
+
+This ensures that weather forecasts are fetched for the correct local time regardless of whether the UK is in GMT or BST. For more details on timezone handling, see the [Timezone Handling documentation](../../TimezoneHandling.md).
 
 ## XP Penalty Consideration
 This feature does not interact with the XP penalty system for unpaid games, which remains at -50% per unpaid game as previously documented.

@@ -4,7 +4,8 @@ interface PlayerRating {
   player_id: string;
   attack_rating: number;
   defense_rating: number;
-  win_rate?: number; // Added win rate property
+  win_rate?: number | null; // Allow win rate to be null for players with no game history
+  total_games?: number | null; // Total games played by the player
 }
 
 interface TeamStats {
@@ -45,10 +46,10 @@ export const convertSelectedPlayersToRatings = async (selectedPlayers: any[]): P
   }
 
   // Create a map of player win rates for easy lookup
-  const winRateMap = new Map<string, number>();
+  const winRateMap = new Map<string, number | null>();
   if (winRateResponse.data) {
-    winRateResponse.data.forEach((player: { id: string, recent_win_rate: number }) => {
-      winRateMap.set(player.id, player.recent_win_rate || 50); // Default to 50% if no win rate
+    winRateResponse.data.forEach((player: { id: string, recent_win_rate: number | null }) => {
+      winRateMap.set(player.id, player.recent_win_rate); // Don't default to 50%
     });
   }
 
@@ -56,7 +57,7 @@ export const convertSelectedPlayersToRatings = async (selectedPlayers: any[]): P
     player_id: player.id,
     attack_rating: player.average_attack_rating || 5,
     defense_rating: player.average_defense_rating || 5,
-    win_rate: winRateMap.get(player.id) || 50 // Get win rate from map or default to 50%
+    win_rate: winRateMap.get(player.id) // Get win rate from map or leave as undefined
   }));
 };
 
@@ -64,14 +65,23 @@ export const convertSelectedPlayersToRatings = async (selectedPlayers: any[]): P
  * Calculate team statistics for attack, defense, and win rate
  */
 const calculateTeamStats = (team: PlayerRating[]): TeamStats => {
+  // Handle empty teams
   if (team.length === 0) {
     return { attack: 0, defense: 0, winRate: 0, playerCount: 0 };
   }
   
+  // Filter players that have win rate data
+  const playersWithWinRates = team.filter(p => p.win_rate !== null && p.win_rate !== undefined);
+  
+  // Calculate win rate only for players who have data
+  const winRate = playersWithWinRates.length > 0
+    ? playersWithWinRates.reduce((sum, p) => sum + (p.win_rate || 0), 0) / playersWithWinRates.length
+    : 0;
+  
   return {
     attack: team.reduce((sum, p) => sum + p.attack_rating, 0),
     defense: team.reduce((sum, p) => sum + p.defense_rating, 0),
-    winRate: team.reduce((sum, p) => sum + (p.win_rate || 50), 0) / team.length, // Calculate average win rate
+    winRate: winRate,
     playerCount: team.length
   };
 };
@@ -89,8 +99,11 @@ export const calculateBalanceScore = (team1: PlayerRating[], team2: PlayerRating
   const attackDiff = Math.abs(stats1.attack - stats2.attack);
   const defenseDiff = Math.abs(stats1.defense - stats2.defense);
   
-  // Calculate difference in win rates (no longer scaled by factor of 5 to make all metrics equal)
-  const winRateDiff = Math.abs(stats1.winRate - stats2.winRate);
+  // Calculate difference in win rates only if both teams have win rate data
+  const hasWinRateData = team1.some(p => p.win_rate !== null && p.win_rate !== undefined) && 
+                        team2.some(p => p.win_rate !== null && p.win_rate !== undefined);
+  
+  const winRateDiff = hasWinRateData ? Math.abs(stats1.winRate - stats2.winRate) : 0;
 
   // Final score is the sum of attack, defense, and win rate differences
   return attackDiff + defenseDiff + winRateDiff;

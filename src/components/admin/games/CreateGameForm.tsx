@@ -9,6 +9,7 @@ import GameTimingDetails from './form-components/GameTimingDetails';
 import PlayerSelectionDetails from './form-components/PlayerSelectionDetails';
 import TeamAnnouncementDetails from './form-components/TeamAnnouncementDetails';
 import GameDetailsPaste from './form-components/GameDetailsPaste';
+import { ukTimeToUtc } from '../../../utils/dateUtils';
 
 interface CreateGameFormProps {
   date?: string;
@@ -135,6 +136,27 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     }
   }, [date, time, gamePhase]);
 
+  /**
+   * Converts a local UK time to UTC for storage in the database
+   * This ensures that times are properly stored in UTC regardless of whether UK is in GMT or BST
+   */
+  const convertToUtcForStorage = (localDateTimeStr: string): string => {
+    try {
+      // Parse the local date time string
+      const localDateTime = new Date(localDateTimeStr);
+      
+      // Convert to UTC using our utility function
+      const utcDateTime = ukTimeToUtc(localDateTime);
+      
+      // Format as ISO string and return
+      return utcDateTime.toISOString();
+    } catch (error) {
+      console.error('Error converting time to UTC:', error);
+      toast.error('Error processing date/time');
+      return localDateTimeStr; // Return original if conversion fails
+    }
+  };
+
   // Function to handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,9 +164,31 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
 
     try {
       // Validate dates based on game phase
-      const gameDateTime = `${date}T${time}`;
+      const localGameDateTime = `${date}T${time}`;
+      
+      // Convert local UK time to UTC for storage
+      const gameDateTime = convertToUtcForStorage(localGameDateTime);
+      
+      console.log('Game time debug:');
+      console.log('Local input time:', localGameDateTime);
+      console.log('Converted UTC time for storage:', gameDateTime);
+      
       let registrationStartDate = registrationStart;
       let registrationEndDate = registrationEnd;
+      let teamAnnouncementTimeUtc = teamAnnouncementTime;
+      
+      // Convert registration times to UTC if they exist
+      if (registrationStart) {
+        registrationStartDate = convertToUtcForStorage(registrationStart);
+      }
+      
+      if (registrationEnd) {
+        registrationEndDate = convertToUtcForStorage(registrationEnd);
+      }
+      
+      if (teamAnnouncementTime) {
+        teamAnnouncementTimeUtc = convertToUtcForStorage(teamAnnouncementTime);
+      }
       
       if (gamePhase !== GAME_STATUSES.UPCOMING) {
         // For non-upcoming games, set registration window to be in the past
@@ -154,24 +198,23 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
       }
 
       // Create the game using admin role
-      const { data: gameResult, error: gameError } = await supabase.auth.getSession().then(({ data: { session } }) => {
-        return supabase
-          .from('games')
-          .insert([
-            {
-              date: gameDateTime,
-              venue_id: venueId,
-              pitch_cost: pitchCost,
-              status: gamePhase,
-              max_players: maxPlayers,
-              registration_window_start: registrationStartDate,
-              registration_window_end: registrationEndDate,
-              team_announcement_time: teamAnnouncementTime,
-            },
-          ])
-          .select()
-          .single();
-      });
+      const { data: gameResult, error: gameError } = await supabase
+        .from('games')
+        .insert([
+          {
+            date: gameDateTime,
+            venue_id: venueId,
+            pitch_cost: pitchCost,
+            status: gamePhase,
+            max_players: maxPlayers,
+            random_slots: randomSlots,
+            registration_window_start: registrationStartDate,
+            registration_window_end: registrationEndDate,
+            team_announcement_time: teamAnnouncementTimeUtc,
+          },
+        ])
+        .select()
+        .single();
 
       if (gameError) throw gameError;
 
@@ -190,100 +233,103 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
         const newPlayers = allSelectedPlayers.filter(id => !existingPlayerIds.has(id));
 
         if (newPlayers.length > 0) {
-          const { error: registrationError } = await supabase.auth.getSession().then(({ data: { session } }) => {
-            return supabase
-              .from('game_registrations')
-              .insert(
-                newPlayers.map(playerId => ({
-                  game_id: gameResult.id,
-                  player_id: playerId,
-                  status: 'selected',
-                  selection_method: randomPickPlayers.includes(playerId) ? 'random' : 'merit'
-                }))
-              );
-          });
+          const { error: registrationError } = await supabase
+            .from('game_registrations')
+            .insert(
+              newPlayers.map(playerId => ({
+                game_id: gameResult.id,
+                player_id: playerId,
+                status: 'selected',
+                selection_method: randomPickPlayers.includes(playerId) ? 'random' : 'merit'
+              }))
+            );
 
-          if (registrationError) {
-            console.error('Error registering players:', registrationError);
-            toast.error('Game created but there was an error registering some players');
-            return;
-          }
+          if (registrationError) throw registrationError;
         }
       }
 
-      // Add reserve players using admin role
+      // Register reserve players
       if (reservePlayers.length > 0) {
-        // First check if any of these players are already registered
-        const { data: existingReserveRegistrations } = await supabase
+        const { error: reserveError } = await supabase
           .from('game_registrations')
-          .select('player_id')
-          .eq('game_id', gameResult.id)
-          .in('player_id', reservePlayers);
+          .insert(
+            reservePlayers.map(playerId => ({
+              game_id: gameResult.id,
+              player_id: playerId,
+              status: 'reserve',
+              selection_method: 'merit'
+            }))
+          );
 
-        const existingReserveIds = new Set(existingReserveRegistrations?.map(reg => reg.player_id) || []);
-        const newReservePlayers = reservePlayers.filter(id => !existingReserveIds.has(id));
-
-        if (newReservePlayers.length > 0) {
-          const { error: reserveError } = await supabase.auth.getSession().then(({ data: { session } }) => {
-            return supabase
-              .from('game_registrations')
-              .insert(
-                newReservePlayers.map(playerId => ({
-                  game_id: gameResult.id,
-                  player_id: playerId,
-                  status: 'reserve',
-                  selection_method: 'none'  // Reserve players weren't selected by any method
-                }))
-              );
-          });
-
-          if (reserveError) {
-            console.error('Error adding reserve players:', reserveError);
-            toast.error('Game created but there was an error adding some reserve players');
-            return;
-          }
-        }
+        if (reserveError) throw reserveError;
       }
 
-      // Add dropped out players
+      // Register dropped out players
       if (droppedOutPlayers.length > 0) {
-        // First check if any of these players are already registered
-        const { data: existingDroppedRegistrations } = await supabase
+        const { error: droppedOutError } = await supabase
           .from('game_registrations')
-          .select('player_id')
-          .eq('game_id', gameResult.id)
-          .in('player_id', droppedOutPlayers);
+          .insert(
+            droppedOutPlayers.map(playerId => ({
+              game_id: gameResult.id,
+              player_id: playerId,
+              status: 'dropped_out',
+              selection_method: 'merit'
+            }))
+          );
 
-        const existingDroppedIds = new Set(existingDroppedRegistrations?.map(reg => reg.player_id) || []);
-        const newDroppedPlayers = droppedOutPlayers.filter(id => !existingDroppedIds.has(id));
+        if (droppedOutError) throw droppedOutError;
+      }
 
-        if (newDroppedPlayers.length > 0) {
-          const { error: droppedOutError } = await supabase.auth.getSession().then(({ data: { session } }) => {
-            return supabase
-              .from('game_registrations')
-              .insert(
-                newDroppedPlayers.map(playerId => ({
-                  game_id: gameResult.id,
-                  player_id: playerId,
-                  status: 'dropped_out',
-                  selection_method: 'none'  // Dropped out players don't have a selection method
-                }))
-              );
-          });
+      // Assign teams if in team announcement phase
+      if (gamePhase === GAME_STATUSES.TEAMS_ANNOUNCED) {
+        // Assign team A (blue)
+        if (teamAPlayers.length > 0) {
+          const { error: teamAError } = await supabase
+            .from('game_registrations')
+            .update({ team: 'blue' })
+            .eq('game_id', gameResult.id)
+            .in('player_id', teamAPlayers);
 
-          if (droppedOutError) {
-            console.error('Error adding dropped out players:', droppedOutError);
-            toast.error('Game created but there was an error adding some dropped out players');
-            return;
-          }
+          if (teamAError) throw teamAError;
         }
+
+        // Assign team B (orange)
+        if (teamBPlayers.length > 0) {
+          const { error: teamBError } = await supabase
+            .from('game_registrations')
+            .update({ team: 'orange' })
+            .eq('game_id', gameResult.id)
+            .in('player_id', teamBPlayers);
+
+          if (teamBError) throw teamBError;
+        }
+
+        // Save team ratings
+        const { error: teamRatingsError } = await supabase
+          .from('game_team_ratings')
+          .insert([
+            {
+              game_id: gameResult.id,
+              team: 'blue',
+              attack_rating: teamAAttackRating,
+              defense_rating: teamADefenseRating
+            },
+            {
+              game_id: gameResult.id,
+              team: 'orange',
+              attack_rating: teamBAttackRating,
+              defense_rating: teamBDefenseRating
+            }
+          ]);
+
+        if (teamRatingsError) throw teamRatingsError;
       }
 
       toast.success('Game created successfully!');
-      onGameCreated?.();
-    } catch (error) {
+      if (onGameCreated) onGameCreated();
+    } catch (error: any) {
       console.error('Error creating game:', error);
-      toast.error('Error creating game');
+      toast.error(`Failed to create game: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }

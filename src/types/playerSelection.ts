@@ -26,31 +26,53 @@ export interface Player {
   isRandomlySelected?: boolean;
   selectionMethod?: string;
   stats?: PlayerStats;
+  caps?: number;
+  active_bonuses?: number;
+  active_penalties?: number;
+  current_streak?: number;
+  max_streak?: number;
+  avatar_svg?: string;
+  whatsapp_group_member?: boolean;
+  unpaid_games?: number;
+  unpaid_games_modifier?: number;
 }
 
 export interface ExtendedPlayerData extends PlayerStats {
   isRandomlySelected?: boolean;
   hasSlotOffer?: boolean;
   slotOfferStatus?: 'pending' | 'declined';
-  slotOfferExpiresAt?: string; // When exclusive access ends
-  slotOfferAvailableAt?: string; // When the offer became available
+  slotOfferExpiresAt?: string; 
+  slotOfferAvailableAt?: string; 
   slotOffers?: {
     status: string;
     expires_at?: string;
     available_at?: string;
   }[];
   whatsapp_group_member?: string;
-  benchWarmerStreak?: number;  // Add this for consistency with PlayerCard props
-  registrationStreakBonus?: number; // Current registration streak length
-  registrationStreakBonusApplies?: boolean; // Whether the bonus should be applied
-  using_token?: boolean; // Whether the player is using a token for this game
-  had_token?: boolean; // Whether the player used a token but had it returned due to merit selection
-  status?: 'selected' | 'reserve' | 'dropped_out' | 'none'; // Player's status in the latest game
+  benchWarmerStreak?: number;  
+  registrationStreakBonus?: number; 
+  registrationStreakBonusApplies?: boolean; 
+  using_token?: boolean; 
+  had_token?: boolean; 
+  status?: 'selected' | 'reserve' | 'dropped_out' | 'none'; 
 }
 
 export interface PlayerSelectionResultsProps {
-  selectedPlayers: ExtendedPlayerData[];
-  onClose: () => void;
+  gameId: string;
+  selectedPlayers: Array<{
+    player: Player;
+    selection_type: string;
+    team: string;
+  }>;
+  reservePlayers: Player[];
+  onClose?: () => void;
+}
+
+export interface TeamSelectionResultsProps {
+  gameId: string;
+  blueTeam: Player[];
+  orangeTeam: Player[];
+  reservePlayers: Player[];
 }
 
 export interface ReservePlayer {

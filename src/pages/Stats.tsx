@@ -87,10 +87,10 @@ export default function Stats() {
               return {
                 name: player?.friendlyName,
                 value: (
-                  <div className="flex items-center justify-end gap-2">
-                    <span className="font-bold text-right w-20">{player?.maxWinStreak} wins</span>
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                    <span className="font-bold text-right whitespace-nowrap w-20">{player?.maxWinStreak} wins</span>
                     {player?.maxStreakDate && (
-                      <span className="text-xs opacity-80 text-right w-24">
+                      <span className="text-xs opacity-80 text-right whitespace-nowrap w-24">
                         {new Intl.DateTimeFormat('en-GB', { 
                           day: 'numeric', 
                           month: 'short', 
@@ -116,8 +116,8 @@ export default function Stats() {
             winners={stats.currentWinningStreaks.map(player => ({
               name: player.friendlyName,
               value: (
-                <div className="flex items-center justify-end gap-2">
-                  <span className="font-bold text-right w-20">{player.currentWinStreak} wins</span>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                  <span className="font-bold text-right whitespace-nowrap w-20">{player.currentWinStreak} wins</span>
                 </div>
               ),
               rawValue: player.currentWinStreak,
@@ -134,10 +134,10 @@ export default function Stats() {
           winners={stats.topAttendanceStreaks.map(player => ({
             name: player.friendlyName,
             value: (
-              <div className="flex items-center justify-end gap-2">
-                <span className="font-bold text-right w-20">{player.maxStreak} games</span>
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                <span className="font-bold text-right whitespace-nowrap w-20">{player.maxStreak} games</span>
                 {player.maxAttendanceStreakDate && (
-                  <span className="text-xs opacity-80 text-right w-24">
+                  <span className="text-xs opacity-80 text-right whitespace-nowrap w-24">
                     {new Intl.DateTimeFormat('en-GB', { 
                       day: 'numeric', 
                       month: 'short', 
@@ -161,8 +161,8 @@ export default function Stats() {
             winners={stats.currentStreaks.map(player => ({
               name: player.friendlyName,
               value: (
-                <div className="flex items-center justify-end gap-2">
-                  <span className="font-bold text-right w-20">{player.currentStreak} games</span>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                  <span className="font-bold text-right whitespace-nowrap w-20">{player.currentStreak} games</span>
                 </div>
               ),
               rawValue: player.currentStreak,

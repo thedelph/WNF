@@ -1,23 +1,32 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabase, supabaseAdmin } from '../utils/supabase';
-import { handlePlayerSelection } from '../utils/playerSelection';
+import { utcToUkTime } from '../utils/dateUtils';
 
 interface UseRegistrationCloseProps {
   game?: any;
   onGameUpdated: () => Promise<void>;
 }
 
+/**
+ * Hook to handle registration window closing
+ * Uses timezone-aware date handling for proper time comparison
+ */
 export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
   const [isProcessingClose, setIsProcessingClose] = useState(false);
   const [hasPassedWindowEnd, setHasPassedWindowEnd] = useState(false);
+  const [isRegistrationClosed, setIsRegistrationClosed] = useState(false);
 
   useEffect(() => {
     if (!props?.game) return;
 
     const checkRegistrationStatus = () => {
       const now = new Date();
-      const registrationEnd = new Date(props.game!.registration_window_end);
+      // Convert UTC timestamp to UK timezone for proper comparison
+      const registrationEnd = utcToUkTime(new Date(props.game!.registration_window_end));
+      
+      // Update registration closed state
+      setIsRegistrationClosed(now > registrationEnd);
       
       // Check if we need to process player selection
       const shouldProcessSelection = 
@@ -81,7 +90,7 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to acquire lock:', error);
       return false;
     }
@@ -97,7 +106,7 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
         p_game_id: gameId,
         p_user_id: user.id
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error releasing lock:', error);
     }
   };
@@ -129,7 +138,7 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
       const { id, max_players, random_slots } = props.game;
       
       // Use a transaction to ensure atomic updates
-      const { data: result, error: txError } = await supabase.rpc('process_registration_close', {
+      const { error: txError } = await supabase.rpc('process_registration_close', {
         p_game_id: id,
         p_max_players: max_players,
         p_random_slots: random_slots
@@ -148,7 +157,7 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
 
       setHasPassedWindowEnd(true);
       toast.success('Player selection completed successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration close error:', error);
       const errorMessage = error.message || 'An unknown error occurred';
       toast.error(`Failed to process registration close: ${errorMessage}`);
@@ -164,6 +173,7 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
   return {
     isProcessingClose,
     hasPassedWindowEnd,
+    isRegistrationClosed,
     handleRegistrationWindowClose
   };
 };

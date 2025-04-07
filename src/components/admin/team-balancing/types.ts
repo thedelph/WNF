@@ -14,7 +14,8 @@ export interface TeamAssignment {
   friendly_name: string;
   attack_rating: number;
   defense_rating: number;
-  win_rate?: number; // Added recent win rate as optional property
+  win_rate?: number | null; // Allow win rate to be null for players with no game history
+  total_games?: number | null; // Add total games count
   team: 'blue' | 'orange' | null;
 }
 

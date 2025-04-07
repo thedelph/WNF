@@ -67,18 +67,33 @@ const TeamBalancingOverview = () => {
     // Calculate average stats for each team
     const blueAttack = blueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeam.length;
     const blueDefense = blueTeam.reduce((sum, p) => sum + p.defense_rating, 0) / blueTeam.length;
-    const blueWinRate = blueTeam.reduce((sum, p) => sum + (p.win_rate || 50), 0) / blueTeam.length;
+    
+    // Filter out players with no game history
+    const bluePlayersWithHistory = blueTeam.filter(p => p.win_rate !== null && p.win_rate !== undefined);
+    const orangePlayersWithHistory = orangeTeam.filter(p => p.win_rate !== null && p.win_rate !== undefined);
+    
+    const blueWinRate = bluePlayersWithHistory.length > 0 
+      ? bluePlayersWithHistory.reduce((sum, p) => sum + (p.win_rate ?? 0), 0) / bluePlayersWithHistory.length 
+      : 0;
     
     const orangeAttack = orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeam.length;
     const orangeDefense = orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeam.length;
-    const orangeWinRate = orangeTeam.reduce((sum, p) => sum + (p.win_rate || 50), 0) / orangeTeam.length;
+    
+    const orangeWinRate = orangePlayersWithHistory.length > 0 
+      ? orangePlayersWithHistory.reduce((sum, p) => sum + (p.win_rate ?? 0), 0) / orangePlayersWithHistory.length 
+      : 0;
     
     // Calculate differences between teams
     const attackDiff = Math.abs(blueAttack - orangeAttack);
     const defenseDiff = Math.abs(blueDefense - orangeDefense);
-    const rawWinRateDiff = Math.abs(blueWinRate - orangeWinRate);
-    const weightedWinRateDiff = rawWinRateDiff * 5; // Apply weight to win rate for scoring
     
+    // Only calculate win rate difference if both teams have players with history
+    const rawWinRateDiff = (bluePlayersWithHistory.length > 0 && orangePlayersWithHistory.length > 0)
+      ? Math.abs(blueWinRate - orangeWinRate)
+      : 0;
+      
+    const weightedWinRateDiff = rawWinRateDiff * 5; // Apply weight to win rate for scoring
+      
     // Calculate overall balance score (lower is better)
     const currentScore = attackDiff + defenseDiff + weightedWinRateDiff;
     
@@ -140,19 +155,32 @@ const TeamBalancingOverview = () => {
         
         const blueAttack = blueTeamCopy.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeamCopy.length;
         const blueDefense = blueTeamCopy.reduce((sum, p) => sum + p.defense_rating, 0) / blueTeamCopy.length;
-        const blueWinRate = blueTeamCopy.reduce((sum, p) => sum + (p.win_rate || 50), 0) / blueTeamCopy.length;
+        
+        // Filter out players with no game history for win rate calculation
+        const bluePlayersWithHistory = blueTeamCopy.filter(p => p.win_rate !== null && p.win_rate !== undefined);
+        const orangePlayersWithHistory = orangeTeamCopy.filter(p => p.win_rate !== null && p.win_rate !== undefined);
+        
+        const blueWinRate = bluePlayersWithHistory.length > 0 
+          ? bluePlayersWithHistory.reduce((sum, p) => sum + (p.win_rate ?? 0), 0) / bluePlayersWithHistory.length 
+          : 0;
         
         const orangeAttack = orangeTeamCopy.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeamCopy.length;
         const orangeDefense = orangeTeamCopy.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeamCopy.length;
-        const orangeWinRate = orangeTeamCopy.reduce((sum, p) => sum + (p.win_rate || 50), 0) / orangeTeamCopy.length;
+        
+        const orangeWinRate = orangePlayersWithHistory.length > 0 
+          ? orangePlayersWithHistory.reduce((sum, p) => sum + (p.win_rate ?? 0), 0) / orangePlayersWithHistory.length 
+          : 0;
         
         // Calculate diffs
         const attackDiff = Math.abs(blueAttack - orangeAttack);
         const defenseDiff = Math.abs(blueDefense - orangeDefense);
-        const winRateDiff = Math.abs(blueWinRate - orangeWinRate);
-        const weightedWinRateDiff = winRateDiff * 5; // Apply weight to win rate
         
-        // Lower score is better
+        // Only calculate win rate difference if both teams have players with history
+        const winRateDiff = (bluePlayersWithHistory.length > 0 && orangePlayersWithHistory.length > 0)
+          ? Math.abs(blueWinRate - orangeWinRate)
+          : 0;
+          
+        const weightedWinRateDiff = winRateDiff * 5; // Apply weight to win rate
         const newScore = attackDiff + defenseDiff + weightedWinRateDiff;
         const improvementScore = teamStats.currentScore - newScore;
         
@@ -212,16 +240,31 @@ const TeamBalancingOverview = () => {
     
     const blueAttack = blueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeam.length;
     const blueDefense = blueTeam.reduce((sum, p) => sum + p.defense_rating, 0) / blueTeam.length;
-    const blueWinRate = blueTeam.reduce((sum, p) => sum + (p.win_rate || 50), 0) / blueTeam.length;
+    
+    // Filter out players with no game history
+    const bluePlayersWithHistory = blueTeam.filter(p => p.win_rate !== null && p.win_rate !== undefined);
+    const orangePlayersWithHistory = orangeTeam.filter(p => p.win_rate !== null && p.win_rate !== undefined);
+    
+    const blueWinRate = bluePlayersWithHistory.length > 0 
+      ? bluePlayersWithHistory.reduce((sum, p) => sum + (p.win_rate ?? 0), 0) / bluePlayersWithHistory.length 
+      : 0;
     
     const orangeAttack = orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeam.length;
     const orangeDefense = orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeam.length;
-    const orangeWinRate = orangeTeam.reduce((sum, p) => sum + (p.win_rate || 50), 0) / orangeTeam.length;
+    
+    const orangeWinRate = orangePlayersWithHistory.length > 0 
+      ? orangePlayersWithHistory.reduce((sum, p) => sum + (p.win_rate ?? 0), 0) / orangePlayersWithHistory.length 
+      : 0;
     
     // Calculate differences between teams
     const attackDiff = Math.abs(blueAttack - orangeAttack);
     const defenseDiff = Math.abs(blueDefense - orangeDefense);
-    const rawWinRateDiff = Math.abs(blueWinRate - orangeWinRate);
+    
+    // Only calculate win rate difference if both teams have players with history
+    const rawWinRateDiff = (bluePlayersWithHistory.length > 0 && orangePlayersWithHistory.length > 0)
+      ? Math.abs(blueWinRate - orangeWinRate)
+      : 0;
+      
     const winRateDiff = rawWinRateDiff * 5; // Apply weight to win rate for the score
     
     // Lower score is better

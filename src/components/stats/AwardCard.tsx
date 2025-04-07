@@ -103,19 +103,22 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="flex items-center justify-between"
               >
-                <div className="flex items-center gap-2">
-                  {medalIndex !== null ? (
-                    <Medal 
-                      className={`w-5 h-5 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
-                    />
-                  ) : (
-                    <span className="w-5 h-5">{/* Empty space to maintain alignment */}</span>
-                  )}
-                  <span className="drop-shadow-[0_0_1px_rgba(0,0,0,0.5)]">{winner.name}</span>
+                <div key={winner.id} className="flex justify-between items-center gap-2">
+                  {/* Player name with medal - left side */}
+                  <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
+                    {medalIndex !== null ? (
+                      <Medal 
+                        className={`w-5 h-5 flex-shrink-0 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
+                      />
+                    ) : (
+                      <span className="w-5 h-5 flex-shrink-0">{/* Empty space to maintain alignment */}</span>
+                    )}
+                    <span className="drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] truncate block">{winner.name}</span>
+                  </div>
+                  {/* Value display - right side */}
+                  <div className="flex-shrink-0 drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] text-right">{winner.value}</div>
                 </div>
-                <span className="font-bold drop-shadow-[0_0_1px_rgba(0,0,0,0.5)]">{winner.value}</span>
               </motion.div>
             );
           })}

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trophy, Medal } from 'lucide-react';
+import { Medal } from 'lucide-react';
 
 interface StatsCardProps {
   title: string;
@@ -39,7 +39,7 @@ export const StatsCard = ({ title, value, description, icon, color = 'blue', cla
   };
 
   // Determine medal positions considering ties
-  const getMedalIndex = (currentIndex: number, currentValue: number, players: any[]) => {
+  const getMedalIndex = (_: number, currentValue: number, players: any[]) => {
     // Count how many players have a higher win rate
     const playersWithHigherRate = players.filter(p => p.winRate > currentValue).length;
     // Return that as the medal index - this handles ties correctly
@@ -62,16 +62,16 @@ export const StatsCard = ({ title, value, description, icon, color = 'blue', cla
           {stats && stats.map((player, index) => {
             const medalIndex = getMedalIndex(index, player.winRate, stats);
             return (
-              <div key={player.id} className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
+              <div key={player.id} className="flex justify-between items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
                   <Medal 
-                    className={`w-5 h-5 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
+                    className={`w-5 h-5 flex-shrink-0 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
                   />
-                  <span>{player.friendlyName}</span>
+                  <span className="truncate block">{player.friendlyName}</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="w-14 text-right">{player.winRate.toFixed(1)}%</span>
-                  <span className="text-sm opacity-70 w-24 text-right">
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 flex-shrink-0 justify-end">
+                  <span className="font-bold whitespace-nowrap text-right w-14">{player.winRate.toFixed(1)}%</span>
+                  <span className="text-sm opacity-70 whitespace-nowrap text-right w-24">
                     {player.wins}W/{player.draws}D/{player.losses}L
                   </span>
                 </div>

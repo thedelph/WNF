@@ -28,10 +28,6 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-// Get year from date string
-const getYear = (dateString: string): number => {
-  return new Date(dateString).getFullYear();
-};
 
 export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
   const [highestXP, setHighestXP] = useState<HighestXPRecord[]>([]);
@@ -144,18 +140,20 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
         {highestXP.length > 0 ? (
           <div className="space-y-2">
             {highestXP.map((record, index) => (
-              <div key={`${record.player_id}-${record.snapshot_date}`} className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
+              <div key={`${record.player_id}-${record.snapshot_date}`} className="flex justify-between items-center gap-2">
+                {/* Player name with medal - left side */}
+                <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%] sm:max-w-none">
                   {index < 3 ? (
-                    <Medal className={medals[index].color} size={18} />
+                    <Medal className={`flex-shrink-0 ${medals[index].color}`} size={18} />
                   ) : (
-                    <span className="w-[18px]">{/* Empty space to maintain alignment */}</span>
+                    <span className="w-[18px] flex-shrink-0">{/* Empty space to maintain alignment */}</span>
                   )}
-                  <span>{record.friendly_name}</span>
+                  <span className="truncate block">{record.friendly_name}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold">{record.xp} XP</span>
-                  <span className="text-xs opacity-80">{record.formatted_date}</span>
+                {/* XP and date - right side, stacked on mobile, side-by-side on larger screens */}
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 flex-shrink-0 justify-end">
+                  <span className="font-bold whitespace-nowrap text-right w-20">{record.xp} XP</span>
+                  <span className="text-xs opacity-80 whitespace-nowrap text-right w-24">{record.formatted_date}</span>
                 </div>
               </div>
             ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { supabase } from '../utils/supabase';
@@ -15,19 +15,58 @@ import { TeamSelectionResults } from '../components/games/TeamSelectionResults';
 
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
-import { PlayerCard } from '../components/player-card/PlayerCard';
-
 import { useRegistrationClose } from '../hooks/useRegistrationClose';
 
 import { useTeamAnnouncement } from '../hooks/useTeamAnnouncement';
 
 import { useRegistrationOpen } from '../hooks/useRegistrationOpen';
 
-import { Game as GameType } from '../types/game';
+import { Game as GameType, GameRegistration as GameRegistrationType } from '../types/game';
+import { Player } from '../types/player';
 
-import WeatherCard from '../components/weather/WeatherCard';
 import { useWeatherCard } from '../hooks/useWeatherCard';
+import { utcToUkTime } from '../utils/dateUtils';
 
+// Define types for player data state to fix TypeScript errors
+interface PlayerDataState {
+  registrations: Array<{
+    player: Player & {
+      registrationStreak?: number;
+      registrationStreakApplies?: boolean;
+    };
+    status: string;
+    using_token?: boolean;
+    created_at: string;
+  }>;
+  selectedPlayers: Array<{
+    player: Player;
+    selection_type: string;
+    team: string;
+  }>;
+  reservePlayers: Player[];
+  selectionNotes: string[];
+}
+
+// Define type for registration streak data
+interface RegStreakData {
+  friendly_name: string;
+  current_streak_length: number;
+  bonus_applies: boolean;
+}
+
+// Define type for registration streak map
+interface RegStreakMap {
+  [key: string]: {
+    registrationStreak: number;
+    registrationStreakApplies: boolean;
+  };
+}
+
+/**
+ * Game component displays details for a specific game or the next upcoming game
+ * Handles registration, player selection, and team announcements
+ * Uses timezone-aware date handling for proper display of times
+ */
 const Game = () => {
 
   const { id } = useParams();
@@ -38,16 +77,12 @@ const Game = () => {
 
   const [isUserRegistered, setIsUserRegistered] = useState(false);
 
-  const [playerData, setPlayerData] = useState({
-
+  // Use the defined interface for playerData state
+  const [playerData, setPlayerData] = useState<PlayerDataState>({
     registrations: [],
-
     selectedPlayers: [],
-
     reservePlayers: [],
-
-    selectionNotes: [] as string[]
-
+    selectionNotes: []
   });
 
   const [useToken, setUseToken] = useState(false);
@@ -153,8 +188,8 @@ const Game = () => {
 
       if (regStreakError) throw regStreakError;
 
-      // Create a map of registration streak data
-      const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
+      // Create a map of registration streak data with proper typing
+      const regStreakMap: RegStreakMap = (regStreakData as RegStreakData[] || []).reduce((acc: RegStreakMap, player: RegStreakData) => ({
         ...acc,
         [player.friendly_name]: {
           registrationStreak: player.current_streak_length || 0,
@@ -164,45 +199,40 @@ const Game = () => {
 
       const registrations = game.game_registrations || [];
 
-      const allValidRegistrations = registrations.filter(reg => reg && reg.player);
+      const allValidRegistrations = registrations.filter((reg: GameRegistrationType) => reg && reg.player);
 
-      const selectedRegistrations = registrations.filter(reg => 
-
+      const selectedRegistrations = registrations.filter((reg: GameRegistrationType) => 
         reg && reg.player && reg.status === 'selected'
-
       );
 
-      const transformedPlayers = selectedRegistrations.map(reg => ({
-
-        player: reg.player,
-
+      const transformedPlayers = selectedRegistrations.map((reg: GameRegistrationType) => ({
+        player: reg.player!,
         selection_type: reg.selection_method || 'merit',
-
-        team: reg.team?.toLowerCase()
-
+        team: reg.team?.toLowerCase() || ''
       }));
 
+      // Create a properly typed playerData object
       setPlayerData({
-        registrations: allValidRegistrations.map(reg => ({
+        registrations: allValidRegistrations.map((reg: GameRegistrationType) => ({
           player: {
-            ...reg.player,
-            registrationStreak: regStreakMap?.[reg.player.friendly_name]?.registrationStreak || 0,
-            registrationStreakApplies: regStreakMap?.[reg.player.friendly_name]?.registrationStreakApplies || false
+            ...reg.player!,
+            // Safely access registration streak data with null checks and defaults
+            registrationStreak: reg.player?.friendly_name && regStreakMap[reg.player.friendly_name] 
+              ? regStreakMap[reg.player.friendly_name].registrationStreak 
+              : 0,
+            registrationStreakApplies: reg.player?.friendly_name && regStreakMap[reg.player.friendly_name] 
+              ? regStreakMap[reg.player.friendly_name].registrationStreakApplies 
+              : false
           },
           status: reg.status,
           using_token: reg.using_token,
           created_at: reg.created_at || new Date().toISOString()
         })),
         selectedPlayers: transformedPlayers,
-
         reservePlayers: registrations
-
-          .filter(reg => reg.status === 'reserve' && reg.player)
-
-          .map(reg => reg.player),
-
+          .filter((reg: GameRegistrationType) => reg.status === 'reserve' && reg.player)
+          .map((reg: GameRegistrationType) => reg.player!),
         selectionNotes: []
-
       });
 
     } catch (error) {
@@ -237,7 +267,7 @@ const Game = () => {
 
     const registration = upcomingGame.game_registrations?.find(
 
-      reg => reg.player?.id === playerProfile.id
+      (reg: GameRegistrationType) => reg.player?.id === playerProfile.id
 
     );
 
@@ -278,11 +308,12 @@ const Game = () => {
   const useWeatherCardHook = useWeatherCard({ gameId: upcomingGame?.id });
 
   // Determine if registration is open based on window times and game status
+  // Use timezone-aware date handling for proper comparison
   const now = new Date();
   const isRegistrationOpen = upcomingGame && 
     upcomingGame.status === 'open' &&
-    now >= new Date(upcomingGame.registration_window_start) &&
-    now < new Date(upcomingGame.registration_window_end);
+    now >= utcToUkTime(new Date(upcomingGame.registration_window_start)) &&
+    now < utcToUkTime(new Date(upcomingGame.registration_window_end));
 
   // Set up realtime subscription for game updates
 
@@ -376,84 +407,6 @@ const Game = () => {
 
   }, [checkUserRegistration, upcomingGame?.game_registrations]);
 
-  const handleRegistration = async () => {
-    try {
-      if (!upcomingGame) return;
-
-      const { data: playerProfile } = await supabase
-        .from('players')
-        .select('id')
-        .single();
-
-      if (!playerProfile) {
-        console.error('No player profile found');
-        return;
-      }
-
-      if (isUserRegistered) {
-        // Unregister
-        const { error } = await supabase
-          .from('game_registrations')
-          .delete()
-          .match({ 
-            game_id: upcomingGame.id,
-            player_id: playerProfile.id 
-          });
-
-        if (error) throw error;
-        
-        // Reset token usage
-        setUseToken(false);
-      } else {
-        // If using token, verify and reserve it
-        if (useToken) {
-          const { data: tokenReserved } = await supabase
-            .rpc('handle_game_token', { 
-              p_player_id: playerProfile.id,
-              p_game_id: upcomingGame.id,
-              p_action: 'reserve'
-            });
-
-          if (!tokenReserved) {
-            console.error('Failed to reserve token');
-            return;
-          }
-        }
-
-        // Register
-        const { error } = await supabase
-          .from('game_registrations')
-          .insert({
-            game_id: upcomingGame.id,
-            player_id: playerProfile.id,
-            status: 'registered',
-            using_token: useToken,
-            selection_method: useToken ? 'token' : null
-          });
-
-        if (error) {
-          // If registration failed and we reserved a token, release it
-          if (useToken) {
-            await supabase
-              .rpc('handle_game_token', { 
-                p_player_id: playerProfile.id,
-                p_game_id: upcomingGame.id,
-                p_action: 'return'
-              });
-          }
-          throw error;
-        }
-      }
-
-      // Refresh game data
-      await fetchGameData();
-      await checkUserRegistration();
-    } catch (error) {
-      console.error('Error handling registration:', error);
-      throw error;
-    }
-  };
-
   if (isLoading) {
 
     return (
@@ -482,12 +435,21 @@ const Game = () => {
 
   }
 
+  // Extract blue and orange teams for TeamSelectionResults
+  const blueTeam = playerData.selectedPlayers
+    .filter(p => p.team === 'blue')
+    .map(p => p.player);
+  
+  const orangeTeam = playerData.selectedPlayers
+    .filter(p => p.team === 'orange')
+    .map(p => p.player);
+
   return (
     <div className="container mx-auto px-4 space-y-8">
       <GameHeader
         game={upcomingGame}
         isRegistrationOpen={isRegistrationOpen}
-        isRegistrationClosed={isRegistrationClosed}
+        isRegistrationClosed={!!isRegistrationClosed}
         weatherCardProps={upcomingGame.venue ? {
           venueAddress: upcomingGame.venue.address || '',
           venueName: upcomingGame.venue.name || '',
@@ -503,7 +465,7 @@ const Game = () => {
           <GameRegistration
             game={upcomingGame}
             isRegistrationOpen={isRegistrationOpen}
-            isRegistrationClosed={isRegistrationClosed}
+            isRegistrationClosed={!!isRegistrationClosed}
             isUserRegistered={isUserRegistered}
             isProcessingOpen={isProcessingOpen}
             isProcessingClose={isProcessingClose}
@@ -514,14 +476,18 @@ const Game = () => {
           <RegisteredPlayers 
             registrations={playerData.registrations} 
             maxPlayers={upcomingGame.max_players} 
-            randomSlots={upcomingGame.random_slots} 
+            randomSlots={upcomingGame.random_slots || 0} 
           />
         </>
       )}
 
       {/* Show PlayerSelectionResults after registration closes but before team announcement */}
       {upcomingGame.status === 'players_announced' && !isTeamAnnouncementTime && (
-        <PlayerSelectionResults gameId={upcomingGame.id} />
+        <PlayerSelectionResults 
+          gameId={upcomingGame.id} 
+          selectedPlayers={playerData.selectedPlayers}
+          reservePlayers={playerData.reservePlayers}
+        />
       )}
 
       {/* Show TeamSelectionResults after team announcement */}
@@ -529,7 +495,8 @@ const Game = () => {
         <TeamSelectionResults
           key={`team-selection-${playerData.selectedPlayers.length}`}
           gameId={upcomingGame.id}
-          selectedPlayers={playerData.selectedPlayers}
+          blueTeam={blueTeam}
+          orangeTeam={orangeTeam}
           reservePlayers={playerData.reservePlayers}
         />
       )}

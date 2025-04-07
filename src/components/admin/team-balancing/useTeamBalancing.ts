@@ -55,7 +55,8 @@ export const useTeamBalancing = () => {
             id,
             friendly_name,
             attack_rating,
-            defense_rating
+            defense_rating,
+            caps
           )
         `)
         .eq('game_id', nextGame.id)
@@ -84,10 +85,10 @@ export const useTeamBalancing = () => {
       }
 
       // Create win rate lookup map
-      const winRateMap = new Map<string, number>();
+      const winRateMap = new Map<string, number | null>();
       if (winRateData) {
         winRateData.forEach((player: { id: string; recent_win_rate: number | null }) => {
-          winRateMap.set(player.id, player.recent_win_rate || 50);
+          winRateMap.set(player.id, player.recent_win_rate);
         });
       }
 
@@ -99,6 +100,7 @@ export const useTeamBalancing = () => {
           name: lewisData.players.friendly_name,
           attack: lewisData.players.attack_rating,
           defense: lewisData.players.defense_rating,
+          caps: lewisData.players.caps,
           winRate: winRateMap.get(lewisData.players.id) || 'N/A'
         });
       }
@@ -111,24 +113,37 @@ export const useTeamBalancing = () => {
         .maybeSingle();
 
       // Create new assignments using fresh player data
-      const playerRatings = registrations.map(reg => ({
-        player_id: reg.players.id,
-        attack_rating: reg.players.attack_rating || 5,
-        defense_rating: reg.players.defense_rating || 5,
-        win_rate: winRateMap.get(reg.players.id) || 50 // Add win rate data
-      }));
+      const playerRatings = registrations.map(reg => {
+        const playerId = reg.players.id;
+        const caps = reg.players.caps || 0; // Default to 0 if null
+        // Set win_rate to null if player has played fewer than 10 games
+        const winRate = caps >= 10 ? winRateMap.get(playerId) : null;
+        
+        return {
+          player_id: playerId,
+          attack_rating: reg.players.attack_rating || 5,
+          defense_rating: reg.players.defense_rating || 5,
+          win_rate: winRate, // Pass null if less than 10 games
+          total_games: caps
+        };
+      });
 
       let finalAssignments;
       if (assignmentData?.team_assignments?.teams) {
         // Update existing assignments with fresh player data
         finalAssignments = assignmentData.team_assignments.teams.map((assignment: TeamAssignment) => {
           const freshPlayerData = registrations.find(reg => reg.players.id === assignment.player_id);
+          const caps = freshPlayerData?.players.caps || 0; // Default to 0 if null
+          // Set win_rate to null if player has played fewer than 10 games
+          const winRate = caps >= 10 ? winRateMap.get(assignment.player_id) : null;
+          
           return {
             ...assignment,
             friendly_name: freshPlayerData?.players.friendly_name,
             attack_rating: freshPlayerData?.players.attack_rating || assignment.attack_rating,
             defense_rating: freshPlayerData?.players.defense_rating || assignment.defense_rating,
-            win_rate: winRateMap.get(assignment.player_id) || 50 // Add win rate data
+            win_rate: winRate, // Pass null if less than 10 games
+            total_games: caps
           };
         });
       } else {
@@ -137,12 +152,17 @@ export const useTeamBalancing = () => {
         finalAssignments = registrations.map((reg, index) => {
           // Use blueTeam property from the balanceTeams result
           const isBlue = index < balancedTeams.blueTeam.length;
+          const caps = reg.players.caps || 0;
+          // Set win_rate to null if player has played fewer than 10 games
+          const winRate = caps >= 10 ? winRateMap.get(reg.players.id) : null;
+          
           return {
             player_id: reg.players.id,
             friendly_name: reg.players.friendly_name,
             attack_rating: reg.players.attack_rating || 5,
             defense_rating: reg.players.defense_rating || 5,
-            win_rate: winRateMap.get(reg.players.id) || 50, // Add win rate data
+            win_rate: winRate, // Pass null if less than 10 games
+            total_games: caps,
             team: isBlue ? 'blue' : 'orange'
           };
         });
@@ -239,7 +259,8 @@ export const useTeamBalancing = () => {
       player_id: player.player_id,
       attack_rating: player.attack_rating,
       defense_rating: player.defense_rating,
-      win_rate: player.win_rate || 50
+      win_rate: player.win_rate || 50,
+      total_games: player.total_games
     }));
     
     const balancedTeams = balanceTeams(playerRatings);
