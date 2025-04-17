@@ -619,6 +619,23 @@ export default function PlayerProfileNew() {
             />
           </div>
         )}
+        
+        {/* Win Rate Graph - Directly below XP Breakdown */}
+        {player && games.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="w-full mt-6"
+          >
+            <WinRateGraph 
+              userGameData={games} 
+              getGameOutcome={getGameOutcome} 
+              officialWinRate={player.win_rate} 
+              className="w-full"
+            /> 
+          </motion.div>
+        )}
 
         {/* Priority Token Status - Full Width */}
         {player && tokenStatus && (
@@ -678,22 +695,7 @@ export default function PlayerProfileNew() {
         </motion.div>
       )}
 
-      {/* Win Rate Graph */}
-      {player && games.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-12 mb-12"
-        >
-          <WinRateGraph 
-            userGameData={games} 
-            getGameOutcome={getGameOutcome} 
-            officialWinRate={player.win_rate} 
-            className="w-full"
-          /> 
-        </motion.div>
-      )}
+      {/* Win Rate Graph moved above */}
 
       {/* Game History */}
       <div id="game-history" className="bg-base-100 rounded-lg p-6 shadow-lg">
