@@ -14,52 +14,20 @@ import {
   Line, XAxis, YAxis, CartesianGrid, 
   Tooltip as RechartsTooltip, 
   Legend, ResponsiveContainer,
-  Scatter, ComposedChart
+  Scatter, ComposedChart,
+  ReferenceArea
 } from 'recharts';
-// We're defining our own GameHistory interface to handle all data structures
-// import { GameHistory as BaseGameHistory } from '../../types/game';
+// Import the shared PlayerGameHistory interface that handles all data structures
+import { PlayerGameHistory } from '../../hooks/useGameHistory';
 
-// Define our own GameHistory interface that combines all possible structures
-interface GameHistory {
-  team?: string;
-  // Add fields from the data structure in PlayerProfile.tsx
-  game?: {
-    id: string;
-    date: string;
-    score_blue: number | null;
-    score_orange: number | null;
-    outcome: string | null;
-    sequence_number?: number;
-    is_historical?: boolean;
-    needs_completion?: boolean;
-    completed?: boolean;
-    team_sizes?: {
-      blue: number;
-      orange: number;
-    };
-  };
-  // Add completed field at the root level for some data structures
-  completed?: boolean;
-  // Include games field with all possible properties
-  games?: {
-    id: string;
-    date: string;
-    score_blue: number | null;
-    score_orange: number | null;
-    outcome: 'blue_win' | 'orange_win' | 'draw' | null;
-    sequence_number?: number;
-    is_historical?: boolean;
-    needs_completion?: boolean;
-    completed?: boolean;
-    blue_team_size?: number;
-    orange_team_size?: number;
-  };
-}
+// Use the imported PlayerGameHistory interface rather than defining a local one
+// This ensures consistency with the getGameOutcome function
+type GameHistory = PlayerGameHistory;
 
 export interface UserGameDataProps {
-  userGameData: GameHistory[];
+  userGameData: PlayerGameHistory[];
   // Updated to include the team-specific outcome types
-  getGameOutcome: (game: GameHistory) => 'Won' | 'Lost' | 'Draw' | 'Blue Won' | 'Orange Won' | null;
+  getGameOutcome: (game: PlayerGameHistory) => 'Won' | 'Lost' | 'Draw' | 'Blue Won' | 'Orange Won' | null;
   className?: string;
   // Add official win rate from backend to ensure consistency
   officialWinRate?: number;
@@ -147,10 +115,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
   const processGameData = (games: GameHistory[]): GraphDataPoint[] => {
     if (!games || games.length === 0) return [];
 
-    // Log the first game to help with debugging
-    if (process.env.NODE_ENV === 'development' && games.length > 0) {
-      console.log('[WinRateGraph] First game data structure:', games[0]);
-    }
+    // Process the first game
 
     // Sort games by date (oldest first)
     const sortedGames = [...games].sort((a, b) => {
@@ -171,6 +136,8 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
     let completedGamesWithUnknownOutcomes = 0;
     let gamesWithUnevenTeams = 0;
     
+    // Process game data
+    
     // Calculate cumulative win rate for each game
     return sortedGames.map((game, index) => {
       // Determine the outcome of the game
@@ -184,13 +151,11 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         outcome = 'Lost';
       } else if (gameOutcome === 'Draw') {
         outcome = 'Draw';
+      } else {
+        outcome = 'Unknown'; // Ensure we have a valid enum value
       }
       
-      // Debug output to help diagnose issues
-      if (process.env.NODE_ENV === 'development' && index === 0) {
-        console.log('[WinRateGraph] First game outcome:', gameOutcome);
-        console.log('[WinRateGraph] First game data:', game);
-      }
+      // Process first game outcome
 
       // Count all games for total games counter
       totalGames++;
@@ -252,13 +217,19 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       // For the final data point, ensure we're showing the correct win rate
       // This should match what's displayed in the player profile
       if (index === sortedGames.length - 1) {
-        // Log the final stats for debugging
-        console.log('[WinRateGraph] Final stats:', {
+        // Update final stats
+        setFinalStats({
+          totalGames,
+          totalCompletedGames,
           wins,
-          losses,
-          draws,
-          denominator,
-          currentWinRate
+          winRate: currentWinRate,
+          gamesWithUnknownScores,
+          gamesWithUnknownOutcomes,
+          completedGamesWithUnknownOutcomes,
+          gamesWithUnevenTeams,
+          gameId: game.game?.id || game.games?.id || 'unknown',
+          gameDate: game.game?.date || game.games?.date || new Date().toISOString(),
+          movingAverage: null
         });
       }
       
@@ -302,32 +273,28 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       const gameId = game.game?.id || game.games?.id || 'unknown';
       const gameDate = game.game?.date || game.games?.date || new Date().toISOString();
       
-      // Debug information for the last data point
-      if (index === sortedGames.length - 1) {
-        // Update the final stats state
-        setFinalStats({
-          totalGames,
-          totalCompletedGames,
-          wins,
-          winRate: currentWinRate,
-          gamesWithUnknownScores,
-          gamesWithUnknownOutcomes,
-          completedGamesWithUnknownOutcomes,
-          gamesWithUnevenTeams, // Track games with uneven teams
-          gameId: game.game?.id || game.games?.id || 'unknown',
-          gameDate: gameDate,
-          movingAverage
-        });
-      }
-
-      return {
+      // Force a direct re-evaluation of the outcome using getGameOutcome to ensure consistency
+  const forcedOutcome = getGameOutcome(game);
+  
+  // Map team-specific outcomes to standard outcomes
+  let displayOutcome = 'Unknown';
+  
+  if (forcedOutcome === 'Won' || forcedOutcome === 'Blue Won' || forcedOutcome === 'Orange Won') {
+    displayOutcome = 'Won';
+  } else if (forcedOutcome === 'Lost') {
+    displayOutcome = 'Lost';
+  } else if (forcedOutcome === 'Draw') {
+    displayOutcome = 'Draw';
+  }
+        
+  return {
         gameNumber: index + 1, // Sequential index (1-based) for clean x-axis
         gameId: gameId,
         gameDate: gameDate,
         winRate: currentWinRate !== null && !isNaN(currentWinRate) ? Number(currentWinRate.toFixed(1)) : 0,
         movingAverage: movingAverage !== null && !isNaN(movingAverage) ? Number(movingAverage.toFixed(1)) : null,
-        outcome: outcome,
-        outcomeValue: outcome ? 2 : null,
+        outcome: displayOutcome, // Use the explicitly forced outcome for rendering
+        outcomeValue: displayOutcome ? 2 : null,
         _debug_totalGames: totalCompletedGames, // Only count games with known outcomes
         _debug_wins: wins,
         _debug_hasScore: game.games?.score_blue !== null && game.games?.score_orange !== null,
@@ -346,16 +313,10 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
     return processGameData(games);
   }, [games, getGameOutcome]);
 
-  // Log the games data for debugging
+  // Process game data when dependencies change
   React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[WinRateGraph] Games data received:', games);
-      console.log('[WinRateGraph] Games length:', games?.length || 0);
-      console.log('[WinRateGraph] Graph data processed:', graphData);
-      console.log('[WinRateGraph] Graph data length:', graphData?.length || 0);
-      console.log('[WinRateGraph] Official win rate:', officialWinRate);
-    }
-  }, [games, graphData, officialWinRate]);
+    // No debug logging in production
+  }, [games, graphData, officialWinRate, getGameOutcome]);
 
   // If there's no data, show a message
   if (!games || games.length === 0 || !graphData || graphData.length === 0) {
@@ -462,7 +423,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
               tickCount={Math.min(10, maxGameNumber)} 
               padding={{ left: 10, right: 10 }} 
               label={{
-                value: 'Game Number',
+                value: 'Games Played',
                 position: 'insideBottom',
                 offset: -20, // Increased offset to move label further from axis
               }}
@@ -498,6 +459,9 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
               strokeWidth={2}
               dot={false}
               connectNulls // Connect line even if there are null values
+              isAnimationActive={true}
+              animationDuration={1500}
+              animationEasing="ease-in-out"
             />
             
             {/* Line for 10-Game Moving Average Win Rate - only shown after 10 valid games */}
@@ -509,121 +473,96 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
               strokeWidth={2}
               dot={false}
               connectNulls
+              isAnimationActive={true}
+              animationDuration={1500}
+              animationEasing="ease-in-out"
+              animationBegin={300} // Start after the win rate line begins animating
             />
             
-            {/* Scatter plot for Wins (Green dots) */}
+            {/* SIMPLE APPROACH: Single scatter with direct outcome determination */}
             <Scatter
-              name="Win"
-              data={graphData.filter(d => d.outcome === 'Won')}
-              dataKey="outcomeValue" 
-              fill="#10b981" // Green
-              shape={(props: { cx?: number; cy?: number }) => {
-                const { cx = 0, cy = 0 } = props;
-                const size = 10; // Size of the square
-                return (
-                  <rect
-                    x={cx - size / 2}
-                    y={cy - size / 2} // Center on the y=0 line
-                    width={size}
-                    height={size}
-                    fill="#10b981"
-                  />
-                );
-              }}
-              legendType="square" // Match legend icon to shape
-            />
-
-            {/* Scatter plot for Losses (Red dots) */}
-            <Scatter
-              name="Loss"
-              data={graphData.filter(d => d.outcome === 'Lost')}
+              data={graphData}
               dataKey="outcomeValue"
-              fill="#f43f5e" // Red
-              shape={(props: { cx?: number; cy?: number }) => {
-                const { cx = 0, cy = 0 } = props;
+              name="Outcomes"
+              fill="#FFFFFF"
+              stroke="none"
+              line={false}
+              isAnimationActive={true}
+              animationDuration={1500}
+              animationEasing="ease-in-out"
+              animationBegin={150} // Start slightly after the win rate line begins
+              legendType="none" // Hide this from legend
+              shape={(props: any) => {
                 const size = 10;
+                const { cx, cy, payload } = props;
+                
+                // Direct access to raw game data to manually determine outcome
+                const game = payload.rawGameData;
+                const gameOutcome = getGameOutcome(game);
+                
+                // Force direct outcome determination
+                let fillColor = '#9ca3af'; // Default grey
+                
+                // Process game outcome
+                
+                // Assign colors directly based on raw outcome, not processed outcome
+                if (gameOutcome === 'Won' || gameOutcome === 'Blue Won' || gameOutcome === 'Orange Won') {
+                  fillColor = '#10b981'; // Green
+                  // Render win
+                } else if (gameOutcome === 'Lost') {
+                  fillColor = '#f43f5e'; // Red
+                  // Render loss
+                } else if (gameOutcome === 'Draw') {
+                  fillColor = '#a855f7'; // Purple
+                  // Render draw
+                } else {
+                  // Render unknown
+                }
+                
+                // Increased size and z-index to ensure visibility
                 return (
                   <rect
-                    x={cx - size / 2}
-                    y={cy - size / 2}
+                    x={cx - size/2}
+                    y={cy - size/2}
                     width={size}
                     height={size}
-                    fill="#f43f5e"
+                    fill={fillColor}
+                    style={{ zIndex: 100 }} // Very high z-index
                   />
                 );
               }}
-              legendType="square" // Match legend icon to shape
             />
-
-            {/* Scatter plot for Draws (Purple dots) */}
-            <Scatter
-              name="Draw"
-              data={graphData.filter(d => d.outcome === 'Draw')}
-              dataKey="outcomeValue"
-              fill="#a855f7" // Purple
-              shape={(props: { cx?: number; cy?: number }) => {
-                const { cx = 0, cy = 0 } = props;
-                const size = 10;
-                return (
-                  <rect
-                    x={cx - size / 2}
-                    y={cy - size / 2}
-                    width={size}
-                    height={size}
-                    fill="#a855f7"
-                  />
-                );
-              }}
-              legendType="square" // Match legend icon to shape
-            />
-
-            {/* Scatter plot for Unknown Outcomes (Grey dots) */}
-            <Scatter
-              name="Unknown"
-              data={graphData.filter(d => d.outcome === 'Unknown')}
-              dataKey="outcomeValue"
-              fill="#9ca3af" // Grey
-              shape={(props: { cx?: number; cy?: number }) => {
-                const { cx = 0, cy = 0 } = props;
-                const size = 10;
-                return (
-                  <rect
-                    x={cx - size / 2}
-                    y={cy - size / 2}
-                    width={size}
-                    height={size}
-                    fill="#9ca3af"
-                  />
-                );
-              }}
-              legendType="square" // Match legend icon to shape
-            />
+            
+            {/* No scatter plots for legend */}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
+      {/* Custom legend for outcome squares */}
+      <div className="flex flex-wrap justify-center items-center gap-4 mt-2 mb-2">
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-4 bg-[#10b981]"></div>
+          <span className="text-xs">Win</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-4 bg-[#f43f5e]"></div>
+          <span className="text-xs">Loss</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-4 bg-[#a855f7]"></div>
+          <span className="text-xs">Draw</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-4 bg-[#9ca3af]"></div>
+          <span className="text-xs">Unknown</span>
+        </div>
+      </div>
+      
       <div className="text-center text-[10px] leading-tight text-gray-500 mt-2">
         Note: Games with wins, losses, and draws are counted in the win rate calculation. The 10-game moving average appears after 10 games with known outcomes.
       </div>
       
-      {/* Add debug info that only shows in development mode */}
-      {process.env.NODE_ENV === 'development' && graphData && graphData.length > 0 && (
-        <div className="text-xs text-gray-600 mt-2 p-2 bg-gray-100 rounded">
-          <div className="font-semibold">Debug: Final Stats from last data point</div>
-          <div>Total Games (Win+Loss+Draw): {finalStats?.totalGames || 0}</div>
-          <div>Total Wins: {finalStats?.wins || 0}</div>
-          <div>Calculated Win Rate: {finalStats?.winRate !== undefined && finalStats.winRate !== null ? finalStats.winRate.toFixed(1) : '0.0'}%</div>
-          <div>Games with Unknown Scores: {finalStats?.gamesWithUnknownScores || 0}</div>
-          <div>Games with Unknown Outcomes: {finalStats?.gamesWithUnknownOutcomes || 0}</div>
-          <div>Completed Games with Unknown Outcomes: {finalStats?.completedGamesWithUnknownOutcomes || 0}</div>
-          <div>Games with Uneven Teams: {finalStats?.gamesWithUnevenTeams || 0}</div>
-          {officialWinRate !== undefined && officialWinRate !== null && (
-            <div className="font-semibold">Official Backend Win Rate: {officialWinRate.toFixed(1)}%</div>
-          )}
-          <div className="mt-1 text-[8px]">Win rate formula: wins / (wins + losses + draws + specific completed games) * 100 (only games with even teams)</div>
-          <div className="text-[8px]">The graph shows the win rate progression over time using the same calculation method as the backend.</div>
-        </div>
-      )}
+      {/* Debug info removed */}
     </motion.div>
   );
 };

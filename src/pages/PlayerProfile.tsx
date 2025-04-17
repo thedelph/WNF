@@ -22,6 +22,7 @@ import { fromUrlFriendly } from '../utils/urlHelpers';
 import TokenStatus from '../components/profile/TokenStatus';
 import { executeWithRetry } from '../utils/network';
 import { useTokenStatus } from '../hooks/useTokenStatus';
+import WinRateGraph from '../components/profile/WinRateGraph';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -674,6 +675,23 @@ export default function PlayerProfileNew() {
             <h2 className="card-title">Player Rating</h2>
             <p className="text-gray-500">You cannot rate yourself</p>
           </div>
+        </motion.div>
+      )}
+
+      {/* Win Rate Graph */}
+      {player && games.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-12 mb-12"
+        >
+          <WinRateGraph 
+            userGameData={games} 
+            getGameOutcome={getGameOutcome} 
+            officialWinRate={player.win_rate} 
+            className="w-full"
+          /> 
         </motion.div>
       )}
 

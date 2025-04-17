@@ -62,12 +62,18 @@ export interface Game {
   score_blue?: number       // Blue team's score
   score_orange?: number     // Orange team's score
   outcome?: 'blue_win' | 'orange_win' | 'draw' | null  // Game outcome
+  
+  // Database has venue_id column (foreign key to venues table)
+  venue_id: string
+  
+  // This is a joined/computed property, not a direct database column
   venue: {
     id: string
     name: string
     address: string
     google_maps_url: string
   }
+  
   game_registrations: Array<GameRegistration>
   pitch_cost: number
   payment_link?: string
