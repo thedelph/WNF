@@ -394,12 +394,6 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
           <span className="flex items-center gap-1 text-xs">
             <span className="inline-block w-8 h-[2px] bg-orange-500"></span> 10-Game Avg
           </span>
-          
-          {/* Square indicators for game outcomes */}
-          <span className="flex items-center gap-1 text-xs"><span className="inline-block w-3 h-3 bg-green-500"></span> Win</span>
-          <span className="flex items-center gap-1 text-xs"><span className="inline-block w-3 h-3 bg-red-500"></span> Loss</span>
-          <span className="flex items-center gap-1 text-xs"><span className="inline-block w-3 h-3 bg-purple-500"></span> Draw</span>
-          <span className="flex items-center gap-1 text-xs"><span className="inline-block w-3 h-3 bg-gray-400"></span> Unknown</span>
         </div>
       )}
       
@@ -447,6 +441,10 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
                 wrapperStyle={{
                   paddingBottom: 10
                 }}
+                payload={[
+                  { value: 'Overall Win Rate', type: 'line', color: '#3b82f6' },
+                  { value: '10-Game Moving Avg', type: 'line', color: '#f97316' }
+                ]}
               />
             )}
             {/* Line for Overall Win Rate */}
