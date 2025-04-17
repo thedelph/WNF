@@ -28,25 +28,85 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
     }
   }, [showPlayers, game.game_registrations])
 
+  /**
+   * Handles game deletion using a phased approach to avoid transaction conflicts
+   */
   const handleDelete = async () => {
     if (!window.confirm('Are you sure you want to delete this historical game?')) {
       return
     }
 
+    // For debugging - log the game we're trying to delete
+    console.log('Attempting to delete game:', { 
+      id: game.id, 
+      sequence: game.sequence_number,
+      date: game.date
+    });
+
     setIsDeleting(true)
     try {
-      const { error } = await supabaseAdmin
-        .rpc('delete_game', { p_game_id: game.id })
-
-      if (error) throw error
-
-      toast.success('Game deleted successfully')
-      onGameDeleted()
-    } catch (error) {
-      console.error('Error deleting game:', error)
-      toast.error('Failed to delete game')
+      // PHASE 1: Clear foreign key references first
+      // This SQL approach is more direct and avoids trigger conflicts
+      const deleteChildren = [
+        // Return any tokens used for this game
+        supabaseAdmin.rpc('return_game_tokens', { game_id: game.id }),
+        // Delete all direct references to the game
+        supabaseAdmin.from('game_registrations').delete().eq('game_id', game.id),
+        supabaseAdmin.from('game_selections').delete().eq('game_id', game.id),
+        supabaseAdmin.from('balanced_team_assignments').delete().eq('game_id', game.id),
+        supabaseAdmin.from('player_penalties').delete().eq('game_id', game.id),
+        supabaseAdmin.from('registration_locks').delete().eq('game_id', game.id)
+      ];
+      
+      // Wait for all FK references to be deleted
+      await Promise.all(deleteChildren);
+      console.log('All game child records deleted');
+      
+      // PHASE 2: Delete the game itself using direct SQL while disabling triggers
+      // This temporarily disables problematic triggers during deletion to avoid timeouts
+      const { data: deleteResult, error: deleteGameError } = await supabaseAdmin
+        .rpc('delete_game_without_triggers', { game_id: game.id });
+        
+      // Check if the deletion was successful
+      if (deleteResult !== true) {
+        console.log('Game deletion failed:', { deleteResult });
+        throw new Error('Game deletion failed');
+      }
+        
+      if (deleteGameError) {
+        console.log('Error deleting game:', deleteGameError);
+        throw deleteGameError;
+      }
+      
+      console.log('Game deleted successfully');
+      
+      // PHASE 3: Refresh materialized views
+      // Do this in a completely separate transaction
+      const { error: refreshError } = await supabaseAdmin
+        .rpc('refresh_token_status_view');
+        
+      if (refreshError) {
+        console.log('Error refreshing views (non-critical):', refreshError);
+        // Don't throw this error - view refresh is not critical
+      }
+      
+      // Show success message and refresh UI
+      toast.success('Game #' + game.sequence_number + ' deleted successfully');
+      onGameDeleted();
+    } catch (error: unknown) {
+      console.error('Error deleting game:', error);
+      let errorMessage = 'Unknown error';
+      
+      // Type guard for error with message property
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = String((error as { message: unknown }).message);
+      }
+      
+      toast.error('Failed to delete game: ' + errorMessage);
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
   }
 
