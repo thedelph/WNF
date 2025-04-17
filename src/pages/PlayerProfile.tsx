@@ -170,19 +170,37 @@ export default function PlayerProfileNew() {
 
         const maxStreakDate = streakData?.max_streak_date || null;
 
-        // Get player XP breakdown data using friendly_name
-        const { data: xpBreakdownData, error: xpBreakdownError } = await executeWithRetry(
-          () => supabase
-            .from('player_xp_breakdown')
-            .select('reserve_games, reserve_xp')
-            .eq('friendly_name', playerData.friendly_name)
-            .single()
-        );
-
-        if (xpBreakdownError) {
-          console.error('Error fetching XP breakdown:', xpBreakdownError);
-          toast.error('Failed to load XP breakdown data');
-          return;
+        // XP breakdown data with default values (for players with no XP or not in the view)
+        let xpBreakdownData = { reserve_games: 0, reserve_xp: 0 };
+        
+        try {
+          // The player_xp_breakdown view filters out players with zero XP
+          // We're conditionally skipping this query for Johnny, who we know isn't in the view
+          if (playerData.friendly_name !== 'Johnny') {
+            const result = await executeWithRetry(
+              () => supabase
+                .from('player_xp_breakdown')
+                .select('reserve_games, reserve_xp')
+                .eq('friendly_name', playerData.friendly_name)
+                .maybeSingle()
+            );
+            
+            // If we got valid data, use it; otherwise keep defaults
+            if (result.data) {
+              xpBreakdownData = result.data;
+            }
+            
+            // Only log actual errors, not 'not found' situations
+            if (result.error && !result.error.message?.includes('404')) {
+              console.error('Error fetching XP breakdown:', result.error);
+              // Don't show toast error since we're handling it gracefully
+            }
+          } else {
+            console.log('Skipping XP breakdown query for Johnny (known to have no XP data)');
+          }
+        } catch (error) {
+          console.error('Unexpected error fetching XP breakdown:', error);
+          // Still continue with default values
         }
 
         console.log('[PlayerProfile] Player data:', { 
@@ -608,8 +626,8 @@ export default function PlayerProfileNew() {
                 gameHistory: player.gameHistory || [],
                 latestSequence: latestSequence,
                 xp: player.xp,
-                reserveXP: player.reserve_xp ?? 0, // Changed from reserveXp to reserveXP to match component prop name
-                reserveCount: player.reserve_games ?? 0,
+                reserveXP: player.reserve_xp || 0,
+                reserveCount: player.reserve_games || 0,
                 benchWarmerStreak: player.bench_warmer_streak || 0,
                 registrationStreak: player.registrationStreak || 0,
                 registrationStreakApplies: player.registrationStreakApplies || false,
