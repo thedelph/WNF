@@ -607,7 +607,7 @@ export default function PlayerProfileNew() {
                 gameHistory: player.gameHistory || [],
                 latestSequence: latestSequence,
                 xp: player.xp,
-                reserveXp: player.reserve_xp ?? 0,
+                reserveXP: player.reserve_xp ?? 0, // Changed from reserveXp to reserveXP to match component prop name
                 reserveCount: player.reserve_games ?? 0,
                 benchWarmerStreak: player.bench_warmer_streak || 0,
                 registrationStreak: player.registrationStreak || 0,

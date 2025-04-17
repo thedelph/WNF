@@ -33,7 +33,7 @@ const TotalXPSection: React.FC<TotalXPSectionProps> = ({
             <div>
               <h5 className="font-medium">Final XP</h5>
               <p className="text-sm text-base-content/70">
-                Including Streak & Reserve XP
+                Including all XP modifiers
               </p>
             </div>
             <div className="text-right">
@@ -41,7 +41,7 @@ const TotalXPSection: React.FC<TotalXPSectionProps> = ({
                 {finalXP} XP
               </div>
               <div className="text-xs text-base-content/70">
-                {(reserveXP || 0) > 0 ? `(${baseXP} + ${reserveXP})` : baseXP}
+                {reserveXP !== 0 ? `(${baseXP} ${reserveXP > 0 ? '+' : ''} ${reserveXP})` : baseXP}
                 {hasModifiers && 
                   ` × (1${streakModifier > 0 ? ` + ${streakModifier.toFixed(3)}` : ''}${
                     reserveModifier > 0 ? ` + ${reserveModifier.toFixed(3)}` : ''}${
@@ -50,7 +50,7 @@ const TotalXPSection: React.FC<TotalXPSectionProps> = ({
                 }
               </div>
               <div className="text-xs text-base-content/50">
-                {(reserveXP || 0) > 0 ? '(Base XP + Reserve XP)' : 'Base XP'}
+                {reserveXP !== 0 ? `(Base XP ${reserveXP > 0 ? '+' : '-'} Reserve XP)` : 'Base XP'}
                 {hasModifiers && 
                   ` × (1${streakModifier > 0 ? ' + Attendance Streak Modifier' : ''}${
                     reserveModifier > 0 ? ' + Reserve Streak Modifier' : ''}${
