@@ -100,12 +100,46 @@ export default function PlayerProfileNew() {
             )
           `);
 
-        // Apply the appropriate filter based on the parameter we received
-        const { data: playerData, error: playerError } = await executeWithRetry(
-          () => params.id 
-            ? playerQuery.eq('id', params.id)
-            : playerQuery.ilike('friendly_name', fromUrlFriendly(params.friendlyName || '')).single()
-        );
+        let playerData;
+        let playerError;
+        
+        if (params.id) {
+          // If we have an ID, get the exact player
+          const result = await executeWithRetry(
+            () => playerQuery.eq('id', params.id)
+          );
+          playerData = result.data?.[0] || null;
+          playerError = result.error;
+        } else if (params.friendlyName) {
+          // First try exact match (without wildcard)
+          const exactName = fromUrlFriendly(params.friendlyName).replace(/%$/, '');
+          const exactResult = await executeWithRetry(
+            () => playerQuery.eq('friendly_name', exactName)
+          );
+          
+          if (exactResult.data && exactResult.data.length === 1) {
+            // Exact match found
+            playerData = exactResult.data[0];
+          } else {
+            // Try partial match but handle multiple results
+            const partialResult = await executeWithRetry(
+              () => playerQuery.ilike('friendly_name', fromUrlFriendly(params.friendlyName || ''))
+            );
+            
+            if (partialResult.data && partialResult.data.length > 0) {
+              if (partialResult.data.length === 1) {
+                // Only one match found
+                playerData = partialResult.data[0];
+              } else {
+                // Multiple matches found - take the first one but show a notification
+                playerData = partialResult.data[0];
+                console.log(`Found ${partialResult.data.length} players matching this name. Using first match.`);
+                toast.info(`Multiple players found with similar names. Showing first match.`);
+              }
+            }
+            playerError = partialResult.error;
+          }
+        }
 
         if (playerError) {
           console.error('Error fetching player data:', playerError);
