@@ -1,3 +1,5 @@
+import { PlayerStats } from '../types/player';
+
 /**
  * Rarity tiers and their percentile thresholds (for reference only, actual calculation done in database)
  */
@@ -27,7 +29,7 @@ export const getRarity = (rarity: string | null): RarityTier => {
  * @returns The player's rarity tier
  * @deprecated Use getRarity() instead as rarity is now calculated in the database
  */
-export const calculateRarity = (xp: number, allXp: number[]): RarityTier => {
+export const calculateRarity = (_xp: number, _allXp: number[]): RarityTier => {
   console.warn('calculateRarity is deprecated. Rarity is now calculated in the database.');
   return 'Amateur'; // Default to Amateur if database value not available
 };
@@ -37,13 +39,13 @@ export const calculateRarity = (xp: number, allXp: number[]): RarityTier => {
  */
 export const calculatePlayerXP = ({
   caps = 0,
-  activeBonuses = 0,
-  activePenalties = 0,
-  currentStreak = 0
+  active_bonuses = 0,
+  active_penalties = 0,
+  current_streak = 0
 }: PlayerStats): number => {
-  const bonusModifier = activeBonuses * 0.1;
-  const penaltyModifier = activePenalties * 0.1;
-  const streakModifier = currentStreak * 0.1;
+  const bonusModifier = active_bonuses * 0.1;
+  const penaltyModifier = active_penalties * 0.1;
+  const streakModifier = current_streak * 0.1;
   
   const totalModifier = 1 + bonusModifier - penaltyModifier + streakModifier;
   

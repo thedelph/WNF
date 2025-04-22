@@ -1,5 +1,5 @@
-import { supabase } from '../lib/supabaseClient';
-import { Player } from '../types/Player';
+import { supabase } from './supabase';
+// Player type used in interface but not directly - using inline type instead
 
 interface PlayerWithStats {
   id: string;

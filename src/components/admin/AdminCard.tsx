@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../utils/supabase'
 import { toast } from 'react-toastify'
-import PermissionToggle from './PermissionToggle'
+import PermissionToggle from './permissions/PermissionToggle'
 
 interface AdminCardProps {
   admin: any
@@ -10,7 +10,6 @@ interface AdminCardProps {
 }
 
 const AdminCard: React.FC<AdminCardProps> = ({ admin, onUpdate }) => {
-  const [isEditing, setIsEditing] = useState(false)
 
   const handlePermissionToggle = async (permission: string, enabled: boolean) => {
     try {
@@ -62,22 +61,22 @@ const AdminCard: React.FC<AdminCardProps> = ({ admin, onUpdate }) => {
         <div className="space-y-2">
           <PermissionToggle
             label="Manage Games"
-            isEnabled={admin.admin_permissions.some(p => p.permission === 'manage_games')}
+            isEnabled={admin.admin_permissions.some((p: { permission: string }) => p.permission === 'manage_games')}
             onChange={(enabled) => handlePermissionToggle('manage_games', enabled)}
           />
           <PermissionToggle
             label="Manage Players"
-            isEnabled={admin.admin_permissions.some(p => p.permission === 'manage_players')}
+            isEnabled={admin.admin_permissions.some((p: { permission: string }) => p.permission === 'manage_players')}
             onChange={(enabled) => handlePermissionToggle('manage_players', enabled)}
           />
           <PermissionToggle
             label="Manage Teams"
-            isEnabled={admin.admin_permissions.some(p => p.permission === 'manage_teams')}
+            isEnabled={admin.admin_permissions.some((p: { permission: string }) => p.permission === 'manage_teams')}
             onChange={(enabled) => handlePermissionToggle('manage_teams', enabled)}
           />
           <PermissionToggle
             label="Manage Payments"
-            isEnabled={admin.admin_permissions.some(p => p.permission === 'manage_payments')}
+            isEnabled={admin.admin_permissions.some((p: { permission: string }) => p.permission === 'manage_payments')}
             onChange={(enabled) => handlePermissionToggle('manage_payments', enabled)}
           />
         </div>
