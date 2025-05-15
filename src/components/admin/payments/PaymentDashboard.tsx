@@ -135,13 +135,14 @@ const PaymentDashboard: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="container mx-auto p-4"
+      className="container mx-auto px-2 sm:px-4 py-4"
     >
-      <h1 className="text-3xl font-bold mb-6">Payment Management</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Payment Management</h1>
       
-      <div className="flex justify-between items-center mb-6">
+      {/* Responsive control panel */}
+      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
         <div className="form-control">
-          <label className="label cursor-pointer">
+          <label className="label cursor-pointer justify-start">
             <span className="label-text mr-2">Show Archived</span>
             <input
               type="checkbox"
@@ -152,14 +153,14 @@ const PaymentDashboard: React.FC = () => {
           </label>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <input
             type="date"
-            className="input input-bordered"
+            className="input input-bordered w-full sm:w-auto"
             onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : null)}
           />
           <button
-            className="btn btn-primary"
+            className="btn btn-primary w-full sm:w-auto text-sm sm:text-base whitespace-normal sm:whitespace-nowrap height-auto min-h-8 sm:h-12"
             onClick={() => selectedDate && markAllPaidUpToDate(selectedDate)}
             disabled={!selectedDate}
           >

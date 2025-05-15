@@ -137,13 +137,13 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
             animate={{ opacity: 1, y: 0 }}
             className="card bg-base-100 shadow-xl"
           >
-            <div className="card-body">
-              <div className="flex justify-between items-center">
-                <h3 className="card-title">
+            <div className="card-body p-3 sm:p-6">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0">
+                <h3 className="card-title text-base sm:text-lg break-words">
                   {new Date(game.date).toLocaleDateString()} - {game.venue?.name}
                 </h3>
                 <button
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary btn-sm w-full sm:w-auto"
                   onClick={() => handleMarkAllPaid(game.id)}
                 >
                   Mark All Paid
@@ -152,7 +152,8 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
               
               <GamePaymentStats game={game} />
 
-              <div className="overflow-x-auto">
+              {/* Desktop table view */}
+              <div className="hidden sm:block overflow-x-auto mt-4">
                 <table className="table w-full">
                   <thead>
                     <tr>
@@ -172,10 +173,27 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
                         paymentLink={game.payment_link}
                         costPerPerson={game.cost_per_person}
                         onUpdate={onUpdate}
+                        view="desktop"
                       />
                     ))}
                   </tbody>
                 </table>
+              </div>
+              
+              {/* Mobile card view */}
+              <div className="sm:hidden mt-3 space-y-3">
+                {game.game_registrations?.map((reg) => (
+                  <GamePaymentRow
+                    key={reg.player_id}
+                    registration={reg}
+                    gameId={game.id}
+                    sequenceNumber={game.sequence_number}
+                    paymentLink={game.payment_link}
+                    costPerPerson={game.cost_per_person}
+                    onUpdate={onUpdate}
+                    view="mobile"
+                  />
+                ))}
               </div>
             </div>
           </motion.div>

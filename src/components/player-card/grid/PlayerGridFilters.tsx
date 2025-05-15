@@ -27,6 +27,8 @@ interface FiltersProps {
   setFilterBy: React.Dispatch<React.SetStateAction<string>>;
   whatsAppMembersOnly: boolean;
   setWhatsAppMembersOnly: React.Dispatch<React.SetStateAction<boolean>>;
+  hideZeroXpPlayers: boolean;
+  setHideZeroXpPlayers: React.Dispatch<React.SetStateAction<boolean>>;
   isFiltersOpen: boolean;
   setIsFiltersOpen: React.Dispatch<React.SetStateAction<boolean>>;
   sortConfig: { key: keyof Player; direction: 'asc' | 'desc' };
@@ -44,6 +46,8 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
   setFilterBy,
   whatsAppMembersOnly,
   setWhatsAppMembersOnly,
+  hideZeroXpPlayers,
+  setHideZeroXpPlayers,
   isFiltersOpen,
   setIsFiltersOpen,
   sortConfig,
@@ -101,7 +105,7 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Filter by</h3>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-2">
                   <label className="cursor-pointer label">
                     <span className="label-text mr-2">WhatsApp Members Only</span>
                     <input
@@ -110,6 +114,18 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
                       checked={whatsAppMembersOnly}
                       onChange={(e) => setWhatsAppMembersOnly(e.target.checked)}
                     />
+                  </label>
+                  
+                  <label className="cursor-pointer label">
+                    <span className="label-text mr-2">Hide Players with 0 XP</span>
+                    <Tooltip content="Players with no XP won't appear">
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-primary"
+                        checked={hideZeroXpPlayers}
+                        onChange={(e) => setHideZeroXpPlayers(e.target.checked)}
+                      />
+                    </Tooltip>
                   </label>
                 </div>
 

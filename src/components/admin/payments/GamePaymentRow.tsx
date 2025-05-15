@@ -12,6 +12,7 @@ interface Props {
   paymentLink?: string;
   costPerPerson?: number;
   onUpdate: () => void;
+  view?: 'mobile' | 'desktop'; // Add the view prop with mobile or desktop options
 }
 
 /**
@@ -24,7 +25,8 @@ const GamePaymentRow: React.FC<Props> = ({
   sequenceNumber,
   paymentLink,
   costPerPerson,
-  onUpdate
+  onUpdate,
+  view = 'desktop' // Default to desktop view
 }) => {
   const handlePaymentToggle = async (paid: boolean) => {
     try {
@@ -90,58 +92,115 @@ const GamePaymentRow: React.FC<Props> = ({
     }
   };
 
+  // Render table row for desktop view
+  if (view === 'desktop') {
+    return (
+      <motion.tr
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="hover"
+      >
+        <td>{reg.player?.friendly_name}</td>
+        <td>
+          {reg.status === 'reserve' || reg.is_reserve ? (
+            <span className="badge badge-secondary">Reserve</span>
+          ) : reg.status === 'selected' ? (
+            <PaymentStatusBadge
+              paid={reg.paid}
+              paymentRequired={reg.payment_required}
+              className="mr-2"
+            />
+          ) : (
+            <span className="badge badge-ghost">Not Selected</span>
+          )}
+        </td>
+        <td>
+          {(reg.status === 'reserve' || reg.is_reserve) ? (
+            '-'
+          ) : reg.status === 'selected' ? (
+            reg.payment_received_date 
+              ? new Date(reg.payment_received_date).toLocaleDateString()
+              : '-'
+          ) : (
+            '-'
+          )}
+        </td>
+        <td className="space-x-2">
+          {reg.status === 'selected' && !reg.is_reserve && (
+            <>
+              <button
+                className={`btn btn-sm ${reg.paid ? 'btn-error' : 'btn-success'}`}
+                onClick={() => handlePaymentToggle(!reg.paid)}
+              >
+                {reg.paid ? 'Mark Unpaid' : 'Mark Paid'}
+              </button>
+              {!reg.paid && reg.payment_required && (
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={sendPaymentReminder}
+                >
+                  Send Reminder
+                </button>
+              )}
+            </>
+          )}
+        </td>
+      </motion.tr>
+    );
+  }
+  
+  // Render card for mobile view
   return (
-    <motion.tr
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="hover"
+      className="card bg-base-100 border border-base-300 shadow-sm p-3"
     >
-      <td>{reg.player?.friendly_name}</td>
-      <td>
+      {/* Player name and payment status */}
+      <div className="flex justify-between items-start mb-2">
+        <div className="font-semibold">{reg.player?.friendly_name}</div>
         {reg.status === 'reserve' || reg.is_reserve ? (
           <span className="badge badge-secondary">Reserve</span>
         ) : reg.status === 'selected' ? (
           <PaymentStatusBadge
             paid={reg.paid}
             paymentRequired={reg.payment_required}
-            className="mr-2"
+            className="ml-2"
           />
         ) : (
           <span className="badge badge-ghost">Not Selected</span>
         )}
-      </td>
-      <td>
-        {(reg.status === 'reserve' || reg.is_reserve) ? (
-          '-'
-        ) : reg.status === 'selected' ? (
-          reg.payment_received_date 
+      </div>
+      
+      {/* Payment date if applicable */}
+      {reg.status === 'selected' && !reg.is_reserve && (
+        <div className="text-xs opacity-70 mb-3">
+          Payment Date: {reg.payment_received_date 
             ? new Date(reg.payment_received_date).toLocaleDateString()
-            : '-'
-        ) : (
-          '-'
-        )}
-      </td>
-      <td className="space-x-2">
-        {reg.status === 'selected' && !reg.is_reserve && (
-          <>
+            : 'Not paid'}
+        </div>
+      )}
+      
+      {/* Actions */}
+      {reg.status === 'selected' && !reg.is_reserve && (
+        <div className="flex flex-wrap gap-2 mt-1">
+          <button
+            className={`btn btn-xs ${reg.paid ? 'btn-error' : 'btn-success'} flex-1`}
+            onClick={() => handlePaymentToggle(!reg.paid)}
+          >
+            {reg.paid ? 'Mark Unpaid' : 'Mark Paid'}
+          </button>
+          {!reg.paid && reg.payment_required && (
             <button
-              className={`btn btn-sm ${reg.paid ? 'btn-error' : 'btn-success'}`}
-              onClick={() => handlePaymentToggle(!reg.paid)}
+              className="btn btn-xs btn-ghost flex-1"
+              onClick={sendPaymentReminder}
             >
-              {reg.paid ? 'Mark Unpaid' : 'Mark Paid'}
+              Send Reminder
             </button>
-            {!reg.paid && reg.payment_required && (
-              <button
-                className="btn btn-sm btn-ghost"
-                onClick={sendPaymentReminder}
-              >
-                Send Reminder
-              </button>
-            )}
-          </>
-        )}
-      </td>
-    </motion.tr>
+          )}
+        </div>
+      )}
+    </motion.div>
   );
 };
 

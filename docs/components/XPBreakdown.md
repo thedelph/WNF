@@ -73,7 +73,7 @@ interface XPBreakdownProps {
     gameHistory?: GameHistory[];
     latestSequence?: number; // Required for proper XP calculation
     xp: number;
-    reserveXP?: number;
+    reserveXP?: number;      // IMPORTANT: Note the uppercase 'P' in reserveXP
     reserveCount?: number;
     benchWarmerStreak?: number;
     unpaidGamesCount?: number;
@@ -81,6 +81,8 @@ interface XPBreakdownProps {
   showTotal?: boolean;
 }
 ```
+
+> **Important Note**: When passing props to the XPBreakdown component, ensure that the property names match exactly, including case sensitivity. In particular, `reserveXP` must use an uppercase 'P' (not `reserveXp`), or reserve XP will not be displayed correctly.
 
 ### Props Description
 - `stats`: Object containing all XP-related statistics

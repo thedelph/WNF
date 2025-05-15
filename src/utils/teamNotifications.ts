@@ -47,7 +47,8 @@ export const subscribeToTeamAnnouncements = (userId: string, onTeamAnnounced: (a
           const announcement: TeamAnnouncement = {
             gameId: payload.new.game_id,
             team: payload.new.team as 'Blue' | 'Orange',
-            venue: gameData.venue?.name,
+            // Fix TypeScript error by properly accessing the venue name with proper type checking
+            venue: gameData.venue && typeof gameData.venue === 'object' ? (gameData.venue as any).name : undefined,
             date: gameData.date,
             time: gameData.time
           };

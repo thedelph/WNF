@@ -57,11 +57,11 @@ export async function executeWithRetry<T>(
   queryFn: () => Promise<{ data: T | null; error: PostgrestError | null }>,
   options: RetryOptions = {}
 ): Promise<{ data: T | null; error: PostgrestError | null }> {
-  const { maxRetries, initialDelay, maxDelay, shouldToast } = { ...defaultOptions, ...options };
+  const { maxRetries = defaultOptions.maxRetries, initialDelay = defaultOptions.initialDelay, maxDelay = defaultOptions.maxDelay, shouldToast = defaultOptions.shouldToast } = options;
   let attempt = 0;
-  let delay = initialDelay;
+  let delay = initialDelay || 1000; // Ensure delay has a fallback value
 
-  while (attempt < maxRetries) {
+  while (attempt < (maxRetries || 3)) { // Ensure maxRetries has a fallback value
     try {
       // Check online status before attempting
       const isOnline = await checkOnlineStatus();
@@ -106,7 +106,7 @@ export async function executeWithRetry<T>(
       await new Promise(resolve => setTimeout(resolve, delay));
       
       // Exponential backoff with max delay
-      delay = Math.min(delay * 2, maxDelay);
+      delay = Math.min(delay * 2, maxDelay || 5000); // Ensure maxDelay has a fallback value
       
       if (shouldToast) {
         toast.error(`Connection issue, retrying... (Attempt ${attempt}/${maxRetries})`);
@@ -132,7 +132,15 @@ export async function executeBatchQueries<T>(
       if (options.shouldToast !== false) {
         toast.error('No internet connection. Please check your connection and try again.');
       }
-      return { data: null, error: new Error('No internet connection') };
+      // Create a PostgrestError-compatible object for no internet connection
+      const networkError: PostgrestError = {
+        message: 'No internet connection',
+        details: 'Network unavailable',
+        hint: 'Check your internet connection',
+        code: 'NETWORK_ERROR',
+        name: 'NetworkError'
+      };
+      return { data: null, error: networkError };
     }
 
     const results = await Promise.all(

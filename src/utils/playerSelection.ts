@@ -1,5 +1,4 @@
-import { supabaseAdmin } from "../utils/supabase";
-import { shuffleArray } from "./arrayUtils";
+import { supabaseAdmin } from "./supabase";
 
 interface PlayerSelectionParams {
   gameId: string;
@@ -85,7 +84,7 @@ export const handlePlayerSelection = async ({
     const players: PlayerStats[] = registeredPlayers.map(reg => {
       const details = playerDetails?.find(p => p.id === reg.player_id);
       const stats = playerStats?.find(p => p.id === reg.player_id);
-      const usedTokenLastGame = previousGameTokenUsers?.some(u => u.player_id === reg.player_id) ?? false;
+      const usedTokenLastGame = previousGameTokenUsers?.some((u: { player_id: string }) => u.player_id === reg.player_id) ?? false;
       return {
         id: reg.player_id,
         friendly_name: details?.friendly_name,
@@ -106,8 +105,8 @@ export const handlePlayerSelection = async ({
     const remainingPlayers = players.filter(player => !player.using_token);
     const sortedPlayers = [...remainingPlayers].sort((a, b) => {
       // First check if either player used a token in the previous game
-      const aUsedTokenPreviously = previousGameTokenUsers?.some(u => u.player_id === a.id) ?? false;
-      const bUsedTokenPreviously = previousGameTokenUsers?.some(u => u.player_id === b.id) ?? false;
+      const aUsedTokenPreviously = previousGameTokenUsers?.some((u: { player_id: string }) => u.player_id === a.id) ?? false;
+      const bUsedTokenPreviously = previousGameTokenUsers?.some((u: { player_id: string }) => u.player_id === b.id) ?? false;
 
       // If either used a token in the previous game, they go to the bottom
       if (aUsedTokenPreviously !== bUsedTokenPreviously) {
@@ -172,9 +171,7 @@ export const handlePlayerSelection = async ({
     });
 
     // Get who would get in by merit after token effects
-    const remainingMeritSlots = allPlayersWithTokenEffects
-      .filter(player => !player.using_token) // Exclude token users since they already have slots
-      .slice(0, Math.max(0, xpSlots - players.filter(player => player.using_token).length)); // Take only the remaining merit slots
+    // Note: This calculation was previously used but is now handled directly when selecting players
 
     // Now check which token users would still get in by merit
     const tokenUsersSelectedByMerit = players.filter(player => player.using_token).filter(tokenPlayer => {
@@ -325,7 +322,7 @@ export const handlePlayerSelection = async ({
 
         console.log(`Successfully updated player ${playerId} via RPC`, data);
         return data;
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Failed to update player ${playerId}:`, {
           error,
           message: error.message,
@@ -377,7 +374,7 @@ export const handlePlayerSelection = async ({
         selectedPlayers,
         nonSelectedPlayerIds
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in player selection:', {
         error,
         message: error.message,

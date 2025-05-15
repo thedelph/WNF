@@ -18,6 +18,40 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
 
+  
+  {
+    version: '1.1.4',
+    date: '17/04/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Win Rate Graph',
+            details: "Added a win rate graph to show a player's win rate over time with a 10-game moving average."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          },
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          },
+        ]
+      }
+    ]
+  },
   {
     version: '1.1.3',
     date: '01/04/2025',

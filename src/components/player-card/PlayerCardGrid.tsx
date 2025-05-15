@@ -16,6 +16,8 @@ export default function PlayerCardGrid() {
   }>({ key: 'xp', direction: 'desc' });
   const [filterBy, setFilterBy] = useState('');
   const [whatsAppMembersOnly, setWhatsAppMembersOnly] = useState(true);
+  // Hide players with 0 XP by default for cleaner player list
+  const [hideZeroXpPlayers, setHideZeroXpPlayers] = useState(true);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
     minCaps: '',
@@ -51,7 +53,10 @@ export default function PlayerCardGrid() {
       // WhatsApp members filter
       const whatsAppMatch = !whatsAppMembersOnly || (player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy');
 
-      return nameMatch && capsInRange && winRateInRange && streakInRange && rarityMatch && whatsAppMatch;
+      // Filter out players with 0 XP when toggle is enabled
+      const xpMatch = !hideZeroXpPlayers || player.xp > 0;
+
+      return nameMatch && capsInRange && winRateInRange && streakInRange && rarityMatch && whatsAppMatch && xpMatch;
     });
 
   // Sort filtered players
@@ -88,6 +93,8 @@ export default function PlayerCardGrid() {
           setFilterBy={setFilterBy}
           whatsAppMembersOnly={whatsAppMembersOnly}
           setWhatsAppMembersOnly={setWhatsAppMembersOnly}
+          hideZeroXpPlayers={hideZeroXpPlayers}
+          setHideZeroXpPlayers={setHideZeroXpPlayers}
           isFiltersOpen={isFiltersOpen}
           setIsFiltersOpen={setIsFiltersOpen}
           sortConfig={sortConfig}

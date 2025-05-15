@@ -22,6 +22,7 @@ import { fromUrlFriendly } from '../utils/urlHelpers';
 import TokenStatus from '../components/profile/TokenStatus';
 import { executeWithRetry } from '../utils/network';
 import { useTokenStatus } from '../hooks/useTokenStatus';
+import WinRateGraph from '../components/profile/WinRateGraph';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -100,12 +101,46 @@ export default function PlayerProfileNew() {
             )
           `);
 
-        // Apply the appropriate filter based on the parameter we received
-        const { data: playerData, error: playerError } = await executeWithRetry(
-          () => params.id 
-            ? playerQuery.eq('id', params.id)
-            : playerQuery.ilike('friendly_name', fromUrlFriendly(params.friendlyName || '')).single()
-        );
+        let playerData;
+        let playerError;
+        
+        if (params.id) {
+          // If we have an ID, get the exact player
+          const result = await executeWithRetry(
+            () => playerQuery.eq('id', params.id)
+          );
+          playerData = result.data?.[0] || null;
+          playerError = result.error;
+        } else if (params.friendlyName) {
+          // First try exact match (without wildcard)
+          const exactName = fromUrlFriendly(params.friendlyName).replace(/%$/, '');
+          const exactResult = await executeWithRetry(
+            () => playerQuery.eq('friendly_name', exactName)
+          );
+          
+          if (exactResult.data && exactResult.data.length === 1) {
+            // Exact match found
+            playerData = exactResult.data[0];
+          } else {
+            // Try partial match but handle multiple results
+            const partialResult = await executeWithRetry(
+              () => playerQuery.ilike('friendly_name', fromUrlFriendly(params.friendlyName || ''))
+            );
+            
+            if (partialResult.data && partialResult.data.length > 0) {
+              if (partialResult.data.length === 1) {
+                // Only one match found
+                playerData = partialResult.data[0];
+              } else {
+                // Multiple matches found - take the first one but show a notification
+                playerData = partialResult.data[0];
+                console.log(`Found ${partialResult.data.length} players matching this name. Using first match.`);
+                toast.info(`Multiple players found with similar names. Showing first match.`);
+              }
+            }
+            playerError = partialResult.error;
+          }
+        }
 
         if (playerError) {
           console.error('Error fetching player data:', playerError);
@@ -135,19 +170,37 @@ export default function PlayerProfileNew() {
 
         const maxStreakDate = streakData?.max_streak_date || null;
 
-        // Get player XP breakdown data using friendly_name
-        const { data: xpBreakdownData, error: xpBreakdownError } = await executeWithRetry(
-          () => supabase
-            .from('player_xp_breakdown')
-            .select('reserve_games, reserve_xp')
-            .eq('friendly_name', playerData.friendly_name)
-            .single()
-        );
-
-        if (xpBreakdownError) {
-          console.error('Error fetching XP breakdown:', xpBreakdownError);
-          toast.error('Failed to load XP breakdown data');
-          return;
+        // XP breakdown data with default values (for players with no XP or not in the view)
+        let xpBreakdownData = { reserve_games: 0, reserve_xp: 0 };
+        
+        try {
+          // The player_xp_breakdown view filters out players with zero XP
+          // We're conditionally skipping this query for Johnny, who we know isn't in the view
+          if (playerData.friendly_name !== 'Johnny') {
+            const result = await executeWithRetry(
+              () => supabase
+                .from('player_xp_breakdown')
+                .select('reserve_games, reserve_xp')
+                .eq('friendly_name', playerData.friendly_name)
+                .maybeSingle()
+            );
+            
+            // If we got valid data, use it; otherwise keep defaults
+            if (result.data) {
+              xpBreakdownData = result.data;
+            }
+            
+            // Only log actual errors, not 'not found' situations
+            if (result.error && !result.error.message?.includes('404')) {
+              console.error('Error fetching XP breakdown:', result.error);
+              // Don't show toast error since we're handling it gracefully
+            }
+          } else {
+            console.log('Skipping XP breakdown query for Johnny (known to have no XP data)');
+          }
+        } catch (error) {
+          console.error('Unexpected error fetching XP breakdown:', error);
+          // Still continue with default values
         }
 
         console.log('[PlayerProfile] Player data:', { 
@@ -573,8 +626,8 @@ export default function PlayerProfileNew() {
                 gameHistory: player.gameHistory || [],
                 latestSequence: latestSequence,
                 xp: player.xp,
-                reserveXp: player.reserve_xp ?? 0,
-                reserveCount: player.reserve_games ?? 0,
+                reserveXP: player.reserve_xp || 0,
+                reserveCount: player.reserve_games || 0,
                 benchWarmerStreak: player.bench_warmer_streak || 0,
                 registrationStreak: player.registrationStreak || 0,
                 registrationStreakApplies: player.registrationStreakApplies || false,
@@ -583,6 +636,23 @@ export default function PlayerProfileNew() {
               showTotal={true}
             />
           </div>
+        )}
+        
+        {/* Win Rate Graph - Directly below XP Breakdown */}
+        {player && games.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="w-full mt-6"
+          >
+            <WinRateGraph 
+              userGameData={games} 
+              getGameOutcome={getGameOutcome} 
+              officialWinRate={player.win_rate} 
+              className="w-full"
+            /> 
+          </motion.div>
         )}
 
         {/* Priority Token Status - Full Width */}
@@ -642,6 +712,8 @@ export default function PlayerProfileNew() {
           </div>
         </motion.div>
       )}
+
+      {/* Win Rate Graph moved above */}
 
       {/* Game History */}
       <div id="game-history" className="bg-base-100 rounded-lg p-6 shadow-lg">

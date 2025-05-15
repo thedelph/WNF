@@ -319,6 +319,7 @@ export default function Component() {
           xp: xpData?.xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
           total_xp: xpData?.xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
           reserveXP: xpData?.reserve_xp || 0,
+          reserve_games: xpData?.reserve_games || 0, // Add reserve_games from player_xp_breakdown
           rank: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rank : 0,
           rarity: xpData?.rarity || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rarity : 'Amateur'),
           current_streak: playerData.current_streak || 0,
