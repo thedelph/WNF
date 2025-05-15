@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trophy, Medal } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface Winner {
@@ -18,11 +18,8 @@ interface AwardCardProps {
   color?: 'blue' | 'orange' | 'purple' | 'green' | 'pink' | 'indigo' | 'teal';
 }
 
-const medals = [
-  { color: 'text-yellow-300 drop-shadow-[0_0_3px_rgba(253,224,71,0.7)]', label: 'Gold' },
-  { color: 'text-slate-100 drop-shadow-[0_0_3px_rgba(255,255,255,0.7)]', label: 'Silver' },
-  { color: 'text-yellow-700 drop-shadow-[0_0_3px_rgba(255,255,255,0.7)] font-bold', label: 'Bronze' }
-];
+// Emoji medals for top three positions
+const medals = ['🥇', '🥈', '🥉'];
 
 const gradientColors = {
   blue: 'from-blue-300 via-blue-500 to-blue-700',
@@ -107,10 +104,8 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
                 <div key={winner.id} className="flex justify-between items-center gap-2">
                   {/* Player name with medal - left side */}
                   <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
-                    {medalIndex !== null ? (
-                      <Medal 
-                        className={`w-5 h-5 flex-shrink-0 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
-                      />
+                    {medalIndex !== null && medalIndex < medals.length ? (
+                      <span className="w-5 h-5 flex-shrink-0">{medals[medalIndex]}</span>
                     ) : (
                       <span className="w-5 h-5 flex-shrink-0">{/* Empty space to maintain alignment */}</span>
                     )}

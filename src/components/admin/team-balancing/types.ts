@@ -7,16 +7,21 @@ export interface TeamStats {
   playerCount: number;
   avgRating: number;
   totalRating: number;
+  avgGoalDifferential?: number; // Average goal differential for the team
 }
 
+/**
+ * Represents a player assigned to a team with their stats
+ */
 export interface TeamAssignment {
+  team: 'blue' | 'orange' | null;
   player_id: string;
   friendly_name: string;
   attack_rating: number;
   defense_rating: number;
   win_rate?: number | null; // Allow win rate to be null for players with no game history
+  goal_differential?: number | null; // Goal differential from last 10 games
   total_games?: number | null; // Add total games count
-  team: 'blue' | 'orange' | null;
 }
 
 export interface TeamComparison {
@@ -55,5 +60,8 @@ export interface PlayerSwapSuggestion {
   orangePlayer: TeamAssignment;
   attackDiffImprovement: number;
   defenseDiffImprovement: number;
+  winRateDiffImprovement?: number;
+  goalDiffImprovement?: number;
   totalDiffImprovement: number;
+  primaryImpactMetric?: 'attack' | 'defense' | 'winRate' | 'goalDifferential'; // The metric most improved by this swap
 }

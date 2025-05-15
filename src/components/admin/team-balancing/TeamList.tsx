@@ -78,19 +78,49 @@ const PlayerCard = ({
         <div className="flex justify-between items-center">
           <div className="flex-1">
             <h3 className="text-lg font-semibold">{player.friendly_name}</h3>
-            <div className="text-sm opacity-70">
-              <p>Attack: {player.attack_rating.toFixed(1)} | Defense: {player.defense_rating.toFixed(1)}</p>
-              <p>
-                {
-                  player.win_rate !== null && 
-                  player.win_rate !== undefined && 
-                  player.total_games !== undefined && 
-                  player.total_games !== null && 
-                  player.total_games >= 10 
-                    ? `Recent Win Rate: ${player.win_rate.toFixed(1)}%` 
-                    : `Recent Win Rate: N/A${player.total_games !== undefined && player.total_games !== null ? ` (${player.total_games} ${player.total_games === 1 ? 'game' : 'games'})` : ''}`
-                }
-              </p>
+            
+            {/* Stats grid layout */}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1">
+              {/* Ratings */}
+              <div className="flex items-center">
+                <span className="text-xs font-medium w-16">Attack:</span>
+                <span className="text-sm font-semibold">{player.attack_rating.toFixed(1)}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-xs font-medium w-16">Defense:</span>
+                <span className="text-sm font-semibold">{player.defense_rating.toFixed(1)}</span>
+              </div>
+              
+              {/* Win Rate */}
+              <div className="flex items-center">
+                <span className="text-xs font-medium w-16">Win Rate:</span>
+                <span className="text-sm">
+                  {player.win_rate !== null && 
+                   player.win_rate !== undefined && 
+                   typeof player.win_rate === 'number'
+                    ? <span className={player.win_rate > 60 ? 'text-success' : player.win_rate < 40 ? 'text-error' : ''}>
+                        {`${player.win_rate.toFixed(0)}%`}
+                      </span>
+                    : <span className="text-xs opacity-70">N/A</span>
+                  }
+                </span>
+              </div>
+              
+              {/* Goal Differential */}
+              <div className="flex items-center">
+                <span className="text-xs font-medium w-16">Goal Diff:</span>
+                <span className="text-sm">
+                  {player.goal_differential !== null && 
+                   player.goal_differential !== undefined && 
+                   typeof player.goal_differential === 'number' &&
+                   player.goal_differential !== 0
+                    ? <span className={Math.round(player.goal_differential) > 0 ? 'text-success' : Math.round(player.goal_differential) < 0 ? 'text-error' : ''}>
+                        {`${player.goal_differential > 0 ? '+' : ''}${Math.round(player.goal_differential)}`}
+                      </span>
+                    : <span className="text-xs opacity-70">0</span>
+                  }
+                </span>
+              </div>
             </div>
           </div>
         </div>

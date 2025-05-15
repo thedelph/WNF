@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Medal, LineChart } from 'lucide-react';
+import { LineChart } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 import { Tooltip } from '../ui/Tooltip';
 
@@ -81,11 +81,8 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
     fetchHighestXP();
   }, [selectedYear]);
   
-  const medals = [
-    { color: 'text-yellow-300 drop-shadow-[0_0_3px_rgba(253,224,71,0.7)]' },
-    { color: 'text-slate-100 drop-shadow-[0_0_3px_rgba(255,255,255,0.7)]' },
-    { color: 'text-yellow-700 drop-shadow-[0_0_3px_rgba(255,255,255,0.7)] font-bold' }
-  ];
+  // Emoji medals for top three positions
+  const medals = ['🥇', '🥈', '🥉'];
   
   const gradientColor = customGradient;
   const shadowColor = customShadow;
@@ -144,7 +141,7 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
                 {/* Player name with medal - left side */}
                 <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%] sm:max-w-none">
                   {index < 3 ? (
-                    <Medal className={`flex-shrink-0 ${medals[index].color}`} size={18} />
+                    <span className="flex-shrink-0 w-[18px] text-center">{medals[index]}</span>
                   ) : (
                     <span className="w-[18px] flex-shrink-0">{/* Empty space to maintain alignment */}</span>
                   )}

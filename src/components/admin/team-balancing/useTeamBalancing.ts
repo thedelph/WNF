@@ -73,22 +73,69 @@ export const useTeamBalancing = () => {
         return;
       }
 
-      // Fetch recent win rates for all players
+      // Fetch player statistics including win rates and goal differentials
       const playerIds = registrations.map(reg => reg.players.id);
-      const { data: winRateData, error: winRateError } = await supabase
-        .rpc('get_player_recent_win_rates')
-        .in('id', playerIds);
+      
+      // Initialize maps to store player stats
+      let winRateMap = new Map<string, number | null>();
+      let goalDiffMap = new Map<string, number | null>();
+      let gamesPlayedMap = new Map<string, number | null>();
+      
+      try {
+        // Fetch player stats using our custom function
+        console.log('Fetching player stats from get_player_game_stats RPC function');
+        const { data: playerStats, error: statsError } = await supabase
+          .rpc('get_player_game_stats');
 
-      if (winRateError) {
-        console.error('Error fetching win rates:', winRateError);
-        // Continue without win rates rather than failing completely
-      }
+        if (statsError) {
+          console.error('Error fetching player stats:', statsError);
+          throw statsError;
+        }
 
-      // Create win rate lookup map
-      const winRateMap = new Map<string, number | null>();
-      if (winRateData) {
-        winRateData.forEach((player: { id: string; recent_win_rate: number | null }) => {
-          winRateMap.set(player.id, player.recent_win_rate);
+        // Log the returned data to help with debugging
+        console.log('Player stats data:', playerStats);
+
+        // Create lookup maps from the returned data
+        console.log('Player stats returned from RPC:', playerStats);
+        if (playerStats && playerStats.length > 0) {
+          playerStats.forEach((player: { player_id: string; win_rate: number; goal_differential: number; games_played: number }) => {
+            // Store the actual values from the database
+            // Only set values for players with games played to avoid 0% win rates for everyone
+            if (player.games_played > 0) {
+              winRateMap.set(player.player_id, player.win_rate);
+              goalDiffMap.set(player.player_id, player.goal_differential);
+            } else {
+              // For players with no games, set null to show N/A in the UI
+              winRateMap.set(player.player_id, null);
+              goalDiffMap.set(player.player_id, null);
+            }
+            
+            // Always set games played count
+            gamesPlayedMap.set(player.player_id, player.games_played);
+            
+            // Debug log for all players
+            console.log(`Player ${player.player_id} stats: win_rate=${player.win_rate}, goal_diff=${player.goal_differential}, games=${player.games_played}`);
+            // Debug log for specific players
+            if (playerIds.includes(player.player_id)) {
+              console.log(`Stats for player ${player.player_id}:`, {
+                winRate: player.win_rate,
+                goalDiff: player.goal_differential,
+                gamesPlayed: player.games_played,
+                hasGames: player.games_played > 0
+              });
+            }
+          });
+        } else {
+          console.warn('No player stats returned from database');
+          throw new Error('No player stats data');
+        }
+      } catch (err) {
+        console.error('Error processing player stats:', err);
+        // Set default values for all players if we couldn't get real data
+        playerIds.forEach(id => {
+          winRateMap.set(id, 0);
+          goalDiffMap.set(id, 0);
+          gamesPlayedMap.set(id, 0);
         });
       }
 
@@ -116,26 +163,93 @@ export const useTeamBalancing = () => {
       const playerRatings = registrations.map(reg => {
         const playerId = reg.players.id;
         const caps = reg.players.caps || 0; // Default to 0 if null
-        // Set win_rate to null if player has played fewer than 10 games
-        const winRate = caps >= 10 ? winRateMap.get(playerId) : null;
+        
+        // Get win rate and goal differential from our maps
+        const winRate = winRateMap.get(playerId);
+        const goalDifferential = goalDiffMap.get(playerId);
+        const gamesPlayed = gamesPlayedMap.get(playerId) || caps || 0;
+        
+        // Debug log for this player's stats
+        console.log(`Player ${reg.players.friendly_name} stats:`, {
+          id: playerId,
+          winRate,
+          goalDifferential,
+          gamesPlayed
+        });
         
         return {
           player_id: playerId,
+          friendly_name: reg.players.friendly_name,
           attack_rating: reg.players.attack_rating || 5,
           defense_rating: reg.players.defense_rating || 5,
-          win_rate: winRate, // Pass null if less than 10 games
-          total_games: caps
+          win_rate: winRate, 
+          goal_differential: goalDifferential,
+          total_games: gamesPlayed
         };
       });
 
-      let finalAssignments;
+      let finalAssignments: TeamAssignment[] = [];
+      
+      if (assignmentData && assignmentData.team_assignments && assignmentData.team_assignments.teams) {
+        // Use existing team assignments
+        const existingAssignments = assignmentData.team_assignments.teams;
+        
+        finalAssignments = playerRatings.map(player => {
+          // Find existing assignment for this player
+          const existingAssignment = existingAssignments.find((a: any) => a.player_id === player.player_id);
+          
+          if (existingAssignment) {
+            // Use existing team assignment but with fresh player data
+            return {
+              player_id: player.player_id,
+              friendly_name: player.friendly_name,
+              attack_rating: player.attack_rating,
+              defense_rating: player.defense_rating,
+              win_rate: player.win_rate,
+              goal_differential: player.goal_differential,
+              total_games: player.total_games,
+              team: existingAssignment.team as 'blue' | 'orange' | null
+            };
+          } else {
+            // New player, no existing assignment
+            return {
+              player_id: player.player_id,
+              friendly_name: player.friendly_name,
+              attack_rating: player.attack_rating,
+              defense_rating: player.defense_rating,
+              win_rate: player.win_rate,
+              goal_differential: player.goal_differential,
+              total_games: player.total_games,
+              team: null
+            };
+          }
+        });
+      } else {
+        // No existing assignments, all players start with null team
+        finalAssignments = playerRatings.map(player => ({
+          player_id: player.player_id,
+          friendly_name: player.friendly_name,
+          attack_rating: player.attack_rating,
+          defense_rating: player.defense_rating,
+          win_rate: player.win_rate,
+          goal_differential: player.goal_differential,
+          total_games: player.total_games,
+          team: null
+        }));
+      }
+      
+      // Log the final assignments to verify data
+      console.log('Final player assignments with stats:', finalAssignments);
+
+      // Update existing assignments with fresh player data
       if (assignmentData?.team_assignments?.teams) {
-        // Update existing assignments with fresh player data
         finalAssignments = assignmentData.team_assignments.teams.map((assignment: TeamAssignment) => {
           const freshPlayerData = registrations.find(reg => reg.players.id === assignment.player_id);
           const caps = freshPlayerData?.players.caps || 0; // Default to 0 if null
           // Set win_rate to null if player has played fewer than 10 games
           const winRate = caps >= 10 ? winRateMap.get(assignment.player_id) : null;
+          const goalDifferential = goalDiffMap.get(assignment.player_id);
+          const gamesPlayed = gamesPlayedMap.get(assignment.player_id) || caps || 0;
           
           return {
             ...assignment,
@@ -143,7 +257,8 @@ export const useTeamBalancing = () => {
             attack_rating: freshPlayerData?.players.attack_rating || assignment.attack_rating,
             defense_rating: freshPlayerData?.players.defense_rating || assignment.defense_rating,
             win_rate: winRate, // Pass null if less than 10 games
-            total_games: caps
+            goal_differential: goalDifferential,
+            total_games: gamesPlayed
           };
         });
       } else {
@@ -159,9 +274,10 @@ export const useTeamBalancing = () => {
           return {
             player_id: reg.players.id,
             friendly_name: reg.players.friendly_name,
-            attack_rating: reg.players.attack_rating || 5,
-            defense_rating: reg.players.defense_rating || 5,
+            attack_rating: reg.players.attack_rating,
+            defense_rating: reg.players.defense_rating,
             win_rate: winRate, // Pass null if less than 10 games
+            goal_differential: goalDiffMap.get(reg.players.id),
             total_games: caps,
             team: isBlue ? 'blue' : 'orange'
           };

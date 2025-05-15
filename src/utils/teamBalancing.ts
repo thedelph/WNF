@@ -5,13 +5,15 @@ interface PlayerRating {
   attack_rating: number;
   defense_rating: number;
   win_rate?: number | null; // Allow win rate to be null for players with no game history
+  goal_differential?: number | null; // Goal differential from last 10 games
   total_games?: number | null; // Total games played by the player
 }
 
 interface TeamStats {
   attack: number;
   defense: number;
-  winRate: number; // Added win rate stat
+  winRate: number; // Win rate stat
+  goalDifferential: number; // Goal differential stat
   playerCount: number;
 }
 
@@ -26,14 +28,17 @@ interface BalancedTeams {
 }
 
 export const convertSelectedPlayersToRatings = async (selectedPlayers: any[]): Promise<PlayerRating[]> => {
-  // Fetch both player ratings and recent win rates in parallel
-  const [ratingResponse, winRateResponse] = await Promise.all([
+  // Fetch player ratings, recent win rates, and goal differentials in parallel
+  const [ratingResponse, winRateResponse, goalDiffResponse] = await Promise.all([
     supabase
       .from('players')
       .select('id, average_attack_rating, average_defense_rating')
       .in('id', selectedPlayers.map(p => p.id)),
     supabase
-      .rpc('get_player_recent_win_rates')
+      .rpc('get_player_recent_win_rates', { games_threshold: 10 })
+      .in('id', selectedPlayers.map(p => p.id)),
+    supabase
+      .rpc('get_player_recent_goal_differentials', { games_threshold: 10 })
       .in('id', selectedPlayers.map(p => p.id))
   ]);
 
@@ -44,12 +49,28 @@ export const convertSelectedPlayersToRatings = async (selectedPlayers: any[]): P
   if (winRateResponse.error) {
     throw winRateResponse.error;
   }
+  
+  if (goalDiffResponse.error) {
+    throw goalDiffResponse.error;
+  }
 
-  // Create a map of player win rates for easy lookup
+  // Create maps for player win rates and goal differentials
   const winRateMap = new Map<string, number | null>();
+  const goalDiffMap = new Map<string, number | null>();
+  const totalGamesMap = new Map<string, number>();
+  
   if (winRateResponse.data) {
-    winRateResponse.data.forEach((player: { id: string, recent_win_rate: number | null }) => {
-      winRateMap.set(player.id, player.recent_win_rate); // Don't default to 50%
+    winRateResponse.data.forEach((player: { id: string, recent_win_rate: number | null, games_played: number }) => {
+      // Only include win rate if player has played enough games
+      winRateMap.set(player.id, player.games_played >= 10 ? player.recent_win_rate : null);
+      totalGamesMap.set(player.id, player.games_played);
+    });
+  }
+  
+  if (goalDiffResponse.data) {
+    goalDiffResponse.data.forEach((player: { id: string, recent_goal_differential: number | null, games_played: number }) => {
+      // Only include goal differential if player has played enough games
+      goalDiffMap.set(player.id, player.games_played >= 10 ? player.recent_goal_differential : 0);
     });
   }
 
@@ -57,31 +78,42 @@ export const convertSelectedPlayersToRatings = async (selectedPlayers: any[]): P
     player_id: player.id,
     attack_rating: player.average_attack_rating || 5,
     defense_rating: player.average_defense_rating || 5,
-    win_rate: winRateMap.get(player.id) // Get win rate from map or leave as undefined
+    win_rate: winRateMap.get(player.id), // Get win rate from map or leave as undefined
+    goal_differential: goalDiffMap.get(player.id) || 0, // Get goal differential or default to 0
+    total_games: totalGamesMap.get(player.id) || 0
   }));
 };
 
 /**
- * Calculate team statistics for attack, defense, and win rate
+ * Calculate team statistics for attack, defense, win rate, and goal differential
  */
 const calculateTeamStats = (team: PlayerRating[]): TeamStats => {
   // Handle empty teams
   if (team.length === 0) {
-    return { attack: 0, defense: 0, winRate: 0, playerCount: 0 };
+    return { attack: 0, defense: 0, winRate: 0, goalDifferential: 0, playerCount: 0 };
   }
   
-  // Filter players that have win rate data
+  // Filter players that have win rate data (10+ games)
   const playersWithWinRates = team.filter(p => p.win_rate !== null && p.win_rate !== undefined);
   
-  // Calculate win rate only for players who have data
+  // Filter players that have goal differential data (10+ games)
+  const playersWithGoalDiff = team.filter(p => p.goal_differential !== null && p.goal_differential !== undefined);
+  
+  // Calculate win rate only for players who have sufficient data
   const winRate = playersWithWinRates.length > 0
     ? playersWithWinRates.reduce((sum, p) => sum + (p.win_rate || 0), 0) / playersWithWinRates.length
+    : 0;
+    
+  // Calculate goal differential average for the team
+  const goalDifferential = playersWithGoalDiff.length > 0
+    ? playersWithGoalDiff.reduce((sum, p) => sum + (p.goal_differential || 0), 0) / playersWithGoalDiff.length
     : 0;
   
   return {
     attack: team.reduce((sum, p) => sum + p.attack_rating, 0),
     defense: team.reduce((sum, p) => sum + p.defense_rating, 0),
     winRate: winRate,
+    goalDifferential: goalDifferential,
     playerCount: team.length
   };
 };
@@ -89,24 +121,36 @@ const calculateTeamStats = (team: PlayerRating[]): TeamStats => {
 /**
  * Calculate a balance score for a given team composition
  * Lower score means better balance
- * Considers attack, defense ratings, and recent win rates
+ * Considers attack, defense ratings, recent win rates, and goal differentials
+ * Each metric is weighted equally (25% each)
  */
 export const calculateBalanceScore = (team1: PlayerRating[], team2: PlayerRating[]): number => {
   const stats1 = calculateTeamStats(team1);
   const stats2 = calculateTeamStats(team2);
 
-  // Calculate raw differences in attack and defense
+  // Calculate differences for each metric
   const attackDiff = Math.abs(stats1.attack - stats2.attack);
   const defenseDiff = Math.abs(stats1.defense - stats2.defense);
   
-  // Calculate difference in win rates only if both teams have win rate data
-  const hasWinRateData = team1.some(p => p.win_rate !== null && p.win_rate !== undefined) && 
-                        team2.some(p => p.win_rate !== null && p.win_rate !== undefined);
-  
+  // Check if we have valid win rate data
+  const hasWinRateData = team1.some(p => p.win_rate !== null && p.win_rate !== undefined && (p.total_games || 0) >= 10) && 
+                        team2.some(p => p.win_rate !== null && p.win_rate !== undefined && (p.total_games || 0) >= 10);
   const winRateDiff = hasWinRateData ? Math.abs(stats1.winRate - stats2.winRate) : 0;
-
-  // Final score is the sum of attack, defense, and win rate differences
-  return attackDiff + defenseDiff + winRateDiff;
+  
+  // Check if we have valid goal differential data
+  const hasGoalDiffData = team1.some(p => p.goal_differential !== null && p.goal_differential !== undefined && (p.total_games || 0) >= 10) && 
+                         team2.some(p => p.goal_differential !== null && p.goal_differential !== undefined && (p.total_games || 0) >= 10);
+  const goalDiffDiff = hasGoalDiffData ? Math.abs(stats1.goalDifferential - stats2.goalDifferential) : 0;
+  
+  // Calculate normalized metrics based on team size to make them comparable
+  const normalizedAttackDiff = attackDiff / Math.max(1, Math.max(stats1.playerCount, stats2.playerCount));
+  const normalizedDefenseDiff = defenseDiff / Math.max(1, Math.max(stats1.playerCount, stats2.playerCount));
+  
+  // Apply equal 25% weighting to each metric
+  return (normalizedAttackDiff * 0.25) + 
+         (normalizedDefenseDiff * 0.25) + 
+         (winRateDiff * 0.25) + 
+         (goalDiffDiff * 0.25);
 };
 
 /**

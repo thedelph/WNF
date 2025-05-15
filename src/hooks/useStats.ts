@@ -41,6 +41,19 @@ interface BestBuddies {
   gamesTogether: number;
 }
 
+/**
+ * Interface for player goal differential statistics
+ * Tracks goals for, goals against, and overall goal differential
+ */
+interface PlayerGoalStats {
+  id: string;
+  friendlyName: string;
+  caps: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifferential: number;
+}
+
 interface Stats {
   luckyBibColor: {
     color: 'orange' | 'blue';
@@ -59,6 +72,8 @@ interface Stats {
   currentWinStreaks: PlayerStats[];
   topUnbeatenStreaks: PlayerStats[];
   currentUnbeatenStreaks: PlayerStats[];
+  // New goal differential stats
+  goalDifferentials: PlayerGoalStats[];
   loading: boolean;
   error: string | null;
 }
@@ -79,6 +94,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
     currentWinStreaks: [],
     topUnbeatenStreaks: [],
     currentUnbeatenStreaks: [],
+    goalDifferentials: [], // Initialize the goal differentials array
     loading: true,
     error: null,
   });
@@ -145,6 +161,14 @@ export const useStats = (year?: number, availableYears?: number[]) => {
         const capsMap = new Map<string, number>(
           playerCaps?.map(p => [p.id, Number(p.total_games)])
         );
+        
+        // Fetch goal differential stats
+        const { data: goalDifferentials, error: goalDiffError } = await supabase
+          .rpc('get_player_goal_differentials', {
+            target_year: year || null
+          });
+          
+        if (goalDiffError) throw goalDiffError;
 
         // Fetch attendance streaks
         const { data: streakStats, error: streakError } = await supabase
@@ -424,6 +448,15 @@ export const useStats = (year?: number, availableYears?: number[]) => {
             })()
           },
           bestBuddies: transformedBuddies.sort((a, b) => b.gamesTogether - a.gamesTogether),
+          // Transform goal differential data
+          goalDifferentials: goalDifferentials?.map((player: any) => ({
+            id: player.id,
+            friendlyName: player.friendly_name,
+            caps: Number(player.caps),
+            goalsFor: Number(player.goals_for),
+            goalsAgainst: Number(player.goals_against),
+            goalDifferential: Number(player.goal_differential)
+          })) || [],
           loading: false,
           error: null,
         });

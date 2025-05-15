@@ -16,6 +16,7 @@ import { StatsCard } from '../components/stats/StatsCard';
 import { AwardCard } from '../components/stats/AwardCard';
 import { YearSelector } from '../components/stats/YearSelector';
 import { HighestXPCard } from '../components/stats/HighestXPCard';
+import { GoalDifferentialsCard } from '../components/stats/GoalDifferentialsCard';
 import { useStats } from '../hooks/useStats';
 
 const containerVariants = {
@@ -75,6 +76,9 @@ export default function Stats() {
         animate="visible"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
+        {/* Goal Differential Stats - Custom card with perfect column alignment */}
+        <GoalDifferentialsCard goalDifferentials={stats.goalDifferentials} />
+        
         {/* Highest XP Records */}
         <HighestXPCard selectedYear={selectedYear} />
 
