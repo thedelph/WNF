@@ -146,7 +146,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
     },
     { 
       key: 'teamDistribution', 
-      label: 'Team Colors', 
+      label: 'Team Colours', 
       sortable: true,
       tooltip: 'Distribution of games played on blue vs. orange team',
       // This formatter creates the visual team distribution bar

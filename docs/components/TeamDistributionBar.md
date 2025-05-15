@@ -52,14 +52,14 @@ export const TeamDistributionBar = ({
 
 ### Integration with Comprehensive Stats Table
 The team distribution bar is integrated into the ComprehensiveStatsTable by:
-1. Replacing the separate "Blue Team %" and "Orange Team %" columns with a single "Team Colors" column
+1. Replacing the separate "Blue Team %" and "Orange Team %" columns with a single "Team Colours" column
 2. Using a formatter function that calculates missing percentages (ensuring they add up to 100%)
 3. Adding sorting functionality by blue team percentage
 
 ```tsx
 { 
   key: 'teamDistribution', 
-  label: 'Team Colors', 
+  label: 'Team Colours', 
   sortable: true,
   tooltip: 'Distribution of games played on blue vs. orange team',
   formatter: (_, player) => {
@@ -112,7 +112,7 @@ ROUND(
 ## Future Improvements
 Potential enhancements for this component:
 - Add player stats tooltip on hover with more detailed team performance
-- Include win percentage by team color
+- Include win percentage by team colour
 - Add animation for data changes
 - Consider additional accessibility features (aria labels, etc.)
-- Provide filtering options for players based on team color preferences
+- Provide filtering options for players based on team colour preferences

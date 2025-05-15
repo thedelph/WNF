@@ -16,7 +16,7 @@ The component is built using several sub-components and features:
 
 1. **Main table component**: `ComprehensiveStatsTable.tsx`
 2. **Visual elements**:
-   - `TeamDistributionBar.tsx`: Visual representation of team color distribution
+   - `TeamDistributionBar.tsx`: Visual representation of team colours distribution
    - Tooltips for providing additional context
 3. **Data handling**:
    - Uses `useStats` hook to fetch data from the database
@@ -83,7 +83,7 @@ The table includes the following metrics:
 - Longest Win Streak
 - Current Unbeaten Streak
 - Longest Unbeaten Streak
-- Team Colors (Visual distribution of blue/orange team percentages)
+- Team Colours (Visual distribution of blue/orange team percentages)
 
 ### Visual Team Distribution Bar
 The team distribution is displayed using a visual bar rather than separate percentage columns:
@@ -91,7 +91,7 @@ The team distribution is displayed using a visual bar rather than separate perce
 ```tsx
 { 
   key: 'teamDistribution', 
-  label: 'Team Colors', 
+  label: 'Team Colours', 
   sortable: true,
   tooltip: 'Distribution of games played on blue vs. orange team',
   formatter: (_, player) => {

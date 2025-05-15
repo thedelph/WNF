@@ -40,7 +40,7 @@ A tiered XP system that rewards player participation, win rates, and other facto
 
 The application includes several components for displaying statistics:
 - [ComprehensiveStatsTable](./components/ComprehensiveStatsTable.md): Complete player stats table
-- [TeamDistributionBar](./components/TeamDistributionBar.md): Visual team color distribution
+- [TeamDistributionBar](./components/TeamDistributionBar.md): Visual Team Colours distribution
 - [StatsGrid](./components/StatsGrid.md): Grid layout for various player stats
 - [WinRateGraph](./components/WinRateGraph.md): Visual representation of win rate over time
 - [PlayerCard](./components/PlayerCard.md): Individual player stat cards
