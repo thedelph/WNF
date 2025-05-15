@@ -1,60 +1,79 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 
-interface PlayerStats {
+export interface PlayerStats {
   id: string;
   friendlyName: string;
   caps: number;
   winRate: number;
   recentWinRate?: number;
-  currentStreak: number;
-  maxStreak: number;
+  currentStreak?: number;
+  maxStreak?: number;
   currentWinStreak: number;
   maxWinStreak: number;
   currentUnbeatenStreak: number;
   maxUnbeatenStreak: number;
-  maxStreakDate?: string;
   maxAttendanceStreakDate?: string;
   maxUnbeatenStreakDate?: string;
   recentGames: number;
-  wins: number;
-  draws: number;
-  losses: number;
+  wins?: number;
+  draws?: number;
+  losses?: number;
   recentWins?: number;
   recentDraws?: number;
   recentLosses?: number;
-}
+};
 
-interface TeamColorStats {
+// Define team color stats type
+type TeamColorStats = {
   id: string;
   friendlyName: string;
   team: string;
   teamFrequency: number;
   caps: number;
-}
+};
 
-interface BestBuddies {
+// Define best buddies type
+type BuddyStats = {
   id: string;
   friendlyName: string;
   buddyId: string;
   buddyFriendlyName: string;
   gamesTogether: number;
-}
+};
 
-/**
- * Interface for player goal differential statistics
- * Tracks goals for, goals against, and overall goal differential
- */
-interface PlayerGoalStats {
+// Define player goal stats type
+type GoalDifferentialStats = {
   id: string;
   friendlyName: string;
   caps: number;
   goalsFor: number;
   goalsAgainst: number;
   goalDifferential: number;
-}
+};
 
-interface Stats {
+// Define comprehensive player stats type
+type ComprehensivePlayerStats = {
+  id: string;
+  friendlyName: string;
+  xp: number;
+  caps: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifferential: number;
+  winRate: number | null;
+  wins: number;
+  draws: number;
+  losses: number;
+  currentWinStreak: number;
+  maxWinStreak: number;
+  currentUnbeatenStreak: number;
+  maxUnbeatenStreak: number;
+  blueTeamPercentage: number | null;
+  orangeTeamPercentage: number | null;
+};
+
+export interface Stats {
   luckyBibColor: {
     color: 'orange' | 'blue';
     winRate: number;
@@ -67,13 +86,13 @@ interface Stats {
     blue: TeamColorStats[];
     orange: TeamColorStats[];
   };
-  bestBuddies: BestBuddies[];
+  bestBuddies: BuddyStats[];
   topWinStreaks: PlayerStats[];
   currentWinStreaks: PlayerStats[];
   topUnbeatenStreaks: PlayerStats[];
   currentUnbeatenStreaks: PlayerStats[];
-  // New goal differential stats
-  goalDifferentials: PlayerGoalStats[];
+  goalDifferentials: GoalDifferentialStats[];
+  comprehensiveStats: ComprehensivePlayerStats[];
   loading: boolean;
   error: string | null;
 }
@@ -94,7 +113,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
     currentWinStreaks: [],
     topUnbeatenStreaks: [],
     currentUnbeatenStreaks: [],
-    goalDifferentials: [], // Initialize the goal differentials array
+    goalDifferentials: [], 
+    comprehensiveStats: [], 
     loading: true,
     error: null,
   });
@@ -162,13 +182,21 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           playerCaps?.map(p => [p.id, Number(p.total_games)])
         );
         
-        // Fetch goal differential stats
+        // Get goal differentials
         const { data: goalDifferentials, error: goalDiffError } = await supabase
-          .rpc('get_player_goal_differentials', {
-            target_year: year || null
+          .rpc('get_player_goal_differentials', { 
+            target_year: year || null 
           });
-          
+
         if (goalDiffError) throw goalDiffError;
+        
+        // Get all players for comprehensive stats
+        const { data: playersList, error: allPlayersError } = await supabase
+          .from('players')
+          .select('id, friendly_name')
+          .order('friendly_name');
+          
+        if (allPlayersError) throw allPlayersError;
 
         // Fetch attendance streaks
         const { data: streakStats, error: streakError } = await supabase
@@ -368,86 +396,17 @@ export const useStats = (year?: number, availableYears?: number[]) => {
 
             return sorted.slice(0, 10);
           })(),
-          topWinStreaks: (() => {
-            const sorted = allPlayers
-              .filter((p: PlayerStats) => p.maxWinStreak > 0)
-              .sort((a: PlayerStats, b: PlayerStats) => b.maxWinStreak - a.maxWinStreak);
-            return sorted.slice(0, 10);
-          })(),
-          currentWinStreaks: (() => {
-            // Only show current streaks for ALL TIME or latest year
-            if (year !== undefined && availableYears && year !== Math.max(...availableYears)) {
-              return [];
-            }
-            
-            // Filter out players with no current streak
-            const sorted = allPlayers
-              .filter((p: PlayerStats) => p.currentWinStreak > 0)
-              .sort((a: PlayerStats, b: PlayerStats) => {
-                // First sort by current streak
-                const streakDiff = b.currentWinStreak - a.currentWinStreak;
-                if (streakDiff !== 0) return streakDiff;
-                // If streaks are equal, sort by caps as a tiebreaker
-                return b.caps - a.caps;
-              });
-
-            return sorted.slice(0, 10);
-          })(),
-          topUnbeatenStreaks: (() => {
-            const sorted = allPlayers
-              .filter((p: PlayerStats) => p.maxUnbeatenStreak > 0)
-              .sort((a: PlayerStats, b: PlayerStats) => b.maxUnbeatenStreak - a.maxUnbeatenStreak);
-            return sorted.slice(0, 10);
-          })(),
-          currentUnbeatenStreaks: (() => {
-            // Only show current streaks for ALL TIME or latest year
-            if (year !== undefined && availableYears && year !== Math.max(...availableYears)) {
-              return [];
-            }
-            
-            // Filter out players with no current streak
-            const sorted = allPlayers
-              .filter((p: PlayerStats) => p.currentUnbeatenStreak > 0)
-              .sort((a: PlayerStats, b: PlayerStats) => {
-                // First sort by current streak
-                const streakDiff = b.currentUnbeatenStreak - a.currentUnbeatenStreak;
-                if (streakDiff !== 0) return streakDiff;
-                // If streaks are equal, sort by caps as a tiebreaker
-                return b.caps - a.caps;
-              });
-
-            return sorted.slice(0, 10);
-          })(),
-          mostCaps: (() => {
-            const sorted = allPlayers
-              .sort((a, b) => b.caps - a.caps);
-            const threshold = sorted[2]?.caps || 0;
-            return sorted.filter(p => p.caps >= threshold);
-          })(),
-          bestWinRates: (() => {
-            const eligible = transformedPlayerStats
-              .filter(p => p.caps >= 10)
-              .sort((a, b) => b.winRate - a.winRate);
-            const threshold = eligible[2]?.winRate || 0;
-            return eligible.filter(p => p.winRate >= threshold);
-          })(),
+          topWinStreaks: getPlayerStatsByMaxWinStreak(allPlayers).slice(0, 10),
+          currentWinStreaks: getPlayerStatsByCurrentWinStreak(allPlayers).slice(0, 10),
+          topUnbeatenStreaks: getPlayerStatsByMaxUnbeatenStreak(allPlayers).slice(0, 10),
+          currentUnbeatenStreaks: getPlayerStatsByCurrentUnbeatenStreak(allPlayers).slice(0, 10),
+          mostCaps: getPlayerStatsByCaps(allPlayers).filter((p: PlayerStats) => p.caps >= (getPlayerStatsByCaps(allPlayers)[2]?.caps || 0)),
+          bestWinRates: getPlayerStatsByWinRate(transformedPlayerStats).filter((p: PlayerStats) => p.winRate >= (getPlayerStatsByWinRate(transformedPlayerStats)[2]?.winRate || 0)),
           teamColorFrequency: {
-            blue: (() => {
-              const sorted = transformedTeamColorStats
-                .filter(p => p.team === 'blue')
-                .sort((a, b) => b.teamFrequency - a.teamFrequency);
-              const threshold = sorted[2]?.teamFrequency || 0;
-              return sorted.filter(p => p.teamFrequency >= threshold);
-            })(),
-            orange: (() => {
-              const sorted = transformedTeamColorStats
-                .filter(p => p.team === 'orange')
-                .sort((a, b) => b.teamFrequency - a.teamFrequency);
-              const threshold = sorted[2]?.teamFrequency || 0;
-              return sorted.filter(p => p.teamFrequency >= threshold);
-            })()
+            blue: transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'blue').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency).filter((p: TeamColorStats) => p.teamFrequency >= (transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'blue').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency)[2]?.teamFrequency || 0)),
+            orange: transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'orange').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency).filter((p: TeamColorStats) => p.teamFrequency >= (transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'orange').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency)[2]?.teamFrequency || 0))
           },
-          bestBuddies: transformedBuddies.sort((a, b) => b.gamesTogether - a.gamesTogether),
+          bestBuddies: transformedBuddies.sort((a: BuddyStats, b: BuddyStats) => b.gamesTogether - a.gamesTogether),
           // Transform goal differential data
           goalDifferentials: goalDifferentials?.map((player: any) => ({
             id: player.id,
@@ -457,6 +416,14 @@ export const useStats = (year?: number, availableYears?: number[]) => {
             goalsAgainst: Number(player.goals_against),
             goalDifferential: Number(player.goal_differential)
           })) || [],
+          
+          // Generate comprehensive player stats
+          comprehensiveStats: generateComprehensivePlayerStats(
+            playersList || [],
+            transformedPlayerStats,
+            goalDifferentials || [],
+            transformedTeamColorStats
+          ),
           loading: false,
           error: null,
         });
@@ -473,5 +440,212 @@ export const useStats = (year?: number, availableYears?: number[]) => {
     fetchStats();
   }, [year]);
 
-  return stats;
+  /**
+   * Generate comprehensive player statistics by combining data from multiple sources
+   * 
+   * @param allPlayers - Base player list
+   * @param playerStats - Player stats with win rates and streaks
+   * @param goalDifferentials - Player goal differentials
+   * @param teamColorStats - Team color frequency stats
+   * @returns Array of comprehensive player stats
+   */
+  const generateComprehensivePlayerStats = (
+    allPlayers: any[],
+    playerStats: PlayerStats[],
+    goalDifferentials: any[],
+    teamColorStats: TeamColorStats[]
+  ): ComprehensivePlayerStats[] => {
+    // Create a map to store combined player data
+    const playerMap = new Map<string, ComprehensivePlayerStats>();
+    
+    // Initialize with all players who have played at least one game
+    const playersWithCaps = playerStats.filter(p => p.caps > 0);
+    
+    // Add all players with caps
+    playersWithCaps.forEach(player => {
+      playerMap.set(player.id, {
+        id: player.id,
+        friendlyName: player.friendlyName,
+        xp: player.xp || 0,
+        caps: player.caps,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifferential: 0,
+        winRate: player.winRate,
+        wins: player.wins || 0,
+        draws: player.draws || 0,
+        losses: player.losses || 0,
+        currentWinStreak: player.currentWinStreak || 0,
+        maxWinStreak: player.maxWinStreak || 0,
+        currentUnbeatenStreak: player.currentUnbeatenStreak || 0,
+        maxUnbeatenStreak: player.maxUnbeatenStreak || 0,
+        blueTeamPercentage: null,
+        orangeTeamPercentage: null
+      });
+    });
+    
+    // Add goal differential data
+    goalDifferentials.forEach((player: any) => {
+      if (playerMap.has(player.id)) {
+        const playerData = playerMap.get(player.id)!;
+        playerData.goalsFor = Number(player.goals_for) || 0;
+        playerData.goalsAgainst = Number(player.goals_against) || 0;
+        playerData.goalDifferential = Number(player.goal_differential) || 0;
+      } else if (player.caps > 0) {
+        // Add player if they have caps but weren't in the initial list
+        playerMap.set(player.id, {
+          id: player.id,
+          friendlyName: player.friendly_name,
+          xp: 0, // We don't have XP data for this player
+          caps: Number(player.caps),
+          goalsFor: Number(player.goals_for) || 0,
+          goalsAgainst: Number(player.goals_against) || 0,
+          goalDifferential: Number(player.goal_differential) || 0,
+          winRate: null,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          currentWinStreak: 0,
+          maxWinStreak: 0,
+          currentUnbeatenStreak: 0,
+          maxUnbeatenStreak: 0,
+          blueTeamPercentage: null,
+          orangeTeamPercentage: null
+        });
+      }
+    });
+    
+    // Add team color data
+    const blueTeamStats = teamColorStats.filter(p => p.team === 'blue');
+    const orangeTeamStats = teamColorStats.filter(p => p.team === 'orange');
+    
+    blueTeamStats.forEach(player => {
+      if (playerMap.has(player.id)) {
+        const playerData = playerMap.get(player.id)!;
+        playerData.blueTeamPercentage = player.teamFrequency * 100;
+      }
+    });
+    
+    orangeTeamStats.forEach(player => {
+      if (playerMap.has(player.id)) {
+        const playerData = playerMap.get(player.id)!;
+        playerData.orangeTeamPercentage = player.teamFrequency * 100;
+      }
+    });
+    
+    // Convert to array and sort by XP (descending)
+    return Array.from(playerMap.values())
+      .sort((a, b) => b.xp - a.xp);
+  };
+
+  // Get player stats sorted by max unbeaten streak
+  const getPlayerStatsByMaxUnbeatenStreak = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.maxUnbeatenStreak || 0) - (a.maxUnbeatenStreak || 0));
+  };
+
+  // Get player stats sorted by current unbeaten streak
+  const getPlayerStatsByCurrentUnbeatenStreak = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.currentUnbeatenStreak || 0) - (a.currentUnbeatenStreak || 0));
+  };
+
+  // Get player stats sorted by max win streak
+  const getPlayerStatsByMaxWinStreak = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.maxWinStreak || 0) - (a.maxWinStreak || 0));
+  };
+
+  // Get player stats sorted by win rate
+  const getPlayerStatsByWinRate = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.winRate || 0) - (a.winRate || 0));
+  };
+
+  // Get player stats sorted by current win streak
+  const getPlayerStatsByCurrentWinStreak = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.currentWinStreak || 0) - (a.currentWinStreak || 0));
+  };
+
+  // Get player stats sorted by caps (used for XP calculation)
+  const getPlayerStatsByCaps = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => b.caps - a.caps);
+  };
+
+  /**
+   * Get comprehensive player stats directly from the database
+   * This ensures we get all players, not just those in award cards
+   */
+  const fetchComprehensivePlayerStats = async (year: string | number) => {
+    try {
+      // Set loading state without clearing previous data
+      // This prevents the flash of N/A values
+      setStats(prevStats => ({ 
+        ...prevStats, 
+        loading: true,
+        // Keep the previous comprehensive stats until new data is ready
+      }));
+      console.log('Fetching comprehensive player stats for year:', year);
+
+      // Fetch comprehensive player stats directly from database function
+      const { data: playerStats, error: playerStatsError } = await supabase
+        .rpc('get_comprehensive_player_stats', { 
+          target_year: year === 'all' ? null : Number(year) || null 
+        });
+
+      if (playerStatsError) {
+        console.error('Error fetching comprehensive player stats:', playerStatsError);
+        throw playerStatsError;
+      }
+      
+      console.log('Comprehensive player stats fetched:', playerStats?.length || 0, 'players');
+
+      // Process the data into the format we need
+      const allStats = playerStats?.map((player: any) => {
+        return {
+          id: player.id,
+          friendlyName: player.friendly_name,
+          caps: player.caps || 0,
+          xp: player.xp || 0,
+          winRate: player.win_rate || 0,
+          wins: player.wins || 0,
+          draws: player.draws || 0,
+          losses: player.losses || 0,
+          goalsFor: player.goals_for || 0,
+          goalsAgainst: player.goals_against || 0,
+          goalDifferential: player.goal_differential || 0,
+          currentWinStreak: player.current_win_streak || 0,
+          maxWinStreak: player.max_win_streak || 0,
+          currentUnbeatenStreak: player.current_unbeaten_streak || 0,
+          maxUnbeatenStreak: player.max_unbeaten_streak || 0,
+          // For team percentages, use null if the value is 0 (no games on that team)
+          // This ensures the frontend displays the data correctly
+          blueTeamPercentage: player.blue_team_percentage || null,
+          orangeTeamPercentage: player.orange_team_percentage || null
+        };
+      }) || [];
+
+      // Sort by caps by default
+      const sortedStats = [...allStats].sort(
+        (a: ComprehensivePlayerStats, b: ComprehensivePlayerStats) => b.caps - a.caps
+      );
+
+      setStats(prevStats => ({
+        ...prevStats,
+        comprehensiveStats: sortedStats,
+        loading: false
+      }));
+      
+      return sortedStats;
+    } catch (error) {
+      console.error('Error fetching comprehensive player stats:', error);
+      setStats(prevStats => ({
+        ...prevStats,
+        error: 'Error fetching comprehensive player stats',
+        loading: false
+      }));
+      return [];
+    }
+  };
+
+  return {
+    ...stats,
+    fetchComprehensivePlayerStats
+  };
 };
