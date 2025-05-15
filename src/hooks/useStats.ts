@@ -11,8 +11,11 @@ interface PlayerStats {
   maxStreak: number;
   currentWinStreak: number;
   maxWinStreak: number;
+  currentUnbeatenStreak: number;
+  maxUnbeatenStreak: number;
   maxStreakDate?: string;
   maxAttendanceStreakDate?: string;
+  maxUnbeatenStreakDate?: string;
   recentGames: number;
   wins: number;
   draws: number;
@@ -54,6 +57,8 @@ interface Stats {
   bestBuddies: BestBuddies[];
   topWinStreaks: PlayerStats[];
   currentWinStreaks: PlayerStats[];
+  topUnbeatenStreaks: PlayerStats[];
+  currentUnbeatenStreaks: PlayerStats[];
   loading: boolean;
   error: string | null;
 }
@@ -72,6 +77,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
     bestBuddies: [],
     topWinStreaks: [],
     currentWinStreaks: [],
+    topUnbeatenStreaks: [],
+    currentUnbeatenStreaks: [],
     loading: true,
     error: null,
   });
@@ -81,8 +88,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
       setStats(prev => ({ ...prev, loading: true, error: null }));
       
       try {
-        // Add a timestamp to force fresh data
-        const timestamp = new Date().getTime();
+        // Add a timestamp to force fresh data - for cache busting if needed
         
         // Fetch lucky bib color stats
         const { data: colorStats, error: colorError } = await supabase
@@ -172,7 +178,24 @@ export const useStats = (year?: number, availableYears?: number[]) => {
             max_streak_date: s.max_streak_date
           }]) || []
         );
+        
+        // Fetch unbeaten streaks (only broken by losses, not draws)
+        const { data: unbeatenStreakStats, error: unbeatenStreakError } = await supabase
+          .rpc('get_player_unbeaten_streaks', { 
+            target_year: year || null
+          });
 
+        if (unbeatenStreakError) throw unbeatenStreakError;
+
+        // Create a map of player unbeaten streaks
+        const unbeatenStreakMap = new Map<string, { current_unbeaten_streak: number, max_unbeaten_streak: number, max_streak_date?: string }>(
+          unbeatenStreakStats?.map((s: { id: string, current_unbeaten_streak: number, max_unbeaten_streak: number, max_streak_date?: string }) => [s.id, { 
+            current_unbeaten_streak: Number(s.current_unbeaten_streak), 
+            max_unbeaten_streak: Number(s.max_unbeaten_streak),
+            max_streak_date: s.max_streak_date
+          }]) || []
+        );
+        
         // Fetch player streak stats for attendance streak dates
         const { data: playerStreakStats, error: playerStreakStatsError } = await supabase
           .from('player_streak_stats')
@@ -194,7 +217,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
         }
 
         // Transform player stats to match our interface
-        const transformedPlayerStats = playerStats?.map((p: { id: string, friendly_name: string, total_games: number, win_rate: number, wins: number, draws: number, losses: number }) => ({
+        const transformedPlayerStats = playerStats?.map((p) => ({
           id: p.id,
           friendlyName: p.friendly_name,
           caps: capsMap.get(p.id) || Number(p.total_games),
@@ -203,7 +226,10 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           maxStreak: streakMap.get(p.id)?.max_streak || 0,
           currentWinStreak: winStreakMap.get(p.id)?.current_win_streak || 0,
           maxWinStreak: winStreakMap.get(p.id)?.max_win_streak || 0,
+          currentUnbeatenStreak: unbeatenStreakMap.get(p.id)?.current_unbeaten_streak || 0,
+          maxUnbeatenStreak: unbeatenStreakMap.get(p.id)?.max_unbeaten_streak || 0,
           maxStreakDate: winStreakMap.get(p.id)?.max_streak_date ? winStreakMap.get(p.id)?.max_streak_date : undefined,
+          maxUnbeatenStreakDate: unbeatenStreakMap.get(p.id)?.max_streak_date ? unbeatenStreakMap.get(p.id)?.max_streak_date : undefined,
           maxAttendanceStreakDate: streakPeriodMap.get(p.friendly_name)?.end_date,
           recentGames: 0,
           wins: Number(p.wins),
@@ -216,7 +242,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
         })) || [];
 
         // Create a list of all players with caps
-        const playersWithCaps = playerCaps?.map((p: { id: string, friendly_name: string, total_games: number }) => ({
+        const playersWithCaps = playerCaps?.map((p) => ({
           id: p.id,
           friendlyName: p.friendly_name,
           caps: Number(p.total_games),
@@ -225,7 +251,10 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           maxStreak: streakMap.get(p.id)?.max_streak || 0,
           currentWinStreak: winStreakMap.get(p.id)?.current_win_streak || 0,
           maxWinStreak: winStreakMap.get(p.id)?.max_win_streak || 0,
+          currentUnbeatenStreak: unbeatenStreakMap.get(p.id)?.current_unbeaten_streak || 0,
+          maxUnbeatenStreak: unbeatenStreakMap.get(p.id)?.max_unbeaten_streak || 0,
           maxStreakDate: winStreakMap.get(p.id)?.max_streak_date ? winStreakMap.get(p.id)?.max_streak_date : undefined,
+          maxUnbeatenStreakDate: unbeatenStreakMap.get(p.id)?.max_streak_date ? unbeatenStreakMap.get(p.id)?.max_streak_date : undefined,
           maxAttendanceStreakDate: streakPeriodMap.get(p.friendly_name)?.end_date,
           recentGames: 0,
           wins: 0,
@@ -257,7 +286,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
         if (teamColorError) throw teamColorError;
 
         // Transform team color stats
-        const transformedTeamColorStats = teamColorStats?.map((p: { id: string, friendly_name: string, team: string, team_frequency: number, caps: number }) => ({
+        const transformedTeamColorStats = teamColorStats?.map((p) => ({
           id: p.id,
           friendlyName: p.friendly_name,
           team: p.team,
@@ -276,7 +305,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           throw bestBuddiesError;
         }
 
-        const transformedBuddies = bestBuddies?.map((buddy: { id: string, friendly_name: string, buddy_id: string, buddy_friendly_name: string, games_together: number }) => ({
+        const transformedBuddies = bestBuddies?.map((buddy) => ({
           id: buddy.id,
           friendlyName: buddy.friendly_name,
           buddyId: buddy.buddy_id,
@@ -292,20 +321,20 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           },
           topAttendanceStreaks: (() => {
             const sorted = allPlayers
-              .filter(p => p.maxStreak > 0)
-              .sort((a, b) => b.maxStreak - a.maxStreak);
+              .filter((p: PlayerStats) => p.maxStreak > 0)
+              .sort((a: PlayerStats, b: PlayerStats) => b.maxStreak - a.maxStreak);
             return sorted.slice(0, 10);
           })(),
           currentStreaks: (() => {
             // Only show current streaks for ALL TIME or latest year
-            if (year !== undefined && year !== Math.max(...availableYears)) {
+            if (year !== undefined && availableYears && year !== Math.max(...availableYears)) {
               return [];
             }
             
             // Filter out players with no current streak
             const sorted = allPlayers
-              .filter(p => p.currentStreak > 0)
-              .sort((a, b) => {
+              .filter((p: PlayerStats) => p.currentStreak > 0)
+              .sort((a: PlayerStats, b: PlayerStats) => {
                 // First sort by current streak
                 const streakDiff = b.currentStreak - a.currentStreak;
                 if (streakDiff !== 0) return streakDiff;
@@ -317,22 +346,47 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           })(),
           topWinStreaks: (() => {
             const sorted = allPlayers
-              .filter(p => p.maxWinStreak > 0)
-              .sort((a, b) => b.maxWinStreak - a.maxWinStreak);
+              .filter((p: PlayerStats) => p.maxWinStreak > 0)
+              .sort((a: PlayerStats, b: PlayerStats) => b.maxWinStreak - a.maxWinStreak);
             return sorted.slice(0, 10);
           })(),
           currentWinStreaks: (() => {
             // Only show current streaks for ALL TIME or latest year
-            if (year !== undefined && year !== Math.max(...availableYears)) {
+            if (year !== undefined && availableYears && year !== Math.max(...availableYears)) {
               return [];
             }
             
             // Filter out players with no current streak
             const sorted = allPlayers
-              .filter(p => p.currentWinStreak > 0)
-              .sort((a, b) => {
+              .filter((p: PlayerStats) => p.currentWinStreak > 0)
+              .sort((a: PlayerStats, b: PlayerStats) => {
                 // First sort by current streak
                 const streakDiff = b.currentWinStreak - a.currentWinStreak;
+                if (streakDiff !== 0) return streakDiff;
+                // If streaks are equal, sort by caps as a tiebreaker
+                return b.caps - a.caps;
+              });
+
+            return sorted.slice(0, 10);
+          })(),
+          topUnbeatenStreaks: (() => {
+            const sorted = allPlayers
+              .filter((p: PlayerStats) => p.maxUnbeatenStreak > 0)
+              .sort((a: PlayerStats, b: PlayerStats) => b.maxUnbeatenStreak - a.maxUnbeatenStreak);
+            return sorted.slice(0, 10);
+          })(),
+          currentUnbeatenStreaks: (() => {
+            // Only show current streaks for ALL TIME or latest year
+            if (year !== undefined && availableYears && year !== Math.max(...availableYears)) {
+              return [];
+            }
+            
+            // Filter out players with no current streak
+            const sorted = allPlayers
+              .filter((p: PlayerStats) => p.currentUnbeatenStreak > 0)
+              .sort((a: PlayerStats, b: PlayerStats) => {
+                // First sort by current streak
+                const streakDiff = b.currentUnbeatenStreak - a.currentUnbeatenStreak;
                 if (streakDiff !== 0) return streakDiff;
                 // If streaks are equal, sort by caps as a tiebreaker
                 return b.caps - a.caps;

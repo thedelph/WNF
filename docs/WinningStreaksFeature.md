@@ -172,6 +172,8 @@ The `useStats` hook was modified to:
 
 To verify a player's winning streak, you can run the following SQL query in Supabase:
 
+**Related Feature:** See also the [Unbeaten Streaks Feature](./UnbeatenStreaksFeature.md) which tracks consecutive games without a loss (where draws don't break streaks).
+
 ```sql
 WITH player_game_results AS (
   -- Get all games with outcomes for a specific player

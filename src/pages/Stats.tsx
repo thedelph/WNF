@@ -9,7 +9,8 @@ import {
   ShirtIcon,
   Flame,
   Heart,
-  Award
+  Award,
+  Shield
 } from 'lucide-react';
 import { StatsCard } from '../components/stats/StatsCard';
 import { AwardCard } from '../components/stats/AwardCard';
@@ -107,6 +108,7 @@ export default function Stats() {
             })}
           icon={<Award className="w-6 h-6" />}
           color="green"
+          description="Streaks that are broken by both losses and draws"
         />
 
         {/* Current Win Streaks - Only show for current year or all time */}
@@ -125,6 +127,60 @@ export default function Stats() {
             }))}
             icon={<TrendingUp className="w-6 h-6" />}
             color="teal"
+            description="Streaks that are broken by both losses and draws"
+          />
+        )}
+
+        {/* Top All-Time Unbeaten Streaks */}
+        <AwardCard
+          title="Longest Unbeaten Streaks"
+          winners={stats.topUnbeatenStreaks
+            // Sort by maxUnbeatenStreak in descending order to ensure correct medal assignment
+            .sort((a, b) => (b?.maxUnbeatenStreak || 0) - (a?.maxUnbeatenStreak || 0))
+            .map(player => {
+              return {
+                name: player?.friendlyName,
+                value: (
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                    <span className="font-bold text-right whitespace-nowrap w-20">{player?.maxUnbeatenStreak} games</span>
+                    {player?.maxUnbeatenStreakDate && (
+                      <span className="text-xs opacity-80 text-right whitespace-nowrap w-24">
+                        {new Intl.DateTimeFormat('en-GB', { 
+                          day: 'numeric', 
+                          month: 'short', 
+                          year: 'numeric' 
+                        }).format(new Date(player?.maxUnbeatenStreakDate))}
+                      </span>
+                    )}
+                  </div>
+                ),
+                // Add the raw win streak value for medal calculation
+                rawValue: player?.maxUnbeatenStreak,
+                id: player?.id
+              }
+            })}
+          icon={<Shield className="w-6 h-6" />}
+          color="indigo"
+          description="Streaks that are only broken by losses (draws don't break streaks)"
+        />
+
+        {/* Current Unbeaten Streaks - Only show for current year or all time */}
+        {(selectedYear === 'all' || selectedYear === new Date().getFullYear()) && (
+          <AwardCard
+            title="Current Unbeaten Streaks"
+            winners={stats.currentUnbeatenStreaks.map(player => ({
+              name: player.friendlyName,
+              value: (
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                  <span className="font-bold text-right whitespace-nowrap w-20">{player.currentUnbeatenStreak} games</span>
+                </div>
+              ),
+              rawValue: player.currentUnbeatenStreak,
+              id: player.id
+            }))}
+            icon={<Shield className="w-6 h-6" />}
+            color="blue"
+            description="Streaks that are only broken by losses (draws don't break streaks)"
           />
         )}
 
