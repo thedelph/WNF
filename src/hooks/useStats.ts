@@ -52,8 +52,8 @@ interface Stats {
     orange: TeamColorStats[];
   };
   bestBuddies: BestBuddies[];
-  topWinningStreaks: PlayerStats[];
-  currentWinningStreaks: PlayerStats[];
+  topWinStreaks: PlayerStats[];
+  currentWinStreaks: PlayerStats[];
   loading: boolean;
   error: string | null;
 }
@@ -70,8 +70,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
       orange: []
     },
     bestBuddies: [],
-    topWinningStreaks: [],
-    currentWinningStreaks: [],
+    topWinStreaks: [],
+    currentWinStreaks: [],
     loading: true,
     error: null,
   });
@@ -315,13 +315,13 @@ export const useStats = (year?: number, availableYears?: number[]) => {
 
             return sorted.slice(0, 10);
           })(),
-          topWinningStreaks: (() => {
+          topWinStreaks: (() => {
             const sorted = allPlayers
               .filter(p => p.maxWinStreak > 0)
               .sort((a, b) => b.maxWinStreak - a.maxWinStreak);
             return sorted.slice(0, 10);
           })(),
-          currentWinningStreaks: (() => {
+          currentWinStreaks: (() => {
             // Only show current streaks for ALL TIME or latest year
             if (year !== undefined && year !== Math.max(...availableYears)) {
               return [];

@@ -1,12 +1,12 @@
-# Winning Streaks Feature
+# Win Streaks Feature
 
 ## Overview
-The Winning Streaks feature adds a new statistic to the WNF app that tracks consecutive wins for each player. This feature complements the existing Attendance Streaks feature by focusing on player performance rather than just participation.
+The Win Streaks feature adds a new statistic to the WNF app that tracks consecutive wins for each player. This feature complements the existing Attendance Streaks feature by focusing on player performance rather than just participation.
 
 ## Implementation Details
 
 ### Database Function
-A new SQL function `get_player_winning_streaks` was created to calculate winning streaks for all players:
+A new SQL function `get_player_winning_streaks` was created to calculate win streaks for all players:
 
 ```sql
 CREATE OR REPLACE FUNCTION public.get_player_winning_streaks(target_year integer DEFAULT NULL::integer)
@@ -140,8 +140,8 @@ $function$;
 
 The function calculates two key metrics:
 
-1. **Maximum Winning Streak**: The longest consecutive sequence of wins a player has ever achieved
-2. **Current Winning Streak**: The number of consecutive wins a player has in their most recent games
+1. **Longest Win Streak**: The longest consecutive sequence of wins a player has ever achieved
+2. **Current Win Streak**: The number of consecutive wins a player has in their most recent games
 
 The calculation process:
 1. For each player, identify all games they played in and whether they won or lost
@@ -154,14 +154,14 @@ A win is defined as:
 - Player was on the blue team and the game outcome was "blue_win", OR
 - Player was on the orange team and the game outcome was "orange_win"
 
-Draws are excluded from streak calculations as they neither continue nor break a streak.
+Draws are excluded from streak calculations and will break a win streak.
 
 ### Frontend Implementation
 
 The Stats page was updated to display two new cards:
 
-1. **Longest Winning Streaks**: Shows the top 10 players with the longest historical winning streaks
-2. **Current Winning Streaks**: Shows the top 10 players with active winning streaks (only displayed for the current year or "all time" view)
+1. **Longest Win Streaks**: Shows the top 10 players with the longest historical win streaks
+2. **Current Win Streaks**: Shows the top 10 players with active win streaks (only displayed for the current year or "all time" view)
 
 The `useStats` hook was modified to:
 - Call the new `get_player_winning_streaks` function

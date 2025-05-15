@@ -79,8 +79,8 @@ export default function Stats() {
 
         {/* Top All-Time Winning Streaks */}
         <AwardCard
-          title="Longest Winning Streaks"
-          winners={stats.topWinningStreaks
+          title="Longest Win Streaks"
+          winners={stats.topWinStreaks
             // Sort by maxWinStreak in descending order to ensure correct medal assignment
             .sort((a, b) => (b?.maxWinStreak || 0) - (a?.maxWinStreak || 0))
             .map(player => {
@@ -109,11 +109,11 @@ export default function Stats() {
           color="green"
         />
 
-        {/* Current Winning Streaks - Only show for current year or all time */}
+        {/* Current Win Streaks - Only show for current year or all time */}
         {(selectedYear === 'all' || selectedYear === new Date().getFullYear()) && (
           <AwardCard
-            title="Current Winning Streaks"
-            winners={stats.currentWinningStreaks.map(player => ({
+            title="Current Win Streaks"
+            winners={stats.currentWinStreaks.map(player => ({
               name: player.friendlyName,
               value: (
                 <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
