@@ -9,6 +9,7 @@ The Comprehensive Stats Table displays detailed statistics for players in a sear
 - Search functionality for finding specific players
 - Visual team distribution bar showing blue/orange team percentages
 - Visual goals distribution bar showing goals for/against
+- Visual game results bar showing wins/losses/draws breakdown
 - Responsive design for all device sizes
 - Tooltips providing additional context for each metric
 - Data resilience using React refs to prevent XP values from disappearing
@@ -21,6 +22,7 @@ The component is built using several sub-components and features:
 2. **Visual elements**:
    - `TeamDistributionBar.tsx`: Visual representation of team colours distribution
    - `GoalsDistributionBar.tsx`: Visual representation of goals for/against and goal differential
+   - `GameResultsBar.tsx`: Visual representation of wins, losses, and draws distribution
    - Tooltips for providing additional context
 3. **Data handling**:
    - Uses `useStats` hook to fetch data from the database
@@ -104,7 +106,7 @@ const sortedPlayers = useMemo(() => {
 The table includes the following metrics:
 - Player name
 - XP (Experience points)
-- Caps (Games played)
+- Caps (Games played with visual breakdown of wins, losses and draws)
 - Goals (Visual representation of Goals For vs Goals Against)
 - +/- (Goal Differential)
 - Win % (Win percentage)
@@ -113,6 +115,41 @@ The table includes the following metrics:
 - Current Unbeaten Streak
 - Longest Unbeaten Streak
 - Team Colours (Visual distribution of blue/orange team percentages)
+
+### Visual Game Results Bar
+The game results are displayed using a visual bar that shows the breakdown of wins, losses, and draws with color-coding:
+
+```tsx
+{ 
+  key: 'caps', 
+  label: 'Caps', 
+  sortable: true,
+  tooltip: 'Number of games played, with breakdown of results (W/L/D)',
+  formatter: (_, player) => {
+    if (!player) return 'N/A';
+    
+    return <GameResultsBar 
+      wins={player.wins || 0}
+      losses={player.losses || 0}
+      draws={player.draws || 0}
+      total={player.caps || 0}
+    />;
+  }
+}
+```
+
+The `GameResultsBar` component uses a consistent layout with:
+- Left side: Total number of caps displayed
+- Right side: Win/loss/draw counts with color coding
+- Visual bar below showing the proportional segments
+
+Color coding used in the component:
+- Wins in green
+- Losses in red
+- Draws in purple
+- Unknown results in grey (if any)
+
+This provides an at-a-glance understanding of a player's performance record beyond just seeing the total number of games played.
 
 ### Visual Team Distribution Bar
 The team distribution is displayed using a visual bar rather than separate percentage columns:
@@ -144,6 +181,11 @@ The team distribution is displayed using a visual bar rather than separate perce
   }
 }
 ```
+
+The `TeamDistributionBar` component uses a consistent layout pattern with:
+- Blue team percentage displayed on the left in blue text
+- Orange team percentage displayed on the right in orange text
+- Visual bar below showing the proportional blue and orange segments
 
 For more details on the TeamDistributionBar component, see [TeamDistributionBar.md](./TeamDistributionBar.md).
 
@@ -179,6 +221,13 @@ Similarly, the goals are displayed using a visual bar to represent goals for (gr
   }
 }
 ```
+
+The `GoalsDistributionBar` component follows a consistent layout pattern:
+- Goals For count displayed on the left in green text
+- Goals Against count displayed on the right in red text
+- Visual bar below showing the proportional green and red segments
+
+All three visual bar components (GameResultsBar, GoalsDistributionBar, and TeamDistributionBar) follow a consistent vertical alignment pattern with colored text indicators at the top and a proportional colored bar below for easy visual comparison.
 
 The goals column features a multi-sort capability that allows users to cycle through all possible combinations of goals metrics and sort directions by clicking repeatedly on the column header:
 

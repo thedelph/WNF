@@ -5,6 +5,7 @@ import { useStats } from '../../hooks/useStats';
 import { Tooltip } from '../ui/Tooltip';
 import { TeamDistributionBar } from './TeamDistributionBar';
 import { GoalsDistributionBar } from './GoalsDistributionBar';
+import { GameResultsBar } from './GameResultsBar';
 
 // Props interface for the ComprehensiveStatsTable component
 interface ComprehensiveStatsTableProps {
@@ -136,7 +137,17 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       key: 'caps', 
       label: 'Caps', 
       sortable: true,
-      tooltip: 'Number of games played'
+      tooltip: 'Number of games played, with breakdown of results (W/L/D)',
+      formatter: (_, player) => {
+        if (!player) return 'N/A';
+        
+        return <GameResultsBar 
+          wins={player.wins || 0}
+          losses={player.losses || 0}
+          draws={player.draws || 0}
+          total={player.caps || 0}
+        />;
+      }
     },
     { 
       key: 'goals', 

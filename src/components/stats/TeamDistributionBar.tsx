@@ -1,4 +1,4 @@
-import React from 'react';
+// TeamDistributionBar component
 
 /**
  * TeamDistributionBar - Visual representation of blue vs. orange team percentages
@@ -23,10 +23,12 @@ export const TeamDistributionBar = ({
         <div 
           className="bg-blue-500 h-full transition-all duration-300 ease-in-out" 
           style={{ width: `${bluePercentage}%` }}
+          title={`Blue: ${bluePercentage.toFixed(1)}%`}
         />
         <div 
           className="bg-orange-500 h-full transition-all duration-300 ease-in-out" 
           style={{ width: `${orangePercentage}%` }}
+          title={`Orange: ${orangePercentage.toFixed(1)}%`}
         />
       </div>
     </div>

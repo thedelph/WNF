@@ -38,8 +38,9 @@ export const GoalsDistributionBar = ({
     
     return (
       <div className="flex flex-col w-full gap-1">
-        <div className="text-center text-xs font-semibold">
-          <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
+        <div className="flex justify-between text-xs">
+          <span className="font-semibold">Goal Diff</span>
+          <span className={`font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
             {goalDifferential > 0 ? '+' : ''}{goalDifferential}
           </span>
         </div>
@@ -52,11 +53,13 @@ export const GoalsDistributionBar = ({
             <div 
               className="bg-green-500 h-full absolute transition-all duration-300 ease-in-out left-1/2"
               style={{ width: `${percentWidth}%` }}
+              title={`Goal Differential: +${goalDifferential}`}
             />
           ) : (
             <div 
               className="bg-red-500 h-full absolute transition-all duration-300 ease-in-out right-1/2"
               style={{ width: `${percentWidth}%` }}
+              title={`Goal Differential: ${goalDifferential}`}
             />
           )}
         </div>
@@ -95,10 +98,12 @@ export const GoalsDistributionBar = ({
         <div 
           className="bg-green-500 h-full transition-all duration-300 ease-in-out" 
           style={{ width: `${forPercentage}%` }}
+          title={`Goals For: ${goalsFor} (${forPercentage.toFixed(1)}%)`}
         />
         <div 
           className="bg-red-500 h-full transition-all duration-300 ease-in-out" 
           style={{ width: `${againstPercentage}%` }}
+          title={`Goals Against: ${goalsAgainst} (${againstPercentage.toFixed(1)}%)`}
         />
       </div>
     </div>
