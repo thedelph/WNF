@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ArrowUpDown, Info } from 'lucide-react';
+import { Search, ArrowUpDown, Info, ChevronDown, ChevronRight, ArrowDown, ArrowUp, Filter } from 'lucide-react';
 import { useStats } from '../../hooks/useStats';
 import { Tooltip } from '../ui/Tooltip';
 import { TeamDistributionBar } from './TeamDistributionBar';
@@ -62,6 +62,37 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
   // Track maximum streak values across all players for relative scaling
   const [maxWinStreakValue, setMaxWinStreakValue] = useState(0);
   const [maxUnbeatenStreakValue, setMaxUnbeatenStreakValue] = useState(0);
+  
+  // State for mobile view - track expanded player cards
+  const [expandedPlayers, setExpandedPlayers] = useState<{[key: string]: boolean}>({});
+  
+  // State to track if we're in mobile view
+  const [isMobileView, setIsMobileView] = useState(false);
+  
+  // Effect to detect mobile view using window size
+  useEffect(() => {
+    // Function to check if we're in mobile view
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth < 768); // Standard md breakpoint
+    };
+    
+    // Check on initial load
+    checkMobileView();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkMobileView);
+    
+    // Cleanup on unmount
+    return () => window.removeEventListener('resize', checkMobileView);
+  }, []);
+  
+  // Toggle expanded state for a player
+  const togglePlayerExpanded = (playerId: string) => {
+    setExpandedPlayers(prev => ({
+      ...prev,
+      [playerId]: !prev[playerId]
+    }));
+  };
   
   // Use the stats hook to get player statistics
   const { loading, error, comprehensiveStats, fetchComprehensivePlayerStats } = useStats();
@@ -559,58 +590,366 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
           </div>
         </div>
         
-        {/* Stats table */}
-        <div className="overflow-x-auto">
-          <table className="table table-zebra w-full">
-            <thead>
-              <tr>
-                {columns.map((column) => (
-                  <th 
-                    key={column.key}
-                    className={column.sortable ? 'cursor-pointer hover:bg-base-200' : ''}
-                    onClick={() => column.sortable && handleSort(column.key)}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>{typeof column.label === 'function' ? column.label() : column.label}</span>
-                      {column.sortable && (
-                        <ArrowUpDown className={`h-4 w-4 ${sortColumn === column.key ? 'text-primary' : 'opacity-50'}`} />
-                      )}
-                      {column.tooltip && (
-                        <Tooltip content={column.tooltip}>
-                          <Info className="h-4 w-4 text-info cursor-help" />
-                        </Tooltip>
-                      )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedPlayers.map((player) => (
-                <tr key={player.id}>
+        {/* Responsive view - switch between table (desktop) and cards (mobile) */}
+        {!isMobileView ? (
+          /* Desktop View - Standard Table */
+          <div className="overflow-x-auto hidden md:block">
+            <table className="table table-zebra w-full">
+              <thead>
+                <tr>
                   {columns.map((column) => (
-                    <td key={`${player.id}-${column.key}`}>
-                      {/* Use formatter if available, otherwise display raw value */}
-                      {column.formatter
-                        ? column.formatter(player[column.key as keyof ComprehensivePlayerStats], player)
-                        : column.key === 'xp' 
-                          ? player.xp || 0 /* Ensure XP always shows a value */
-                          : player[column.key as keyof ComprehensivePlayerStats] ?? 'N/A'
-                      }
-                    </td>
+                    <th 
+                      key={column.key}
+                      className={column.sortable ? 'cursor-pointer hover:bg-base-200' : ''}
+                      onClick={() => column.sortable && handleSort(column.key)}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>{typeof column.label === 'function' ? column.label() : column.label}</span>
+                        {column.sortable && (
+                          <ArrowUpDown className={`h-4 w-4 ${sortColumn === column.key ? 'text-primary' : 'opacity-50'}`} />
+                        )}
+                        {column.tooltip && (
+                          <Tooltip content={column.tooltip}>
+                            <Info className="h-4 w-4 text-info cursor-help" />
+                          </Tooltip>
+                        )}
+                      </div>
+                    </th>
                   ))}
                 </tr>
-              ))}
-              {sortedPlayers.length === 0 && (
-                <tr>
-                  <td colSpan={columns.length} className="text-center py-4">
-                    No players found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {sortedPlayers.map((player) => (
+                  <tr key={player.id}>
+                    {columns.map((column) => (
+                      <td key={`${player.id}-${column.key}`}>
+                        {/* Use formatter if available, otherwise display raw value */}
+                        {column.formatter
+                          ? column.formatter(player[column.key as keyof ComprehensivePlayerStats], player)
+                          : column.key === 'xp' 
+                            ? player.xp || 0 /* Ensure XP always shows a value */
+                            : player[column.key as keyof ComprehensivePlayerStats] ?? 'N/A'
+                        }
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                {sortedPlayers.length === 0 && (
+                  <tr>
+                    <td colSpan={columns.length} className="text-center py-4">
+                      No players found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Mobile View - Card-based layout */
+          <div className="md:hidden space-y-4">
+            {/* Mobile sorting options */}
+            <div className="flex flex-col gap-2 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold flex items-center gap-1">
+                  <Filter className="h-4 w-4" />
+                  Sort Players By:
+                </span>
+                <div className="flex items-center gap-1 text-xs">
+                  <span>Order:</span>
+                  <button 
+                    className={`p-1 rounded ${sortDirection === 'desc' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                    onClick={() => setSortDirection('desc')}
+                    aria-label="Descending order"
+                  >
+                    <ArrowDown className="h-3.5 w-3.5" />
+                  </button>
+                  <button 
+                    className={`p-1 rounded ${sortDirection === 'asc' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                    onClick={() => setSortDirection('asc')}
+                    aria-label="Ascending order"
+                  >
+                    <ArrowUp className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Categories */}
+              <div className="grid grid-cols-3 gap-1">
+                {/* Player Name */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'friendlyName' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => handleSort('friendlyName')}
+                >
+                  Player Name
+                </button>
+                
+                {/* XP */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'xp' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => handleSort('xp')}
+                >
+                  XP
+                </button>
+                
+                {/* Caps */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'caps' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => handleSort('caps')}
+                >
+                  Caps
+                </button>
+                
+                {/* Win % */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'winRate' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => handleSort('winRate')}
+                >
+                  Win %
+                </button>
+                
+                {/* Unbeaten % */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'unbeatenRate' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => handleSort('unbeatenRate')}
+                >
+                  Unbeaten %
+                </button>
+                
+                {/* Goal Diff */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'goalDifferential' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => handleSort('goalDifferential')}
+                >
+                  Goal +/-
+                </button>
+                
+                {/* Goals */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'goals' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => {
+                    // Replicate the multi-sort cycling for goals
+                    if (sortColumn === 'goals') {
+                      if (goalsSortMetric === 'goalsFor' && sortDirection === 'desc') {
+                        // First click already happened, now switch to asc
+                        setSortDirection('asc');
+                      } else if (goalsSortMetric === 'goalsFor' && sortDirection === 'asc') {
+                        // Switch to goalsAgainst, desc
+                        setGoalsSortMetric('goalsAgainst');
+                        setSortDirection('desc');
+                      } else if (goalsSortMetric === 'goalsAgainst' && sortDirection === 'desc') {
+                        // Switch to goalsAgainst, asc
+                        setSortDirection('asc');
+                      } else {
+                        // Reset to goalsFor, desc
+                        setGoalsSortMetric('goalsFor');
+                        setSortDirection('desc');
+                      }
+                    } else {
+                      // Initial click
+                      setSortColumn('goals');
+                      setGoalsSortMetric('goalsFor');
+                      setSortDirection('desc');
+                    }
+                  }}
+                >
+                  {sortColumn === 'goals' ? 
+                    `Goals (${goalsSortMetric === 'goalsFor' ? 'GF' : 'GA'})` : 
+                    'Goals'}
+                </button>
+                
+                {/* GF/GA Ratio */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'goalRatio' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => handleSort('goalRatio')}
+                >
+                  GF/GA Ratio
+                </button>
+                
+                {/* Win Streak */}
+                <button 
+                  className={`py-1 px-2 text-xs rounded ${sortColumn === 'winStreaks' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+                  onClick={() => handleSort('winStreaks')}
+                >
+                  Win Streak
+                </button>
+              </div>
+            </div>
+            
+            {/* List of sorted players */}
+            {sortedPlayers.length > 0 ? (
+              <div className="space-y-4">
+                {sortedPlayers.map((player) => (
+                  <motion.div 
+                    key={player.id}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="card bg-base-200 shadow-sm"
+                  >
+                    {/* Card header with player name, XP and toggle button */}
+                    <div className="card-body p-4 pb-2">
+                      <div 
+                        className="flex justify-between items-center cursor-pointer" 
+                        onClick={() => togglePlayerExpanded(player.id)}
+                      >
+                        <div className="flex flex-col">
+                          <h3 className="card-title text-lg">{player.friendlyName}</h3>
+                          <p className="text-sm opacity-80">XP: {player.xp || 0}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <div className="font-semibold">Win %</div>
+                            <div>
+                              {player.winRate !== null && player.winRate !== undefined ? 
+                                `${parseFloat(player.winRate.toString()).toFixed(1)}%` : 
+                                '0.0%'}
+                            </div>
+                          </div>
+                          {expandedPlayers[player.id] ? 
+                            <ChevronDown className="h-5 w-5" /> : 
+                            <ChevronRight className="h-5 w-5" />
+                          }
+                        </div>
+                      </div>
+                      
+                      {/* Main stats summary - always visible */}
+                      <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+                        <div>
+                          <div className="font-semibold">Caps</div>
+                          <div>{player.caps || 0}</div>
+                        </div>
+                        <div>
+                          <div className="font-semibold">Results</div>
+                          <div className="mt-1">
+                            <GameResultsBar 
+                              wins={player.wins || 0}
+                              losses={player.losses || 0}
+                              draws={player.draws || 0}
+                              mobile={true}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Expanded stats - only visible when expanded */}
+                      {expandedPlayers[player.id] && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-3 pt-3 border-t border-base-300 text-sm"
+                        >
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="font-semibold">Unbeaten %</div>
+                              <div>
+                                {(() => {
+                                  const wins = player.wins || 0;
+                                  const draws = player.draws || 0;
+                                  const losses = player.losses || 0;
+                                  const totalGames = wins + draws + losses;
+                                  
+                                  if (totalGames === 0) return '0.0%';
+                                  
+                                  const unbeatenPercentage = ((wins + draws) / totalGames) * 100;
+                                  return `${unbeatenPercentage.toFixed(1)}%`;
+                                })()}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-semibold">Goal +/-</div>
+                              <div>
+                                {(() => {
+                                  const value = player.goalDifferential;
+                                  if (value === null || value === undefined) return 'N/A';
+                                  const formattedValue = value > 0 ? `+${value}` : value;
+                                  const colorClass = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : '';
+                                  return <span className={`font-semibold ${colorClass}`}>{formattedValue}</span>;
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3">
+                            <div className="font-semibold">Goals</div>
+                            <div className="mt-1">
+                              <GoalsDistributionBar 
+                                goalsFor={player.goalsFor}
+                                goalsAgainst={player.goalsAgainst}
+                                goalDifferential={player.goalDifferential}
+                                mode="for-against"
+                                mobile={true}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3">
+                            <div className="font-semibold">Team Colours</div>
+                            <div className="mt-1">
+                              {(() => {
+                                if (!player || player.caps === 0) return 'N/A';
+                                
+                                // Calculate percentages - ensure they add up to 100%
+                                let bluePercentage = player.blueTeamPercentage || 0;
+                                let orangePercentage = player.orangeTeamPercentage || 0;
+                                
+                                // Calculate missing percentages if needed
+                                if (bluePercentage > 0 && orangePercentage === 0) {
+                                  orangePercentage = 100 - bluePercentage;
+                                } else if (orangePercentage > 0 && bluePercentage === 0) {
+                                  bluePercentage = 100 - orangePercentage;
+                                }
+                                
+                                return <TeamDistributionBar 
+                                  bluePercentage={bluePercentage}
+                                  orangePercentage={orangePercentage}
+                                  mobile={true}
+                                />;
+                              })()}
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3 mt-3">
+                            <div>
+                              <div className="font-semibold">Win Streak</div>
+                              <div className="mt-1">
+                                <StreakBar 
+                                  currentStreak={player.currentWinStreak || 0}
+                                  maxStreak={player.maxWinStreak || 0}
+                                  label="Win"
+                                  tableMax={maxWinStreakValue}
+                                  mobile={true}
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-semibold">Unbeaten Streak</div>
+                              <div className="mt-1">
+                                <StreakBar 
+                                  currentStreak={player.currentUnbeatenStreak || 0}
+                                  maxStreak={player.maxUnbeatenStreak || 0}
+                                  label="Unbeaten"
+                                  tableMax={maxUnbeatenStreakValue}
+                                  color="amber"
+                                  mobile={true}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 bg-base-200 rounded-lg space-y-3">
+                <p className="text-lg">No players found</p>
+                <p className="text-sm opacity-70">Try adjusting your search criteria</p>
+              </div>
+            )}
+          </div>
+        )}
         
         <p className="text-sm opacity-80 mt-4">
           Note: Stats are based on games with known outcomes. Players must have at least 10 games with known outcomes (wins/losses/draws) to be displayed.

@@ -19,13 +19,15 @@ export const GoalsDistributionBar = ({
   goalsAgainst,
   goalDifferential,
   mode = 'for-against',
-  maxValue
+  maxValue,
+  mobile = false
 }: { 
   goalsFor: number, 
   goalsAgainst: number,
   goalDifferential: number,
   mode?: 'for-against' | 'differential',
-  maxValue?: number
+  maxValue?: number,
+  mobile?: boolean
 }) => {
   // For differential mode
   if (mode === 'differential') {
@@ -79,7 +81,7 @@ export const GoalsDistributionBar = ({
           <span className="text-green-600 font-semibold">0</span>
           <span className="text-red-600 font-semibold">0</span>
         </div>
-        <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200"></div>
+        <div className={`${mobile ? 'h-3' : 'h-4'} w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200`}></div>
       </div>
     );
   }
@@ -88,6 +90,31 @@ export const GoalsDistributionBar = ({
   const forPercentage = (goalsFor / totalGoals) * 100;
   const againstPercentage = (goalsAgainst / totalGoals) * 100;
   
+  // Mobile-specific compact layout
+  if (mobile) {
+    return (
+      <div className="flex flex-col w-full gap-1">
+        <div className="flex justify-between text-xs">
+          <span className="text-green-600 font-semibold">{goalsFor}</span>
+          <span className="text-red-600 font-semibold">{goalsAgainst}</span>
+        </div>
+        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 flex">
+          <div 
+            className="bg-green-500 h-full transition-all duration-300 ease-in-out" 
+            style={{ width: `${forPercentage}%` }}
+            title={`Goals For: ${goalsFor} (${forPercentage.toFixed(1)}%)`}
+          />
+          <div 
+            className="bg-red-500 h-full transition-all duration-300 ease-in-out" 
+            style={{ width: `${againstPercentage}%` }}
+            title={`Goals Against: ${goalsAgainst} (${againstPercentage.toFixed(1)}%)`}
+          />
+        </div>
+      </div>
+    );
+  }
+  
+  // Desktop layout (original)
   return (
     <div className="flex flex-col w-full gap-1">
       <div className="flex justify-between text-xs">

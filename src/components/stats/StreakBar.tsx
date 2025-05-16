@@ -15,12 +15,16 @@ export const StreakBar = ({
   currentStreak, 
   maxStreak,
   label = "Win",
-  tableMax = 0
+  tableMax = 0,
+  color,
+  mobile = false
 }: { 
   currentStreak: number, 
   maxStreak: number,
   label?: string,
-  tableMax?: number
+  tableMax?: number,
+  color?: string,
+  mobile?: boolean
 }) => {
   // If max streak is 0, show empty bar
   if (maxStreak === 0) {
@@ -48,14 +52,63 @@ export const StreakBar = ({
     ? Math.min((currentStreak / maxStreak) * maxStreakPercentage, maxStreakPercentage) 
     : 0;
   
-  // Determine colors based on streak type
-  // Use purple for win streaks and amber/gold for unbeaten streaks
-  const barColor = label.toLowerCase().includes('win') ? 'bg-purple-500' : 'bg-amber-500';
-  const markerColor = label.toLowerCase().includes('win') ? 'bg-purple-700' : 'bg-amber-700';
+  // Determine colors based on streak type or use provided color
+  // Use purple for win streaks and amber/gold for unbeaten streaks by default
+  const colorBase = color || (label.toLowerCase().includes('win') ? 'purple' : 'amber');
+  const barColor = `bg-${colorBase}-500`;
+  const markerColor = `bg-${colorBase}-700`;
   
   // Add a subtle glow effect to the marker to make it more noticeable
-  const markerGlow = label.toLowerCase().includes('win') ? 'shadow-purple-500/50' : 'shadow-amber-500/50';
+  const markerGlow = `shadow-${colorBase}-500/50`;
   
+  // Mobile-specific layout and adjustments
+  if (mobile) {
+    return (
+      <div className="flex flex-col w-full gap-1">
+        {/* More compact mobile layout */}
+        <div className="flex justify-between text-xs">
+          <span className="font-semibold">
+            {currentStreak === maxStreak && currentStreak > 0 && (
+              <span className="text-xs px-1 py-0.5 bg-accent text-accent-content rounded-sm font-bold">PB</span>
+            )}
+          </span>
+          <div>
+            <span className="font-semibold">{currentStreak}</span>
+            <span className="mx-1">/</span>
+            <span className="font-semibold">{maxStreak}</span>
+          </div>
+        </div>
+        
+        {/* Thinner bar for mobile */}
+        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200 relative">
+          {/* Max streak segment */}
+          <div 
+            className={`${barColor} h-full transition-all duration-300 ease-in-out`} 
+            style={{ width: `${maxStreakPercentage}%` }}
+            title={`Max ${label} Streak: ${maxStreak}`}
+          />
+          
+          {/* Current streak marker - simplified for mobile */}
+          {currentStreak > 0 && (
+            <div 
+              className={`absolute top-0 h-full ${currentStreak === maxStreak ? 'w-2' : 'w-1.5'} ${markerColor} shadow-sm ${markerGlow}`}
+              style={{ 
+                left: `calc(${currentPositionPercentage}% - ${currentStreak === maxStreak ? 1 : 0.75}px)`,
+                display: currentStreak > 0 ? 'block' : 'none',
+                zIndex: 10 // Ensure marker is above the bar
+              }}
+              title={currentStreak === maxStreak ? 
+                `Personal Best! Current ${label} Streak: ${currentStreak}` : 
+                `Current ${label} Streak: ${currentStreak}`
+              }
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  // Desktop view (original)
   return (
     <div className="flex flex-col w-full gap-1">
       {/* Top row: streak info */}

@@ -18,12 +18,14 @@ export const GameResultsBar = ({
   wins, 
   losses,
   draws,
-  total
+  total,
+  mobile = false
 }: { 
   wins: number, 
   losses: number,
   draws: number,
-  total?: number
+  total?: number,
+  mobile?: boolean
 }) => {
   // Calculate total known results
   const knownResults = wins + losses + draws;
@@ -46,6 +48,51 @@ export const GameResultsBar = ({
   const lossPercentage = (losses / knownResults) * 100;
   const drawPercentage = (draws / knownResults) * 100;
   
+  // Mobile-specific layout adjustments
+  if (mobile) {
+    return (
+      <div className="flex flex-col w-full gap-1">
+        {/* More compact mobile layout */}
+        <div className="flex justify-between text-xs">
+          <span className="text-green-600 font-semibold">{wins}</span>
+          <span className="text-purple-600 font-semibold">{draws}</span>
+          <span className="text-red-600 font-semibold">{losses}</span>
+        </div>
+        
+        {/* Thinner bar for mobile */}
+        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 flex">
+          {/* Wins segment */}
+          {wins > 0 && (
+            <div 
+              className="bg-green-500 h-full transition-all duration-300 ease-in-out" 
+              style={{ width: `${winPercentage}%` }}
+              title={`${wins} wins (${winPercentage.toFixed(1)}%)`}
+            />
+          )}
+          
+          {/* Draws segment */}
+          {draws > 0 && (
+            <div 
+              className="bg-purple-500 h-full transition-all duration-300 ease-in-out" 
+              style={{ width: `${drawPercentage}%` }}
+              title={`${draws} draws (${drawPercentage.toFixed(1)}%)`}
+            />
+          )}
+          
+          {/* Losses segment */}
+          {losses > 0 && (
+            <div 
+              className="bg-red-500 h-full transition-all duration-300 ease-in-out" 
+              style={{ width: `${lossPercentage}%` }}
+              title={`${losses} losses (${lossPercentage.toFixed(1)}%)`}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  // Desktop layout (original)
   return (
     <div className="flex flex-col w-full gap-1">
       {/* Top row: caps info and W/L/D */}
