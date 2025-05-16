@@ -53,13 +53,17 @@ export const StreakBar = ({
     : 0;
   
   // Determine colors based on streak type or use provided color
-  // Use purple for win streaks and amber/gold for unbeaten streaks by default
-  const colorBase = color || (label.toLowerCase().includes('win') ? 'purple' : 'amber');
-  const barColor = `bg-${colorBase}-500`;
-  const markerColor = `bg-${colorBase}-700`;
+  // We need to use explicit classes instead of template literals for Tailwind's purge process
+  let barColor = 'bg-purple-500'; // Default to purple for win streaks
+  let markerColor = 'bg-purple-700';
+  let markerGlow = 'shadow-purple-500/50';
   
-  // Add a subtle glow effect to the marker to make it more noticeable
-  const markerGlow = `shadow-${colorBase}-500/50`;
+  // If it's an unbeaten streak or color is explicitly provided, use amber
+  if (color === 'amber' || (!color && !label.toLowerCase().includes('win'))) {
+    barColor = 'bg-amber-500';
+    markerColor = 'bg-amber-700';
+    markerGlow = 'shadow-amber-500/50';
+  }
   
   // Mobile-specific layout and adjustments
   if (mobile) {
