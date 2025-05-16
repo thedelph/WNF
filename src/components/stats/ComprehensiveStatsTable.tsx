@@ -4,6 +4,7 @@ import { Search, ArrowUpDown, Info } from 'lucide-react';
 import { useStats } from '../../hooks/useStats';
 import { Tooltip } from '../ui/Tooltip';
 import { TeamDistributionBar } from './TeamDistributionBar';
+import { GoalsDistributionBar } from './GoalsDistributionBar';
 
 // Props interface for the ComprehensiveStatsTable component
 interface ComprehensiveStatsTableProps {
@@ -34,7 +35,7 @@ type ComprehensivePlayerStats = {
 // Column definition for the stats table
 interface Column {
   key: string;
-  label: string;
+  label: string | (() => string);
   tooltip?: string;
   sortable?: boolean;
   formatter?: (value: any, player?: ComprehensivePlayerStats) => React.ReactNode;
@@ -53,6 +54,8 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
   const validStatsRef = useRef<ComprehensivePlayerStats[]>([]);
   const [sortColumn, setSortColumn] = useState('caps');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  // For goals column, we'll track which specific metric to sort by (goalsFor or goalsAgainst)
+  const [goalsSortMetric, setGoalsSortMetric] = useState<'goalsFor' | 'goalsAgainst'>('goalsFor');
   
   // Use the stats hook to get player statistics
   const { loading, error, comprehensiveStats, fetchComprehensivePlayerStats } = useStats();
@@ -127,36 +130,52 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       key: 'xp', 
       label: 'XP', 
       sortable: true,
-      tooltip: 'Experience points earned based on attendance, streaks, and other factors'
+      tooltip: 'Experience points earned from playing games'
     },
     { 
       key: 'caps', 
       label: 'Caps', 
       sortable: true,
-      tooltip: 'Total number of games played'
+      tooltip: 'Number of games played'
     },
     { 
-      key: 'goalsFor', 
-      label: 'GF', 
-      sortable: true,
-      tooltip: 'Goals scored by the player\'s team while they were playing'
-    },
-    { 
-      key: 'goalsAgainst', 
-      label: 'GA', 
-      sortable: true,
-      tooltip: 'Goals conceded by the player\'s team while they were playing'
+      key: 'goals', 
+      label: () => {
+        // Show different label based on the current goals sort metric and direction
+        let metricLabel = 'Goals';
+        if (sortColumn === 'goals') {
+          // Create label based on which metric is being sorted
+          const metricType = goalsSortMetric === 'goalsFor' ? 'GF' : 'GA';
+          // Add sort direction indicator
+          const directionIndicator = sortDirection === 'asc' ? '↑' : '↓';
+          metricLabel = `Goals (${metricType} ${directionIndicator})`;
+        }
+        return metricLabel;
+      }, 
+      sortable: true, 
+      tooltip: 'Click to cycle through sorting by: Goals For (GF) and Goals Against (GA)',
+      formatter: (_, player) => {
+        if (!player) return 'N/A';
+        
+        return <GoalsDistributionBar 
+          goalsFor={player.goalsFor}
+          goalsAgainst={player.goalsAgainst}
+          goalDifferential={player.goalDifferential}
+          mode="for-against"
+        />;
+      }
     },
     { 
       key: 'goalDifferential', 
       label: '+/-', 
-      sortable: true,
-      tooltip: 'Goal difference (Goals For - Goals Against)',
-      formatter: (value) => (
-        <span className={value > 0 ? 'text-success' : value < 0 ? 'text-error' : ''}>
-          {value > 0 ? `+${value}` : value}
-        </span>
-      )
+      sortable: true, 
+      tooltip: 'Goal Differential (Goals For - Goals Against)',
+      formatter: (value) => {
+        if (value === null || value === undefined) return 'N/A';
+        const formattedValue = value > 0 ? `+${value}` : value;
+        const colorClass = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : '';
+        return <span className={`font-semibold ${colorClass}`}>{formattedValue}</span>;
+      }
     },
     { 
       key: 'winRate', 
@@ -253,12 +272,34 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
     // Debug log when sorting happens
     console.log(`Sorting ${filteredPlayers.length} players by ${sortColumn} ${sortDirection}`);
     
+    const sortByTeamDistribution = (a: ComprehensivePlayerStats, b: ComprehensivePlayerStats) => {
+      const aValue = a.blueTeamPercentage || 0;
+      const bValue = b.blueTeamPercentage || 0;
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    };
+
+    const sortByGoals = (a: ComprehensivePlayerStats, b: ComprehensivePlayerStats) => {
+      if (goalsSortMetric === 'goalsFor') {
+        const aValue = a.goalsFor || 0;
+        const bValue = b.goalsFor || 0;
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      } else if (goalsSortMetric === 'goalsAgainst') {
+        const aValue = a.goalsAgainst || 0;
+        const bValue = b.goalsAgainst || 0;
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      return 0;
+    };
+
     return [...filteredPlayers].sort((a, b) => {
       // Special handling for team distribution column (sort by blue team percentage)
       if (sortColumn === 'teamDistribution') {
-        const aValue = a.blueTeamPercentage || 0;
-        const bValue = b.blueTeamPercentage || 0;
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        return sortByTeamDistribution(a, b);
+      }
+      
+      // Special handling for goals column (using the current goals sort metric)
+      if (sortColumn === 'goals') {
+        return sortByGoals(a, b);
       }
       
       // Get the values to compare based on sort column
@@ -280,12 +321,37 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       // Number comparison
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     });
-  }, [filteredPlayers, sortColumn, sortDirection]);
+  }, [filteredPlayers, sortColumn, sortDirection, goalsSortMetric]);
 
   // Handle column header click for sorting
   const handleSort = (column: string) => {
-    if (sortColumn === column) {
-      // Toggle direction if same column
+    console.log(`Sorting by ${column}`);
+    
+    // Special handling for goals column to cycle through all four combinations
+    if (column === 'goals' && column === sortColumn) {
+      // Cycle through: GF desc -> GF asc -> GA desc -> GA asc
+      if (goalsSortMetric === 'goalsFor' && sortDirection === 'desc') {
+        // GF desc -> GF asc
+        setSortDirection('asc');
+      } else if (goalsSortMetric === 'goalsFor' && sortDirection === 'asc') {
+        // GF asc -> GA desc
+        setGoalsSortMetric('goalsAgainst');
+        setSortDirection('desc');
+      } else if (goalsSortMetric === 'goalsAgainst' && sortDirection === 'desc') {
+        // GA desc -> GA asc
+        setSortDirection('asc');
+      } else {
+        // GA asc -> GF desc (back to the beginning)
+        setGoalsSortMetric('goalsFor');
+        setSortDirection('desc');
+      }
+    } else if (column === 'goals') {
+      // If column is goals but wasn't the previous sort column
+      setSortColumn(column);
+      setGoalsSortMetric('goalsFor'); // Default to goalsFor
+      setSortDirection('desc'); // Default to descending
+    } else if (column === sortColumn) {
+      // If same column (but not goals), toggle direction
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       // Set new column and default to descending
@@ -352,7 +418,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
                     onClick={() => column.sortable && handleSort(column.key)}
                   >
                     <div className="flex items-center gap-1">
-                      <span>{column.label}</span>
+                      <span>{typeof column.label === 'function' ? column.label() : column.label}</span>
                       {column.sortable && (
                         <ArrowUpDown className={`h-4 w-4 ${sortColumn === column.key ? 'text-primary' : 'opacity-50'}`} />
                       )}

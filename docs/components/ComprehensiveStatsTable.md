@@ -8,6 +8,7 @@ The Comprehensive Stats Table displays detailed statistics for players in a sear
 - Sortable columns for all metrics
 - Search functionality for finding specific players
 - Visual team distribution bar showing blue/orange team percentages
+- Visual goals distribution bar showing goals for/against
 - Responsive design for all device sizes
 - Tooltips providing additional context for each metric
 - Data resilience using React refs to prevent XP values from disappearing
@@ -19,6 +20,7 @@ The component is built using several sub-components and features:
 1. **Main table component**: `ComprehensiveStatsTable.tsx`
 2. **Visual elements**:
    - `TeamDistributionBar.tsx`: Visual representation of team colours distribution
+   - `GoalsDistributionBar.tsx`: Visual representation of goals for/against and goal differential
    - Tooltips for providing additional context
 3. **Data handling**:
    - Uses `useStats` hook to fetch data from the database
@@ -103,8 +105,7 @@ The table includes the following metrics:
 - Player name
 - XP (Experience points)
 - Caps (Games played)
-- GF (Goals For)
-- GA (Goals Against)
+- Goals (Visual representation of Goals For vs Goals Against)
 - +/- (Goal Differential)
 - Win % (Win percentage)
 - Current Win Streak
@@ -145,6 +146,51 @@ The team distribution is displayed using a visual bar rather than separate perce
 ```
 
 For more details on the TeamDistributionBar component, see [TeamDistributionBar.md](./TeamDistributionBar.md).
+
+### Visual Goals Distribution Bar
+Similarly, the goals are displayed using a visual bar to represent goals for (green) vs goals against (red):
+
+```tsx
+{ 
+  key: 'goals', 
+  label: () => {
+    // Show different label based on the current goals sort metric and direction
+    let metricLabel = 'Goals';
+    if (sortColumn === 'goals') {
+      // Create label based on which metric is being sorted
+      const metricType = goalsSortMetric === 'goalsFor' ? 'GF' : 'GA';
+      // Add sort direction indicator
+      const directionIndicator = sortDirection === 'asc' ? '↑' : '↓';
+      metricLabel = `Goals (${metricType} ${directionIndicator})`;
+    }
+    return metricLabel;
+  }, 
+  sortable: true, 
+  tooltip: 'Click to cycle through sorting by: Goals For (GF) and Goals Against (GA)',
+  formatter: (_, player) => {
+    if (!player) return 'N/A';
+    
+    return <GoalsDistributionBar 
+      goalsFor={player.goalsFor}
+      goalsAgainst={player.goalsAgainst}
+      goalDifferential={player.goalDifferential}
+      mode="for-against"
+    />;
+  }
+}
+```
+
+The goals column features a multi-sort capability that allows users to cycle through all possible combinations of goals metrics and sort directions by clicking repeatedly on the column header:
+
+1. **First click**: Sort by Goals For (GF) in descending order (highest scorers at top)
+2. **Second click**: Sort by Goals For (GF) in ascending order (lowest scorers at top)
+3. **Third click**: Sort by Goals Against (GA) in descending order (most conceded at top)
+4. **Fourth click**: Sort by Goals Against (GA) in ascending order (least conceded at top)
+5. **Fifth click**: Back to Goals For (GF) in descending order
+
+This provides users with complete flexibility to analyze player performance based on offensive (Goals For) or defensive (Goals Against) metrics from a single column. The column header dynamically changes to indicate both which metric is being used for sorting and the sort direction (using ↑ for ascending and ↓ for descending).
+
+The component also has the capability to display goal differential using a centered bar that extends left (red) for negative values or right (green) for positive values - this can be enabled by setting the `mode` property to `"differential"` in the GoalsDistributionBar component.
 
 ## Usage
 The Comprehensive Stats Table is used on the Stats page and displays data based on the selected year filter:
