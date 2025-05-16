@@ -1,15 +1,17 @@
 # Comprehensive Stats Table
 
 ## Overview
-The Comprehensive Stats Table displays detailed statistics for players in a searchable, sortable table format. It provides a complete view of player performance metrics, including attendance, goals, win rates, streaks, and team distribution. The component has been enhanced with data persistence features to ensure XP values and other stats are consistently displayed without disappearing or resetting to zero. Only players with 10 or more caps are displayed in the table to ensure statistical relevance.
+The Comprehensive Stats Table displays detailed statistics for players in a searchable, sortable table format. It provides a complete view of player performance metrics, including attendance, goals, win rates, streaks, and team distribution. The component has been enhanced with data persistence features to ensure XP values and other stats are consistently displayed without disappearing or resetting to zero. Only players with 10 or more games with known outcomes (wins/losses/draws) are displayed in the table to ensure statistical relevance.
 
 ## Features
 - Complete player statistics in a single, unified table
 - Sortable columns for all metrics
 - Search functionality for finding specific players
+- Dedicated Caps column showing total games played
+- Separate Results column with visual distribution of wins/draws/losses
+- Win % column positioned next to Results for logical grouping
 - Visual team distribution bar showing blue/orange team percentages
 - Visual goals distribution bar showing goals for/against
-- Visual game results bar showing wins/losses/draws breakdown
 - Responsive design for all device sizes
 - Tooltips providing additional context for each metric
 - Data resilience using React refs to prevent XP values from disappearing
@@ -63,10 +65,10 @@ useEffect(() => {
 ```
 
 ### Filtering and Sorting with Data Resilience
-The component implements client-side filtering and sorting with resilience against data loss. Only players with 10 or more caps are displayed to ensure statistical relevance:
+The component implements client-side filtering and sorting with resilience against data loss. Only players with 10 or more games with known outcomes (wins+losses+draws) are displayed to ensure statistical relevance:
 
 ```tsx
-// Filter players based on search query and minimum 10 caps requirement
+// Filter players based on search query and minimum 10 known outcomes requirement
 const filteredPlayers = useMemo(() => {
   // Basic search filtering - use valid stats if current stats are empty
   const statsToUse = comprehensiveStats?.length ? comprehensiveStats : validStatsRef.current;
@@ -79,11 +81,13 @@ const filteredPlayers = useMemo(() => {
   }
   
   const filtered = statsToUse.filter((player) => {
-    // Filter by name search and minimum 10 caps requirement
-    return player.friendlyName?.toLowerCase().includes(searchFilter) && player.caps >= 10;
+    // Check for minimum 10 games with known outcomes (wins + losses + draws)
+    const knownOutcomes = (player.wins || 0) + (player.losses || 0) + (player.draws || 0);
+    // Filter by name search and minimum 10 known outcomes requirement
+    return player.friendlyName?.toLowerCase().includes(searchFilter) && knownOutcomes >= 10;
   });
   
-  console.log(`After filtering: ${filtered.length} players remain (caps >= 10 only)`);
+  console.log(`After filtering: ${filtered.length} players remain (known outcomes >= 10 only)`);
   return filtered;
 }, [comprehensiveStats, searchQuery]);
 
@@ -116,15 +120,34 @@ The table includes the following metrics:
 - Longest Unbeaten Streak
 - Team Colours (Visual distribution of blue/orange team percentages)
 
+### Dedicated Caps and Results Columns
+The attendance and game outcomes have been separated into two distinct columns for clarity:
+
+1. **Caps Column**: Shows the total number of games played by a player, regardless of whether the outcome is known or not.
+
+2. **Results Column**: Displays only the games with known outcomes using a visual bar chart.
+
 ### Visual Game Results Bar
-The game results are displayed using a visual bar that shows the breakdown of wins, losses, and draws with color-coding:
+The game results are displayed using a visual bar that shows the breakdown of wins, draws, and losses in a logical progression with color-coding:
 
 ```tsx
+// Caps column - total number of games played
 { 
   key: 'caps', 
   label: 'Caps', 
   sortable: true,
-  tooltip: 'Number of games played, with breakdown of results (W/L/D)',
+  tooltip: 'Total number of games played',
+  formatter: (value) => {
+    return value || 0;
+  }
+}
+
+// Results column - visual breakdown of games with known outcomes
+{ 
+  key: 'results', 
+  label: 'Results', 
+  sortable: true,
+  tooltip: 'Distribution of known game results (W/D/L)',
   formatter: (_, player) => {
     if (!player) return 'N/A';
     
@@ -132,7 +155,6 @@ The game results are displayed using a visual bar that shows the breakdown of wi
       wins={player.wins || 0}
       losses={player.losses || 0}
       draws={player.draws || 0}
-      total={player.caps || 0}
     />;
   }
 }
@@ -227,6 +249,24 @@ The `GoalsDistributionBar` component follows a consistent layout pattern:
 - Goals Against count displayed on the right in red text
 - Visual bar below showing the proportional green and red segments
 
+### Win Percentage Column
+The Win % column has been repositioned to appear directly after the Results column for a more logical data grouping. This improves the user experience by placing related metrics next to each other.
+
+```tsx
+{ 
+  key: 'winRate', 
+  label: 'Win %', 
+  sortable: true,
+  tooltip: 'Win percentage (wins / total games)',
+  formatter: (value) => {
+    if (value !== null && value !== undefined) {
+      return `${parseFloat(value.toString()).toFixed(1)}%`;
+    }
+    return '0.0%';
+  }
+}
+```
+
 All three visual bar components (GameResultsBar, GoalsDistributionBar, and TeamDistributionBar) follow a consistent vertical alignment pattern with colored text indicators at the top and a proportional colored bar below for easy visual comparison.
 
 The goals column features a multi-sort capability that allows users to cycle through all possible combinations of goals metrics and sort directions by clicking repeatedly on the column header:
@@ -254,7 +294,7 @@ The component handles several edge cases:
 - Error state: Shows an error message if data fetching fails
 - Empty results: Displays a "No players found" message when search yields no results
 - Null/undefined values: Safely handles missing data with fallbacks
-- Players with fewer than 10 caps: Filtered out completely from the display
+- Players with fewer than 10 games with known outcomes: Filtered out completely from the display
 - Data loss prevention: Maintains valid stats in a React ref to prevent data from disappearing
 - Re-render protection: Prevents XP values from being reset to zero during component updates
 
@@ -273,6 +313,23 @@ The UI has been streamlined by removing the information banner previously shown 
 - Caches data to prevent unnecessary re-fetching
 - Uses React refs to maintain state between renders without triggering re-renders
 - Smart loading logic that preserves existing data while fetching new data
+
+## Recent Updates
+
+### May 2025 Updates
+1. **Enhanced Column Structure**: Separated the game statistics into dedicated columns for clearer data presentation:
+   - Dedicated Caps column showing total games played
+   - Separate Results column showing only games with known outcomes
+   - Repositioned Win % column to appear directly after Results for logical grouping
+
+2. **Improved Results Visualization**: Updated the GameResultsBar component to:
+   - Display outcomes in a logical progression: wins (green), draws (purple), losses (red)
+   - Match the legend ordering with the visual bar segments for consistency
+   - Focus only on known outcomes for better visual clarity
+
+3. **Win Percentage Display Fix**: Fixed an issue with win percentages displaying incorrectly (e.g., 4330.0% instead of 43.3%). The formatter now correctly handles percentage values without applying an additional multiplication by 100.
+
+4. **Filtering Logic Improvement**: Changed filtering criteria from minimum 10 caps to minimum 10 games with known outcomes (wins+losses+draws). This ensures players with sufficient game data are displayed, even if some of their games don't have recorded outcomes.
 
 ## Known Issues
 As of May 2025, the component includes protection against XP value display issues that were previously causing values to disappear or reset to zero. While we've implemented robust safeguards, the underlying data structure might still benefit from further optimization.

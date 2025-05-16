@@ -8,12 +8,11 @@
  * - Green for wins
  * - Red for losses
  * - Purple for draws
- * - Grey for unknown
  * 
  * @param wins - Number of games won
  * @param losses - Number of games lost
  * @param draws - Number of games drawn
- * @param total - Total number of games played (caps)
+ * @param total - (Optional) Total number of games played (caps)
  */
 export const GameResultsBar = ({ 
   wins, 
@@ -24,16 +23,13 @@ export const GameResultsBar = ({
   wins: number, 
   losses: number,
   draws: number,
-  total: number
+  total?: number
 }) => {
   // Calculate total known results
   const knownResults = wins + losses + draws;
   
-  // Calculate unknown games (if any)
-  const unknown = total - knownResults;
-  
-  // If no games played, show empty bar
-  if (total === 0) {
+  // If no known results, show empty bar
+  if (knownResults === 0) {
     return (
       <div className="flex flex-col w-full gap-1">
         <div className="flex justify-between text-xs">
@@ -45,29 +41,25 @@ export const GameResultsBar = ({
     );
   }
   
-  // Calculate percentages for the bar segments
-  const winPercentage = (wins / total) * 100;
-  const lossPercentage = (losses / total) * 100;
-  const drawPercentage = (draws / total) * 100;
-  const unknownPercentage = (unknown / total) * 100;
+  // Calculate percentages for the bar segments based on known results only
+  const winPercentage = (wins / knownResults) * 100;
+  const lossPercentage = (losses / knownResults) * 100;
+  const drawPercentage = (draws / knownResults) * 100;
   
   return (
     <div className="flex flex-col w-full gap-1">
-      {/* Top row: total caps and W/L/D */}
+      {/* Top row: caps info and W/L/D */}
       <div className="flex justify-between text-xs">
-        <span className="font-semibold">{total} caps</span>
+        <span className="font-semibold">
+          {/* Show different text based on whether total is provided */}
+          {total !== undefined ? `${knownResults} of ${total}` : `${knownResults} games`}
+        </span>
         <div>
           <span className="text-green-600 font-semibold">W: {wins}</span>
           <span className="mx-1">/</span>
-          <span className="text-red-600 font-semibold">L: {losses}</span>
-          <span className="mx-1">/</span>
           <span className="text-purple-600 font-semibold">D: {draws}</span>
-          {unknown > 0 && (
-            <>
-              <span className="mx-1">/</span>
-              <span className="text-gray-600 font-semibold">?: {unknown}</span>
-            </>
-          )}
+          <span className="mx-1">/</span>
+          <span className="text-red-600 font-semibold">L: {losses}</span>
         </div>
       </div>
       
@@ -82,6 +74,15 @@ export const GameResultsBar = ({
           />
         )}
         
+        {/* Draws segment - moved to the middle */}
+        {draws > 0 && (
+          <div 
+            className="bg-purple-500 h-full transition-all duration-300 ease-in-out" 
+            style={{ width: `${drawPercentage}%` }}
+            title={`${draws} draws (${drawPercentage.toFixed(1)}%)`}
+          />
+        )}
+        
         {/* Losses segment */}
         {losses > 0 && (
           <div 
@@ -91,23 +92,7 @@ export const GameResultsBar = ({
           />
         )}
         
-        {/* Draws segment */}
-        {draws > 0 && (
-          <div 
-            className="bg-purple-500 h-full transition-all duration-300 ease-in-out" 
-            style={{ width: `${drawPercentage}%` }}
-            title={`${draws} draws (${drawPercentage.toFixed(1)}%)`}
-          />
-        )}
-        
-        {/* Unknown segment */}
-        {unknown > 0 && (
-          <div 
-            className="bg-gray-400 h-full transition-all duration-300 ease-in-out" 
-            style={{ width: `${unknownPercentage}%` }}
-            title={`${unknown} unknown results (${unknownPercentage.toFixed(1)}%)`}
-          />
-        )}
+        {/* No Unknown segment - removed */}
       </div>
     </div>
   );

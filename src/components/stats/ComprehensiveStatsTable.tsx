@@ -137,7 +137,16 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       key: 'caps', 
       label: 'Caps', 
       sortable: true,
-      tooltip: 'Number of games played, with breakdown of results (W/L/D)',
+      tooltip: 'Total number of games played',
+      formatter: (value) => {
+        return value || 0;
+      }
+    },
+    { 
+      key: 'results', 
+      label: 'Results', 
+      sortable: true,
+      tooltip: 'Distribution of known game results (W/L/D)',
       formatter: (_, player) => {
         if (!player) return 'N/A';
         
@@ -145,8 +154,21 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
           wins={player.wins || 0}
           losses={player.losses || 0}
           draws={player.draws || 0}
-          total={player.caps || 0}
         />;
+      }
+    },
+    { 
+      key: 'winRate', 
+      label: 'Win %', 
+      sortable: true,
+      tooltip: 'Win percentage (wins / total games)',
+      formatter: (value) => {
+        if (value !== null && value !== undefined) {
+          // Win rate is already stored as a percentage value (e.g., 43.3), so no need to multiply by 100
+          // Just format it to one decimal place for consistent display
+          return `${parseFloat(value.toString()).toFixed(1)}%`;
+        }
+        return '0.0%';
       }
     },
     { 
@@ -186,19 +208,6 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
         const formattedValue = value > 0 ? `+${value}` : value;
         const colorClass = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : '';
         return <span className={`font-semibold ${colorClass}`}>{formattedValue}</span>;
-      }
-    },
-    { 
-      key: 'winRate', 
-      label: 'Win %', 
-      sortable: true,
-      tooltip: 'Win percentage (wins / total games)',
-      formatter: (value) => {
-        if (value !== null && value !== undefined) {
-          // Win rate is stored as a decimal (e.g., 0.619), so multiply by 100 for display
-          return `${(value * 100).toFixed(1)}%`;
-        }
-        return '0.0%';
       }
     },
     { 
@@ -268,11 +277,13 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
     }
     
     const filtered = statsToUse.filter((player) => {
-      // Filter by name search and minimum 10 caps requirement
-      return player.friendlyName?.toLowerCase().includes(searchFilter) && player.caps >= 10;
+      // Check for minimum 10 games with known outcomes (wins + losses + draws)
+      const knownOutcomes = (player.wins || 0) + (player.losses || 0) + (player.draws || 0);
+      // Filter by name search and minimum 10 known outcomes requirement
+      return player.friendlyName?.toLowerCase().includes(searchFilter) && knownOutcomes >= 10;
     });
     
-    console.log(`After filtering: ${filtered.length} players remain (caps >= 10 only)`);
+    console.log(`After filtering: ${filtered.length} players remain (known outcomes >= 10 only)`);
     return filtered;
   }, [comprehensiveStats, searchQuery]);
 
@@ -471,7 +482,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
         </div>
         
         <p className="text-sm opacity-80 mt-4">
-          Note: Stats are based on games with known outcomes. Some stats require a minimum of 10 caps to be displayed.
+          Note: Stats are based on games with known outcomes. Players must have at least 10 games with known outcomes (wins/losses/draws) to be displayed.
           <strong> {sortedPlayers.length} players shown.</strong>
         </p>
       </div>
