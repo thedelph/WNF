@@ -1,5 +1,6 @@
 import { Target } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Tooltip } from '../ui/Tooltip';
 
 // Custom card for goal differentials with perfect column alignment
 interface GoalDiffCardProps {
@@ -14,8 +15,28 @@ interface GoalDiffCardProps {
 }
 
 export const GoalDifferentialsCard = ({ goalDifferentials }: GoalDiffCardProps) => {
+  // Sort by GF/GA ratio instead of goal differential
+  const sortedPlayers = [...goalDifferentials].sort((a, b) => {
+    // Handle cases where goalsAgainst is 0 (infinity ratio)
+    if (a.goalsAgainst === 0 && b.goalsAgainst === 0) {
+      // If both have 0 goals against, sort by goals for (higher is better)
+      return b.goalsFor - a.goalsFor;
+    } else if (a.goalsAgainst === 0) {
+      // If only a has 0 goals against, it comes first
+      return -1;
+    } else if (b.goalsAgainst === 0) {
+      // If only b has 0 goals against, it comes first
+      return 1;
+    }
+    
+    // Normal case: Sort by GF/GA ratio
+    const aRatio = a.goalsFor / a.goalsAgainst;
+    const bRatio = b.goalsFor / b.goalsAgainst;
+    return bRatio - aRatio;
+  });
+  
   // Get top 10 players only
-  const displayPlayers = goalDifferentials.slice(0, 10);
+  const displayPlayers = sortedPlayers.slice(0, 10);
   
   // The medal emojis for top performers
   const medals = ['🥇', '🥈', '🥉'];
@@ -38,11 +59,17 @@ export const GoalDifferentialsCard = ({ goalDifferentials }: GoalDiffCardProps) 
           {/* Fixed header row with column titles */}
           <div className="flex justify-between items-center text-xs opacity-80 pb-2 pr-1">
             <div className="flex-1">Player</div>
-            <div className="grid grid-cols-4 gap-3 w-40">
+            <div className="grid grid-cols-5 gap-2 w-60">
               <div className="text-center">Caps</div>
               <div className="text-center">GF</div>
               <div className="text-center">GA</div>
               <div className="text-center">+/-</div>
+              <div className="text-center relative">
+                <span>GF/GA</span>
+                <Tooltip content="Ratio of Goals For to Goals Against">
+                  <span className="cursor-help text-info absolute -right-2 -top-1 text-xs">ⓘ</span>
+                </Tooltip>
+              </div>
             </div>
           </div>
           
@@ -66,12 +93,17 @@ export const GoalDifferentialsCard = ({ goalDifferentials }: GoalDiffCardProps) 
                 </div>
                 
                 {/* Stats with perfect alignment - now with Caps column */}
-                <div className="grid grid-cols-4 gap-3 w-40 text-right pr-1">
+                <div className="grid grid-cols-5 gap-2 w-60 text-right pr-1">
                   <div className="text-center text-white/90">{player.caps}</div>
                   <div className="text-success text-center">{player.goalsFor}</div>
                   <div className="text-error text-center">{player.goalsAgainst}</div>
                   <div className={`font-bold text-center ${player.goalDifferential > 0 ? 'text-success' : player.goalDifferential < 0 ? 'text-error' : ''}`}>
                     {player.goalDifferential > 0 ? `+${player.goalDifferential}` : player.goalDifferential}
+                  </div>
+                  <div className={`text-center font-semibold ${player.goalsAgainst === 0 ? 'text-warning' : (player.goalsFor / player.goalsAgainst) >= 1 ? 'text-success' : 'text-error'}`}>
+                    {player.goalsAgainst === 0 
+                      ? '∞' 
+                      : (player.goalsFor / player.goalsAgainst).toFixed(1)}
                   </div>
                 </div>
               </div>
@@ -80,7 +112,7 @@ export const GoalDifferentialsCard = ({ goalDifferentials }: GoalDiffCardProps) 
         </div>
         
         <p className="text-sm opacity-80 mt-auto text-left">
-          Team goals scored minus team goals conceded (only players with 10+ caps)
+          Players ranked by GF/GA ratio. GF/GA shows ratio of goals scored to conceded (only players with 10+ caps)
         </p>
       </div>
     </motion.div>
