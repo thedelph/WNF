@@ -17,7 +17,7 @@ The PerformanceStats component is a container that displays performance-related 
 - **Current Win Streaks**: Shows players with active win streaks (current year or all-time only)
 - **Longest Unbeaten Streaks**: Displays the longest unbeaten streaks achieved, with dates
 - **Current Unbeaten Streaks**: Shows players with active unbeaten streaks (current year or all-time only)
-- **Best Win Rates**: Displays players with the highest win percentages
+- **Best Win Rates**: Displays the top 10 players with the highest win percentages, with medal emojis for the top three
 
 ## Technical Implementation
 
@@ -79,10 +79,12 @@ The PerformanceStats component is integrated into the Stats page and displayed i
 1. **Enhanced Goal Differentials Card**: Updated to include GF/GA ratio and change sorting to prioritize this efficiency metric
 2. **Improved Visual Consistency**: Ensured consistent styling across all award cards
 3. **Enhanced Animation**: Improved animation timing for a smoother experience
+4. **Updated Best Win Rates Card**: Replaced Lucide Medal icons with emoji medals and expanded to show top 10 players instead of only medal positions
 
 ## Component Dependencies
 - **AwardCard**: Used for displaying ranked player achievements
-- **StatsCard**: Used for displaying statistical values
+- **StatsCard**: Used for displaying statistical values (see [StatsCard](./StatsCard.md))
 - **GoalDifferentialsCard**: Custom card for displaying goal statistics
 - **Framer Motion**: Used for animations
+- **Emojis**: Used for medal indicators in win rate statistics
 - **Lucide Icons**: Used for card icons

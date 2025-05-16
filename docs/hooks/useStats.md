@@ -162,6 +162,11 @@ The hook handles several edge cases:
 - Possible undefined properties in some sorting comparisons
 - The property 'xp' needs to be added to the PlayerStats interface
 
+## Recent Updates
+
+### May 2025 Updates
+1. **Best Win Rates Processing**: Modified the hook to return the top 10 players by win rate for the bestWinRates data, rather than only including players with win rates equal to or higher than the bronze medal position.
+
 ## Future Improvements
 - Complete TypeScript typing for all parameters and variables
 - Implement more robust error recovery mechanisms

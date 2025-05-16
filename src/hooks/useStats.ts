@@ -413,7 +413,8 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           topUnbeatenStreaks: getPlayerStatsByMaxUnbeatenStreak(allPlayers).slice(0, 10),
           currentUnbeatenStreaks: getPlayerStatsByCurrentUnbeatenStreak(allPlayers).slice(0, 10),
           mostCaps: getPlayerStatsByCaps(allPlayers).filter((p: PlayerStats) => p.caps >= (getPlayerStatsByCaps(allPlayers)[2]?.caps || 0)),
-          bestWinRates: getPlayerStatsByWinRate(transformedPlayerStats).filter((p: PlayerStats) => p.winRate >= (getPlayerStatsByWinRate(transformedPlayerStats)[2]?.winRate || 0)),
+          // Get top 10 players by win rate
+          bestWinRates: getPlayerStatsByWinRate(transformedPlayerStats).slice(0, 10),
           teamColorFrequency: {
             blue: transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'blue').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency).filter((p: TeamColorStats) => p.teamFrequency >= (transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'blue').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency)[2]?.teamFrequency || 0)),
             orange: transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'orange').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency).filter((p: TeamColorStats) => p.teamFrequency >= (transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'orange').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency)[2]?.teamFrequency || 0))

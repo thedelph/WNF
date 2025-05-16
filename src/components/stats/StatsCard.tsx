@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { Medal } from 'lucide-react';
 
 interface StatsCardProps {
   title: string;
@@ -11,11 +10,8 @@ interface StatsCardProps {
   stats?: any[];
 }
 
-const medals = [
-  { color: 'text-yellow-300 drop-shadow-[0_0_3px_rgba(253,224,71,0.7)]', label: 'Gold' },
-  { color: 'text-slate-100 drop-shadow-[0_0_3px_rgba(255,255,255,0.7)]', label: 'Silver' },
-  { color: 'text-yellow-700 drop-shadow-[0_0_3px_rgba(255,255,255,0.7)] font-bold', label: 'Bronze' }
-];
+// Emoji medals for top three positions
+const medals = ['🥇', '🥈', '🥉'];
 
 export const StatsCard = ({ title, value, description, icon, color = 'blue', className, stats }: StatsCardProps) => {
   const gradientColors = {
@@ -46,6 +42,9 @@ export const StatsCard = ({ title, value, description, icon, color = 'blue', cla
     return playersWithHigherRate;
   };
   
+  // Limit display to top 10 players, sorting by win rate in descending order
+  const displayStats = stats ? [...stats].sort((a, b) => b.winRate - a.winRate).slice(0, 10) : [];
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -59,23 +58,32 @@ export const StatsCard = ({ title, value, description, icon, color = 'blue', cla
           <div>{icon}</div>
         </div>
         <div className="space-y-1 mb-4">
-          {stats && stats.map((player, index) => {
-            const medalIndex = getMedalIndex(index, player.winRate, stats);
+          {displayStats.map((player, index) => {
+            const medalIndex = getMedalIndex(index, player.winRate, displayStats);
             return (
-              <div key={player.id} className="flex justify-between items-center gap-2">
-                <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
-                  <Medal 
-                    className={`w-5 h-5 flex-shrink-0 ${medalIndex < medals.length ? medals[medalIndex].color : 'text-gray-300'}`} 
-                  />
-                  <span className="truncate block">{player.friendlyName}</span>
+              <motion.div
+                key={player.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
+                    {medalIndex < medals.length ? (
+                      <span className="w-5 h-5 flex-shrink-0">{medals[medalIndex]}</span>
+                    ) : (
+                      <span className="w-5 h-5 flex-shrink-0"></span>
+                    )}
+                    <span className="drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] truncate block">{player.friendlyName}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 flex-shrink-0 justify-end">
+                    <span className="font-bold whitespace-nowrap text-right w-14">{player.winRate.toFixed(1)}%</span>
+                    <span className="text-sm opacity-70 whitespace-nowrap text-right w-24">
+                      {player.wins}W/{player.draws}D/{player.losses}L
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 flex-shrink-0 justify-end">
-                  <span className="font-bold whitespace-nowrap text-right w-14">{player.winRate.toFixed(1)}%</span>
-                  <span className="text-sm opacity-70 whitespace-nowrap text-right w-24">
-                    {player.wins}W/{player.draws}D/{player.losses}L
-                  </span>
-                </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
