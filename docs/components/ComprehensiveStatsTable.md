@@ -1,7 +1,7 @@
 # Comprehensive Stats Table
 
 ## Overview
-The Comprehensive Stats Table displays detailed statistics for all players in a searchable, sortable table format. It provides a complete view of player performance metrics, including attendance, goals, win rates, streaks, and team distribution. The component has been enhanced with data persistence features to ensure XP values and other stats are consistently displayed without disappearing or resetting to zero.
+The Comprehensive Stats Table displays detailed statistics for players in a searchable, sortable table format. It provides a complete view of player performance metrics, including attendance, goals, win rates, streaks, and team distribution. The component has been enhanced with data persistence features to ensure XP values and other stats are consistently displayed without disappearing or resetting to zero. Only players with 10 or more caps are displayed in the table to ensure statistical relevance.
 
 ## Features
 - Complete player statistics in a single, unified table
@@ -59,10 +59,10 @@ useEffect(() => {
 ```
 
 ### Filtering and Sorting with Data Resilience
-The component implements client-side filtering and sorting with resilience against data loss:
+The component implements client-side filtering and sorting with resilience against data loss. Only players with 10 or more caps are displayed to ensure statistical relevance:
 
 ```tsx
-// Filter players based on search query
+// Filter players based on search query and minimum 10 caps requirement
 const filteredPlayers = useMemo(() => {
   // Basic search filtering - use valid stats if current stats are empty
   const statsToUse = comprehensiveStats?.length ? comprehensiveStats : validStatsRef.current;
@@ -74,10 +74,13 @@ const filteredPlayers = useMemo(() => {
     return []; // Return empty array if no stats
   }
   
-  // Filter by player name matching the search query
-  return statsToUse.filter((player) =>
-    player.friendlyName?.toLowerCase().includes(searchFilter)
-  );
+  const filtered = statsToUse.filter((player) => {
+    // Filter by name search and minimum 10 caps requirement
+    return player.friendlyName?.toLowerCase().includes(searchFilter) && player.caps >= 10;
+  });
+  
+  console.log(`After filtering: ${filtered.length} players remain (caps >= 10 only)`);
+  return filtered;
 }, [comprehensiveStats, searchQuery]);
 
 // Sort players based on current sort settings
@@ -156,16 +159,18 @@ The component handles several edge cases:
 - Error state: Shows an error message if data fetching fails
 - Empty results: Displays a "No players found" message when search yields no results
 - Null/undefined values: Safely handles missing data with fallbacks
-- Players with 0 caps: Shows appropriate placeholders for stats
+- Players with fewer than 10 caps: Filtered out completely from the display
 - Data loss prevention: Maintains valid stats in a React ref to prevent data from disappearing
 - Re-render protection: Prevents XP values from being reset to zero during component updates
 
-## Styling
+## Styling and UI
 The component uses a combination of:
 - Tailwind CSS for layout and responsive design
 - Daisy UI for component styling (cards, tables, etc.)
 - Custom CSS for specific visual elements
-- Framer Motion for animations
+- Framer Motion for animations and transitions
+
+The UI has been streamlined by removing the information banner previously shown at the top of the table. The component now displays only the title, search bar, and data table for a cleaner, more focused presentation.
 
 ## Performance Considerations
 - Uses `useMemo` for expensive operations like filtering and sorting

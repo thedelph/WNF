@@ -225,7 +225,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
     }
   ];
 
-  // Filter players based on search query
+  // Filter players based on search query and minimum 10 caps requirement
   const filteredPlayers = useMemo(() => {
     // Basic search filtering - use valid stats if current stats are empty
     const statsToUse = comprehensiveStats?.length ? comprehensiveStats : validStatsRef.current;
@@ -237,11 +237,12 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       return []; // Return empty array if no stats
     }
     
-    const filtered = statsToUse.filter((player) =>
-      player.friendlyName?.toLowerCase().includes(searchFilter)
-    );
+    const filtered = statsToUse.filter((player) => {
+      // Filter by name search and minimum 10 caps requirement
+      return player.friendlyName?.toLowerCase().includes(searchFilter) && player.caps >= 10;
+    });
     
-    console.log(`After filtering: ${filtered.length} players remain`);
+    console.log(`After filtering: ${filtered.length} players remain (caps >= 10 only)`);
     return filtered;
   }, [comprehensiveStats, searchQuery]);
 
@@ -321,15 +322,6 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       className="card bg-base-100 shadow-xl"
     >
       <div className="card-body">
-        {/* Warning banner for work in progress */}
-        <div className="alert alert-info mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-          <div>
-            <h3 className="font-bold">Player Stats Information</h3>
-            <p className="text-sm">These comprehensive player stats include XP values calculated according to the XP system formula. Stats are refreshed automatically when changing year filters.</p>
-          </div>
-        </div>
-        
         <h2 className="card-title text-2xl">Comprehensive Player Stats</h2>
         
         {/* Search filter */}
