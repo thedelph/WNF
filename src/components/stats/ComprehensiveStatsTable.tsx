@@ -182,7 +182,11 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       key: 'xp', 
       label: 'XP', 
       sortable: true,
-      tooltip: 'Experience points earned from playing games'
+      tooltip: 'Experience points earned from playing games',
+      formatter: (value) => {
+        // Ensure XP is never negative - cap at 0
+        return Math.max(0, value || 0);
+      }
     },
     { 
       key: 'caps', 
@@ -627,7 +631,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
                         {column.formatter
                           ? column.formatter(player[column.key as keyof ComprehensivePlayerStats], player)
                           : column.key === 'xp' 
-                            ? player.xp || 0 /* Ensure XP always shows a value */
+                            ? Math.max(0, player.xp || 0) /* Ensure XP always shows a non-negative value */
                             : player[column.key as keyof ComprehensivePlayerStats] ?? 'N/A'
                         }
                       </td>
@@ -794,7 +798,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
                       >
                         <div className="flex flex-col">
                           <h3 className="card-title text-lg">{player.friendlyName}</h3>
-                          <p className="text-sm opacity-80">XP: {player.xp || 0}</p>
+                          <p className="text-sm opacity-80">XP: {Math.max(0, player.xp || 0)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-right">

@@ -1,38 +1,57 @@
 # Comprehensive Stats Table
 
 ## Overview
-The Comprehensive Stats Table displays detailed statistics for players in a searchable, sortable table format. It provides a complete view of player performance metrics, including attendance, goals, win rates, streaks, and team distribution. The component has been enhanced with data persistence features to ensure XP values and other stats are consistently displayed without disappearing or resetting to zero. Only players with 10 or more games with known outcomes (wins/losses/draws) are displayed in the table to ensure statistical relevance.
+The Comprehensive Stats Table displays detailed statistics for players in a searchable, sortable format that adapts to different screen sizes. It provides a complete view of player performance metrics, including attendance, goals, win rates, streaks, and team distribution. 
+
+On desktop, it presents data in a traditional table layout, while on mobile devices it transforms into a card-based interface with expandable details for optimal viewing on smaller screens. The component includes data persistence features to ensure XP values and other stats are consistently displayed without disappearing or resetting to zero. Only players with 10 or more games with known outcomes (wins/losses/draws) are displayed to ensure statistical relevance.
 
 ## Features
-- Complete player statistics in a single, unified table
-- Sortable columns for all metrics
+
+### Core Features
+- Complete player statistics in a unified format that adapts to device size
+- Sortable data for all metrics on both desktop and mobile
 - Search functionality for finding specific players
+- Negative XP values automatically capped at 0
+- Data resilience using React refs to prevent values from disappearing
+- State preservation between re-renders and data fetches
+
+### Statistic Visualization
 - Dedicated Caps column showing total games played
-- Separate Results column with visual distribution of wins/draws/losses
-- Win % column positioned next to Results for logical grouping
+- Results column with visual distribution of wins/draws/losses
+- Win % column positioned logically next to Results
 - Unbeaten % column showing percentage of games that weren't lost (wins + draws)
 - Visual team distribution bar showing blue/orange team percentages
 - Visual goals distribution bar showing goals for/against
 - Visual streak bars showing current win/unbeaten streaks relative to personal bests
 - GF/GA Ratio column showing goals for to goals against ratio (similar to K/D in FPS games)
-- Responsive design for all device sizes
+
+### Responsive Design
+- Automatically adapts between table view (desktop) and card view (mobile)
+- Responsive card layout with expandable details on mobile
+- Mobile-optimized sorting interface with all sort options accessible
 - Tooltips providing additional context for each metric
-- Data resilience using React refs to prevent XP values from disappearing
-- State preservation between re-renders and data fetches
+- Optimized visual components for different screen sizes
 
 ## Component Structure
 The component is built using several sub-components and features:
 
-1. **Main table component**: `ComprehensiveStatsTable.tsx`
+1. **Main component**: `ComprehensiveStatsTable.tsx`
+   - Handles responsive view switching between table and card layouts
+   - Implements window resize detection for dynamic view changes
+   - Manages expandable player cards in mobile view
+
 2. **Visual elements**:
    - `TeamDistributionBar.tsx`: Visual representation of team colours distribution
    - `GoalsDistributionBar.tsx`: Visual representation of goals for/against and goal differential
    - `GameResultsBar.tsx`: Visual representation of wins, losses, and draws distribution
    - `StreakBar.tsx`: Visual representation of current and maximum streaks with position markers
    - Tooltips for providing additional context
+   - Mobile-optimized versions of all visual components
+
 3. **Data handling**:
    - Uses `useStats` hook to fetch data from the database
-   - Implements filtering and sorting logic
+   - Implements filtering and sorting logic for both desktop and mobile views
+   - Maintains consistent sorting capabilities across device sizes
 
 ## Data Source
 The comprehensive player stats are fetched from the database using the `get_comprehensive_player_stats` function, which combines data from several sources:
@@ -66,6 +85,29 @@ useEffect(() => {
     fetchComprehensivePlayerStats(year);
   }
 }, [year, fetchComprehensivePlayerStats]);
+```
+
+### XP Value Management
+The component ensures that XP values are never displayed as negative by implementing capping logic in multiple places:
+
+```tsx
+// XP column formatter to ensure non-negative values
+{ 
+  key: 'xp', 
+  label: 'XP', 
+  sortable: true,
+  tooltip: 'Experience points earned from playing games',
+  formatter: (value) => {
+    // Ensure XP is never negative - cap at 0
+    return Math.max(0, value || 0);
+  }
+}
+
+// In the table view display
+column.key === 'xp' ? Math.max(0, player.xp || 0) : player[column.key as keyof ComprehensivePlayerStats]
+
+// In the mobile card view
+<p className="text-sm opacity-80">XP: {Math.max(0, player.xp || 0)}</p>
 ```
 
 ### Filtering and Sorting with Data Resilience
@@ -382,23 +424,113 @@ The component handles several edge cases:
 - Data loss prevention: Maintains valid stats in a React ref to prevent data from disappearing
 - Re-render protection: Prevents XP values from being reset to zero during component updates
 
+## Responsive Design Implementation
+
+### Desktop View
+On larger screens (md breakpoint and above), the component displays a traditional table with horizontal scrolling for wide content:
+
+```tsx
+// Desktop table view - only visible on md screens and above
+<div className="overflow-x-auto hidden md:block">
+  <table className="table table-zebra w-full">
+    {/* Table content */}
+  </table>
+</div>
+```
+
+### Mobile View
+On smaller screens, the component switches to a card-based layout with expandable details:
+
+```tsx
+// Mobile card view - visible on screens smaller than md breakpoint
+<div className="md:hidden space-y-4">
+  {/* Mobile sorting options */}
+  <div className="flex flex-col gap-2 mb-4">
+    {/* Sorting buttons */}
+  </div>
+  
+  {/* Card list */}
+  <div className="space-y-4">
+    {sortedPlayers.map((player) => (
+      <motion.div className="card bg-base-200 shadow-sm">
+        {/* Card header with essential info */}
+        <div className="card-body p-4 pb-2">
+          {/* Player name, XP, and Win % always visible */}
+          
+          {/* Expandable detailed stats */}
+          {expandedPlayers[player.id] && (
+            <motion.div initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-3 pt-3 border-t border-base-300">
+              {/* Detailed stats */}
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    ))}
+  </div>
+</div>
+```
+
+### Mobile Sorting Interface
+A special grid-based sorting interface for mobile devices provides access to all sorting options:
+
+```tsx
+<div className="grid grid-cols-3 gap-1">
+  {/* Sorting option buttons, highlighted when active */}
+  <button 
+    className={`py-1 px-2 text-xs rounded ${sortColumn === 'caps' ? 'bg-primary text-primary-content' : 'bg-base-200'}`}
+    onClick={() => handleSort('caps')}
+  >
+    Caps
+  </button>
+  {/* Other sorting options... */}
+</div>
+```
+
 ## Styling and UI
 The component uses a combination of:
 - Tailwind CSS for layout and responsive design
-- Daisy UI for component styling (cards, tables, etc.)
+- Daisy UI for component styling (cards, tables, buttons, etc.)
 - Custom CSS for specific visual elements
 - Framer Motion for animations and transitions
 
-The UI has been streamlined by removing the information banner previously shown at the top of the table. The component now displays only the title, search bar, and data table for a cleaner, more focused presentation.
+The UI has been designed with these principles:
+- Clean, information-dense layout on desktop
+- Touch-friendly, expandable cards on mobile
+- Consistent visual components across device sizes
+- Animated transitions for a polished user experience
 
 ## Performance Considerations
 - Uses `useMemo` for expensive operations like filtering and sorting
 - Implements efficient rendering with proper React patterns
+- Conditionally renders desktop or mobile view based on screen width
+- Uses responsive Tailwind classes for layout adjustments instead of JS calculations
+- Optimized expandable cards that only render detailed content when expanded
 - Caches data to prevent unnecessary re-fetching
 - Uses React refs to maintain state between renders without triggering re-renders
 - Smart loading logic that preserves existing data while fetching new data
+- Avoids layout shifts with consistent sizing and placeholder states
 
 ## Recent Updates
+
+### Mobile Optimizations (May 2025)
+- Added responsive card-based layout for mobile devices
+- Implemented mobile-specific components with optimized sizes and layouts
+- Created a touch-friendly sorting interface for mobile users
+- Added expand/collapse functionality for detailed player stats on mobile
+- Enhanced animation with Framer Motion for smooth transitions
+
+### Data Handling Improvements (May 2025)
+- Implemented XP value capping to ensure values are never displayed as negative
+- Enhanced error handling and empty state messaging
+- Improved data persistence between view changes
+
+### Accessibility Enhancements
+- Added ARIA labels to interactive elements
+- Improved color contrast for better readability
+- Enhanced touch target sizes on mobile devices
 
 ### May 2025 Updates
 1. **Enhanced Column Structure**: Separated the game statistics into dedicated columns for clearer data presentation:
