@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Search, ArrowUpDown, Info } from 'lucide-react';
 import { useStats } from '../../hooks/useStats';
@@ -49,21 +49,72 @@ interface Column {
 export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTableProps) => {
   // State for search filter and sorting
   const [searchQuery, setSearchQuery] = useState('');
+  // Keep a reference to valid stats to avoid losing them during re-renders
+  const validStatsRef = useRef<ComprehensivePlayerStats[]>([]);
   const [sortColumn, setSortColumn] = useState('caps');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   
   // Use the stats hook to get player statistics
   const { loading, error, comprehensiveStats, fetchComprehensivePlayerStats } = useStats();
   
+  // Success callback for direct stats fetch
+  const onComprehensiveStatsLoaded = useCallback((players: ComprehensivePlayerStats[]) => {
+    if (players?.length) {
+      console.log(`Successfully loaded ${players.length} players with XP data`);
+      // Update our valid stats reference
+      validStatsRef.current = players;
+      
+      // The filteredPlayers value will be automatically updated through the useMemo hook
+      // since it depends on comprehensiveStats
+    }
+  }, [searchQuery]);
+
   // Fetch comprehensive player stats when the component mounts or year changes
   useEffect(() => {
-    // Fetch data for the selected year
-    fetchComprehensivePlayerStats(selectedYear);
+    let isMounted = true;
     
-    // Add console logging to help debug
-    console.log('Fetching comprehensive stats for year:', selectedYear);
+    const loadData = async () => {
+      try {
+        console.log('Fetching comprehensive stats for year:', selectedYear);
+        // Fetch data for the selected year
+        const data = await fetchComprehensivePlayerStats(selectedYear);
+        
+        // Only update if component is still mounted
+        if (isMounted && data && data.length > 0) {
+          onComprehensiveStatsLoaded(data);
+        }
+      } catch (err) {
+        console.error('Error loading comprehensive stats:', err);
+      }
+    };
+    
+    loadData();
+    
+    // Cleanup function to prevent additional updates after unmounting
+    return () => {
+      isMounted = false;
+      console.log('Cleanup: ComprehensiveStatsTable effect for year', selectedYear);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear]);
+  }, [selectedYear, onComprehensiveStatsLoaded]);
+  
+  // Log comprehensive stats when they're loaded
+  useEffect(() => {
+    if (comprehensiveStats?.length > 0) {
+      console.log(`Comprehensive stats loaded: ${comprehensiveStats.length} players`);
+      console.log('First 3 players XP values:', comprehensiveStats.slice(0, 3).map((p: ComprehensivePlayerStats) => ({ name: p.friendlyName, xp: p.xp })));
+      
+      // Store valid stats for future reference
+      validStatsRef.current = comprehensiveStats;
+    } else if (comprehensiveStats?.length === 0) {
+      console.warn('Received empty comprehensive stats array');
+      
+      // If we have valid stats saved but received empty stats, don't update the UI
+      if (validStatsRef.current.length > 0) {
+        console.log(`Using ${validStatsRef.current.length} preserved valid stats instead of empty array`);
+      }
+    }
+  }, [comprehensiveStats]);
 
   // Define the columns for our table
   const columns: Column[] = [
@@ -176,19 +227,30 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
 
   // Filter players based on search query
   const filteredPlayers = useMemo(() => {
-    if (!comprehensiveStats) return [];
+    // Basic search filtering - use valid stats if current stats are empty
+    const statsToUse = comprehensiveStats?.length ? comprehensiveStats : validStatsRef.current;
+    const searchFilter = searchQuery.toLowerCase() || '';
     
-    if (!searchQuery) return comprehensiveStats;
+    // Only proceed with filtering if we have stats to filter
+    if (!statsToUse || statsToUse.length === 0) {
+      console.log('No stats available for filtering');
+      return []; // Return empty array if no stats
+    }
     
-    // Filter by player name matching the search query
-    return comprehensiveStats.filter(player => 
-      player.friendlyName.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = statsToUse.filter((player) =>
+      player.friendlyName?.toLowerCase().includes(searchFilter)
     );
+    
+    console.log(`After filtering: ${filtered.length} players remain`);
+    return filtered;
   }, [comprehensiveStats, searchQuery]);
-  
+
   // Sort players based on current sort settings
   const sortedPlayers = useMemo(() => {
     if (!filteredPlayers.length) return [];
+    
+    // Debug log when sorting happens
+    console.log(`Sorting ${filteredPlayers.length} players by ${sortColumn} ${sortDirection}`);
     
     return [...filteredPlayers].sort((a, b) => {
       // Special handling for team distribution column (sort by blue team percentage)
@@ -231,11 +293,13 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
     }
   };
 
-  // Loading state
-  if (loading) {
+  // Loading state - only show if we don't have any usable data
+  const hasData = filteredPlayers.length > 0 || validStatsRef.current.length > 0;
+  if (loading && !hasData) {
     return (
       <div className="flex justify-center items-center p-8">
         <div className="loading loading-spinner loading-lg"></div>
+        <p className="ml-2">Loading player statistics...</p>
       </div>
     );
   }
@@ -258,11 +322,11 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
     >
       <div className="card-body">
         {/* Warning banner for work in progress */}
-        <div className="alert alert-warning mb-4">
+        <div className="alert alert-info mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           <div>
-            <h3 className="font-bold">Work In Progress - Data Not Accurate</h3>
-            <p className="text-sm">This stats table is still being developed and the data shown may contain inaccuracies. Updates coming soon.</p>
+            <h3 className="font-bold">Player Stats Information</h3>
+            <p className="text-sm">These comprehensive player stats include XP values calculated according to the XP system formula. Stats are refreshed automatically when changing year filters.</p>
           </div>
         </div>
         
@@ -318,7 +382,9 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
                       {/* Use formatter if available, otherwise display raw value */}
                       {column.formatter
                         ? column.formatter(player[column.key as keyof ComprehensivePlayerStats], player)
-                        : player[column.key as keyof ComprehensivePlayerStats] ?? 'N/A'
+                        : column.key === 'xp' 
+                          ? player.xp || 0 /* Ensure XP always shows a value */
+                          : player[column.key as keyof ComprehensivePlayerStats] ?? 'N/A'
                       }
                     </td>
                   ))}

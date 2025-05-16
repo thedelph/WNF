@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../utils/supabase';
 
 export interface PlayerStats {
@@ -98,6 +98,11 @@ export interface Stats {
 }
 
 export const useStats = (year?: number, availableYears?: number[]) => {
+  // Track if comprehensive stats have been loaded directly
+  const directFetchRef = useRef(false);
+  // Preserve the last successful stats
+  const lastSuccessfulStatsRef = useRef<ComprehensivePlayerStats[]>([]);
+  
   const [stats, setStats] = useState<Stats>({
     luckyBibColor: { color: 'blue', winRate: 0 },
     topAttendanceStreaks: [],
@@ -119,7 +124,14 @@ export const useStats = (year?: number, availableYears?: number[]) => {
     error: null,
   });
 
+  // Main effect for loading general stats (without overriding comprehensive stats)
   useEffect(() => {
+    // Only run this if we haven't directly loaded comprehensive stats
+    if (directFetchRef.current) {
+      console.log('Using direct fetch data, skipping automatic comprehensive stats loading');
+      return;
+    }
+    
     const fetchStats = async () => {
       setStats(prev => ({ ...prev, loading: true, error: null }));
       
@@ -417,13 +429,15 @@ export const useStats = (year?: number, availableYears?: number[]) => {
             goalDifferential: Number(player.goal_differential)
           })) || [],
           
-          // Generate comprehensive player stats
-          comprehensiveStats: generateComprehensivePlayerStats(
-            playersList || [],
-            transformedPlayerStats,
-            goalDifferentials || [],
-            transformedTeamColorStats
-          ),
+          // Generate comprehensive player stats only if not already loaded directly
+          comprehensiveStats: directFetchRef.current
+            ? (lastSuccessfulStatsRef.current.length > 0 ? lastSuccessfulStatsRef.current : stats.comprehensiveStats) // Use preserved stats if available
+            : generateComprehensivePlayerStats(
+                playersList || [],
+                transformedPlayerStats,
+                goalDifferentials || [],
+                transformedTeamColorStats
+              ),
           loading: false,
           error: null,
         });
@@ -571,8 +585,21 @@ export const useStats = (year?: number, availableYears?: number[]) => {
   /**
    * Get comprehensive player stats directly from the database
    * This ensures we get all players, not just those in award cards
+   * This is the preferred method for loading comprehensive stats
    */
   const fetchComprehensivePlayerStats = async (year: string | number) => {
+    // Mark that we're doing a direct fetch to prevent other effects from overriding our data
+    directFetchRef.current = true;
+    
+    // If we already have successful stats, keep using them while loading
+    if (lastSuccessfulStatsRef.current.length > 0) {
+      // Pre-update with existing data to avoid flicker
+      setStats(prevStats => ({
+        ...prevStats,
+        comprehensiveStats: lastSuccessfulStatsRef.current,
+        loading: true
+      }));
+    }
     try {
       // Set loading state without clearing previous data
       // This prevents the flash of N/A values
@@ -597,12 +624,14 @@ export const useStats = (year?: number, availableYears?: number[]) => {
       console.log('Comprehensive player stats fetched:', playerStats?.length || 0, 'players');
 
       // Process the data into the format we need
+      console.log('Processing comprehensive player stats with XP values');
       const allStats = playerStats?.map((player: any) => {
         return {
           id: player.id,
           friendlyName: player.friendly_name,
           caps: player.caps || 0,
-          xp: player.xp || 0,
+          // Ensure XP is always a number and never undefined
+          xp: Number(player.xp) || 0,
           winRate: player.win_rate || 0,
           wins: player.wins || 0,
           draws: player.draws || 0,
@@ -625,6 +654,12 @@ export const useStats = (year?: number, availableYears?: number[]) => {
       const sortedStats = [...allStats].sort(
         (a: ComprehensivePlayerStats, b: ComprehensivePlayerStats) => b.caps - a.caps
       );
+
+      // Preserve the successful stats for future use
+      if (sortedStats.length > 0) {
+        console.log(`Preserving ${sortedStats.length} player stats to prevent data loss`);
+        lastSuccessfulStatsRef.current = sortedStats;
+      }
 
       setStats(prevStats => ({
         ...prevStats,

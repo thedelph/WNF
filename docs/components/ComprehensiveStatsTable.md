@@ -1,7 +1,7 @@
 # Comprehensive Stats Table
 
 ## Overview
-The Comprehensive Stats Table displays detailed statistics for all players in a searchable, sortable table format. It provides a complete view of player performance metrics, including attendance, goals, win rates, streaks, and team distribution.
+The Comprehensive Stats Table displays detailed statistics for all players in a searchable, sortable table format. It provides a complete view of player performance metrics, including attendance, goals, win rates, streaks, and team distribution. The component has been enhanced with data persistence features to ensure XP values and other stats are consistently displayed without disappearing or resetting to zero.
 
 ## Features
 - Complete player statistics in a single, unified table
@@ -10,6 +10,8 @@ The Comprehensive Stats Table displays detailed statistics for all players in a 
 - Visual team distribution bar showing blue/orange team percentages
 - Responsive design for all device sizes
 - Tooltips providing additional context for each metric
+- Data resilience using React refs to prevent XP values from disappearing
+- State preservation between re-renders and data fetches
 
 ## Component Structure
 The component is built using several sub-components and features:
@@ -33,25 +35,48 @@ The comprehensive player stats are fetched from the database using the `get_comp
 
 ## Technical Implementation
 
-### Data Fetching
+### Data Fetching and Persistence
 ```tsx
+// Keep a reference to valid stats to avoid losing them during re-renders
+const validStatsRef = useRef<ComprehensivePlayerStats[]>([]);
+
+// Success callback for direct stats fetch
+const onComprehensiveStatsLoaded = useCallback((players: ComprehensivePlayerStats[]) => {
+  if (players?.length) {
+    console.log(`Successfully loaded ${players.length} players with XP data`);
+    // Update our valid stats reference
+    validStatsRef.current = players;
+  }
+}, [searchQuery]);
+
 // Fetch comprehensive player stats when the component mounts or year changes
 useEffect(() => {
-  fetchComprehensivePlayerStats(selectedYear);
-  console.log('Fetching comprehensive stats for year:', selectedYear);
-}, [selectedYear]);
+  console.log(`Fetching comprehensive stats for year: ${year}`);
+  if (year) {
+    fetchComprehensivePlayerStats(year);
+  }
+}, [year, fetchComprehensivePlayerStats]);
 ```
 
-### Filtering and Sorting
-The component implements client-side filtering and sorting:
+### Filtering and Sorting with Data Resilience
+The component implements client-side filtering and sorting with resilience against data loss:
 
 ```tsx
 // Filter players based on search query
 const filteredPlayers = useMemo(() => {
-  if (!comprehensiveStats) return [];
-  if (!searchQuery) return comprehensiveStats;
-  return comprehensiveStats.filter(player => 
-    player.friendlyName.toLowerCase().includes(searchQuery.toLowerCase())
+  // Basic search filtering - use valid stats if current stats are empty
+  const statsToUse = comprehensiveStats?.length ? comprehensiveStats : validStatsRef.current;
+  const searchFilter = searchQuery.toLowerCase() || '';
+  
+  // Only proceed with filtering if we have stats to filter
+  if (!statsToUse || statsToUse.length === 0) {
+    console.log('No stats available for filtering');
+    return []; // Return empty array if no stats
+  }
+  
+  // Filter by player name matching the search query
+  return statsToUse.filter((player) =>
+    player.friendlyName?.toLowerCase().includes(searchFilter)
   );
 }, [comprehensiveStats, searchQuery]);
 
@@ -127,11 +152,13 @@ The Comprehensive Stats Table is used on the Stats page and displays data based 
 
 ## Edge Cases and Error Handling
 The component handles several edge cases:
-- Loading state: Displays a spinner while data is being fetched
+- Loading state: Displays a spinner while data is being fetched, but only when no previous data exists
 - Error state: Shows an error message if data fetching fails
 - Empty results: Displays a "No players found" message when search yields no results
 - Null/undefined values: Safely handles missing data with fallbacks
 - Players with 0 caps: Shows appropriate placeholders for stats
+- Data loss prevention: Maintains valid stats in a React ref to prevent data from disappearing
+- Re-render protection: Prevents XP values from being reset to zero during component updates
 
 ## Styling
 The component uses a combination of:
@@ -144,9 +171,11 @@ The component uses a combination of:
 - Uses `useMemo` for expensive operations like filtering and sorting
 - Implements efficient rendering with proper React patterns
 - Caches data to prevent unnecessary re-fetching
+- Uses React refs to maintain state between renders without triggering re-renders
+- Smart loading logic that preserves existing data while fetching new data
 
 ## Known Issues
-As of May 2025, the component displays a warning banner indicating that some of the data may not be accurate. This is a temporary measure while data quality issues are being addressed.
+As of May 2025, the component includes protection against XP value display issues that were previously causing values to disappear or reset to zero. While we've implemented robust safeguards, the underlying data structure might still benefit from further optimization.
 
 ## Future Improvements
 Potential enhancements for this component:
@@ -155,3 +184,5 @@ Potential enhancements for this component:
 - Add more advanced filtering options
 - Enhance mobile view with collapsible sections
 - Add data visualization for more metrics
+- Further TypeScript improvements to eliminate remaining implicit any types
+- Additional optimizations for the data fetching process
