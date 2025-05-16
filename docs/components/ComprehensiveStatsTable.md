@@ -10,8 +10,11 @@ The Comprehensive Stats Table displays detailed statistics for players in a sear
 - Dedicated Caps column showing total games played
 - Separate Results column with visual distribution of wins/draws/losses
 - Win % column positioned next to Results for logical grouping
+- Unbeaten % column showing percentage of games that weren't lost (wins + draws)
 - Visual team distribution bar showing blue/orange team percentages
 - Visual goals distribution bar showing goals for/against
+- Visual streak bars showing current win/unbeaten streaks relative to personal bests
+- GF/GA Ratio column showing goals for to goals against ratio (similar to K/D in FPS games)
 - Responsive design for all device sizes
 - Tooltips providing additional context for each metric
 - Data resilience using React refs to prevent XP values from disappearing
@@ -25,6 +28,7 @@ The component is built using several sub-components and features:
    - `TeamDistributionBar.tsx`: Visual representation of team colours distribution
    - `GoalsDistributionBar.tsx`: Visual representation of goals for/against and goal differential
    - `GameResultsBar.tsx`: Visual representation of wins, losses, and draws distribution
+   - `StreakBar.tsx`: Visual representation of current and maximum streaks with position markers
    - Tooltips for providing additional context
 3. **Data handling**:
    - Uses `useStats` hook to fetch data from the database
@@ -267,6 +271,58 @@ The Win % column has been repositioned to appear directly after the Results colu
 }
 ```
 
+### Unbeaten Percentage Column
+The Unbeaten % column shows the percentage of games that weren't lost (wins + draws combined), providing a broader view of player performance beyond just wins. This is positioned after the Win % column to allow easy comparison between the two metrics.
+
+```tsx
+{ 
+  key: 'unbeatenRate', 
+  label: 'Unbeaten %', 
+  sortable: true,
+  tooltip: 'Unbeaten percentage (wins + draws / total games)',
+  formatter: (_, player) => {
+    if (!player) return '0.0%';
+    
+    const wins = player.wins || 0;
+    const draws = player.draws || 0;
+    const losses = player.losses || 0;
+    const totalGames = wins + draws + losses;
+    
+    if (totalGames === 0) return '0.0%';
+    
+    // Calculate unbeaten percentage (wins + draws) / total games
+    const unbeatenPercentage = ((wins + draws) / totalGames) * 100;
+    return `${unbeatenPercentage.toFixed(1)}%`;
+  }
+}
+```
+
+The Unbeaten % column includes custom sorting logic to ensure it works correctly with both ascending and descending sorting:
+
+```tsx
+if (sortColumn === 'unbeatenRate') {
+  // Calculate unbeaten percentages for sorting
+  const aWins = a.wins || 0;
+  const aDraws = a.draws || 0;
+  const aLosses = a.losses || 0;
+  const aTotalGames = aWins + aDraws + aLosses;
+  
+  const bWins = b.wins || 0;
+  const bDraws = b.draws || 0;
+  const bLosses = b.losses || 0;
+  const bTotalGames = bWins + bDraws + bLosses;
+  
+  // Calculate unbeaten percentages
+  const aUnbeatenRate = aTotalGames === 0 ? 0 : ((aWins + aDraws) / aTotalGames) * 100;
+  const bUnbeatenRate = bTotalGames === 0 ? 0 : ((bWins + bDraws) / bTotalGames) * 100;
+  
+  // Sort based on direction (asc or desc)
+  return sortDirection === 'asc' ? aUnbeatenRate - bUnbeatenRate : bUnbeatenRate - aUnbeatenRate;
+}
+```
+
+This custom sorting logic is needed because the Unbeaten % is a calculated value that doesn't directly exist in the player data object. The sorting follows the same pattern as other calculated columns, supporting both ascending (lowest to highest) and descending (highest to lowest) sort directions.
+
 All three visual bar components (GameResultsBar, GoalsDistributionBar, and TeamDistributionBar) follow a consistent vertical alignment pattern with colored text indicators at the top and a proportional colored bar below for easy visual comparison.
 
 The goals column features a multi-sort capability that allows users to cycle through all possible combinations of goals metrics and sort directions by clicking repeatedly on the column header:
@@ -280,6 +336,34 @@ The goals column features a multi-sort capability that allows users to cycle thr
 This provides users with complete flexibility to analyze player performance based on offensive (Goals For) or defensive (Goals Against) metrics from a single column. The column header dynamically changes to indicate both which metric is being used for sorting and the sort direction (using ↑ for ascending and ↓ for descending).
 
 The component also has the capability to display goal differential using a centered bar that extends left (red) for negative values or right (green) for positive values - this can be enabled by setting the `mode` property to `"differential"` in the GoalsDistributionBar component.
+
+### Visual Streak Bars
+The streak information is displayed using visual bars that show both the maximum streak and current streak in a single component:
+
+```tsx
+{ 
+  key: 'winStreaks', 
+  label: 'Win Streak', 
+  sortable: true,
+  tooltip: 'Win streak - bar shows max streak with marker at current position',
+  formatter: (_, player) => {
+    if (!player) return 'N/A';
+    
+    return <StreakBar 
+      currentStreak={player.currentWinStreak || 0}
+      maxStreak={player.maxWinStreak || 0}
+      label="Win"
+      tableMax={maxWinStreakValue}
+    />;
+  }
+}
+```
+
+The `StreakBar` component provides these key features:
+- Shows maximum win/unbeaten streak as a bar relative to the highest streak in the table
+- Displays a "You Are Here" marker showing where the current streak sits relative to the personal best
+- Uses distinct color coding: purple for win streaks and amber/gold for unbeaten streaks
+- Includes a visual legend explaining the elements
 
 ## Usage
 The Comprehensive Stats Table is used on the Stats page and displays data based on the selected year filter:
@@ -321,15 +405,28 @@ The UI has been streamlined by removing the information banner previously shown 
    - Dedicated Caps column showing total games played
    - Separate Results column showing only games with known outcomes
    - Repositioned Win % column to appear directly after Results for logical grouping
+   - Consolidated streak columns into visual representations showing current and max streaks together
 
 2. **Improved Results Visualization**: Updated the GameResultsBar component to:
    - Display outcomes in a logical progression: wins (green), draws (purple), losses (red)
    - Match the legend ordering with the visual bar segments for consistency
    - Focus only on known outcomes for better visual clarity
 
-3. **Win Percentage Display Fix**: Fixed an issue with win percentages displaying incorrectly (e.g., 4330.0% instead of 43.3%). The formatter now correctly handles percentage values without applying an additional multiplication by 100.
+3. **New Streak Visualization**: Added the StreakBar component to:
+   - Show maximum streak length relative to other players in the table
+   - Display current streak position with a "You Are Here" marker
+   - Use distinct color coding (purple for win streaks, amber/gold for unbeaten streaks)
+   - Provide better visual context for streak data comparison
+   - Display a special "PB!" indicator when a player is at their personal best
 
-4. **Filtering Logic Improvement**: Changed filtering criteria from minimum 10 caps to minimum 10 games with known outcomes (wins+losses+draws). This ensures players with sufficient game data are displayed, even if some of their games don't have recorded outcomes.
+4. **GF/GA Ratio Column**: Added a new column showing:
+   - Ratio of Goals For to Goals Against (similar to K/D ratio in FPS games)
+   - Color-coded values (green for ratios > 1, red for ratios < 1)
+   - Special handling for edge cases (infinity symbol for players who never concede)
+
+5. **Win Percentage Display Fix**: Fixed an issue with win percentages displaying incorrectly (e.g., 4330.0% instead of 43.3%). The formatter now correctly handles percentage values without applying an additional multiplication by 100.
+
+6. **Filtering Logic Improvement**: Changed filtering criteria from minimum 10 caps to minimum 10 games with known outcomes (wins+losses+draws). This ensures players with sufficient game data are displayed, even if some of their games don't have recorded outcomes.
 
 ## Known Issues
 As of May 2025, the component includes protection against XP value display issues that were previously causing values to disappear or reset to zero. While we've implemented robust safeguards, the underlying data structure might still benefit from further optimization.

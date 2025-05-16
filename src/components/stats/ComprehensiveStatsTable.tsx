@@ -6,6 +6,7 @@ import { Tooltip } from '../ui/Tooltip';
 import { TeamDistributionBar } from './TeamDistributionBar';
 import { GoalsDistributionBar } from './GoalsDistributionBar';
 import { GameResultsBar } from './GameResultsBar';
+import { StreakBar } from './StreakBar';
 
 // Props interface for the ComprehensiveStatsTable component
 interface ComprehensiveStatsTableProps {
@@ -57,6 +58,10 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   // For goals column, we'll track which specific metric to sort by (goalsFor or goalsAgainst)
   const [goalsSortMetric, setGoalsSortMetric] = useState<'goalsFor' | 'goalsAgainst'>('goalsFor');
+  
+  // Track maximum streak values across all players for relative scaling
+  const [maxWinStreakValue, setMaxWinStreakValue] = useState(0);
+  const [maxUnbeatenStreakValue, setMaxUnbeatenStreakValue] = useState(0);
   
   // Use the stats hook to get player statistics
   const { loading, error, comprehensiveStats, fetchComprehensivePlayerStats } = useStats();
@@ -110,6 +115,21 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       
       // Store valid stats for future reference
       validStatsRef.current = comprehensiveStats;
+      
+      // Calculate maximum streak values for visual scaling
+      let maxWin = 0;
+      let maxUnbeaten = 0;
+      
+      comprehensiveStats.forEach((player) => {
+        if (player.maxWinStreak > maxWin) maxWin = player.maxWinStreak;
+        if (player.maxUnbeatenStreak > maxUnbeaten) maxUnbeaten = player.maxUnbeatenStreak;
+      });
+      
+      setMaxWinStreakValue(maxWin);
+      setMaxUnbeatenStreakValue(maxUnbeaten);
+      
+      console.log(`Max win streak across all players: ${maxWin}`);
+      console.log(`Max unbeaten streak across all players: ${maxUnbeaten}`);
     } else if (comprehensiveStats?.length === 0) {
       console.warn('Received empty comprehensive stats array');
       
@@ -172,6 +192,26 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       }
     },
     { 
+      key: 'unbeatenRate', 
+      label: 'Unbeaten %', 
+      sortable: true,
+      tooltip: 'Unbeaten percentage (wins + draws / total games)',
+      formatter: (_, player) => {
+        if (!player) return '0.0%';
+        
+        const wins = player.wins || 0;
+        const draws = player.draws || 0;
+        const losses = player.losses || 0;
+        const totalGames = wins + draws + losses;
+        
+        if (totalGames === 0) return '0.0%';
+        
+        // Calculate unbeaten percentage (wins + draws) / total games
+        const unbeatenPercentage = ((wins + draws) / totalGames) * 100;
+        return `${unbeatenPercentage.toFixed(1)}%`;
+      }
+    },
+    { 
       key: 'goals', 
       label: () => {
         // Show different label based on the current goals sort metric and direction
@@ -211,28 +251,66 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       }
     },
     { 
-      key: 'currentWinStreak', 
-      label: 'Current Win Streak', 
-      sortable: true,
-      tooltip: 'Current consecutive wins'
+      key: 'goalRatio', 
+      label: 'GF/GA Ratio', 
+      sortable: true, 
+      tooltip: 'Goals For/Against Ratio (similar to K/D ratio in FPS games)',
+      formatter: (_, player) => {
+        // Calculate goals for/against ratio
+        if (!player) return 'N/A';
+        
+        const goalsFor = player.goalsFor || 0;
+        const goalsAgainst = player.goalsAgainst || 0;
+        
+        // Handle division by zero case
+        if (goalsAgainst === 0) {
+          // If goalsFor is also 0, ratio is 0. Otherwise, it's technically infinite
+          return goalsFor === 0 ? 
+            <span className="font-semibold">0.00</span> : 
+            <span className="font-semibold text-green-600">∞</span>;
+        }
+        
+        // Calculate ratio and format to 2 decimal places
+        const ratio = goalsFor / goalsAgainst;
+        const formattedRatio = ratio.toFixed(2);
+        
+        // Color based on value: green if > 1, red if < 1, neutral if = 1
+        const colorClass = ratio > 1 ? 'text-green-600' : ratio < 1 ? 'text-red-600' : '';
+        
+        return <span className={`font-semibold ${colorClass}`}>{formattedRatio}</span>;
+      }
     },
     { 
-      key: 'maxWinStreak', 
-      label: 'Longest Win Streak', 
+      key: 'winStreaks', 
+      label: 'Win Streak', 
       sortable: true,
-      tooltip: 'Longest consecutive win streak'
+      tooltip: 'Win streak - bar shows max streak with marker at current position',
+      formatter: (_, player) => {
+        if (!player) return 'N/A';
+        
+        return <StreakBar 
+          currentStreak={player.currentWinStreak || 0}
+          maxStreak={player.maxWinStreak || 0}
+          label="Win"
+          tableMax={maxWinStreakValue}
+        />;
+      }
     },
     { 
-      key: 'currentUnbeatenStreak', 
-      label: 'Current Unbeaten', 
+      key: 'unbeatenStreaks', 
+      label: 'Unbeaten Streak', 
       sortable: true,
-      tooltip: 'Current streak without losing (wins and draws)'
-    },
-    { 
-      key: 'maxUnbeatenStreak', 
-      label: 'Longest Unbeaten', 
-      sortable: true,
-      tooltip: 'Longest streak without losing (wins and draws)'
+      tooltip: 'Unbeaten streak (wins and draws) - bar shows max streak with marker at current position',
+      formatter: (_, player) => {
+        if (!player) return 'N/A';
+        
+        return <StreakBar 
+          currentStreak={player.currentUnbeatenStreak || 0}
+          maxStreak={player.maxUnbeatenStreak || 0}
+          label="Unbeaten"
+          tableMax={maxUnbeatenStreakValue}
+        />;
+      }
     },
     { 
       key: 'teamDistribution', 
@@ -294,6 +372,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
     // Debug log when sorting happens
     console.log(`Sorting ${filteredPlayers.length} players by ${sortColumn} ${sortDirection}`);
     
+    // Helper functions for sorting specific columns
     const sortByTeamDistribution = (a: ComprehensivePlayerStats, b: ComprehensivePlayerStats) => {
       const aValue = a.blueTeamPercentage || 0;
       const bValue = b.blueTeamPercentage || 0;
@@ -305,28 +384,80 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
         const aValue = a.goalsFor || 0;
         const bValue = b.goalsFor || 0;
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      } else if (goalsSortMetric === 'goalsAgainst') {
+      } else {
         const aValue = a.goalsAgainst || 0;
         const bValue = b.goalsAgainst || 0;
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
-      return 0;
     };
-
+    
+    // Handle sorting for the combined streak columns
+    const actualSortColumn = sortColumn === 'winStreaks' 
+      ? 'maxWinStreak' 
+      : sortColumn === 'unbeatenStreaks'
+        ? 'maxUnbeatenStreak'
+        : sortColumn;
+    
+    // Return sorted players array
     return [...filteredPlayers].sort((a, b) => {
-      // Special handling for team distribution column (sort by blue team percentage)
+      // Special handling for specific columns
       if (sortColumn === 'teamDistribution') {
         return sortByTeamDistribution(a, b);
       }
       
-      // Special handling for goals column (using the current goals sort metric)
       if (sortColumn === 'goals') {
         return sortByGoals(a, b);
       }
       
+      if (sortColumn === 'winStreaks') {
+        const aValue = a.maxWinStreak || 0;
+        const bValue = b.maxWinStreak || 0;
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      if (sortColumn === 'unbeatenStreaks') {
+        const aValue = a.maxUnbeatenStreak || 0;
+        const bValue = b.maxUnbeatenStreak || 0;
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      if (sortColumn === 'unbeatenRate') {
+        // Calculate unbeaten percentages for sorting
+        const aWins = a.wins || 0;
+        const aDraws = a.draws || 0;
+        const aLosses = a.losses || 0;
+        const aTotalGames = aWins + aDraws + aLosses;
+        
+        const bWins = b.wins || 0;
+        const bDraws = b.draws || 0;
+        const bLosses = b.losses || 0;
+        const bTotalGames = bWins + bDraws + bLosses;
+        
+        // Calculate unbeaten percentages
+        const aUnbeatenRate = aTotalGames === 0 ? 0 : ((aWins + aDraws) / aTotalGames) * 100;
+        const bUnbeatenRate = bTotalGames === 0 ? 0 : ((bWins + bDraws) / bTotalGames) * 100;
+        
+        // Sort based on direction (asc or desc)
+        return sortDirection === 'asc' ? aUnbeatenRate - bUnbeatenRate : bUnbeatenRate - aUnbeatenRate;
+      }
+      
+      if (sortColumn === 'goalRatio') {
+        // Calculate ratios
+        const aGoalsFor = a.goalsFor || 0;
+        const aGoalsAgainst = a.goalsAgainst || 0;
+        const bGoalsFor = b.goalsFor || 0;
+        const bGoalsAgainst = b.goalsAgainst || 0;
+        
+        // Handle division by zero cases
+        let aRatio = aGoalsAgainst === 0 ? (aGoalsFor === 0 ? 0 : Number.MAX_VALUE) : aGoalsFor / aGoalsAgainst;
+        let bRatio = bGoalsAgainst === 0 ? (bGoalsFor === 0 ? 0 : Number.MAX_VALUE) : bGoalsFor / bGoalsAgainst;
+        
+        return sortDirection === 'asc' ? aRatio - bRatio : bRatio - aRatio;
+      }
+      
       // Get the values to compare based on sort column
-      const aValue: any = a[sortColumn as keyof ComprehensivePlayerStats];
-      const bValue: any = b[sortColumn as keyof ComprehensivePlayerStats];
+      const aValue: any = a[actualSortColumn as keyof ComprehensivePlayerStats];
+      const bValue: any = b[actualSortColumn as keyof ComprehensivePlayerStats];
       
       // Handle null values
       if (aValue === null && bValue === null) return 0;
