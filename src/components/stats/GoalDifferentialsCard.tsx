@@ -54,61 +54,71 @@ export const GoalDifferentialsCard = ({ goalDifferentials }: GoalDiffCardProps) 
           <div><Target className="w-6 h-6" /></div>
         </div>
         
-        {/* Custom-built table with perfect alignment */}
-        <div className="space-y-1 mb-4">
-          {/* Fixed header row with column titles */}
-          <div className="flex justify-between items-center text-xs opacity-80 pb-2 pr-1">
-            <div className="flex-1">Player</div>
-            <div className="grid grid-cols-5 gap-2 w-60">
-              <div className="text-center">Caps</div>
-              <div className="text-center">GF</div>
-              <div className="text-center">GA</div>
-              <div className="text-center">+/-</div>
-              <div className="text-center relative">
-                <span>GF/GA</span>
-                <Tooltip content="Ratio of Goals For to Goals Against">
-                  <span className="cursor-help text-info absolute -right-2 -top-1 text-xs">ⓘ</span>
-                </Tooltip>
+        {/* Responsive mobile notice - Only visible on xs screens */}
+        <div className="lg:hidden text-xs mb-2 text-white/80">
+          <p className="text-center">👉 Swipe horizontally to view all stats 👈</p>
+        </div>
+
+        {/* Scrollable container for mobile */}
+        <div className="overflow-x-auto pb-2 -mx-2 px-2">
+          {/* Custom-built table with responsive design */}
+          <div className="space-y-1 mb-4 min-w-[320px]">
+            {/* Header row with column titles */}
+            <div className="flex text-xs opacity-80 pb-2 pr-1">
+              {/* Left side: Name column */}
+              <div className="w-[40%] min-w-[120px]">Player</div>
+              {/* Right side: Stats columns */}
+              <div className="grid grid-cols-5 gap-1 xs:gap-2 flex-1">
+                <div className="text-center">Caps</div>
+                <div className="text-center">GF</div>
+                <div className="text-center">GA</div>
+                <div className="text-center">+/-</div>
+                <div className="text-center relative">
+                  <span>GF/GA</span>
+                  <Tooltip content="Ratio of Goals For to Goals Against">
+                    <span className="cursor-help text-info absolute -right-2 -top-1 text-xs">ⓘ</span>
+                  </Tooltip>
+                </div>
               </div>
             </div>
+            
+            {/* Player rows */}
+            {displayPlayers.map((player, index) => (
+              <motion.div
+                key={player.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <div className="flex items-center">
+                  {/* Player name with medal - fixed width for consistent layout */}
+                  <div className="flex items-center gap-1 xs:gap-2 w-[40%] min-w-[120px]">
+                    {index < 3 ? (
+                      <span className="w-5 h-5 flex-shrink-0">{medals[index]}</span>
+                    ) : (
+                      <span className="w-5 h-5 flex-shrink-0"></span>
+                    )}
+                    <span className="truncate block" title={player.friendlyName}>{player.friendlyName}</span>
+                  </div>
+                  
+                  {/* Stats with responsive layout */}
+                  <div className="grid grid-cols-5 gap-1 xs:gap-2 flex-1 text-right pr-1">
+                    <div className="text-center text-white/90">{player.caps}</div>
+                    <div className="text-success text-center">{player.goalsFor}</div>
+                    <div className="text-error text-center">{player.goalsAgainst}</div>
+                    <div className={`font-bold text-center ${player.goalDifferential > 0 ? 'text-success' : player.goalDifferential < 0 ? 'text-error' : ''}`}>
+                      {player.goalDifferential > 0 ? `+${player.goalDifferential}` : player.goalDifferential}
+                    </div>
+                    <div className={`text-center font-semibold ${player.goalsAgainst === 0 ? 'text-warning' : (player.goalsFor / player.goalsAgainst) >= 1 ? 'text-success' : 'text-error'}`}>
+                      {player.goalsAgainst === 0 
+                        ? '∞' 
+                        : (player.goalsFor / player.goalsAgainst).toFixed(1)}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-          
-          {/* Player rows */}
-          {displayPlayers.map((player, index) => (
-            <motion.div
-              key={player.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <div className="flex justify-between items-center">
-                {/* Player name with medal */}
-                <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
-                  {index < 3 ? (
-                    <span className="w-5 h-5 flex-shrink-0">{medals[index]}</span>
-                  ) : (
-                    <span className="w-5 h-5 flex-shrink-0"></span>
-                  )}
-                  <span className="truncate block">{player.friendlyName}</span>
-                </div>
-                
-                {/* Stats with perfect alignment - now with Caps column */}
-                <div className="grid grid-cols-5 gap-2 w-60 text-right pr-1">
-                  <div className="text-center text-white/90">{player.caps}</div>
-                  <div className="text-success text-center">{player.goalsFor}</div>
-                  <div className="text-error text-center">{player.goalsAgainst}</div>
-                  <div className={`font-bold text-center ${player.goalDifferential > 0 ? 'text-success' : player.goalDifferential < 0 ? 'text-error' : ''}`}>
-                    {player.goalDifferential > 0 ? `+${player.goalDifferential}` : player.goalDifferential}
-                  </div>
-                  <div className={`text-center font-semibold ${player.goalsAgainst === 0 ? 'text-warning' : (player.goalsFor / player.goalsAgainst) >= 1 ? 'text-success' : 'text-error'}`}>
-                    {player.goalsAgainst === 0 
-                      ? '∞' 
-                      : (player.goalsFor / player.goalsAgainst).toFixed(1)}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
         </div>
         
         <p className="text-sm opacity-80 mt-auto text-left">
