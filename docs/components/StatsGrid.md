@@ -207,7 +207,10 @@ The percentile is then mapped to a rarity level:
 - World Class: Top 7% (93rd percentile)
 - Professional: Top 20% (80th percentile)
 - Semi Pro: Top 40% (60th percentile)
-- Amateur: Below 60th percentile
+- Amateur: Players with XP > 0 but below the 60th percentile
+- Retired: Players with 0 XP
+
+Players with 0 XP are automatically assigned the "Retired" rarity tier regardless of percentile calculations.
 
 ### XP Data Consistency
 To ensure XP data consistency across components:

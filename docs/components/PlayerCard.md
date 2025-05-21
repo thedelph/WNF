@@ -43,6 +43,19 @@ Each modifier is displayed in a colored badge with its corresponding percentage:
 - Blue badge for registration streak bonus
 - Yellow badge for bench warmer streak
 
+## Rarity Tiers
+
+The player card uses different background styles to represent the player's rarity tier:
+
+- **Legendary**: Gold gradient with animation (top 2% of players)
+- **World Class**: Purple gradient with animation (top 7% of players)
+- **Professional**: Blue gradient with animation (top 20% of players)
+- **Semi Pro**: Green gradient with animation (top 40% of players) 
+- **Amateur**: Grey gradient (all remaining players with XP > 0)
+- **Retired**: Black background with light text (players with 0 XP)
+
+The player's rarity tier is displayed in a badge at the bottom right corner of the card. Rank shields are only shown for players with XP > 0 (non-Retired players).
+
 ## Implementation Details
 
 ### Attendance Streak Data

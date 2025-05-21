@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Player } from '../PlayerCardTypes';
+import { PlayerCardProps } from '../PlayerCardTypes';
 import { PlayerCard } from '../PlayerCard';
 
 interface LayoutProps {
-  players: Player[];
+  players: PlayerCardProps[];
 }
 
 /**
@@ -47,7 +47,8 @@ export const PlayerGridLayout: React.FC<LayoutProps> = ({ players }) => {
               losses={player.losses}
               whatsapp_group_member={player.whatsapp_group_member}
               isRandomlySelected={player.isRandomlySelected}
-              rank={player.rank}
+              // Only pass rank if player has XP > 0 (not Retired)
+              rank={player.xp > 0 ? player.rank : undefined}
               xp={player.xp}
               totalGames={player.totalGames}
               hasSlotOffer={player.hasSlotOffer}

@@ -3,6 +3,21 @@
 ## Overview
 The XP (Experience Points) system is designed to reward player participation and consistency in games. It uses a sophisticated weighted calculation that emphasizes recent game participation while maintaining a historical record of player engagement.
 
+## Rarity Tiers
+
+Players are classified into tiers based on their XP relative to other players:
+
+| Tier | Percentile | Description |
+|------|------------|-------------|
+| **Legendary** | Top 2% | Elite players at the very top of the leaderboard |
+| **World Class** | Top 7% | Exceptional players with consistent high performance |
+| **Professional** | Top 20% | Accomplished players with significant experience |
+| **Semi Pro** | Top 40% | Established players with moderate experience |
+| **Amateur** | Above 0 XP | Players still building their experience (with any XP > 0) |
+| **Retired** | 0 XP | Inactive players with no current XP |
+
+Players with 0 XP are classified as "Retired" and displayed with a black card design. These players do not show rank shields, as they no longer have an active ranking in the system.
+
 ## Core Components
 
 ### 1. Database Tables

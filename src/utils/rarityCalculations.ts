@@ -2,23 +2,31 @@ import { PlayerStats } from '../types/player';
 
 /**
  * Rarity tiers and their percentile thresholds (for reference only, actual calculation done in database)
+ * All these tiers only apply to players with XP > 0
  */
 export const RARITY_THRESHOLDS = {
   LEGENDARY: 0.98,    // Top 2% (98th percentile)
   WORLD_CLASS: 0.93,  // Top 7% (93rd percentile)
   PROFESSIONAL: 0.80, // Top 20% (80th percentile)
-  SEMI_PRO: 0.60     // Top 40% (60th percentile)
+  SEMI_PRO: 0.60,     // Top 40% (60th percentile)
+  AMATEUR: 0.00       // All players with XP > 0
 } as const;
 
-export type RarityTier = 'Legendary' | 'World Class' | 'Professional' | 'Semi Pro' | 'Amateur';
+export type RarityTier = 'Legendary' | 'World Class' | 'Professional' | 'Semi Pro' | 'Amateur' | 'Retired';
 
 /**
  * Get the rarity tier from the database value
  * @param rarity - The rarity string from the database
+ * @param xp - The player's XP value (optional)
  * @returns The player's rarity tier
  */
-export const getRarity = (rarity: string | null): RarityTier => {
+export const getRarity = (rarity: string | null, xp?: number | null): RarityTier => {
+  // Special case for players with 0 XP - they get the 'Retired' tier
+  if (xp === 0) return 'Retired';
+  
+  // If no rarity provided or null/undefined, default to Amateur
   if (!rarity) return 'Amateur';
+  
   return rarity as RarityTier;
 };
 
@@ -31,6 +39,10 @@ export const getRarity = (rarity: string | null): RarityTier => {
  */
 export const calculateRarity = (_xp: number, _allXp: number[]): RarityTier => {
   console.warn('calculateRarity is deprecated. Rarity is now calculated in the database.');
+  
+  // Special case for players with 0 XP
+  if (_xp === 0) return 'Retired';
+  
   return 'Amateur'; // Default to Amateur if database value not available
 };
 

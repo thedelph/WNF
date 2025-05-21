@@ -70,7 +70,8 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
                 draws={playerStats[registration.player.id]?.draws || 0}
                 losses={playerStats[registration.player.id]?.losses || 0}
                 totalGames={playerStats[registration.player.id]?.totalGames || 0}
-                rank={playerStats[registration.player.id]?.rank || undefined}
+                // Only pass rank if player has XP > 0 (not Retired)
+                rank={playerStats[registration.player.id]?.xp > 0 ? playerStats[registration.player.id]?.rank : undefined}
                 unpaidGames={isDroppedOut ? 0 : playerStats[registration.player.id]?.unpaidGames || 0}
                 unpaidGamesModifier={unpaidGamesModifier}
                 registrationStreakBonus={stats[registration.player.id].registrationStreak}

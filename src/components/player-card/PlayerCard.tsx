@@ -1,11 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Trophy, Star, Medal, CircleOff, CircleDot, Sparkles, Swords, ListChecks, Flame } from 'lucide-react'
-import { usePlayerPenalties } from '../../hooks/usePlayerPenalties';
-import { useUser } from '../../hooks/useUser';
-import WhatsAppIndicator from '../indicators/WhatsAppIndicator';
-import { RankShield } from './RankShield';
 import { PlayerCardFront } from './PlayerCardFront'
 import { PlayerCardBack } from './PlayerCardBack'
 
@@ -28,7 +22,7 @@ interface PlayerCardProps {
   currentStreak: number
   maxStreak: number
   benchWarmerStreak: number
-  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
+  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired'
   avatarSvg?: string
   isRandomlySelected?: boolean
   status?: string
@@ -74,7 +68,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   potentialOfferTimes,
   hasActiveSlotOffers,
   whatsapp_group_member,
-  children,
   rank,
   unpaidGames = 0,
   unpaidGamesModifier = 0,
@@ -84,7 +77,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
-  const getRarityColor = (rarity: string) => {
+  const getRarityColor = (rarity: string | undefined) => {
+    if (!rarity) return 'bg-gradient-to-br from-slate-300 via-slate-400 to-zinc-600 shadow-lg shadow-slate-500/50'
     switch (rarity) {
       case 'Legendary':
         return 'bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 shadow-lg shadow-yellow-500/50 animate-gradient-xy'
@@ -94,6 +88,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         return 'bg-gradient-to-br from-blue-300 via-blue-500 to-cyan-600 shadow-lg shadow-blue-500/50 animate-gradient-xy'
       case 'Semi Pro':
         return 'bg-gradient-to-br from-green-300 via-green-500 to-emerald-600 shadow-lg shadow-green-500/50 animate-gradient-xy'
+      case 'Retired':
+        // Black design for retired players (0 XP)
+        return 'bg-gray-900 text-gray-100 shadow-lg shadow-slate-700/50 border border-gray-800'
+      case 'Amateur':
+        return 'bg-gradient-to-br from-slate-300 via-slate-400 to-zinc-600 shadow-lg shadow-slate-500/50'
       default:
         return 'bg-gradient-to-br from-slate-300 via-slate-400 to-zinc-600 shadow-lg shadow-slate-500/50'
     }

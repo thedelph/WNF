@@ -9,7 +9,7 @@ interface PlayerStats {
   losses: number;
   total_games: number;
   win_rate: number;
-  rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary';
+  rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired';
   caps: number;
   activeBonuses: number;
   activePenalties: number;

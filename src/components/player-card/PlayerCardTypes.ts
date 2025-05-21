@@ -14,7 +14,7 @@ export interface PlayerCardProps {
   currentStreak: number
   maxStreak: number
   benchWarmerStreak: number
-  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary'
+  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired'
   avatarSvg?: string
   isRandomlySelected?: boolean
   status?: string
