@@ -1,6 +1,6 @@
 import React from 'react';
-import { Filter, ChevronDown } from 'lucide-react';
-import { Player } from '../PlayerCardTypes';
+import { ChevronDown, Filter } from 'lucide-react';
+import { PlayerCardProps } from '../PlayerCardTypes';
 import { Tooltip } from '../../ui/Tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,8 +31,8 @@ interface FiltersProps {
   setHideZeroXpPlayers: React.Dispatch<React.SetStateAction<boolean>>;
   isFiltersOpen: boolean;
   setIsFiltersOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  sortConfig: { key: keyof Player; direction: 'asc' | 'desc' };
-  setSortConfig: React.Dispatch<React.SetStateAction<{ key: keyof Player; direction: 'asc' | 'desc' }>>;
+  sortConfig: { key: keyof PlayerCardProps; direction: 'asc' | 'desc' };
+  setSortConfig: React.Dispatch<React.SetStateAction<{ key: keyof PlayerCardProps; direction: 'asc' | 'desc' }>>;
 }
 
 /**
@@ -53,14 +53,14 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
   sortConfig,
   setSortConfig,
 }) => {
-  const handleSort = (key: keyof Player) => {
+  const handleSort = (key: keyof PlayerCardProps) => {
     setSortConfig(prevConfig => ({
       key,
       direction: prevConfig.key === key && prevConfig.direction === 'desc' ? 'asc' : 'desc'
     }));
   };
 
-  const getSortButtonClass = (key: keyof Player) => {
+  const getSortButtonClass = (key: keyof PlayerCardProps) => {
     return `btn btn-sm ${sortConfig.key === key ? 'btn-primary' : 'btn-ghost'}`;
   };
 
@@ -117,8 +117,8 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
                   </label>
                   
                   <label className="cursor-pointer label">
-                    <span className="label-text mr-2">Hide Players with 0 XP</span>
-                    <Tooltip content="Players with no XP won't appear">
+                    <span className="label-text mr-2">Hide Retired Players</span>
+                    <Tooltip content="Hide inactive players with 0 XP">
                       <input
                         type="checkbox"
                         className="toggle toggle-primary"
