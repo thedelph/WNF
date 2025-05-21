@@ -11,6 +11,7 @@ The graph also displays colored square indicators on the x-axis to show individu
 - 🟥 **Red squares**: Losses
 - 🟪 **Purple squares**: Draws
 - ⬜ **Grey squares**: Unknown/No outcome
+- **Dashed border squares**: Games excluded from win rate calculation
 
 The graph uses the Recharts library to create a fully responsive visualization that works well on both desktop and mobile devices.
 
@@ -19,7 +20,8 @@ The component renders a combination chart with:
 - X-axis: Sequential game numbers (1, 2, 3, etc.)
 - Y-axis: Win rate percentage (0-100%)
 - Color-coded squares on the x-axis indicating the outcome of each game
-- Tooltip showing detailed information for each data point including game number, date, outcome, and win rates
+- Dashed-border squares for games excluded from the win rate calculation
+- Enhanced tooltips showing detailed information for each data point including game number, date, outcome, win rates, and exclusion status
 
 ## Props
 
@@ -51,11 +53,16 @@ The component processes game history to calculate:
   - Red squares for losses
   - Purple squares for draws
   - Grey squares for games with unknown outcomes
-- Games with unclear outcomes (null or draw) are not counted in win rate calculations
+  - Dashed border around squares for games excluded from win rate calculation
+- Games are excluded from win rate calculations if they have:
+  - Uneven teams (different number of players on each side)
+  - Unknown outcomes
+- Only games with even teams and clear win/loss/draw outcomes contribute to the win rate line
 - The 10-game moving average (orange line) only appears after the player has at least 10 valid games with win/loss outcomes
 - The component uses Framer Motion for smooth animations when loading
-- Enhanced tooltips provide detailed information about specific games when hovering over data points
-- The legend uses square icons to match the visual representation of game outcomes on the graph
+- Enhanced tooltips provide detailed information about specific games when hovering over data points, including why certain games are excluded from calculations
+- Summary statistics below the graph show how many games are included/excluded from the win rate calculation
+- The legend includes an example of an excluded game for clarity
 
 ## Usage
 
@@ -77,11 +84,12 @@ const { getGameOutcome } = useGameHistory();
 ## Technical Implementation
 
 - Uses Recharts' `ComposedChart` to combine line charts (for win rates) with scatter plots (for game outcomes)
-- Custom shape functions are used to render square markers for game outcomes 
+- Custom shape functions are used to render square markers for game outcomes and special dashed borders for excluded games
 - Y-axis domain is precisely set to [0, 100] for the win rate percentage range
 - Outcome indicators (squares) are positioned at y=2 to ensure visibility while maintaining a clean axis
 - Responsive design logic detects screen size and adjusts layout accordingly
-- Tooltip uses a custom component to display detailed game information
+- Enhanced tooltip uses a custom component to display detailed game information including exclusion status and reasons
+- Tracks statistics about included and excluded games to provide a summary below the chart
 
 ## Related Components
 

@@ -158,6 +158,47 @@ CREATE TABLE player_xp_snapshots (
 - Uses SECURITY DEFINER to ensure proper permissions
 - Granted to authenticated and service_role roles
 
+## Player Statistics Functions
+
+### get_player_recent_win_rates
+```sql
+get_player_recent_win_rates(games_threshold INTEGER DEFAULT 10)
+```
+
+**Purpose:**  
+Calculates the recent win rate for each player based on their most recent games (default: last 10 games).
+
+**Parameters:**
+- `games_threshold`: The number of recent games to consider (defaults to 10)
+
+**Behavior:**
+1. Identifies all completed games where the player was selected to play
+2. Filters to only include balanced games (team sizes differ by at most 1 player)
+3. Considers a player's most recent N games (where N is the games_threshold)
+4. Calculates the win rate percentage, total games played, and the count of wins/draws/losses
+5. Returns results for all players (with 0.0% for those with no recent games)
+
+**Returns:**
+A table with columns:
+- id (UUID): Player's unique identifier
+- recent_win_rate (NUMERIC): Percentage of games won (0-100)
+- games_played (BIGINT): Number of recent games considered
+- recent_wins (BIGINT): Number of wins in recent games
+- recent_draws (BIGINT): Number of draws in recent games
+- recent_losses (BIGINT): Number of losses in recent games
+
+**Usage Example:**
+```sql
+-- Get recent win rates for all players
+SELECT * FROM get_player_recent_win_rates();
+
+-- Get recent win rates based on last 5 games
+SELECT * FROM get_player_recent_win_rates(5);
+```
+
+**Important Note:**
+The function uses 'selected' as the player status value to identify games where a player participated (not 'played').
+
 ## Database Views
 
 ### highest_xp_records_view

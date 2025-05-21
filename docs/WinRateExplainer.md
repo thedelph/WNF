@@ -50,6 +50,14 @@ Display Rules:
 - Win rates are consistently formatted across all components using the same database function
 - The StatsGrid component displays both overall win rate and recent win rate in the same cell, with a form indicator showing the difference
 
+Win Rate Visualisation:
+---------------------
+The WinRateGraph component shows a player's win rate history with special visual indicators:
+- Games excluded from win rate calculation (those with uneven teams or unknown outcomes) are shown with a dashed border
+- Only games with even teams and clear outcomes (win/loss/draw) affect the blue win rate line
+- Enhanced tooltips explain why certain games are excluded from the calculations
+- A summary below the graph shows statistics about included vs excluded games
+
 Technical Implementation:
 ----------------------
 
@@ -81,6 +89,15 @@ Win rates are automatically updated in the following scenarios:
 - When a game's teams are modified
 
 This ensures that player win rates are always up-to-date and reflect their current performance.
+
+5. Visual Indicators in WinRateGraph:
+The player profile page's win rate graph includes visual indicators to explain the win rate calculation:
+- Dashed-border squares indicate games excluded from win rate calculations (uneven teams, unknown outcomes)
+- Solid-border squares indicate games included in the calculation
+- Tooltips on each game provide details about why a game might be excluded
+- Summary statistics below the graph show the breakdown of excluded vs included games
+
+This helps players understand why certain games might not appear to affect their overall win rate.
 
 4. Database Implementation:
 ```sql
