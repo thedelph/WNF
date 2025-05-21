@@ -99,24 +99,42 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
   const hasEvenTeams = (game: GameHistory): boolean => {
     // Check if the game has team size information directly
     if (game.games?.blue_team_size !== undefined && game.games?.orange_team_size !== undefined) {
-      return game.games.blue_team_size === game.games.orange_team_size;
+      const isEven = game.games.blue_team_size === game.games.orange_team_size;
+      console.log(`Game ${game.games?.sequence_number || '?'} team size check: Blue=${game.games.blue_team_size}, Orange=${game.games.orange_team_size}, Even=${isEven}`);
+      return isEven;
     }
     
     // Try alternate data structure
     if (game.blue_team_size !== undefined && game.orange_team_size !== undefined) {
-      return game.blue_team_size === game.orange_team_size;
+      const isEven = game.blue_team_size === game.orange_team_size;
+      console.log(`Game ${game.games?.sequence_number || game.game?.sequence_number || '?'} team size check (alt): Blue=${game.blue_team_size}, Orange=${game.orange_team_size}, Even=${isEven}`);
+      return isEven;
     }
     
-    // For the one game with uneven teams - game #5 in the sequence
+    // For the one game with known uneven teams - game #5 in the sequence
     const gameId = game.game?.id || game.games?.id || '';
     const sequenceNumber = game.games?.sequence_number || game.game?.sequence_number;
     
     // Game #5 is the one with uneven teams (ID: 3808f43c-6b2e-4c6c-bb1f-71702e119cff)
     if (gameId === '3808f43c-6b2e-4c6c-bb1f-71702e119cff' || sequenceNumber === 5) {
+      console.log(`Game #5 (${gameId}) - known uneven teams`);
       return false;
     }
     
+    // For games with known scores, we can reasonably assume teams were even
+    const hasScores = 
+      (game.games?.score_blue !== null && game.games?.score_blue !== undefined && 
+       game.games?.score_orange !== null && game.games?.score_orange !== undefined) ||
+      (game.game?.score_blue !== null && game.game?.score_blue !== undefined && 
+       game.game?.score_orange !== null && game.game?.score_orange !== undefined);
+       
+    if (hasScores) {
+      console.log(`Game ${sequenceNumber || '?'} has scores, assuming even teams`);
+      return true;
+    }
+    
     // Default to true for other games
+    console.log(`Game ${sequenceNumber || '?'} no team size info, defaulting to even teams`);
     return true;
   };
 
@@ -124,8 +142,8 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
   const processGameData = (games: GameHistory[]): GraphDataPoint[] => {
     if (!games || games.length === 0) return [];
 
-    // Process the first game
-
+    console.log(`Processing ${games.length} games for win rate graph`);
+    
     // Sort games by date (oldest first)
     const sortedGames = [...games].sort((a, b) => {
       // Access the date from the game object - handle the structure from PlayerProfile.tsx
@@ -296,9 +314,34 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         });
       }
       
-      // For the final data point only, ensure we match the backend exactly
-      if (index === sortedGames.length - 1 && officialWinRate !== undefined) {
-        currentWinRate = officialWinRate;
+      // For the final data point only, ensure we NEVER reset to 0% incorrectly
+      // Only use the official win rate if it's actually provided and valid
+      if (index === sortedGames.length - 1) {
+        // Check if we have a valid calculated win rate with actual wins
+        const validCalculatedRate = currentWinRate > 0 && wins > 0;
+        
+        // Check if backend value is valid (not null, undefined, or 0 when we have wins)
+        const invalidBackendRate = officialWinRate === null || 
+                                  officialWinRate === undefined || 
+                                  (officialWinRate === 0 && wins > 0);
+        
+        if (validCalculatedRate && invalidBackendRate) {
+          // Keep our calculated win rate - it's more reliable
+          console.log(`⚠️ NOT using invalid backend win rate (${officialWinRate}) - keeping calculated ${currentWinRate.toFixed(1)}%`);
+        } else if (officialWinRate !== undefined && officialWinRate !== null) {
+          // Only use backend rate if it's actually a valid number
+          console.log(`Using official win rate from backend: ${officialWinRate}%`);
+          currentWinRate = officialWinRate;
+        } else {
+          console.log(`Backend rate is ${officialWinRate}, keeping calculated rate: ${currentWinRate.toFixed(1)}%`);
+        }
+        
+        // Final validation - never allow 0% if we have wins
+        if (currentWinRate === 0 && wins > 0) {
+          console.log(`⚠️ Win rate incorrectly dropped to 0% at the last game despite ${wins} wins - fixing!`);
+          currentWinRate = (wins / (wins + losses + draws)) * 100;
+          console.log(`Fixed final win rate: ${currentWinRate.toFixed(1)}%`);
+        }
       }
       
       // Calculate the 10-game moving average (only consider the last 10 valid games)
