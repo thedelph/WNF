@@ -36,7 +36,10 @@ The component renders a combination chart with:
 The component processes game history to calculate:
 
 1. **Cumulative Win Rate**: Total wins / total games played (only games with clear outcomes are counted)
-2. **Moving Average**: Win rate over the last 10 games (rolling window), which only appears once the player has completed at least 10 games with valid win/loss outcomes
+2. **10-Game Moving Average**: Win rate over the last 10 games, calculated as (Wins / (Wins + Losses + Draws)) × 100
+   - Draws ARE included in the denominator, consistent with the database win rate calculation
+   - Only appears once the player has completed at least 10 games with valid outcomes (wins/losses/draws)
+   - Uses exactly the same formula as the recent win rate shown on player profiles
 
 ## Responsive Behavior
 

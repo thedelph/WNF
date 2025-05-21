@@ -32,7 +32,9 @@ Recent Win Rate:
 --------------
 In addition to overall win rate, WNF also calculates a "Recent Win Rate" based on a player's last 10 games. This provides insight into a player's current form.
 
-- Recent Win Rate = (Number of Wins in Last 10 Games / 10) × 100
+- Recent Win Rate = (Number of Wins in Last 10 Games / (Wins + Losses + Draws)) × 100
+- Like the overall win rate, draws ARE included in the denominator
+- Only includes games with even teams and valid outcomes (same criteria as overall win rate)
 - Form Indicator: Shows the difference between recent and overall win rates
   - indicates better recent form (e.g.,  2.0% means recent win rate is 2% higher than overall)
   - indicates worse recent form (e.g.,  3.5% means recent win rate is 3.5% lower than overall)
