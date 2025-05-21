@@ -308,6 +308,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       // Look for the last 10 valid games
       let recentWins = 0;
       let recentLosses = 0;
+      let recentDraws = 0;
       let recentGamesCount = 0;
       
       // Start from current game and go backwards
@@ -319,14 +320,18 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
             recentWins++;
           } else if (recentOutcome === 'Lost') {
             recentLosses++;
+          } else if (recentOutcome === 'Draw') {
+            recentDraws++;
           }
         }
       }
       
       // Only set a moving average if we have exactly 10 valid games with clear outcomes
       // This ensures we're showing a true 10-game moving average
-      if (recentGamesCount === 10 && (recentWins + recentLosses) > 0) {
-        movingAverage = (recentWins / (recentWins + recentLosses)) * 100;
+      // Include draws in the denominator to match the database calculation formula
+      if (recentGamesCount === 10) {
+        movingAverage = (recentWins / (recentWins + recentLosses + recentDraws)) * 100;
+        console.log(`  Moving Avg Formula: (${recentWins} / (${recentWins} + ${recentLosses} + ${recentDraws})) * 100 = ${movingAverage.toFixed(1)}%`);
       } else {
         movingAverage = null; // No moving average until we have 10 valid games
       }
