@@ -35,6 +35,7 @@ import Stats from './pages/Stats'
 import StandaloneStats from './pages/StandaloneStats'
 import { ScrollToTop } from './components/ui/ScrollToTop'
 import TokenManagement from './pages/admin/TokenManagement'
+import AccountManagement from './pages/admin/AccountManagement'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -100,6 +101,7 @@ const App: React.FC = () => {
                 <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
                 <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
                 <Route path="/admin/tokens" element={<TokenManagement />} />
+                <Route path="/admin/account-management" element={<AccountManagement />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/changelog" element={<Changelog />} />
               </Route>

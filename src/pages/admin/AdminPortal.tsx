@@ -10,6 +10,7 @@ import HistoricalDataCard from '../../components/admin/cards/HistoricalDataCard'
 import RatingsCard from '../../components/admin/cards/RatingsCard'
 import { SlotOffersCard } from '../../components/admin/cards/SlotOffersCard'
 import { TokenManagementCard } from '../../components/admin/cards/TokenManagementCard'
+import AccountManagementCard from '../../components/admin/cards/AccountManagementCard'
 
 const AdminPortal: React.FC = () => {
   const { isAdmin, isSuperAdmin, loading: adminLoading } = useAdmin()
@@ -39,6 +40,7 @@ const AdminPortal: React.FC = () => {
           <TeamGenerationCard key="team" />,
           <PaymentManagementCard key="payment" />,
           <TokenManagementCard key="token" />,
+          <AccountManagementCard key="account" />,
           <AdminManagementCard key="admin" />,
           <HistoricalDataCard key="historical" />,
           <SlotOffersCard key="slots" />,

@@ -30,7 +30,8 @@ const ForgotPassword: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Request password reset from Supabase
+      // Request password reset from Supabase with proper redirect URL
+      // This ensures the password reset link points to our reset-password page
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -42,8 +43,9 @@ const ForgotPassword: React.FC = () => {
       // Show success message and update UI
       setResetSent(true);
       toast.success('Password reset link sent to your email');
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.message || 'Failed to send reset link. Please try again.');
+      console.error('Password reset error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -111,8 +113,21 @@ const ForgotPassword: React.FC = () => {
               Please check your email and click on the link to reset your password.
             </p>
             
+            <div className="alert alert-warning mb-4">
+              <div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>
+                  <strong>Important:</strong> The reset email may appear in your spam/junk folder. 
+                  Please check there if you don't see it in your inbox.
+                </span>
+              </div>
+            </div>
+            
             <p className="text-sm text-gray-500 mb-6">
-              If you don't see the email, check your spam folder or request another reset link.
+              The email contains a link labelled "Reset Password" that you need to click.
+              If the link text doesn't work, you may need to copy and paste the full URL from the email into your browser.
             </p>
             
             <div className="flex flex-col gap-2">

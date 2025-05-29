@@ -376,11 +376,19 @@ export default function Component() {
           const registrations = registrationsData || [];
           const updatedProfileData = {
             ...profileData,
-            gameSequences: registrations?.map((reg: any) => ({
-              sequence: reg.games.sequence_number,
-              status: reg.status,
-              is_historical: reg.games.is_historical
-            })) || [],
+            gameSequences: registrations?.map((reg: any) => {
+              // Check if games object exists before accessing properties
+              if (!reg.games) {
+                console.warn('Registration missing game data:', reg);
+                return null;
+              }
+              
+              return {
+                sequence: reg.games.sequence_number,
+                status: reg.status,
+                is_historical: reg.games.is_historical
+              };
+            }).filter(Boolean) || [], // Filter out null values
             latestSequence: latestSequence // Add latest sequence to profile data
           };
 

@@ -16,6 +16,7 @@ interface GamePayment {
   venue: {
     name: string
   }
+  // Add any other properties that might be coming from d.games
 }
 
 const ITEMS_PER_PAGE = 10
@@ -115,10 +116,43 @@ const PaymentHistory = () => {
 
       if (error) throw error
 
-      const transformedGames = data?.map(d => ({
-        ...d.games,
-        payment_status: d.payment_status
-      })).filter(game => game) || []
+      // Make sure we only include games with valid data and proper typing
+      const transformedGames: GamePayment[] = [];
+      
+      // Safely process the data
+      if (data && Array.isArray(data)) {
+        for (const d of data) {
+          // Skip if games data is missing or invalid
+          if (!d || !d.games || typeof d.games !== 'object') {
+            console.warn('Skipping invalid game data item:', d);
+            continue;
+          }
+          
+          // Access properties safely with optional chaining
+          const gameId = d.games?.id;
+          const gameDate = d.games?.date;
+          const gameSequence = d.games?.sequence_number;
+          const venueName = d.games?.venue?.name;
+          
+          // Skip if any required fields are missing
+          if (!gameId || !gameDate || !gameSequence || !venueName) {
+            console.warn('Skipping game with missing required fields:', d.games);
+            continue;
+          }
+          
+          // Create a properly typed game payment object
+          transformedGames.push({
+            id: gameId,
+            date: gameDate,
+            sequence_number: gameSequence,
+            payment_link: d.games?.payment_link || null,
+            payment_status: d.payment_status || null,
+            venue: {
+              name: venueName
+            }
+          });
+        }
+      }
 
       setGames(transformedGames)
     } catch (error) {
@@ -253,9 +287,9 @@ const PaymentHistory = () => {
               </thead>
               <tbody>
                 <AnimatePresence>
-                  {games.map((game) => (
+                  {games.map((game, index) => (
                     <TableRow 
-                      key={game.id} 
+                      key={`table-row-${game.id || 'unknown'}-${game.sequence_number || index}`} 
                       game={game} 
                       onRefresh={fetchPaymentHistory}
                     />
@@ -268,9 +302,9 @@ const PaymentHistory = () => {
           {/* Mobile View - Cards */}
           <div className="md:hidden space-y-4">
             <AnimatePresence>
-              {games.map((game) => (
+              {games.map((game, index) => (
                 <PaymentCard 
-                  key={game.id} 
+                  key={`payment-card-${game.id || 'unknown'}-${game.sequence_number || index}`} 
                   game={game} 
                   onRefresh={fetchPaymentHistory}
                 />
