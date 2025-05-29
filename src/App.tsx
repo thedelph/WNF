@@ -25,6 +25,8 @@ import Teams from './pages/admin/Teams'
 import TeamBalancingOverview from './components/admin/pages/TeamBalancingOverview'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import NotificationsPage from './pages/NotificationsPage'
 import { SlotOffersPage } from './pages/admin/SlotOffersPage'
 import EmailVerification from './pages/EmailVerification'
@@ -75,6 +77,8 @@ const App: React.FC = () => {
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/verify-email" element={<EmailVerification />} />
                 <Route path="/admin" element={<AdminPortal />} />
                 <Route path="/admin/admins" element={<AdminManagement />} />

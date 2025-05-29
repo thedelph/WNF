@@ -11,7 +11,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       
       if (error) {
         if (error.message.includes('Email not confirmed')) {
@@ -34,8 +34,8 @@ const Login: React.FC = () => {
 
       toast.success('Logged in successfully!')
       navigate('/')
-    } catch (error) {
-      toast.error(error.message)
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed')
     }
   }
 
@@ -72,7 +72,7 @@ const Login: React.FC = () => {
                 Login
               </button>
               <div className="text-sm text-center mt-4">
-                <a href="#" className="link link-primary">Forgot password?</a>
+                <Link to="/forgot-password" className="link link-primary">Forgot password?</Link>
               </div>
               <div className="divider">OR</div>
               <div className="text-sm text-center">
