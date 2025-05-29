@@ -6,13 +6,16 @@ import { toast } from 'react-toastify';
 
 interface AvatarCreatorProps {
   onSave: (avatarOptions: any, avatarUrl: string) => void;
-  onCancel: () => void;
+  onClose: () => void;
   initialOptions?: any;
+  playerId?: string;
+  currentAvatar?: string;
+  currentOptions?: any;
 }
 
-const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onCancel, initialOptions }) => {
+const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onClose, initialOptions, currentOptions, currentAvatar }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [avatarOptions, setAvatarOptions] = useState(initialOptions || {
+  const [avatarOptions, setAvatarOptions] = useState(currentOptions || initialOptions || {
     seed: Math.random().toString(),
   });
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -20,13 +23,13 @@ const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onCancel, initial
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent): void => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        onCancel();
+        onClose();
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onCancel]);
+  }, [onClose]);
 
   const generateAvatar = async (): Promise<string> => {
     try {
@@ -101,7 +104,7 @@ const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onCancel, initial
 
         <div className="flex justify-end gap-2 mt-6">
           <button 
-            onClick={onCancel}
+            onClick={onClose}
             className="btn btn-error"
           >
             Cancel
