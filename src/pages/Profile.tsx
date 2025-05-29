@@ -6,109 +6,12 @@ import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import AvatarCreator from '../components/AvatarCreator'
-import PaymentHistory from '../components/profile/PaymentHistory'
-import XPBreakdown from '../components/profile/XPBreakdown'
-import StatsGrid from '../components/profile/StatsGrid'
-import TokenStatus from '../components/profile/TokenStatus'
+import ProfileHeader from '../components/profile/ProfileHeader'
+import ProfileContent from '../components/profile/ProfileContent'
+import EditNameModal from '../components/profile/EditNameModal'
 import { useTokenStatus } from '../hooks/useTokenStatus'
-
-// Helper function to format date
-const formatDate = (dateString: string | null): string => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-};
-
-// Helper function to retry Supabase queries
-async function executeWithRetry<T>(queryFn: () => Promise<T>, options = { maxRetries: 3, shouldToast: true }): Promise<T> {
-  const { maxRetries, shouldToast } = options;
-  let lastError: any = null;
-  
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await queryFn();
-    } catch (error) {
-      lastError = error;
-      console.error(`Attempt ${attempt + 1} failed:`, error);
-      await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-    }
-  }
-  
-  if (shouldToast) {
-    toast.error('Failed to load data after multiple attempts');
-  }
-  
-  throw lastError;
-}
-
-interface PlayerProfile {
-  friendly_name: string;
-  current_stored_xp: number;
-  base_xp: number;
-  reserve_xp: number;
-  reserve_games: number;
-  subtotal_before_modifiers: number;
-  attendance_streak: number;
-  attendance_streak_modifier: number;
-  reserve_game_modifier: number;
-  registration_streak: number;
-  registration_streak_modifier: number;
-  unpaid_games_count: number;
-  unpaid_games_modifier: number;
-  total_xp: number;
-  rarity?: string;
-  current_streak?: number;
-  max_streak?: number;
-  avatar_svg?: string | null;
-  avatar_options?: any;
-  token?: {
-    status: string;
-    last_used_at: string | null;
-    next_token_at: string | null;
-    created_at: string;
-  };
-}
-
-interface ExtendedPlayerData {
-  id: string;
-  user_id: string;
-  friendly_name: string;
-  avatar_svg: string | null;
-  avatar_options: any;
-  current_streak: number;
-  max_streak: number;
-  xp: number;
-  total_xp?: number;
-  rank: number;
-  rarity: string;
-  reserveXP: number;
-  whatsapp_group_member: boolean;
-  registration_streak?: number;
-  gameSequences?: Array<{
-    sequence: number;
-    status: string;
-    team: string;
-  }>;
-  win_rate?: number;
-  recent_win_rate?: number;
-  highestXP?: number;
-  highestXPSnapshotDate?: string;
-  maxStreakDate?: string;
-  caps?: number;
-  reserve_games?: number;
-  bench_warmer_streak?: number;
-  registrationStreak?: number;
-  registrationStreakApplies?: boolean;
-  unpaidGames?: number;
-  latestSequence?: number;
-}
-
-// Calculate rarity percentile based on player's XP compared to all players
-const calculateRarity = (playerXP: number, allXP: number[]): number => {
-  const totalPlayers = allXP.length;
-  const playersBelow = allXP.filter(xp => xp < playerXP).length;
-  return Math.round((playersBelow / totalPlayers) * 100);
-};
+import { formatDate, executeWithRetry, calculateRarity } from '../utils/profileHelpers'
+import { ExtendedPlayerData } from '../types/profile'
 
 export default function Component() {
   const { user } = useAuth()
@@ -289,10 +192,11 @@ export default function Component() {
         // Get XP breakdown from player_xp table with better error handling
         let xpData = null;
         try {
+          // Fetch player_xp data with rank information
           const xpResult = await executeWithRetry(
             () => supabase
               .from('player_xp')
-              .select('*')
+              .select('*, rank')
               .eq('player_id', playerData.id)
               .single()
           );
@@ -302,6 +206,7 @@ export default function Component() {
             toast.error('Failed to load XP data');
           } else {
             xpData = xpResult.data;
+            console.log('Player XP data with rank:', xpData);
           }
         } catch (xpError) {
           console.error('Error processing XP data:', xpError);
@@ -320,7 +225,8 @@ export default function Component() {
           total_xp: xpData?.xp || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 0),
           reserveXP: xpData?.reserve_xp || 0,
           reserve_games: xpData?.reserve_games || 0, // Add reserve_games from player_xp_breakdown
-          rank: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rank : 0,
+          // Use the rank from xpData if available, otherwise try to get it from playerData.player_xp
+          rank: xpData?.rank || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rank : 7),
           rarity: xpData?.rarity || (playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].rarity : 'Amateur'),
           current_streak: playerData.current_streak || 0,
           max_streak: correctMaxStreak,
@@ -417,39 +323,14 @@ export default function Component() {
   };
 
   useEffect(() => {
-    if (user?.id) {
-      loadProfile();
+    if (user) {
+      loadProfile()
     }
-  }, [user?.id]);
-
-  // Set up real-time subscription for profile updates
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const subscription = supabase
-      .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'players',
-          filter: `user_id=eq.${user.id}`
-        },
-        (_reg: any) => {
-          loadProfile()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [user?.id])
+  }, [user])
 
   const handleEditProfile = () => setIsEditing(true)
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (newName: string) => {
     if (!profile) {
       toast.error('Please fill in all fields.')
       return
@@ -464,14 +345,14 @@ export default function Component() {
     try {
       const { error } = await supabase
         .from('players')
-        .update({ friendly_name: profile.friendly_name })
+        .update({ friendly_name: newName })
         .eq('user_id', user!.id)
 
       if (error) throw error
 
       setProfile((prevProfile) => ({
         ...prevProfile!,
-        friendly_name: profile.friendly_name,
+        friendly_name: newName,
       }))
 
       toast.success('Profile updated successfully!!')
@@ -506,213 +387,59 @@ export default function Component() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-error">{error}</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="container mx-auto px-4 py-6 sm:py-8 max-w-7xl">
-      <motion.div
+    <div className="min-h-screen bg-base-100">
+      <motion.div 
+        className="container mx-auto px-4 py-8 max-w-6xl"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="space-y-6 sm:space-y-8"
+        transition={{ duration: 0.5 }}
       >
-        {error && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="alert alert-error"
-          >
-            <span>{error}</span>
-          </motion.div>
-        )}
-
-        {isLoading ? (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex justify-center items-center min-h-[60vh]"
-          >
-            <span className="loading loading-spinner loading-lg"></span>
-          </motion.div>
-        ) : profile ? (
+        {profile ? (
           <>
-            {/* Profile Header Section */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-base-200 rounded-box p-6 shadow-lg"
-            >
-              <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                {/* Avatar Section */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative group"
-                >
-                  <img 
-                    src={profile.avatar_svg || '/src/assets/default-avatar.svg'} 
-                    alt="Avatar" 
-                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-full cursor-pointer shadow-md transition-transform"
-                    onClick={() => setIsAvatarEditorOpen(true)}
-                  />
-                  <div 
-                    className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center"
-                    onClick={() => setIsAvatarEditorOpen(true)}
-                  >
-                    <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity">Edit</span>
-                  </div>
-                </motion.div>
+            {/* Profile Header with Avatar and Name */}
+            <ProfileHeader
+              profile={profile}
+              onEditClick={handleEditProfile}
+              onAvatarEditClick={() => setIsAvatarEditorOpen(true)}
+            />
 
-                {/* Name and Email Section */}
-                <div className="flex-grow space-y-3">
-                  <div className="flex items-center gap-3">
-                    {isEditing ? (
-                      <motion.input 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        type="text" 
-                        value={profile.friendly_name} 
-                        onChange={(e) => setProfile((prevProfile) => ({ ...prevProfile!, friendly_name: e.target.value }))} 
-                        className="input input-bordered text-xl sm:text-2xl font-bold w-full max-w-xs"
-                        placeholder="Enter your friendly name"
-                      />
-                    ) : (
-                      <motion.h1 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-2xl sm:text-3xl font-bold"
-                      >
-                        {profile.friendly_name}
-                      </motion.h1>
-                    )}
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => setIsEditing(true)}
-                      className="btn btn-ghost btn-sm"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                        />
-                      </svg>
-                    </motion.button>
-                  </div>
-                  <motion.p 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-base-content/70"
-                  >
-                    {user.email}
-                  </motion.p>
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-2"
-                  >
-                    <span className="badge badge-primary">{profile.rarity}</span>
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Stats Grid Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <StatsGrid stats={{
-                id: profile.id,
-                friendly_name: profile.friendly_name,
-                xp: profile.xp,
-                current_streak: profile.current_streak || 0,
-                max_streak: profile.max_streak || 0,
-                max_streak_date: profile.maxStreakDate || undefined,
-                rarity: profile.rarity,
-                win_rate: profile.win_rate,
-                recent_win_rate: profile.recent_win_rate,
-                active_bonuses: 0, // Default values if not present in profile
-                active_penalties: 0,
-                highest_xp: profile.highestXP,
-                highest_xp_date: profile.highestXPSnapshotDate || undefined,
-                caps: profile.caps || 0,
-                latestSequence: profile.latestSequence || 0 // Pass latest sequence to StatsGrid
-              }} />
-            </motion.div>
-
-            {/* XP Breakdown Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-base-200 rounded-box p-6 shadow-lg"
-            >
-              <h2 className="text-xl sm:text-2xl font-bold mb-4">XP Breakdown</h2>
-              <XPBreakdown stats={{
-                caps: profile.caps || 0,
-                activeBonuses: 0,
-                activePenalties: 0,
-                currentStreak: profile.current_streak || 0,
-                gameHistory: profile.gameSequences?.map((reg: any) => ({
-                  sequence: reg.sequence,
-                  status: reg.status,
-                  unpaid: false
-                })) || [],
-                latestSequence: profile.latestSequence || 0, // Pass latest sequence to XPBreakdown
-                xp: profile.xp || 0,
-                reserveXP: profile.reserveXP || 0,
-                reserveCount: profile.reserve_games || 0,
-                benchWarmerStreak: profile.bench_warmer_streak || 0,
-                registrationStreak: profile.registrationStreak || 0,
-                registrationStreakApplies: profile.registrationStreakApplies || false,
-                unpaidGames: profile.unpaidGames || 0
-              }} />
-            </motion.div>
-
-            {/* Token Status Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-base-200 rounded-box p-6 shadow-lg"
-            >
-              <h2 className="text-xl sm:text-2xl font-bold mb-4">Token Status</h2>
-              {tokenStatus && (
-                <TokenStatus 
-                  status={tokenStatus.status}
-                  lastUsedAt={tokenStatus.lastUsedAt}
-                  createdAt={tokenStatus.createdAt}
-                  isEligible={tokenStatus.isEligible}
-                  recentGames={tokenStatus.recentGames}
-                  hasPlayedInLastTenGames={tokenStatus.hasPlayedInLastTenGames}
-                  hasRecentSelection={tokenStatus.hasRecentSelection}
-                  hasOutstandingPayments={tokenStatus.hasOutstandingPayments}
-                  outstandingPaymentsCount={tokenStatus.outstandingPaymentsCount}
-                  whatsappGroupMember={tokenStatus.whatsappGroupMember}
-                />
-              )}
-            </motion.div>
-
-            {/* Payment History Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-base-200 rounded-box p-6 shadow-lg"
-            >
-              <h2 className="text-xl sm:text-2xl font-bold mb-4">Payment History</h2>
-              <PaymentHistory playerId={profile?.id} />
-            </motion.div>
+            {/* Main Content Grid */}
+            <div className="grid gap-6">
+              <ProfileContent
+                profile={profile}
+                tokenStatus={tokenStatus}
+              />
+            </div>
           </>
         ) : null}
 
+        {/* Edit Name Modal */}
+        {isEditing && profile && (
+          <EditNameModal
+            currentName={profile.friendly_name}
+            onSave={handleSaveProfile}
+            onClose={() => setIsEditing(false)}
+          />
+        )}
+
+        {/* Avatar Editor */}
         {isAvatarEditorOpen && (
           <motion.div
             initial={{ opacity: 0 }}

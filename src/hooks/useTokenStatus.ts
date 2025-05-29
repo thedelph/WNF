@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { executeWithRetry } from '../utils/network';
 
-interface TokenStatus {
+export interface TokenStatus {
   status: string;
   lastUsedAt: string | null;
   nextTokenAt: string | null;
