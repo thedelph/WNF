@@ -3,25 +3,74 @@ import { motion } from 'framer-motion'
 import type { ExtendedPlayerData } from 'src/types/profile'
 import { Tooltip } from '../ui/Tooltip'
 import { Shield } from 'lucide-react'
+import type { RarityTier } from '../../utils/rarityCalculations'
+
+/**
+ * Helper function to determine the badge class based on rarity tier
+ * @param rarity - The player's rarity tier
+ * @returns The appropriate badge class
+ */
+const getRarityBadgeClass = (rarity: string): string => {
+  switch (rarity) {
+    case 'Legendary':
+      return 'badge-warning'; // Gold/yellow for top 2%
+    case 'World Class':
+      return 'badge-secondary'; // Purple for top 7%
+    case 'Professional':
+      return 'badge-accent'; // Teal/green for top 20%
+    case 'Semi Pro':
+      return 'badge-info'; // Blue for top 40%
+    case 'Amateur':
+      return 'badge-neutral'; // Gray for any XP > 0
+    case 'Retired':
+      return 'badge-ghost'; // Transparent for 0 XP
+    default:
+      return 'badge-ghost';
+  }
+};
 
 interface ProfileHeaderProps {
   profile: ExtendedPlayerData
   onEditClick: () => void
   onAvatarEditClick: () => void
+  onPasswordResetClick: () => void
 }
 
 export default function ProfileHeader({ 
   profile, 
   onEditClick,
-  onAvatarEditClick 
+  onAvatarEditClick,
+  onPasswordResetClick
 }: ProfileHeaderProps) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-base-200 rounded-box p-8 shadow-lg mb-6"
+      className="bg-base-200 rounded-box p-8 shadow-lg mb-6 relative"
     >
+      {/* Password Reset Button - Top Right for desktop, below name on mobile */}
+      <div className="hidden sm:block absolute top-4 right-4">
+        <Tooltip content="Change your password">
+          <button 
+            onClick={onPasswordResetClick}
+            className="btn btn-outline btn-xs h-8 px-2"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-3.5 w-3.5 mr-1.5" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+              style={{ position: 'relative', top: '0px' }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <span style={{ position: 'relative', top: '0px', fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.02em' }}>CHANGE PASSWORD</span>
+          </button>
+        </Tooltip>
+      </div>
       <div className="flex flex-col sm:flex-row items-center gap-6">
         {/* Avatar Section */}
         <Tooltip content="Click to edit your avatar">
@@ -56,16 +105,31 @@ export default function ProfileHeader({
 
         {/* Profile Info */}
         <div className="flex-1 text-center sm:text-left">
-          <div className="flex items-center gap-3 justify-center sm:justify-start">
-            <h1 className="text-3xl font-bold">{profile.friendly_name}</h1>
-            <Tooltip content="Edit your name">
-              <button
-                onClick={onEditClick}
-                className="btn btn-ghost btn-sm btn-circle"
+          {/* Player Name */}
+          <div className="flex flex-col items-center sm:items-start mt-1 mb-2 md:mb-0">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white sm:text-left">
+              {profile.friendly_name}
+            </h2>
+          </div>
+          
+          {/* Mobile Password Reset Button - only visible on small screens */}
+          <div className="sm:hidden mt-2 flex justify-center">
+            <Tooltip content="Change your password">
+              <button 
+                onClick={onPasswordResetClick}
+                className="btn btn-outline btn-xs gap-1 px-2"
+                style={{ height: '26px', display: 'inline-flex', alignItems: 'center' }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-3 w-3 mr-1" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.02em' }}>CHANGE PASSWORD</span>
               </button>
             </Tooltip>
           </div>
@@ -76,13 +140,7 @@ export default function ProfileHeader({
               {profile.total_xp || profile.xp} XP
             </div>
             {profile.rarity && (
-              <div className={`badge badge-lg ${
-                profile.rarity === 'Legendary' ? 'badge-warning' :
-                profile.rarity === 'Epic' ? 'badge-secondary' :
-                profile.rarity === 'Rare' ? 'badge-accent' :
-                profile.rarity === 'Common' ? 'badge-info' :
-                'badge-ghost'
-              }`}>
+              <div className={`badge badge-lg ${getRarityBadgeClass(profile.rarity)}`}>
                 {profile.rarity}
               </div>
             )}

@@ -4,14 +4,16 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import AvatarCreator from '../components/AvatarCreator'
 import ProfileHeader from '../components/profile/ProfileHeader'
 import ProfileContent from '../components/profile/ProfileContent'
 import EditNameModal from '../components/profile/EditNameModal'
+import PasswordChangeSection from '../components/profile/PasswordChangeSection'
 import { useTokenStatus } from '../hooks/useTokenStatus'
 import { formatDate, executeWithRetry, calculateRarity } from '../utils/profileHelpers'
 import { ExtendedPlayerData } from '../types/profile'
+import { Tooltip } from '../components/ui/Tooltip'
 
 export default function Component() {
   const { user } = useAuth()
@@ -24,6 +26,7 @@ export default function Component() {
   const [showAvatarCreator, setShowAvatarCreator] = useState(false)
   const [showEditModal, setShowEditModal] = useState<string | null>(null)
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
+  const [showPasswordReset, setShowPasswordReset] = useState(false)
   const { tokenStatus } = useTokenStatus(playerId || '')
 
   // Function to load profile data
@@ -418,7 +421,41 @@ export default function Component() {
               profile={profile}
               onEditClick={handleEditProfile}
               onAvatarEditClick={() => setIsAvatarEditorOpen(true)}
+              onPasswordResetClick={() => setShowPasswordReset(true)}
             />
+
+            {/* Password Reset Section (shown when requested) */}
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ 
+                height: showPasswordReset ? 'auto' : 0,
+                opacity: showPasswordReset ? 1 : 0
+              }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ 
+                type: 'spring', 
+                stiffness: 300, 
+                damping: 30,
+                opacity: { duration: 0.2 }
+              }}
+              className="overflow-visible mb-6 px-1 pt-1"
+            >
+              <AnimatePresence mode="wait">
+                {showPasswordReset && (
+                  <motion.div
+                    key="password-change-section"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <PasswordChangeSection 
+                      onClose={() => setShowPasswordReset(false)} 
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
             {/* Main Content Grid */}
             <div className="grid gap-6">
@@ -455,6 +492,8 @@ export default function Component() {
             />
           </motion.div>
         )}
+
+
       </motion.div>
     </div>
   );

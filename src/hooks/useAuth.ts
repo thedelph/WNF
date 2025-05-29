@@ -89,11 +89,38 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // First try to get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If we have a session, use a more specific signOut approach
+      if (session) {
+        // Use local scope which only removes the current browser session
+        // This avoids the 403 error that can happen with global scope
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) throw error;
+      } else {
+        // Handle the case where there's no active session
+        // Just reset the local auth state without making the API call
+        setAuthState(prev => ({
+          ...prev,
+          user: null,
+          session: null,
+        }));
+      }
+      
+      // Clear any local storage items if needed
+      localStorage.removeItem('supabase.auth.token');
     } catch (error) {
+      console.error('Error during sign out:', error);
       setAuthState(prev => ({ ...prev, error: error as Error }));
-      throw error;
+      
+      // Even if there's an error, still reset the local state
+      // This ensures the user interface shows logged out state
+      setAuthState(prev => ({
+        ...prev,
+        user: null,
+        session: null,
+      }));
     }
   };
 
