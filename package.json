@@ -21,6 +21,7 @@
     "@types/lodash.debounce": "^4.0.9",
     "@types/papaparse": "^5.3.15",
     "@types/react-beautiful-dnd": "^13.1.8",
+    "@vercel/analytics": "^1.5.0",
     "daisyui": "^2.51.6",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",

@@ -2,6 +2,7 @@ import React from "react"
 import { Routes, Route, Outlet, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { Analytics } from '@vercel/analytics/react'
 import Layout from "./components/Layout"
 import StandaloneLayout from "./components/layout/StandaloneLayout"
 import AdminPortal from "./pages/admin/AdminPortal"
@@ -110,6 +111,8 @@ const App: React.FC = () => {
         </ErrorBoundary>
       </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
+      {/* Vercel Analytics - Tracks page views and other metrics */}
+      <Analytics />
     </QueryClientProvider>
   )
 }
