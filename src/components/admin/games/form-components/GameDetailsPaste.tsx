@@ -3,12 +3,17 @@ import { motion } from 'framer-motion';
 
 interface GameDetailsPasteProps {
   onDateTimeExtracted: (date: string, time: string) => void;
-  onPlayerListsExtracted: (selected: string[], random: string[], reserve: string[], droppedOut: string[]) => void;
+  onPlayerListsExtracted: (selected: string[], random: string[], reserve: string[], droppedOut: string[], tokenUsers: string[]) => void;
   onMaxPlayersExtracted: (maxPlayers: number) => void;
 }
 
 /**
- * Component for pasting and parsing full game details
+ * Enhanced component for pasting and parsing full game details
+ * Now supports the updated WhatsApp message format from players_announced phase:
+ * - Token players (🪙)
+ * - Random selection players (🎲) 
+ * - Players with unpaid games penalty (💰)
+ * - Section headers with player counts: "Selected Players (18)", "Reserves in XP order (3)"
  */
 export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
   onDateTimeExtracted,
@@ -26,18 +31,19 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
         line = line.replace(/^\d+\.\s*/, '');
         // Remove XP info
         line = line.replace(/\s*\(\d+\s*XP\).*$/, '');
-        // Remove any emojis at the start (e.g., "🔄 ")
-        line = line.replace(/^[\u{1F300}-\u{1F9FF}]\s*/u, '');
+        // Remove any emojis at the start (including multiple emojis like "🪙💰")
+        line = line.replace(/^[\u{1F300}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]+\s*/gu, '');
         
         console.log('Parsed player name from line:', { original: line, parsed: line.trim() });
         return line.trim();
       });
   };
 
-  // Function to parse player names and identify random selections
+  // Function to parse player names and identify random selections and token usage
   const parseSelectedPlayers = (text: string) => {
     const selectedPlayers: string[] = [];
     const randomPlayers: string[] = [];
+    const tokenPlayers: string[] = [];
 
     text.split('\n')
       .map(line => line.trim())
@@ -48,10 +54,13 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
         // Remove XP info
         processedLine = processedLine.replace(/\s*\(\d+\s*XP\).*$/, '');
         
-        // Check if the line starts with a dice emoji
-        const isRandom = processedLine.startsWith('🎲');
-        // Remove the dice emoji if present
-        processedLine = processedLine.replace(/^🎲\s*/, '');
+        // Check if the line contains a dice emoji (🎲) - it might be combined with other emojis
+        const isRandom = processedLine.includes('🎲');
+        // Check if the line contains a token emoji (🪙)
+        const isToken = processedLine.includes('🪙');
+        
+        // Remove all emojis at the start (🪙, 🎲, 💰, combinations)
+        processedLine = processedLine.replace(/^[\u{1F300}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]+\s*/gu, '');
         
         const playerName = processedLine.trim();
         if (playerName) {
@@ -59,10 +68,13 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
           if (isRandom) {
             randomPlayers.push(playerName);
           }
+          if (isToken) {
+            tokenPlayers.push(playerName);
+          }
         }
       });
 
-    return { selectedPlayers, randomPlayers };
+    return { selectedPlayers, randomPlayers, tokenPlayers };
   };
 
   // Function to parse the full game details text
@@ -158,30 +170,38 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       onDateTimeExtracted(formattedDate, formattedTime);
     }
 
-    // Find the sections by their headers
-    const selectedPlayersMatch = text.match(/✅\s*Selected Players:\s*\n\n([\s\S]*?)(?=\n\n🔄|\n\n❌|$)/);
-    const reservesMatch = text.match(/🔄\s*Reserves[^:]*:\s*\n\n([\s\S]*?)(?=\n\n❌|$)/);
-    const droppedOutMatch = text.match(/❌\s*Dropped Out\s*\n\n([\s\S]*?)$/);
+    // Find the sections by their headers (updated to handle new format with counts)
+    const selectedPlayersMatch = text.match(/✅\s*Selected Players\s*\((\d+)\):\s*\n([\s\S]*?)(?=\n\n🔄|\n\n❌|$)/);
+    const reservesMatch = text.match(/🔄\s*Reserves[^:]*\((\d+)\):\s*\n([\s\S]*?)(?=\n\n❌|$)/);
+    const droppedOutMatch = text.match(/❌\s*Dropped Out\s*:?\s*\n([\s\S]*?)$/);
+    
+    // Also try legacy format without counts
+    const legacySelectedPlayersMatch = !selectedPlayersMatch ? text.match(/✅\s*Selected Players:\s*\n\n([\s\S]*?)(?=\n\n🔄|\n\n❌|$)/) : null;
+    const legacyReservesMatch = !reservesMatch ? text.match(/🔄\s*Reserves[^:]*:\s*\n\n([\s\S]*?)(?=\n\n❌|$)/) : null;
 
-    console.log('Selected players section:', selectedPlayersMatch?.[1]);
-    console.log('Reserves section:', reservesMatch?.[1]);
+    console.log('Selected players section:', selectedPlayersMatch?.[2] || legacySelectedPlayersMatch?.[1]);
+    console.log('Reserves section:', reservesMatch?.[2] || legacyReservesMatch?.[1]);
     console.log('Dropped out section:', droppedOutMatch?.[1]);
 
-    // Parse player names from each section
-    const { selectedPlayers, randomPlayers } = selectedPlayersMatch 
-      ? parseSelectedPlayers(selectedPlayersMatch[1]) 
-      : { selectedPlayers: [], randomPlayers: [] };
-    const reservePlayers = reservesMatch ? parsePlayerNamesFromSection(reservesMatch[1]) : [];
+    // Parse player names from each section - handle both new format with counts and legacy format
+    const selectedPlayersText = selectedPlayersMatch?.[2] || legacySelectedPlayersMatch?.[1];
+    const reservesText = reservesMatch?.[2] || legacyReservesMatch?.[1];
+    
+    const { selectedPlayers, randomPlayers, tokenPlayers } = selectedPlayersText 
+      ? parseSelectedPlayers(selectedPlayersText) 
+      : { selectedPlayers: [], randomPlayers: [], tokenPlayers: [] };
+    const reservePlayers = reservesText ? parsePlayerNamesFromSection(reservesText) : [];
     const droppedOutPlayers = droppedOutMatch ? parsePlayerNamesFromSection(droppedOutMatch[1]) : [];
 
     console.log('Parsed players:', {
       selected: selectedPlayers,
       random: randomPlayers,
+      token: tokenPlayers,
       reserve: reservePlayers,
       droppedOut: droppedOutPlayers
     });
 
-    onPlayerListsExtracted(selectedPlayers, randomPlayers, reservePlayers, droppedOutPlayers);
+    onPlayerListsExtracted(selectedPlayers, randomPlayers, reservePlayers, droppedOutPlayers, tokenPlayers);
   };
 
   return (
@@ -196,7 +216,7 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       </label>
       <textarea
         className="textarea textarea-bordered h-48"
-        placeholder="Paste the full game details here, including date, time, and player lists..."
+        placeholder="Paste the full game details here, including date, time, and player lists with emojis (🪙 for tokens, 🎲 for random, 💰 for unpaid games)..."
         onChange={(e) => handleFullTextPaste(e.target.value)}
       />
     </motion.div>

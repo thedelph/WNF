@@ -156,6 +156,17 @@ Complex weighted calculation system:
 - Drop-out message positioned after reserve bonus explanation
 - One-click message copying with comprehensive game information
 
+### WhatsApp Import (Game Creation)
+- **GameDetailsPaste** component in CreateGameForm allows pasting WhatsApp messages
+- Automatically parses:
+  - Date/time from message headers
+  - Player lists with emoji indicators (🪙 for tokens, 🎲 for random, 💰 for unpaid)
+  - Max players from game details
+- **Token tracking**: Players with 🪙 emoji are marked as `using_token: true` in database
+- Supports both legacy format and new format with player counts
+- Shows parsed counts in UI: Selected, Token Users, Random Picks, Reserves, Dropped Out
+- Handles multiple emojis per player (e.g., 🪙💰 for token user with unpaid games)
+
 ## Environment Setup
 
 Required environment variables in `.env`:
@@ -188,6 +199,19 @@ VITE_SUPABASE_SERVICE_ROLE_KEY=
 - Random ordering: 4-tier priority system (WhatsApp+paid → Non-WhatsApp+paid → WhatsApp+unpaid → Non-WhatsApp+unpaid)
 - Reserve ordering: WhatsApp status → Payment status → XP → tiebreakers
 - Simulation available in admin GameCard.tsx with detailed reasoning tables
+
+### Game Creation from WhatsApp
+1. Navigate to Admin Portal → Games → Create Game
+2. Select "Player Selection Phase" from Game Phase dropdown
+3. Paste WhatsApp message into "Paste Full Game Details" textarea
+4. System automatically extracts:
+   - Game date/time
+   - Player lists with their statuses
+   - Token usage (🪙 emoji)
+   - Random selections (🎲 emoji)
+5. Verify parsed counts shown in info alert
+6. Adjust other game settings as needed
+7. Submit to create game with all player registrations
 
 ## Code Style Guidelines
 

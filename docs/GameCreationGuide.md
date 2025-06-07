@@ -85,16 +85,28 @@ This phase is used when creating a game where players have already been selected
 - Registration window is automatically set to be in the past:
   - Start: 48 hours before game time
   - End: 24 hours before game time
-- Supports player list pasting functionality
+- Supports player list pasting functionality via WhatsApp import
 - Players can be marked as:
   - Confirmed (Selected by merit)
   - Random Pick
   - Reserve
   - Dropped Out
+  - Token User (🪙)
+
+#### WhatsApp Import Feature:
+The **"Paste Full Game Details"** textarea allows admins to paste WhatsApp messages from the players_announced phase:
+- Automatically extracts date, time, and player lists
+- Recognizes emoji indicators:
+  - 🪙 Token users (marked as `using_token: true`)
+  - 🎲 Random selections
+  - 💰 Unpaid games penalty
+- Shows parsed counts for verification
+- See [WhatsApp Import Documentation](./WhatsAppImport.md) for details
 
 #### Player Selection Methods:
 - **Merit Selection**: Players selected based on their performance/ranking
 - **Random Selection**: Players selected randomly from the available pool
+- **Token Users**: Players who used their priority token (guaranteed slot)
 - **Reserve List**: Players on standby in case of dropouts
 - **Dropped Out**: Players who were selected but can't participate
 
@@ -156,6 +168,7 @@ Players are registered with different statuses depending on their selection:
   player_id: string;
   status: 'selected' | 'reserve' | 'dropped_out';
   selection_method: 'merit' | 'random' | 'none';
+  using_token?: boolean; // Set to true for players with 🪙 emoji
 }
 ```
 

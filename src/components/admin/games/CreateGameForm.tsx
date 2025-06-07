@@ -56,8 +56,18 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   const [reservePlayers, setReservePlayers] = useState<string[]>([]);
   const [randomPickPlayers, setRandomPickPlayers] = useState<string[]>([]);
   const [droppedOutPlayers, setDroppedOutPlayers] = useState<string[]>([]);
+  const [tokenPlayers, setTokenPlayers] = useState<string[]>([]);
   const [teamAPlayers, setTeamAPlayers] = useState<string[]>([]);
   const [teamBPlayers, setTeamBPlayers] = useState<string[]>([]);
+  
+  // Parsed counts state
+  const [parsedCounts, setParsedCounts] = useState({
+    selected: 0,
+    random: 0,
+    reserve: 0,
+    droppedOut: 0,
+    token: 0
+  });
   const [teamAAttackRating, setTeamAAttackRating] = useState(0);
   const [teamADefenseRating, setTeamADefenseRating] = useState(0);
   const [teamBAttackRating, setTeamBAttackRating] = useState(0);
@@ -240,7 +250,8 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
                 game_id: gameResult.id,
                 player_id: playerId,
                 status: 'selected',
-                selection_method: randomPickPlayers.includes(playerId) ? 'random' : 'merit'
+                selection_method: randomPickPlayers.includes(playerId) ? 'random' : 'merit',
+                using_token: tokenPlayers.includes(playerId)
               }))
             );
 
@@ -340,8 +351,18 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     selectedPlayers: string[],
     randomPlayers: string[],
     reservePlayers: string[],
-    droppedOutPlayers: string[]
+    droppedOutPlayers: string[],
+    tokenUsers: string[]
   ) => {
+    // Update parsed counts immediately with raw counts
+    setParsedCounts({
+      selected: selectedPlayers.length,
+      random: randomPlayers.length,
+      reserve: reservePlayers.length,
+      droppedOut: droppedOutPlayers.length,
+      token: tokenUsers.length
+    });
+
     // Filter players to only include those in our database
     const validSelectedPlayers = selectedPlayers
       .map(name => players.find(p => p.friendly_name === name))
@@ -363,10 +384,16 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
       .filter((p): p is Player => p !== undefined)
       .map(p => p.id);
 
+    const validTokenPlayers = tokenUsers
+      .map(name => players.find(p => p.friendly_name === name))
+      .filter((p): p is Player => p !== undefined)
+      .map(p => p.id);
+
     setConfirmedPlayers(validSelectedPlayers);
     setRandomPickPlayers(validRandomPlayers);
     setReservePlayers(validReservePlayers);
     setDroppedOutPlayers(validDroppedOutPlayers);
+    setTokenPlayers(validTokenPlayers);
   };
 
   return (
@@ -382,6 +409,15 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
             onChange={(e) => {
               const newPhase = e.target.value as GameStatus;
               setGamePhase(newPhase);
+              
+              // Reset parsed counts when changing phase
+              setParsedCounts({
+                selected: 0,
+                random: 0,
+                reserve: 0,
+                droppedOut: 0,
+                token: 0
+              });
               
               // Set team announcement time when switching to Player Selection Phase
               if (newPhase === GAME_STATUSES.PLAYERS_ANNOUNCED && date && time) {
@@ -413,6 +449,22 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
             setMaxPlayers(maxPlayers);
           }}
         />
+
+        {/* Parsed Player Counts Display */}
+        {(parsedCounts.selected > 0 || parsedCounts.reserve > 0 || parsedCounts.droppedOut > 0) && (
+          <div className="alert alert-info">
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold">Parsed from WhatsApp message:</span>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                <div>✅ Selected Players: {parsedCounts.selected}</div>
+                <div>🪙 Token Users: {parsedCounts.token}</div>
+                <div>🎲 Random Picks: {parsedCounts.random}</div>
+                <div>🔄 Reserve Players: {parsedCounts.reserve}</div>
+                <div>❌ Dropped Out: {parsedCounts.droppedOut}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Basic Game Details */}
         <BasicGameDetails
