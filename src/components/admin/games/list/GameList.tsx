@@ -53,13 +53,16 @@ export const GameList = forwardRef<{ fetchGames: () => void }, GameListProps>(({
           id,
           status,
           selection_method,
+          using_token,
+          team,
           player:players!game_registrations_player_id_fkey(
             id,
             friendly_name,
             caps,
             active_bonuses,
             active_penalties,
-            current_streak
+            current_streak,
+            unpaid_games
           )
         )
       `)

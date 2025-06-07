@@ -78,6 +78,7 @@ export interface Game {
   pitch_cost: number
   payment_link?: string
   cost_per_person?: number
+  registrations_count?: number  // Computed property for UI display
 }
 
 export interface AdminPermission {
@@ -98,6 +99,7 @@ export interface Player {
   current_streak: number;
   admin_role?: AdminRole;
   isAdmin?: boolean;
+  unpaid_games?: number;
 }
 
 export interface GameHistory {

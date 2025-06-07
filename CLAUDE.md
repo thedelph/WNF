@@ -146,9 +146,14 @@ Complex weighted calculation system:
 
 ### WhatsApp Integration
 - Contextual message generation for all game phases (GameCard.tsx)
-- Selection reasoning summaries with visual indicators (🪙 tokens, 🎲 random, 💰 unpaid)
-- Automatic payment penalty indicators in player announcements
+- Selection reasoning summaries with visual indicators:
+  - 🪙 Token users (displayed first in selected players list)
+  - 🎲 Random selection
+  - 💰 Unpaid games penalty
+- Player counts in headers: "Selected Players (18)", "Reserves in XP order (3)"
+- Automatic payment penalty indicators for both selected and reserve players
 - Reserve streak bonus explanation to encourage continued participation
+- Drop-out message positioned after reserve bonus explanation
 - One-click message copying with comprehensive game information
 
 ## Environment Setup

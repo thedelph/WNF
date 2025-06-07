@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Game, GAME_STATUSES } from '../../../types/game';
 import { format } from 'date-fns';
-import { FaUser, FaUserClock, FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { supabase, supabaseAdmin } from '../../../utils/supabase';
 
@@ -126,7 +126,7 @@ export const GameCard: React.FC<Props> = ({
       const { data: playerXpData, error: xpError } = await supabase
         .from('player_xp')
         .select('player_id, xp')
-        .in('player_id', game.game_registrations?.map(reg => reg.player.id) || []);
+        .in('player_id', game.game_registrations?.map(reg => reg.player?.id).filter(Boolean) || []);
 
       if (xpError) {
         console.error('Error fetching player XP:', xpError);
@@ -191,6 +191,7 @@ Reply to this message with names of any reserves outside of this group that want
         case GAME_STATUSES.PLAYERS_ANNOUNCED:
           // Get all selected players (both merit and random)
           const selectedPlayers = game.game_registrations?.filter(reg => reg.status === 'selected');
+          const reservePlayers = game.game_registrations?.filter(reg => reg.status === 'reserve');
           
           // Get additional data for reasoning
           const tokenPlayers = selectedPlayers?.filter(reg => reg.using_token) || [];
@@ -198,12 +199,9 @@ Reply to this message with names of any reserves outside of this group that want
           const randomPlayers = selectedPlayers?.filter(reg => reg.selection_method === 'random') || [];
           
           // Get player unpaid games data for penalty indicator
-          const { data: unpaidData } = await supabase
-            .from('players')
-            .select('id, unpaid_games')
-            .in('id', selectedPlayers?.map(reg => reg.player.id) || []);
-          
-          const playersWithUnpaidGames = unpaidData?.filter(p => (p.unpaid_games || 0) > 0) || [];
+          // Now included in the player data from game_registrations
+          const allPlayersWithStatus = [...(selectedPlayers || []), ...(reservePlayers || [])];
+          const playersWithUnpaidGames = allPlayersWithStatus.filter(reg => (reg.player?.unpaid_games || 0) > 0);
           
           // Add selection reasoning summary
           message += '\n';
@@ -225,33 +223,42 @@ Reply to this message with names of any reserves outside of this group that want
           }
 
           if (selectedPlayers?.length > 0) {
-            message += '\n\n✅ Selected Players:\n';
+            message += `\n\n✅ Selected Players (${selectedPlayers.length}):\n`;
             selectedPlayers
-              .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
+              .sort((a, b) => {
+                // First priority: Token users at the top
+                const aIsToken = a.using_token || false;
+                const bIsToken = b.using_token || false;
+                if (aIsToken !== bIsToken) return aIsToken ? -1 : 1;
+                
+                // Second priority: Sort by XP
+                return (playerXpMap.get(b.player?.id || '') || 0) - (playerXpMap.get(a.player?.id || '') || 0);
+              })
               .forEach(reg => {
-                const xp = playerXpMap.get(reg.player.id) || 0;
+                const xp = playerXpMap.get(reg.player?.id || '') || 0;
                 const isToken = reg.using_token;
                 const isRandom = reg.selection_method === 'random';
-                const playerUnpaid = unpaidData?.find(p => p.id === reg.player.id)?.unpaid_games || 0;
+                const playerUnpaid = reg.player?.unpaid_games || 0;
                 
                 let prefix = '';
                 if (isToken) prefix = '🪙';
                 else if (isRandom) prefix = '🎲';
                 if (playerUnpaid > 0) prefix += '💰';
                 
-                message += `\n${prefix}${reg.player.friendly_name} (${xp} XP)`;
+                message += `\n${prefix}${reg.player?.friendly_name || 'Unknown'} (${xp} XP)`;
               });
           }
 
           // Add reserve players section
-          const reservePlayers = game.game_registrations?.filter(reg => reg.status === 'reserve');
           if (reservePlayers?.length > 0) {
-            message += '\n\n🔄 Reserves (by XP):\n';
+            message += `\n\n🔄 Reserves in XP order (${reservePlayers.length}):\n`;
             reservePlayers
-              .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
+              .sort((a, b) => (playerXpMap.get(b.player?.id || '') || 0) - (playerXpMap.get(a.player?.id || '') || 0))
               .forEach(reg => {
-                const xp = playerXpMap.get(reg.player.id) || 0;
-                message += `\n${reg.player.friendly_name} (${xp} XP)`;
+                const xp = playerXpMap.get(reg.player?.id || '') || 0;
+                const playerUnpaid = reg.player?.unpaid_games || 0;
+                const prefix = playerUnpaid > 0 ? '💰' : '';
+                message += `\n${prefix}${reg.player?.friendly_name || 'Unknown'} (${xp} XP)`;
               });
           }
 
@@ -260,23 +267,22 @@ Reply to this message with names of any reserves outside of this group that want
           if (droppedOut?.length > 0) {
             message += '\n\n❌ Dropped Out:\n';
             droppedOut
-              .sort((a, b) => (playerXpMap.get(b.player.id) || 0) - (playerXpMap.get(a.player.id) || 0))
+              .sort((a, b) => (playerXpMap.get(b.player?.id || '') || 0) - (playerXpMap.get(a.player?.id || '') || 0))
               .forEach(reg => {
-                const xp = playerXpMap.get(reg.player.id) || 0;
-                message += `\n${reg.player.friendly_name} (${xp} XP)`;
+                const xp = playerXpMap.get(reg.player?.id || '') || 0;
+                message += `\n${reg.player?.friendly_name || 'Unknown'} (${xp} XP)`;
               });
           }
 
-          // Add drop-out message and reserve explanation
-          message += '\n\nAnyone needs to drop out (inc reserves) please let me know 👍';
-          
           // Add explanation about reserve streak bonus for next week
-          const allRegisteredPlayers = game.game_registrations?.filter(reg => ['selected', 'reserve'].includes(reg.status)) || [];
           const reservePlayersCount = reservePlayers?.length || 0;
           
           if (reservePlayersCount > 0) {
             message += '\n\n📈 Players not selected this week get boosted chances for random selection next week';
           }
+          
+          // Add drop-out message
+          message += '\n\nAnyone needs to drop out (inc reserves) please let me know 👍';
           break;
 
         case GAME_STATUSES.TEAMS_ANNOUNCED:
@@ -288,12 +294,12 @@ Reply to this message with names of any reserves outside of this group that want
           // Sort players by team and then by name
           const orangeTeam = selectedPlayersTeams
             .filter(reg => reg.team === 'orange')
-            .map(reg => reg.player.friendly_name)
+            .map(reg => reg.player?.friendly_name || 'Unknown')
             .sort();
             
           const blueTeam = selectedPlayersTeams
             .filter(reg => reg.team === 'blue')
-            .map(reg => reg.player.friendly_name)
+            .map(reg => reg.player?.friendly_name || 'Unknown')
             .sort();
           
           // Add orange team

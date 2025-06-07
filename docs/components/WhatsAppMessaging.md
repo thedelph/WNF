@@ -32,18 +32,36 @@ Enhanced with selection reasoning summary:
 - `🪙 X Guaranteed token(s) used this week` - Shows token usage count
 - `✅ First X players chosen by XP` - Shows merit selection count  
 - `🎲 Remaining X players chosen at random` - Shows random selection count
-- `💰 XP penalty due to missing payments` - Appears if any players have unpaid games
+- `💰 XP penalty due to missing payments` - Appears if any players (selected or reserves) have unpaid games
 
-**Player List with Visual Indicators:**
-- `🪙` Token users
+**Player Lists with Counts:**
+- `✅ Selected Players (X):` - Shows total selected player count
+- `🔄 Reserves in XP order (X):` - Shows reserve player count
+
+**Player Sorting and Display:**
+- Token users (🪙) always displayed first in selected players list
+- Remaining selected players sorted by XP descending
+- Reserve players sorted by XP only
+
+**Player List Visual Indicators:**
+- `🪙` Token users (guaranteed slot)
 - `🎲` Randomly selected players
 - `💰` Players with unpaid games
-- Combined indicators possible (e.g., `🎲💰` for random + unpaid)
+- Combined indicators possible (e.g., `🪙💰` for token + unpaid, `🎲💰` for random + unpaid)
+
+**Message Ordering:**
+1. Selection summary with indicators
+2. Selected players list with count
+3. Reserves list with count
+4. Dropped out players (if any)
+5. Reserve boost explanation (if reserves exist)
+6. Drop-out request message
 
 **Reserve System Explanation:**
 - `📈 Players not selected this week get boosted chances for random selection next week`
 - Only appears when there are reserve players
-- Explains the bench warmer streak bonus system
+- Positioned before the drop-out request message
+- `Anyone needs to drop out (inc reserves) please let me know 👍` follows after
 
 #### TEAMS_ANNOUNCED Status
 - Team composition with player names
