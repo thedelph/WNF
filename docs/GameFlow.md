@@ -29,13 +29,13 @@ This document outlines the complete flow of a game in the WNF system, from creat
 **Trigger:** Current time reaches `registration_window_end`
 - `useRegistrationClose` hook automatically:
   - Updates game status
-  - Triggers player selection process via `handlePlayerSelection`
-  - Selection criteria:
-    1. Merit-based (XP points)
-    2. Random slots
-    3. WhatsApp group priority
+  - Triggers player selection process via `process_registration_close()` database function
+  - Selection criteria with **payment penalty system**:
+    1. **Token-based** (guaranteed slots with forgiveness)
+    2. **Merit-based** (XP points with unpaid games penalty - players with unpaid games moved to bottom)
+    3. **Random slots** (4-tier priority: WhatsApp+paid → Non-WhatsApp+paid → WhatsApp+unpaid → Non-WhatsApp+unpaid)
 - Selected players are marked as `confirmed`
-- Remaining players are placed in `reserve`
+- Remaining players are placed in `reserve` (ordered by WhatsApp status → payment status → XP)
 
 **Status Change:** `open` → `players_announced`
 

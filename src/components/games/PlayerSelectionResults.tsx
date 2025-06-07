@@ -99,8 +99,9 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
 
         <div>
           <h4 className="font-bold mb-2">Merit Selection ({meritPlayers.length} players)</h4>
-          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). Players who used a token in the previous game were moved to the bottom of the list. For players with the same token status, the following tiebreakers were used in order:</p>
+          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). Players who used a token in the previous game were moved to the bottom of the list. For players with the same token status, the following criteria were used in order:</p>
           <ol className="list-decimal pl-4 mb-4">
+            <li><strong>Payment status:</strong> Players with unpaid games are moved to the bottom to disincentivise missing payments</li>
             <li>Token cooldown (players who used a token last game moved to bottom)</li>
             <li>WhatsApp membership (members won)</li>
             <li>Current streak (highest won)</li>
@@ -112,11 +113,15 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
               const stats = playerStats[player.id];
               const isWhatsApp = player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy';
               const usedTokenLastGame = player.used_token_last_game;
+              const hasUnpaidGames = (stats?.unpaidGames || 0) > 0;
               return (
                 <li key={player.id} className="mb-2">
                   <span className="font-semibold">{player.friendly_name}</span>: Selected by merit with 
                   {' '}{stats?.xp || 0} XP
                   {isWhatsApp && ' (WhatsApp member)'}
+                  {hasUnpaidGames && (
+                    <span className="text-error"> ({stats?.unpaidGames || 0} unpaid game{(stats?.unpaidGames || 0) !== 1 ? 's' : ''})</span>
+                  )}
                   {usedTokenLastGame && (
                     <span className="text-warning"> (Used token in previous game)</span>
                   )}
@@ -138,12 +143,14 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
 
         <div>
           <h4 className="font-bold mb-2">Random Selection ({randomPlayers.length} players)</h4>
-          <p className="mb-2">After token and merit slots were filled, 2 slots were reserved for random selection. WhatsApp members were prioritized according to these rules:</p>
-          <ul className="list-disc pl-4 mb-4">
-            <li>If there were enough WhatsApp members for all slots: only WhatsApp members were considered</li>
-            <li>If there were fewer WhatsApp members than slots: all WhatsApp members were selected, remaining slots filled from non-WhatsApp members</li>
-            <li>If no WhatsApp members: regular random selection from all eligible players</li>
-          </ul>
+          <p className="mb-2">After token and merit slots were filled, 2 slots were reserved for random selection with the following priority order:</p>
+          <ol className="list-decimal pl-4 mb-4">
+            <li><strong>WhatsApp members with no unpaid games</strong> (highest priority)</li>
+            <li><strong>Non-WhatsApp members with no unpaid games</strong></li>
+            <li><strong>WhatsApp members with unpaid games</strong></li>
+            <li><strong>Non-WhatsApp members with unpaid games</strong> (lowest priority)</li>
+          </ol>
+          <p className="mb-2">Within each group, selection is weighted by bench warmer streak (consecutive reserve appearances).</p>
           
           {/* Add weighted selection explanation */}
           <WeightedSelectionExplanation 
@@ -158,12 +165,16 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
               {randomPlayers.map(player => {
                 const stats = playerStats[player.id];
                 const isWhatsApp = player.whatsapp_group_member === 'Yes' || player.whatsapp_group_member === 'Proxy';
+                const hasUnpaidGames = (stats?.unpaidGames || 0) > 0;
                 return (
                   <li key={player.id} className="mb-2">
                     <span className="font-semibold">{player.friendly_name}</span>
                     {isWhatsApp && ' (WhatsApp member)'}
+                    {hasUnpaidGames && (
+                      <span className="text-error"> ({stats?.unpaidGames || 0} unpaid game{(stats?.unpaidGames || 0) !== 1 ? 's' : ''})</span>
+                    )}
                     <span className="text-info">
-                      {' '}(Has a reserve streak of {stats?.benchWarmerStreak || 0} games)
+                      {' '}(Reserve streak: {stats?.benchWarmerStreak || 0} games)
                     </span>
                   </li>
                 );
@@ -522,12 +533,19 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
                   return aIsWhatsApp ? -1 : 1;
                 }
 
-                // Both have same WhatsApp status - compare by XP
+                // Both have same WhatsApp status - check unpaid games (no unpaid games first)
+                const aHasUnpaid = (playerStats[a.id]?.unpaidGames || 0) > 0 ? 1 : 0;
+                const bHasUnpaid = (playerStats[b.id]?.unpaidGames || 0) > 0 ? 1 : 0;
+                if (aHasUnpaid !== bHasUnpaid) {
+                  return aHasUnpaid - bHasUnpaid;
+                }
+
+                // Both have same payment status - compare by XP
                 if ((playerStats[b.id]?.xp || 0) !== (playerStats[a.id]?.xp || 0)) {
                   return (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0);
                 }
 
-                // Both have same XP and WhatsApp status - check streak
+                // Both have same XP and payment status - check streak
                 if ((playerStats[b.id]?.current_streak || 0) !== (playerStats[a.id]?.current_streak || 0)) {
                   return (playerStats[b.id]?.current_streak || 0) - (playerStats[a.id]?.current_streak || 0);
                 }
@@ -654,12 +672,19 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
                 return aIsWhatsApp ? -1 : 1;
               }
 
-              // Both have same WhatsApp status - compare by XP
+              // Both have same WhatsApp status - check unpaid games (no unpaid games first)
+              const aHasUnpaid = (playerStats[a.id]?.unpaidGames || 0) > 0 ? 1 : 0;
+              const bHasUnpaid = (playerStats[b.id]?.unpaidGames || 0) > 0 ? 1 : 0;
+              if (aHasUnpaid !== bHasUnpaid) {
+                return aHasUnpaid - bHasUnpaid;
+              }
+
+              // Both have same payment status - compare by XP
               if ((playerStats[b.id]?.xp || 0) !== (playerStats[a.id]?.xp || 0)) {
                 return (playerStats[b.id]?.xp || 0) - (playerStats[a.id]?.xp || 0);
               }
 
-              // Both have same XP and WhatsApp status - check streak
+              // Both have same XP and payment status - check streak
               if ((playerStats[b.id]?.current_streak || 0) !== (playerStats[a.id]?.current_streak || 0)) {
                 return (playerStats[b.id]?.current_streak || 0) - (playerStats[a.id]?.current_streak || 0);
               }

@@ -43,8 +43,13 @@ The player selection process is automatically triggered when a game's registrati
      → A's token returned, B's token consumed
      ```
 
-3. **XP Priority**
-   - After token slots are allocated, XP becomes the primary sorting mechanism
+3. **Payment Priority (Merit Selection)**
+   - **Players with unpaid games are moved to the bottom of merit selection** to maximally disincentivise missing payments
+   - This penalty applies before all other criteria including XP
+   - Among players with same payment status (paid vs unpaid), normal sorting rules apply
+
+4. **XP Priority**
+   - After payment and token slots are allocated, XP becomes the primary sorting mechanism
    - Players who used a token in the previous sequential game are pushed to the bottom of the list
    - Among token-cooldown players, normal sorting rules apply (XP, WhatsApp, etc.)
    - For all other players:
@@ -52,16 +57,19 @@ The player selection process is automatically triggered when a game's registrati
      - A lower XP player can never be selected over a higher XP player in merit selection
    - Non-token users are displayed after token users, sorted by XP
 
-4. **WhatsApp Status Equivalence**
+5. **WhatsApp Status Equivalence**
    - "Proxy" status is treated exactly the same as "Yes" for all purposes
    - Both statuses receive equal priority in both merit tiebreakers and random selection
    - Only "No" and NULL are treated as non-WhatsApp members
 
-5. **Random Selection Priority**
-   - **WhatsApp Status Priority**
-     - If exact number of WhatsApp members as random slots: all are selected
-     - If more WhatsApp members than slots: random selection among WhatsApp members only
-     - If fewer WhatsApp members than slots: all WhatsApp members selected, remaining slots filled randomly from non-WhatsApp members
+6. **Random Selection Priority**
+   - **Payment and WhatsApp Priority System**
+     - Players are grouped into 4 priority tiers:
+       1. **WhatsApp members with no unpaid games** (highest priority)
+       2. **Non-WhatsApp members with no unpaid games**
+       3. **WhatsApp members with unpaid games**
+       4. **Non-WhatsApp members with unpaid games** (lowest priority)
+     - Selection fills from highest priority group first, then moves to next tier if needed
 
    - **Weighted Random Selection**
      - Each player's chance of being randomly selected is weighted based on their reserve history

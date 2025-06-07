@@ -12,7 +12,8 @@ const GameManagementCard: React.FC = () => {
       <div className="card-body">
         <h2 className="card-title">Game Management</h2>
         <p>Create and manage games, handle venues and scheduling</p>
-        <div className="card-actions justify-end">
+        
+        <div className="card-actions justify-end mt-4">
           <Link to="/admin/games" className="btn btn-primary">Manage Games</Link>
         </div>
       </div>
