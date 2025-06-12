@@ -30,10 +30,11 @@ The Game Completion Form is used to record the final details of a completed game
    - Immediate team/status assignment for new additions
 
 4. **Reserve System**
-   - Two reserve statuses:
-     - "Reserve - No Slot Offer": Default status for reserve players
+   - Reserve status options:
+     - "Reserve": Default status for reserve players (includes those who didn't receive slot offers)
      - "Reserve - Declined Slot": For players who declined an offered slot
    - Automatic team removal when marked as reserve
+   - Slot offer tracking handled separately via `slot_offers` table
 
 5. **Status Change Tracking**
    - Tracks player status transitions including dropouts and reserve responses
@@ -113,7 +114,7 @@ interface PlayerWithTeam {
   id: string
   friendly_name: string
   team: 'blue' | 'orange' | null
-  status: 'selected' | 'registered' | 'reserve_no_offer' | 'reserve_declined'
+  status: 'selected' | 'registered' | 'reserve' | 'reserve_declined' | 'dropped_out'
   payment_status: 'unpaid' | 'marked_paid' | 'admin_verified'
 }
 ```
@@ -160,8 +161,9 @@ Status changes use color-coded badges:
 1. Players can be marked as reserve through the dropdown
 2. Reserve players are automatically removed from teams
 3. Two reserve statuses available:
-   - "No Slot Offer": Default reserve status
-   - "Declined Slot": For tracking declined offers
+   - "Reserve": Default reserve status (includes players without slot offers)
+   - "Reserve - Declined Slot": For tracking declined offers
+   - Note: The database stores both as 'reserve' status, with slot offer tracking in separate table
 
 ### Last-Minute Changes
 1. Use the player search to find any registered player

@@ -101,7 +101,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
               .insert({
                 player_id: selectedPlayer.id,
                 game_id: gameId,
-                from_status: 'reserve_no_offer',
+                from_status: 'reserve',
                 to_status: 'reserve_declined',
                 change_type: 'slot_response',
                 is_game_day: isGameDay,
@@ -205,7 +205,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
                     {!selectedTeam ? (
                       <>
                         <option value="registered">Available</option>
-                        <option value="reserve_no_offer">Reserve - No Slot Offer</option>
+                        <option value="reserve">Reserve - No Slot Offer</option>
                         <option value="reserve_declined">Reserve - Declined Slot</option>
                       </>
                     ) : (

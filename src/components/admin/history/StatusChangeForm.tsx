@@ -39,7 +39,7 @@ export const StatusChangeForm: React.FC<StatusChangeFormProps> = ({
         isReserveAction: true
       })
     }
-    else if (currentStatus === 'reserve_no_offer') {
+    else if (currentStatus === 'reserve') {
       baseStatuses.push({
         value: 'reserve_declined',
         label: 'Decline Slot',

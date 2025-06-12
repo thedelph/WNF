@@ -56,6 +56,7 @@ export default function Component() {
               max_streak,
               caps,
               whatsapp_group_member,
+              bench_warmer_streak,
               player_xp (
                 xp,
                 rank,
@@ -216,6 +217,53 @@ export default function Component() {
           toast.error('Failed to process XP data');
         }
 
+        // Fetch registration streak data
+        let registrationStreakData = null;
+        try {
+          const { data: streakData, error: streakError } = await executeWithRetry(
+            () => supabase
+              .from('player_current_registration_streak_bonus')
+              .select('current_streak_length, bonus_applies')
+              .eq('friendly_name', playerData.friendly_name)
+              .maybeSingle()
+          );
+          
+          console.log('[Profile] Registration streak query result:', {
+            friendly_name: playerData.friendly_name,
+            data: streakData,
+            error: streakError
+          });
+          
+          if (!streakError && streakData) {
+            registrationStreakData = streakData;
+          } else if (streakError) {
+            console.error('Error fetching registration streak:', streakError);
+          }
+        } catch (regStreakError) {
+          console.error('Error fetching registration streak:', regStreakError);
+          // Continue without registration streak data
+        }
+
+
+        // Get count of unpaid games
+        let unpaidGamesCount = 0;
+        try {
+          const { data: unpaidData, error: unpaidError } = await executeWithRetry(
+            () => supabase
+              .from('player_unpaid_games_view')
+              .select('count')
+              .eq('player_id', playerData.id)
+              .single()
+          );
+          
+          if (!unpaidError && unpaidData) {
+            unpaidGamesCount = unpaidData.count || 0;
+          }
+        } catch (unpaidCountError) {
+          console.error('Error fetching unpaid games count:', unpaidCountError);
+          // Continue without unpaid games count
+        }
+
         // Combine the data with safe access
         const profileData: ExtendedPlayerData = {
           id: playerData.id,
@@ -239,7 +287,11 @@ export default function Component() {
           recent_win_rate: recentWinRate,
           highestXP: highestXPData?.xp,
           highestXPSnapshotDate: highestXPData?.snapshot_date ? formatDate(highestXPData.snapshot_date) : undefined,
-          caps: playerData.caps || 0
+          caps: playerData.caps || 0,
+          bench_warmer_streak: playerData.bench_warmer_streak || 0,
+          registrationStreak: registrationStreakData?.current_streak_length || 0,
+          registrationStreakApplies: registrationStreakData?.bonus_applies || false,
+          unpaidGames: unpaidGamesCount
         };
 
         // Add debug logs to track XP data
@@ -247,7 +299,10 @@ export default function Component() {
           playerXP: playerData.player_xp && playerData.player_xp[0] ? playerData.player_xp[0].xp : 'No player_xp data',
           xpDataTotal: xpData?.xp || 'No total_xp in xpData',
           finalXP: profileData.xp,
-          finalTotalXP: profileData.total_xp
+          finalTotalXP: profileData.total_xp,
+          registrationStreak: profileData.registrationStreak,
+          registrationStreakApplies: profileData.registrationStreakApplies,
+          registrationStreakData
         });
 
         setProfile(profileData);

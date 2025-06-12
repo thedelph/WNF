@@ -76,7 +76,9 @@ interface XPBreakdownProps {
     reserveXP?: number;      // IMPORTANT: Note the uppercase 'P' in reserveXP
     reserveCount?: number;
     benchWarmerStreak?: number;
-    unpaidGamesCount?: number;
+    registrationStreak?: number;      // Number of consecutive registrations
+    registrationStreakApplies?: boolean; // Whether the bonus applies (player is reserve)
+    unpaidGames: number;     // Number of unpaid games (required, not unpaidGamesCount)
   };
   showTotal?: boolean;
 }
@@ -96,7 +98,9 @@ interface XPBreakdownProps {
   - `reserveXP`: XP earned/lost from reserve status
   - `reserveCount`: Number of times player has been a reserve
   - `benchWarmerStreak`: Current streak of consecutive reserve appearances (resets if player gets selected or misses a game)
-  - `unpaidGamesCount`: Number of unpaid games (older than 24h)
+  - `registrationStreak`: Number of consecutive games the player has registered for
+  - `registrationStreakApplies`: Boolean indicating if the registration streak bonus applies (true when player is a reserve)
+  - `unpaidGames`: Number of unpaid games (older than 24h) - Note: use `unpaidGames` not `unpaidGamesCount`
 - `showTotal`: Boolean to toggle display of total XP
 
 ## XP Weighting System
@@ -141,6 +145,7 @@ The XP calculation follows these steps:
 3. Modifiers
    - Attendance Streak: +10% per consecutive game played
    - Bench Warmer Streak: +5% per consecutive reserve appearance (must be consecutive, resets if selected or miss a game)
+   - Registration Streak: +2.5% per consecutive registration (only applies when player is a reserve)
    - Unpaid Games: -50% per unpaid game (only applies to games older than 24h)
 
 > **Important**: XP will never be negative. If the calculation would result in a negative value, it will be clamped to 0.
@@ -156,10 +161,11 @@ totalBaseXP = 291
 // Modifiers
 streakModifier = 0.1  // 1 game streak
 benchWarmerModifier = 0.0  // No bench warmer streak
+registrationModifier = 0.0  // No registration streak or not a reserve
 unpaidGamesModifier = -1.5  // 3 unpaid games (-50% each)
 
 // Final calculation
-totalModifier = 1 + 0.1 + 0.0 - 1.5 = -0.4
+totalModifier = 1 + 0.1 + 0.0 + 0.0 - 1.5 = -0.4
 rawXP = 291 * -0.4 = -116.4
 finalXP = Math.max(0, Math.round(-116.4)) = 0  // Clamped to 0
 ```
@@ -171,6 +177,7 @@ The component shows:
 3. Modifiers (with their signs):
    - Attendance Streak: Shows `+10%` for a 1-game streak
    - Bench Warmer Streak: Shows `+5%` for a 1-game reserve streak
+   - Registration Streak: Shows `+2.5%` for a 1-game registration streak (only when player is a reserve)
    - Unpaid Games: Shows `-50%` per unpaid game
 
 A note "(XP will never be less than 0)" is displayed when the calculation would result in negative XP.
@@ -194,6 +201,14 @@ A note "(XP will never be less than 0)" is displayed when the calculation would 
 - Provides +5% XP bonus per consecutive reserve appearance
 - Example: 3 consecutive reserve appearances = +15% XP bonus
 - Helps compensate players who consistently show up as reserves but don't get selected
+
+### Registration Streak
+- Shows when player has consecutive game registrations AND is currently a reserve
+- Provides +2.5% XP bonus per consecutive registration
+- The streak counts ALL consecutive registrations (whether selected or reserve)
+- But the bonus only applies when the player is a reserve in their most recent game
+- Example: Player registered for 8 consecutive games, reserve in the latest = +20% XP bonus
+- Helps boost reserve players who consistently register
 
 ### Streak Display
 - Shows the current streak based on consecutive participation in past games
@@ -272,6 +287,23 @@ When implementing the XPBreakdown component in different views:
 
 This ensures consistent XP calculation across different views of the same player data.
 
+#### Registration Streak Not Showing
+If the registration streak is not showing despite the player having a streak:
+
+1. Verify the data is being fetched from `player_current_registration_streak_bonus` view
+2. Check that both `registrationStreak` and `registrationStreakApplies` are being passed to the component
+3. Ensure the parent component (Profile.tsx or PlayerProfile.tsx) is fetching the registration streak data:
+   ```typescript
+   const { data: streakData } = await supabase
+     .from('player_current_registration_streak_bonus')
+     .select('current_streak_length, bonus_applies')
+     .eq('friendly_name', playerData.friendly_name)
+     .maybeSingle();
+   ```
+4. The registration streak only shows when BOTH conditions are met:
+   - `registrationStreak > 0`
+   - `registrationStreakApplies === true` (player is a reserve)
+
 ## Usage Example
 
 ```tsx
@@ -282,10 +314,14 @@ This ensures consistent XP calculation across different views of the same player
     activePenalties: 0,
     currentStreak: 3,
     gameHistory: [],
+    latestSequence: 50,
     xp: 100,
     reserveXP: 5,
     reserveCount: 1,
-    unpaidGamesCount: 2
+    benchWarmerStreak: 1,
+    registrationStreak: 1,
+    registrationStreakApplies: true,
+    unpaidGames: 2
   }}
   showTotal={true}
 />

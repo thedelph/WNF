@@ -15,7 +15,7 @@ export interface StatusChange {
   isGameDay: boolean
 }
 
-export type PlayerStatus = 'selected' | 'registered' | 'reserve_no_offer' | 'reserve_declined' | 'dropped_out'
+export type PlayerStatus = 'selected' | 'registered' | 'reserve' | 'reserve_declined' | 'dropped_out'
 
 export interface PlayerWithTeam extends Player {
   team?: 'blue' | 'orange' | null

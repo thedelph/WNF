@@ -89,14 +89,20 @@ The player card displays attendance streak information with the following implem
    ```
 
 ### Registration Streak
-The registration streak bonus is implemented through several components:
+The registration streak bonus helps reserve players who consistently register but don't get selected by providing a temporary XP boost.
 
-1. **Data Flow**:
-   - Registration streak data comes from the `player_current_registration_streak_bonus` table
+1. **How it Works**:
+   - Tracks consecutive games where a player has registered (not dropped out)
+   - Provides a 2.5% XP bonus per streak level
+   - Bonus applies to ANY reserve player with a registration streak
+   - Players don't need to be reserves for their entire streak
+
+2. **Data Flow**:
+   - Registration streak data comes from the `player_current_registration_streak_bonus` view
    - Key fields: `current_streak_length` and `bonus_applies`
    - Accessed via player's `friendly_name` in RegisteredPlayers.tsx
 
-2. **State Management**:
+3. **State Management**:
    - Registration streak data is stored in a separate stats map in RegisteredPlayers.tsx
    - Data is processed during the fetchPlayerStats effect
    - Each player's stats include:
@@ -107,12 +113,16 @@ The registration streak bonus is implemented through several components:
      }
      ```
 
-3. **Display Logic**:
+4. **Display Logic**:
    - Only shows when both conditions are true:
      - registrationStreakBonus > 0
      - registrationStreakBonusApplies is true
    - Applies a 2.5% XP bonus per streak level
    - Rendered in PlayerCardModifiers with a blue background
+
+5. **Example**:
+   - Jude: 8-game registration streak, reserve in latest game → 20% bonus applies
+   - Zhao: 1-game registration streak, reserve in latest game → 2.5% bonus applies
 
 ### Other Modifiers
 - Positive modifiers use specific colors:

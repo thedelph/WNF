@@ -108,6 +108,13 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   // Calculate final XP (ensuring it's never negative)
   const finalXP = Math.max(0, Math.round(totalBaseXP * totalModifier));
 
+  console.log('[XPBreakdown] Registration streak details:', {
+    registrationStreak: stats.registrationStreak,
+    registrationStreakApplies: stats.registrationStreakApplies,
+    registrationModifier,
+    shouldShowSection: stats.registrationStreak > 0 && stats.registrationStreakApplies
+  });
+
   return (
     <div className="w-full">
       <motion.button

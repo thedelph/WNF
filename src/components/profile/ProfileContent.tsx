@@ -18,6 +18,12 @@ export default function ProfileContent({
 }: ProfileContentProps) {
   if (!profile) return null
 
+  console.log('[ProfileContent] Profile data:', {
+    registrationStreak: profile.registrationStreak,
+    registrationStreakApplies: profile.registrationStreakApplies,
+    fullProfile: profile
+  })
+
   return (
     <>
       {/* Stats Grid Section */}

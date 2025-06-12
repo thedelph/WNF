@@ -91,6 +91,20 @@ IMPORTANT: The bench warmer streak multiplier is applied to ALL XP, not just res
 - A player with base XP of 82 and reserve XP of 5, with a bench warmer streak of 1, would get:
   (82 + 5) * 1.05 = 91.35, rounded to 91
 
+##### Registration Streak Bonus
+The registration streak bonus is designed to help reserve players who consistently register but don't get selected. It provides a temporary XP boost that may help them reach the threshold for random selection vs XP merit selection.
+
+- Tracks consecutive games where a player has registered (not dropped out)
+- Provides a 2.5% XP bonus per streak level
+- **Key feature**: The bonus applies to ANY reserve player with a registration streak
+- Players don't need to be reserves for their entire streak - just in the current game
+- Previous selections don't break the streak or affect eligibility
+
+Example:
+- Player registers for 8 consecutive games (selected in games 1-7, reserve in game 8)
+- They get an 8-game registration streak with 20% bonus (8 × 2.5%)
+- This helps boost their XP while they're in reserves
+
 ##### Unpaid Games Penalty
 - Each unpaid game older than 24 hours incurs a -50% XP penalty
 - Penalties stack linearly (e.g., 3 unpaid games = -150% penalty)
@@ -113,6 +127,7 @@ Final XP: 0
 3. Calculate and combine all modifiers:
    - Streak bonus: +10% per game
    - Bench warmer bonus: +5% per game
+   - Registration streak bonus: +2.5% per game (reserves only)
    - Unpaid games penalty: -50% per game
 4. Apply total modifier to (Base XP + Reserve XP)
 5. Round to nearest integer

@@ -140,7 +140,7 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
           .insert({
             player_id: playerId,
             game_id: game.id,
-            from_status: 'reserve_no_offer',
+            from_status: 'reserve',
             to_status: 'selected',
             change_type: 'slot_response',
             is_game_day: isGameDay,
@@ -164,7 +164,7 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
           .insert({
             player_id: playerId,
             game_id: game.id,
-            from_status: 'reserve_no_offer',
+            from_status: 'reserve',
             to_status: 'reserve_declined',
             change_type: 'slot_response',
             is_game_day: isGameDay,
@@ -463,7 +463,7 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
       for (const player of players) {
         const registration = {
           team: player.team,
-          status: player.status === 'reserve_no_offer' || player.status === 'reserve_declined' ? 'reserve' : player.status,
+          status: player.status === 'reserve_declined' ? 'reserve' : player.status,
           payment_status: player.payment_status
         }
 

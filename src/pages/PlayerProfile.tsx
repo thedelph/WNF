@@ -156,11 +156,10 @@ export default function PlayerProfileNew() {
         }
 
         // Get max streak date from the winning streaks function
-        const { data: streakData, error: streakError } = await executeWithRetry(
+        // First get all winning streaks, then filter for our player
+        const { data: allStreakData, error: streakError } = await executeWithRetry(
           () => supabase
-            .rpc('get_player_winning_streaks')
-            .eq('id', playerData.id)
-            .single()
+            .rpc('get_player_winning_streaks', { target_year: null })
         );
 
         if (streakError) {
@@ -168,6 +167,8 @@ export default function PlayerProfileNew() {
           // Continue without streak date data
         }
 
+        // Find the streak data for our specific player
+        const streakData = allStreakData?.find((player: any) => player.id === playerData.id);
         const maxStreakDate = streakData?.max_streak_date || null;
 
         // XP breakdown data with default values (for players with no XP or not in the view)
@@ -226,6 +227,33 @@ export default function PlayerProfileNew() {
         }
 
         const unpaidGamesCount = unpaidGamesData?.count || 0;
+
+        // Fetch registration streak data
+        let registrationStreakData = null;
+        try {
+          const { data: streakData, error: streakError } = await executeWithRetry(
+            () => supabase
+              .from('player_current_registration_streak_bonus')
+              .select('current_streak_length, bonus_applies')
+              .eq('friendly_name', playerData.friendly_name)
+              .maybeSingle()
+          );
+          
+          console.log('[PlayerProfile] Registration streak query result:', {
+            friendly_name: playerData.friendly_name,
+            data: streakData,
+            error: streakError
+          });
+          
+          if (!streakError && streakData) {
+            registrationStreakData = streakData;
+          } else if (streakError) {
+            console.error('Error fetching registration streak:', streakError);
+          }
+        } catch (regStreakError) {
+          console.error('Error fetching registration streak:', regStreakError);
+          // Continue without registration streak data
+        }
 
         // Get win rates for player
         const { data: winRates } = await supabase.rpc('get_player_win_rates');
@@ -459,8 +487,8 @@ export default function PlayerProfileNew() {
           games_played_together: gamesPlayedTogether,
           my_rating: myRating as { attack_rating: number; defense_rating: number; } | null,
           unpaidGames: unpaidGamesCount,
-          registrationStreak: 0,
-          registrationStreakApplies: false,
+          registrationStreak: registrationStreakData?.current_streak_length || 0,
+          registrationStreakApplies: registrationStreakData?.bonus_applies || false,
           gameHistory: validGames
             .filter((reg: any) => reg.game?.is_historical)
             .map((reg: any) => ({
