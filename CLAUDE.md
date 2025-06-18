@@ -4,6 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Memories
 - Run date via base before adding/editing any documentation to ensure you've got the correct date.
+- Academy tier added (2025-06-18): Players with 0 caps and 0 XP are now "Academy" (deep teal gradient), while players with >0 caps and 0 XP remain "Retired" (black). This distinction helps differentiate new players from inactive ones.
 
 ## Core Development Commands
 

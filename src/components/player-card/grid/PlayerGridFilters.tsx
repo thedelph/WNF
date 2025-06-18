@@ -117,8 +117,8 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
                   </label>
                   
                   <label className="cursor-pointer label">
-                    <span className="label-text mr-2">Hide Retired Players</span>
-                    <Tooltip content="Hide inactive players with 0 XP">
+                    <span className="label-text mr-2">Hide 0 XP Players</span>
+                    <Tooltip content="Hide Academy and Retired players (0 XP)">
                       <input
                         type="checkbox"
                         className="toggle toggle-primary"
@@ -202,11 +202,13 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
                       className="select select-bordered w-full"
                     >
                       <option value="">All</option>
+                      <option value="Academy">Academy</option>
                       <option value="Amateur">Amateur</option>
                       <option value="Semi Pro">Semi Pro</option>
                       <option value="Professional">Professional</option>
                       <option value="World Class">World Class</option>
                       <option value="Legendary">Legendary</option>
+                      <option value="Retired">Retired</option>
                     </select>
                   </div>
                 </div>

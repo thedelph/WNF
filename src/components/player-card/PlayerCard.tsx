@@ -91,6 +91,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       case 'Retired':
         // Black design for retired players (0 XP)
         return 'bg-gray-900 text-gray-100 shadow-lg shadow-slate-700/50 border border-gray-800'
+      case 'Academy':
+        // Deep teal design for academy players (0 caps, 0 XP) - better contrast for white text
+        return 'bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-800 shadow-lg shadow-teal-600/50 animate-pulse-slow'
       case 'Amateur':
         return 'bg-gradient-to-br from-slate-300 via-slate-400 to-zinc-600 shadow-lg shadow-slate-500/50'
       default:

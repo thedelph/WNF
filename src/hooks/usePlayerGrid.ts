@@ -143,8 +143,8 @@ export const usePlayerGrid = () => {
             currentStreak: player.current_streak || 0,
             maxStreak: correctMaxStreak,
             benchWarmerStreak: player.bench_warmer_streak || 0,
-            // Override rarity to 'Retired' if XP is 0, otherwise use the database value or default to 'Amateur'
-            rarity: (player.player_xp?.xp === 0) ? 'Retired' : (player.player_xp?.rarity || 'Amateur'),
+            // Use the database rarity value which now correctly handles Academy vs Retired
+            rarity: player.player_xp?.rarity || (player.player_xp?.xp === 0 ? 'Academy' : 'Amateur'),
             rank: player.player_xp?.rank || 0,
             wins: winRateMap[player.id]?.wins || 0,
             draws: winRateMap[player.id]?.draws || 0,

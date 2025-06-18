@@ -15,7 +15,8 @@ Players are classified into the following tiers:
 | **Professional** | Top 20% (80th percentile) | Accomplished players with significant experience |
 | **Semi Pro** | Top 40% (60th percentile) | Established players with moderate experience |
 | **Amateur** | Above 0 XP | Players still building their experience (with any XP > 0) |
-| **Retired** | 0 XP | Inactive players with 0 XP |
+| **Academy** | 0 XP, 0 Caps | New players who haven't played their first game yet |
+| **Retired** | 0 XP, >0 Caps | Inactive players who have played before but now have 0 XP |
 
 ## Implementation Details
 
@@ -23,17 +24,29 @@ Players are classified into the following tiers:
 
 Rarity tiers are calculated in the database using the `calculate_player_rarity()` function. The function:
 
-1. First identifies all players with 0 XP and assigns them to the "Retired" tier
-2. Then calculates percentile ranks only among players with XP > 0
-3. Assigns appropriate tiers based on percentile thresholds
+1. First identifies players with 0 XP and 0 caps and assigns them to the "Academy" tier
+2. Then identifies players with 0 XP but >0 caps and assigns them to the "Retired" tier
+3. Calculates percentile ranks only among players with XP > 0
+4. Assigns appropriate tiers based on percentile thresholds
 
 ```sql
 -- Simplified version of the database calculation
 BEGIN
-  -- Handle players with 0 XP - they get the 'Retired' tier
+  -- Handle players with 0 XP AND 0 caps - they get the 'Academy' tier
+  UPDATE player_xp
+  SET rarity = 'Academy'
+  FROM players p
+  WHERE player_xp.player_id = p.id
+  AND player_xp.xp = 0
+  AND p.caps = 0;
+
+  -- Handle players with 0 XP but caps > 0 - they get the 'Retired' tier
   UPDATE player_xp
   SET rarity = 'Retired'
-  WHERE xp = 0;
+  FROM players p
+  WHERE player_xp.player_id = p.id
+  AND player_xp.xp = 0
+  AND p.caps > 0;
 
   -- Apply percentile rankings only to players with XP > 0
   WITH player_rankings AS (
@@ -67,24 +80,38 @@ Each rarity tier has a distinct visual appearance in the UI:
 - **Professional**: Blue gradient card with animation
 - **Semi Pro**: Green gradient card with animation
 - **Amateur**: Grey gradient card
+- **Academy**: Deep teal gradient card with pulse animation
 - **Retired**: Black card design with light text (no rank shield displayed)
 
-## Rationale for "Retired" Tier
+## Rationale for "Academy" and "Retired" Tiers
 
-As XP tapers off after 40 games, many inactive players eventually reach 0 XP. The "Retired" tier was introduced to:
+### Academy Tier
+The "Academy" tier was introduced to distinguish new players who haven't played their first game yet from those who have played before but are now inactive. This provides:
 
-1. Clearly distinguish inactive players (0 XP) from active players who are still earning XP
-2. Keep the percentile calculations meaningful by only including active players
-3. Provide a clean visual separation in the UI between active and inactive players
-4. Eliminate confusion by not displaying rank shields on inactive player cards
+1. A welcoming designation for new players joining the system
+2. Clear differentiation between "new" and "inactive" players
+3. A positive, aspirational label that suggests potential and growth
+4. Visual distinction with a bright, hopeful color scheme
 
-This prevents the rarity distribution from being skewed by players who are no longer participating, ensuring that the tier system remains relevant and meaningful for active players.
+### Retired Tier
+As XP tapers off after 40 games, many inactive players eventually reach 0 XP. The "Retired" tier is for players who:
+
+1. Have played at least one game (caps > 0)
+2. Currently have 0 XP due to inactivity
+3. Are distinguished from new players who simply haven't played yet
+
+This dual-tier approach for 0 XP players:
+- Keeps the percentile calculations meaningful by only including active players
+- Provides clear visual separation between new, active, and inactive players
+- Eliminates confusion about player status
+- Ensures the tier system remains relevant and meaningful for all player types
 
 ### UI Implementation Details
 
+- Academy player cards use a deep teal gradient with a subtle pulse animation to suggest fresh potential while ensuring excellent contrast for white text
 - Retired player cards use a black background with light text for high visibility and clear distinction
-- Rank shields are not displayed on Retired player cards (only active players with XP > 0 show rank shields)
-- This implementation maintains UI consistency by avoiding the display of "0" rank for inactive players
+- Rank shields are not displayed on Academy or Retired player cards (only active players with XP > 0 show rank shields)
+- This implementation maintains UI consistency by avoiding the display of "0" rank for players with no XP
 
 ## Related Components
 

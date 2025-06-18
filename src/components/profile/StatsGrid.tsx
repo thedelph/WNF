@@ -78,8 +78,10 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
         return 'Top 40% of players (60th percentile)';
       case 'Amateur':
         return 'Still climbing the ranks! (Above 0 XP)';
+      case 'Academy':
+        return 'New player - Yet to play their first game';
       case 'Retired':
-        return 'Inactive player with 0 XP';
+        return 'Inactive player with 0 XP (has played before)';
       default:
         return 'Rarity not available';
     }
