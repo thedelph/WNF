@@ -8,6 +8,13 @@
         "--access-token",
         "sbp_6eb8e33aa84901ef4f2b353fe65d71f29617fc52"
       ]
+    },
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git"
+      ]
     }
   }
 }

@@ -24,7 +24,10 @@
       "Bash(git commit:*)",
       "Bash(npx tsc:*)",
       "mcp__supabase__search_docs",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
