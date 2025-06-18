@@ -15,7 +15,7 @@ Each phase has its own specific requirements and behaviors while sharing some co
 
 ### Default Values
 - **Max Players**: 18 players per game
-- **Pitch Cost**: £50 default
+- **Pitch Cost**: £54 default
 - **Random Slots**: 2 slots reserved for random selection
 - **Default Game Time**: 21:00 (9 PM)
 
@@ -115,15 +115,24 @@ The **"Paste Full Game Details"** textarea allows admins to paste WhatsApp messa
 The final phase where teams have been formed and are ready to be announced.
 
 #### Key Features:
-- Supports team A and B player assignments
-- Tracks team attack and defense ratings
+- Supports Orange Team and Blue Team player assignments
+- Two-stage pasting: first paste player registration message, then team announcement
 - Team announcement time is required
 - Registration window is set in the past (same as Player Selection phase)
 
-#### Team Balance Features:
-- Attack Rating tracking per team
-- Defense Rating tracking per team
+#### WhatsApp Team Import Feature:
+The **"Paste Player Registration or Team Announcement"** textarea supports two types of messages:
+1. **Player Registration Message**: Same format as Player Selection phase
+2. **Team Announcement Message**: Automatically extracts team assignments from messages containing:
+   - 🟠 Orange Team with player list
+   - 🔵 Blue Team with player list
+   - Recognizes 👤 emoji prefixes for player names
+
+#### Team Assignment:
+- Orange Team players are assigned to the "orange" team in database
+- Blue Team players are assigned to the "blue" team in database
 - Equal team size enforcement
+- Automatic player name matching to database records
 
 ## Technical Implementation Details
 

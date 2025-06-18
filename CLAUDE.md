@@ -5,6 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Memories
 - Run date via base before adding/editing any documentation to ensure you've got the correct date.
 - Academy tier added (2025-06-18): Players with 0 caps and 0 XP are now "Academy" (deep teal gradient), while players with >0 caps and 0 XP remain "Retired" (black). This distinction helps differentiate new players from inactive ones.
+- When the user wants to commit changes to GitHub, ask if they'd like to use the Git MCP server commands instead of bash git commands.
+- Team Announcement Phase enhanced (2025-06-18): Now supports two-stage pasting - first paste player registration message, then team announcement message with 🟠 Orange Team and 🔵 Blue Team sections. Attack/Defense ratings removed from game creation form. Default pitch cost updated to £54.
 
 ## Core Development Commands
 

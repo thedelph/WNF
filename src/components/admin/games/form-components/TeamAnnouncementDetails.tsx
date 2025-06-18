@@ -6,16 +6,8 @@ interface TeamAnnouncementDetailsProps {
   players: Player[];
   teamAPlayers: string[];
   teamBPlayers: string[];
-  teamAAttackRating: number;
-  teamADefenseRating: number;
-  teamBAttackRating: number;
-  teamBDefenseRating: number;
   onTeamAPlayersChange: (players: string[]) => void;
   onTeamBPlayersChange: (players: string[]) => void;
-  onTeamAAttackRatingChange: (rating: number) => void;
-  onTeamADefenseRatingChange: (rating: number) => void;
-  onTeamBAttackRatingChange: (rating: number) => void;
-  onTeamBDefenseRatingChange: (rating: number) => void;
 }
 
 /**
@@ -25,16 +17,8 @@ export const TeamAnnouncementDetails: React.FC<TeamAnnouncementDetailsProps> = (
   players,
   teamAPlayers,
   teamBPlayers,
-  teamAAttackRating,
-  teamADefenseRating,
-  teamBAttackRating,
-  teamBDefenseRating,
   onTeamAPlayersChange,
   onTeamBPlayersChange,
-  onTeamAAttackRatingChange,
-  onTeamADefenseRatingChange,
-  onTeamBAttackRatingChange,
-  onTeamBDefenseRatingChange,
 }) => {
   return (
     <motion.div
@@ -44,11 +28,11 @@ export const TeamAnnouncementDetails: React.FC<TeamAnnouncementDetailsProps> = (
       className="space-y-4"
     >
       <div className="grid grid-cols-2 gap-4">
-        {/* Team A */}
+        {/* Orange Team */}
         <div className="space-y-4">
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Team A Players</span>
+              <span className="label-text">Orange Team Players</span>
             </label>
             <select
               multiple
@@ -66,39 +50,13 @@ export const TeamAnnouncementDetails: React.FC<TeamAnnouncementDetailsProps> = (
               ))}
             </select>
           </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Attack Rating</span>
-            </label>
-            <input
-              type="number"
-              value={teamAAttackRating}
-              onChange={(e) => onTeamAAttackRatingChange(parseInt(e.target.value))}
-              className="input input-bordered"
-              required
-            />
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Defense Rating</span>
-            </label>
-            <input
-              type="number"
-              value={teamADefenseRating}
-              onChange={(e) => onTeamADefenseRatingChange(parseInt(e.target.value))}
-              className="input input-bordered"
-              required
-            />
-          </div>
         </div>
 
-        {/* Team B */}
+        {/* Blue Team */}
         <div className="space-y-4">
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Team B Players</span>
+              <span className="label-text">Blue Team Players</span>
             </label>
             <select
               multiple
@@ -115,32 +73,6 @@ export const TeamAnnouncementDetails: React.FC<TeamAnnouncementDetailsProps> = (
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Attack Rating</span>
-            </label>
-            <input
-              type="number"
-              value={teamBAttackRating}
-              onChange={(e) => onTeamBAttackRatingChange(parseInt(e.target.value))}
-              className="input input-bordered"
-              required
-            />
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Defense Rating</span>
-            </label>
-            <input
-              type="number"
-              value={teamBDefenseRating}
-              onChange={(e) => onTeamBDefenseRatingChange(parseInt(e.target.value))}
-              className="input input-bordered"
-              required
-            />
           </div>
         </div>
       </div>

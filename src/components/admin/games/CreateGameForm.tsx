@@ -47,7 +47,7 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   const [venueId, setVenueId] = useState(presetVenueId || '');
   const [maxPlayers, setMaxPlayers] = useState<number>(18);
   const [randomSlots, setRandomSlots] = useState(2);
-  const [pitchCost, setPitchCost] = useState(presetPitchCost || 50);
+  const [pitchCost, setPitchCost] = useState(presetPitchCost || 54);
   const [gamePhase, setGamePhase] = useState<GameStatus>(GAME_STATUSES.UPCOMING);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -68,10 +68,6 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     droppedOut: 0,
     token: 0
   });
-  const [teamAAttackRating, setTeamAAttackRating] = useState(0);
-  const [teamADefenseRating, setTeamADefenseRating] = useState(0);
-  const [teamBAttackRating, setTeamBAttackRating] = useState(0);
-  const [teamBDefenseRating, setTeamBDefenseRating] = useState(0);
 
   useEffect(() => {
     fetchVenues();
@@ -293,47 +289,27 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
 
       // Assign teams if in team announcement phase
       if (gamePhase === GAME_STATUSES.TEAMS_ANNOUNCED) {
-        // Assign team A (blue)
+        // Assign team A (orange)
         if (teamAPlayers.length > 0) {
           const { error: teamAError } = await supabase
             .from('game_registrations')
-            .update({ team: 'blue' })
+            .update({ team: 'orange' })
             .eq('game_id', gameResult.id)
             .in('player_id', teamAPlayers);
 
           if (teamAError) throw teamAError;
         }
 
-        // Assign team B (orange)
+        // Assign team B (blue)
         if (teamBPlayers.length > 0) {
           const { error: teamBError } = await supabase
             .from('game_registrations')
-            .update({ team: 'orange' })
+            .update({ team: 'blue' })
             .eq('game_id', gameResult.id)
             .in('player_id', teamBPlayers);
 
           if (teamBError) throw teamBError;
         }
-
-        // Save team ratings
-        const { error: teamRatingsError } = await supabase
-          .from('game_team_ratings')
-          .insert([
-            {
-              game_id: gameResult.id,
-              team: 'blue',
-              attack_rating: teamAAttackRating,
-              defense_rating: teamADefenseRating
-            },
-            {
-              game_id: gameResult.id,
-              team: 'orange',
-              attack_rating: teamBAttackRating,
-              defense_rating: teamBDefenseRating
-            }
-          ]);
-
-        if (teamRatingsError) throw teamRatingsError;
       }
 
       toast.success('Game created successfully!');
@@ -396,6 +372,28 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     setTokenPlayers(validTokenPlayers);
   };
 
+  // Function to handle team extraction from team announcement message
+  const handleTeamsExtracted = (orangeTeamNames: string[], blueTeamNames: string[]) => {
+    // Convert player names to IDs
+    const validOrangePlayers = orangeTeamNames
+      .map(name => players.find(p => p.friendly_name === name))
+      .filter((p): p is Player => p !== undefined)
+      .map(p => p.id);
+
+    const validBluePlayers = blueTeamNames
+      .map(name => players.find(p => p.friendly_name === name))
+      .filter((p): p is Player => p !== undefined)
+      .map(p => p.id);
+
+    setTeamAPlayers(validOrangePlayers); // Team A = Orange
+    setTeamBPlayers(validBluePlayers);   // Team B = Blue
+
+    console.log('Teams extracted:', {
+      orange: validOrangePlayers,
+      blue: validBluePlayers
+    });
+  };
+
   return (
     <FormContainer title="Create New Game">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -435,6 +433,7 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
 
         {/* Game Details Paste */}
         <GameDetailsPaste
+          gamePhase={gamePhase}
           onDateTimeExtracted={(newDate, newTime) => {
             setDate(newDate);
             setTime(newTime);
@@ -448,6 +447,7 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
           onMaxPlayersExtracted={(maxPlayers) => {
             setMaxPlayers(maxPlayers);
           }}
+          onTeamsExtracted={handleTeamsExtracted}
         />
 
         {/* Parsed Player Counts Display */}
@@ -517,16 +517,8 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
             players={players}
             teamAPlayers={teamAPlayers}
             teamBPlayers={teamBPlayers}
-            teamAAttackRating={teamAAttackRating}
-            teamADefenseRating={teamADefenseRating}
-            teamBAttackRating={teamBAttackRating}
-            teamBDefenseRating={teamBDefenseRating}
             onTeamAPlayersChange={setTeamAPlayers}
             onTeamBPlayersChange={setTeamBPlayers}
-            onTeamAAttackRatingChange={setTeamAAttackRating}
-            onTeamADefenseRatingChange={setTeamADefenseRating}
-            onTeamBAttackRatingChange={setTeamBAttackRating}
-            onTeamBDefenseRatingChange={setTeamBDefenseRating}
           />
         )}
 

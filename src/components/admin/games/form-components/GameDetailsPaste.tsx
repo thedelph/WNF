@@ -5,6 +5,8 @@ interface GameDetailsPasteProps {
   onDateTimeExtracted: (date: string, time: string) => void;
   onPlayerListsExtracted: (selected: string[], random: string[], reserve: string[], droppedOut: string[], tokenUsers: string[]) => void;
   onMaxPlayersExtracted: (maxPlayers: number) => void;
+  onTeamsExtracted?: (orangeTeam: string[], blueTeam: string[]) => void;
+  gamePhase?: string;
 }
 
 /**
@@ -19,6 +21,8 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
   onDateTimeExtracted,
   onPlayerListsExtracted,
   onMaxPlayersExtracted,
+  onTeamsExtracted,
+  gamePhase,
 }) => {
   // Function to parse player names from a section of text
   const parsePlayerNamesFromSection = (text: string) => {
@@ -77,8 +81,59 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     return { selectedPlayers, randomPlayers, tokenPlayers };
   };
 
+  // Function to parse team announcement message
+  const parseTeamAnnouncement = (text: string) => {
+    const orangeTeam: string[] = [];
+    const blueTeam: string[] = [];
+
+    // Match Orange Team section
+    const orangeMatch = text.match(/🟠\s*Orange Team[^:]*:\s*\n([\s\S]*?)(?=\n\n🔵|$)/);
+    // Match Blue Team section
+    const blueMatch = text.match(/🔵\s*Blue Team[^:]*:\s*\n([\s\S]*?)$/);
+
+    if (orangeMatch) {
+      const orangePlayers = orangeMatch[1]
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => {
+          // Remove emoji prefix (👤)
+          return line.replace(/^👤\s*/, '').trim();
+        })
+        .filter(name => name.length > 0);
+      
+      orangeTeam.push(...orangePlayers);
+    }
+
+    if (blueMatch) {
+      const bluePlayers = blueMatch[1]
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => {
+          // Remove emoji prefix (👤)
+          return line.replace(/^👤\s*/, '').trim();
+        })
+        .filter(name => name.length > 0);
+      
+      blueTeam.push(...bluePlayers);
+    }
+
+    console.log('Parsed teams:', { orangeTeam, blueTeam });
+    return { orangeTeam, blueTeam };
+  };
+
   // Function to parse the full game details text
   const handleFullTextPaste = (text: string) => {
+    // Check if this is a team announcement message
+    if (text.includes('🟠 Orange Team') && text.includes('🔵 Blue Team')) {
+      const { orangeTeam, blueTeam } = parseTeamAnnouncement(text);
+      if (onTeamsExtracted) {
+        onTeamsExtracted(orangeTeam, blueTeam);
+      }
+      return;
+    }
+
     // Parse max players
     const maxPlayersMatch = text.match(/⚽\s*(\d+)\s*players/);
     if (maxPlayersMatch) {
@@ -212,11 +267,19 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       className="form-control"
     >
       <label className="label">
-        <span className="label-text">Paste Full Game Details</span>
+        <span className="label-text">
+          {gamePhase === 'teams_announced' 
+            ? 'Paste Player Registration or Team Announcement' 
+            : 'Paste Full Game Details'}
+        </span>
       </label>
       <textarea
         className="textarea textarea-bordered h-48"
-        placeholder="Paste the full game details here, including date, time, and player lists with emojis (🪙 for tokens, 🎲 for random, 💰 for unpaid games)..."
+        placeholder={
+          gamePhase === 'teams_announced'
+            ? "First paste the player registration message, then paste the team announcement (🟠 Orange Team / 🔵 Blue Team)..."
+            : "Paste the full game details here, including date, time, and player lists with emojis (🪙 for tokens, 🎲 for random, 💰 for unpaid games)..."
+        }
         onChange={(e) => handleFullTextPaste(e.target.value)}
       />
     </motion.div>
