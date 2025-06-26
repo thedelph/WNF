@@ -11,6 +11,8 @@ The Changelog component displays version history and updates for the WNF applica
   - List of changes categorised by type (Added, Changed, Fixed, etc.)
 - Deep linking support - each version has a unique URL hash
 - Smooth scrolling to specific versions when accessed via direct link
+- "Expand All" and "Collapse All" buttons for bulk control of version entries
+- Auto-expansion of linked versions when accessed via URL fragment
 - Responsive design that works well on all screen sizes
 
 ## Deep Linking

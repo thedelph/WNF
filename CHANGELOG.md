@@ -46,6 +46,17 @@ All notable changes to the WNF project will be documented in this file.
   - Emphasizes importance of honest ratings without revealing algorithm specifics
   - Created new component: `/src/components/ratings/RatingsExplanation.tsx`
   
+### Enhanced - June 26, 2025
+- **Admin Players Page Mobile Improvements**:
+  - Restructured header controls with mobile-first responsive layout
+  - Search bar takes full width on mobile for better usability
+  - Added mobile-specific "Select All" button since checkboxes are hidden
+  - Responsive table columns - Caps and XP hidden on mobile to save space
+  - Stacked layout for player information with inline badges on mobile
+  - Improved touch targets with appropriate button sizing (btn-sm/btn-xs)
+  - Reduced container padding on mobile for better space utilization
+  - Abbreviated button labels on mobile (e.g., "Delete" instead of "Delete Selected")
+  
 - **Enhanced Team Balancing Algorithm**
   - Now considers 5 metrics with equal 20% weighting each:
     - Attack Rating (20%)

@@ -203,7 +203,7 @@ export default function Players() {
   const allFilteredSelected = filteredPlayers.length > 0 && filteredPlayers.every(player => selectedPlayers.has(player.id))
 
   return (
-    <div className="container mx-auto p-4 space-y-8">
+    <div className="container mx-auto p-2 sm:p-4 space-y-4 sm:space-y-8">
       <Toaster position="top-right" />
       <motion.h1
         className="text-4xl font-bold text-primary"
@@ -214,69 +214,90 @@ export default function Players() {
         Player Management
       </motion.h1>
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Player Management</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={handleRecalculateXP}
-            disabled={loading}
-            className="btn btn-primary"
-          >
-            {loading ? (
-              <span className="loading loading-spinner loading-sm"></span>
-            ) : (
-              'RECALCULATE XP'
-            )}
-          </button>
-          <button
-            onClick={handleRecalculateStreaks}
-            disabled={loading}
-            className="btn btn-secondary"
-          >
-            {loading ? (
-              <span className="loading loading-spinner loading-sm"></span>
-            ) : (
-              'RECALCULATE STREAKS'
-            )}
-          </button>
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h1 className="text-2xl font-bold">Player Management</h1>
           <input
             type="text"
             placeholder="Search players..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input input-bordered w-full max-w-xs"
+            className="input input-bordered w-full sm:w-auto sm:max-w-xs"
           />
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => handleSelectAll(!allFilteredSelected)}
+            className="btn btn-outline btn-sm sm:btn-md sm:hidden"
+          >
+            {allFilteredSelected ? 'Deselect All' : 'Select All'}
+          </button>
+          <button
+            onClick={handleRecalculateXP}
+            disabled={loading}
+            className="btn btn-primary btn-sm sm:btn-md"
+          >
+            {loading ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <span className="flex items-center">
+                <span className="hidden sm:inline">RECALCULATE </span>XP
+              </span>
+            )}
+          </button>
+          <button
+            onClick={handleRecalculateStreaks}
+            disabled={loading}
+            className="btn btn-secondary btn-sm sm:btn-md"
+          >
+            {loading ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <span className="flex items-center">
+                <span className="hidden sm:inline">RECALCULATE </span>STREAKS
+              </span>
+            )}
+          </button>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="btn btn-error"
+            className="btn btn-error btn-sm sm:btn-md"
             onClick={handleDeleteSelected}
           >
-            <FaTrash className="mr-2" /> Delete Selected
+            <FaTrash className="mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Delete Selected</span>
+            <span className="sm:hidden">Delete</span>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="btn btn-primary"
+            className="btn btn-primary btn-sm sm:btn-md"
             onClick={() => setShowCreateTestUserModal(true)}
           >
-            <FaUserPlus className="mr-2" /> Create Test User
+            <FaUserPlus className="mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Create Test User</span>
+            <span className="sm:hidden">Create</span>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-sm sm:btn-md"
             onClick={() => setShowBulkCreateModal(true)}
           >
-            <FaUsers className="mr-2" /> Bulk Create Test Users
+            <FaUsers className="mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Bulk Create Test Users</span>
+            <span className="sm:hidden">Bulk</span>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="btn btn-accent"
+            className="btn btn-accent btn-sm sm:btn-md"
             onClick={() => setShowImportModal(true)}
           >
-            <FaFileImport className="mr-2" /> Import CSV
+            <FaFileImport className="mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Import CSV</span>
+            <span className="sm:hidden">Import</span>
           </motion.button>
         </div>
       </div>
@@ -286,24 +307,25 @@ export default function Players() {
           <div className="loading loading-spinner loading-lg"></div>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-base-200 rounded-lg shadow-lg">
-          <table className="table w-full">
-            <thead>
-              <tr>
-                <th>
-                  <input
-                    type="checkbox"
-                    checked={allFilteredSelected}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="checkbox checkbox-primary"
-                  />
-                </th>
-                <th>Friendly Name</th>
-                <th>Caps</th>
-                <th>XP</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+        <div className="overflow-x-auto -mx-4 sm:mx-0 bg-base-200 rounded-lg shadow-lg">
+          <div className="min-w-full px-4 sm:px-0">
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th className="hidden sm:table-cell">
+                    <input
+                      type="checkbox"
+                      checked={allFilteredSelected}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="checkbox checkbox-primary"
+                    />
+                  </th>
+                  <th>Player</th>
+                  <th className="hidden sm:table-cell">Caps</th>
+                  <th className="hidden sm:table-cell">XP</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
             <tbody>
               <AnimatePresence>
                 {filteredPlayers.map((player) => (
@@ -315,7 +337,7 @@ export default function Players() {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <td>
+                    <td className="hidden sm:table-cell">
                       <input
                         type="checkbox"
                         checked={selectedPlayers.has(player.id)}
@@ -324,43 +346,60 @@ export default function Players() {
                       />
                     </td>
                     <td>
-                      {player.friendly_name}
-                      {player.is_test_user && (
-                        <span className="badge badge-secondary ml-2">Test User</span>
-                      )}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedPlayers.has(player.id)}
+                            onChange={() => handleSelectPlayer(player.id)}
+                            className="checkbox checkbox-primary checkbox-sm sm:hidden"
+                          />
+                          <span className="font-medium">{player.friendly_name}</span>
+                          {player.is_test_user && (
+                            <span className="badge badge-secondary badge-sm">Test User</span>
+                          )}
+                        </div>
+                        <div className="sm:hidden flex gap-2 text-xs text-base-content/70">
+                          <span className="badge badge-ghost badge-sm">Caps: {player.caps}</span>
+                          <span className="badge badge-ghost badge-sm">XP: {player.xp}</span>
+                        </div>
+                      </div>
                     </td>
-                    <td>{player.caps}</td>
-                    <td>{player.xp}</td>
+                    <td className="hidden sm:table-cell">{player.caps}</td>
+                    <td className="hidden sm:table-cell">{player.xp}</td>
                     <td>
-                      <Link
-                        to={`/admin/players/${player.id}`}
-                        className="btn btn-sm btn-info mr-2"
-                      >
-                        Edit
-                      </Link>
-                      {player.is_test_user && (
-                        <button
-                          className="btn btn-sm btn-primary mr-2"
-                          onClick={() => {
-                            setSelectedTestUser(player);
-                            setShowMergeModal(true);
-                          }}
+                      <div className="flex flex-wrap gap-1 sm:gap-2">
+                        <Link
+                          to={`/admin/players/${player.id}`}
+                          className="btn btn-xs sm:btn-sm btn-info"
                         >
-                          <FaExchangeAlt className="mr-1" /> Merge
+                          Edit
+                        </Link>
+                        {player.is_test_user && (
+                          <button
+                            className="btn btn-xs sm:btn-sm btn-primary"
+                            onClick={() => {
+                              setSelectedTestUser(player);
+                              setShowMergeModal(true);
+                            }}
+                          >
+                            <FaExchangeAlt className="hidden sm:inline mr-1" /> Merge
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-xs sm:btn-sm btn-error"
+                          onClick={() => handleDeleteSinglePlayer(player.id)}
+                        >
+                          <FaTrash />
                         </button>
-                      )}
-                      <button
-                        className="btn btn-sm btn-error"
-                        onClick={() => handleDeleteSinglePlayer(player.id)}
-                      >
-                        <FaTrash />
-                      </button>
+                      </div>
                     </td>
                   </motion.tr>
                 ))}
               </AnimatePresence>
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       )}
 
