@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
@@ -24,6 +24,8 @@ interface ChangelogEntryProps {
   version: string;
   date: string;
   sections: ChangelogSection[];
+  forceExpanded?: boolean | null;
+  initialExpanded?: boolean;
 }
 
 /**
@@ -43,9 +45,43 @@ const hasMeaningfulContent = (section: ChangelogSection): boolean => {
  * Displays a single version's changelog entry with expandable sections
  * Uses Framer Motion for smooth animations and DaisyUI for styling
  */
-const ChangelogEntry: React.FC<ChangelogEntryProps> = ({ version, date, sections }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const ChangelogEntry: React.FC<ChangelogEntryProps> = ({ version, date, sections, forceExpanded, initialExpanded = false }) => {
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({});
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  // Effect to handle forceExpanded prop changes
+  React.useEffect(() => {
+    if (forceExpanded !== null && forceExpanded !== undefined) {
+      setIsExpanded(forceExpanded);
+      // Also expand/collapse all sections within this entry
+      const newExpandedSections: { [key: string]: boolean } = {};
+      sections.forEach(section => {
+        if (hasMeaningfulContent(section)) {
+          newExpandedSections[section.type] = forceExpanded;
+        }
+      });
+      setExpandedSections(newExpandedSections);
+    }
+  }, [forceExpanded, sections]);
+
+  // Effect to handle initialExpanded on mount
+  useEffect(() => {
+    if (initialExpanded && checkboxRef.current) {
+      // Set the checkbox to checked state
+      checkboxRef.current.checked = true;
+      setIsExpanded(true);
+      
+      // Expand all sections within this entry when initially expanded
+      const newExpandedSections: { [key: string]: boolean } = {};
+      sections.forEach(section => {
+        if (hasMeaningfulContent(section)) {
+          newExpandedSections[section.type] = true;
+        }
+      });
+      setExpandedSections(newExpandedSections);
+    }
+  }, [initialExpanded, sections]);
 
   const toggleSection = (sectionType: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -61,6 +97,7 @@ const ChangelogEntry: React.FC<ChangelogEntryProps> = ({ version, date, sections
   return (
     <div className="collapse collapse-arrow bg-base-200 mb-4">
       <input 
+        ref={checkboxRef}
         type="checkbox" 
         checked={isExpanded}
         onChange={() => setIsExpanded(!isExpanded)}

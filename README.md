@@ -20,6 +20,7 @@ A web application for managing weekly football (soccer) games, player registrati
 - Admin portal for game management
 - Player rating system with three metrics: Attack, Defense, and Game IQ
 - Collectable card-style player profiles with rarity tiers
+- Version changelog with deep linking support for sharing updates
 
 ## Expanding the ESLint configuration
 

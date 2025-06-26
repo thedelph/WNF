@@ -24,6 +24,14 @@ All notable changes to the WNF project will be documented in this file.
   - Added `updated_at` column to `player_ratings` table with auto-update trigger to track modification dates
 
 ### Enhanced - June 26, 2025
+- **Changelog Page Improvements**:
+  - Added "Expand All" and "Collapse All" buttons for easier navigation
+  - Buttons control both version entries and their internal sections
+  - Maintains individual toggle control after using bulk actions
+  - Added deep linking support with URL fragments (e.g., `/changelog#1.2.0`)
+  - Linked versions auto-expand with all sections visible for easy sharing
+  - Smooth scrolling to targeted version on page load
+  
 - **Rating Display Improvements**:
   - Unrated values now display as "unrated" instead of "0" or "NaN"
   - Created formatting utility functions in `/src/utils/ratingFormatters.ts`
