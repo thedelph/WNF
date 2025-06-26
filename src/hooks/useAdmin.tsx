@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../utils/supabase'
 import { Permission, PERMISSIONS } from '../types/permissions'
+import { useViewAs } from '../context/ViewAsContext'
 
 interface AdminStatus {
   isAdmin: boolean
@@ -14,6 +15,7 @@ interface AdminStatus {
 
 export const useAdmin = (): AdminStatus => {
   const { user } = useAuth()
+  const { viewAsAdmin, isViewingAs } = useViewAs()
   const [isAdmin, setIsAdmin] = useState(false)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>([])
@@ -23,6 +25,15 @@ export const useAdmin = (): AdminStatus => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
+        // If in "view as" mode, use the emulated permissions
+        if (isViewingAs && viewAsAdmin) {
+          setIsAdmin(viewAsAdmin.is_admin || viewAsAdmin.is_super_admin || viewAsAdmin.permissions.length > 0)
+          setIsSuperAdmin(viewAsAdmin.is_super_admin)
+          setPermissions(viewAsAdmin.permissions)
+          setLoading(false)
+          return
+        }
+
         if (!user) {
           setIsAdmin(false)
           setIsSuperAdmin(false)
@@ -111,7 +122,7 @@ export const useAdmin = (): AdminStatus => {
     }
 
     checkAdminStatus()
-  }, [user])
+  }, [user, isViewingAs, viewAsAdmin])
 
   const hasPermission = useCallback((permission: Permission): boolean => {
     // Super admins have all permissions

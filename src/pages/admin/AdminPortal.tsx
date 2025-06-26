@@ -13,6 +13,7 @@ import { TokenManagementCard } from '../../components/admin/cards/TokenManagemen
 import AccountManagementCard from '../../components/admin/cards/AccountManagementCard'
 import RoleManagementCard from '../../components/admin/cards/RoleManagementCard'
 import { PERMISSIONS } from '../../types/permissions'
+import ViewAsIndicator from '../../components/admin/ViewAsIndicator'
 
 const AdminPortal: React.FC = () => {
   const { isAdmin, isSuperAdmin, hasPermission, loading: adminLoading } = useAdmin()
@@ -26,14 +27,16 @@ const AdminPortal: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto mt-8 p-4">
-      <motion.h1 
-        className="text-3xl font-bold mb-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        Admin Portal
-      </motion.h1>
+    <>
+      <ViewAsIndicator />
+      <div className="container mx-auto mt-8 p-4">
+        <motion.h1 
+          className="text-3xl font-bold mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          Admin Portal
+        </motion.h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[
@@ -69,6 +72,7 @@ const AdminPortal: React.FC = () => {
         ))}
       </div>
     </div>
+    </>
   )
 }
 

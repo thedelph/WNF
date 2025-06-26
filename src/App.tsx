@@ -14,6 +14,7 @@ import Profile from "./pages/Profile"
 import Players from "./pages/admin/players"
 import EditPlayer from "./pages/admin/EditPlayer"
 import { AuthProvider } from "./context/AuthContext"
+import { ViewAsProvider } from "./context/ViewAsContext"
 import ErrorBoundary from './components/ErrorBoundary'
 import { Toaster } from 'react-hot-toast'
 import HistoricalGames from './pages/admin/history/HistoricalGames'
@@ -55,9 +56,10 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ErrorBoundary>
-          <ScrollToTop />
-          <Routes>
+        <ViewAsProvider>
+          <ErrorBoundary>
+            <ScrollToTop />
+            <Routes>
             {/* Redirect root to stats */}
             <Route path="/" element={<Navigate to="/stats" replace />} />
             
@@ -110,7 +112,8 @@ const App: React.FC = () => {
               </Route>
             </Routes>
             <Toaster />
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </ViewAsProvider>
       </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
       {/* Vercel Analytics - Tracks page views and other metrics */}

@@ -4,19 +4,24 @@ import { useAdmin } from '../../hooks/useAdmin'
 import { supabase } from '../../utils/supabase'
 import { toast } from 'react-toastify'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import FormContainer from '../../components/common/containers/FormContainer'
 import AdminList from '../../components/admin/AdminList'
 import AdminForm from '../../components/admin/AdminForm'
-import { Role } from '../../types/permissions'
+import { Role, PERMISSIONS, Permission } from '../../types/permissions'
+import { useViewAs } from '../../context/ViewAsContext'
 
 const AdminManagement: React.FC = () => {
   const { user } = useAuth()
   const { isSuperAdmin, loading: adminLoading } = useAdmin()
+  const { setViewAsAdmin } = useViewAs()
+  const navigate = useNavigate()
   const [admins, setAdmins] = useState<any[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [isAddingAdmin, setIsAddingAdmin] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showViewAsModal, setShowViewAsModal] = useState(false)
+  const [selectedViewAsAdmin, setSelectedViewAsAdmin] = useState<string | null>(null)
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -28,7 +33,12 @@ const AdminManagement: React.FC = () => {
   const fetchRoles = async () => {
     const { data, error } = await supabase
       .from('roles')
-      .select('*')
+      .select(`
+        *,
+        role_permissions!role_permissions_role_id_fkey (
+          permission
+        )
+      `)
       .order('name')
 
     if (error) {
@@ -36,7 +46,13 @@ const AdminManagement: React.FC = () => {
       return
     }
 
-    setRoles(data || [])
+    // Transform data to include permissions array
+    const rolesWithPermissions = (data || []).map(role => ({
+      ...role,
+      permissions: role.role_permissions?.map((rp: any) => rp.permission) || []
+    }))
+
+    setRoles(rolesWithPermissions)
   }
 
   const fetchAdmins = async () => {
@@ -148,6 +164,58 @@ const AdminManagement: React.FC = () => {
     })
   }, [admins, searchQuery])
 
+  const handleViewAs = () => {
+    if (!selectedViewAsAdmin) {
+      toast.error('Please select an admin to view as')
+      return
+    }
+
+    const admin = admins.find(a => a.id === selectedViewAsAdmin)
+    if (!admin) {
+      toast.error('Admin not found')
+      return
+    }
+
+    // Calculate permissions for the selected admin
+    let permissions: Permission[] = []
+    
+    if (admin.is_super_admin) {
+      // Super admin has all permissions
+      permissions = Object.values(PERMISSIONS)
+    } else if (admin.is_admin && !admin.admin_roles?.length) {
+      // Traditional admin has all non-super permissions
+      permissions = Object.values(PERMISSIONS).filter(
+        p => p !== PERMISSIONS.MANAGE_ADMINS && p !== PERMISSIONS.MANAGE_RATINGS
+      )
+    } else if (admin.admin_roles?.length > 0) {
+      // Role-based admin - collect permissions from roles
+      const rolePermissions = new Set<Permission>()
+      
+      admin.admin_roles.forEach((adminRole: any) => {
+        // Get permissions from role_permissions table
+        const rolePerms = roles.find(r => r.id === adminRole.role_id)?.permissions || []
+        rolePerms.forEach(p => rolePermissions.add(p as Permission))
+      })
+      
+      permissions = Array.from(rolePermissions)
+    }
+
+    // Set the view as admin context
+    setViewAsAdmin({
+      id: admin.id,
+      friendly_name: admin.friendly_name,
+      is_admin: admin.is_admin,
+      is_super_admin: admin.is_super_admin,
+      permissions,
+      roleName: admin.admin_roles?.[0]?.role?.name
+    })
+
+    // Close modal and navigate to admin portal
+    setShowViewAsModal(false)
+    navigate('/admin')
+    toast.success(`Now viewing as ${admin.friendly_name}`)
+  }
+
   if (adminLoading) {
     return <div className="text-center mt-8">Loading...</div>
   }
@@ -231,6 +299,16 @@ const AdminManagement: React.FC = () => {
                   </svg>
                   Manage Roles
                 </Link>
+                <button
+                  onClick={() => setShowViewAsModal(true)}
+                  className="btn btn-accent"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  View As
+                </button>
               </div>
 
               {/* Search Box */}
@@ -294,6 +372,80 @@ const AdminManagement: React.FC = () => {
             />
           </div>
         </motion.div>
+
+        {/* View As Modal */}
+        {showViewAsModal && (
+          <div className="modal modal-open">
+            <div className="modal-box max-w-2xl">
+              <h3 className="font-bold text-lg mb-4">View As Admin</h3>
+              <p className="text-sm text-base-content/70 mb-6">
+                Select an admin to emulate their permissions and see what they would see in the admin portal.
+                You will be redirected to the admin portal with their permissions.
+              </p>
+              
+              <div className="form-control mb-6">
+                <label className="label">
+                  <span className="label-text">Select Admin</span>
+                </label>
+                <select 
+                  className="select select-bordered w-full"
+                  value={selectedViewAsAdmin || ''}
+                  onChange={(e) => setSelectedViewAsAdmin(e.target.value || null)}
+                >
+                  <option value="">Choose an admin...</option>
+                  {filteredAdmins.map(admin => {
+                    let adminType = ''
+                    if (admin.is_super_admin) {
+                      adminType = ' (Super Admin)'
+                    } else if (admin.is_admin && !admin.admin_roles?.length) {
+                      adminType = ' (Full Admin)'
+                    } else if (admin.admin_roles?.length > 0) {
+                      adminType = ` (${admin.admin_roles[0]?.role?.name || 'Role-based'})`
+                    }
+                    
+                    return (
+                      <option key={admin.id} value={admin.id}>
+                        {admin.friendly_name}{adminType}
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+
+              {selectedViewAsAdmin && (
+                <div className="alert alert-warning mb-6">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>You will be viewing the admin portal with this user's permissions. An indicator will show you're in "View As" mode.</span>
+                </div>
+              )}
+
+              <div className="modal-action">
+                <button 
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setShowViewAsModal(false)
+                    setSelectedViewAsAdmin(null)
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleViewAs}
+                  disabled={!selectedViewAsAdmin}
+                >
+                  View As Selected Admin
+                </button>
+              </div>
+            </div>
+            <div className="modal-backdrop" onClick={() => {
+              setShowViewAsModal(false)
+              setSelectedViewAsAdmin(null)
+            }}></div>
+          </div>
+        )}
       </div>
     </motion.div>
   )
