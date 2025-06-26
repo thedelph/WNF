@@ -9,9 +9,11 @@ import { FilterPanel } from '../../components/admin/ratings/components/FilterPan
 import { Header } from '../../components/admin/ratings/components/Header';
 import { LoadingSpinner } from '../../components/admin/ratings/components/LoadingSpinner';
 import { TabSelector } from '../../components/admin/ratings/components/TabSelector';
+import { RecentActivity } from '../../components/admin/ratings/components/RecentActivity';
 import { usePlayerRatings } from '../../components/admin/ratings/hooks/usePlayerRatings';
 import { useRaterStats } from '../../components/admin/ratings/hooks/useRaterStats';
 import { usePlayerFiltering } from '../../components/admin/ratings/hooks/usePlayerFiltering';
+import { useRecentRatings } from '../../components/admin/ratings/hooks/useRecentRatings';
 
 const RatingsView: React.FC = () => {
   const { isSuperAdmin, loading: adminLoading } = useAdmin();
@@ -37,6 +39,12 @@ const RatingsView: React.FC = () => {
   // Custom hooks
   const { players, loading: playersLoading } = usePlayerRatings(isSuperAdmin);
   const { raters, loading: ratersLoading } = useRaterStats(isSuperAdmin);
+  const { recentRatings, loading: recentLoading } = useRecentRatings(isSuperAdmin, 10);
+  const { recentRatings: userRecentRatings, loading: userRecentLoading } = useRecentRatings(
+    isSuperAdmin, 
+    10, 
+    activeTab === 'given' ? selectedRaterId || undefined : undefined
+  );
   const filteredPlayers = usePlayerFiltering(players, searchTerm, filterConfig);
   const filteredRaters = raters.filter(rater => 
     rater.friendly_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -58,6 +66,12 @@ const RatingsView: React.FC = () => {
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
   const selectedRater = raters.find(r => r.id === selectedRaterId);
 
+  const handleRecentActivityClick = (playerId: string) => {
+    setActiveTab('received');
+    setSelectedPlayerId(playerId);
+    setSelectedRaterId(null);
+  };
+
   // Wait for admin status to be confirmed before rendering anything
   if (adminLoading) {
     return <LoadingSpinner />;
@@ -68,15 +82,30 @@ const RatingsView: React.FC = () => {
     return null;
   }
 
-  const loading = playersLoading || ratersLoading;
+  const loading = playersLoading || ratersLoading || recentLoading || userRecentLoading;
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
       <Header
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onToggleFilters={() => setShowFilters(!showFilters)}
       />
+      
+      {activeTab === 'given' && selectedRaterId ? (
+        <RecentActivity
+          recentRatings={userRecentRatings}
+          onSelectPlayer={handleRecentActivityClick}
+          loading={userRecentLoading}
+          title={`Recent Activity by ${selectedRater?.friendly_name}`}
+        />
+      ) : (
+        <RecentActivity
+          recentRatings={recentRatings}
+          onSelectPlayer={handleRecentActivityClick}
+          loading={recentLoading}
+        />
+      )}
 
       <TabSelector activeTab={activeTab} onTabChange={handleTabChange} />
 
@@ -93,9 +122,9 @@ const RatingsView: React.FC = () => {
       {loading ? (
         <LoadingSpinner />
       ) : (
-        <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
-          <div className="bg-base-200 p-4 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">
+        <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
+          <div className="bg-base-200 p-3 sm:p-4 rounded-lg overflow-hidden">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               {activeTab === 'received' ? 'Players' : 'Raters'}
             </h2>
             {activeTab === 'received' ? (
@@ -118,8 +147,8 @@ const RatingsView: React.FC = () => {
           </div>
 
           {(selectedPlayer || selectedRater) && (
-            <div className="bg-base-200 p-4 rounded-lg">
-              <h2 className="text-xl font-semibold mb-4">
+            <div className="bg-base-200 p-3 sm:p-4 rounded-lg overflow-hidden">
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1">
                 {activeTab === 'received' 
                   ? `Ratings for ${selectedPlayer?.friendly_name}`
                   : `Ratings by ${selectedRater?.friendly_name}`

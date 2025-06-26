@@ -63,6 +63,7 @@ The system includes 5 built-in roles:
 - Search functionality by name, role, or admin type
 - Visual badges for different admin types
 - "View Permissions" expandable section showing granted permissions
+- **"View As" Feature** - Super admins can emulate other admin users to see what they would see
 
 ### Admin Portal
 - Dynamically shows only sections users have permission to access
@@ -102,6 +103,27 @@ The system maintains full backward compatibility:
 - Only super admins can manage roles and permissions
 - Permission checks occur at both UI and database levels
 - Audit trail potential through timestamps
+
+## View As Feature
+
+Super administrators can temporarily emulate the permissions of other admin users to understand their access level and test the system from their perspective.
+
+### How to Use View As:
+
+1. Navigate to Admin Portal → Admin Management
+2. Click the "View As" button in the action bar
+3. Select an admin user from the dropdown
+4. Click "View As Selected Admin"
+5. You'll be redirected to the admin portal with that user's permissions
+6. A yellow warning banner at the top shows you're in "View As" mode
+7. Click "Exit View As" to return to your normal permissions
+
+### Technical Implementation:
+
+- **ViewAsContext**: Manages the emulated permission state globally
+- **useAdmin Hook**: Checks for view-as overrides before returning permissions
+- **ViewAsIndicator**: Shows a persistent banner when in view-as mode
+- Permission calculation respects the hierarchy (Super Admin > Full Admin > Role-based)
 
 ## Usage Example
 

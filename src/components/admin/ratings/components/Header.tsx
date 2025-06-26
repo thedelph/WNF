@@ -14,8 +14,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleFilters,
 }) => (
   <>
-    <h1 className="text-2xl font-bold mb-6">Player Ratings Overview</h1>
-    <div className="flex gap-4 items-center">
+    <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Player Ratings Overview</h1>
+    <div className="flex gap-2 sm:gap-4 items-center">
       <div className="flex-1">
         <SearchBar
           value={searchTerm}
@@ -25,9 +25,10 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
       <button
         onClick={onToggleFilters}
-        className="btn btn-primary"
+        className="btn btn-primary btn-sm sm:btn-md"
       >
-        <FaFilter className="mr-2" /> Filters
+        <FaFilter className="sm:mr-2" /> 
+        <span className="hidden sm:inline">Filters</span>
       </button>
     </div>
   </>

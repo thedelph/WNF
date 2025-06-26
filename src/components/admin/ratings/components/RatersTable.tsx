@@ -38,18 +38,36 @@ export const RatersTable: React.FC<RatersTableProps> = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="table w-full">
+      <table className="table table-xs sm:table-sm md:table-md w-full">
         <thead>
           <tr>
             <th onClick={() => onSort('friendly_name')} className="cursor-pointer">
-              Rater Name {getSortIcon('friendly_name')}
+              <span className="flex items-center gap-1">
+                <span className="hidden sm:inline">Rater Name</span>
+                <span className="sm:hidden">Rater</span>
+                {getSortIcon('friendly_name')}
+              </span>
             </th>
             <th onClick={() => onSort('total_ratings')} className="cursor-pointer">
-              Ratings Given {getSortIcon('total_ratings')}
+              <span className="flex items-center gap-1">
+                <span className="hidden sm:inline">Ratings Given</span>
+                <span className="sm:hidden">Given</span>
+                {getSortIcon('total_ratings')}
+              </span>
             </th>
-            <th>Average Attack</th>
-            <th>Average Defense</th>
-            <th>Average Game IQ</th>
+            <th className="hidden sm:table-cell">
+              <span className="hidden md:inline">Average Attack</span>
+              <span className="md:hidden">Avg A</span>
+            </th>
+            <th className="hidden sm:table-cell">
+              <span className="hidden md:inline">Average Defense</span>
+              <span className="md:hidden">Avg D</span>
+            </th>
+            <th className="hidden md:table-cell">
+              <span className="hidden lg:inline">Average Game IQ</span>
+              <span className="lg:hidden">Avg IQ</span>
+            </th>
+            <th className="sm:hidden">Averages</th>
           </tr>
         </thead>
         <tbody>
@@ -69,11 +87,18 @@ export const RatersTable: React.FC<RatersTableProps> = ({
                 }`}
                 onClick={() => onRaterSelect(rater.id)}
               >
-                <td>{rater.friendly_name}</td>
+                <td className="font-medium">{rater.friendly_name}</td>
                 <td>{rater.ratings_given?.length || 0}</td>
-                <td>{formatRating(rater.ratings_given?.length ? avgAttack : null)}</td>
-                <td>{formatRating(rater.ratings_given?.length ? avgDefense : null)}</td>
-                <td>{formatRating(rater.ratings_given?.length ? avgGameIq : null)}</td>
+                <td className="hidden sm:table-cell">{formatRating(rater.ratings_given?.length ? avgAttack : null)}</td>
+                <td className="hidden sm:table-cell">{formatRating(rater.ratings_given?.length ? avgDefense : null)}</td>
+                <td className="hidden md:table-cell">{formatRating(rater.ratings_given?.length ? avgGameIq : null)}</td>
+                <td className="sm:hidden">
+                  <div className="flex flex-col gap-1">
+                    <span className="badge badge-xs">A: {formatRating(rater.ratings_given?.length ? avgAttack : null)}</span>
+                    <span className="badge badge-xs">D: {formatRating(rater.ratings_given?.length ? avgDefense : null)}</span>
+                    <span className="badge badge-xs">IQ: {formatRating(rater.ratings_given?.length ? avgGameIq : null)}</span>
+                  </div>
+                </td>
               </motion.tr>
             );
           })}

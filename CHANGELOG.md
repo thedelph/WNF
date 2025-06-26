@@ -5,6 +5,21 @@ All notable changes to the WNF project will be documented in this file.
 ## [Unreleased]
 
 ### Added - June 26, 2025
+- **Role-Based Access Control (RBAC) System**: Granular permission management for admins
+  - 5 default roles: Super Admin, Full Admin, Treasurer, Team Manager, Player Manager
+  - 10 available permissions for fine-grained access control
+  - Role management UI at `/admin/roles` (super admin only)
+  - Backward compatible with existing `is_admin` and `is_super_admin` flags
+  - Admin management page shows role badges and permission details
+
+- **View As Feature**: Super admins can emulate other admin permissions
+  - "View As" button in admin management page
+  - Select any admin to see what they would see in the admin portal
+  - Yellow warning banner shows when in "View As" mode
+  - Exit button returns to normal permissions
+  - Useful for testing and understanding different permission levels
+
+### Added - June 26, 2025
 - **Game IQ Rating System**: Third player rating metric alongside Attack and Defense
   - Measures tactical awareness, positioning, and decision-making abilities
   - 0-10 scale displayed as 0-5 stars (matching Attack/Defense ratings)

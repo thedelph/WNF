@@ -14,6 +14,10 @@ export interface Rating {
     id: string;
     friendly_name: string;
   };
+  // Previous rating values from history
+  previous_attack_rating?: number;
+  previous_defense_rating?: number;
+  previous_game_iq_rating?: number;
 }
 
 export interface Player {

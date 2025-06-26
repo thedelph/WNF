@@ -30,21 +30,22 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="table w-full">
+      <table className="table table-xs sm:table-sm md:table-md w-full">
         <thead>
           <tr>
             <th onClick={() => onSort('friendly_name')} className="cursor-pointer">
-              {mode === 'received' ? 'Rater Name' : 'Rated Player'}
+              {mode === 'received' ? 'Rater' : 'Player'}
             </th>
-            <th onClick={() => onSort('attack_rating')} className="cursor-pointer">
-              Attack Rating
+            <th className="hidden sm:table-cell" onClick={() => onSort('attack_rating')} >
+              <span className="cursor-pointer">Attack</span>
             </th>
-            <th onClick={() => onSort('defense_rating')} className="cursor-pointer">
-              Defense Rating
+            <th className="hidden sm:table-cell" onClick={() => onSort('defense_rating')} >
+              <span className="cursor-pointer">Defense</span>
             </th>
-            <th onClick={() => onSort('game_iq_rating')} className="cursor-pointer">
-              Game IQ Rating
+            <th className="hidden sm:table-cell" onClick={() => onSort('game_iq_rating')} >
+              <span className="cursor-pointer">Game IQ</span>
             </th>
+            <th className="sm:hidden">Ratings</th>
             <th>Date</th>
           </tr>
         </thead>
@@ -57,15 +58,29 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
               exit={{ opacity: 0 }}
               className="hover"
             >
-              <td>
+              <td className="font-medium">
                 {mode === 'received' 
                   ? rating.rater?.friendly_name 
                   : rating.rated_player?.friendly_name}
               </td>
-              <td>{formatRating(rating.attack_rating)}</td>
-              <td>{formatRating(rating.defense_rating)}</td>
-              <td>{formatRating(rating.game_iq_rating)}</td>
-              <td>{formatDate(rating.updated_at || rating.created_at)}</td>
+              <td className="hidden sm:table-cell">{formatRating(rating.attack_rating)}</td>
+              <td className="hidden sm:table-cell">{formatRating(rating.defense_rating)}</td>
+              <td className="hidden sm:table-cell">{formatRating(rating.game_iq_rating)}</td>
+              <td className="sm:hidden">
+                <div className="flex flex-col gap-1">
+                  <span className="badge badge-xs">A: {formatRating(rating.attack_rating)}</span>
+                  <span className="badge badge-xs">D: {formatRating(rating.defense_rating)}</span>
+                  <span className="badge badge-xs">IQ: {formatRating(rating.game_iq_rating)}</span>
+                </div>
+              </td>
+              <td className="text-xs sm:text-sm">
+                <div className="hidden sm:block">
+                  {formatDate(rating.updated_at || rating.created_at)}
+                </div>
+                <div className="sm:hidden">
+                  {new Date(rating.updated_at || rating.created_at).toLocaleDateString()}
+                </div>
+              </td>
             </motion.tr>
           ))}
         </tbody>

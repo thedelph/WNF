@@ -7,18 +7,18 @@ interface TabSelectorProps {
 
 export const TabSelector: React.FC<TabSelectorProps> = ({ activeTab, onTabChange }) => {
   return (
-    <div className="tabs tabs-boxed justify-center mb-6">
+    <div className="tabs tabs-boxed justify-center mb-4 sm:mb-6">
       <button
-        className={`tab ${activeTab === 'received' ? 'tab-active' : ''}`}
+        className={`tab tab-sm sm:tab-md ${activeTab === 'received' ? 'tab-active' : ''}`}
         onClick={() => onTabChange('received')}
       >
-        Ratings Received
+        <span className="hidden sm:inline">Ratings </span>Received
       </button>
       <button
-        className={`tab ${activeTab === 'given' ? 'tab-active' : ''}`}
+        className={`tab tab-sm sm:tab-md ${activeTab === 'given' ? 'tab-active' : ''}`}
         onClick={() => onTabChange('given')}
       >
-        Ratings Given
+        <span className="hidden sm:inline">Ratings </span>Given
       </button>
     </div>
   );
