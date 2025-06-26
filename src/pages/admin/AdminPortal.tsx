@@ -11,9 +11,11 @@ import RatingsCard from '../../components/admin/cards/RatingsCard'
 import { SlotOffersCard } from '../../components/admin/cards/SlotOffersCard'
 import { TokenManagementCard } from '../../components/admin/cards/TokenManagementCard'
 import AccountManagementCard from '../../components/admin/cards/AccountManagementCard'
+import RoleManagementCard from '../../components/admin/cards/RoleManagementCard'
+import { PERMISSIONS } from '../../types/permissions'
 
 const AdminPortal: React.FC = () => {
-  const { isAdmin, isSuperAdmin, loading: adminLoading } = useAdmin()
+  const { isAdmin, isSuperAdmin, hasPermission, loading: adminLoading } = useAdmin()
 
   if (adminLoading) {
     return <div className="text-center mt-8">Loading...</div>
@@ -35,16 +37,17 @@ const AdminPortal: React.FC = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[
-          <GameManagementCard key="game" />,
-          <PlayerManagementCard key="player" />,
-          <TeamGenerationCard key="team" />,
-          <PaymentManagementCard key="payment" />,
-          <TokenManagementCard key="token" />,
-          <AccountManagementCard key="account" />,
-          <AdminManagementCard key="admin" />,
-          <HistoricalDataCard key="historical" />,
-          <SlotOffersCard key="slots" />,
-          isSuperAdmin && <RatingsCard key="ratings" />
+          hasPermission(PERMISSIONS.MANAGE_GAMES) && <GameManagementCard key="game" />,
+          hasPermission(PERMISSIONS.MANAGE_PLAYERS) && <PlayerManagementCard key="player" />,
+          hasPermission(PERMISSIONS.MANAGE_TEAMS) && <TeamGenerationCard key="team" />,
+          hasPermission(PERMISSIONS.MANAGE_PAYMENTS) && <PaymentManagementCard key="payment" />,
+          hasPermission(PERMISSIONS.MANAGE_TOKENS) && <TokenManagementCard key="token" />,
+          hasPermission(PERMISSIONS.MANAGE_ACCOUNTS) && <AccountManagementCard key="account" />,
+          hasPermission(PERMISSIONS.MANAGE_ADMINS) && <AdminManagementCard key="admin" />,
+          hasPermission(PERMISSIONS.MANAGE_HISTORY) && <HistoricalDataCard key="historical" />,
+          hasPermission(PERMISSIONS.MANAGE_SLOTS) && <SlotOffersCard key="slots" />,
+          hasPermission(PERMISSIONS.MANAGE_RATINGS) && <RatingsCard key="ratings" />,
+          isSuperAdmin && <RoleManagementCard key="roles" />
         ].filter(Boolean).map((card, index) => (
           <motion.div
             key={index}

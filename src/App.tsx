@@ -37,6 +37,7 @@ import StandaloneStats from './pages/StandaloneStats'
 import { ScrollToTop } from './components/ui/ScrollToTop'
 import TokenManagement from './pages/admin/TokenManagement'
 import AccountManagement from './pages/admin/AccountManagement'
+import RoleManagement from './pages/admin/RoleManagement'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -85,6 +86,7 @@ const App: React.FC = () => {
                 <Route path="/admin" element={<AdminPortal />} />
                 <Route path="/admin/admins" element={<AdminManagement />} />
                 <Route path="/admin/permissions" element={<AdminPermissions />} />
+                <Route path="/admin/roles" element={<RoleManagement />} />
                 <Route path="/admin/games" element={<GameManagement />} />
                 <Route path="/admin/players" element={<Players />} />
                 <Route path="/admin/players/:id" element={<EditPlayer />} />

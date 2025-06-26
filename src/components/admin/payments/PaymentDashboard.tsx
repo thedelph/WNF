@@ -5,8 +5,11 @@ import PaymentSummary from './PaymentSummary';
 import GamePaymentList from './GamePaymentList';
 import { Game } from '../../../types/game';
 import toast from 'react-hot-toast'; // Assuming you have react-hot-toast installed
+import { useAdmin } from '../../../hooks/useAdmin';
+import { PERMISSIONS } from '../../../types/permissions';
 
 const PaymentDashboard: React.FC = () => {
+  const { hasPermission, loading: adminLoading } = useAdmin();
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
@@ -130,6 +133,26 @@ const PaymentDashboard: React.FC = () => {
       toast.error('Failed to update payments');
     }
   };
+
+  // Check for permission
+  if (adminLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center mt-8">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!hasPermission(PERMISSIONS.MANAGE_PAYMENTS)) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center mt-8">
+          <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
+          <p>You do not have permission to access Payment Management.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
