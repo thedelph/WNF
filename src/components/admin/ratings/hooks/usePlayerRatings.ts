@@ -26,10 +26,10 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
           id,
           friendly_name,
           attack_rating,
-          defense_rating
+          defense_rating,
+          game_iq
         `)
-        .not('attack_rating', 'eq', 0)
-        .not('defense_rating', 'eq', 0);
+        .or('attack_rating.gt.0,defense_rating.gt.0,game_iq.gt.0');
 
       if (playersError) throw playersError;
 
@@ -42,7 +42,9 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
               id,
               attack_rating,
               defense_rating,
+              game_iq_rating,
               created_at,
+              updated_at,
               rater:players!player_ratings_rater_id_fkey(
                 id,
                 friendly_name,

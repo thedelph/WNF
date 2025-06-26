@@ -43,9 +43,10 @@ export default function PlayerProfileNew() {
   const [latestSequence, setLatestSequence] = useState<number>(0);
   const { user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const [ratings, setRatings] = useState<{ attack: number; defense: number }>({
+  const [ratings, setRatings] = useState<{ attack: number; defense: number; gameIq: number }>({
     attack: 0,
     defense: 0,
+    gameIq: 0,
   });
 
   // Use custom hook for game history management
@@ -364,7 +365,7 @@ export default function PlayerProfileNew() {
           const { data: ratingData, error: ratingError } = await executeWithRetry(
             () => supabase
               .from('player_ratings')
-              .select('attack_rating, defense_rating')
+              .select('attack_rating, defense_rating, game_iq_rating')
               .eq('rater_id', currentPlayerId)
               .eq('rated_player_id', playerData.id)
               .maybeSingle()
@@ -485,7 +486,11 @@ export default function PlayerProfileNew() {
           bench_warmer_streak: playerData.bench_warmer_streak || 0,
           token_status: tokenStatus,
           games_played_together: gamesPlayedTogether,
-          my_rating: myRating as { attack_rating: number; defense_rating: number; } | null,
+          my_rating: myRating ? { 
+            attack_rating: myRating.attack_rating, 
+            defense_rating: myRating.defense_rating,
+            game_iq_rating: myRating.game_iq_rating || 0
+          } : null,
           unpaidGames: unpaidGamesCount,
           registrationStreak: registrationStreakData?.current_streak_length || 0,
           registrationStreakApplies: registrationStreakData?.bonus_applies || false,
@@ -545,7 +550,8 @@ export default function PlayerProfileNew() {
             rater_id: currentPlayer.id,
             rated_player_id: player.id,
             attack_rating: ratings.attack,
-            defense_rating: ratings.defense
+            defense_rating: ratings.defense,
+            game_iq_rating: ratings.gameIq
           },
           {
             onConflict: 'rater_id,rated_player_id'
@@ -560,7 +566,7 @@ export default function PlayerProfileNew() {
       // Refresh player data to update ratings
       const { data: myRating, error: ratingError } = await supabase
         .from('player_ratings')
-        .select('attack_rating, defense_rating')
+        .select('attack_rating, defense_rating, game_iq_rating')
         .eq('rater_id', currentPlayer.id)
         .eq('rated_player_id', player.id)
         .maybeSingle();
@@ -570,7 +576,11 @@ export default function PlayerProfileNew() {
       } else if (player) {
         setPlayer({
           ...player,
-          my_rating: myRating || null
+          my_rating: myRating ? { 
+            attack_rating: myRating.attack_rating, 
+            defense_rating: myRating.defense_rating,
+            game_iq_rating: myRating.game_iq_rating || 0
+          } : null
         });
       }
     } catch (error: any) {
@@ -716,7 +726,8 @@ export default function PlayerProfileNew() {
             onRatePlayer={() => {
               setRatings({
                 attack: player.my_rating?.attack_rating || 0,
-                defense: player.my_rating?.defense_rating || 0
+                defense: player.my_rating?.defense_rating || 0,
+                gameIq: player.my_rating?.game_iq_rating || 0
               });
               setShowRatingModal(true);
             }}

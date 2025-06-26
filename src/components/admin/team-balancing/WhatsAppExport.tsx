@@ -65,18 +65,21 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
 🟠 Orange Team
 ⚔ Attack: ${stats.orange.attack.toFixed(1)}
 🛡 Defense: ${stats.orange.defense.toFixed(1)}
+🧠 Game IQ: ${stats.orange.gameIq.toFixed(1)}
 🏆 Win Rate: ${Math.round(stats.orange.winRate)}%
 ⚽ Goal Diff: ${stats.orange.goalDifferential}
 
 🔵 Blue Team
 ⚔ Attack: ${stats.blue.attack.toFixed(1)}
 🛡 Defense: ${stats.blue.defense.toFixed(1)}
+🧠 Game IQ: ${stats.blue.gameIq.toFixed(1)}
 🏆 Win Rate: ${Math.round(stats.blue.winRate)}%
 ⚽ Goal Diff: ${stats.blue.goalDifferential}
 
 📊 Differences
 ⚔ Attack Diff: ${stats.attackDiff.toFixed(1)}
 🛡 Defense Diff: ${stats.defenseDiff.toFixed(1)}
+🧠 Game IQ Diff: ${stats.gameIqDiff.toFixed(1)}
 🏆 Win Rate Diff: ${stats.winRateDiff.toFixed(1)}%
 ${goalDiffDiffText}
 ⚖ Balance Score: ${stats.currentScore.toFixed(1)}

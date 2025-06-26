@@ -15,10 +15,10 @@ A web application for managing weekly football (soccer) games, player registrati
 
 - Player registration and profile management
 - XP-based player selection system
-- Automatic team balancing based on player ratings
+- Automatic team balancing based on player ratings (Attack, Defense, Game IQ, Win Rate, Goal Differential)
 - Player statistics and performance tracking
 - Admin portal for game management
-- Player rating system
+- Player rating system with three metrics: Attack, Defense, and Game IQ
 - Collectable card-style player profiles with rarity tiers
 
 ## Expanding the ESLint configuration

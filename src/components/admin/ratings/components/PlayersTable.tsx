@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Player, SortConfig } from './types';
+import { Player, SortConfig } from '../types';
 import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import { formatRating } from '../../../../utils/ratingFormatters';
 
 interface PlayersTableProps {
   players: Player[];
@@ -32,7 +33,9 @@ export const PlayersTable: React.FC<PlayersTableProps> = ({
     if (sortConfig.key === 'total_ratings') {
       return direction * ((a.ratings?.length || 0) - (b.ratings?.length || 0));
     }
-    return direction * ((a[sortConfig.key] || 0) - (b[sortConfig.key] || 0));
+    const aValue = a[sortConfig.key] ?? 0;
+    const bValue = b[sortConfig.key] ?? 0;
+    return direction * (aValue - bValue);
   });
 
   return (
@@ -48,6 +51,9 @@ export const PlayersTable: React.FC<PlayersTableProps> = ({
             </th>
             <th onClick={() => onSort('defense_rating')} className="cursor-pointer">
               Defense Rating {getSortIcon('defense_rating')}
+            </th>
+            <th onClick={() => onSort('game_iq')} className="cursor-pointer">
+              Game IQ Rating {getSortIcon('game_iq')}
             </th>
             <th onClick={() => onSort('total_ratings')} className="cursor-pointer">
               Total Ratings {getSortIcon('total_ratings')}
@@ -67,8 +73,9 @@ export const PlayersTable: React.FC<PlayersTableProps> = ({
               onClick={() => onPlayerSelect(player.id)}
             >
               <td>{player.friendly_name}</td>
-              <td>{player.attack_rating.toFixed(1)}</td>
-              <td>{player.defense_rating.toFixed(1)}</td>
+              <td>{formatRating(player.attack_rating)}</td>
+              <td>{formatRating(player.defense_rating)}</td>
+              <td>{formatRating(player.game_iq)}</td>
               <td>{player.ratings?.length || 0}</td>
             </motion.tr>
           ))}

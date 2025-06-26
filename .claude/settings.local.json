@@ -27,11 +27,14 @@
       "Bash(npx eslint:*)",
       "Bash(echo:*)",
       "Bash(ls:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "mcp__supabase__list_organizations",
+      "Bash(grep:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "supabase"
+    "supabase",
+    "git"
   ]
 }

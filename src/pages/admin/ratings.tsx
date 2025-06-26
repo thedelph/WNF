@@ -28,6 +28,8 @@ const RatingsView: React.FC = () => {
     maxAttack: 10,
     minDefense: 0,
     maxDefense: 10,
+    minGameIq: 0,
+    maxGameIq: 10,
     minTotalRatings: 0
   });
   const [showFilters, setShowFilters] = useState(false);

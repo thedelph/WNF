@@ -74,6 +74,29 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             />
           </div>
         </div>
+        
+        <div>
+          <label className="label">Game IQ Rating Range</label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="0"
+              max="10"
+              value={filterConfig.minGameIq}
+              onChange={(e) => onFilterChange({ ...filterConfig, minGameIq: Number(e.target.value) })}
+              className="input input-bordered w-full"
+            />
+            <span className="self-center">to</span>
+            <input
+              type="number"
+              min="0"
+              max="10"
+              value={filterConfig.maxGameIq}
+              onChange={(e) => onFilterChange({ ...filterConfig, maxGameIq: Number(e.target.value) })}
+              className="input input-bordered w-full"
+            />
+          </div>
+        </div>
       </div>
       
       <div className="mt-4">

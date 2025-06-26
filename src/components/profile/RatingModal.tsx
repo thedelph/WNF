@@ -8,17 +8,19 @@ interface RatingModalProps {
   ratings: {
     attack: number;
     defense: number;
+    gameIq: number;
   };
   setRatings: React.Dispatch<React.SetStateAction<{
     attack: number;
     defense: number;
+    gameIq: number;
   }>>;
   onClose: () => void;
   onSubmit: () => void;
 }
 
 /**
- * Modal component for rating a player's attack and defense skills
+ * Modal component for rating a player's attack, defense, and game IQ skills
  * Allows users to rate on a scale of 0-5 stars (internally 0-10 for half stars)
  */
 export const RatingModal: React.FC<RatingModalProps> = ({
@@ -55,6 +57,11 @@ export const RatingModal: React.FC<RatingModalProps> = ({
             rating={ratings.defense}
             onChange={(value) => setRatings(prev => ({ ...prev, defense: value }))}
             label="Defense Rating"
+          />
+          <StarRating
+            rating={ratings.gameIq}
+            onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
+            label="Game IQ Rating"
           />
         </div>
 

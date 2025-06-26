@@ -1,6 +1,7 @@
 import React from 'react';
 import { PlayerSwapSuggestion } from './types';
 import { SwapSuggestion } from './SwapSuggestion';
+import { formatRating } from '../../../utils/ratingFormatters';
 
 interface SwapRecommendationsProps {
   swaps: PlayerSwapSuggestion[];
@@ -79,18 +80,21 @@ export const SwapRecommendations: React.FC<SwapRecommendationsProps> = ({
                     <th>Player</th>
                     <th>Attack</th>
                     <th>Defense</th>
+                    <th>Game IQ</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td className="text-blue-500">{selectedSwap.bluePlayer.friendly_name}</td>
-                    <td>{selectedSwap.bluePlayer.attack_rating.toFixed(1)}</td>
-                    <td>{selectedSwap.bluePlayer.defense_rating.toFixed(1)}</td>
+                    <td>{formatRating(selectedSwap.bluePlayer.attack_rating)}</td>
+                    <td>{formatRating(selectedSwap.bluePlayer.defense_rating)}</td>
+                    <td>{formatRating(selectedSwap.bluePlayer.game_iq_rating)}</td>
                   </tr>
                   <tr>
                     <td className="text-orange-500">{selectedSwap.orangePlayer.friendly_name}</td>
-                    <td>{selectedSwap.orangePlayer.attack_rating.toFixed(1)}</td>
-                    <td>{selectedSwap.orangePlayer.defense_rating.toFixed(1)}</td>
+                    <td>{formatRating(selectedSwap.orangePlayer.attack_rating)}</td>
+                    <td>{formatRating(selectedSwap.orangePlayer.defense_rating)}</td>
+                    <td>{formatRating(selectedSwap.orangePlayer.game_iq_rating)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -109,6 +113,12 @@ export const SwapRecommendations: React.FC<SwapRecommendationsProps> = ({
                   <p>Defense: {teamStats.defenseDiff.toFixed(1)} → {swapStats.defenseDiff.toFixed(1)}</p>
                   <p className={`${swapStats.defenseDiff < teamStats.defenseDiff ? 'text-success' : 'text-error'}`}>
                     {swapStats.defenseDiff < teamStats.defenseDiff ? '✓ Better' : '✗ Worse'}
+                  </p>
+                </div>
+                <div>
+                  <p>Game IQ: {teamStats.gameIqDiff.toFixed(1)} → {swapStats.gameIqDiff.toFixed(1)}</p>
+                  <p className={`${swapStats.gameIqDiff < teamStats.gameIqDiff ? 'text-success' : 'text-error'}`}>
+                    {swapStats.gameIqDiff < teamStats.gameIqDiff ? '✓ Better' : '✗ Worse'}
                   </p>
                 </div>
                 <div>

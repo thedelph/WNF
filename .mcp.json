@@ -6,15 +6,7 @@
         "-y",
         "@supabase/mcp-server-supabase@latest",
         "--access-token",
-        "sbp_6eb8e33aa84901ef4f2b353fe65d71f29617fc52"
-      ]
-    },
-    "git": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-git"
+        "sbp_5c487b8a536418f73931a146a0881f84cd75284a"
       ]
     }
-  }
-}
+}}

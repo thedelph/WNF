@@ -1,0 +1,71 @@
+# Changelog
+
+All notable changes to the WNF project will be documented in this file.
+
+## [Unreleased]
+
+### Added - June 26, 2025
+- **Game IQ Rating System**: Third player rating metric alongside Attack and Defense
+  - Measures tactical awareness, positioning, and decision-making abilities
+  - 0-10 scale displayed as 0-5 stars (matching Attack/Defense ratings)
+  - Database columns: `game_iq_rating` in player_ratings table
+  - Database columns: `game_iq` and `average_game_iq_rating` in players table
+  - Updated trigger function `update_player_average_ratings()` to calculate Game IQ averages
+  
+### Fixed - June 26, 2025
+- **Game IQ Rating Fixes**:
+  - Added Game IQ rating field to Edit Player admin page (`/admin/players/{id}/edit`)
+  - Fixed Player Profile to display Game IQ in "Your Current Ratings" section
+  - Fixed Admin Ratings page empty table issue - changed filtering from AND to OR logic
+  - Added null value handling for all rating fields to prevent runtime errors
+  - Added Game IQ filter controls to Admin Ratings filter panel
+  - Updated all TypeScript interfaces to include `game_iq_rating` field
+  - Fixed Admin Ratings "Ratings by [Player]" not showing Game IQ values - was missing from database query
+  - Added `updated_at` column to `player_ratings` table with auto-update trigger to track modification dates
+
+### Enhanced - June 26, 2025
+- **Rating Display Improvements**:
+  - Unrated values now display as "unrated" instead of "0" or "NaN"
+  - Created formatting utility functions in `/src/utils/ratingFormatters.ts`
+  - Rating buttons show contextual text ("ADD GAME IQ RATING" when only Game IQ is missing)
+  - Improved null value handling across all rating displays
+
+- **Ratings Explanation Section**:
+  - Added expandable/collapsible explanation component to ratings page
+  - Uses Framer Motion for smooth animations (similar to XP Breakdown)
+  - Explains Attack, Defense, and Game IQ rating criteria
+  - Clarifies that ratings should consider both skill AND position tendency
+  - Emphasizes importance of honest ratings without revealing algorithm specifics
+  - Created new component: `/src/components/ratings/RatingsExplanation.tsx`
+  
+- **Enhanced Team Balancing Algorithm**
+  - Now considers 5 metrics with equal 20% weighting each:
+    - Attack Rating (20%)
+    - Defense Rating (20%) 
+    - Game IQ Rating (20%)
+    - Win Rate (20%)
+    - Goal Differential (20%)
+  - Swap recommendations include Game IQ impact
+  - Balance score visualization updated to show all 5 metrics
+
+- **UI Updates**
+  - Rating modal now shows 3 star ratings (Attack, Defense, Game IQ)
+  - Admin tables display Game IQ ratings with sorting/filtering
+  - Team stats show Game IQ averages and differences
+  - WhatsApp export includes Game IQ with 🧠 emoji
+  - Player profiles display Game IQ ratings
+
+### Changed
+- Team balance calculations updated from 4 to 5 metrics
+- All player rating interfaces updated to include Game IQ
+- Documentation updated to reflect new rating system
+
+## [Previous Releases]
+
+### June 18, 2025
+- **Academy Tier**: New player rarity for 0 caps and 0 XP (deep teal gradient)
+- **Enhanced Team Announcement Phase**: Two-stage pasting process
+- **Game Creation Updates**: Removed Attack/Defense from form, pitch cost now £54
+
+### Earlier Updates
+- See git history for previous changes

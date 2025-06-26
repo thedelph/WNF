@@ -10,10 +10,12 @@ export const usePlayerFiltering = (
     players.filter(player => {
       const matchesSearch = player.friendly_name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFilter = (
-        player.attack_rating >= filterConfig.minAttack &&
-        player.attack_rating <= filterConfig.maxAttack &&
-        player.defense_rating >= filterConfig.minDefense &&
-        player.defense_rating <= filterConfig.maxDefense &&
+        (player.attack_rating ?? 0) >= filterConfig.minAttack &&
+        (player.attack_rating ?? 0) <= filterConfig.maxAttack &&
+        (player.defense_rating ?? 0) >= filterConfig.minDefense &&
+        (player.defense_rating ?? 0) <= filterConfig.maxDefense &&
+        (player.game_iq ?? 0) >= filterConfig.minGameIq &&
+        (player.game_iq ?? 0) <= filterConfig.maxGameIq &&
         (player.ratings?.length || 0) >= filterConfig.minTotalRatings
       );
       return matchesSearch && matchesFilter;

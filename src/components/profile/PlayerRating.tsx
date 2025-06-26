@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { PlayerStats } from '../../types/player';
 import { User } from '@supabase/supabase-js';
 import StarRating from '../StarRating';
+import { formatStarRating, getRatingButtonText } from '../../utils/ratingFormatters';
 
 interface PlayerRatingProps {
   player: PlayerStats;
@@ -10,8 +11,9 @@ interface PlayerRatingProps {
   ratings: {
     attack: number;
     defense: number;
+    gameIq: number;
   };
-  setRatings: (ratings: { attack: number; defense: number }) => void;
+  setRatings: (ratings: { attack: number; defense: number; gameIq: number }) => void;
 }
 
 export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }: PlayerRatingProps) => {
@@ -50,8 +52,9 @@ export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }
                 {player.my_rating && (
                   <div className="text-sm text-gray-600">
                     <p>Your Current Ratings:</p>
-                    <p>Attack: {player.my_rating.attack_rating / 2} stars</p>
-                    <p>Defense: {player.my_rating.defense_rating / 2} stars</p>
+                    <p>Attack: {formatStarRating(player.my_rating.attack_rating)}</p>
+                    <p>Defense: {formatStarRating(player.my_rating.defense_rating)}</p>
+                    <p>Game IQ: {formatStarRating(player.my_rating.game_iq_rating)}</p>
                   </div>
                 )}
                 <motion.button
@@ -61,7 +64,7 @@ export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }
                   onClick={onRatePlayer}
                 >
                   <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-                  <span className="font-medium">{player.my_rating ? 'UPDATE RATING' : 'RATE PLAYER'}</span>
+                  <span className="font-medium">{getRatingButtonText(player.my_rating)}</span>
                 </motion.button>
               </div>
             ) : (

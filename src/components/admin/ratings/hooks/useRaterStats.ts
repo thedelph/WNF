@@ -37,7 +37,9 @@ export const useRaterStats = (isSuperAdmin: boolean) => {
               id,
               attack_rating,
               defense_rating,
+              game_iq_rating,
               created_at,
+              updated_at,
               rated_player:players!player_ratings_rated_player_id_fkey(
                 id,
                 friendly_name

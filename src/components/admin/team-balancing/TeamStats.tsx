@@ -6,6 +6,7 @@ export interface TeamStatsProps {
     blue: {
       attack: number;
       defense: number;
+      gameIq: number;
       winRate: number;
       goalDifferential: number;
       playerCount: number;
@@ -13,22 +14,26 @@ export interface TeamStatsProps {
     orange: {
       attack: number;
       defense: number;
+      gameIq: number;
       winRate: number;
       goalDifferential: number;
       playerCount: number;
     };
     attackDiff: number;
     defenseDiff: number;
+    gameIqDiff: number;
     winRateDiff: number;
     goalDifferentialDiff: number;
     currentScore: number;
     // Normalized values for visualization
     normalizedAttackDiff?: number;
     normalizedDefenseDiff?: number;
+    normalizedGameIqDiff?: number;
     normalizedWinRateDiff?: number;
     normalizedGoalDiffDiff?: number;
     normalizedWeightedAttackDiff?: number;
     normalizedWeightedDefenseDiff?: number;
+    normalizedWeightedGameIqDiff?: number;
     normalizedWeightedWinRateDiff?: number;
     normalizedWeightedGoalDiffDiff?: number;
   };
@@ -36,6 +41,7 @@ export interface TeamStatsProps {
     blue: {
       attack: number;
       defense: number;
+      gameIq: number;
       winRate: number;
       goalDifferential: number;
       playerCount: number;
@@ -43,12 +49,14 @@ export interface TeamStatsProps {
     orange: {
       attack: number;
       defense: number;
+      gameIq: number;
       winRate: number;
       goalDifferential: number;
       playerCount: number;
     };
     attackDiff: number;
     defenseDiff: number;
+    gameIqDiff: number;
     winRateDiff: number;
     goalDifferentialDiff: number;
     totalDiff: number;
@@ -58,6 +66,7 @@ export interface TeamStatsProps {
     blue: {
       attack: number;
       defense: number;
+      gameIq: number;
       winRate: number;
       goalDifferential: number;
       playerCount: number;
@@ -65,12 +74,14 @@ export interface TeamStatsProps {
     orange: {
       attack: number;
       defense: number;
+      gameIq: number;
       winRate: number;
       goalDifferential: number;
       playerCount: number;
     };
     attackDiff: number;
     defenseDiff: number;
+    gameIqDiff: number;
     winRateDiff: number;
     goalDifferentialDiff: number;
     totalDiff: number;
@@ -149,6 +160,16 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
               {previewSwapStats && <td>{formatStat(previewSwapStats.defenseDiff)}</td>}
             </tr>
             
+            {/* Game IQ Row */}
+            <tr>
+              <td>Game IQ Rating</td>
+              <td>{formatStat(stats.blue.gameIq)}</td>
+              <td>{formatStat(stats.orange.gameIq)}</td>
+              <td>{formatStat(stats.gameIqDiff)}</td>
+              {comparisonStats && <td>{formatStat(comparisonStats.gameIqDiff)}</td>}
+              {previewSwapStats && <td>{formatStat(previewSwapStats.gameIqDiff)}</td>}
+            </tr>
+            
             {/* Win Rate Row */}
             <tr>
               <td>Win Rate</td>
@@ -172,11 +193,11 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
             {/* Balance Score Breakdown */}
             <tr className="border-t-2">
               <td colSpan={5} className="pt-4">
-                <div className="font-medium text-center mb-2">Balance Score Breakdown (25% each)</div>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="font-medium text-center mb-2">Balance Score Breakdown (20% each)</div>
+                <div className="grid grid-cols-5 gap-2">
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Attack</div>
-                    <div className="text-sm">{formatStat(stats.attackDiff * 0.25)}</div>
+                    <div className="text-sm">{formatStat(stats.attackDiff * 0.20)}</div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                       <div 
                         className="bg-blue-500 h-2 rounded-full" 
@@ -186,7 +207,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Defense</div>
-                    <div className="text-sm">{formatStat(stats.defenseDiff * 0.25)}</div>
+                    <div className="text-sm">{formatStat(stats.defenseDiff * 0.20)}</div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                       <div 
                         className="bg-green-500 h-2 rounded-full" 
@@ -195,8 +216,18 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
                     </div>
                   </div>
                   <div className="flex flex-col items-center">
+                    <div className="text-xs font-medium">Game IQ</div>
+                    <div className="text-sm">{formatStat(stats.gameIqDiff * 0.20)}</div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                      <div 
+                        className="bg-purple-500 h-2 rounded-full" 
+                        style={{ width: `${Math.min(100, (stats.normalizedWeightedGameIqDiff || 0) * 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Win Rate</div>
-                    <div className="text-sm">{formatStat(stats.winRateDiff * 0.25)}</div>
+                    <div className="text-sm">{formatStat(stats.winRateDiff * 0.20)}</div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                       <div 
                         className="bg-yellow-500 h-2 rounded-full" 
@@ -206,7 +237,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Goal Diff</div>
-                    <div className="text-sm">{formatStat(stats.goalDifferentialDiff * 0.25)}</div>
+                    <div className="text-sm">{formatStat(stats.goalDifferentialDiff * 0.20)}</div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                       <div 
                         className="bg-red-500 h-2 rounded-full" 
@@ -272,6 +303,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
             <h4 className="font-medium text-blue-700">Blue Team</h4>
             <p className="text-sm">Attack: {formatStat(stats.blue.attack)}</p>
             <p className="text-sm">Defense: {formatStat(stats.blue.defense)}</p>
+            <p className="text-sm">Game IQ: {formatStat(stats.blue.gameIq)}</p>
             <p className="text-sm">Win Rate: {formatStat(stats.blue.winRate)}%</p>
           </div>
           
@@ -279,6 +311,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
             <h4 className="font-medium text-orange-700">Orange Team</h4>
             <p className="text-sm">Attack: {formatStat(stats.orange.attack)}</p>
             <p className="text-sm">Defense: {formatStat(stats.orange.defense)}</p>
+            <p className="text-sm">Game IQ: {formatStat(stats.orange.gameIq)}</p>
             <p className="text-sm">Win Rate: {formatStat(stats.orange.winRate)}%</p>
           </div>
         </div>
@@ -287,6 +320,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
           <h4 className="font-medium">Differences</h4>
           <p className="text-sm">Attack: {formatStat(stats.blue.attack)} | {formatStat(stats.orange.attack)} | Diff: {formatStat(stats.attackDiff)}</p>
           <p className="text-sm">Defense: {formatStat(stats.blue.defense)} | {formatStat(stats.orange.defense)} | Diff: {formatStat(stats.defenseDiff)}</p>
+          <p className="text-sm">Game IQ: {formatStat(stats.blue.gameIq)} | {formatStat(stats.orange.gameIq)} | Diff: {formatStat(stats.gameIqDiff)}</p>
           <p className="text-sm">Win Rate: {formatPercentage(stats.blue.winRate)} | {formatPercentage(stats.orange.winRate)} | Diff: {formatPercentage(stats.winRateDiff)}</p>
           <p className="text-sm">Goal Diff: {formatGoalDiff(stats.blue.goalDifferential)} | {formatGoalDiff(stats.orange.goalDifferential)} | Diff: {formatGoalDiff(stats.goalDifferentialDiff)}</p>
           <div className="mt-2 pt-2 border-t">
@@ -306,6 +340,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
             <h4 className="font-medium text-green-700">After Swap</h4>
             <p className="text-sm">Attack Diff: {formatStat(comparisonStats.attackDiff)}</p>
             <p className="text-sm">Defense Diff: {formatStat(comparisonStats.defenseDiff)}</p>
+            <p className="text-sm">Game IQ Diff: {formatStat(comparisonStats.gameIqDiff)}</p>
             <p className="text-sm">Win Rate Diff: {formatStat(comparisonStats.winRateDiff)}%</p>
             <p className="text-sm">Goal Diff: {formatStat(comparisonStats.goalDifferentialDiff)}</p>
             <div className="mt-2 pt-2 border-t">
@@ -334,6 +369,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
             <h4 className="font-medium text-white">Preview Swap</h4>
             <p className="text-sm text-white">Attack Diff: {formatStat(previewSwapStats.attackDiff)}</p>
             <p className="text-sm text-white">Defense Diff: {formatStat(previewSwapStats.defenseDiff)}</p>
+            <p className="text-sm text-white">Game IQ Diff: {formatStat(previewSwapStats.gameIqDiff)}</p>
             <p className="text-sm text-white">Win Rate Diff: {formatStat(previewSwapStats.winRateDiff)}%</p>
             <p className="text-sm text-white">Goal Diff: {formatStat(previewSwapStats.goalDifferentialDiff)}</p>
             <div className="mt-2 pt-2 border-t border-white">

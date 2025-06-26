@@ -11,6 +11,7 @@ type Player = {
   xp: number
   attack_rating?: number
   defense_rating?: number
+  game_iq_rating?: number
   is_test_user: boolean
   calculated_caps?: number
   manual_caps_override?: boolean
@@ -114,6 +115,7 @@ const EditPlayer: React.FC = () => {
           manual_caps_override: useManualOverride,
           ...(player.attack_rating ? { attack_rating: player.attack_rating } : {}),
           ...(player.defense_rating ? { defense_rating: player.defense_rating } : {}),
+          ...(player.game_iq_rating ? { game_iq_rating: player.game_iq_rating } : {}),
           whatsapp_group_member: player.whatsapp_group_member || null,
           whatsapp_mobile_number: player.whatsapp_mobile_number || null
         })
@@ -241,6 +243,21 @@ const EditPlayer: React.FC = () => {
             id="defense_rating"
             name="defense_rating"
             value={player.defense_rating || ''}
+            onChange={handleChange}
+            min="1"
+            max="10"
+            className="input input-bordered w-full"
+          />
+        </div>
+        <div className="form-control">
+          <label className="label" htmlFor="game_iq_rating">
+            <span className="label-text">Game IQ Rating</span>
+          </label>
+          <input
+            type="number"
+            id="game_iq_rating"
+            name="game_iq_rating"
+            value={player.game_iq_rating || ''}
             onChange={handleChange}
             min="1"
             max="10"

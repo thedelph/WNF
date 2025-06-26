@@ -130,6 +130,7 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
         player_id: reg.players.id,
         attack_rating: reg.players.attack_rating || 0,
         defense_rating: reg.players.defense_rating || 0,
+        game_iq_rating: reg.players.game_iq || 0,
         win_rate: reg.players.win_rate || 50
       }));
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Player, Rating, SortConfig } from './types';
+import { Player, Rating, SortConfig } from '../types';
 import { formatDate } from '../../../../utils/dateUtils';
+import { formatRating } from '../../../../utils/ratingFormatters';
 
 interface PlayerRatingsTableProps {
   ratings: Rating[];
@@ -41,6 +42,9 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
             <th onClick={() => onSort('defense_rating')} className="cursor-pointer">
               Defense Rating
             </th>
+            <th onClick={() => onSort('game_iq_rating')} className="cursor-pointer">
+              Game IQ Rating
+            </th>
             <th>Date</th>
           </tr>
         </thead>
@@ -58,9 +62,10 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
                   ? rating.rater?.friendly_name 
                   : rating.rated_player?.friendly_name}
               </td>
-              <td>{rating.attack_rating}</td>
-              <td>{rating.defense_rating}</td>
-              <td>{formatDate(rating.created_at)}</td>
+              <td>{formatRating(rating.attack_rating)}</td>
+              <td>{formatRating(rating.defense_rating)}</td>
+              <td>{formatRating(rating.game_iq_rating)}</td>
+              <td>{formatDate(rating.updated_at || rating.created_at)}</td>
             </motion.tr>
           ))}
         </tbody>

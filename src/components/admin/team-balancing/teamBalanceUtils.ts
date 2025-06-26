@@ -67,15 +67,16 @@ export const findOptimalTeamBalance = (players: TeamAssignment[]): TeamBalance =
  */
 export const calculateMetricImpact = (blueTeam: TeamAssignment[], orangeTeam: TeamAssignment[]) => {
     // Calculate original balance metrics
-    const { attackDiff, defenseDiff, winRateDiff, goalDifferentialDiff } = 
+    const { attackDiff, defenseDiff, gameIqDiff, winRateDiff, goalDifferentialDiff } = 
         calculateTeamComparison(blueTeam, orangeTeam);
     
     // Calculate the contribution of each metric to the overall score
-    const totalDiff = attackDiff + defenseDiff + winRateDiff + goalDifferentialDiff;
+    const totalDiff = attackDiff + defenseDiff + gameIqDiff + winRateDiff + goalDifferentialDiff;
     
     return {
         attack: attackDiff / totalDiff,
         defense: defenseDiff / totalDiff,
+        gameIq: gameIqDiff / totalDiff,
         winRate: winRateDiff / totalDiff,
         goalDifferential: goalDifferentialDiff / totalDiff
     };
@@ -94,7 +95,7 @@ import { PlayerSwapSuggestion } from './types';
 export const calculateBestSwaps = (
     blueTeam: TeamAssignment[],
     orangeTeam: TeamAssignment[],
-    focusMetric?: 'attack' | 'defense' | 'winRate' | 'goalDifferential'
+    focusMetric?: 'attack' | 'defense' | 'gameIq' | 'winRate' | 'goalDifferential'
 ): PlayerSwapSuggestion[] => {
     const swapSuggestions: PlayerSwapSuggestion[] = [];
     
@@ -114,12 +115,12 @@ export const calculateBestSwaps = (
             // Calculate attack and defense differences
             const originalAttackDiff = Math.abs(
                 blueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeam.length - 
-                orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeam.length
+                orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeam.length
             );
             
             const newAttackDiff = Math.abs(
                 newBlueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / newBlueTeam.length - 
-                newOrangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / newOrangeTeam.length
+                newOrangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / newOrangeTeam.length
             );
             
             const originalDefenseDiff = Math.abs(
@@ -130,6 +131,17 @@ export const calculateBestSwaps = (
             const newDefenseDiff = Math.abs(
                 newBlueTeam.reduce((sum, p) => sum + p.defense_rating, 0) / newBlueTeam.length - 
                 newOrangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / newOrangeTeam.length
+            );
+            
+            // Calculate game IQ differences
+            const originalGameIqDiff = Math.abs(
+                blueTeam.reduce((sum, p) => sum + p.game_iq_rating, 0) / blueTeam.length - 
+                orangeTeam.reduce((sum, p) => sum + p.game_iq_rating, 0) / orangeTeam.length
+            );
+            
+            const newGameIqDiff = Math.abs(
+                newBlueTeam.reduce((sum, p) => sum + p.game_iq_rating, 0) / newBlueTeam.length - 
+                newOrangeTeam.reduce((sum, p) => sum + p.game_iq_rating, 0) / newOrangeTeam.length
             );
             
             // Calculate win rate differences if data available
@@ -183,24 +195,35 @@ export const calculateBestSwaps = (
             // Calculate overall improvement (positive means better balance)
             const attackDiffImprovement = originalAttackDiff - newAttackDiff;
             const defenseDiffImprovement = originalDefenseDiff - newDefenseDiff;
+            const gameIqDiffImprovement = originalGameIqDiff - newGameIqDiff;
             
             // Calculate weighted improvement based on focus metric or default weighting
             let totalDiffImprovement;
             
             if (focusMetric) {
-                // If focusing on a specific metric, weight it at 70% and others at 10% each
+                // If focusing on a specific metric, weight it at 60% and others at 10% each
                 switch(focusMetric) {
                     case 'attack':
                         totalDiffImprovement = 
-                            (attackDiffImprovement * 0.7) + 
+                            (attackDiffImprovement * 0.6) + 
                             (defenseDiffImprovement * 0.1) + 
+                            (gameIqDiffImprovement * 0.1) +
                             (winRateDiffImprovement * 0.1) + 
                             (goalDiffImprovement * 0.1);
                         break;
                     case 'defense':
                         totalDiffImprovement = 
                             (attackDiffImprovement * 0.1) + 
-                            (defenseDiffImprovement * 0.7) + 
+                            (defenseDiffImprovement * 0.6) + 
+                            (gameIqDiffImprovement * 0.1) +
+                            (winRateDiffImprovement * 0.1) + 
+                            (goalDiffImprovement * 0.1);
+                        break;
+                    case 'gameIq':
+                        totalDiffImprovement = 
+                            (attackDiffImprovement * 0.1) + 
+                            (defenseDiffImprovement * 0.1) + 
+                            (gameIqDiffImprovement * 0.6) +
                             (winRateDiffImprovement * 0.1) + 
                             (goalDiffImprovement * 0.1);
                         break;
@@ -208,24 +231,27 @@ export const calculateBestSwaps = (
                         totalDiffImprovement = 
                             (attackDiffImprovement * 0.1) + 
                             (defenseDiffImprovement * 0.1) + 
-                            (winRateDiffImprovement * 0.7) + 
+                            (gameIqDiffImprovement * 0.1) +
+                            (winRateDiffImprovement * 0.6) + 
                             (goalDiffImprovement * 0.1);
                         break;
                     case 'goalDifferential':
                         totalDiffImprovement = 
                             (attackDiffImprovement * 0.1) + 
                             (defenseDiffImprovement * 0.1) + 
+                            (gameIqDiffImprovement * 0.1) +
                             (winRateDiffImprovement * 0.1) + 
-                            (goalDiffImprovement * 0.7);
+                            (goalDiffImprovement * 0.6);
                         break;
                 }
             } else {
-                // Default: Apply 25% weighting to each factor
+                // Default: Apply 20% weighting to each factor
                 totalDiffImprovement = 
-                    (attackDiffImprovement * 0.25) + 
-                    (defenseDiffImprovement * 0.25) + 
-                    (winRateDiffImprovement * 0.25) + 
-                    (goalDiffImprovement * 0.25);
+                    (attackDiffImprovement * 0.20) + 
+                    (defenseDiffImprovement * 0.20) + 
+                    (gameIqDiffImprovement * 0.20) +
+                    (winRateDiffImprovement * 0.20) + 
+                    (goalDiffImprovement * 0.20);
             }
             
             // Only include if it's an improvement
@@ -234,6 +260,7 @@ export const calculateBestSwaps = (
                 const improvements = [
                     { metric: 'attack', value: attackDiffImprovement },
                     { metric: 'defense', value: defenseDiffImprovement },
+                    { metric: 'gameIq', value: gameIqDiffImprovement },
                     { metric: 'winRate', value: winRateDiffImprovement },
                     { metric: 'goalDifferential', value: goalDiffImprovement }
                 ];
@@ -249,6 +276,7 @@ export const calculateBestSwaps = (
                     orangePlayer,
                     attackDiffImprovement,
                     defenseDiffImprovement,
+                    gameIqDiffImprovement,
                     winRateDiffImprovement,
                     goalDiffImprovement,
                     totalDiffImprovement,

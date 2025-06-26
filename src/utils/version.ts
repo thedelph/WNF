@@ -17,7 +17,47 @@ export interface ChangelogEntry {
  * Changelog data containing all version information
  */
 export const changelogData: ChangelogEntry[] = [
-
+  {
+    version: '1.2.0',
+    date: '26/06/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Game IQ Rating System',
+            details: "Introduced a third player rating metric alongside Attack and Defense. Game IQ measures tactical awareness, positioning, and decision-making abilities on a 0-10 scale (displayed as 0-5 stars). Players can now rate other players on all three dimensions after playing 5+ games together."
+          },
+          {
+            title: 'Enhanced Team Balancing',
+            details: "Team balancing algorithm now incorporates Game IQ ratings alongside other player metrics to create more balanced and competitive matches."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Rating Display Improvements',
+            details: "Unrated values now display as 'unrated' instead of '0' or 'NaN'. Rating buttons dynamically show 'ADD GAME IQ RATING' when only Game IQ is missing, providing clearer guidance to users."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Rating Display Issues',
+            details: "Fixed various display issues where Game IQ ratings were showing as 'NaN' or missing from player profiles and rating pages."
+          },
+          {
+            title: 'Null Rating Handling',
+            details: "Added proper handling for players who haven't been rated yet, ensuring all rating displays work correctly even with partial data."
+          }
+        ]
+      }
+    ]
+  },
   
   {
     version: '1.1.4',

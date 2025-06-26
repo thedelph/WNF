@@ -22,7 +22,12 @@ The WNF Ratings System allows players to confidentially rate other players they 
 ### Rating Criteria
 - Players can rate others only after playing 5 games with them
 - Ratings are confidential and only visible to administrators
-- Players can rate both attack and defense skills on a scale of 0-10
+- Players can rate attack, defense, and game IQ skills on a scale of 0-10
+
+### Rating Definitions
+- **Attack Rating**: Measures both offensive skills AND tendency to play in attacking positions
+- **Defense Rating**: Measures both defensive skills AND tendency to play in defensive positions  
+- **Game IQ Rating**: Measures tactical awareness, positioning, decision-making, and understanding of game flow
 
 ### Rating Process
 1. After completing a game, eligible players can rate their teammates
@@ -146,13 +151,25 @@ graph TD
    - User-friendly error messages
    - Comprehensive error logging
 
+## User Interface Features
+
+### Ratings Explanation Component
+- Located at the top of the ratings page
+- Expandable/collapsible sections using Framer Motion animations
+- Provides detailed explanations for each rating type
+- Emphasizes importance of honest ratings
+- Component path: `/src/components/ratings/RatingsExplanation.tsx`
+
 ## Related Documentation
 - [Player Selection Explained](./PlayerSelectionExplained.md)
 - [Game Flow](./GameFlow.md)
 - [XP System Explained](./XPSystemExplained.md)
+- [Game IQ Rating Feature](./features/GameIQRating.md)
 
 ## Recent Updates
 - Added support for both received and given ratings views
 - Improved error handling in ratings table
 - Enhanced sorting functionality
 - Added null safety checks for player data
+- Added expandable ratings explanation section (June 26, 2025)
+- Integrated Game IQ rating throughout the system

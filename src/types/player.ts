@@ -55,6 +55,7 @@ export interface PlayerStats {
   my_rating?: {
     attack_rating: number;
     defense_rating: number;
+    game_iq_rating: number;
   } | null;
   reserveXP?: number;
   reserveCount?: number;

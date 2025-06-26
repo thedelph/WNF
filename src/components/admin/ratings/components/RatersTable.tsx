@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Player, SortConfig } from '../types';
 import { FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import { formatRating } from '../../../../utils/ratingFormatters';
 
 interface RatersTableProps {
   raters: Player[];
@@ -48,12 +49,14 @@ export const RatersTable: React.FC<RatersTableProps> = ({
             </th>
             <th>Average Attack</th>
             <th>Average Defense</th>
+            <th>Average Game IQ</th>
           </tr>
         </thead>
         <tbody>
           {sortedRaters.map((rater) => {
             const avgAttack = rater.ratings_given?.reduce((sum, r) => sum + r.attack_rating, 0) / (rater.ratings_given?.length || 1);
             const avgDefense = rater.ratings_given?.reduce((sum, r) => sum + r.defense_rating, 0) / (rater.ratings_given?.length || 1);
+            const avgGameIq = rater.ratings_given?.reduce((sum, r) => sum + r.game_iq_rating, 0) / (rater.ratings_given?.length || 1);
             
             return (
               <motion.tr
@@ -68,8 +71,9 @@ export const RatersTable: React.FC<RatersTableProps> = ({
               >
                 <td>{rater.friendly_name}</td>
                 <td>{rater.ratings_given?.length || 0}</td>
-                <td>{avgAttack.toFixed(1)}</td>
-                <td>{avgDefense.toFixed(1)}</td>
+                <td>{formatRating(rater.ratings_given?.length ? avgAttack : null)}</td>
+                <td>{formatRating(rater.ratings_given?.length ? avgDefense : null)}</td>
+                <td>{formatRating(rater.ratings_given?.length ? avgGameIq : null)}</td>
               </motion.tr>
             );
           })}

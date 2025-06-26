@@ -4,6 +4,8 @@ import { supabase } from '../utils/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
+import { formatStarRating, getRatingButtonText } from '../utils/ratingFormatters';
+import RatingsExplanation from '../components/ratings/RatingsExplanation';
 
 interface Player {
   id: string;
@@ -13,10 +15,11 @@ interface Player {
   current_rating?: {
     attack_rating: number;
     defense_rating: number;
+    game_iq_rating: number;
   };
 }
 
-type SortOption = 'alphabetical' | 'games_played' | 'rated' | 'unrated' | 'attack_asc' | 'attack_desc' | 'defense_asc' | 'defense_desc';
+type SortOption = 'alphabetical' | 'games_played' | 'rated' | 'unrated' | 'attack_asc' | 'attack_desc' | 'defense_asc' | 'defense_desc' | 'game_iq_asc' | 'game_iq_desc';
 type FilterOption = 'all' | 'rated' | 'unrated' | 'min_games';
 
 export default function Ratings() {
@@ -31,9 +34,10 @@ export default function Ratings() {
   const [whatsAppMembersOnly, setWhatsAppMembersOnly] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
-  const [ratings, setRatings] = useState<{ attack: number; defense: number }>({
+  const [ratings, setRatings] = useState<{ attack: number; defense: number; gameIq: number }>({
     attack: 0,
     defense: 0,
+    gameIq: 0,
   });
 
   useEffect(() => {
@@ -134,6 +138,20 @@ export default function Ratings() {
           return (b.current_rating.defense_rating || 0) - (a.current_rating.defense_rating || 0);
         });
         break;
+      case 'game_iq_asc':
+        result.sort((a, b) => {
+          if (!a.current_rating) return 1;
+          if (!b.current_rating) return -1;
+          return (a.current_rating.game_iq_rating || 0) - (b.current_rating.game_iq_rating || 0);
+        });
+        break;
+      case 'game_iq_desc':
+        result.sort((a, b) => {
+          if (!a.current_rating) return 1;
+          if (!b.current_rating) return -1;
+          return (b.current_rating.game_iq_rating || 0) - (a.current_rating.game_iq_rating || 0);
+        });
+        break;
       default:
         break;
     }
@@ -174,7 +192,7 @@ export default function Ratings() {
       // Get current user's ratings
       const { data: existingRatings } = await supabase
         .from('player_ratings')
-        .select('rated_player_id, attack_rating, defense_rating')
+        .select('rated_player_id, attack_rating, defense_rating, game_iq_rating')
         .eq('rater_id', currentPlayer.id);
 
       // Get WhatsApp status for all players
@@ -219,7 +237,8 @@ export default function Ratings() {
             rater_id: currentPlayer.id,
             rated_player_id: selectedPlayer.id,
             attack_rating: ratings.attack,
-            defense_rating: ratings.defense
+            defense_rating: ratings.defense,
+            game_iq_rating: ratings.gameIq
           },
           {
             onConflict: 'rater_id,rated_player_id'
@@ -257,9 +276,8 @@ export default function Ratings() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-4">Player Ratings</h1>
-      <p className="text-gray-600 mb-8 max-w-3xl">
-      All ratings are confidential. Player ratings are used solely by the team-balancing algorithm to ensure teams are balanced. Please rate players honestly and fairly. 
-      </p>
+      
+      <RatingsExplanation />
       
       {/* Advanced Filters Section */}
       <div className="mb-6">
@@ -303,7 +321,7 @@ export default function Ratings() {
                       onChange={(e) => {
                         if (
                           filterOption === 'unrated' && 
-                          (e.target.value.includes('attack') || e.target.value.includes('defense'))
+                          (e.target.value.includes('attack') || e.target.value.includes('defense') || e.target.value.includes('game_iq'))
                         ) {
                           setSortOption('alphabetical');
                           return;
@@ -321,6 +339,8 @@ export default function Ratings() {
                           <option value="attack_desc">Attack Rating (High to Low)</option>
                           <option value="defense_asc">Defense Rating (Low to High)</option>
                           <option value="defense_desc">Defense Rating (High to Low)</option>
+                          <option value="game_iq_asc">Game IQ Rating (Low to High)</option>
+                          <option value="game_iq_desc">Game IQ Rating (High to Low)</option>
                         </>
                       )}
                     </select>
@@ -335,7 +355,7 @@ export default function Ratings() {
                         const newFilter = e.target.value as FilterOption;
                         if (
                           newFilter === 'unrated' && 
-                          (sortOption.includes('attack') || sortOption.includes('defense'))
+                          (sortOption.includes('attack') || sortOption.includes('defense') || sortOption.includes('game_iq'))
                         ) {
                           setSortOption('alphabetical');
                         }
@@ -398,6 +418,11 @@ export default function Ratings() {
                 onChange={(value) => setRatings(prev => ({ ...prev, defense: value }))}
                 label="Defense Rating"
               />
+              <StarRating
+                rating={ratings.gameIq}
+                onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
+                label="Game IQ Rating"
+              />
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
@@ -450,8 +475,9 @@ export default function Ratings() {
                     {player.current_rating && (
                       <div className="text-sm text-gray-600">
                         <p>Current Ratings:</p>
-                        <p>Attack: {player.current_rating.attack_rating / 2} stars</p>
-                        <p>Defense: {player.current_rating.defense_rating / 2} stars</p>
+                        <p>Attack: {formatStarRating(player.current_rating.attack_rating)}</p>
+                        <p>Defense: {formatStarRating(player.current_rating.defense_rating)}</p>
+                        <p>Game IQ: {formatStarRating(player.current_rating.game_iq_rating)}</p>
                       </div>
                     )}
                     <motion.button
@@ -462,12 +488,13 @@ export default function Ratings() {
                         setSelectedPlayer(player);
                         setRatings({
                           attack: player.current_rating?.attack_rating || 0,
-                          defense: player.current_rating?.defense_rating || 0
+                          defense: player.current_rating?.defense_rating || 0,
+                          gameIq: player.current_rating?.game_iq_rating || 0
                         });
                       }}
                     >
                       <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-                      <span className="font-medium">{player.current_rating ? 'UPDATE RATING' : 'RATE PLAYER'}</span>
+                      <span className="font-medium">{getRatingButtonText(player.current_rating)}</span>
                     </motion.button>
                   </div>
                 ) : (

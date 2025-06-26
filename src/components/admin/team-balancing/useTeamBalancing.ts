@@ -182,6 +182,7 @@ export const useTeamBalancing = () => {
           friendly_name: reg.players.friendly_name,
           attack_rating: reg.players.attack_rating || 5,
           defense_rating: reg.players.defense_rating || 5,
+          game_iq_rating: reg.players.game_iq || 5,
           win_rate: winRate, 
           goal_differential: goalDifferential,
           total_games: gamesPlayed
@@ -205,6 +206,7 @@ export const useTeamBalancing = () => {
               friendly_name: player.friendly_name,
               attack_rating: player.attack_rating,
               defense_rating: player.defense_rating,
+              game_iq_rating: player.game_iq_rating,
               win_rate: player.win_rate,
               goal_differential: player.goal_differential,
               total_games: player.total_games,
@@ -217,6 +219,7 @@ export const useTeamBalancing = () => {
               friendly_name: player.friendly_name,
               attack_rating: player.attack_rating,
               defense_rating: player.defense_rating,
+              game_iq_rating: player.game_iq_rating,
               win_rate: player.win_rate,
               goal_differential: player.goal_differential,
               total_games: player.total_games,
@@ -231,6 +234,7 @@ export const useTeamBalancing = () => {
           friendly_name: player.friendly_name,
           attack_rating: player.attack_rating,
           defense_rating: player.defense_rating,
+          game_iq_rating: player.game_iq_rating,
           win_rate: player.win_rate,
           goal_differential: player.goal_differential,
           total_games: player.total_games,
@@ -256,6 +260,7 @@ export const useTeamBalancing = () => {
             friendly_name: freshPlayerData?.players.friendly_name,
             attack_rating: freshPlayerData?.players.attack_rating || assignment.attack_rating,
             defense_rating: freshPlayerData?.players.defense_rating || assignment.defense_rating,
+            game_iq_rating: freshPlayerData?.players.game_iq || assignment.game_iq_rating || 5,
             win_rate: winRate, // Pass null if less than 10 games
             goal_differential: goalDifferential,
             total_games: gamesPlayed
@@ -276,6 +281,7 @@ export const useTeamBalancing = () => {
             friendly_name: reg.players.friendly_name,
             attack_rating: reg.players.attack_rating,
             defense_rating: reg.players.defense_rating,
+            game_iq_rating: reg.players.game_iq || 5,
             win_rate: winRate, // Pass null if less than 10 games
             goal_differential: goalDiffMap.get(reg.players.id),
             total_games: caps,
@@ -375,6 +381,7 @@ export const useTeamBalancing = () => {
       player_id: player.player_id,
       attack_rating: player.attack_rating,
       defense_rating: player.defense_rating,
+      game_iq_rating: player.game_iq_rating,
       win_rate: player.win_rate || 50,
       total_games: player.total_games
     }));
