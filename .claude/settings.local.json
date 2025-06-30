@@ -29,7 +29,10 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "mcp__supabase__list_organizations",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx typescript:*)",
+      "Bash(node:*)",
+      "Bash(touch:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

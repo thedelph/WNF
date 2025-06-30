@@ -9,6 +9,17 @@ interface TeamBalance {
 }
 
 /**
+ * Check if a player has unknown stats (less than 10 games played)
+ * @param player - The player to check
+ * @returns True if the player has unknown stats
+ */
+export const isUnknownPlayer = (player: TeamAssignment): boolean => {
+    return player.total_games === null || 
+           player.total_games === undefined || 
+           player.total_games < 10;
+};
+
+/**
  * Generate all possible team combinations with similar sizes
  * Uses binary counting to generate combinations
  */
@@ -42,21 +53,152 @@ const generateTeamCombinations = (players: TeamAssignment[]): TeamBalance[] => {
 };
 
 /**
- * Find the optimal team balance from all possible combinations
+ * Generate all combinations of players of a specific size
+ * Used for distributing unknown players optimally
  */
+const generateCombinationsOfSize = (players: TeamAssignment[], size: number): TeamAssignment[][] => {
+    if (size === 0) return [[]];
+    if (size > players.length) return [];
+    if (size === players.length) return [players];
+    
+    const combinations: TeamAssignment[][] = [];
+    
+    // Recursive approach to generate combinations
+    const generate = (start: number, current: TeamAssignment[]) => {
+        if (current.length === size) {
+            combinations.push([...current]);
+            return;
+        }
+        
+        for (let i = start; i < players.length; i++) {
+            current.push(players[i]);
+            generate(i + 1, current);
+            current.pop();
+        }
+    };
+    
+    generate(0, []);
+    return combinations;
+};
+
+/**
+ * Calculate balance score based only on Attack, Defense, and Game IQ
+ * Used for distributing unknown players optimally
+ */
+const calculatePartialBalanceScore = (team1: TeamAssignment[], team2: TeamAssignment[]): number => {
+    // Return high score if either team is empty
+    if (team1.length === 0 || team2.length === 0) {
+        return 1000;
+    }
+    
+    // Calculate average ratings for each team
+    const team1Attack = team1.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / team1.length;
+    const team1Defense = team1.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / team1.length;
+    const team1GameIq = team1.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / team1.length;
+    
+    const team2Attack = team2.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / team2.length;
+    const team2Defense = team2.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / team2.length;
+    const team2GameIq = team2.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / team2.length;
+    
+    // Calculate differences
+    const attackDiff = Math.abs(team1Attack - team2Attack);
+    const defenseDiff = Math.abs(team1Defense - team2Defense);
+    const gameIqDiff = Math.abs(team1GameIq - team2GameIq);
+    
+    // Equal weighting for the three known metrics
+    return (attackDiff + defenseDiff + gameIqDiff) / 3;
+};
+
+/**
+ * Find optimal distribution of unknown players based on their known stats
+ * @param unknownPlayers - Players with < 10 games
+ * @param targetBlueCount - Target number of unknowns for blue team
+ * @returns Optimal distribution of unknown players
+ */
+const findOptimalUnknownDistribution = (
+    unknownPlayers: TeamAssignment[], 
+    targetBlueCount: number
+): { blueUnknowns: TeamAssignment[], orangeUnknowns: TeamAssignment[] } => {
+    // Generate all possible combinations where blue team gets targetBlueCount unknowns
+    const combinations = generateCombinationsOfSize(unknownPlayers, targetBlueCount);
+    
+    let bestScore = Infinity;
+    let bestDistribution = {
+        blueUnknowns: [] as TeamAssignment[],
+        orangeUnknowns: [] as TeamAssignment[]
+    };
+    
+    // Try each combination and find the one with best Attack/Defense/Game IQ balance
+    for (const blueUnknowns of combinations) {
+        const orangeUnknowns = unknownPlayers.filter(p => 
+            !blueUnknowns.some(bp => bp.player_id === p.player_id)
+        );
+        
+        // Calculate balance based only on the three known metrics
+        const score = calculatePartialBalanceScore(blueUnknowns, orangeUnknowns);
+        
+        if (score < bestScore) {
+            bestScore = score;
+            bestDistribution = { blueUnknowns, orangeUnknowns };
+        }
+    }
+    
+    return bestDistribution;
+};
+
 /**
  * Find the optimal team balance from all possible combinations
+ * Uses a two-phase approach:
+ * 1. Distribute players with unknown stats optimally based on Attack/Defense/Game IQ
+ * 2. Optimize remaining players for best overall balance
  * @param players - Array of all available players
  * @returns The optimal team balance configuration
  */
 export const findOptimalTeamBalance = (players: TeamAssignment[]): TeamBalance => {
-    const combinations = generateTeamCombinations(players);
+    // Separate players into unknown and experienced groups
+    const unknownPlayers = players.filter(isUnknownPlayer);
+    const experiencedPlayers = players.filter(p => !isUnknownPlayer(p));
     
-    // Sort combinations by score (ascending - lower is better)
-    const sortedCombinations = [...combinations].sort((a, b) => a.score - b.score);
+    // Phase 1: Find optimal distribution of unknown players
+    let blueUnknowns: TeamAssignment[] = [];
+    let orangeUnknowns: TeamAssignment[] = [];
     
-    // Return the best combination (lowest score)
-    return sortedCombinations[0];
+    if (unknownPlayers.length > 0) {
+        const unknownForBlue = Math.floor(unknownPlayers.length / 2);
+        const distribution = findOptimalUnknownDistribution(unknownPlayers, unknownForBlue);
+        blueUnknowns = distribution.blueUnknowns;
+        orangeUnknowns = distribution.orangeUnknowns;
+    }
+    
+    // Phase 2: Find optimal distribution of experienced players
+    let bestBalance: TeamBalance;
+    
+    if (experiencedPlayers.length > 0) {
+        // Generate combinations only for experienced players
+        const combinations = generateTeamCombinations(experiencedPlayers);
+        
+        // For each combination, add the pre-assigned unknowns and calculate score
+        const fullCombinations = combinations.map(combo => {
+            const blueTeam = [...combo.blueTeam, ...blueUnknowns];
+            const orangeTeam = [...combo.orangeTeam, ...orangeUnknowns];
+            const score = calculateBalanceScore(blueTeam, orangeTeam);
+            
+            return { blueTeam, orangeTeam, score };
+        });
+        
+        // Sort by score and get the best
+        const sortedCombinations = fullCombinations.sort((a, b) => a.score - b.score);
+        bestBalance = sortedCombinations[0];
+    } else {
+        // If all players are unknowns, use the optimal distribution
+        bestBalance = {
+            blueTeam: blueUnknowns,
+            orangeTeam: orangeUnknowns,
+            score: calculateBalanceScore(blueUnknowns, orangeUnknowns)
+        };
+    }
+    
+    return bestBalance;
 };
 
 /**
@@ -114,34 +256,34 @@ export const calculateBestSwaps = (
             
             // Calculate attack and defense differences
             const originalAttackDiff = Math.abs(
-                blueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / blueTeam.length - 
-                orangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / orangeTeam.length
+                blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / blueTeam.length - 
+                orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / orangeTeam.length
             );
             
             const newAttackDiff = Math.abs(
-                newBlueTeam.reduce((sum, p) => sum + p.attack_rating, 0) / newBlueTeam.length - 
-                newOrangeTeam.reduce((sum, p) => sum + p.attack_rating, 0) / newOrangeTeam.length
+                newBlueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / newBlueTeam.length - 
+                newOrangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / newOrangeTeam.length
             );
             
             const originalDefenseDiff = Math.abs(
-                blueTeam.reduce((sum, p) => sum + p.defense_rating, 0) / blueTeam.length - 
-                orangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / orangeTeam.length
+                blueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / blueTeam.length - 
+                orangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / orangeTeam.length
             );
             
             const newDefenseDiff = Math.abs(
-                newBlueTeam.reduce((sum, p) => sum + p.defense_rating, 0) / newBlueTeam.length - 
-                newOrangeTeam.reduce((sum, p) => sum + p.defense_rating, 0) / newOrangeTeam.length
+                newBlueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / newBlueTeam.length - 
+                newOrangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / newOrangeTeam.length
             );
             
             // Calculate game IQ differences
             const originalGameIqDiff = Math.abs(
-                blueTeam.reduce((sum, p) => sum + p.game_iq_rating, 0) / blueTeam.length - 
-                orangeTeam.reduce((sum, p) => sum + p.game_iq_rating, 0) / orangeTeam.length
+                blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / blueTeam.length - 
+                orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / orangeTeam.length
             );
             
             const newGameIqDiff = Math.abs(
-                newBlueTeam.reduce((sum, p) => sum + p.game_iq_rating, 0) / newBlueTeam.length - 
-                newOrangeTeam.reduce((sum, p) => sum + p.game_iq_rating, 0) / newOrangeTeam.length
+                newBlueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / newBlueTeam.length - 
+                newOrangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / newOrangeTeam.length
             );
             
             // Calculate win rate differences if data available

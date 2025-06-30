@@ -2,9 +2,9 @@ import { supabase } from './supabase';
 
 interface PlayerRating {
   player_id: string;
-  attack_rating: number;
-  defense_rating: number;
-  game_iq_rating: number;
+  attack_rating: number | null;
+  defense_rating: number | null;
+  game_iq_rating: number | null;
   win_rate?: number | null; // Allow win rate to be null for players with no game history
   goal_differential?: number | null; // Goal differential from last 10 games
   total_games?: number | null; // Total games played by the player
@@ -78,12 +78,12 @@ export const convertSelectedPlayersToRatings = async (selectedPlayers: any[]): P
 
   return ratingResponse.data.map(player => ({
     player_id: player.id,
-    attack_rating: player.average_attack_rating || 5,
-    defense_rating: player.average_defense_rating || 5,
-    game_iq_rating: player.average_game_iq_rating || 5,
+    attack_rating: player.average_attack_rating ?? 5,
+    defense_rating: player.average_defense_rating ?? 5,
+    game_iq_rating: player.average_game_iq_rating ?? 5,
     win_rate: winRateMap.get(player.id), // Get win rate from map or leave as undefined
-    goal_differential: goalDiffMap.get(player.id) || 0, // Get goal differential or default to 0
-    total_games: totalGamesMap.get(player.id) || 0
+    goal_differential: goalDiffMap.get(player.id) ?? 0, // Get goal differential or default to 0
+    total_games: totalGamesMap.get(player.id) ?? 0
   }));
 };
 
@@ -113,9 +113,9 @@ const calculateTeamStats = (team: PlayerRating[]): TeamStats => {
     : 0;
   
   return {
-    attack: team.reduce((sum, p) => sum + p.attack_rating, 0),
-    defense: team.reduce((sum, p) => sum + p.defense_rating, 0),
-    gameIq: team.reduce((sum, p) => sum + p.game_iq_rating, 0),
+    attack: team.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0),
+    defense: team.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0),
+    gameIq: team.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0),
     winRate: winRate,
     goalDifferential: goalDifferential,
     playerCount: team.length

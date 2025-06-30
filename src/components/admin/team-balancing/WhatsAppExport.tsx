@@ -63,26 +63,26 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
     return `📋 Proposed Teams For Next Game
 
 🟠 Orange Team
-⚔ Attack: ${stats.orange.attack.toFixed(1)}
-🛡 Defense: ${stats.orange.defense.toFixed(1)}
-🧠 Game IQ: ${stats.orange.gameIq.toFixed(1)}
-🏆 Win Rate: ${Math.round(stats.orange.winRate)}%
-⚽ Goal Diff: ${stats.orange.goalDifferential}
+⚔ Attack: ${stats.orange.attack?.toFixed(1) ?? '0.0'}
+🛡 Defense: ${stats.orange.defense?.toFixed(1) ?? '0.0'}
+🧠 Game IQ: ${stats.orange.gameIq?.toFixed(1) ?? '0.0'}
+🏆 Win Rate: ${Math.round(stats.orange.winRate ?? 0)}%
+⚽ Goal Diff: ${stats.orange.goalDifferential ?? 0}
 
 🔵 Blue Team
-⚔ Attack: ${stats.blue.attack.toFixed(1)}
-🛡 Defense: ${stats.blue.defense.toFixed(1)}
-🧠 Game IQ: ${stats.blue.gameIq.toFixed(1)}
-🏆 Win Rate: ${Math.round(stats.blue.winRate)}%
-⚽ Goal Diff: ${stats.blue.goalDifferential}
+⚔ Attack: ${stats.blue.attack?.toFixed(1) ?? '0.0'}
+🛡 Defense: ${stats.blue.defense?.toFixed(1) ?? '0.0'}
+🧠 Game IQ: ${stats.blue.gameIq?.toFixed(1) ?? '0.0'}
+🏆 Win Rate: ${Math.round(stats.blue.winRate ?? 0)}%
+⚽ Goal Diff: ${stats.blue.goalDifferential ?? 0}
 
 📊 Differences
-⚔ Attack Diff: ${stats.attackDiff.toFixed(1)}
-🛡 Defense Diff: ${stats.defenseDiff.toFixed(1)}
-🧠 Game IQ Diff: ${stats.gameIqDiff.toFixed(1)}
-🏆 Win Rate Diff: ${stats.winRateDiff.toFixed(1)}%
+⚔ Attack Diff: ${stats.attackDiff?.toFixed(1) ?? '0.0'}
+🛡 Defense Diff: ${stats.defenseDiff?.toFixed(1) ?? '0.0'}
+🧠 Game IQ Diff: ${stats.gameIqDiff?.toFixed(1) ?? '0.0'}
+🏆 Win Rate Diff: ${stats.winRateDiff?.toFixed(1) ?? '0.0'}%
 ${goalDiffDiffText}
-⚖ Balance Score: ${stats.currentScore.toFixed(1)}
+⚖ Balance Score: ${stats.currentScore?.toFixed(1) ?? '0.0'}
 
 🟠 Orange Team (${orangeTeam.length}):
 ${orangeTeamText}

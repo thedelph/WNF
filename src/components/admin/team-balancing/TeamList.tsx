@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { TeamAssignment } from './types';
+import { formatRating } from '../../../utils/ratingFormatters';
 
 // Made win_rate required to match the data we have
 
@@ -84,11 +85,17 @@ const PlayerCard = ({
               {/* Ratings */}
               <div className="flex items-center">
                 <span className="text-xs font-medium w-16">Attack:</span>
-                <span className="text-sm font-semibold">{player.attack_rating.toFixed(1)}</span>
+                <span className="text-sm font-semibold">{formatRating(player.attack_rating)}</span>
               </div>
               <div className="flex items-center">
                 <span className="text-xs font-medium w-16">Defense:</span>
-                <span className="text-sm font-semibold">{player.defense_rating.toFixed(1)}</span>
+                <span className="text-sm font-semibold">{formatRating(player.defense_rating)}</span>
+              </div>
+              
+              {/* Game IQ */}
+              <div className="flex items-center">
+                <span className="text-xs font-medium w-16">Game IQ:</span>
+                <span className="text-sm font-semibold">{formatRating(player.game_iq_rating)}</span>
               </div>
               
               {/* Win Rate */}
@@ -205,10 +212,12 @@ const PlayerCard = ({
 };
 
 export const TeamList = ({ team, title, selectedPlayer, previewState, swapRankings, onPlayerSelect, onPlayerHover, onPreviewRequest, onCancelPreview, onExecutePreviewSwap }: TeamListProps) => {
-  // Sort players by rating for display
-  const sortedPlayers = [...team].sort((a, b) => 
-    (b.attack_rating + b.defense_rating) - (a.attack_rating + a.defense_rating)
-  );
+  // Sort players by rating for display (including Game IQ)
+  const sortedPlayers = [...team].sort((a, b) => {
+    const aTotal = (a.attack_rating ?? 0) + (a.defense_rating ?? 0) + (a.game_iq_rating ?? 0);
+    const bTotal = (b.attack_rating ?? 0) + (b.defense_rating ?? 0) + (b.game_iq_rating ?? 0);
+    return bTotal - aTotal;
+  });
 
   return (
     <div className="bg-base-200 p-4 rounded-lg">

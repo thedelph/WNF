@@ -104,32 +104,32 @@ export const SwapRecommendations: React.FC<SwapRecommendationsProps> = ({
               <h5 className="font-medium">Balance Improvements</h5>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p>Attack: {teamStats.attackDiff.toFixed(1)} → {swapStats.attackDiff.toFixed(1)}</p>
+                  <p>Attack: {teamStats.attackDiff?.toFixed(1) ?? '0.0'} → {swapStats.attackDiff?.toFixed(1) ?? '0.0'}</p>
                   <p className={`${swapStats.attackDiff < teamStats.attackDiff ? 'text-success' : 'text-error'}`}>
                     {swapStats.attackDiff < teamStats.attackDiff ? '✓ Better' : '✗ Worse'}
                   </p>
                 </div>
                 <div>
-                  <p>Defense: {teamStats.defenseDiff.toFixed(1)} → {swapStats.defenseDiff.toFixed(1)}</p>
+                  <p>Defense: {teamStats.defenseDiff?.toFixed(1) ?? '0.0'} → {swapStats.defenseDiff?.toFixed(1) ?? '0.0'}</p>
                   <p className={`${swapStats.defenseDiff < teamStats.defenseDiff ? 'text-success' : 'text-error'}`}>
                     {swapStats.defenseDiff < teamStats.defenseDiff ? '✓ Better' : '✗ Worse'}
                   </p>
                 </div>
                 <div>
-                  <p>Game IQ: {teamStats.gameIqDiff.toFixed(1)} → {swapStats.gameIqDiff.toFixed(1)}</p>
+                  <p>Game IQ: {teamStats.gameIqDiff?.toFixed(1) ?? '0.0'} → {swapStats.gameIqDiff?.toFixed(1) ?? '0.0'}</p>
                   <p className={`${swapStats.gameIqDiff < teamStats.gameIqDiff ? 'text-success' : 'text-error'}`}>
                     {swapStats.gameIqDiff < teamStats.gameIqDiff ? '✓ Better' : '✗ Worse'}
                   </p>
                 </div>
                 <div>
-                  <p>Win Rate: {teamStats.winRateDiff.toFixed(1)} → {swapStats.winRateDiff.toFixed(1)}</p>
+                  <p>Win Rate: {teamStats.winRateDiff?.toFixed(1) ?? '0.0'} → {swapStats.winRateDiff?.toFixed(1) ?? '0.0'}</p>
                   <p className={`${swapStats.winRateDiff < teamStats.winRateDiff ? 'text-success' : 'text-error'}`}>
                     {swapStats.winRateDiff < teamStats.winRateDiff ? '✓ Better' : '✗ Worse'}
                   </p>
                 </div>
                 {(teamStats.goalDifferentialDiff !== undefined && swapStats.goalDifferentialDiff !== undefined) && (
                   <div>
-                    <p>Goal Diff: {teamStats.goalDifferentialDiff.toFixed(1)} → {swapStats.goalDifferentialDiff.toFixed(1)}</p>
+                    <p>Goal Diff: {teamStats.goalDifferentialDiff?.toFixed(1) ?? '0.0'} → {swapStats.goalDifferentialDiff?.toFixed(1) ?? '0.0'}</p>
                     <p className={`${swapStats.goalDifferentialDiff < teamStats.goalDifferentialDiff ? 'text-success' : 'text-error'}`}>
                       {swapStats.goalDifferentialDiff < teamStats.goalDifferentialDiff ? '✓ Better' : '✗ Worse'}
                     </p>
