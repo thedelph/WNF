@@ -4,6 +4,13 @@ All notable changes to the WNF project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed - June 27, 2025
+- **Player Rating Decimal Precision**: Fixed issue where average ratings were incorrectly stored as integers
+  - Root cause: Bulk update during Game IQ implementation rounded most averages to whole numbers
+  - Applied migration to recalculate all average ratings from individual ratings
+  - Restored proper decimal precision (e.g., 5.71 instead of 6.0)
+  - Affects `attack_rating`, `defense_rating`, and `game_iq` columns in players table
+
 ### Added - June 26, 2025
 - **Role-Based Access Control (RBAC) System**: Granular permission management for admins
   - 5 default roles: Super Admin, Full Admin, Treasurer, Team Manager, Player Manager
