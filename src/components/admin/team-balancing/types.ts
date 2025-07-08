@@ -19,9 +19,9 @@ export interface TeamAssignment {
   team: 'blue' | 'orange' | null;
   player_id: string;
   friendly_name: string;
-  attack_rating: number;
-  defense_rating: number;
-  game_iq_rating: number;
+  attack_rating: number | null;
+  defense_rating: number | null;
+  game_iq_rating: number | null;
   win_rate?: number | null; // Allow win rate to be null for players with no game history
   goal_differential?: number | null; // Goal differential from last 10 games
   total_games?: number | null; // Add total games count

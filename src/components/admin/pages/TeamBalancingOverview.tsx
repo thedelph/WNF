@@ -36,7 +36,7 @@ const TeamBalancingOverview = () => {
   const [selectedSwap, setSelectedSwap] = useState<PlayerSwapSuggestion | null>(null);
   
   // Focus metric for swap recommendations
-  const [focusMetric, setFocusMetric] = useState<'attack' | 'defense' | 'winRate' | 'goalDifferential' | null>(null);
+  const [focusMetric, setFocusMetric] = useState<'attack' | 'defense' | 'gameIq' | 'winRate' | 'goalDifferential' | null>(null);
   
   // Preview state for visualizing potential swaps
   const [previewState, setPreviewState] = useState<{
@@ -308,7 +308,7 @@ const TeamBalancingOverview = () => {
           {/* Metric focus buttons */}
           <div className="dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-sm btn-outline">
-              {focusMetric ? `Focus: ${focusMetric}` : 'Focus Metric'} <span className="ml-1">▼</span>
+              {focusMetric ? `Focus: ${focusMetric === 'gameIq' ? 'Game IQ' : focusMetric === 'goalDifferential' ? 'Goal Differential' : focusMetric === 'winRate' ? 'Win Rate' : focusMetric.charAt(0).toUpperCase() + focusMetric.slice(1)}` : 'Focus Metric'} <span className="ml-1">▼</span>
             </label>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li>
@@ -324,6 +324,11 @@ const TeamBalancingOverview = () => {
               <li>
                 <a onClick={() => setFocusMetric('defense')} className={focusMetric === 'defense' ? 'active' : ''}>
                   Focus on Defense
+                </a>
+              </li>
+              <li>
+                <a onClick={() => setFocusMetric('gameIq')} className={focusMetric === 'gameIq' ? 'active' : ''}>
+                  Focus on Game IQ
                 </a>
               </li>
               <li>
@@ -394,7 +399,7 @@ const TeamBalancingOverview = () => {
             {focusMetric && <span className="font-medium"> Focusing on: <span className="text-primary">{focusMetric}</span></span>}
           </p>
           
-          <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
             <div className="flex flex-col items-center">
               <div className="text-xs font-medium text-blue-600">Attack</div>
               <div className="text-sm">{(metricImpact.attack * 100).toFixed(1)}%</div>
@@ -413,6 +418,17 @@ const TeamBalancingOverview = () => {
                 <div 
                   className="bg-green-500 h-2 rounded-full" 
                   style={{ width: `${Math.min(100, metricImpact.defense * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="text-xs font-medium text-purple-600">Game IQ</div>
+              <div className="text-sm">{(metricImpact.gameIq * 100).toFixed(1)}%</div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                <div 
+                  className="bg-purple-500 h-2 rounded-full" 
+                  style={{ width: `${Math.min(100, metricImpact.gameIq * 100)}%` }}
                 ></div>
               </div>
             </div>

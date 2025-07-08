@@ -2,56 +2,92 @@
 
 ## Overview
 
-The Team Balancing algorithm creates optimally balanced Blue and Orange teams based on player attack and defense ratings. It provides both automated team assignments and interactive team management.
+The WNF team balancing system uses a sophisticated algorithm to create fair and competitive teams. It considers multiple player metrics and handles both experienced players and newcomers intelligently.
 
 ## Key Features
 
-- **Optimal Team Generation**: Finds the most balanced team arrangement using attack and defense ratings
-- **Interactive Team Management**: Visual interface for manual player swapping between teams
-- **Smart Swap Recommendations**: Suggests player swaps to improve team balance
-- **Balance Scoring**: Quantifies team balance using a numerical score (lower is better)
-- **Preview Functionality**: Visualize the impact of potential player swaps before committing to changes
+### 1. Five-Metric Balancing
+The algorithm considers five key metrics, each weighted equally at 20%:
+- **Attack Rating** (0-10): Offensive capabilities
+- **Defense Rating** (0-10): Defensive capabilities  
+- **Game IQ Rating** (0-10): Tactical awareness and decision-making
+- **Win Rate** (%): Recent performance (last 10 games)
+- **Goal Differential**: Average goal difference (last 10 games)
+
+### 2. Unknown Player Handling
+Players with fewer than 10 games are considered "unknown" because they lack sufficient data for win rate and goal differential calculations.
+
+#### Visual Indicators
+- **"NEW" badge**: Displayed next to players with <10 games
+- **Team headers**: Show count of new players (e.g., "Blue Team (8 players, 3 new)")
+- **Confidence score**: Indicates reliability of team balance
+
+#### Confidence Levels
+- 🟢 **High confidence**: <25% unknown players
+- 🟡 **Medium confidence**: 25-50% unknown players
+- 🔴 **Low confidence**: >50% unknown players
 
 ## Technical Implementation
 
 ### Balance Score
 
-The balance score is calculated as:
+The balance score for experienced players (all 5 metrics):
 ```
-score = |blueTeamAttack - orangeTeamAttack| + |blueTeamDefense - orangeTeamDefense|
+Score = (AttackDiff × 0.20) + (DefenseDiff × 0.20) + (GameIQDiff × 0.20) + 
+        (WinRateDiff × 0.20) + (GoalDiffDiff × 0.20)
 ```
 
-A perfectly balanced team would have a score of 0.
+For unknown players (3 metrics only):
+```
+Score = (AttackDiff + DefenseDiff + GameIQDiff) / 3
+```
 
-### Algorithm Steps
+Lower scores indicate better balance.
 
-1. **Team Generation**: Uses binary enumeration to evaluate all possible team combinations
-2. **Optimization**: Selects the combination with the lowest balance score
-3. **Swap Analysis**: Calculates potential balance improvements from player swaps
-4. **UI Rendering**: Displays teams, stats, and swap recommendations
+### Two-Phase Optimization Algorithm
 
-### Algorithm Details
+#### Phase 1: Optimal Unknown Distribution
+1. **Separation**: Players are separated into unknown (<10 games) and experienced (≥10 games) groups
+2. **Target Distribution**: Calculates how many unknowns should go to each team (e.g., 5 unknowns → 2 blue, 3 orange)
+3. **Combination Generation**: Uses `generateCombinationsOfSize()` to create all possible distributions
+4. **Evaluation**: Each distribution is scored using `calculatePartialBalanceScore()` (Attack/Defense/Game IQ only)
+5. **Selection**: The distribution with the minimum score is selected
 
-#### Combination Generation
+#### Phase 2: Experienced Player Optimization
+1. **Pre-assigned Unknowns**: Unknown players are already optimally distributed from Phase 1
+2. **Combination Generation**: Uses `generateTeamCombinations()` for all possible experienced player arrangements
+3. **Full Evaluation**: Each combination is scored using all 5 metrics via `calculateBalanceScore()`
+4. **Final Selection**: The combination with the lowest overall score is selected
 
-The algorithm uses a binary enumeration approach to generate all possible team combinations:
-- Uses binary counting (0 to 2^n - 1) to generate all possible team assignments
-- Each bit position (0 or 1) determines a player's team assignment
-- Only considers combinations where team sizes differ by at most 1 player
+### Key Functions
 
-This is implemented in `generateTeamCombinations()` function in `teamBalanceUtils.ts`.
+```typescript
+// Check if a player is unknown (< 10 games)
+isUnknownPlayer(player: TeamAssignment): boolean
 
-#### Finding Optimal Teams
+// Find optimal distribution of unknown players
+findOptimalUnknownDistribution(unknownPlayers: TeamAssignment[], targetBlueCount: number)
 
-The `findOptimalTeamBalance()` function evaluates all combinations and selects the one with the lowest balance score. This approach guarantees finding the optimal solution, though it has exponential time complexity (O(2^n)).
+// Calculate balance score for Attack/Defense/Game IQ only
+calculatePartialBalanceScore(team1: TeamAssignment[], team2: TeamAssignment[]): number
 
-#### Calculating Best Swaps
+// Main algorithm entry point
+findOptimalTeamBalance(players: TeamAssignment[]): TeamBalance
+```
+
+### Deterministic Results
+The algorithm is completely deterministic:
+- Same input always produces the same output
+- No randomization involved
+- Results are predictable and explainable
+
+### Swap Recommendations
 
 When a player is selected, the `calculateBestSwaps()` function:
 - Simulates swapping the selected player with each player on the opposite team
 - Calculates the new balance score for each potential swap
-- Ranks the swaps by their resulting score (lower is better)
-- Returns the top 3 swap candidates
+- Considers both immediate metric improvements and overall balance
+- Returns swaps ranked by total improvement, with focus on specific metrics if selected
 
 ## Preview Functionality
 
@@ -63,50 +99,84 @@ The team balancing interface includes a powerful preview system that allows admi
 
 For detailed information about the preview system, see [PlayerSwapPreview.md](./PlayerSwapPreview.md).
 
-## Win Rate Integration
+## Usage in Admin Interface
 
-The team balancing system takes into account both overall and recent win rates:
+### Generate Optimal Teams
+1. Click "Generate Optimal Teams" button
+2. Algorithm runs automatically
+3. Results display with:
+   - Team summaries showing average stats
+   - Player lists with ratings and indicators
+   - Confidence score
+   - Balance score
 
-- **Overall Win Rate**: Historical performance across all games
-- **Recent Form**: Performance in the last 10 games
-- **Form Indicators**: Visual indicators showing if a player's recent form is better or worse than their overall performance
+### Manual Adjustments
+After generation, admins can:
+- Manually swap players if needed
+- View swap recommendations with improvement scores
+- Focus on specific metrics (Attack, Defense, Game IQ, Win Rate, Goal Differential)
+- See impact of each potential swap
 
-This integration helps create more balanced teams by considering both long-term skill and current form. For more details on the win rate system, see [WinRateExplainer.md](./WinRateExplainer.md).
+## Edge Cases
 
-## User Interface Components
+### All Unknown Players
+- Algorithm still works by optimizing Attack/Defense/Game IQ
+- Confidence will show as "Low"
+- Teams will be as balanced as possible given available data
 
-The Team Balancing interface provides:
+### Similar Stats
+- When players have very similar stats, multiple distributions may be equally optimal
+- Algorithm consistently picks the first valid option (deterministic)
 
-1. **Team Stats Display**:
-   - Shows total and average attack/defense ratings for each team
-   - Displays current balance score
-
-2. **Recommended Swaps**:
-   - If a better team balance is possible, shows recommended swaps
-   - For each swap, shows balance improvement score and player details
-   - "Make This Swap" buttons to execute recommended swaps
-
-3. **Interactive Swapping**:
-   - Click on one player, then another to swap them
-   - Visual indicators show best swap candidates when a player is selected
-   - Error handling for invalid swaps (e.g., same team)
-
-4. **Data Refresh**:
-   - Button to refresh team data from the backend
-
-## Usage Guidelines
-
-- **Team Size**: Teams should have equal numbers of players (or differ by at most 1)
-- **Manual Adjustments**: Use recommended swaps or manual swapping when team composition needs adjustment
-- **Data Refresh**: Use the "Refresh Team Data" button to update player ratings from the database
+### Uneven Player Count
+- Algorithm handles odd numbers gracefully
+- One team may have one more player
+- Balance calculation accounts for different team sizes
 
 ## Performance Considerations
 
-The algorithm evaluates 2^n possible team combinations, where n is the number of players. This approach works well for typical team sizes (up to ~20 players), but could become slow for larger player counts.
+### Computational Complexity
+- For n players: O(2^n) combinations to evaluate
+- Optimization: Separate handling of unknowns reduces search space
+- Practical limit: ~20 players before noticeable delay
+
+### Optimization Strategies
+1. Pre-filtering invalid combinations (team size constraints)
+2. Early termination when perfect balance found
+3. Caching repeated calculations
+
+## Troubleshooting
+
+### Common Issues
+
+**"Teams seem unbalanced despite good scores"**
+- Check if many players are "unknown" (low confidence)
+- Verify all player ratings are up to date
+- Consider manual adjustments for edge cases
+
+**"Same players always together"**
+- This is expected behavior (deterministic)
+- Use manual swaps to vary teams if desired
+- Future chemistry features will address this
+
+**"Algorithm is slow"**
+- Reduce number of players if possible
+- Check for performance issues in browser
+- Contact support if consistently slow
+
+## Best Practices
+
+1. **Keep ratings updated**: Regularly update player ratings for accuracy
+2. **Monitor confidence**: Be cautious with low confidence results
+3. **Use manual adjustments**: Algorithm provides a starting point
+4. **Consider context**: Account for factors the algorithm doesn't know
+5. **Gather feedback**: Track actual game results to improve ratings
 
 ## Future Improvements
 
 Potential enhancements to consider:
-- Implement heuristic methods for larger player pools
-- Add position-based balancing (ensuring each team has proper role distribution)
-- Add player skill compatibility scoring (synergies between players)
+- **Position-based balancing**: Consider player positions
+- **Chemistry factors**: Account for players who work well together
+- **Fatigue tracking**: Consider recent game participation
+- **Historical performance**: Weight recent games more heavily
+- **Custom weights**: Allow admins to adjust metric importance

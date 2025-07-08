@@ -25,9 +25,9 @@ export const calculateTeamStats = (team: TeamAssignment[]) => {
   }
 
   // Calculate attack, defense, and game IQ averages
-  const blueAttack = team.reduce((sum, p) => sum + p.attack_rating, 0) / team.length;
-  const blueDefense = team.reduce((sum, p) => sum + p.defense_rating, 0) / team.length;
-  const blueGameIq = team.reduce((sum, p) => sum + p.game_iq_rating, 0) / team.length;
+  const blueAttack = team.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / team.length;
+  const blueDefense = team.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / team.length;
+  const blueGameIq = team.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / team.length;
   
   // Filter out players with no game history for win rate calculation
   // No longer requiring 10+ games, just need valid data

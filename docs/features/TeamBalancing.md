@@ -27,11 +27,23 @@ The system now considers **5 metrics** with equal weighting (20% each):
    - Average goal difference from recent games
    - Only included for players with 10+ games
 
-## Algorithm
+## Algorithm (Updated June 30, 2025)
+
+### Two-Phase Optimization Approach
+
+#### Phase 1: Unknown Player Distribution
+Players with <10 games ("unknowns") lack win rate and goal differential data. The algorithm:
+1. Separates players into unknown (<10 games) and experienced (≥10 games) groups
+2. Finds the optimal distribution of unknowns based on Attack/Defense/Game IQ
+3. Evaluates all possible distributions and selects the best one
+
+#### Phase 2: Experienced Player Optimization
+1. With unknowns optimally pre-distributed, optimizes experienced player placement
+2. Uses all 5 metrics for evaluation
+3. Selects the combination with the lowest overall balance score
 
 ### Balance Score Calculation
-The system calculates a "balance score" where lower is better:
-
+For experienced players (all 5 metrics):
 ```javascript
 balanceScore = (attackDiff * 0.20) + 
                (defenseDiff * 0.20) + 
@@ -40,12 +52,23 @@ balanceScore = (attackDiff * 0.20) +
                (goalDiffDiff * 0.20)
 ```
 
-### Team Assignment Process
-1. Fetch all registered players for the game
-2. Retrieve player ratings and statistics
-3. Generate all possible team combinations
-4. Calculate balance score for each combination
-5. Select the combination with the lowest score
+For unknown players (3 metrics only):
+```javascript
+balanceScore = (attackDiff + defenseDiff + gameIqDiff) / 3
+```
+
+### Deterministic Results
+- Same input always produces the same output
+- No randomization involved
+- Consistent team configurations
+
+### Visual Indicators
+- **"NEW" badge**: Players with <10 games
+- **Team headers**: Show count of new players
+- **Confidence score**: 
+  - 🟢 High (<25% unknowns)
+  - 🟡 Medium (25-50% unknowns)
+  - 🔴 Low (>50% unknowns)
 
 ### Swap Recommendations
 The system can suggest player swaps to improve balance:
@@ -106,8 +129,24 @@ Admins can:
 
 ### Key Files
 - `/src/utils/teamBalancing.ts` - Core balancing algorithm
-- `/src/components/admin/team-balancing/` - UI components
+- `/src/components/admin/team-balancing/teamBalanceUtils.ts` - Unknown player distribution logic
+- `/src/components/admin/team-balancing/OptimalTeamGenerator.tsx` - UI for team generation
 - `/src/hooks/useTeamBalancing.ts` - React hook for team management
+
+### Key Functions
+```typescript
+// Check if player has insufficient data
+isUnknownPlayer(player: TeamAssignment): boolean
+
+// Find optimal distribution of unknowns
+findOptimalUnknownDistribution(unknownPlayers: TeamAssignment[], targetBlueCount: number)
+
+// Calculate partial balance (3 metrics)
+calculatePartialBalanceScore(team1: TeamAssignment[], team2: TeamAssignment[]): number
+
+// Main algorithm entry point
+findOptimalTeamBalance(players: TeamAssignment[]): TeamBalance
+```
 
 ### Database Tables
 - `balanced_team_assignments` - Stores team assignments

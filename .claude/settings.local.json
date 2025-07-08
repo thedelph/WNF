@@ -30,7 +30,13 @@
       "Bash(find:*)",
       "mcp__supabase__list_organizations",
       "Bash(grep:*)",
+<<<<<<< HEAD
       "mcp__supabase__list_migrations"
+=======
+      "Bash(npx typescript:*)",
+      "Bash(node:*)",
+      "Bash(touch:*)"
+>>>>>>> 94109b20dd5d5927ac3a9d1adbd2f0048cb8c0fc
     ]
   },
   "enableAllProjectMcpServers": true,

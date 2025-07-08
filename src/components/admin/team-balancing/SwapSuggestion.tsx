@@ -59,6 +59,16 @@ export const SwapSuggestion: React.FC<SwapSuggestionProps> = ({ swap, selected, 
               </span>
             </Tooltip>
           </div>
+          <div>
+            <Tooltip content="How much this swap improves Game IQ balance">
+              <span className={swap.primaryImpactMetric === 'gameIq' ? 'font-bold text-purple-600' : ''}>
+                Game IQ: {formatStat(swap.gameIqDiffImprovement)}
+                {swap.primaryImpactMetric === 'gameIq' && 
+                  <span className="ml-1 text-purple-600">★</span>
+                }
+              </span>
+            </Tooltip>
+          </div>
           
           {swap.winRateDiffImprovement !== undefined && (
             <div>

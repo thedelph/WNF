@@ -4,12 +4,39 @@ All notable changes to the WNF project will be documented in this file.
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ### Fixed - June 27, 2025
 - **Player Rating Decimal Precision**: Fixed issue where average ratings were incorrectly stored as integers
   - Root cause: Bulk update during Game IQ implementation rounded most averages to whole numbers
   - Applied migration to recalculate all average ratings from individual ratings
   - Restored proper decimal precision (e.g., 5.71 instead of 6.0)
   - Affects `attack_rating`, `defense_rating`, and `game_iq` columns in players table
+=======
+### Fixed - June 30, 2025
+- **Game IQ Team Balancing Issues**:
+  - Fixed Game IQ ratings not being fetched from database in team balancing interface
+  - Fixed all players showing Game IQ as "5" instead of actual database values
+  - Added Game IQ display to Optimal Team Generator summaries
+  - Added Game IQ improvements to Swap Suggestion cards
+  - Updated team stats calculations to include avgGameIq and totalGameIq
+  - Fixed null value handling throughout team balancing components
+
+### Enhanced - June 30, 2025
+- **Team Balancing Algorithm Improvements**:
+  - **Unknown Player Distribution**: Players with <10 games are now distributed evenly across teams
+    - Added "NEW" badges for players with insufficient game history
+    - Team headers show count of new players (e.g., "8 players, 3 new")
+    - Prevents all unknowns clustering on one team which disabled win rate/goal differential metrics
+  - **Deterministic Results**: Generate Optimal Teams now produces consistent results
+    - Replaced random shuffling with deterministic optimization
+    - Unknown players distributed based on their Attack/Defense/Game IQ ratings
+    - Algorithm tries all possible distributions and selects the mathematically optimal one
+  - **Confidence Score**: Added team balance confidence indicator
+    - High (green): <25% unknown players
+    - Medium (yellow): 25-50% unknown players
+    - Low (red): >50% unknown players
+    - Helps admins understand reliability of team balance
+>>>>>>> 94109b20dd5d5927ac3a9d1adbd2f0048cb8c0fc
 
 ### Added - June 26, 2025
 - **Role-Based Access Control (RBAC) System**: Granular permission management for admins
