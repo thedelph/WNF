@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart,
@@ -19,9 +19,100 @@ interface TierDistributionVisualProps {
   data: ParsedDebugData;
 }
 
+// Separate component for each tier to isolate animations
+const TierItem: React.FC<{
+  tier: any;
+  index: number;
+  color: string;
+  widthPercentage: number;
+  maxCount: number;
+  forceExpanded?: boolean;
+  forceCollapsed?: boolean;
+  onExpandChange?: (tierNumber: number, expanded: boolean) => void;
+}> = React.memo(({ tier, index, color, widthPercentage, forceExpanded, forceCollapsed, onExpandChange }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    if (forceExpanded !== undefined && forceExpanded !== isExpanded) {
+      setIsExpanded(forceExpanded);
+    }
+    if (forceCollapsed !== undefined && !forceCollapsed && isExpanded) {
+      setIsExpanded(false);
+    }
+  }, [forceExpanded, forceCollapsed]);
+
+  return (
+    <div className="flex flex-col items-center w-full">
+      <motion.div
+        className="relative cursor-pointer"
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+          onExpandChange?.(tier.tier, !isExpanded);
+        }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <div
+          className={`
+            h-16 flex items-center justify-center rounded-lg shadow-lg transition-all duration-300
+            ${isExpanded ? 'ring-4 ring-opacity-50' : ''}
+          `}
+          style={{
+            backgroundColor: color,
+            width: `${Math.max(widthPercentage, 30)}%`,
+            minWidth: '200px',
+            maxWidth: '600px',
+            ringColor: color
+          }}
+        >
+          <div className="text-white font-bold text-lg">
+            Tier {tier.tier}
+          </div>
+          <div className="absolute right-4 text-white text-sm">
+            {tier.count} players
+          </div>
+        </div>
+        
+        {/* Rating range */}
+        <div className="text-center mt-1 text-sm text-gray-500">
+          {tier.minRating.toFixed(1)} - {tier.maxRating.toFixed(1)}
+        </div>
+      </motion.div>
+      
+      {/* Player details for this specific tier */}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            key="expanded-content"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-2xl mt-4 overflow-hidden"
+          >
+            <div className="p-4 bg-base-200 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                {tier.players.map((player: any) => (
+                  <div
+                    key={player.name}
+                    className="bg-base-100 p-2 rounded text-sm"
+                  >
+                    <div className="font-medium">{player.name}</div>
+                    <div className="text-xs text-gray-500">Rating: {player.rating.toFixed(2)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
 export const TierDistributionVisual: React.FC<TierDistributionVisualProps> = ({ data }) => {
   const [viewMode, setViewMode] = useState<'pyramid' | 'distribution' | 'skills'>('pyramid');
-  const [selectedTier, setSelectedTier] = useState<number | null>(null);
+  const [expandAllState, setExpandAllState] = useState<'none' | 'expand' | 'collapse'>('none');
 
   // Prepare tier data for visualizations
   const tierStats = useMemo(() => {
@@ -44,47 +135,35 @@ export const TierDistributionVisual: React.FC<TierDistributionVisualProps> = ({ 
     
     return (
       <div className="flex flex-col items-center space-y-4">
+        <div className="flex gap-2 mb-4">
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={() => setExpandAllState('expand')}
+          >
+            Expand All
+          </button>
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={() => setExpandAllState('collapse')}
+          >
+            Collapse All
+          </button>
+        </div>
         {tierStats.map((tier, index) => {
           const widthPercentage = (tier.count / maxCount) * 100;
-          const isSelected = selectedTier === tier.tier;
           
           return (
-            <motion.div
+            <TierItem
               key={tier.tier}
-              className="relative cursor-pointer"
-              onClick={() => setSelectedTier(isSelected ? null : tier.tier)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <motion.div
-                className={`
-                  h-16 flex items-center justify-center rounded-lg shadow-lg
-                  ${isSelected ? 'ring-4 ring-opacity-50' : ''}
-                `}
-                style={{
-                  backgroundColor: tierColors[index],
-                  width: `${Math.max(widthPercentage, 30)}%`,
-                  minWidth: '200px',
-                  maxWidth: '600px',
-                  ringColor: tierColors[index]
-                }}
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.max(widthPercentage, 30)}%` }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <div className="text-white font-bold text-lg">
-                  Tier {tier.tier}
-                </div>
-                <div className="absolute right-4 text-white text-sm">
-                  {tier.count} players
-                </div>
-              </motion.div>
-              
-              {/* Rating range */}
-              <div className="text-center mt-1 text-sm text-gray-500">
-                {tier.minRating.toFixed(1)} - {tier.maxRating.toFixed(1)}
-              </div>
-            </motion.div>
+              tier={tier}
+              index={index}
+              color={tierColors[index]}
+              widthPercentage={widthPercentage}
+              maxCount={maxCount}
+              forceExpanded={expandAllState === 'expand' ? true : undefined}
+              forceCollapsed={expandAllState === 'collapse' ? true : undefined}
+              onExpandChange={() => setExpandAllState('none')}
+            />
           );
         })}
         
@@ -290,34 +369,6 @@ export const TierDistributionVisual: React.FC<TierDistributionVisualProps> = ({ 
         )}
       </AnimatePresence>
 
-      {/* Selected tier details */}
-      {selectedTier && viewMode === 'pyramid' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-6 p-4 bg-base-200 rounded-lg"
-        >
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold">Tier {selectedTier} Players</h3>
-            <button
-              className="btn btn-ghost btn-xs"
-              onClick={() => setSelectedTier(null)}
-            >
-              ✕
-            </button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {tierStats
-              .find(t => t.tier === selectedTier)
-              ?.players.map((player) => (
-                <div key={player.name} className="bg-base-100 p-2 rounded text-sm">
-                  <div className="font-medium">{player.name}</div>
-                  <div className="text-xs text-gray-500">Rating: {player.rating.toFixed(2)}</div>
-                </div>
-              ))}
-          </div>
-        </motion.div>
-      )}
 
       {/* Summary stats */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

@@ -4,14 +4,15 @@ All notable changes to the WNF project will be documented in this file.
 
 ## [Unreleased]
 
-<<<<<<< HEAD
-### Fixed - June 27, 2025
-- **Player Rating Decimal Precision**: Fixed issue where average ratings were incorrectly stored as integers
-  - Root cause: Bulk update during Game IQ implementation rounded most averages to whole numbers
-  - Applied migration to recalculate all average ratings from individual ratings
-  - Restored proper decimal precision (e.g., 5.71 instead of 6.0)
-  - Affects `attack_rating`, `defense_rating`, and `game_iq` columns in players table
-=======
+### Enhanced - July 17, 2025
+- **Team Balancing Tier Visualization Improvements**:
+  - Player names now appear directly under each specific tier when clicked (instead of at the bottom)
+  - Multiple tiers can be expanded simultaneously for easier comparison
+  - Added "Expand All" and "Collapse All" buttons for tier pyramid view
+  - Each tier maintains its own animation state to prevent re-animation issues
+  - Smooth Framer Motion animations restored with proper isolation
+  - Improved user experience with individual tier control
+
 ### Fixed - June 30, 2025
 - **Game IQ Team Balancing Issues**:
   - Fixed Game IQ ratings not being fetched from database in team balancing interface
@@ -36,7 +37,13 @@ All notable changes to the WNF project will be documented in this file.
     - Medium (yellow): 25-50% unknown players
     - Low (red): >50% unknown players
     - Helps admins understand reliability of team balance
->>>>>>> 94109b20dd5d5927ac3a9d1adbd2f0048cb8c0fc
+
+### Fixed - June 27, 2025
+- **Player Rating Decimal Precision**: Fixed issue where average ratings were incorrectly stored as integers
+  - Root cause: Bulk update during Game IQ implementation rounded most averages to whole numbers
+  - Applied migration to recalculate all average ratings from individual ratings
+  - Restored proper decimal precision (e.g., 5.71 instead of 6.0)
+  - Affects `attack_rating`, `defense_rating`, and `game_iq` columns in players table
 
 ### Added - June 26, 2025
 - **Role-Based Access Control (RBAC) System**: Granular permission management for admins

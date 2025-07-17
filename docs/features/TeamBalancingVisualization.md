@@ -43,6 +43,10 @@ Multiple views of how players are grouped by skill:
 - Visual representation of tier structure
 - Shows player count per tier
 - Color-coded by tier level
+- **Click any tier to see player names directly underneath**
+- **Multiple tiers can be expanded simultaneously**
+- **"Expand All" and "Collapse All" buttons for bulk control**
+- Smooth animations with isolated state per tier
 
 #### Distribution Charts
 - Bar chart of players per tier
@@ -159,3 +163,8 @@ Key metrics and takeaways:
 - Added proper null handling for player statistics
 - Improved field mapping for snake_case database fields
 - Enhanced mobile responsiveness across all views
+- **Tier Pyramid Improvements (July 17, 2025)**:
+  - Player names now appear directly under each tier when clicked
+  - Multiple tiers can be expanded at once for comparison
+  - Added expand/collapse all functionality
+  - Fixed animation issues with isolated component state
