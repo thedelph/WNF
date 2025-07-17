@@ -4,6 +4,8 @@
 
 The WNF team balancing system uses a sophisticated algorithm to create fair and competitive teams. It considers multiple player metrics and handles both experienced players and newcomers intelligently.
 
+> **Note**: This document describes the original optimal team balancing algorithm. For information about the alternative tier-based snake draft algorithm, see [Tier-Based Snake Draft Implementation](/docs/TierBasedSnakeDraftImplementation.md).
+
 ## Key Features
 
 ### 1. Five-Metric Balancing

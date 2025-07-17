@@ -13,6 +13,15 @@ All notable changes to the WNF project will be documented in this file.
   - Smooth Framer Motion animations restored with proper isolation
   - Improved user experience with individual tier control
 
+- **True Snake Draft Implementation**:
+  - Fixed tier-based team balancing to use proper snake draft pattern
+  - Randomly selects which team picks first (different each time)
+  - Teams alternate who picks first in each tier (true snake draft)
+  - Prevents same team from always getting highest-rated player
+  - Pre-calculates and prevents team size imbalances (e.g., 10v8)
+  - Smart adjustments ensure teams differ by at most 1 player
+  - Debug log shows random selection and any balance adjustments
+
 ### Fixed - June 30, 2025
 - **Game IQ Team Balancing Issues**:
   - Fixed Game IQ ratings not being fetched from database in team balancing interface

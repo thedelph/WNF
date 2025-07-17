@@ -222,50 +222,118 @@ function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blu
   const blueTeam: PlayerWithRating[] = [];
   const orangeTeam: PlayerWithRating[] = [];
   
-  // Track which team should pick first in the current tier
-  let bluePicksFirst = true;
+  // Calculate total players to determine target team sizes
+  const totalPlayers = tiers.reduce((sum, tier) => sum + tier.players.length, 0);
+  const targetTeamSize = Math.floor(totalPlayers / 2);
+  
+  // Randomly determine which team picks first in Tier 1
+  let bluePicksFirst = Math.random() < 0.5;
+  const initialFirstPicker = bluePicksFirst ? 'Blue' : 'Orange';
   
   if (debugLog) {
     debugLog.value += '\nSTEP 4: SNAKE DRAFT PROCESS\n';
-    debugLog.value += '===========================\n\n';
+    debugLog.value += '===========================\n';
+    debugLog.value += `Randomly selected ${initialFirstPicker} team to pick first\n`;
+    debugLog.value += `Target team size: ${targetTeamSize} players each (${totalPlayers} total)\n\n`;
   }
   
+  // Pre-calculate how the standard snake draft would distribute players
+  let simulatedBlueCount = 0;
+  let simulatedOrangeCount = 0;
+  let simulatedBlueFirst = bluePicksFirst;
+  
   tiers.forEach((tier) => {
+    const tierSize = tier.players.length;
+    if (simulatedBlueFirst) {
+      simulatedBlueCount += Math.ceil(tierSize / 2);
+      simulatedOrangeCount += Math.floor(tierSize / 2);
+    } else {
+      simulatedOrangeCount += Math.ceil(tierSize / 2);
+      simulatedBlueCount += Math.floor(tierSize / 2);
+    }
+    simulatedBlueFirst = !simulatedBlueFirst;
+  });
+  
+  // Check if standard snake draft would create imbalance
+  const wouldBeImbalanced = Math.abs(simulatedBlueCount - simulatedOrangeCount) > 1;
+  
+  if (wouldBeImbalanced && debugLog) {
+    debugLog.value += `Warning: Standard snake draft would create imbalance (Blue: ${simulatedBlueCount}, Orange: ${simulatedOrangeCount})\n`;
+    debugLog.value += `Adjusting draft pattern to ensure balanced teams...\n\n`;
+  }
+  
+  // Track actual picks for balance
+  let currentTierIndex = 0;
+  
+  tiers.forEach((tier, tierIndex) => {
     const tierPlayers = [...tier.players]; // Copy to avoid mutation
+    currentTierIndex = tierIndex;
     
     if (debugLog) {
       debugLog.value += `Tier ${tier.tierNumber} Draft:\n`;
       debugLog.value += `  ${bluePicksFirst ? 'Blue' : 'Orange'} picks first\n`;
     }
     
+    // Check if we need to adjust the pattern to maintain balance
+    let adjustedPattern = false;
+    const remainingTiers = tiers.length - tierIndex - 1;
+    const currentBlueTotal = blueTeam.length;
+    const currentOrangeTotal = orangeTeam.length;
+    
+    // If we're in the last few tiers and teams are getting imbalanced, adjust
+    if (remainingTiers <= 2 && Math.abs(currentBlueTotal - currentOrangeTotal) >= 2) {
+      // Give more picks to the team that's behind
+      if (currentBlueTotal > currentOrangeTotal && bluePicksFirst) {
+        bluePicksFirst = false;
+        adjustedPattern = true;
+        if (debugLog) debugLog.value += `  [Adjusted to Orange first to balance teams]\n`;
+      } else if (currentOrangeTotal > currentBlueTotal && !bluePicksFirst) {
+        bluePicksFirst = true;
+        adjustedPattern = true;
+        if (debugLog) debugLog.value += `  [Adjusted to Blue first to balance teams]\n`;
+      }
+    }
+    
     // Distribute players in this tier
     tierPlayers.forEach((player, index) => {
-      if (bluePicksFirst) {
-        // Blue picks on even indices (0, 2, 4...)
-        if (index % 2 === 0) {
-          blueTeam.push(player);
-          if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Blue\n`;
-        } else {
-          orangeTeam.push(player);
-          if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Orange\n`;
-        }
+      // Check if either team has reached the target size
+      if (blueTeam.length >= targetTeamSize && orangeTeam.length < targetTeamSize) {
+        orangeTeam.push(player);
+        if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Orange (Blue team full)\n`;
+      } else if (orangeTeam.length >= targetTeamSize && blueTeam.length < targetTeamSize) {
+        blueTeam.push(player);
+        if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Blue (Orange team full)\n`;
       } else {
-        // Orange picks on even indices (0, 2, 4...)
-        if (index % 2 === 0) {
-          orangeTeam.push(player);
-          if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Orange\n`;
+        // Normal snake draft distribution
+        if (bluePicksFirst) {
+          // Blue picks on even indices (0, 2, 4...)
+          if (index % 2 === 0) {
+            blueTeam.push(player);
+            if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Blue\n`;
+          } else {
+            orangeTeam.push(player);
+            if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Orange\n`;
+          }
         } else {
-          blueTeam.push(player);
-          if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Blue\n`;
+          // Orange picks on even indices (0, 2, 4...)
+          if (index % 2 === 0) {
+            orangeTeam.push(player);
+            if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Orange\n`;
+          } else {
+            blueTeam.push(player);
+            if (debugLog) debugLog.value += `  Pick ${index + 1}: ${player.friendly_name} → Blue\n`;
+          }
         }
       }
     });
     
-    // For next tier, check who should pick first to maintain balance
-    // If tier has odd number of players, the team that picked last gets first pick next tier
-    if (tierPlayers.length % 2 === 1) {
+    // Always alternate which team picks first in the next tier (unless we adjusted)
+    if (!adjustedPattern) {
       bluePicksFirst = !bluePicksFirst;
-      if (debugLog) debugLog.value += `  → Next tier: ${bluePicksFirst ? 'Blue' : 'Orange'} will pick first (odd number in this tier)\n`;
+    }
+    
+    if (debugLog && tier !== tiers[tiers.length - 1]) {
+      debugLog.value += `  → Next tier: ${bluePicksFirst ? 'Blue' : 'Orange'} will pick first\n`;
     }
     
     if (debugLog) {
@@ -1009,7 +1077,8 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   debugLog += '========================\n';
   
   let pickNumber = 0;
-  let bluePicksFirst = true;
+  // Determine which team picked first based on the actual draft results
+  let bluePicksFirstInVisualization = initialBlueTeam.some(p => p.tier === 1 && tiers[0]?.players[0]?.player_id === p.player_id);
   tiers.forEach((tier, tierIndex) => {
     const players = tier.players;
     
@@ -1018,7 +1087,7 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
     for (let i = 0; i < players.length; i++) {
       pickNumber++;
       const player = players[i];
-      const team = bluePicksFirst ? (i % 2 === 0 ? 'B' : 'O') : (i % 2 === 0 ? 'O' : 'B');
+      const team = bluePicksFirstInVisualization ? (i % 2 === 0 ? 'B' : 'O') : (i % 2 === 0 ? 'O' : 'B');
       picks.push(`${player.friendly_name}(${team})`);
     }
     
@@ -1036,10 +1105,8 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
       debugLog += `Tier ${tierIndex + 1}: ${picks.reverse().join(' ← ')} ←`;
     }
     
-    // Update which team picks first for next tier if odd number of players
-    if (players.length % 2 === 1) {
-      bluePicksFirst = !bluePicksFirst;
-    }
+    // Always alternate which team picks first for next tier (true snake draft)
+    bluePicksFirstInVisualization = !bluePicksFirstInVisualization;
   });
   debugLog += '\n\n';
   

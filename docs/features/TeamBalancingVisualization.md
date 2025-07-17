@@ -58,8 +58,13 @@ Step-by-step animation of the draft process:
 - Play/pause controls
 - Speed adjustment (0.5x to 3x)
 - Visual draft board showing selections
-- Snake pattern visualization
+- True snake pattern visualization with:
+  - Randomly selected starting team (shown at top)
+  - Alternating first picks between tiers
+  - Team balance adjustments when needed
 - Current pick indicator
+- Running totals for each team
+- Warnings when balance adjustments are made
 
 ### 5. Balance Analysis Dashboard
 Comprehensive team comparison metrics:

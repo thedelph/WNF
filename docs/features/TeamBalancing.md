@@ -125,12 +125,48 @@ Admins can:
 - Star rating system (5 stars = perfect balance)
 - Visual bars showing metric contributions
 
+## Alternative Algorithm: Tier-Based Snake Draft
+
+### Overview
+An alternative team balancing approach that uses a tier-based snake draft system. This algorithm:
+- Groups players into skill tiers based on a three-layer rating system
+- Uses a snake draft pattern with randomized starting team
+- Ensures balanced team sizes through smart adjustments
+
+### Key Features
+1. **Three-Layer Rating System**:
+   - Base Skill (70%): Average of Attack, Defense, and Game IQ
+   - Overall Performance (20%): Career win rate and goal differential
+   - Recent Form (10%): Last 10 games performance with momentum factor
+
+2. **True Snake Draft**:
+   - Randomly selects which team picks first
+   - Alternates first pick between tiers (e.g., Blue→Orange→Blue→Orange)
+   - Prevents the same team from always getting the highest-rated player
+
+3. **Team Size Balancing**:
+   - Pre-calculates potential imbalances
+   - Adjusts pick order in final tiers if needed
+   - Ensures teams differ by at most 1 player
+
+4. **Tier-Constrained Optimization**:
+   - Only allows same-tier player swaps
+   - Preserves tier distribution while improving balance
+
+### When to Use
+- When you want to ensure fair distribution of skill levels
+- When tier-based team composition is important
+- For a more transparent, draft-style team selection
+
+For detailed implementation, see: [Tier-Based Snake Draft Implementation](/docs/TierBasedSnakeDraftImplementation.md)
+
 ## Technical Implementation
 
 ### Key Files
 - `/src/utils/teamBalancing.ts` - Core balancing algorithm
 - `/src/components/admin/team-balancing/teamBalanceUtils.ts` - Unknown player distribution logic
 - `/src/components/admin/team-balancing/OptimalTeamGenerator.tsx` - UI for team generation
+- `/src/components/admin/team-balancing/tierBasedSnakeDraft.ts` - Tier-based snake draft algorithm
 - `/src/hooks/useTeamBalancing.ts` - React hook for team management
 
 ### Key Functions

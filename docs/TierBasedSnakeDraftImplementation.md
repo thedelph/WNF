@@ -109,6 +109,11 @@ The algorithm uses individual skill ratings in two distinct ways:
    - Balance score = maximum difference across all three skills
    - This ensures teams are balanced in all dimensions, not just overall rating
 
+### Snake Draft Fairness
+- The starting team is randomly selected each time teams are generated
+- This prevents the same team from always getting the highest-rated player
+- The alternating pattern ensures fair distribution of picks across all tiers
+
 ### Four-Layer Rating Example
 ```
 Player: Simon
@@ -124,17 +129,54 @@ Player: Simon
 ```
 
 ### Snake Draft Process
-The draft follows a snake pattern with visual flow indicators:
+The draft follows a true snake pattern with alternating first picks per tier:
+- **Initial Pick**: The team that picks first in Tier 1 is randomly selected each time
+- **Alternation**: The team that picks first alternates with each tier (regardless of player count)
+- **Pattern**: If Blue picks first in Tier 1, Orange picks first in Tier 2, Blue in Tier 3, etc.
+
+Example visualization (Blue randomly selected to pick first):
 ```
+Randomly selected Blue team to pick first
+
 Tier 1: → Simon(B) → Jarman(O) → Daniel(B) → Michael D(O) ↘
 Tier 2: Tom K(O) ← Dom(B) ← Paul(O) ← Dave(B) ←
         ↓
 Tier 3: → Joe(B) → Lewis(O) → Phil R(B) ↘
-Tier 4: Darren W(B) ← Chris H(O) ← Jack G(B) ← Lee M(O) ←
+Tier 4: Darren W(O) ← Chris H(B) ← Jack G(O) ← Lee M(B) ←
         ↓
-Tier 5: → Stephen(O) → Zhao(B) → James H(O)
+Tier 5: → Stephen(B) → Zhao(O) → James H(B)
 ```
-The arrows (→, ←, ↘, ↓) show the draft flow between and within tiers.
+The arrows (→, ←, ↘, ↓) show the draft flow between and within tiers. Notice how the first pick alternates: Blue→Orange→Blue→Orange→Blue.
+
+### Team Size Balancing
+The algorithm ensures teams are always balanced (9v9 for 18 players, or differ by at most 1 for odd totals):
+- **Pre-calculation**: Simulates the standard snake draft to detect potential imbalances
+- **Target Size**: Each team targets `totalPlayers / 2` (rounded down)
+- **Smart Adjustments**: In final tiers, if teams differ by 2+ players, the algorithm adjusts who picks first
+- **Hard Limits**: No team can exceed the target size - remaining picks go to the smaller team
+
+Example with 4-4-3-4-3 configuration:
+```
+Randomly selected Orange team to pick first
+Target team size: 9 players each (18 total)
+
+Warning: Standard snake draft would create imbalance (Blue: 8, Orange: 10)
+Adjusting draft pattern to ensure balanced teams...
+
+Tier 4 Draft:
+  Blue picks first
+  [Adjusted to Blue first to balance teams]
+  Pick 1: Player → Blue
+  ...
+  Current totals: Blue 8, Orange 8
+
+Tier 5 Draft:
+  Orange picks first
+  Pick 1: Player → Orange
+  Pick 2: Player → Blue
+  Pick 3: Player → Orange (Blue team full)
+  Current totals: Blue 9, Orange 9
+```
 
 ### Tier-Constrained Optimization
 ```
@@ -157,11 +199,12 @@ Optimizing Tier 4:
 ## Key Differences from Original Algorithm
 
 1. **Player Evaluation**: Uses three-layer system with momentum (70/20/10 weights) vs five equal metrics
-2. **Team Formation**: Snake draft vs exhaustive search
+2. **Team Formation**: True snake draft with randomized initial pick vs exhaustive search
 3. **Performance**: O(n log n) vs O(2^n) complexity
 4. **Philosophy**: Ensures tier distribution vs pure statistical balance
 5. **Optimization**: Tier-constrained same-tier swaps only, preserves clustering prevention
 6. **Skill Usage**: Averages skills for ranking, but keeps them separate for balance checking
+7. **Fairness**: Random team selection for first pick ensures different patterns each week
 
 ## Momentum Factor
 
