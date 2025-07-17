@@ -39,6 +39,7 @@ import { ScrollToTop } from './components/ui/ScrollToTop'
 import TokenManagement from './pages/admin/TokenManagement'
 import AccountManagement from './pages/admin/AccountManagement'
 import RoleManagement from './pages/admin/RoleManagement'
+import TeamBalancingVisualization from './pages/admin/TeamBalancingVisualization'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -104,6 +105,7 @@ const App: React.FC = () => {
                 <Route path="/admin/ratings" element={<RatingsView />} />
                 <Route path="/admin/teams/:gameId" element={<Teams />} />
                 <Route path="/admin/team-balancing" element={<TeamBalancingOverview />} />
+                <Route path="/admin/team-balancing/visualization" element={<TeamBalancingVisualization />} />
                 <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
                 <Route path="/admin/tokens" element={<TokenManagement />} />
                 <Route path="/admin/account-management" element={<AccountManagement />} />

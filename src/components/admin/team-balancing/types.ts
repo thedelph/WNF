@@ -22,8 +22,10 @@ export interface TeamAssignment {
   attack_rating: number | null;
   defense_rating: number | null;
   game_iq_rating: number | null;
-  win_rate?: number | null; // Allow win rate to be null for players with no game history
+  win_rate?: number | null; // Recent win rate (last 10 games)
   goal_differential?: number | null; // Goal differential from last 10 games
+  overall_win_rate?: number | null; // Overall career win rate
+  overall_goal_differential?: number | null; // Overall career goal differential
   total_games?: number | null; // Add total games count
 }
 
@@ -68,4 +70,57 @@ export interface PlayerSwapSuggestion {
   goalDiffImprovement?: number;
   totalDiffImprovement: number;
   primaryImpactMetric?: 'attack' | 'defense' | 'gameIq' | 'winRate' | 'goalDifferential'; // The metric most improved by this swap
+}
+
+/**
+ * Result from the current optimal team algorithm
+ */
+export interface OptimalTeamResult {
+  blueTeam: TeamAssignment[];
+  orangeTeam: TeamAssignment[];
+  score: number;
+  confidenceLevel: 'high' | 'medium' | 'low';
+  unknownPlayerCount: number;
+}
+
+/**
+ * Result from the tier-based snake draft algorithm
+ */
+export interface TierBasedTeamResult {
+  blueTeam: TeamAssignment[];
+  orangeTeam: TeamAssignment[];
+  tiers: Array<{
+    tierNumber: number;
+    players: TeamAssignment[];
+    skillRange: { min: number; max: number };
+  }>;
+  initialScore: number;
+  optimizedScore: number;
+  wasOptimized: boolean;
+  confidenceLevel: 'high' | 'medium' | 'low';
+}
+
+/**
+ * Comparison between two team balancing algorithms
+ */
+export interface AlgorithmComparison {
+  currentAlgorithm: OptimalTeamResult | null;
+  tierBasedAlgorithm: TierBasedTeamResult | null;
+  metrics: {
+    attackDiffCurrent: number;
+    attackDiffTierBased: number;
+    defenseDiffCurrent: number;
+    defenseDiffTierBased: number;
+    gameIqDiffCurrent: number;
+    gameIqDiffTierBased: number;
+    overallScoreCurrent: number;
+    overallScoreTierBased: number;
+  } | null;
+  playerMovements: Array<{
+    playerId: string;
+    playerName: string;
+    currentTeam: 'blue' | 'orange';
+    tierBasedTeam: 'blue' | 'orange';
+    moved: boolean;
+  }>;
 }

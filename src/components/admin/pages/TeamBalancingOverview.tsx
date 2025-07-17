@@ -6,12 +6,16 @@ import { useTeamBalancing } from '../team-balancing/useTeamBalancing';
 import { TeamAssignment, PlayerSwapSuggestion, TeamComparison } from '../team-balancing/types';
 import { calculateBestSwaps, calculateMetricImpact } from '../team-balancing/teamBalanceUtils';
 import { calculateTeamComparison } from '../team-balancing/teamBalanceCalcs';
+import { calculateBalanceScore } from '../../../utils/teamBalancing';
 import { WhatsAppExport } from '../team-balancing/WhatsAppExport';
 import { SwapRecommendations } from '../team-balancing/SwapRecommendations';
 import { PlayerSelectionAlert } from '../team-balancing/PlayerSelectionAlert';
 import { PreviewSwapControls } from '../team-balancing/PreviewSwapControls';
 import { BalancingActions } from '../team-balancing/BalancingActions';
 import { OptimalTeamGenerator } from '../team-balancing/OptimalTeamGenerator';
+import { TierBasedTeamGenerator } from '../team-balancing/TierBasedTeamGenerator';
+import { TeamAlgorithmComparison } from '../team-balancing/TeamAlgorithmComparison';
+import { TierBasedResult } from '../team-balancing/tierBasedSnakeDraft';
 import { Tooltip } from '../../ui/Tooltip';
 
 /**
@@ -48,6 +52,15 @@ const TeamBalancingOverview = () => {
     player2: null,
     active: false
   });
+
+  // State to store results from both algorithms for comparison
+  const [currentAlgorithmResult, setCurrentAlgorithmResult] = useState<{
+    blueTeam: TeamAssignment[];
+    orangeTeam: TeamAssignment[];
+    score: number;
+  } | null>(null);
+  
+  const [tierBasedResult, setTierBasedResult] = useState<TierBasedResult | null>(null);
 
   // Memoize filtered teams to prevent unnecessary recalculations
   const teams = useMemo(() => {
@@ -387,8 +400,43 @@ const TeamBalancingOverview = () => {
           });
           
           updateAssignments(updatedAssignments);
+          
+          // Store result for comparison
+          setCurrentAlgorithmResult({
+            blueTeam,
+            orangeTeam,
+            score: calculateBalanceScore(blueTeam, orangeTeam)
+          });
         }}
       />
+      
+      {/* Tier-Based Team Generator */}
+      <TierBasedTeamGenerator
+        allPlayers={assignments}
+        onApplyTeams={(blueTeam, orangeTeam) => {
+          // Update all assignments with the new team assignments
+          const updatedAssignments = [...assignments].map(player => {
+            const bluePlayer = blueTeam.find(p => p.player_id === player.player_id);
+            if (bluePlayer) return { ...player, team: 'blue' };
+            
+            const orangePlayer = orangeTeam.find(p => p.player_id === player.player_id);
+            if (orangePlayer) return { ...player, team: 'orange' };
+            
+            return player;
+          });
+          
+          updateAssignments(updatedAssignments);
+        }}
+        onResultGenerated={setTierBasedResult}
+      />
+      
+      {/* Algorithm Comparison */}
+      {currentAlgorithmResult && tierBasedResult && (
+        <TeamAlgorithmComparison
+          currentResult={currentAlgorithmResult}
+          tierBasedResult={tierBasedResult}
+        />
+      )}
       
       {/* Metric-focused swap recommendations */}
       {focusMetric && metricImpact && (
