@@ -25,7 +25,13 @@ export const deleteGame = async (gameId: string): Promise<{ error: any | null }>
       supabase.from('game_selections').delete().eq('game_id', gameId),
       supabase.from('balanced_team_assignments').delete().eq('game_id', gameId),
       supabase.from('player_penalties').delete().eq('game_id', gameId),
-      supabase.from('registration_locks').delete().eq('game_id', gameId)
+      supabase.from('registration_locks').delete().eq('game_id', gameId),
+      // Delete additional tables that were missing
+      supabase.from('player_status_changes').delete().eq('game_id', gameId),
+      supabase.from('reserve_xp_transactions').delete().eq('game_id', gameId),
+      supabase.from('slot_offers').delete().eq('game_id', gameId),
+      supabase.from('team_announcement_locks').delete().eq('game_id', gameId),
+      supabase.from('token_history').delete().eq('game_id', gameId)
     ];
     
     // Wait for all FK references to be deleted
