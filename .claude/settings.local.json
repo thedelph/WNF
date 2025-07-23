@@ -4,7 +4,14 @@
       "mcp__supabase__list_projects",
       "mcp__supabase__execute_sql",
       "mcp__supabase__apply_migration",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(timeout 10 npx -y @supabase/mcp-server-supabase@latest --access-token sbp_344b2f150a2f87223849352a6e2f47c929a4edf4)",
+      "Bash(echo $env:APPDATA)",
+      "Bash(timeout 5 npx -y @supabase/mcp-server-supabase@latest --access-token sbp_344b2f150a2f87223849352a6e2f47c929a4edf4)",
+      "Bash(set SUPABASE_ACCESS_TOKEN=sbp_344b2f150a2f87223849352a6e2f47c929a4edf4)"
     ]
   },
   "enableAllProjectMcpServers": true,

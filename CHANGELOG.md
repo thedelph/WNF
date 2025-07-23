@@ -4,6 +4,17 @@ All notable changes to the WNF project will be documented in this file.
 
 ## [Unreleased]
 
+### Enhanced - July 23, 2025
+- **Tier Distribution Awareness for Snake Draft**:
+  - Added quality concentration detection to prevent extreme tier imbalances
+  - Prevents one team from getting all worst players in a tier (e.g., both bottom Tier 5 players)
+  - Detects tiers with rating spread > 1.2 points and enforces fair distribution
+  - New validation functions: `validateTierDistribution()`, `getTierDistributionIssues()`, `isSwapAcceptable()`
+  - Improvement-aware logic allows beneficial swaps that don't worsen existing concentrations
+  - Changed balance threshold from 0.5 to 0.3 for better optimization control
+  - Enhanced debug logging shows tier distribution status and specific rejection reasons
+  - Ensures both statistical balance AND perceptual fairness in team composition
+
 ### Enhanced - July 17, 2025
 - **Team Balancing Tier Visualization Improvements**:
   - Player names now appear directly under each specific tier when clicked (instead of at the bottom)

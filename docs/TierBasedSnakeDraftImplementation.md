@@ -19,6 +19,11 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
 - `calculateTierSizes()`: Determines tier distribution (e.g., 4-4-3-4-3 for 18 players)
 - `applySnakeDraft()`: Implements snake draft with team balance checks
 - `optimizeTeams()`: Tier-constrained optimization starting from lowest tier
+- `validateTierDistribution()`: Checks for count and quality concentrations in tiers
+- `getTierDistributionIssues()`: Returns specific details about distribution problems
+- `isSwapAcceptable()`: Improvement-aware validation for proposed swaps
+- `trySameTierSwaps()`: Attempts swaps within the same tier
+- `tryCrossTierSwaps()`: Attempts swaps between adjacent tiers
 
 #### Fixes Applied:
 - Fixed rating calculation formula to allow both positive and negative adjustments
@@ -29,6 +34,9 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
 - Fixed optimization to start from Tier 5 and respect threshold stopping
 - Fixed Final Rankings Summary to use sorted player array
 - Reduced transformation weights to be more conservative (70/20/10 from 60/25/15)
+- Added tier distribution awareness to prevent extreme quality concentrations (2025-07-23)
+- Changed balance threshold from 0.5 to 0.3 for better optimization control
+- Implemented improvement-aware validation to allow beneficial swaps
 
 ### 2. Data Structure Updates
 **File**: `src/components/admin/team-balancing/types.ts`
@@ -182,19 +190,58 @@ Tier 5 Draft:
 ```
 TIER-CONSTRAINED OPTIMIZATION PHASE
 Current Balance: 1.143
-Threshold: 0.5
-Only same-tier swaps allowed, starting from lowest tier
+Threshold: 0.3
+Integrated same-tier and cross-tier swaps, starting from lowest tier
 
 Optimizing Tier 5:
-  Blue: Zhao
-  Orange: Darren W, James H
-  [attempts swaps within tier only]
+  Blue: Maddocks
+  Orange: James H, Mike M
+  [attempts swaps within tier, then cross-tier with Tier 4]
 
 Optimizing Tier 4:
-  Blue: Jack G, Chris H
-  Orange: Lee M, Stephen
-  [stops when balance ≤ 0.5 threshold]
+  Blue: Zhao, Calvin
+  Orange: Stephen, Darren W
+  [stops when balance ≤ 0.3 threshold]
 ```
+
+### Tier Distribution Awareness (Added 2025-07-23)
+
+The algorithm now includes sophisticated tier distribution validation to prevent extreme quality concentrations:
+
+#### Key Features:
+1. **Quality Concentration Detection**: Identifies when one team gets all the worst players in a tier
+2. **Improvement-Aware Validation**: Allows swaps that don't worsen existing concentrations
+3. **Enhanced Debug Logging**: Shows detailed tier distribution status and rejection reasons
+
+#### How It Works:
+
+**Validation Functions**:
+- `validateTierDistribution()`: Checks for both count and quality concentrations
+- `getTierDistributionIssues()`: Provides specific details about distribution problems
+- `isSwapAcceptable()`: Improvement-aware validation that compares before/after states
+
+**Quality Concentration Rules**:
+- For tiers with 3+ players and rating spread > 1.2 points
+- Prevents one team from getting all bottom players (lowest 2 in tier)
+- Example: In Tier 5 with Maddocks (4.53), James H (3.87), Mike M (3.10)
+  - Spread: 4.53 - 3.10 = 1.43 (> 1.2 threshold)
+  - Bottom players: James H, Mike M
+  - Rejected if one team would get both
+
+**Improvement-Aware Logic**:
+- ✅ **Allowed**: Swaps that fix or don't affect existing concentrations
+- ✅ **Allowed**: Swaps where the same concentration remains (doesn't worsen)
+- ❌ **Blocked**: Swaps that create new concentrations
+- ❌ **Blocked**: Swaps that worsen existing concentrations
+
+**Debug Log Example**:
+```
+Initial Tier Distribution: CONCENTRATED (Orange would get all bottom players in Tier 5: James H, Mike M)
+Trying Zhao ↔ Stephen: balance 0.360 → 0.159 (improves by 0.201) → ACCEPTED
+Final Tier Distribution: CONCENTRATED (Orange would get all bottom players in Tier 5: James H, Mike M)
+```
+
+This ensures both statistical balance AND perceptual fairness in team composition.
 
 ## Key Differences from Original Algorithm
 
@@ -245,7 +292,7 @@ Player: Daniel
 2. **Goal Differentials**: Fixed RPC function to use correct status filter
 3. **Rating Formula**: Fixed to allow both positive and negative adjustments
 4. **Optimization Order**: Fixed to start from Tier 5 (lowest) upwards
-5. **Threshold Stopping**: Optimization stops when balance ≤ 0.5
+5. **Threshold Stopping**: Optimization stops when balance ≤ 0.3
 
 ## Enhanced Debug Log Features
 

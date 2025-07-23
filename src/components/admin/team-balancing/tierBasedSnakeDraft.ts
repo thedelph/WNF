@@ -18,7 +18,7 @@ const GOAL_DIFF_WEIGHT = 0.3;
 
 // Other constants
 const MIN_GAMES_FOR_STATS = 10;
-const BALANCE_THRESHOLD = 0.5;
+const BALANCE_THRESHOLD = 0.3;
 
 // Momentum constants
 const MOMENTUM_THRESHOLD_SMALL = 0.1;   // Below this, no momentum effect
@@ -400,7 +400,477 @@ function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: Pla
 }
 
 /**
- * Optimize teams by trying same-tier swaps only, starting from lowest tier upwards
+ * Validate tier distribution to prevent extreme concentrations
+ * Returns true if the distribution is fair:
+ * 1. No team has ALL players from any tier with 2+ players
+ * 2. No team has all the worst players from tiers with significant rating spreads
+ */
+function validateTierDistribution(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): boolean {
+  const QUALITY_CONCENTRATION_THRESHOLD = 1.2; // Rating spread threshold for quality checking
+  
+  // Count players by tier for each team
+  const blueTierCounts = new Map<number, number>();
+  const orangeTierCounts = new Map<number, number>();
+  const totalTierCounts = new Map<number, number>();
+  const tierPlayers = new Map<number, PlayerWithRating[]>();
+
+  // Collect all players by tier
+  const allPlayers = [...blueTeam, ...orangeTeam];
+  allPlayers.forEach(player => {
+    const tier = player.tier ?? 1;
+    if (!tierPlayers.has(tier)) {
+      tierPlayers.set(tier, []);
+    }
+    tierPlayers.get(tier)!.push(player);
+  });
+
+  // Count blue team players by tier
+  blueTeam.forEach(player => {
+    const tier = player.tier ?? 1;
+    blueTierCounts.set(tier, (blueTierCounts.get(tier) || 0) + 1);
+    totalTierCounts.set(tier, (totalTierCounts.get(tier) || 0) + 1);
+  });
+
+  // Count orange team players by tier
+  orangeTeam.forEach(player => {
+    const tier = player.tier ?? 1;
+    orangeTierCounts.set(tier, (orangeTierCounts.get(tier) || 0) + 1);
+    totalTierCounts.set(tier, (totalTierCounts.get(tier) || 0) + 1);
+  });
+
+  // Check each tier for concentration violations
+  for (const [tier, totalCount] of totalTierCounts) {
+    // Only check tiers with 2+ players (single-player tiers can go to either team)
+    if (totalCount >= 2) {
+      const blueCount = blueTierCounts.get(tier) || 0;
+      const orangeCount = orangeTierCounts.get(tier) || 0;
+      
+      // Check if one team has ALL players from this tier
+      if (blueCount === totalCount && orangeCount === 0) {
+        return false; // Blue has all players from this tier
+      }
+      if (orangeCount === totalCount && blueCount === 0) {
+        return false; // Orange has all players from this tier
+      }
+
+      // Check for quality concentration in tiers with 3+ players
+      if (totalCount >= 3) {
+        const playersInTier = tierPlayers.get(tier) || [];
+        const sortedByRating = playersInTier.sort((a, b) => b.threeLayerRating - a.threeLayerRating);
+        
+        const highestRating = sortedByRating[0].threeLayerRating;
+        const lowestRating = sortedByRating[sortedByRating.length - 1].threeLayerRating;
+        const ratingSpread = highestRating - lowestRating;
+        
+        // If there's a significant rating spread, check for quality concentration
+        if (ratingSpread > QUALITY_CONCENTRATION_THRESHOLD) {
+          // Identify bottom players (lowest 2 players in tier)
+          const bottomPlayers = sortedByRating.slice(-2);
+          
+          // Check if one team has both/all bottom players
+          const blueBottomPlayers = bottomPlayers.filter(p => 
+            blueTeam.some(bp => bp.player_id === p.player_id)
+          );
+          const orangeBottomPlayers = bottomPlayers.filter(p => 
+            orangeTeam.some(op => op.player_id === p.player_id)
+          );
+          
+          // If one team has all bottom players (when there are 2+ bottom players), it's unfair
+          if (bottomPlayers.length >= 2 && 
+              (blueBottomPlayers.length === bottomPlayers.length || 
+               orangeBottomPlayers.length === bottomPlayers.length)) {
+            return false; // Quality concentration detected
+          }
+        }
+      }
+    }
+  }
+
+  return true; // Distribution is fair
+}
+
+/**
+ * Get detailed tier distribution validation information
+ * Returns information about why distribution might be unfair
+ */
+function getTierDistributionIssues(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): string | null {
+  const QUALITY_CONCENTRATION_THRESHOLD = 1.2;
+  
+  const blueTierCounts = new Map<number, number>();
+  const orangeTierCounts = new Map<number, number>();
+  const totalTierCounts = new Map<number, number>();
+  const tierPlayers = new Map<number, PlayerWithRating[]>();
+
+  // Collect all players by tier
+  const allPlayers = [...blueTeam, ...orangeTeam];
+  allPlayers.forEach(player => {
+    const tier = player.tier ?? 1;
+    if (!tierPlayers.has(tier)) {
+      tierPlayers.set(tier, []);
+    }
+    tierPlayers.get(tier)!.push(player);
+  });
+
+  // Count blue team players by tier
+  blueTeam.forEach(player => {
+    const tier = player.tier ?? 1;
+    blueTierCounts.set(tier, (blueTierCounts.get(tier) || 0) + 1);
+    totalTierCounts.set(tier, (totalTierCounts.get(tier) || 0) + 1);
+  });
+
+  // Count orange team players by tier
+  orangeTeam.forEach(player => {
+    const tier = player.tier ?? 1;
+    orangeTierCounts.set(tier, (orangeTierCounts.get(tier) || 0) + 1);
+    totalTierCounts.set(tier, (totalTierCounts.get(tier) || 0) + 1);
+  });
+
+  // Check each tier for concentration violations
+  for (const [tier, totalCount] of totalTierCounts) {
+    if (totalCount >= 2) {
+      const blueCount = blueTierCounts.get(tier) || 0;
+      const orangeCount = orangeTierCounts.get(tier) || 0;
+      
+      // Check if one team has ALL players from this tier
+      if (blueCount === totalCount && orangeCount === 0) {
+        return `Blue would get ALL ${totalCount} players from Tier ${tier}`;
+      }
+      if (orangeCount === totalCount && blueCount === 0) {
+        return `Orange would get ALL ${totalCount} players from Tier ${tier}`;
+      }
+
+      // Check for quality concentration in tiers with 3+ players
+      if (totalCount >= 3) {
+        const playersInTier = tierPlayers.get(tier) || [];
+        const sortedByRating = playersInTier.sort((a, b) => b.threeLayerRating - a.threeLayerRating);
+        
+        const highestRating = sortedByRating[0].threeLayerRating;
+        const lowestRating = sortedByRating[sortedByRating.length - 1].threeLayerRating;
+        const ratingSpread = highestRating - lowestRating;
+        
+        if (ratingSpread > QUALITY_CONCENTRATION_THRESHOLD) {
+          const bottomPlayers = sortedByRating.slice(-2);
+          
+          const blueBottomPlayers = bottomPlayers.filter(p => 
+            blueTeam.some(bp => bp.player_id === p.player_id)
+          );
+          const orangeBottomPlayers = bottomPlayers.filter(p => 
+            orangeTeam.some(op => op.player_id === p.player_id)
+          );
+          
+          if (bottomPlayers.length >= 2 && blueBottomPlayers.length === bottomPlayers.length) {
+            const playerNames = bottomPlayers.map(p => p.friendly_name).join(', ');
+            return `Blue would get all bottom players in Tier ${tier}: ${playerNames}`;
+          }
+          if (bottomPlayers.length >= 2 && orangeBottomPlayers.length === bottomPlayers.length) {
+            const playerNames = bottomPlayers.map(p => p.friendly_name).join(', ');
+            return `Orange would get all bottom players in Tier ${tier}: ${playerNames}`;
+          }
+        }
+      }
+    }
+  }
+
+  return null; // No issues found
+}
+
+/**
+ * Improved validation that allows swaps unless they make concentrations worse
+ * Returns true if the swap is acceptable (doesn't worsen existing concentrations)
+ */
+function isSwapAcceptable(
+  beforeBlueTeam: PlayerWithRating[], 
+  beforeOrangeTeam: PlayerWithRating[],
+  afterBlueTeam: PlayerWithRating[], 
+  afterOrangeTeam: PlayerWithRating[]
+): boolean {
+  const beforeIssues = getTierDistributionIssues(beforeBlueTeam, beforeOrangeTeam);
+  const afterIssues = getTierDistributionIssues(afterBlueTeam, afterOrangeTeam);
+  
+  // If no issues before or after, swap is acceptable
+  if (!beforeIssues && !afterIssues) {
+    return true;
+  }
+  
+  // If there were no issues before but issues after, swap creates new concentration (reject)
+  if (!beforeIssues && afterIssues) {
+    return false;
+  }
+  
+  // If there were issues before but none after, swap fixes concentration (accept!)
+  if (beforeIssues && !afterIssues) {
+    return true;
+  }
+  
+  // Both before and after have issues - check if they're the same or different
+  if (beforeIssues && afterIssues) {
+    // If it's the same issue, swap doesn't make it worse (accept)
+    // If it's a different issue, swap might be creating a new problem (reject)
+    return beforeIssues === afterIssues;
+  }
+  
+  return false; // Default to reject if unclear
+}
+
+/**
+ * Try same-tier swaps within a specific tier
+ */
+function trySameTierSwaps(
+  tier: number,
+  blueTeam: PlayerWithRating[],
+  orangeTeam: PlayerWithRating[], 
+  blueTierPlayers: PlayerWithRating[],
+  orangeTierPlayers: PlayerWithRating[],
+  currentBalance: number,
+  debugLog?: { value: string }
+): {
+  bestSwap: { bluePlayer: PlayerWithRating; orangePlayer: PlayerWithRating } | null;
+  bestScore: number;
+  improved: boolean;
+} {
+  if (blueTierPlayers.length === 0 || orangeTierPlayers.length === 0) {
+    return { bestSwap: null, bestScore: currentBalance, improved: false };
+  }
+
+  if (debugLog) {
+    debugLog.value += `  Same-tier swaps in Tier ${tier}:\n`;
+    debugLog.value += `    Blue: ${blueTierPlayers.map(p => `${p.friendly_name}(${p.threeLayerRating.toFixed(2)})`).join(', ')}\n`;
+    debugLog.value += `    Orange: ${orangeTierPlayers.map(p => `${p.friendly_name}(${p.threeLayerRating.toFixed(2)})`).join(', ')}\n`;
+    
+    // Add tier distribution status for this tier
+    const currentDistributionIssue = getTierDistributionIssues(blueTeam, orangeTeam);
+    if (currentDistributionIssue) {
+      debugLog.value += `    Current distribution issue: ${currentDistributionIssue}\n`;
+    }
+  }
+
+  let bestSwap: { bluePlayer: PlayerWithRating; orangePlayer: PlayerWithRating } | null = null;
+  let bestScore = currentBalance;
+  let improved = false;
+
+  // Try all possible swaps within this tier
+  for (const bluePlayer of blueTierPlayers) {
+    for (const orangePlayer of orangeTierPlayers) {
+      // Create temporary teams with this swap
+      const tempBlue = [...blueTeam];
+      const tempOrange = [...orangeTeam];
+      
+      const blueIndex = tempBlue.findIndex(p => p.player_id === bluePlayer.player_id);
+      const orangeIndex = tempOrange.findIndex(p => p.player_id === orangePlayer.player_id);
+      
+      if (blueIndex === -1 || orangeIndex === -1) continue;
+      
+      tempBlue[blueIndex] = orangePlayer;
+      tempOrange[orangeIndex] = bluePlayer;
+      
+      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+      
+      // Check if this swap is acceptable (doesn't worsen existing concentrations)
+      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange);
+      
+      if (debugLog) {
+        debugLog.value += `    Trying ${bluePlayer.friendly_name} ↔ ${orangePlayer.friendly_name}: `;
+        debugLog.value += `balance ${currentBalance.toFixed(3)} → ${newBalance.toFixed(3)}`;
+        if (newBalance < currentBalance) {
+          debugLog.value += ` (improves by ${(currentBalance - newBalance).toFixed(3)})`;
+        }
+        if (!isSwapOk) {
+          const issue = getTierDistributionIssues(tempBlue, tempOrange);
+          debugLog.value += ` → REJECTED (${issue})`;
+        } else if (newBalance < bestScore) {
+          debugLog.value += ` → ACCEPTED`;
+        } else {
+          debugLog.value += ` → no improvement`;
+        }
+        debugLog.value += `\n`;
+      }
+      
+      if (newBalance < bestScore && isSwapOk) {
+        bestScore = newBalance;
+        bestSwap = { bluePlayer, orangePlayer };
+        improved = true;
+      }
+    }
+  }
+
+  if (debugLog) {
+    if (improved && bestSwap) {
+      debugLog.value += `    Best same-tier swap: ${bestSwap.bluePlayer.friendly_name} ↔ ${bestSwap.orangePlayer.friendly_name}\n`;
+      debugLog.value += `    Improvement: ${(currentBalance - bestScore).toFixed(3)} (${bestScore.toFixed(3)})\n`;
+    } else {
+      debugLog.value += `    No beneficial same-tier swaps found\n`;
+    }
+  }
+
+  return { bestSwap, bestScore, improved };
+}
+
+/**
+ * Try cross-tier swaps between two adjacent tiers
+ */
+function tryCrossTierSwaps(
+  lowerTier: number,
+  upperTier: number,
+  blueTeam: PlayerWithRating[],
+  orangeTeam: PlayerWithRating[],
+  blueLowerPlayers: PlayerWithRating[],
+  orangeLowerPlayers: PlayerWithRating[],
+  blueUpperPlayers: PlayerWithRating[],
+  orangeUpperPlayers: PlayerWithRating[],
+  currentBalance: number,
+  debugLog?: { value: string }
+): {
+  bestSwap: { 
+    bluePlayer: PlayerWithRating; 
+    orangePlayer: PlayerWithRating; 
+    blueTier: number; 
+    orangeTier: number;
+  } | null;
+  bestScore: number;
+  improved: boolean;
+} {
+  const MAX_RATING_DIFFERENCE = 1.5;
+
+  if (debugLog && (blueLowerPlayers.length > 0 || orangeLowerPlayers.length > 0) && 
+     (blueUpperPlayers.length > 0 || orangeUpperPlayers.length > 0)) {
+    debugLog.value += `  Cross-tier swaps Tier ${lowerTier}↔${upperTier}:\n`;
+    debugLog.value += `    Tier ${lowerTier} - Blue: ${blueLowerPlayers.map(p => `${p.friendly_name}(${p.threeLayerRating.toFixed(2)})`).join(', ')}\n`;
+    debugLog.value += `    Tier ${lowerTier} - Orange: ${orangeLowerPlayers.map(p => `${p.friendly_name}(${p.threeLayerRating.toFixed(2)})`).join(', ')}\n`;
+    debugLog.value += `    Tier ${upperTier} - Blue: ${blueUpperPlayers.map(p => `${p.friendly_name}(${p.threeLayerRating.toFixed(2)})`).join(', ')}\n`;
+    debugLog.value += `    Tier ${upperTier} - Orange: ${orangeUpperPlayers.map(p => `${p.friendly_name}(${p.threeLayerRating.toFixed(2)})`).join(', ')}\n`;
+  }
+
+  let bestSwap: { 
+    bluePlayer: PlayerWithRating; 
+    orangePlayer: PlayerWithRating; 
+    blueTier: number; 
+    orangeTier: number;
+  } | null = null;
+  let bestScore = currentBalance;
+  let improved = false;
+
+  // Try Blue lower tier ↔ Orange upper tier
+  for (const blueLower of blueLowerPlayers) {
+    for (const orangeUpper of orangeUpperPlayers) {
+      const ratingDiff = Math.abs(blueLower.threeLayerRating - orangeUpper.threeLayerRating);
+      if (ratingDiff > MAX_RATING_DIFFERENCE) continue;
+      
+      // Create temporary teams with this cross-tier swap
+      const tempBlue = [...blueTeam];
+      const tempOrange = [...orangeTeam];
+      
+      const blueIndex = tempBlue.findIndex(p => p.player_id === blueLower.player_id);
+      const orangeIndex = tempOrange.findIndex(p => p.player_id === orangeUpper.player_id);
+      
+      if (blueIndex === -1 || orangeIndex === -1) continue;
+      
+      tempBlue[blueIndex] = orangeUpper;
+      tempOrange[orangeIndex] = blueLower;
+      
+      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+      
+      // Check if this swap is acceptable (doesn't worsen existing concentrations)
+      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange);
+      
+      if (debugLog) {
+        debugLog.value += `    Trying ${blueLower.friendly_name}(T${lowerTier}) ↔ ${orangeUpper.friendly_name}(T${upperTier}): `;
+        debugLog.value += `balance ${currentBalance.toFixed(3)} → ${newBalance.toFixed(3)}`;
+        if (newBalance < currentBalance) {
+          debugLog.value += ` (improves by ${(currentBalance - newBalance).toFixed(3)})`;
+        }
+        if (!isSwapOk) {
+          const issue = getTierDistributionIssues(tempBlue, tempOrange);
+          debugLog.value += ` → REJECTED (${issue})`;
+        } else if (newBalance < bestScore) {
+          debugLog.value += ` → ACCEPTED`;
+        } else {
+          debugLog.value += ` → no improvement`;
+        }
+        debugLog.value += `\n`;
+      }
+      
+      if (newBalance < bestScore && isSwapOk) {
+        bestScore = newBalance;
+        bestSwap = { 
+          bluePlayer: blueLower, 
+          orangePlayer: orangeUpper,
+          blueTier: lowerTier,
+          orangeTier: upperTier
+        };
+        improved = true;
+      }
+    }
+  }
+  
+  // Try Orange lower tier ↔ Blue upper tier
+  for (const orangeLower of orangeLowerPlayers) {
+    for (const blueUpper of blueUpperPlayers) {
+      const ratingDiff = Math.abs(orangeLower.threeLayerRating - blueUpper.threeLayerRating);
+      if (ratingDiff > MAX_RATING_DIFFERENCE) continue;
+      
+      // Create temporary teams with this cross-tier swap
+      const tempBlue = [...blueTeam];
+      const tempOrange = [...orangeTeam];
+      
+      const blueIndex = tempBlue.findIndex(p => p.player_id === blueUpper.player_id);
+      const orangeIndex = tempOrange.findIndex(p => p.player_id === orangeLower.player_id);
+      
+      if (blueIndex === -1 || orangeIndex === -1) continue;
+      
+      tempBlue[blueIndex] = orangeLower;
+      tempOrange[orangeIndex] = blueUpper;
+      
+      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+      
+      // Check if this swap is acceptable (doesn't worsen existing concentrations)
+      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange);
+      
+      if (debugLog) {
+        debugLog.value += `    Trying ${blueUpper.friendly_name}(T${upperTier}) ↔ ${orangeLower.friendly_name}(T${lowerTier}): `;
+        debugLog.value += `balance ${currentBalance.toFixed(3)} → ${newBalance.toFixed(3)}`;
+        if (newBalance < currentBalance) {
+          debugLog.value += ` (improves by ${(currentBalance - newBalance).toFixed(3)})`;
+        }
+        if (!isSwapOk) {
+          const issue = getTierDistributionIssues(tempBlue, tempOrange);
+          debugLog.value += ` → REJECTED (${issue})`;
+        } else if (newBalance < bestScore) {
+          debugLog.value += ` → ACCEPTED`;
+        } else {
+          debugLog.value += ` → no improvement`;
+        }
+        debugLog.value += `\n`;
+      }
+      
+      if (newBalance < bestScore && isSwapOk) {
+        bestScore = newBalance;
+        bestSwap = { 
+          bluePlayer: blueUpper, 
+          orangePlayer: orangeLower,
+          blueTier: upperTier,
+          orangeTier: lowerTier
+        };
+        improved = true;
+      }
+    }
+  }
+
+  if (debugLog) {
+    if (improved && bestSwap) {
+      debugLog.value += `    Best cross-tier swap: ${bestSwap.bluePlayer.friendly_name}(T${bestSwap.blueTier}) ↔ ${bestSwap.orangePlayer.friendly_name}(T${bestSwap.orangeTier})\n`;
+      debugLog.value += `    Rating diff: ${Math.abs(bestSwap.bluePlayer.threeLayerRating - bestSwap.orangePlayer.threeLayerRating).toFixed(2)}\n`;
+      debugLog.value += `    Improvement: ${(currentBalance - bestScore).toFixed(3)} (${bestScore.toFixed(3)})\n`;
+    } else {
+      debugLog.value += `    No beneficial cross-tier swaps found\n`;
+    }
+  }
+
+  return { bestSwap, bestScore, improved };
+}
+
+/**
+ * Optimize teams by trying same-tier swaps first, then cross-tier swaps between adjacent tiers
+ * Starting from lowest tier upwards (Tier 5 → Tier 1)
  */
 function optimizeTeams(
   initialBlueTeam: PlayerWithRating[], 
@@ -422,11 +892,20 @@ function optimizeTeams(
   const swapDetails: Array<{ bluePlayer: string; orangePlayer: string; improvement: number; tier: number }> = [];
   
   if (debugLog) {
-    debugLog.value += 'STEP 6: TIER-CONSTRAINED OPTIMIZATION PHASE\n';
-    debugLog.value += '==========================================\n';
+    debugLog.value += 'STEP 6: INTEGRATED OPTIMIZATION PHASE\n';
+    debugLog.value += '=====================================\n';
     debugLog.value += `Current Balance: ${currentBalance.toFixed(3)}\n`;
     debugLog.value += `Threshold: ${BALANCE_THRESHOLD}\n`;
-    debugLog.value += 'Only same-tier swaps allowed, starting from lowest tier\n\n';
+    const initialDistributionFair = validateTierDistribution(blueTeam, orangeTeam);
+    const distributionIssue = getTierDistributionIssues(blueTeam, orangeTeam);
+    if (initialDistributionFair) {
+      debugLog.value += `Initial Tier Distribution: FAIR\n`;
+    } else {
+      debugLog.value += `Initial Tier Distribution: CONCENTRATED (${distributionIssue})\n`;
+    }
+    debugLog.value += 'For each tier: try same-tier swaps first, then cross-tier swaps with adjacent tier\n';
+    debugLog.value += 'Starting from lowest tier upwards (Tier 5 → Tier 1)\n';
+    debugLog.value += 'Note: Swaps that create tier concentrations will be automatically rejected\n\n';
   }
   
   // Only optimize if balance exceeds threshold
@@ -466,8 +945,8 @@ function optimizeTeams(
   let totalIterations = 0;
   const MAX_ITERATIONS = 100;
   
-  // Start optimization from lowest tier upwards (Tier 5 → Tier 4 → Tier 3 → Tier 2 → Tier 1)
-  // allTiers is sorted [5, 4, 3, 2, 1], so we iterate from index 0 to length-1
+  // Integrated optimization: for each tier, try same-tier then cross-tier swaps
+  // Start from lowest tier upwards (Tier 5 → Tier 4 → Tier 3 → Tier 2 → Tier 1)
   for (let tierIndex = 0; tierIndex < allTiers.length; tierIndex++) {
     const currentTier = allTiers[tierIndex];
     
@@ -478,108 +957,170 @@ function optimizeTeams(
       }
       break;
     }
-    const blueTierPlayers = blueTiers.get(currentTier) || [];
-    const orangeTierPlayers = orangeTiers.get(currentTier) || [];
-    
-    if (blueTierPlayers.length === 0 || orangeTierPlayers.length === 0) {
-      continue; // Skip if no players in this tier on one team
-    }
     
     if (debugLog) {
       debugLog.value += `Optimizing Tier ${currentTier}:\n`;
-      debugLog.value += `  Blue: ${blueTierPlayers.map(p => p.friendly_name).join(', ')}\n`;
-      debugLog.value += `  Orange: ${orangeTierPlayers.map(p => p.friendly_name).join(', ')}\n`;
     }
     
-    let tierImproved = true;
-    let tierIterations = 0;
+    const blueTierPlayers = blueTiers.get(currentTier) || [];
+    const orangeTierPlayers = orangeTiers.get(currentTier) || [];
     
-    while (tierImproved && totalIterations < MAX_ITERATIONS) {
-      tierImproved = false;
-      tierIterations++;
-      totalIterations++;
+    // Phase 1: Try same-tier swaps
+    const sameTierResult = trySameTierSwaps(
+      currentTier,
+      blueTeam,
+      orangeTeam,
+      blueTierPlayers,
+      orangeTierPlayers,
+      currentBalance,
+      debugLog
+    );
+    
+    // Execute same-tier swap if beneficial
+    if (sameTierResult.improved && sameTierResult.bestSwap) {
+      const blueIndex = blueTeam.findIndex(p => p.player_id === sameTierResult.bestSwap.bluePlayer.player_id);
+      const orangeIndex = orangeTeam.findIndex(p => p.player_id === sameTierResult.bestSwap.orangePlayer.player_id);
       
-      let bestSwap: { bluePlayer: PlayerWithRating; orangePlayer: PlayerWithRating } | null = null;
-      let bestScore = currentBalance;
-      
-      // Try all possible swaps within this tier only
-      for (const bluePlayer of blueTierPlayers) {
-        for (const orangePlayer of orangeTierPlayers) {
-          // Create temporary teams with this swap
-          const tempBlue = [...blueTeam];
-          const tempOrange = [...orangeTeam];
-          
-          const blueIndex = tempBlue.findIndex(p => p.player_id === bluePlayer.player_id);
-          const orangeIndex = tempOrange.findIndex(p => p.player_id === orangePlayer.player_id);
-          
-          if (blueIndex === -1 || orangeIndex === -1) continue;
-          
-          tempBlue[blueIndex] = orangePlayer;
-          tempOrange[orangeIndex] = bluePlayer;
-          
-          const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
-          
-          if (newBalance < bestScore) {
-            bestScore = newBalance;
-            bestSwap = { bluePlayer, orangePlayer };
-            tierImproved = true;
-          }
-        }
+      if (debugLog) {
+        debugLog.value += `  Executing same-tier swap: ${sameTierResult.bestSwap.bluePlayer.friendly_name} ↔ ${sameTierResult.bestSwap.orangePlayer.friendly_name}\n`;
+        debugLog.value += `    Balance improved: ${currentBalance.toFixed(3)} → ${sameTierResult.bestScore.toFixed(3)}\n`;
       }
       
-      // Execute the best swap if found
-      if (bestSwap) {
-        const blueIndex = blueTeam.findIndex(p => p.player_id === bestSwap.bluePlayer.player_id);
-        const orangeIndex = orangeTeam.findIndex(p => p.player_id === bestSwap.orangePlayer.player_id);
+      blueTeam[blueIndex] = sameTierResult.bestSwap.orangePlayer;
+      orangeTeam[orangeIndex] = sameTierResult.bestSwap.bluePlayer;
+      swapCount++;
+      
+      // Track swap details
+      swapDetails.push({
+        bluePlayer: sameTierResult.bestSwap.bluePlayer.friendly_name,
+        orangePlayer: sameTierResult.bestSwap.orangePlayer.friendly_name,
+        improvement: currentBalance - sameTierResult.bestScore,
+        tier: currentTier
+      });
+      
+      // Update tier groups
+      const bluePlayerIndex = blueTierPlayers.findIndex(p => p.player_id === sameTierResult.bestSwap.bluePlayer.player_id);
+      const orangePlayerIndex = orangeTierPlayers.findIndex(p => p.player_id === sameTierResult.bestSwap.orangePlayer.player_id);
+      
+      if (bluePlayerIndex !== -1) blueTierPlayers[bluePlayerIndex] = sameTierResult.bestSwap.orangePlayer;
+      if (orangePlayerIndex !== -1) orangeTierPlayers[orangePlayerIndex] = sameTierResult.bestSwap.bluePlayer;
+      
+      currentBalance = sameTierResult.bestScore;
+      wasOptimized = true;
+      totalIterations++;
+      
+      // Check if threshold reached
+      if (currentBalance <= BALANCE_THRESHOLD) {
+        if (debugLog) {
+          debugLog.value += `    Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${BALANCE_THRESHOLD}), stopping optimization\n\n`;
+        }
+        break;
+      }
+    }
+    
+    // Phase 2: Try cross-tier swaps with next tier up (if exists)
+    if (tierIndex < allTiers.length - 1) {
+      const upperTier = allTiers[tierIndex + 1];
+      const blueUpperPlayers = blueTiers.get(upperTier) || [];
+      const orangeUpperPlayers = orangeTiers.get(upperTier) || [];
+      
+      const crossTierResult = tryCrossTierSwaps(
+        currentTier,
+        upperTier,
+        blueTeam,
+        orangeTeam,
+        blueTierPlayers,
+        orangeTierPlayers,
+        blueUpperPlayers,
+        orangeUpperPlayers,
+        currentBalance,
+        debugLog
+      );
+      
+      // Execute cross-tier swap if beneficial
+      if (crossTierResult.improved && crossTierResult.bestSwap) {
+        const blueIndex = blueTeam.findIndex(p => p.player_id === crossTierResult.bestSwap.bluePlayer.player_id);
+        const orangeIndex = orangeTeam.findIndex(p => p.player_id === crossTierResult.bestSwap.orangePlayer.player_id);
         
         if (debugLog) {
-          debugLog.value += `  Iteration ${tierIterations}: Swapping ${bestSwap.bluePlayer.friendly_name} ↔ ${bestSwap.orangePlayer.friendly_name}\n`;
-          debugLog.value += `    New balance: ${bestScore.toFixed(3)} (improved by ${(currentBalance - bestScore).toFixed(3)})\n`;
+          debugLog.value += `  Executing cross-tier swap: ${crossTierResult.bestSwap.bluePlayer.friendly_name}(T${crossTierResult.bestSwap.blueTier}) ↔ ${crossTierResult.bestSwap.orangePlayer.friendly_name}(T${crossTierResult.bestSwap.orangeTier})\n`;
+          debugLog.value += `    Balance improved: ${currentBalance.toFixed(3)} → ${crossTierResult.bestScore.toFixed(3)}\n`;
         }
         
-        blueTeam[blueIndex] = bestSwap.orangePlayer;
-        orangeTeam[orangeIndex] = bestSwap.bluePlayer;
+        blueTeam[blueIndex] = crossTierResult.bestSwap.orangePlayer;
+        orangeTeam[orangeIndex] = crossTierResult.bestSwap.bluePlayer;
         swapCount++;
         
-        // Track swap details
+        // Track swap details  
         swapDetails.push({
-          bluePlayer: bestSwap.bluePlayer.friendly_name,
-          orangePlayer: bestSwap.orangePlayer.friendly_name,
-          improvement: currentBalance - bestScore,
-          tier: currentTier
+          bluePlayer: crossTierResult.bestSwap.bluePlayer.friendly_name,
+          orangePlayer: crossTierResult.bestSwap.orangePlayer.friendly_name,
+          improvement: currentBalance - crossTierResult.bestScore,
+          tier: -1 // Special marker for cross-tier swaps
         });
         
         // Update tier groups
-        const bluePlayerIndex = blueTierPlayers.findIndex(p => p.player_id === bestSwap.bluePlayer.player_id);
-        const orangePlayerIndex = orangeTierPlayers.findIndex(p => p.player_id === bestSwap.orangePlayer.player_id);
+        const blueTierOld = crossTierResult.bestSwap.blueTier;
+        const orangeTierOld = crossTierResult.bestSwap.orangeTier;
         
-        if (bluePlayerIndex !== -1) blueTierPlayers[bluePlayerIndex] = bestSwap.orangePlayer;
-        if (orangePlayerIndex !== -1) orangeTierPlayers[orangePlayerIndex] = bestSwap.bluePlayer;
+        // Remove players from old tiers
+        const blueOldTierPlayers = blueTiers.get(blueTierOld);
+        const orangeOldTierPlayers = orangeTiers.get(orangeTierOld);
         
-        currentBalance = bestScore;
+        if (blueOldTierPlayers) {
+          const playerIndex = blueOldTierPlayers.findIndex(p => p.player_id === crossTierResult.bestSwap.bluePlayer.player_id);
+          if (playerIndex !== -1) {
+            blueOldTierPlayers.splice(playerIndex, 1);
+          }
+        }
+        
+        if (orangeOldTierPlayers) {
+          const playerIndex = orangeOldTierPlayers.findIndex(p => p.player_id === crossTierResult.bestSwap.orangePlayer.player_id);
+          if (playerIndex !== -1) {
+            orangeOldTierPlayers.splice(playerIndex, 1);
+          }
+        }
+        
+        // Add players to new tiers
+        if (!blueTiers.has(orangeTierOld)) blueTiers.set(orangeTierOld, []);
+        if (!orangeTiers.has(blueTierOld)) orangeTiers.set(blueTierOld, []);
+        
+        blueTiers.get(orangeTierOld)!.push(crossTierResult.bestSwap.orangePlayer);
+        orangeTiers.get(blueTierOld)!.push(crossTierResult.bestSwap.bluePlayer);
+        
+        currentBalance = crossTierResult.bestScore;
         wasOptimized = true;
+        totalIterations++;
         
-        // Check if we've reached the threshold after this swap
+        // Check if threshold reached
         if (currentBalance <= BALANCE_THRESHOLD) {
           if (debugLog) {
-            debugLog.value += `    Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${BALANCE_THRESHOLD}), stopping tier optimization\n`;
+            debugLog.value += `    Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${BALANCE_THRESHOLD}), stopping optimization\n\n`;
           }
           break;
         }
       }
     }
     
-    if (debugLog && tierIterations > 1) {
-      debugLog.value += `  Tier ${currentTier} optimization complete after ${tierIterations - 1} iterations\n`;
+    if (debugLog) {
+      debugLog.value += `  Tier ${currentTier} optimization complete. Current balance: ${currentBalance.toFixed(3)}\n\n`;
     }
-    debugLog.value += '\n';
   }
   
-  if (debugLog && wasOptimized) {
-    debugLog.value += `Tier-constrained optimization complete after ${totalIterations} total iterations\n`;
-    debugLog.value += `Final balance: ${currentBalance.toFixed(3)}\n\n`;
-  } else if (debugLog) {
-    debugLog.value += 'No beneficial swaps found within tier constraints\n\n';
+  if (debugLog) {
+    if (wasOptimized) {
+      debugLog.value += `Integrated optimization complete after ${totalIterations} iterations\n`;
+      debugLog.value += `Final balance: ${currentBalance.toFixed(3)}\n`;
+    } else {
+      debugLog.value += 'No beneficial swaps found\n';
+    }
+    const finalDistributionFair = validateTierDistribution(blueTeam, orangeTeam);
+    const finalDistributionIssue = getTierDistributionIssues(blueTeam, orangeTeam);
+    if (finalDistributionFair) {
+      debugLog.value += `Final Tier Distribution: FAIR\n\n`;
+    } else {
+      debugLog.value += `Final Tier Distribution: CONCENTRATED (${finalDistributionIssue})\n\n`;
+    }
   }
   
   return {
@@ -1257,7 +1798,11 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
     
     swapDetails.forEach((swap, index) => {
       debugLog += `${index + 1}. ${swap.bluePlayer} (Blue) ↔ ${swap.orangePlayer} (Orange)\n`;
-      debugLog += `   Tier: ${swap.tier}, Improvement: ${swap.improvement.toFixed(3)}\n`;
+      if (swap.tier === -1) {
+        debugLog += `   Cross-tier swap, Improvement: ${swap.improvement.toFixed(3)}\n`;
+      } else {
+        debugLog += `   Tier: ${swap.tier}, Improvement: ${swap.improvement.toFixed(3)}\n`;
+      }
     });
     
     // Identify what was improved
