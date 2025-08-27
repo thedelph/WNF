@@ -15,7 +15,7 @@ Each phase has its own specific requirements and behaviors while sharing some co
 
 ### Default Values
 - **Max Players**: 18 players per game
-- **Pitch Cost**: £54 default
+- **Pitch Cost**: £56.70 default (£3.15 per player for 18 players)
 - **Random Slots**: 2 slots reserved for random selection
 - **Default Game Time**: 21:00 (9 PM)
 
@@ -100,7 +100,16 @@ The **"Paste Full Game Details"** textarea allows admins to paste WhatsApp messa
   - 🪙 Token users (marked as `using_token: true`)
   - 🎲 Random selections
   - 💰 Unpaid games penalty
+  - 🔄 Replacement players (players who replaced someone who dropped out)
 - Shows parsed counts for verification
+- Database matching validation:
+  - Displays matched vs unmatched player counts
+  - Warning alerts for unmatched players
+  - Lists specific player names that need manual selection
+- Smart parsing features:
+  - Stops at empty lines to avoid counting non-player text
+  - Validates player names to reject phrases like "drop out", "let me know"
+- Player count displays in multi-select dropdowns (e.g., "Selected Players (18)")
 - See [WhatsApp Import Documentation](./WhatsAppImport.md) for details
 
 #### Player Selection Methods:

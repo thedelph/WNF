@@ -113,6 +113,7 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
             friendly_name,
             attack_rating,
             defense_rating,
+            game_iq,
             win_rate
           )
         `)
@@ -134,8 +135,99 @@ export const useTeamAnnouncement = (props?: UseTeamAnnouncementProps) => {
         win_rate: reg.players.win_rate || 50
       }));
 
-      // Balance teams
-      const teams = await balanceTeams(playerRatings);
+      // Check for saved teams first
+      const { data: savedTeamData, error: savedTeamError } = await supabaseAdmin
+        .from('balanced_team_assignments')
+        .select('team_assignments')
+        .eq('game_id', id)
+        .maybeSingle();
+
+      let teams;
+      
+      if (savedTeamData?.team_assignments?.teams) {
+        console.log('Found saved team assignments, validating...');
+        
+        // Extract player IDs from saved teams
+        const savedTeams = savedTeamData.team_assignments.teams;
+        const savedPlayerIds = savedTeams.map((t: any) => t.player_id);
+        const currentPlayerIds = registrations.map(r => r.players.id);
+        
+        // Check if all saved players are still selected
+        const allPlayersStillSelected = savedPlayerIds.every((id: string) => 
+          currentPlayerIds.includes(id)
+        );
+        
+        // Check if player count matches
+        const playerCountMatches = savedPlayerIds.length === currentPlayerIds.length;
+        
+        // Find any missing or extra players for logging
+        const missingPlayers = savedPlayerIds.filter((id: string) => 
+          !currentPlayerIds.includes(id)
+        );
+        const extraPlayers = currentPlayerIds.filter(id => 
+          !savedPlayerIds.includes(id)
+        );
+        
+        if (allPlayersStillSelected && playerCountMatches) {
+          console.log('Saved teams are valid, using pre-planned team assignments');
+          
+          // Convert saved teams to the format expected by update_team_assignments
+          const blueTeamPlayers = savedTeams
+            .filter((t: any) => t.team === 'blue')
+            .map((t: any) => t.player_id);
+          const orangeTeamPlayers = savedTeams
+            .filter((t: any) => t.team === 'orange')
+            .map((t: any) => t.player_id);
+          
+          // Calculate stats for the saved teams
+          const blueTeamRatings = playerRatings.filter(p => 
+            blueTeamPlayers.includes(p.player_id)
+          );
+          const orangeTeamRatings = playerRatings.filter(p => 
+            orangeTeamPlayers.includes(p.player_id)
+          );
+          
+          const blueStats = {
+            attack: blueTeamRatings.reduce((sum, p) => sum + p.attack_rating, 0),
+            defense: blueTeamRatings.reduce((sum, p) => sum + p.defense_rating, 0),
+            gameIq: blueTeamRatings.reduce((sum, p) => sum + p.game_iq_rating, 0)
+          };
+          
+          const orangeStats = {
+            attack: orangeTeamRatings.reduce((sum, p) => sum + p.attack_rating, 0),
+            defense: orangeTeamRatings.reduce((sum, p) => sum + p.defense_rating, 0),
+            gameIq: orangeTeamRatings.reduce((sum, p) => sum + p.game_iq_rating, 0)
+          };
+          
+          teams = {
+            blueTeam: blueTeamPlayers,
+            orangeTeam: orangeTeamPlayers,
+            stats: {
+              blue: blueStats,
+              orange: orangeStats
+            },
+            difference: Math.abs(
+              (blueStats.attack + blueStats.defense + blueStats.gameIq) -
+              (orangeStats.attack + orangeStats.defense + orangeStats.gameIq)
+            )
+          };
+          
+        } else {
+          // Players have changed, need to regenerate teams
+          if (missingPlayers.length > 0) {
+            console.log(`Players no longer selected: ${missingPlayers.join(', ')}`);
+          }
+          if (extraPlayers.length > 0) {
+            console.log(`New players added: ${extraPlayers.join(', ')}`);
+          }
+          console.log('Player list has changed, regenerating teams');
+          teams = await balanceTeams(playerRatings);
+        }
+      } else {
+        // No saved teams found, generate new ones
+        console.log('No saved teams found, generating new team assignments');
+        teams = await balanceTeams(playerRatings);
+      }
 
       if (!teams || !teams.blueTeam || !teams.orangeTeam) {
         throw new Error('Invalid team structure returned from balancing');

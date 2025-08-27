@@ -11,14 +11,23 @@
       "Bash(timeout 10 npx -y @supabase/mcp-server-supabase@latest --access-token sbp_344b2f150a2f87223849352a6e2f47c929a4edf4)",
       "Bash(echo $env:APPDATA)",
       "Bash(timeout 5 npx -y @supabase/mcp-server-supabase@latest --access-token sbp_344b2f150a2f87223849352a6e2f47c929a4edf4)",
-      "Bash(set SUPABASE_ACCESS_TOKEN=sbp_344b2f150a2f87223849352a6e2f47c929a4edf4)"
+      "Bash(set SUPABASE_ACCESS_TOKEN=sbp_344b2f150a2f87223849352a6e2f47c929a4edf4)",
+      "Bash(cmd /c:*)",
+      "Bash(claude mcp:*)",
+      "Bash(where:*)",
+      "Bash(mcp-server-supabase:*)",
+      "Bash(claude:*)",
+      "mcp__supabase__search_docs",
+      "mcp__supabase__get_logs",
+      "Bash(powershell:*)",
+      "Bash(ren:*)",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__list_tables"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
   ],
-  "disabledMcpjsonServers": [
-    "supabase"
-  ]
+  "disabledMcpjsonServers": []
 }

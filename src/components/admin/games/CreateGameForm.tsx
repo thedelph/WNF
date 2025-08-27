@@ -47,7 +47,7 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   const [venueId, setVenueId] = useState(presetVenueId || '');
   const [maxPlayers, setMaxPlayers] = useState<number>(18);
   const [randomSlots, setRandomSlots] = useState(2);
-  const [pitchCost, setPitchCost] = useState(presetPitchCost || 54);
+  const [pitchCost, setPitchCost] = useState(presetPitchCost || 56.70);
   const [gamePhase, setGamePhase] = useState<GameStatus>(GAME_STATUSES.UPCOMING);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -67,6 +67,15 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     reserve: 0,
     droppedOut: 0,
     token: 0
+  });
+  
+  // Track unmatched players
+  const [unmatchedPlayers, setUnmatchedPlayers] = useState<string[]>([]);
+  const [matchedCounts, setMatchedCounts] = useState({
+    selected: 0,
+    random: 0,
+    reserve: 0,
+    droppedOut: 0
   });
 
   useEffect(() => {
@@ -339,31 +348,70 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
       token: tokenUsers.length
     });
 
-    // Filter players to only include those in our database
-    const validSelectedPlayers = selectedPlayers
-      .map(name => players.find(p => p.friendly_name === name))
+    // Track all unmatched players
+    const allUnmatchedPlayers: string[] = [];
+
+    // Process selected players
+    const selectedPlayerMatches = selectedPlayers.map(name => {
+      const player = players.find(p => p.friendly_name === name);
+      if (!player) {
+        allUnmatchedPlayers.push(name);
+      }
+      return player;
+    });
+    const validSelectedPlayers = selectedPlayerMatches
       .filter((p): p is Player => p !== undefined)
       .map(p => p.id);
 
-    const validRandomPlayers = randomPlayers
-      .map(name => players.find(p => p.friendly_name === name))
+    // Process random players
+    const randomPlayerMatches = randomPlayers.map(name => {
+      const player = players.find(p => p.friendly_name === name);
+      return player;
+    });
+    const validRandomPlayers = randomPlayerMatches
       .filter((p): p is Player => p !== undefined)
       .map(p => p.id);
 
-    const validReservePlayers = reservePlayers
-      .map(name => players.find(p => p.friendly_name === name))
+    // Process reserve players
+    const reservePlayerMatches = reservePlayers.map(name => {
+      const player = players.find(p => p.friendly_name === name);
+      if (!player && !allUnmatchedPlayers.includes(name)) {
+        allUnmatchedPlayers.push(name);
+      }
+      return player;
+    });
+    const validReservePlayers = reservePlayerMatches
       .filter((p): p is Player => p !== undefined)
       .map(p => p.id);
 
-    const validDroppedOutPlayers = droppedOutPlayers
-      .map(name => players.find(p => p.friendly_name === name))
+    // Process dropped out players
+    const droppedOutPlayerMatches = droppedOutPlayers.map(name => {
+      const player = players.find(p => p.friendly_name === name);
+      if (!player && !allUnmatchedPlayers.includes(name)) {
+        allUnmatchedPlayers.push(name);
+      }
+      return player;
+    });
+    const validDroppedOutPlayers = droppedOutPlayerMatches
       .filter((p): p is Player => p !== undefined)
       .map(p => p.id);
 
+    // Process token players
     const validTokenPlayers = tokenUsers
       .map(name => players.find(p => p.friendly_name === name))
       .filter((p): p is Player => p !== undefined)
       .map(p => p.id);
+
+    // Update matched counts
+    setMatchedCounts({
+      selected: validSelectedPlayers.length,
+      random: validRandomPlayers.length,
+      reserve: validReservePlayers.length,
+      droppedOut: validDroppedOutPlayers.length
+    });
+
+    // Set unmatched players
+    setUnmatchedPlayers(allUnmatchedPlayers);
 
     setConfirmedPlayers(validSelectedPlayers);
     setRandomPickPlayers(validRandomPlayers);
@@ -416,6 +464,13 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
                 droppedOut: 0,
                 token: 0
               });
+              setMatchedCounts({
+                selected: 0,
+                random: 0,
+                reserve: 0,
+                droppedOut: 0
+              });
+              setUnmatchedPlayers([]);
               
               // Set team announcement time when switching to Player Selection Phase
               if (newPhase === GAME_STATUSES.PLAYERS_ANNOUNCED && date && time) {
@@ -452,18 +507,47 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
 
         {/* Parsed Player Counts Display */}
         {(parsedCounts.selected > 0 || parsedCounts.reserve > 0 || parsedCounts.droppedOut > 0) && (
-          <div className="alert alert-info">
-            <div className="flex flex-col gap-1">
-              <span className="font-semibold">Parsed from WhatsApp message:</span>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                <div>✅ Selected Players: {parsedCounts.selected}</div>
-                <div>🪙 Token Users: {parsedCounts.token}</div>
-                <div>🎲 Random Picks: {parsedCounts.random}</div>
-                <div>🔄 Reserve Players: {parsedCounts.reserve}</div>
-                <div>❌ Dropped Out: {parsedCounts.droppedOut}</div>
+          <>
+            <div className="alert alert-info">
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold">Parsed from WhatsApp message:</span>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                  <div>✅ Selected Players: {parsedCounts.selected}</div>
+                  <div>🪙 Token Users: {parsedCounts.token}</div>
+                  <div>🎲 Random Picks: {parsedCounts.random}</div>
+                  <div>🔄 Reserve Players: {parsedCounts.reserve}</div>
+                  <div>❌ Dropped Out: {parsedCounts.droppedOut}</div>
+                </div>
               </div>
             </div>
-          </div>
+            
+            {/* Matching Status */}
+            <div className={`alert ${unmatchedPlayers.length > 0 ? 'alert-warning' : 'alert-success'}`}>
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold">Database Matching:</span>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                  <div>✅ Matched Selected: {matchedCounts.selected}/{parsedCounts.selected}</div>
+                  <div>🔄 Matched Reserves: {matchedCounts.reserve}/{parsedCounts.reserve}</div>
+                  <div>❌ Matched Dropped: {matchedCounts.droppedOut}/{parsedCounts.droppedOut}</div>
+                </div>
+                {unmatchedPlayers.length > 0 && (
+                  <div className="mt-2">
+                    <span className="font-semibold text-warning">⚠️ Unmatched players ({unmatchedPlayers.length}):</span>
+                    <div className="text-sm mt-1">
+                      {unmatchedPlayers.map((name, index) => (
+                        <span key={index}>
+                          {name}{index < unmatchedPlayers.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="text-xs mt-1 opacity-75">
+                      Please manually select these players from the dropdowns below
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
 
         {/* Basic Game Details */}

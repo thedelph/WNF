@@ -4,6 +4,17 @@ All notable changes to the WNF project will be documented in this file.
 
 ## [Unreleased]
 
+### Enhanced - August 27, 2025
+- **Game Creation Form Improvements**:
+  - Fixed player counting issue where non-player text like "Anyone needs to drop out" was counted as a player
+  - Parser now stops at empty lines which naturally separate player lists from additional notes
+  - Added validation to reject text containing phrases like "drop out", "let me know", "anyone", etc.
+  - Updated default pitch cost to £56.70 (£3.15 per player for 18 players)
+  - Added database matching validation showing matched vs unmatched players
+  - Warning alerts display when players can't be found in database (e.g., "Tom" needs manual selection as "Tom K")
+  - Player counts now displayed in multi-select labels (e.g., "Selected Players (18)")
+  - Improved handling of 🔄 replacement symbol in player lists
+
 ### Enhanced - July 23, 2025
 - **Tier Distribution Awareness for Snake Draft**:
   - Added quality concentration detection to prevent extreme tier imbalances

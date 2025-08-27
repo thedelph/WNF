@@ -38,7 +38,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
       {/* Selected Players Display */}
       <div className="form-control">
         <label className="label">
-          <span className="label-text">Selected Players</span>
+          <span className="label-text">Selected Players ({confirmedPlayers.length})</span>
         </label>
         <select
           multiple
@@ -60,7 +60,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
       {/* Random Pick Players Display */}
       <div className="form-control">
         <label className="label">
-          <span className="label-text">Random Pick Players</span>
+          <span className="label-text">Random Pick Players ({randomPickPlayers.length})</span>
         </label>
         <select
           multiple
@@ -82,7 +82,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
       {/* Reserve Players Display */}
       <div className="form-control">
         <label className="label">
-          <span className="label-text">Reserve Players</span>
+          <span className="label-text">Reserve Players ({reservePlayers.length})</span>
         </label>
         <select
           multiple
@@ -104,7 +104,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
       {/* Dropped Out Players Display */}
       <div className="form-control">
         <label className="label">
-          <span className="label-text">Dropped Out Players</span>
+          <span className="label-text">Dropped Out Players ({droppedOutPlayers.length})</span>
         </label>
         <select
           multiple

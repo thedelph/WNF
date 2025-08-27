@@ -43,8 +43,11 @@ Located in `/src/components/admin/games/form-components/GameDetailsPaste.tsx`
 Key features:
 - **Date/Time Extraction**: Parses UK date formats (e.g., "Friday 6th December")
 - **Player Parsing**: Extracts player names and removes XP information
-- **Emoji Detection**: Identifies token users (🪙), random selections (🎲), and payment penalties (💰)
+- **Emoji Detection**: Identifies token users (🪙), random selections (🎲), payment penalties (💰), and replacement players (🔄)
 - **Section Recognition**: Handles both new format with counts and legacy format
+- **Empty Line Detection**: Parser stops at empty lines, which naturally separate player lists from additional notes
+- **Player Name Validation**: Rejects non-player text containing phrases like "drop out", "let me know", "anyone", etc.
+- **Smart Text Filtering**: Validates player names by word count (max 4 words) and character length (max 30 chars)
 
 ### 3. Token Tracking
 When importing players:
@@ -52,11 +55,24 @@ When importing players:
 - This ensures token usage is properly tracked for the token cooldown system
 - Multiple emojis are handled (e.g., 🪙💰 for token user with unpaid games)
 
-### 4. CreateGameForm Integration
+### 4. Database Matching
+When players are extracted from the pasted text:
+- Each player name is matched against the database `friendly_name` field
+- Successfully matched players are automatically selected in the form
+- Unmatched players are highlighted with a warning alert
+- The form shows:
+  - Total parsed count (e.g., "✅ Selected Players: 18")
+  - Database matched count (e.g., "✅ Matched Selected: 17/18")
+  - List of unmatched player names that need manual selection
+- Color-coded alerts: green when all players matched, yellow warning when some unmatched
+
+### 5. CreateGameForm Integration
 The form displays parsed information:
 - Shows count of each player category
 - Visual feedback with emoji indicators
 - Responsive grid layout (2 columns mobile, 3 columns desktop)
+- Player counts in multi-select labels (e.g., "Selected Players (18)")
+- Database matching status with detailed breakdown
 
 ## Usage Instructions
 
@@ -86,8 +102,9 @@ The form displays parsed information:
 
 ### What Needs Manual Entry
 - Venue selection (defaults to last used)
-- Pitch cost (defaults to £50)
+- Pitch cost (defaults to £56.70 for 18 players at £3.15 each)
 - Registration window times (auto-set to past for Player Selection phase)
+- Unmatched player names (must be manually selected from dropdowns)
 
 ## Technical Implementation
 
@@ -100,9 +117,10 @@ The form displays parsed information:
 6. **Database Save** → Create game_registrations with proper flags
 
 ### Key Functions
-- `parseSelectedPlayers()`: Extracts players and identifies token/random status
+- `parseSelectedPlayers()`: Extracts players and identifies token/random status, stops at empty lines
 - `parsePlayerNamesFromSection()`: Cleans player names from list sections
-- `handlePlayerListsExtracted()`: Maps player names to database IDs
+- `isLikelyPlayerName()`: Validates if text is a player name (rejects non-player phrases)
+- `handlePlayerListsExtracted()`: Maps player names to database IDs and tracks unmatched players
 
 ## Benefits
 - **Time Saving**: Reduces game creation from 10+ minutes to under 1 minute

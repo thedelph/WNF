@@ -11,7 +11,7 @@ type Player = {
   xp: number
   attack_rating?: number
   defense_rating?: number
-  game_iq_rating?: number
+  game_iq?: number
   is_test_user: boolean
   calculated_caps?: number
   manual_caps_override?: boolean
@@ -115,7 +115,7 @@ const EditPlayer: React.FC = () => {
           manual_caps_override: useManualOverride,
           ...(player.attack_rating ? { attack_rating: player.attack_rating } : {}),
           ...(player.defense_rating ? { defense_rating: player.defense_rating } : {}),
-          ...(player.game_iq_rating ? { game_iq_rating: player.game_iq_rating } : {}),
+          ...(player.game_iq ? { game_iq: player.game_iq } : {}),
           whatsapp_group_member: player.whatsapp_group_member || null,
           whatsapp_mobile_number: player.whatsapp_mobile_number || null
         })
@@ -250,14 +250,14 @@ const EditPlayer: React.FC = () => {
           />
         </div>
         <div className="form-control">
-          <label className="label" htmlFor="game_iq_rating">
+          <label className="label" htmlFor="game_iq">
             <span className="label-text">Game IQ Rating</span>
           </label>
           <input
             type="number"
-            id="game_iq_rating"
-            name="game_iq_rating"
-            value={player.game_iq_rating || ''}
+            id="game_iq"
+            name="game_iq"
+            value={player.game_iq || ''}
             onChange={handleChange}
             min="1"
             max="10"
