@@ -22,7 +22,10 @@
       "Bash(powershell:*)",
       "Bash(ren:*)",
       "mcp__supabase__list_migrations",
-      "mcp__supabase__list_tables"
+      "mcp__supabase__list_tables",
+      "Bash(test:*)",
+      "Bash(rm:*)",
+      "Bash(sed:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

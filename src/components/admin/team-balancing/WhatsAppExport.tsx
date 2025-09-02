@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { FaCopy } from 'react-icons/fa';
 import { TeamAssignment } from './types';
 import { toast } from 'react-hot-toast';
 import { calculateTeamComparison } from './teamBalanceCalcs';
+import { suggestFormations, POSITION_DISPLAY_NAMES } from '../../../utils/teamBalancing/formationSuggester';
+import { PositionType } from './types';
 
 interface WhatsAppExportProps {
   blueTeam: TeamAssignment[];
@@ -19,6 +21,16 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
   blueTeam, 
   orangeTeam 
 }) => {
+  const [includeFormation, setIncludeFormation] = useState(false);
+  
+  // Calculate formation suggestions when enabled
+  const formationSuggestions = useMemo(() => {
+    if (!includeFormation || blueTeam.length === 0 || orangeTeam.length === 0) {
+      return null;
+    }
+    return suggestFormations(blueTeam, orangeTeam);
+  }, [blueTeam, orangeTeam, includeFormation]);
+  
   const generateWhatsAppMessage = () => {
     // Calculate team stats
     const stats = calculateTeamComparison(blueTeam, orangeTeam);
@@ -89,6 +101,32 @@ ${orangeTeamText}
 
 🔵 Blue Team (${blueTeam.length}):
 ${blueTeamText}`;
+
+    // Add formation suggestions if enabled
+    if (includeFormation && formationSuggestions) {
+      const formatPositionGroup = (positions: any, positionType: PositionType) => {
+        const players = positions[positionType];
+        if (!players || players.length === 0) return '';
+        const names = players.map((p: any) => p.player.friendly_name).join(', ');
+        return `${POSITION_DISPLAY_NAMES[positionType]}: ${names}`;
+      };
+      
+      const blueFormationText = ['DEF', 'W', 'CDM', 'CM', 'CAM', 'ST']
+        .map(pos => formatPositionGroup(formationSuggestions.blueFormation.positions, pos as PositionType))
+        .filter(text => text !== '')
+        .join('\n');
+      
+      const orangeFormationText = ['DEF', 'W', 'CDM', 'CM', 'CAM', 'ST']
+        .map(pos => formatPositionGroup(formationSuggestions.orangeFormation.positions, pos as PositionType))
+        .filter(text => text !== '')
+        .join('\n');
+      
+      message += `\n\n📋 Suggested Formations\n\n`;
+      message += `🟠 Orange (${formationSuggestions.orangeFormation.formation}):\n${orangeFormationText}\n\n`;
+      message += `🔵 Blue (${formationSuggestions.blueFormation.formation}):\n${blueFormationText}`;
+    }
+    
+    return message;
   };
 
   const handleCopyToClipboard = () => {
@@ -113,12 +151,24 @@ ${blueTeamText}`;
   };
 
   return (
-    <button 
-      className="btn btn-success btn-sm flex items-center gap-2"
-      onClick={handleCopyToClipboard}
-    >
-      <FaCopy className="text-lg" />
-      <span>Copy for WhatsApp</span>
-    </button>
+    <div className="flex items-center gap-3">
+      <button 
+        className="btn btn-success btn-sm flex items-center gap-2"
+        onClick={handleCopyToClipboard}
+      >
+        <FaCopy className="text-lg" />
+        <span>Copy for WhatsApp</span>
+      </button>
+      
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          className="checkbox checkbox-sm"
+          checked={includeFormation}
+          onChange={(e) => setIncludeFormation(e.target.checked)}
+        />
+        <span className="text-sm">Include Formation</span>
+      </label>
+    </div>
   );
 };

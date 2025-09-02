@@ -124,3 +124,80 @@ export interface AlgorithmComparison {
     moved: boolean;
   }>;
 }
+
+/**
+ * Position types for formation suggestions
+ */
+export type PositionType = 'DEF' | 'W' | 'CDM' | 'CM' | 'CAM' | 'ST';
+
+/**
+ * Position weights for calculating player suitability
+ */
+export interface PositionWeights {
+  attack: number;
+  defense: number;
+  gameIq: number;
+}
+
+/**
+ * Player position assignment with score
+ */
+export interface PlayerPositionAssignment {
+  player: TeamAssignment;
+  position: PositionType;
+  score: number;
+  isSpecialist: boolean;
+  alternativePositions: Array<{
+    position: PositionType;
+    score: number;
+  }>;
+}
+
+/**
+ * Formation template defining number of players in each position
+ */
+export interface FormationTemplate {
+  name: string;
+  positions: {
+    DEF: number;
+    W: number;    // Wingers
+    CDM: number;
+    CM: number;
+    CAM: number;
+    ST: number;
+  };
+  minPlayers: number;
+  maxPlayers: number;
+}
+
+/**
+ * Formation suggestion for a team
+ */
+export interface FormationSuggestion {
+  formation: string;
+  positions: {
+    DEF: PlayerPositionAssignment[];
+    W: PlayerPositionAssignment[];    // Wingers
+    CDM: PlayerPositionAssignment[];
+    CM: PlayerPositionAssignment[];
+    CAM: PlayerPositionAssignment[];
+    ST: PlayerPositionAssignment[];
+  };
+  confidence: 'high' | 'medium' | 'low';
+  rationale: string[];
+  balanceScore: {
+    defense: number;
+    midfield: number;
+    attack: number;
+    overall: number;
+  };
+}
+
+/**
+ * Complete formation result for both teams
+ */
+export interface FormationResult {
+  blueFormation: FormationSuggestion;
+  orangeFormation: FormationSuggestion;
+  formationNotes: string[];
+}

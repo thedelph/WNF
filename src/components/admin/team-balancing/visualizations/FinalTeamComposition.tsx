@@ -1,18 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ParsedDebugData } from '../../../../utils/teamBalancing/debugLogParser';
 import { PlayerWithRating } from '../../team-balancing/tierBasedSnakeDraft';
 import { formatRating } from '../../../../utils/ratingFormatters';
+import { FormationView } from '../FormationView';
+import { suggestFormations } from '../../../../utils/teamBalancing/formationSuggester';
+import { TeamAssignment } from '../types';
 
 interface FinalTeamCompositionProps {
   data: ParsedDebugData;
 }
 
 export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data }) => {
-  const [viewMode, setViewMode] = useState<'cards' | 'stats' | 'tier'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'stats' | 'tier' | 'formation'>('cards');
 
   const blueTeam = data.blueTeam || [];
   const orangeTeam = data.orangeTeam || [];
+
+  // Convert PlayerWithRating to TeamAssignment for formation suggestions
+  const formationSuggestions = useMemo(() => {
+    if (blueTeam.length === 0 || orangeTeam.length === 0) return null;
+    
+    const convertToTeamAssignment = (players: PlayerWithRating[]): TeamAssignment[] => {
+      return players.map(p => ({
+        team: p.team,
+        player_id: p.player_id,
+        friendly_name: p.friendly_name,
+        attack_rating: p.attack_rating,
+        defense_rating: p.defense_rating,
+        game_iq_rating: p.game_iq_rating,
+        win_rate: p.win_rate,
+        goal_differential: p.goal_differential,
+        overall_win_rate: p.overall_win_rate,
+        overall_goal_differential: p.overall_goal_differential,
+        total_games: p.total_games
+      }));
+    };
+    
+    const blueAssignments = convertToTeamAssignment(blueTeam);
+    const orangeAssignments = convertToTeamAssignment(orangeTeam);
+    
+    return suggestFormations(blueAssignments, orangeAssignments);
+  }, [blueTeam, orangeTeam]);
 
   // Calculate team stats
   const getTeamStats = (team: PlayerWithRating[]) => {
@@ -102,6 +131,12 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
             onClick={() => setViewMode('tier')}
           >
             By Tier
+          </button>
+          <button
+            className={`btn btn-sm ${viewMode === 'formation' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setViewMode('formation')}
+          >
+            Formation
           </button>
         </div>
       </div>
@@ -289,6 +324,43 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {viewMode === 'formation' && formationSuggestions && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <FormationView 
+              formation={formationSuggestions.blueFormation} 
+              teamColor="blue"
+              showDetails={true}
+            />
+            <FormationView 
+              formation={formationSuggestions.orangeFormation} 
+              teamColor="orange"
+              showDetails={true}
+            />
+          </div>
+          
+          {formationSuggestions.formationNotes.length > 0 && (
+            <div className="bg-base-200 rounded-lg p-4">
+              <h4 className="font-semibold mb-2">Formation Notes</h4>
+              <ul className="text-sm space-y-1">
+                {formationSuggestions.formationNotes.map((note, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {viewMode === 'formation' && !formationSuggestions && (
+        <div className="text-center py-8 text-gray-500">
+          No formation suggestions available. Teams may be empty or have insufficient data.
         </div>
       )}
     </motion.div>
