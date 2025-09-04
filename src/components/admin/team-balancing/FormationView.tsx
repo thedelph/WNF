@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FormationSuggestion, PlayerPositionAssignment, PositionType } from './types';
+import { FormationSuggestion, PlayerPositionAssignment, PositionType, FormationDebugLog } from './types';
 import { POSITION_DISPLAY_NAMES, POSITION_COLORS } from '../../../utils/teamBalancing/formationSuggester';
 import { formatRating } from '../../../utils/ratingFormatters';
+import { FormationDebugView } from './FormationDebugView';
 
 interface FormationViewProps {
   formation: FormationSuggestion;
   teamColor: 'blue' | 'orange';
   showDetails?: boolean;
+  debugLog?: FormationDebugLog;
 }
 
 export const FormationView: React.FC<FormationViewProps> = ({ 
   formation, 
   teamColor,
-  showDetails = true 
+  showDetails = true,
+  debugLog
 }) => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [expandedPositions, setExpandedPositions] = useState<Set<PositionType>>(new Set());
@@ -329,6 +332,11 @@ export const FormationView: React.FC<FormationViewProps> = ({
             ))}
           </ul>
         </div>
+      )}
+      
+      {/* Debug Log */}
+      {debugLog && showDetails && (
+        <FormationDebugView debugLog={debugLog} teamColor={teamColor} />
       )}
     </div>
   );

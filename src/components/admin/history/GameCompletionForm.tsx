@@ -453,7 +453,8 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
           outcome,
           payment_link: paymentLink,
           status: 'completed',
-          completed: true
+          completed: true,
+          is_historical: true
         })
         .eq('id', game.id)
 

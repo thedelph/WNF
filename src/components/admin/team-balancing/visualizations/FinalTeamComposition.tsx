@@ -334,11 +334,13 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
               formation={formationSuggestions.blueFormation} 
               teamColor="blue"
               showDetails={true}
+              debugLog={formationSuggestions.debugLog?.blue}
             />
             <FormationView 
               formation={formationSuggestions.orangeFormation} 
               teamColor="orange"
               showDetails={true}
+              debugLog={formationSuggestions.debugLog?.orange}
             />
           </div>
           

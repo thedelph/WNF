@@ -191,6 +191,68 @@ export interface FormationSuggestion {
     attack: number;
     overall: number;
   };
+  debugLog?: FormationDebugLog;
+}
+
+/**
+ * Debug log entry for formation suggestions
+ */
+export interface FormationDebugEntry {
+  type: 'classification' | 'threshold' | 'suitability' | 'assignment' | 'optimization' | 'balance';
+  message: string;
+  data?: any;
+}
+
+/**
+ * Complete debug log for formation generation
+ */
+export interface FormationDebugLog {
+  timestamp: string;
+  teamSize: number;
+  playerClassifications: Map<string, {
+    playerId: string;
+    playerName: string;
+    type: string;
+    ratings: { attack: number; defense: number; gameIq: number; overall: number };
+    reason: string;
+  }>;
+  thresholds: {
+    attack: { mean: number; p25: number; p50: number; p75: number; p90: number };
+    defense: { mean: number; p25: number; p50: number; p75: number; p90: number };
+    gameIq: { mean: number; p25: number; p50: number; p75: number; p90: number };
+    overall: { mean: number; p25: number; p50: number; p75: number; p90: number };
+  };
+  positionMatrix: Array<{
+    player: string;
+    position: PositionType;
+    baseScore: number;
+    adjustedScore: number;
+    priority: number;
+    suitable: boolean;
+    suitabilityReason?: string;
+  }>;
+  assignments: Array<{
+    order: number;
+    player: string;
+    position: PositionType;
+    priority: number;
+    score: number;
+    reason: string;
+  }>;
+  optimizations: Array<{
+    type: string;
+    from: { player: string; position: PositionType };
+    to: { player: string; position: PositionType };
+    reason: string;
+  }>;
+  finalBalance: {
+    defense: number;
+    midfield: number;
+    attack: number;
+    overall: number;
+  };
+  confidence: 'high' | 'medium' | 'low';
+  confidenceReason: string;
 }
 
 /**
@@ -200,4 +262,8 @@ export interface FormationResult {
   blueFormation: FormationSuggestion;
   orangeFormation: FormationSuggestion;
   formationNotes: string[];
+  debugLog?: {
+    blue: FormationDebugLog;
+    orange: FormationDebugLog;
+  };
 }
