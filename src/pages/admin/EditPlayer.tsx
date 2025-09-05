@@ -13,6 +13,7 @@ type Player = {
   defense_rating?: number
   game_iq?: number
   is_test_user: boolean
+  is_beta_tester: boolean
   calculated_caps?: number
   manual_caps_override?: boolean
   whatsapp_group_member?: 'Yes' | 'No' | 'Proxy'

@@ -31,3 +31,6 @@ dist-ssr
 .env.production
 
 # Keep production env checked in
+
+# MCP configuration
+.mcp.json

@@ -16,6 +16,7 @@ type Player = {
   caps: number
   xp: number
   is_test_user: boolean
+  is_beta_tester: boolean
   attack_rating?: number
   defense_rating?: number
 }
@@ -33,13 +34,23 @@ export default function Players() {
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set())
 
   const fetchPlayers = async () => {
-    const { data, error } = await supabase.from('players').select('*')
+    const { data, error } = await supabase
+      .from('players')
+      .select(`
+        *,
+        player_xp!left(xp)
+      `)
 
     if (error) {
       console.error('Error fetching players:', error)
       toast.error('Failed to fetch players')
     } else {
-      setPlayers(data || [])
+      // Map the joined data to include xp at the top level
+      const playersWithXp = (data || []).map(player => ({
+        ...player,
+        xp: player.player_xp?.[0]?.xp || 0
+      }))
+      setPlayers(playersWithXp)
     }
     setLoading(false)
   }
@@ -357,6 +368,9 @@ export default function Players() {
                           <span className="font-medium">{player.friendly_name}</span>
                           {player.is_test_user && (
                             <span className="badge badge-secondary badge-sm">Test User</span>
+                          )}
+                          {player.is_beta_tester && (
+                            <span className="badge badge-warning badge-sm">Beta</span>
                           )}
                         </div>
                         <div className="sm:hidden flex gap-2 text-xs text-base-content/70">

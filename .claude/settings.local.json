@@ -25,7 +25,8 @@
       "mcp__supabase__list_tables",
       "Bash(test:*)",
       "Bash(rm:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Read(//c/Users/ChrisHide/documents/github/wnf/wnf/src/pages/**)"
     ]
   },
   "enableAllProjectMcpServers": true,

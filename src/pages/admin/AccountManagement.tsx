@@ -3,6 +3,7 @@ import { useAdmin } from '../../hooks/useAdmin';
 import { motion } from 'framer-motion';
 import { FaUserShield } from 'react-icons/fa';
 import AdminPasswordReset from '../../components/admin/utils/AdminPasswordReset';
+import BetaTesterManagement from '../../components/admin/utils/BetaTesterManagement';
 import { Tooltip } from '../../components/ui/Tooltip';
 
 /**
@@ -46,7 +47,7 @@ const AccountManagement: React.FC = () => {
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Password Reset Card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -120,6 +121,20 @@ const AccountManagement: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Beta Tester Management */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="w-full"
+      >
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <BetaTesterManagement />
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };

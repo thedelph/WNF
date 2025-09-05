@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import StarRating from '../components/StarRating';
 import { formatStarRating, getRatingButtonText } from '../utils/ratingFormatters';
 import RatingsExplanation from '../components/ratings/RatingsExplanation';
+import PlaystyleSelector from '../components/ratings/PlaystyleSelector';
 
 interface Player {
   id: string;
@@ -16,6 +17,7 @@ interface Player {
     attack_rating: number;
     defense_rating: number;
     game_iq_rating: number;
+    playstyle_id?: string | null;
   };
 }
 
@@ -39,6 +41,7 @@ export default function Ratings() {
     defense: 0,
     gameIq: 0,
   });
+  const [selectedPlaystyleId, setSelectedPlaystyleId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCurrentPlayer();
@@ -192,7 +195,7 @@ export default function Ratings() {
       // Get current user's ratings
       const { data: existingRatings } = await supabase
         .from('player_ratings')
-        .select('rated_player_id, attack_rating, defense_rating, game_iq_rating')
+        .select('rated_player_id, attack_rating, defense_rating, game_iq_rating, playstyle_id')
         .eq('rater_id', currentPlayer.id);
 
       // Get WhatsApp status for all players
@@ -238,7 +241,8 @@ export default function Ratings() {
             rated_player_id: selectedPlayer.id,
             attack_rating: ratings.attack,
             defense_rating: ratings.defense,
-            game_iq_rating: ratings.gameIq
+            game_iq_rating: ratings.gameIq,
+            playstyle_id: selectedPlaystyleId
           },
           {
             onConflict: 'rater_id,rated_player_id'
@@ -249,6 +253,7 @@ export default function Ratings() {
 
       toast.success(`Successfully rated ${selectedPlayer.friendly_name}`);
       setSelectedPlayer(null);
+      setSelectedPlaystyleId(null); // Reset playstyle selection
       fetchPlayers(); // Refresh the list
     } catch (error: any) {
       toast.error(error.message);
@@ -423,6 +428,10 @@ export default function Ratings() {
                 onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
                 label="Game IQ Rating"
               />
+              <PlaystyleSelector
+                selectedPlaystyleId={selectedPlaystyleId}
+                onPlaystyleChange={setSelectedPlaystyleId}
+              />
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
@@ -491,6 +500,7 @@ export default function Ratings() {
                           defense: player.current_rating?.defense_rating || 0,
                           gameIq: player.current_rating?.game_iq_rating || 0
                         });
+                        setSelectedPlaystyleId(player.current_rating?.playstyle_id || null);
                       }}
                     >
                       <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
