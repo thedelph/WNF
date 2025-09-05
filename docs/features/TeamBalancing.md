@@ -3,9 +3,9 @@
 ## Overview
 The team balancing system ensures fair and competitive matches by automatically distributing players across two teams (Blue and Orange) based on multiple performance metrics.
 
-## Balancing Metrics (Updated June 26, 2025)
+## Balancing Metrics (Updated September 5, 2025)
 
-The system now considers **5 metrics** with equal weighting (20% each):
+The system now considers **5 core metrics** plus **derived attributes** from playstyles:
 
 1. **Attack Rating** (0-10 scale)
    - Measures offensive capabilities
@@ -27,7 +27,23 @@ The system now considers **5 metrics** with equal weighting (20% each):
    - Average goal difference from recent games
    - Only included for players with 10+ games
 
-## Algorithm (Updated June 30, 2025)
+6. **Derived Attributes** (from Playstyles)
+   - **Pace**: Speed and acceleration
+   - **Shooting**: Finishing and shot power
+   - **Passing**: Vision and passing accuracy
+   - **Dribbling**: Ball control and agility
+   - **Defending**: Tackling and positioning
+   - **Physical**: Strength and stamina
+   - Automatically calculated from player playstyle ratings
+   - Unrated players default to 0
+
+## Algorithm (Updated September 5, 2025)
+
+### Three-Layer Rating System (Tier-Based Snake Draft)
+When using the tier-based algorithm, player ratings are calculated with:
+- **Layer 1 (60%)**: Core skills (Attack/Defense/Game IQ)
+- **Layer 2 (30%)**: Derived attributes from playstyles
+- **Layer 3 (10%)**: Performance metrics (7% track record + 3% recent form)
 
 ### Two-Phase Optimization Approach
 
@@ -43,7 +59,9 @@ Players with <10 games ("unknowns") lack win rate and goal differential data. Th
 3. Selects the combination with the lowest overall balance score
 
 ### Balance Score Calculation
-For experienced players (all 5 metrics):
+
+#### Optimal Algorithm
+For experienced players (all 5 core metrics):
 ```javascript
 balanceScore = (attackDiff * 0.20) + 
                (defenseDiff * 0.20) + 

@@ -31,7 +31,13 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
           created_at,
           updated_at,
           rater_id,
-          rated_player_id
+          rated_player_id,
+          playstyle_id,
+          playstyles (
+            id,
+            name,
+            category
+          )
         `);
         
       if (raterId) {
@@ -75,19 +81,32 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
           // Get the most recent history entry before the current update
           const { data: historyData } = await supabaseAdmin
             .from('player_ratings_history')
-            .select('attack_rating, defense_rating, game_iq_rating')
+            .select('attack_rating, defense_rating, game_iq_rating, playstyle_id')
             .eq('rating_id', rating.id)
             .lt('changed_at', rating.updated_at || rating.created_at)
             .order('changed_at', { ascending: false })
             .limit(1);
             
           const previousRating = historyData?.[0] || null;
+          
+          // Fetch previous playstyle details if there was a previous playstyle
+          let previousPlaystyle = null;
+          if (previousRating?.playstyle_id) {
+            const { data: playstyleData } = await supabaseAdmin
+              .from('playstyles')
+              .select('id, name, category')
+              .eq('id', previousRating.playstyle_id)
+              .single();
+            previousPlaystyle = playstyleData;
+          }
             
           return {
             ...rating,
             previous_attack_rating: previousRating?.attack_rating ?? null,
             previous_defense_rating: previousRating?.defense_rating ?? null,
-            previous_game_iq_rating: previousRating?.game_iq_rating ?? null
+            previous_game_iq_rating: previousRating?.game_iq_rating ?? null,
+            previous_playstyle_id: previousRating?.playstyle_id ?? null,
+            previous_playstyle: previousPlaystyle
           };
         })
       );
@@ -96,7 +115,8 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
       const formattedData = ratingsWithHistory.map(item => ({
         ...item,
         rater: playersMap.get(item.rater_id) || null,
-        rated_player: playersMap.get(item.rated_player_id) || null
+        rated_player: playersMap.get(item.rated_player_id) || null,
+        playstyle: item.playstyles || null
       })).filter(item => item.rater && item.rated_player);
       
 

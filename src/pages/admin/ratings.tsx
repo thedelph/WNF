@@ -38,6 +38,7 @@ const RatingsView: React.FC = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPlayersForComparison, setSelectedPlayersForComparison] = useState<string[]>([]);
+  const [comparisonSearchTerm, setComparisonSearchTerm] = useState('');
 
   // Custom hooks
   const { players, loading: playersLoading } = usePlayerRatings(isSuperAdmin);
@@ -66,6 +67,7 @@ const RatingsView: React.FC = () => {
     setSelectedRaterId(null);
     if (tab === 'attributes') {
       setSelectedPlayersForComparison([]);
+      setComparisonSearchTerm('');
     }
   };
 
@@ -115,9 +117,12 @@ const RatingsView: React.FC = () => {
 
       <TabSelector activeTab={activeTab} onTabChange={handleTabChange} />
 
-      {/* Show playstyle statistics when on received tab */}
-      {activeTab === 'received' && (
-        <PlaystyleStatistics players={players} className="mb-4" />
+      {/* Show playstyle statistics for both received and given tabs */}
+      {(activeTab === 'received' || activeTab === 'given') && (
+        <PlaystyleStatistics 
+          players={activeTab === 'received' ? players : raters} 
+          className="mb-4" 
+        />
       )}
 
       <AnimatePresence>
@@ -136,34 +141,123 @@ const RatingsView: React.FC = () => {
         <div className="space-y-4">
           {/* Player selection for comparison */}
           <div className="bg-base-200 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-3">Select Players to Compare</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-              {filteredPlayers
-                .filter(p => p.derived_attributes)
-                .map(player => (
-                  <label key={player.id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={selectedPlayersForComparison.includes(player.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          if (selectedPlayersForComparison.length < 4) {
-                            setSelectedPlayersForComparison([...selectedPlayersForComparison, player.id]);
-                          }
-                        } else {
-                          setSelectedPlayersForComparison(
-                            selectedPlayersForComparison.filter(id => id !== player.id)
-                          );
-                        }
-                      }}
-                      disabled={!selectedPlayersForComparison.includes(player.id) && selectedPlayersForComparison.length >= 4}
-                    />
-                    <span className="text-sm truncate">{player.friendly_name}</span>
-                  </label>
-                ))}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+              <h3 className="text-lg font-semibold mb-2 sm:mb-0">Select Players to Compare</h3>
+              <div className="flex gap-2">
+                <button 
+                  className="btn btn-xs"
+                  onClick={() => {
+                    const playersWithAttributes = filteredPlayers
+                      .filter(p => p.derived_attributes)
+                      .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
+                      .slice(0, 4)
+                      .map(p => p.id);
+                    setSelectedPlayersForComparison(playersWithAttributes);
+                  }}
+                >
+                  Select First 4
+                </button>
+                <button 
+                  className="btn btn-xs"
+                  onClick={() => setSelectedPlayersForComparison([])}
+                >
+                  Clear All
+                </button>
+              </div>
             </div>
-            {filteredPlayers.filter(p => p.derived_attributes).length === 0 && (
+            
+            {/* Search input */}
+            <div className="mb-3">
+              <input
+                type="text"
+                placeholder="Search players..."
+                className="input input-bordered input-sm w-full"
+                value={comparisonSearchTerm}
+                onChange={(e) => setComparisonSearchTerm(e.target.value)}
+              />
+              <p className="text-xs text-base-content/60 mt-1">
+                {(() => {
+                  const totalWithData = filteredPlayers.filter(p => p.derived_attributes).length;
+                  if (comparisonSearchTerm) {
+                    const matchingCount = filteredPlayers
+                      .filter(p => p.derived_attributes)
+                      .filter(p => p.friendly_name.toLowerCase().includes(comparisonSearchTerm.toLowerCase()))
+                      .length;
+                    return `${matchingCount} matching players (${totalWithData} total with playstyle data)`;
+                  }
+                  return `${totalWithData} players with playstyle data`;
+                })()}
+              </p>
+            </div>
+            
+            {/* Selected players display */}
+            {selectedPlayersForComparison.length > 0 && (
+              <div className="mb-3 p-2 bg-base-100 rounded">
+                <p className="text-sm font-medium mb-1">Selected ({selectedPlayersForComparison.length}/4):</p>
+                <div className="flex flex-wrap gap-1">
+                  {selectedPlayersForComparison.map(playerId => {
+                    const player = players.find(p => p.id === playerId);
+                    return player ? (
+                      <span key={playerId} className="badge badge-sm badge-primary">
+                        {player.friendly_name}
+                        <button
+                          className="ml-1"
+                          onClick={() => setSelectedPlayersForComparison(
+                            selectedPlayersForComparison.filter(id => id !== playerId)
+                          )}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+            
+            {/* Player checkboxes */}
+            {(() => {
+              const availablePlayers = filteredPlayers
+                .filter(p => p.derived_attributes)
+                .filter(p => p.friendly_name.toLowerCase().includes(comparisonSearchTerm.toLowerCase()))
+                .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name));
+              
+              if (availablePlayers.length === 0 && comparisonSearchTerm) {
+                return (
+                  <p className="text-base-content/60 text-center py-4">
+                    No players matching "{comparisonSearchTerm}"
+                  </p>
+                );
+              }
+              
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 max-h-64 overflow-y-auto">
+                  {availablePlayers.map(player => (
+                    <label key={player.id} className="flex items-center space-x-2 cursor-pointer hover:bg-base-300 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={selectedPlayersForComparison.includes(player.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (selectedPlayersForComparison.length < 4) {
+                              setSelectedPlayersForComparison([...selectedPlayersForComparison, player.id]);
+                            }
+                          } else {
+                            setSelectedPlayersForComparison(
+                              selectedPlayersForComparison.filter(id => id !== player.id)
+                            );
+                          }
+                        }}
+                        disabled={!selectedPlayersForComparison.includes(player.id) && selectedPlayersForComparison.length >= 4}
+                      />
+                      <span className="text-sm truncate flex-1">{player.friendly_name}</span>
+                    </label>
+                  ))}
+                </div>
+              );
+            })()}
+            {filteredPlayers.filter(p => p.derived_attributes).length === 0 && !comparisonSearchTerm && (
               <p className="text-base-content/60 text-center py-4">
                 No players with playstyle data available
               </p>

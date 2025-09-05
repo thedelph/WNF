@@ -45,6 +45,7 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
             <th className="hidden sm:table-cell" onClick={() => onSort('game_iq_rating')} >
               <span className="cursor-pointer">Game IQ</span>
             </th>
+            <th className="hidden md:table-cell">Playstyle</th>
             <th className="sm:hidden">Ratings</th>
             <th>Date</th>
           </tr>
@@ -66,11 +67,33 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
               <td className="hidden sm:table-cell">{formatRating(rating.attack_rating)}</td>
               <td className="hidden sm:table-cell">{formatRating(rating.defense_rating)}</td>
               <td className="hidden sm:table-cell">{formatRating(rating.game_iq_rating)}</td>
+              <td className="hidden md:table-cell">
+                {rating.playstyle ? (
+                  <span className={`badge badge-sm ${
+                    rating.playstyle.category === 'attacking' ? 'badge-error' :
+                    rating.playstyle.category === 'midfield' ? 'badge-warning' :
+                    'badge-info'
+                  }`}>
+                    {rating.playstyle.name}
+                  </span>
+                ) : (
+                  <span className="text-xs text-base-content/50">-</span>
+                )}
+              </td>
               <td className="sm:hidden">
                 <div className="flex flex-col gap-1">
                   <span className="badge badge-xs">A: {formatRating(rating.attack_rating)}</span>
                   <span className="badge badge-xs">D: {formatRating(rating.defense_rating)}</span>
                   <span className="badge badge-xs">IQ: {formatRating(rating.game_iq_rating)}</span>
+                  {rating.playstyle && (
+                    <span className={`badge badge-xs ${
+                      rating.playstyle.category === 'attacking' ? 'badge-error' :
+                      rating.playstyle.category === 'midfield' ? 'badge-warning' :
+                      'badge-info'
+                    }`}>
+                      {rating.playstyle.name}
+                    </span>
+                  )}
                 </div>
               </td>
               <td className="text-xs sm:text-sm">

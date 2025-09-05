@@ -38,6 +38,19 @@ const PlayerRadarChart: React.FC<PlayerRadarChartProps> = ({
   showLegend = true,
   className = ''
 }) => {
+  // Responsive height based on screen size
+  const [isMobile, setIsMobile] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  const responsiveHeight = isMobile ? Math.min(height, 300) : height;
   // Transform player data into radar chart format
   const chartData = useMemo(() => {
     // Create base data points for each attribute
@@ -109,7 +122,7 @@ const PlayerRadarChart: React.FC<PlayerRadarChartProps> = ({
       transition={{ duration: 0.3 }}
       className={`w-full ${className}`}
     >
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={responsiveHeight}>
         <RadarChart data={chartData}>
           <PolarGrid 
             stroke="currentColor" 
@@ -118,13 +131,13 @@ const PlayerRadarChart: React.FC<PlayerRadarChartProps> = ({
           />
           <PolarAngleAxis 
             dataKey="attribute" 
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: isMobile ? 11 : 12 }}
             className="text-base-content"
           />
           <PolarRadiusAxis 
             domain={[0, 10]} 
-            tickCount={6}
-            tick={{ fontSize: 10 }}
+            tickCount={isMobile ? 4 : 6}
+            tick={{ fontSize: isMobile ? 10 : 10 }}
             axisLine={false}
             className="text-base-content/60"
           />
@@ -143,7 +156,7 @@ const PlayerRadarChart: React.FC<PlayerRadarChartProps> = ({
 
           <RechartsTooltip content={<CustomTooltip />} />
           
-          {showLegend && (
+          {showLegend && !isMobile && (
             <Legend 
               wrapperStyle={{ 
                 paddingTop: '20px',
@@ -187,8 +200,8 @@ export const PlayerAttributeComparison: React.FC<{
               showLegend={true}
             />
             
-            {/* Attribute descriptions */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
+            {/* Attribute descriptions - hidden on mobile to save space */}
+            <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
               {ATTRIBUTE_CONFIGS.map(config => (
                 <div key={config.key} className="flex items-center gap-2 text-xs">
                   <div 
@@ -227,7 +240,7 @@ export const PlayerAttributeCard: React.FC<{
   className?: string;
 }> = ({ player, className = '' }) => {
   const hasAttributes = player.derived_attributes && 
-    Object.values(player.derived_attributes).some(v => v !== DEFAULT_ATTRIBUTE_VALUE);
+    Object.values(player.derived_attributes).some(v => v > 0);
 
   return (
     <div className={`card bg-base-200 ${className}`}>
@@ -241,7 +254,7 @@ export const PlayerAttributeCard: React.FC<{
         ) : (
           <PlayerRadarChart 
             players={[player]}
-            height={200}
+            height={180}
             showLegend={false}
           />
         )}

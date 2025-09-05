@@ -75,7 +75,7 @@ function calculateThreeLayerRating(player: TeamAssignment): {
                           (player.game_iq_rating ?? 5)) / 3;
   
   // Layer 2: Derived Attributes from Playstyles
-  let attributesScore = 3.5; // Default to 3.5 (0.35 * 10)
+  let attributesScore = 0; // Default to 0 (no playstyle ratings)
   if (player.derived_attributes) {
     const attrs = player.derived_attributes;
     // Average all attributes and convert from 0-1 to 0-10 scale
@@ -92,7 +92,7 @@ function calculateThreeLayerRating(player: TeamAssignment): {
   // Check if player has enough games for performance metrics
   if (!player.total_games || player.total_games < MIN_GAMES_FOR_STATS) {
     // Players with < 10 games use skill rating and attributes only
-    const attributesAdjustment = (attributesScore / 10 - 0.35) / 0.65;
+    const attributesAdjustment = attributesScore / 10; // 0-1 scale, 0 means no attributes
     const finalRating = baseSkillRating * (1 + (WEIGHT_ATTRIBUTES * attributesAdjustment));
     return {
       threeLayerRating: finalRating,
@@ -165,8 +165,8 @@ function calculateThreeLayerRating(player: TeamAssignment): {
   const overallAdjustment = (overallPerformanceScore - 0.5) * 2; // Range: -1 to +1
   const recentAdjustment = (recentFormScore - 0.5) * 2; // Range: -1 to +1
   
-  // Calculate attributes adjustment (center around 0)
-  const attributesAdjustment = (attributesScore / 10 - 0.35) / 0.65;
+  // Calculate attributes adjustment (0-1 scale, 0 means no attributes)
+  const attributesAdjustment = attributesScore / 10;
   
   // Apply weighted adjustments to base skill including momentum and attributes
   const finalRating = baseSkillRating * (1 + 

@@ -18,8 +18,16 @@ export interface Rating {
   previous_attack_rating?: number;
   previous_defense_rating?: number;
   previous_game_iq_rating?: number;
+  previous_playstyle_id?: string | null;
   // Playstyle information
   playstyle?: {
+    id: string;
+    name: string;
+    category: 'attacking' | 'midfield' | 'defensive';
+  } | null;
+  playstyle_id?: string | null;
+  // Previous playstyle information
+  previous_playstyle?: {
     id: string;
     name: string;
     category: 'attacking' | 'midfield' | 'defensive';

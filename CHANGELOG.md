@@ -4,6 +4,35 @@ All notable changes to the WNF project will be documented in this file.
 
 ## [Unreleased]
 
+### Added - September 5, 2025
+- **Playstyle Rating System**:
+  - 24 playstyles across 3 categories (8 attacking, 9 midfield, 7 defensive)
+  - Each playstyle derives 6 attributes: Pace, Shooting, Passing, Dribbling, Defending, Physical
+  - All playstyle weights balanced at 2.0 total for fairness
+  - Three new playstyles added: Speedster (Pace + Dribbling), Locomotive (Pace + Physical), Enforcer (Dribbling + Physical)
+  - Attributes complement existing Attack/Defense/Game IQ ratings
+  - Beta tester/Super admin restricted during initial rollout
+
+### Enhanced - September 5, 2025
+- **Playstyle User Interface**:
+  - PlaystyleSelector shows percentage distribution totaling 100% (e.g., "PAC: 50%, DRI: 50%")
+  - Attribute-based filtering - select attributes to find matching playstyles
+  - Display format uses colon separator (e.g., "Speedster: Pace + Dribbling")
+  - Mobile responsive with compact attribute abbreviations
+  - Playstyles shown on player rating cards
+  - Admin dashboard includes radar chart visualizations
+  - Playstyle statistics and distribution tracking
+  
+- **Team Balancing Algorithm**:
+  - Three-layer rating calculation system
+  - Layer 1 (60%): Core ratings (Attack/Defense/Game IQ)
+  - Layer 2 (30%): Derived attributes from playstyles
+  - Layer 3 (10%): Performance metrics (7% track record, 3% recent form)
+  - Unrated players default to 0 for all attributes (changed from 0.35)
+  - Automatic attribute calculation via database triggers
+
+## [Released]
+
 ### Enhanced - August 27, 2025
 - **Game Creation Form Improvements**:
   - Fixed player counting issue where non-player text like "Anyone needs to drop out" was counted as a player

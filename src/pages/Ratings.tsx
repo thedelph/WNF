@@ -71,7 +71,8 @@ export default function Ratings() {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       result = result.filter(player => 
-        player.friendly_name.toLowerCase().includes(query)
+        player.friendly_name.toLowerCase().includes(query) ||
+        player.current_rating?.playstyles?.name?.toLowerCase().includes(query)
       );
     }
 
@@ -93,6 +94,21 @@ export default function Ratings() {
         break;
       case 'min_games':
         result = result.filter(player => player.games_played >= 10);
+        break;
+      case 'has_playstyle':
+        result = result.filter(player => player.current_rating?.playstyle_id);
+        break;
+      case 'no_playstyle':
+        result = result.filter(player => player.current_rating && !player.current_rating.playstyle_id);
+        break;
+      case 'attacking_style':
+        result = result.filter(player => player.current_rating?.playstyles?.category === 'attacking');
+        break;
+      case 'midfield_style':
+        result = result.filter(player => player.current_rating?.playstyles?.category === 'midfield');
+        break;
+      case 'defensive_style':
+        result = result.filter(player => player.current_rating?.playstyles?.category === 'defensive');
         break;
       default:
         break;
@@ -160,6 +176,22 @@ export default function Ratings() {
           if (!a.current_rating) return 1;
           if (!b.current_rating) return -1;
           return (b.current_rating.game_iq_rating || 0) - (a.current_rating.game_iq_rating || 0);
+        });
+        break;
+      case 'playstyle_name':
+        result.sort((a, b) => {
+          const aName = a.current_rating?.playstyles?.name || 'zzz';
+          const bName = b.current_rating?.playstyles?.name || 'zzz';
+          return aName.localeCompare(bName);
+        });
+        break;
+      case 'playstyle_category':
+        result.sort((a, b) => {
+          const aCategory = a.current_rating?.playstyles?.category || 'zzz';
+          const bCategory = b.current_rating?.playstyles?.category || 'zzz';
+          const aCat = aCategory === 'attacking' ? 0 : aCategory === 'midfield' ? 1 : aCategory === 'defensive' ? 2 : 3;
+          const bCat = bCategory === 'attacking' ? 0 : bCategory === 'midfield' ? 1 : bCategory === 'defensive' ? 2 : 3;
+          return aCat - bCat;
         });
         break;
       default:
@@ -330,7 +362,7 @@ export default function Ratings() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by name..."
+                    placeholder="Search by name or playstyle..."
                     className="w-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
@@ -367,6 +399,12 @@ export default function Ratings() {
                           <option value="game_iq_desc">Game IQ Rating (High to Low)</option>
                         </>
                       )}
+                      {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && filterOption !== 'unrated' && (
+                        <>
+                          <option value="playstyle_name">Playstyle (A-Z)</option>
+                          <option value="playstyle_category">Playstyle Category</option>
+                        </>
+                      )}
                     </select>
                   </div>
 
@@ -390,6 +428,15 @@ export default function Ratings() {
                       <option value="rated">Rated Players</option>
                       <option value="unrated">Unrated Players</option>
                       <option value="min_games">10+ Games</option>
+                      {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && (
+                        <>
+                          <option value="has_playstyle">Has Playstyle</option>
+                          <option value="no_playstyle">No Playstyle</option>
+                          <option value="attacking_style">Attacking Styles</option>
+                          <option value="midfield_style">Midfield Styles</option>
+                          <option value="defensive_style">Defensive Styles</option>
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>
@@ -425,7 +472,7 @@ export default function Ratings() {
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
-            className="bg-white rounded-lg p-6 max-w-md w-full space-y-4 relative z-50"
+            className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full space-y-4 relative z-50 max-h-[90vh] overflow-y-auto"
           >
             <h2 className="text-xl font-semibold">
               Rate {selectedPlayer.friendly_name}
@@ -510,18 +557,19 @@ export default function Ratings() {
                         <p>Game IQ: {formatStarRating(player.current_rating.game_iq_rating)}</p>
                         {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && player.current_rating.playstyles && (
                           <div className="mt-2">
-                            <p className="font-semibold">Playstyle:</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={`badge badge-sm ${
+                            <p className="font-semibold text-xs">Playstyle:</p>
+                            <div className="flex flex-wrap items-center gap-1 mt-1">
+                              <span className={`badge badge-xs ${
                                 player.current_rating.playstyles.category === 'attacking' 
                                   ? 'badge-error' 
                                   : player.current_rating.playstyles.category === 'midfield'
                                   ? 'badge-warning'
                                   : 'badge-info'
                               }`}>
-                                {player.current_rating.playstyles.category}
+                                {player.current_rating.playstyles.category === 'attacking' ? 'ATT' :
+                                 player.current_rating.playstyles.category === 'midfield' ? 'MID' : 'DEF'}
                               </span>
-                              <span className="text-xs">
+                              <span className="text-xs truncate">
                                 {player.current_rating.playstyles.name}
                               </span>
                             </div>

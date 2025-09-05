@@ -13,6 +13,13 @@ interface PlaystyleStatisticsProps {
         category: 'attacking' | 'midfield' | 'defensive';
       } | null;
     }>;
+    ratings_given?: Array<{
+      playstyle?: {
+        id: string;
+        name: string;
+        category: 'attacking' | 'midfield' | 'defensive';
+      } | null;
+    }>;
   }>;
   className?: string;
 }
@@ -32,7 +39,10 @@ export const PlaystyleStatistics: React.FC<PlaystyleStatisticsProps> = ({
     let totalRatingsWithPlaystyle = 0;
     
     players.forEach(player => {
-      player.ratings?.forEach(rating => {
+      // Check both ratings and ratings_given properties
+      const ratingsToCheck = player.ratings || player.ratings_given || [];
+      
+      ratingsToCheck.forEach(rating => {
         if (rating.playstyle) {
           totalRatingsWithPlaystyle++;
           const key = rating.playstyle.id;

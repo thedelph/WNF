@@ -128,8 +128,8 @@ export const ATTRIBUTE_CONFIGS: AttributeConfig[] = [
   }
 ];
 
-// Default baseline value for unrated attributes
-export const DEFAULT_ATTRIBUTE_VALUE = 0.35;
+// Default baseline value for unrated attributes (0 = no playstyle rating)
+export const DEFAULT_ATTRIBUTE_VALUE = 0;
 
 // Utility function to normalize attribute values for display
 export function normalizeAttributeValue(value: number): number {

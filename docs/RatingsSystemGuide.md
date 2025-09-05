@@ -23,6 +23,7 @@ The WNF Ratings System allows players to confidentially rate other players they 
 - Players can rate others only after playing 5 games with them
 - Ratings are confidential and only visible to administrators
 - Players can rate attack, defense, and game IQ skills on a scale of 0-10
+- Players can also assign playstyles to complement the core ratings
 
 ### Rating Definitions
 - **Attack Rating**: Measures both offensive skills AND tendency to play in attacking positions
@@ -52,7 +53,14 @@ The WNF Ratings System allows players to confidentially rate other players they 
 2. **Ratings Given**
    - Shows all raters and their rating history
    - Helps identify rating patterns
+   - Displays playstyle assignments
    - Useful for monitoring rating behavior
+
+3. **Player Attributes**
+   - Radar chart visualization of derived attributes
+   - Compare up to 4 players
+   - Shows 6 attributes from playstyle ratings
+   - Mobile responsive design
 
 #### Tables
 1. **Players/Raters Table**

@@ -7,45 +7,49 @@ Adding a playstyle system to complement the existing Attack/Defense/Game IQ rati
 
 ### Core Concepts
 - **One playstyle per rating** (not three separate categories)
-- **21 total playstyles** across 3 categories (Attacking, Midfield, Defensive)
+- **24 total playstyles** across 3 categories (Attacking, Midfield, Defensive)
 - **6 derived attributes** calculated from playstyle selections
-- **Default baseline** of 0.35 for all attributes (ensures unrated players aren't disadvantaged)
+- **Default baseline** of 0 for all attributes (unrated players start at zero)
 - **Attributes are averaged** across all ratings a player receives
+- **Beta tester/Super admin only** feature during initial rollout
 
 ### Playstyle Categories & Definitions
 
-#### Attacking Styles (7 total)
+#### Attacking Styles (8 total)
 | Playstyle | Pace | Shooting | Passing | Dribbling | Defending | Physical | Description |
 |-----------|------|----------|---------|-----------|-----------|----------|-------------|
-| Complete Forward | 0.35 | 0.35 | 0.35 | 0.35 | 0.35 | 0.35 | Balanced all-round attacker |
+| Complete Forward | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | Balanced all-round attacker |
 | Hunter | 1.0 | 1.0 | 0 | 0 | 0 | 0 | Pace + Shooting |
-| Hawk | 0.8 | 0.8 | 0 | 0 | 0 | 0.8 | Pace + Shooting + Physical |
-| Marksman | 0 | 0.8 | 0 | 0.8 | 0 | 0.8 | Shooting + Dribbling + Physical |
+| Hawk | 0.67 | 0.67 | 0 | 0 | 0 | 0.67 | Pace + Shooting + Physical |
+| Marksman | 0 | 0.67 | 0 | 0.67 | 0 | 0.67 | Shooting + Dribbling + Physical |
 | Finisher | 0 | 1.0 | 0 | 0 | 0 | 1.0 | Shooting + Physical |
 | Sniper | 0 | 1.0 | 0 | 1.0 | 0 | 0 | Shooting + Dribbling |
 | Deadeye | 0 | 1.0 | 1.0 | 0 | 0 | 0 | Shooting + Passing |
+| Speedster | 1.0 | 0 | 0 | 1.0 | 0 | 0 | Pace + Dribbling |
 
-#### Midfield Styles (7 total)
+#### Midfield Styles (9 total)
 | Playstyle | Pace | Shooting | Passing | Dribbling | Defending | Physical | Description |
 |-----------|------|----------|---------|-----------|-----------|----------|-------------|
-| Box-to-Box | 0.35 | 0.35 | 0.35 | 0.35 | 0.35 | 0.35 | Balanced all-round midfielder |
-| Engine | 0.8 | 0 | 0.8 | 0.8 | 0 | 0 | Pace + Passing + Dribbling |
+| Box-to-Box | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | Balanced all-round midfielder |
+| Engine | 0.67 | 0 | 0.67 | 0.67 | 0 | 0 | Pace + Passing + Dribbling |
 | Artist | 0 | 0 | 1.0 | 1.0 | 0 | 0 | Passing + Dribbling |
 | Architect | 0 | 0 | 1.0 | 0 | 0 | 1.0 | Passing + Physical |
 | Powerhouse | 0 | 0 | 1.0 | 0 | 1.0 | 0 | Passing + Defending |
-| Maestro | 0 | 0.8 | 0.8 | 0.8 | 0 | 0 | Shooting + Passing + Dribbling |
+| Maestro | 0 | 0.67 | 0.67 | 0.67 | 0 | 0 | Shooting + Passing + Dribbling |
 | Catalyst | 1.0 | 0 | 1.0 | 0 | 0 | 0 | Pace + Passing |
+| Locomotive | 1.0 | 0 | 0 | 0 | 0 | 1.0 | Pace + Physical |
+| Enforcer | 0 | 0 | 0 | 1.0 | 0 | 1.0 | Dribbling + Physical |
 
 #### Defensive Styles (7 total)
 | Playstyle | Pace | Shooting | Passing | Dribbling | Defending | Physical | Description |
 |-----------|------|----------|---------|-----------|-----------|----------|-------------|
-| Complete Defender | 0.35 | 0.35 | 0.35 | 0.35 | 0.35 | 0.35 | Balanced all-round defender |
+| Complete Defender | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | Balanced all-round defender |
 | Shadow | 1.0 | 0 | 0 | 0 | 1.0 | 0 | Pace + Defending |
-| Anchor | 0.8 | 0 | 0 | 0 | 0.8 | 0.8 | Pace + Defending + Physical |
+| Anchor | 0.67 | 0 | 0 | 0 | 0.67 | 0.67 | Pace + Defending + Physical |
 | Gladiator | 0 | 1.0 | 0 | 0 | 1.0 | 0 | Shooting + Defending |
 | Guardian | 0 | 0 | 0 | 1.0 | 1.0 | 0 | Dribbling + Defending |
 | Sentinel | 0 | 0 | 0 | 0 | 1.0 | 1.0 | Defending + Physical |
-| Backbone | 0 | 0 | 0.8 | 0 | 0.8 | 0.8 | Passing + Defending + Physical |
+| Backbone | 0 | 0 | 0.67 | 0 | 0.67 | 0.67 | Passing + Defending + Physical |
 
 ## Implementation Status
 
@@ -62,13 +66,18 @@ Adding a playstyle system to complement the existing Attack/Defense/Game IQ rati
 2. **Frontend Components**
    - **PlaystyleSelector Component** (`/src/components/ratings/PlaystyleSelector.tsx`)
      - Dropdown with grouped playstyles by category
-     - Shows playstyle description and attribute weights
+     - Shows playstyle description formatted as "Name: Attributes" (e.g., "Speedster: Pace + Dribbling")
+     - Shows percentage distribution totaling 100% (e.g., "PAC: 50%, DRI: 50%")
+     - Attribute-based filtering feature - select attributes to find matching playstyles
      - Visual feedback for selected playstyle
+     - Mobile responsive with compact abbreviations
    
    - **Ratings Page Integration** (`/src/pages/Ratings.tsx`)
      - Added playstyle selector to rating modal
+     - Beta tester/Super admin restriction - only these users see playstyle selector
      - Stores playstyle_id when submitting ratings
      - Loads existing playstyle when editing ratings
+     - Shows playstyle on player rating cards
      - Resets playstyle selection after submission
 
 3. **Admin Radar Chart Visualization** ✅
@@ -89,6 +98,7 @@ Adding a playstyle system to complement the existing Attack/Defense/Game IQ rati
      - Layer 3: Performance metrics - 10% (7% track record + 3% recent form)
    - Added `derived_attributes` to TeamAssignment interface
    - Updated `useTeamBalancing.ts` to fetch and include derived attributes
+   - Changed default attribute value from 0.35 to 0 for unrated players
 
 5. **Admin Interface Enhancements** ✅
    - **PlaystyleStatistics Component** (`/src/components/admin/ratings/components/PlaystyleStatistics.tsx`)
@@ -108,12 +118,23 @@ Adding a playstyle system to complement the existing Attack/Defense/Game IQ rati
    - This documentation file serves as the user guide
    - Documented team balancing changes
 
-### 📋 Still To Do
+8. **Recent Activity Tracking** ✅
+   - Added playstyle changes to admin Recent Activity section
+   - Shows when playstyles are added, changed, or removed
+   - Visual indicators with category colors
 
-8. **Testing & Production Deployment**
-   - Run migration on production Supabase
-   - Monitor trigger function performance
-   - Gather user feedback on playstyle selections
+9. **Mobile Responsiveness** ✅
+   - All playstyle features optimized for mobile
+   - Compact attribute abbreviations on small screens
+   - Responsive radar charts and statistics
+
+### ✅ System Complete
+
+All features have been implemented and tested. The playstyle system is fully integrated with:
+- Player ratings
+- Team balancing
+- Admin dashboards
+- Mobile interfaces
 
 ## Technical Implementation Details
 
@@ -127,15 +148,15 @@ Adding a playstyle system to complement the existing Attack/Defense/Game IQ rati
 
 Example:
 Player rated 3 times:
-- Rating 1: Maestro (shooting: 0.8, passing: 0.8, dribbling: 0.8)
-- Rating 2: Engine (pace: 0.8, passing: 0.8, dribbling: 0.8)
+- Rating 1: Maestro (shooting: 0.67, passing: 0.67, dribbling: 0.67)
+- Rating 2: Engine (pace: 0.67, passing: 0.67, dribbling: 0.67)
 - Rating 3: Sniper (shooting: 1.0, dribbling: 1.0)
 
 Final attributes:
-- Pace: (0 + 0.8 + 0) / 3 = 0.27
-- Shooting: (0.8 + 0 + 1.0) / 3 = 0.60
-- Passing: (0.8 + 0.8 + 0) / 3 = 0.53
-- Dribbling: (0.8 + 0.8 + 1.0) / 3 = 0.87
+- Pace: (0 + 0.67 + 0) / 3 = 0.22
+- Shooting: (0.67 + 0 + 1.0) / 3 = 0.56
+- Passing: (0.67 + 0.67 + 0) / 3 = 0.45
+- Dribbling: (0.67 + 0.67 + 1.0) / 3 = 0.78
 - Defending: 0
 - Physical: 0
 ```
@@ -144,43 +165,34 @@ Final attributes:
 - **Existing ratings remain primary**: Attack/Defense/Game IQ are skill levels
 - **Playstyles are modifiers**: Show HOW players use their skills
 - **No double-counting**: Defending attribute doesn't add to Defense rating
-- **Fair defaults**: Unrated players get 0.35 for all attributes
+- **Fair defaults**: Unrated players get 0 for all attributes
+- **Beta tester restriction**: Only beta testers and super admins can assign playstyles
 
-## Next Steps to Complete
+## Attribute-Based Filtering Feature
 
-1. **Install chart library**:
-   ```bash
-   npm install recharts
-   ```
+### How It Works
+1. Click "Filter by attributes" above the playstyle dropdown
+2. Select which attributes the player has (e.g., Pace, Dribbling)
+3. The dropdown filters to show only playstyles containing ALL selected attributes
+4. Shows count of matching playstyles (e.g., "Showing 3 playstyles with pace + dribbling")
 
-2. **Create RadarChart component**:
-   - Build reusable radar chart for player profiles
-   - Normalize values (0-3 range to 0-10 for display)
-   - Support multiple player overlay
+### Example
+Selecting "Pace + Dribbling" shows:
+- **Speedster** (exactly those two attributes)
+- **Engine** (has both plus Passing)
+- **Complete Forward/Box-to-Box** (all-rounders with everything)
 
-3. **Update team balancing**:
-   - Modify balance score calculation
-   - Add style diversity checks
-   - Prevent teams of all similar playstyles
-
-4. **Test the system**:
-   - Run migration: `npx supabase db push`
-   - Test rating flow with playstyles
-   - Verify attribute calculations
-   - Test radar chart visualization
-
-5. **Deploy**:
-   - Push migration to production
-   - Update documentation
-   - Notify users of new feature
+This makes it easier to find the right playstyle based on your assessment of the player.
 
 ## Key Decisions Made
 
 1. **Single playstyle per rating** (not 3) - More intuitive, rate what you see
-2. **0.35 default baseline** - Ensures fairness for unrated players
+2. **Zero default baseline** - Unrated players start at 0, must earn attributes through ratings
 3. **Balanced styles in all categories** - Every category has a "Complete" option
-4. **Weights balanced around 2.0-2.4 total** - Specialization slightly rewarded
+4. **All weights sum to 2.0** - Perfect balance across all playstyles
 5. **Attributes as tendencies, not additional skills** - Avoids double-counting
+6. **Beta tester restriction** - Limited rollout during initial testing phase
+7. **24 total playstyles** - Comprehensive coverage including Speedster, Locomotive, Enforcer
 
 ## Files Modified/Created
 
@@ -202,10 +214,11 @@ Final attributes:
 - `/src/components/admin/team-balancing/useTeamBalancing.ts` - Fetches derived attributes for players
 - `/CLAUDE.md` - Added playstyle system documentation
 
-## Notes for Continuation
+## Future Enhancements
 
-- The foundation is solid - database and basic UI are working
-- Main focus should be on visualization (radar charts) and team balancing integration
-- Consider adding playstyle analytics (most common styles, style by position, etc.)
-- Could extend to show playstyle badges on player cards
-- Future: Hybrid styles or position-specific weightings
+- Playstyle analytics dashboard (most common styles, trends over time)
+- Playstyle badges on player cards throughout the app
+- Position-specific playstyle recommendations
+- Hybrid playstyles for players showing multiple tendencies
+- Playstyle chemistry analysis for team composition
+- Historical playstyle evolution tracking

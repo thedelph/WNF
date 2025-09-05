@@ -8,14 +8,15 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
 ### 1. Core Algorithm Implementation
 **File**: `src/components/admin/team-balancing/tierBasedSnakeDraft.ts`
 
-#### Four-Layer Rating System (Conservative Weights)
-- **Base Skill (70%)**: Average of Attack, Defense, and Game IQ ratings
-- **Overall Performance (20%)**: Career win rate and goal differential
-- **Recent Form (10%)**: Last 10 games performance
-- **Momentum Factor (10%)**: Compares recent form to overall performance
+#### Three-Layer Rating System
+- **Layer 1: Core Skills (60%)**: Average of Attack, Defense, and Game IQ ratings
+- **Layer 2: Derived Attributes (30%)**: Six attributes from playstyles (Pace, Shooting, Passing, Dribbling, Defending, Physical)
+- **Layer 3: Performance Metrics (10%)**: 
+  - Track Record (7%): Career win rate and goal differential
+  - Recent Form (3%): Last 10 games performance with momentum factor
 
 #### Key Functions:
-- `calculateThreeLayerRating()`: Computes adjusted player rating with momentum
+- `calculateThreeLayerRating()`: Computes adjusted player rating with skills, attributes, and performance
 - `calculateTierSizes()`: Determines tier distribution (e.g., 4-4-3-4-3 for 18 players)
 - `applySnakeDraft()`: Implements snake draft with team balance checks
 - `optimizeTeams()`: Tier-constrained optimization starting from lowest tier
@@ -33,7 +34,7 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
 - Fixed `get_player_recent_goal_differentials` RPC function (was checking for 'played' status instead of 'selected')
 - Fixed optimization to start from Tier 5 and respect threshold stopping
 - Fixed Final Rankings Summary to use sorted player array
-- Reduced transformation weights to be more conservative (70/20/10 from 60/25/15)
+- Updated to three-layer system with playstyle attributes (60/30/10 weighting)
 - Added tier distribution awareness to prevent extreme quality concentrations (2025-07-23)
 - Changed balance threshold from 0.5 to 0.3 for better optimization control
 - Implemented improvement-aware validation to allow beneficial swaps
@@ -45,6 +46,14 @@ Added fields to `TeamAssignment` interface:
 ```typescript
 overall_win_rate?: number | null;        // Career win rate
 overall_goal_differential?: number | null; // Career goal differential
+derived_attributes?: {                   // From playstyle ratings
+  pace: number;
+  shooting: number;
+  passing: number;
+  dribbling: number;
+  defending: number;
+  physical: number;
+} | null;
 ```
 
 ### 3. Data Fetching Updates
@@ -54,7 +63,9 @@ Modified to fetch both overall and recent stats:
 - Uses `get_player_win_rates()` for career stats
 - Uses `get_player_recent_win_rates()` for last 10 games
 - Uses `get_player_recent_goal_differentials()` for recent goal differentials
+- Fetches `player_derived_attributes` for playstyle-based attributes
 - Properly handles null values for players with insufficient games
+- Unrated players default to 0 for all attributes (not 0.35)
 
 ### 4. UI Components
 

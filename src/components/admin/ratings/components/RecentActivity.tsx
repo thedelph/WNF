@@ -115,6 +115,48 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                     <span>IQ: {formatRating(rating.game_iq_rating)}</span>
                     {getRatingChangeDisplay(rating.game_iq_rating, rating.previous_game_iq_rating)}
                   </div>
+                  
+                  {/* Playstyle changes */}
+                  {(rating.playstyle || rating.previous_playstyle) && (
+                    <div className={`badge badge-sm ${
+                      rating.playstyle?.category === 'attacking' ? 'badge-error' :
+                      rating.playstyle?.category === 'midfield' ? 'badge-warning' :
+                      rating.playstyle?.category === 'defensive' ? 'badge-info' :
+                      'badge-ghost'
+                    }`}>
+                      {(() => {
+                        if (!rating.previous_playstyle && rating.playstyle) {
+                          // New playstyle added
+                          return (
+                            <span className="flex items-center gap-1">
+                              <span className="text-success text-xs">+</span>
+                              {rating.playstyle.name}
+                            </span>
+                          );
+                        } else if (rating.previous_playstyle && !rating.playstyle) {
+                          // Playstyle removed
+                          return (
+                            <span className="flex items-center gap-1 line-through opacity-60">
+                              {rating.previous_playstyle.name}
+                            </span>
+                          );
+                        } else if (rating.previous_playstyle && rating.playstyle && 
+                                   rating.previous_playstyle.id !== rating.playstyle.id) {
+                          // Playstyle changed
+                          return (
+                            <span className="flex items-center gap-1" title={`Changed from ${rating.previous_playstyle.name} to ${rating.playstyle.name}`}>
+                              <span className="text-warning text-xs">⟳</span>
+                              <span>{rating.playstyle.name}</span>
+                            </span>
+                          );
+                        } else if (rating.playstyle) {
+                          // Playstyle unchanged
+                          return <span>{rating.playstyle.name}</span>;
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
               

@@ -81,9 +81,16 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
 
           if (ratingsError) throw ratingsError;
 
+          // Map the playstyle data correctly for each rating
+          const mappedRatings = (ratingsData || []).map(rating => ({
+            ...rating,
+            rater: rating.rater,
+            playstyle: rating.playstyle || null
+          }));
+          
           return {
             ...player,
-            ratings: ratingsData || [],
+            ratings: mappedRatings,
             derived_attributes: derivedAttributesMap.get(player.id)
           };
         })
