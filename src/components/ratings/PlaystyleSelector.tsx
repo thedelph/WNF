@@ -71,17 +71,42 @@ export default function PlaystyleSelector({
   };
 
   const getAttributesDisplay = (style: Playstyle) => {
-    const attributes = [];
-    if (style.pace_weight > 0) attributes.push(`Pace: ${(style.pace_weight * 100).toFixed(0)}%`);
-    if (style.shooting_weight > 0) attributes.push(`Shooting: ${(style.shooting_weight * 100).toFixed(0)}%`);
-    if (style.passing_weight > 0) attributes.push(`Passing: ${(style.passing_weight * 100).toFixed(0)}%`);
-    if (style.dribbling_weight > 0) attributes.push(`Dribbling: ${(style.dribbling_weight * 100).toFixed(0)}%`);
-    if (style.defending_weight > 0) attributes.push(`Defending: ${(style.defending_weight * 100).toFixed(0)}%`);
-    if (style.physical_weight > 0) attributes.push(`Physical: ${(style.physical_weight * 100).toFixed(0)}%`);
+    // Calculate total weight for this playstyle
+    const totalWeight = 
+      style.pace_weight + 
+      style.shooting_weight + 
+      style.passing_weight + 
+      style.dribbling_weight + 
+      style.defending_weight + 
+      style.physical_weight;
     
-    if (attributes.length === 0) {
-      return 'Balanced (35% all attributes)';
+    // Calculate percentage distribution (how much each attribute contributes to the total)
+    const attributes = [];
+    if (style.pace_weight > 0) {
+      const percentage = ((style.pace_weight / totalWeight) * 100).toFixed(1);
+      attributes.push(`Pace: ${percentage}%`);
     }
+    if (style.shooting_weight > 0) {
+      const percentage = ((style.shooting_weight / totalWeight) * 100).toFixed(1);
+      attributes.push(`Shooting: ${percentage}%`);
+    }
+    if (style.passing_weight > 0) {
+      const percentage = ((style.passing_weight / totalWeight) * 100).toFixed(1);
+      attributes.push(`Passing: ${percentage}%`);
+    }
+    if (style.dribbling_weight > 0) {
+      const percentage = ((style.dribbling_weight / totalWeight) * 100).toFixed(1);
+      attributes.push(`Dribbling: ${percentage}%`);
+    }
+    if (style.defending_weight > 0) {
+      const percentage = ((style.defending_weight / totalWeight) * 100).toFixed(1);
+      attributes.push(`Defending: ${percentage}%`);
+    }
+    if (style.physical_weight > 0) {
+      const percentage = ((style.physical_weight / totalWeight) * 100).toFixed(1);
+      attributes.push(`Physical: ${percentage}%`);
+    }
+    
     return attributes.join(', ');
   };
 

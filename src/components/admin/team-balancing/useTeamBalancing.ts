@@ -84,13 +84,15 @@ export const useTeamBalancing = () => {
       let overallWinRateMap = new Map<string, number | null>();
       let overallGoalDiffMap = new Map<string, number | null>();
       let gamesPlayedMap = new Map<string, number | null>();
+      let derivedAttributesMap = new Map<string, any>();
       
       try {
-        // Fetch recent stats (last 10 games)
+        // Fetch recent stats (last 10 games) and derived attributes
         console.log('Fetching recent player stats from get_player_recent_win_rates');
-        const [recentWinRates, recentGoalDiffs] = await Promise.all([
+        const [recentWinRates, recentGoalDiffs, derivedAttributes] = await Promise.all([
           supabase.rpc('get_player_recent_win_rates', { games_threshold: 10 }),
-          supabase.rpc('get_player_recent_goal_differentials', { games_threshold: 10 })
+          supabase.rpc('get_player_recent_goal_differentials', { games_threshold: 10 }),
+          supabase.from('player_derived_attributes').select('*')
         ]);
 
         if (recentWinRates.error) {
@@ -166,6 +168,20 @@ export const useTeamBalancing = () => {
             } else {
               overallGoalDiffMap.set(player.id, null);
             }
+          });
+        }
+
+        // Process derived attributes
+        if (derivedAttributes.data) {
+          derivedAttributes.data.forEach((attr: any) => {
+            derivedAttributesMap.set(attr.player_id, {
+              pace: attr.pace_rating,
+              shooting: attr.shooting_rating,
+              passing: attr.passing_rating,
+              dribbling: attr.dribbling_rating,
+              defending: attr.defending_rating,
+              physical: attr.physical_rating
+            });
           });
         }
 
@@ -270,6 +286,7 @@ export const useTeamBalancing = () => {
               overall_win_rate: player.overall_win_rate,
               overall_goal_differential: player.overall_goal_differential,
               total_games: player.total_games,
+              derived_attributes: player.derived_attributes,
               team: existingAssignment.team as 'blue' | 'orange' | null
             };
           } else {
@@ -285,6 +302,7 @@ export const useTeamBalancing = () => {
               overall_win_rate: player.overall_win_rate,
               overall_goal_differential: player.overall_goal_differential,
               total_games: player.total_games,
+              derived_attributes: player.derived_attributes,
               team: null
             };
           }

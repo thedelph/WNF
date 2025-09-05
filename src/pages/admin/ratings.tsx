@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../../hooks/useAdmin';
 import { SortConfig, FilterConfig } from '../../components/admin/ratings/types';
+import { PlayerAttributeComparison } from '../../components/charts/PlayerRadarChart';
+import { PlaystyleStatistics } from '../../components/admin/ratings/components/PlaystyleStatistics';
 import { PlayersTable } from '../../components/admin/ratings/components/PlayersTable';
 import { PlayerRatingsTable } from '../../components/admin/ratings/components/PlayerRatingsTable';
 import { RatersTable } from '../../components/admin/ratings/components/RatersTable';
@@ -17,7 +19,7 @@ import { useRecentRatings } from '../../components/admin/ratings/hooks/useRecent
 
 const RatingsView: React.FC = () => {
   const { isSuperAdmin, loading: adminLoading } = useAdmin();
-  const [activeTab, setActiveTab] = useState<'received' | 'given'>('received');
+  const [activeTab, setActiveTab] = useState<'received' | 'given' | 'attributes'>('received');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedRaterId, setSelectedRaterId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +37,7 @@ const RatingsView: React.FC = () => {
     minTotalRatings: 0
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedPlayersForComparison, setSelectedPlayersForComparison] = useState<string[]>([]);
 
   // Custom hooks
   const { players, loading: playersLoading } = usePlayerRatings(isSuperAdmin);
@@ -57,10 +60,13 @@ const RatingsView: React.FC = () => {
     }));
   };
 
-  const handleTabChange = (tab: 'received' | 'given') => {
+  const handleTabChange = (tab: 'received' | 'given' | 'attributes') => {
     setActiveTab(tab);
     setSelectedPlayerId(null);
     setSelectedRaterId(null);
+    if (tab === 'attributes') {
+      setSelectedPlayersForComparison([]);
+    }
   };
 
   const selectedPlayer = players.find(p => p.id === selectedPlayerId);
@@ -109,6 +115,11 @@ const RatingsView: React.FC = () => {
 
       <TabSelector activeTab={activeTab} onTabChange={handleTabChange} />
 
+      {/* Show playstyle statistics when on received tab */}
+      {activeTab === 'received' && (
+        <PlaystyleStatistics players={players} className="mb-4" />
+      )}
+
       <AnimatePresence>
         {showFilters && activeTab === 'received' && (
           <FilterPanel
@@ -121,6 +132,53 @@ const RatingsView: React.FC = () => {
 
       {loading ? (
         <LoadingSpinner />
+      ) : activeTab === 'attributes' ? (
+        <div className="space-y-4">
+          {/* Player selection for comparison */}
+          <div className="bg-base-200 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-3">Select Players to Compare</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+              {filteredPlayers
+                .filter(p => p.derived_attributes)
+                .map(player => (
+                  <label key={player.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm"
+                      checked={selectedPlayersForComparison.includes(player.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          if (selectedPlayersForComparison.length < 4) {
+                            setSelectedPlayersForComparison([...selectedPlayersForComparison, player.id]);
+                          }
+                        } else {
+                          setSelectedPlayersForComparison(
+                            selectedPlayersForComparison.filter(id => id !== player.id)
+                          );
+                        }
+                      }}
+                      disabled={!selectedPlayersForComparison.includes(player.id) && selectedPlayersForComparison.length >= 4}
+                    />
+                    <span className="text-sm truncate">{player.friendly_name}</span>
+                  </label>
+                ))}
+            </div>
+            {filteredPlayers.filter(p => p.derived_attributes).length === 0 && (
+              <p className="text-base-content/60 text-center py-4">
+                No players with playstyle data available
+              </p>
+            )}
+            {selectedPlayersForComparison.length === 4 && (
+              <p className="text-warning text-sm mt-2">Maximum 4 players can be compared at once</p>
+            )}
+          </div>
+
+          {/* Radar Chart Comparison */}
+          <PlayerAttributeComparison
+            players={players.filter(p => selectedPlayersForComparison.includes(p.id))}
+            className=""
+          />
+        </div>
       ) : (
         <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
           <div className="bg-base-200 p-3 sm:p-4 rounded-lg overflow-hidden">

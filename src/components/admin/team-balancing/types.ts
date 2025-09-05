@@ -27,6 +27,15 @@ export interface TeamAssignment {
   overall_win_rate?: number | null; // Overall career win rate
   overall_goal_differential?: number | null; // Overall career goal differential
   total_games?: number | null; // Add total games count
+  // Derived attributes from playstyle ratings
+  derived_attributes?: {
+    pace: number;
+    shooting: number;
+    passing: number;
+    dribbling: number;
+    defending: number;
+    physical: number;
+  } | null;
 }
 
 export interface TeamComparison {

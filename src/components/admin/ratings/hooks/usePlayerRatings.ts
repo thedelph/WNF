@@ -30,8 +30,28 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
           game_iq
         `)
         .or('attack_rating.gt.0,defense_rating.gt.0,game_iq.gt.0');
-
+      
       if (playersError) throw playersError;
+      
+      // Fetch derived attributes for all players
+      const { data: derivedAttributesData, error: derivedError } = await supabaseAdmin
+        .from('player_derived_attributes')
+        .select('*');
+        
+      if (derivedError) throw derivedError;
+      
+      // Create a map of derived attributes by player_id
+      const derivedAttributesMap = new Map();
+      derivedAttributesData?.forEach(attr => {
+        derivedAttributesMap.set(attr.player_id, {
+          pace: attr.pace_rating,
+          shooting: attr.shooting_rating,
+          passing: attr.passing_rating,
+          dribbling: attr.dribbling_rating,
+          defending: attr.defending_rating,
+          physical: attr.physical_rating
+        });
+      });
 
       // Fetch all ratings for each player using supabaseAdmin
       const playersWithRatings = await Promise.all(
@@ -49,6 +69,11 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
                 id,
                 friendly_name,
                 is_admin
+              ),
+              playstyle:playstyles(
+                id,
+                name,
+                category
               )
             `)
             .eq('rated_player_id', player.id)
@@ -58,7 +83,8 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
 
           return {
             ...player,
-            ratings: ratingsData || []
+            ratings: ratingsData || [],
+            derived_attributes: derivedAttributesMap.get(player.id)
           };
         })
       );

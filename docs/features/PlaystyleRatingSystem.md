@@ -71,45 +71,49 @@ Adding a playstyle system to complement the existing Attack/Defense/Game IQ rati
      - Loads existing playstyle when editing ratings
      - Resets playstyle selection after submission
 
-### ⏳ In Progress
+3. **Admin Radar Chart Visualization** ✅
+   - **PlayerRadarChart Component** (`/src/components/charts/PlayerRadarChart.tsx`)
+     - Implemented using Recharts (already installed)
+     - Supports single player and multi-player comparison (max 4)
+     - Mobile-responsive design with custom tooltips
+   - **Admin Integration** (`/src/pages/admin/ratings.tsx`)
+     - Added "Attributes" tab to admin ratings page
+     - Player selection interface for comparing up to 4 players
+     - Radar chart comparison visualization
 
-3. **Admin Radar Chart Visualization**
-   - Need to install chart library (Chart.js or Recharts)
-   - Create RadarChart component for admin ratings page
-   - Display 6 derived attributes in radar format
-   - Allow comparison of multiple players
+4. **Team Balancing Algorithm Updates** ✅
+   - Modified `tierBasedSnakeDraft.ts` to include derived attributes
+   - Updated weighting system:
+     - Layer 1: Core ratings (Attack/Defense/Game IQ) - 60%
+     - Layer 2: Derived attributes - 30%
+     - Layer 3: Performance metrics - 10% (7% track record + 3% recent form)
+   - Added `derived_attributes` to TeamAssignment interface
+   - Updated `useTeamBalancing.ts` to fetch and include derived attributes
+
+5. **Admin Interface Enhancements** ✅
+   - **PlaystyleStatistics Component** (`/src/components/admin/ratings/components/PlaystyleStatistics.tsx`)
+     - Shows playstyle distribution by category
+     - Displays top 5 most common playstyles with percentages
+     - Visual progress bars for each playstyle
+   - Updated `usePlayerRatings` hook to fetch playstyle information
+   - Added playstyle data to Rating interface
+
+6. **Type Definitions** ✅
+   - Created TypeScript interfaces in `/src/types/playstyle.ts`
+   - Updated existing player interfaces to include derived attributes
+   - Added helper functions for normalizing and formatting
+
+7. **Documentation Updates** ✅
+   - Updated CLAUDE.md with playstyle feature details
+   - This documentation file serves as the user guide
+   - Documented team balancing changes
 
 ### 📋 Still To Do
 
-4. **Team Balancing Algorithm Updates**
-   - Modify `tierBasedSnakeDraft.ts` to include derived attributes
-   - Update weighting system:
-     - Layer 1: Core ratings (Attack/Defense/Game IQ) - 60%
-     - Layer 2: Derived attributes - 30%
-     - Layer 3: Performance metrics - 10%
-   - Ensure style diversity in team composition
-
-5. **Admin Interface Enhancements**
-   - Add derived attributes to admin ratings page
-   - Show playstyle distribution statistics
-   - Create player comparison tool with radar chart overlays
-   - Add filtering by playstyle
-
-6. **Type Definitions**
-   - Create TypeScript interfaces for playstyles
-   - Update existing player interfaces
-   - Add types for derived attributes
-
-7. **Testing & Migration**
-   - Run migration on local Supabase
-   - Test trigger function with sample data
-   - Verify attribute calculations
-   - Test UI components
-
-8. **Documentation Updates**
-   - Update CLAUDE.md with playstyle feature
-   - Add user guide for rating with playstyles
-   - Document team balancing changes
+8. **Testing & Production Deployment**
+   - Run migration on production Supabase
+   - Monitor trigger function performance
+   - Gather user feedback on playstyle selections
 
 ## Technical Implementation Details
 
@@ -180,10 +184,23 @@ Final attributes:
 
 ## Files Modified/Created
 
+### New Files
 - `/supabase/migrations/20250905_add_playstyle_system.sql` - Database schema
 - `/src/components/ratings/PlaystyleSelector.tsx` - Playstyle dropdown component
-- `/src/pages/Ratings.tsx` - Updated to include playstyle selection
+- `/src/types/playstyle.ts` - TypeScript interfaces and helpers
+- `/src/components/charts/PlayerRadarChart.tsx` - Radar chart visualization
+- `/src/components/admin/ratings/components/PlaystyleStatistics.tsx` - Statistics dashboard
 - `/docs/features/PlaystyleRatingSystem.md` - This documentation
+
+### Modified Files
+- `/src/pages/Ratings.tsx` - Added playstyle selection to rating modal
+- `/src/pages/admin/ratings.tsx` - Added attributes tab and statistics
+- `/src/components/admin/ratings/types.ts` - Added derived_attributes and playstyle to interfaces
+- `/src/components/admin/ratings/hooks/usePlayerRatings.ts` - Fetches derived attributes and playstyles
+- `/src/components/admin/team-balancing/types.ts` - Added derived_attributes to TeamAssignment
+- `/src/components/admin/team-balancing/tierBasedSnakeDraft.ts` - Integrated attributes into rating calculation
+- `/src/components/admin/team-balancing/useTeamBalancing.ts` - Fetches derived attributes for players
+- `/CLAUDE.md` - Added playstyle system documentation
 
 ## Notes for Continuation
 

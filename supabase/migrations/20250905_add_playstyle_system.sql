@@ -16,32 +16,32 @@ CREATE TABLE playstyles (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert playstyle definitions with balanced weights
+-- Insert playstyle definitions with balanced weights (all totaling ~2.0)
 INSERT INTO playstyles (name, category, pace_weight, shooting_weight, passing_weight, dribbling_weight, defending_weight, physical_weight, description) VALUES
 -- Attacking Styles
-('Complete Forward', 'attacking', 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 'Balanced all-round attacker'),
+('Complete Forward', 'attacking', 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 'Balanced all-round attacker'),
 ('Hunter', 'attacking', 1.0, 1.0, 0, 0, 0, 0, 'Pace + Shooting'),
-('Hawk', 'attacking', 0.8, 0.8, 0, 0, 0, 0.8, 'Pace + Shooting + Physical'),
-('Marksman', 'attacking', 0, 0.8, 0, 0.8, 0, 0.8, 'Shooting + Dribbling + Physical'),
+('Hawk', 'attacking', 0.67, 0.67, 0, 0, 0, 0.67, 'Pace + Shooting + Physical'),
+('Marksman', 'attacking', 0, 0.67, 0, 0.67, 0, 0.67, 'Shooting + Dribbling + Physical'),
 ('Finisher', 'attacking', 0, 1.0, 0, 0, 0, 1.0, 'Shooting + Physical'),
 ('Sniper', 'attacking', 0, 1.0, 0, 1.0, 0, 0, 'Shooting + Dribbling'),
 ('Deadeye', 'attacking', 0, 1.0, 1.0, 0, 0, 0, 'Shooting + Passing'),
 -- Midfield Styles
-('Box-to-Box', 'midfield', 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 'Balanced all-round midfielder'),
-('Engine', 'midfield', 0.8, 0, 0.8, 0.8, 0, 0, 'Pace + Passing + Dribbling'),
+('Box-to-Box', 'midfield', 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 'Balanced all-round midfielder'),
+('Engine', 'midfield', 0.67, 0, 0.67, 0.67, 0, 0, 'Pace + Passing + Dribbling'),
 ('Artist', 'midfield', 0, 0, 1.0, 1.0, 0, 0, 'Passing + Dribbling'),
 ('Architect', 'midfield', 0, 0, 1.0, 0, 0, 1.0, 'Passing + Physical'),
 ('Powerhouse', 'midfield', 0, 0, 1.0, 0, 1.0, 0, 'Passing + Defending'),
-('Maestro', 'midfield', 0, 0.8, 0.8, 0.8, 0, 0, 'Shooting + Passing + Dribbling'),
+('Maestro', 'midfield', 0, 0.67, 0.67, 0.67, 0, 0, 'Shooting + Passing + Dribbling'),
 ('Catalyst', 'midfield', 1.0, 0, 1.0, 0, 0, 0, 'Pace + Passing'),
 -- Defensive Styles
-('Complete Defender', 'defensive', 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 'Balanced all-round defender'),
+('Complete Defender', 'defensive', 0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 'Balanced all-round defender'),
 ('Shadow', 'defensive', 1.0, 0, 0, 0, 1.0, 0, 'Pace + Defending'),
-('Anchor', 'defensive', 0.8, 0, 0, 0, 0.8, 0.8, 'Pace + Defending + Physical'),
+('Anchor', 'defensive', 0.67, 0, 0, 0, 0.67, 0.67, 'Pace + Defending + Physical'),
 ('Gladiator', 'defensive', 0, 1.0, 0, 0, 1.0, 0, 'Shooting + Defending'),
 ('Guardian', 'defensive', 0, 0, 0, 1.0, 1.0, 0, 'Dribbling + Defending'),
 ('Sentinel', 'defensive', 0, 0, 0, 0, 1.0, 1.0, 'Defending + Physical'),
-('Backbone', 'defensive', 0, 0, 0.8, 0, 0.8, 0.8, 'Passing + Defending + Physical');
+('Backbone', 'defensive', 0, 0, 0.67, 0, 0.67, 0.67, 'Passing + Defending + Physical');
 
 -- Add playstyle column to player_ratings table (single column, not three)
 ALTER TABLE player_ratings 

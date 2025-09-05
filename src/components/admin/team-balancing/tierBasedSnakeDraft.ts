@@ -74,12 +74,30 @@ function calculateThreeLayerRating(player: TeamAssignment): {
                           (player.defense_rating ?? 5) + 
                           (player.game_iq_rating ?? 5)) / 3;
   
+  // Layer 2: Derived Attributes from Playstyles
+  let attributesScore = 3.5; // Default to 3.5 (0.35 * 10)
+  if (player.derived_attributes) {
+    const attrs = player.derived_attributes;
+    // Average all attributes and convert from 0-1 to 0-10 scale
+    attributesScore = (
+      attrs.pace + 
+      attrs.shooting + 
+      attrs.passing + 
+      attrs.dribbling + 
+      attrs.defending + 
+      attrs.physical
+    ) / 6 * 10;
+  }
+  
   // Check if player has enough games for performance metrics
   if (!player.total_games || player.total_games < MIN_GAMES_FOR_STATS) {
-    // Players with < 10 games use skill rating only
+    // Players with < 10 games use skill rating and attributes only
+    const attributesAdjustment = (attributesScore / 10 - 0.35) / 0.65;
+    const finalRating = baseSkillRating * (1 + (WEIGHT_ATTRIBUTES * attributesAdjustment));
     return {
-      threeLayerRating: baseSkillRating,
+      threeLayerRating: finalRating,
       baseSkillRating,
+      attributesScore,
       momentumScore: 0,
       momentumCategory: 'steady',
       momentumAdjustment: 0
@@ -147,8 +165,12 @@ function calculateThreeLayerRating(player: TeamAssignment): {
   const overallAdjustment = (overallPerformanceScore - 0.5) * 2; // Range: -1 to +1
   const recentAdjustment = (recentFormScore - 0.5) * 2; // Range: -1 to +1
   
-  // Apply weighted adjustments to base skill including momentum
+  // Calculate attributes adjustment (center around 0)
+  const attributesAdjustment = (attributesScore / 10 - 0.35) / 0.65;
+  
+  // Apply weighted adjustments to base skill including momentum and attributes
   const finalRating = baseSkillRating * (1 + 
+    (WEIGHT_ATTRIBUTES * attributesAdjustment) +
     (WEIGHT_OVERALL * overallAdjustment) + 
     (WEIGHT_RECENT * recentAdjustment) +
     (MOMENTUM_WEIGHT * momentumAdjustment)
@@ -157,6 +179,7 @@ function calculateThreeLayerRating(player: TeamAssignment): {
   return {
     threeLayerRating: finalRating,
     baseSkillRating,
+    attributesScore,
     overallPerformanceScore,
     recentFormScore,
     momentumScore: momentum,

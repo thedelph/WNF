@@ -18,6 +18,12 @@ export interface Rating {
   previous_attack_rating?: number;
   previous_defense_rating?: number;
   previous_game_iq_rating?: number;
+  // Playstyle information
+  playstyle?: {
+    id: string;
+    name: string;
+    category: 'attacking' | 'midfield' | 'defensive';
+  } | null;
 }
 
 export interface Player {
@@ -27,6 +33,15 @@ export interface Player {
   defense_rating: number;
   game_iq: number;
   ratings: Rating[];
+  // Derived attributes from playstyle ratings
+  derived_attributes?: {
+    pace: number;
+    shooting: number;
+    passing: number;
+    dribbling: number;
+    defending: number;
+    physical: number;
+  };
 }
 
 export interface SortConfig {

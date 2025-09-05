@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface TabSelectorProps {
-  activeTab: 'received' | 'given';
-  onTabChange: (tab: 'received' | 'given') => void;
+  activeTab: 'received' | 'given' | 'attributes';
+  onTabChange: (tab: 'received' | 'given' | 'attributes') => void;
 }
 
 export const TabSelector: React.FC<TabSelectorProps> = ({ activeTab, onTabChange }) => {
@@ -19,6 +19,12 @@ export const TabSelector: React.FC<TabSelectorProps> = ({ activeTab, onTabChange
         onClick={() => onTabChange('given')}
       >
         <span className="hidden sm:inline">Ratings </span>Given
+      </button>
+      <button
+        className={`tab tab-sm sm:tab-md ${activeTab === 'attributes' ? 'tab-active' : ''}`}
+        onClick={() => onTabChange('attributes')}
+      >
+        <span className="hidden sm:inline">Player </span>Attributes
       </button>
     </div>
   );

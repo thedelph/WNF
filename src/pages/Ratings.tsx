@@ -13,11 +13,18 @@ interface Player {
   friendly_name: string;
   games_played: number;
   whatsapp_group_member: string;
+  is_beta_tester?: boolean;
+  is_super_admin?: boolean;
   current_rating?: {
     attack_rating: number;
     defense_rating: number;
     game_iq_rating: number;
     playstyle_id?: string | null;
+    playstyles?: {
+      id: string;
+      name: string;
+      category: string;
+    } | null;
   };
 }
 
@@ -168,7 +175,7 @@ export default function Ratings() {
 
       const { data: player, error } = await supabase
         .from('players')
-        .select('id, friendly_name')
+        .select('id, friendly_name, is_beta_tester, is_super_admin')
         .eq('user_id', user.id)
         .single();
 
@@ -192,10 +199,21 @@ export default function Ratings() {
 
       if (error) throw error;
 
-      // Get current user's ratings
+      // Get current user's ratings with playstyle information
       const { data: existingRatings } = await supabase
         .from('player_ratings')
-        .select('rated_player_id, attack_rating, defense_rating, game_iq_rating, playstyle_id')
+        .select(`
+          rated_player_id, 
+          attack_rating, 
+          defense_rating, 
+          game_iq_rating, 
+          playstyle_id,
+          playstyles (
+            id,
+            name,
+            category
+          )
+        `)
         .eq('rater_id', currentPlayer.id);
 
       // Get WhatsApp status for all players
@@ -242,7 +260,8 @@ export default function Ratings() {
             attack_rating: ratings.attack,
             defense_rating: ratings.defense,
             game_iq_rating: ratings.gameIq,
-            playstyle_id: selectedPlaystyleId
+            // Only include playstyle_id if user is a beta tester or super admin
+            playstyle_id: (currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) ? selectedPlaystyleId : null
           },
           {
             onConflict: 'rater_id,rated_player_id'
@@ -428,10 +447,12 @@ export default function Ratings() {
                 onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
                 label="Game IQ Rating"
               />
-              <PlaystyleSelector
-                selectedPlaystyleId={selectedPlaystyleId}
-                onPlaystyleChange={setSelectedPlaystyleId}
-              />
+              {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && (
+                <PlaystyleSelector
+                  selectedPlaystyleId={selectedPlaystyleId}
+                  onPlaystyleChange={setSelectedPlaystyleId}
+                />
+              )}
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
@@ -487,6 +508,25 @@ export default function Ratings() {
                         <p>Attack: {formatStarRating(player.current_rating.attack_rating)}</p>
                         <p>Defense: {formatStarRating(player.current_rating.defense_rating)}</p>
                         <p>Game IQ: {formatStarRating(player.current_rating.game_iq_rating)}</p>
+                        {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && player.current_rating.playstyles && (
+                          <div className="mt-2">
+                            <p className="font-semibold">Playstyle:</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`badge badge-sm ${
+                                player.current_rating.playstyles.category === 'attacking' 
+                                  ? 'badge-error' 
+                                  : player.current_rating.playstyles.category === 'midfield'
+                                  ? 'badge-warning'
+                                  : 'badge-info'
+                              }`}>
+                                {player.current_rating.playstyles.category}
+                              </span>
+                              <span className="text-xs">
+                                {player.current_rating.playstyles.name}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                     <motion.button
