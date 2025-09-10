@@ -13,8 +13,14 @@ export interface PlayerStats {
   maxWinStreak: number;
   currentUnbeatenStreak: number;
   maxUnbeatenStreak: number;
+  currentLossStreak: number;
+  maxLossStreak: number;
+  currentWinlessStreak: number;
+  maxWinlessStreak: number;
   maxAttendanceStreakDate?: string;
   maxUnbeatenStreakDate?: string;
+  maxLossStreakDate?: string;
+  maxWinlessStreakDate?: string;
   recentGames: number;
   wins?: number;
   draws?: number;
@@ -91,6 +97,10 @@ export interface Stats {
   currentWinStreaks: PlayerStats[];
   topUnbeatenStreaks: PlayerStats[];
   currentUnbeatenStreaks: PlayerStats[];
+  topLossStreaks: PlayerStats[];
+  currentLossStreaks: PlayerStats[];
+  topWinlessStreaks: PlayerStats[];
+  currentWinlessStreaks: PlayerStats[];
   goalDifferentials: GoalDifferentialStats[];
   comprehensiveStats: ComprehensivePlayerStats[];
   loading: boolean;
@@ -118,6 +128,10 @@ export const useStats = (year?: number, availableYears?: number[]) => {
     currentWinStreaks: [],
     topUnbeatenStreaks: [],
     currentUnbeatenStreaks: [],
+    topLossStreaks: [],
+    currentLossStreaks: [],
+    topWinlessStreaks: [],
+    currentWinlessStreaks: [],
     goalDifferentials: [], 
     comprehensiveStats: [], 
     loading: true,
@@ -259,6 +273,40 @@ export const useStats = (year?: number, availableYears?: number[]) => {
             max_streak_date: s.max_streak_date
           }]) || []
         );
+
+        // Fetch losing streaks (broken by wins or draws)
+        const { data: lossStreakStats, error: lossStreakError } = await supabase
+          .rpc('get_player_losing_streaks', { 
+            target_year: year || null
+          });
+
+        if (lossStreakError) throw lossStreakError;
+
+        // Create a map of player losing streaks
+        const lossStreakMap = new Map<string, { current_loss_streak: number, max_loss_streak: number, max_streak_date?: string }>(
+          lossStreakStats?.map((s: { id: string, current_loss_streak: number, max_loss_streak: number, max_streak_date?: string }) => [s.id, { 
+            current_loss_streak: Number(s.current_loss_streak), 
+            max_loss_streak: Number(s.max_loss_streak),
+            max_streak_date: s.max_streak_date
+          }]) || []
+        );
+
+        // Fetch winless streaks (broken only by wins)
+        const { data: winlessStreakStats, error: winlessStreakError } = await supabase
+          .rpc('get_player_winless_streaks', { 
+            target_year: year || null
+          });
+
+        if (winlessStreakError) throw winlessStreakError;
+
+        // Create a map of player winless streaks
+        const winlessStreakMap = new Map<string, { current_winless_streak: number, max_winless_streak: number, max_streak_date?: string }>(
+          winlessStreakStats?.map((s: { id: string, current_winless_streak: number, max_winless_streak: number, max_streak_date?: string }) => [s.id, { 
+            current_winless_streak: Number(s.current_winless_streak), 
+            max_winless_streak: Number(s.max_winless_streak),
+            max_streak_date: s.max_streak_date
+          }]) || []
+        );
         
         // Fetch player streak stats for attendance streak dates
         const { data: playerStreakStats, error: playerStreakStatsError } = await supabase
@@ -292,8 +340,14 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           maxWinStreak: winStreakMap.get(p.id)?.max_win_streak || 0,
           currentUnbeatenStreak: unbeatenStreakMap.get(p.id)?.current_unbeaten_streak || 0,
           maxUnbeatenStreak: unbeatenStreakMap.get(p.id)?.max_unbeaten_streak || 0,
+          currentLossStreak: lossStreakMap.get(p.id)?.current_loss_streak || 0,
+          maxLossStreak: lossStreakMap.get(p.id)?.max_loss_streak || 0,
+          currentWinlessStreak: winlessStreakMap.get(p.id)?.current_winless_streak || 0,
+          maxWinlessStreak: winlessStreakMap.get(p.id)?.max_winless_streak || 0,
           maxStreakDate: winStreakMap.get(p.id)?.max_streak_date ? winStreakMap.get(p.id)?.max_streak_date : undefined,
           maxUnbeatenStreakDate: unbeatenStreakMap.get(p.id)?.max_streak_date ? unbeatenStreakMap.get(p.id)?.max_streak_date : undefined,
+          maxLossStreakDate: lossStreakMap.get(p.id)?.max_streak_date ? lossStreakMap.get(p.id)?.max_streak_date : undefined,
+          maxWinlessStreakDate: winlessStreakMap.get(p.id)?.max_streak_date ? winlessStreakMap.get(p.id)?.max_streak_date : undefined,
           maxAttendanceStreakDate: streakPeriodMap.get(p.friendly_name)?.end_date,
           recentGames: 0,
           wins: Number(p.wins),
@@ -317,8 +371,14 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           maxWinStreak: winStreakMap.get(p.id)?.max_win_streak || 0,
           currentUnbeatenStreak: unbeatenStreakMap.get(p.id)?.current_unbeaten_streak || 0,
           maxUnbeatenStreak: unbeatenStreakMap.get(p.id)?.max_unbeaten_streak || 0,
+          currentLossStreak: lossStreakMap.get(p.id)?.current_loss_streak || 0,
+          maxLossStreak: lossStreakMap.get(p.id)?.max_loss_streak || 0,
+          currentWinlessStreak: winlessStreakMap.get(p.id)?.current_winless_streak || 0,
+          maxWinlessStreak: winlessStreakMap.get(p.id)?.max_winless_streak || 0,
           maxStreakDate: winStreakMap.get(p.id)?.max_streak_date ? winStreakMap.get(p.id)?.max_streak_date : undefined,
           maxUnbeatenStreakDate: unbeatenStreakMap.get(p.id)?.max_streak_date ? unbeatenStreakMap.get(p.id)?.max_streak_date : undefined,
+          maxLossStreakDate: lossStreakMap.get(p.id)?.max_streak_date ? lossStreakMap.get(p.id)?.max_streak_date : undefined,
+          maxWinlessStreakDate: winlessStreakMap.get(p.id)?.max_streak_date ? winlessStreakMap.get(p.id)?.max_streak_date : undefined,
           maxAttendanceStreakDate: streakPeriodMap.get(p.friendly_name)?.end_date,
           recentGames: 0,
           wins: 0,
@@ -412,6 +472,10 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           currentWinStreaks: getPlayerStatsByCurrentWinStreak(allPlayers).slice(0, 10),
           topUnbeatenStreaks: getPlayerStatsByMaxUnbeatenStreak(allPlayers).slice(0, 10),
           currentUnbeatenStreaks: getPlayerStatsByCurrentUnbeatenStreak(allPlayers).slice(0, 10),
+          topLossStreaks: getPlayerStatsByMaxLossStreak(allPlayers).slice(0, 10),
+          currentLossStreaks: getPlayerStatsByCurrentLossStreak(allPlayers).slice(0, 10),
+          topWinlessStreaks: getPlayerStatsByMaxWinlessStreak(allPlayers).slice(0, 10),
+          currentWinlessStreaks: getPlayerStatsByCurrentWinlessStreak(allPlayers).slice(0, 10),
           mostCaps: getPlayerStatsByCaps(allPlayers).filter((p: PlayerStats) => p.caps >= (getPlayerStatsByCaps(allPlayers)[2]?.caps || 0)),
           // Get top 10 players by win rate
           bestWinRates: getPlayerStatsByWinRate(transformedPlayerStats).slice(0, 10),
@@ -581,6 +645,26 @@ export const useStats = (year?: number, availableYears?: number[]) => {
   // Get player stats sorted by caps (used for XP calculation)
   const getPlayerStatsByCaps = (players: PlayerStats[]) => {
     return [...players].sort((a, b) => b.caps - a.caps);
+  };
+
+  // Get player stats sorted by max loss streak
+  const getPlayerStatsByMaxLossStreak = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.maxLossStreak || 0) - (a.maxLossStreak || 0));
+  };
+
+  // Get player stats sorted by current loss streak
+  const getPlayerStatsByCurrentLossStreak = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.currentLossStreak || 0) - (a.currentLossStreak || 0));
+  };
+
+  // Get player stats sorted by max winless streak
+  const getPlayerStatsByMaxWinlessStreak = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.maxWinlessStreak || 0) - (a.maxWinlessStreak || 0));
+  };
+
+  // Get player stats sorted by current winless streak
+  const getPlayerStatsByCurrentWinlessStreak = (players: PlayerStats[]) => {
+    return [...players].sort((a, b) => (b.currentWinlessStreak || 0) - (a.currentWinlessStreak || 0));
   };
 
   /**

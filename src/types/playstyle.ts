@@ -167,37 +167,85 @@ export function formatAttributeValue(value: number | null | undefined): string {
   return normalizeAttributeValue(value).toFixed(1);
 }
 
-// Predefined playstyle names (keep the existing 24)
+// Predefined playstyle names (all 64 combinations)
 const PREDEFINED_PLAYSTYLES: Record<string, string> = {
-  // Complete players (all 6 attributes)
-  '111111': 'Complete Player',
+  // No attributes (1)
+  '000000': 'No Style Selected', // No attributes
   
-  // Attacking styles
+  // Single attributes (6)
+  '100000': 'Sprinter',       // Pace only
+  '010000': 'Shooter',        // Shooting only
+  '001000': 'Playmaker',      // Passing only
+  '000100': 'Dribbler',       // Dribbling only
+  '000010': 'Defender',       // Defending only
+  '000001': 'Warrior',        // Physical only
+  
+  // Two attributes (15)
   '110000': 'Hunter',         // Pace + Shooting
-  '110001': 'Hawk',           // Pace + Shooting + Physical
-  '010101': 'Marksman',       // Shooting + Dribbling + Physical
-  '010001': 'Finisher',       // Shooting + Physical
-  '010100': 'Sniper',         // Shooting + Dribbling
-  '011000': 'Deadeye',        // Shooting + Passing
-  '100100': 'Speedster',      // Pace + Dribbling
-  
-  // Midfield styles
-  '101100': 'Engine',         // Pace + Passing + Dribbling
-  '001100': 'Artist',         // Passing + Dribbling
-  '001001': 'Architect',      // Passing + Physical
-  '001010': 'Powerhouse',     // Passing + Defending
-  '011100': 'Maestro',        // Shooting + Passing + Dribbling
   '101000': 'Catalyst',       // Pace + Passing
-  '100001': 'Locomotive',     // Pace + Physical
-  '000101': 'Enforcer',       // Dribbling + Physical
-  
-  // Defensive styles
+  '100100': 'Speedster',      // Pace + Dribbling
   '100010': 'Shadow',         // Pace + Defending
-  '100011': 'Anchor',         // Pace + Defending + Physical
+  '100001': 'Locomotive',     // Pace + Physical
+  '011000': 'Deadeye',        // Shooting + Passing
+  '010100': 'Sniper',         // Shooting + Dribbling
   '010010': 'Gladiator',      // Shooting + Defending
+  '010001': 'Finisher',       // Shooting + Physical
+  '001100': 'Artist',         // Passing + Dribbling
+  '001010': 'Powerhouse',     // Passing + Defending
+  '001001': 'Architect',      // Passing + Physical
   '000110': 'Guardian',       // Dribbling + Defending
+  '000101': 'Enforcer',       // Dribbling + Physical
   '000011': 'Sentinel',       // Defending + Physical
+  
+  // Three attributes (20)
+  '111000': 'Striker',        // Pace + Shooting + Passing
+  '110100': 'Attacker',       // Pace + Shooting + Dribbling
+  '110010': 'Predator',       // Pace + Shooting + Defending
+  '110001': 'Hawk',           // Pace + Shooting + Physical
+  '101100': 'Engine',         // Pace + Passing + Dribbling
+  '101010': 'Sweeper',        // Pace + Passing + Defending
+  '101001': 'Conductor',      // Pace + Passing + Physical
+  '100110': 'Interceptor',    // Pace + Dribbling + Defending
+  '100101': 'Dynamo',         // Pace + Dribbling + Physical
+  '100011': 'Anchor',         // Pace + Defending + Physical
+  '011100': 'Maestro',        // Shooting + Passing + Dribbling
+  '011010': 'Tactician',      // Shooting + Passing + Defending
+  '011001': 'Technician',     // Shooting + Passing + Physical
+  '010110': 'Poacher',        // Shooting + Dribbling + Defending
+  '010101': 'Marksman',       // Shooting + Dribbling + Physical
+  '010011': 'Tank',           // Shooting + Defending + Physical
+  '001110': 'Regista',        // Passing + Dribbling + Defending
+  '001101': 'Virtuoso',       // Passing + Dribbling + Physical
   '001011': 'Backbone',       // Passing + Defending + Physical
+  '000111': 'Stopper',        // Dribbling + Defending + Physical
+  
+  // Four attributes (15)
+  '111100': 'Magician',       // Pace + Shooting + Passing + Dribbling
+  '111010': 'Captain',        // Pace + Shooting + Passing + Defending
+  '111001': 'Leader',         // Pace + Shooting + Passing + Physical
+  '110110': 'Forward',        // Pace + Shooting + Dribbling + Defending
+  '110101': 'Target Man',     // Pace + Shooting + Dribbling + Physical
+  '110011': 'Destroyer',      // Pace + Shooting + Defending + Physical
+  '101110': 'Box-to-Box',     // Pace + Passing + Dribbling + Defending
+  '101101': 'Powerplayer',    // Pace + Passing + Dribbling + Physical
+  '101011': 'Libero',         // Pace + Passing + Defending + Physical
+  '100111': 'Ball Winner',    // Pace + Dribbling + Defending + Physical
+  '011110': 'Orchestrator',   // Shooting + Passing + Dribbling + Defending
+  '011101': 'Ace',            // Shooting + Passing + Dribbling + Physical
+  '011011': 'General',        // Shooting + Passing + Defending + Physical
+  '010111': 'Terminator',     // Shooting + Dribbling + Defending + Physical
+  '001111': 'Commander',      // Passing + Dribbling + Defending + Physical
+  
+  // Five attributes (6)
+  '111110': 'Genius',         // All except Physical
+  '111101': 'Phenomenon',     // All except Defending
+  '111011': 'Legend',         // All except Dribbling
+  '110111': 'Machine',        // All except Passing
+  '101111': 'Mastermind',     // All except Shooting
+  '011111': 'Titan',          // All except Pace
+  
+  // Six attributes (1)
+  '111111': 'All-Rounder',    // All attributes
 };
 
 // Helper to convert attribute combination to binary key
@@ -216,79 +264,14 @@ function attributesToKey(attributes: AttributeCombination): string {
 export function generatePlaystyleName(attributes: AttributeCombination): string {
   const key = attributesToKey(attributes);
   
-  // Check for predefined name first
-  if (PREDEFINED_PLAYSTYLES[key]) {
-    return PREDEFINED_PLAYSTYLES[key];
-  }
-  
-  // Generate dynamic name for missing combinations
-  const selectedAttributes: string[] = [];
-  
-  if (attributes.has_pace) selectedAttributes.push('Pace');
-  if (attributes.has_shooting) selectedAttributes.push('Shooting');
-  if (attributes.has_passing) selectedAttributes.push('Passing');
-  if (attributes.has_dribbling) selectedAttributes.push('Dribbling');
-  if (attributes.has_defending) selectedAttributes.push('Defending');
-  if (attributes.has_physical) selectedAttributes.push('Physical');
-  
-  const count = selectedAttributes.length;
-  
-  if (count === 0) return 'No Style Selected';
-  if (count === 1) return `${selectedAttributes[0]} Specialist`;
-  
-  // For 2-5 attributes without predefined names, join with ' & '
-  return selectedAttributes.join(' & ');
+  // All 64 combinations now have predefined names
+  return PREDEFINED_PLAYSTYLES[key] || 'No Style Selected';
 }
 
 // Generate compact playstyle display
 export function generatePlaystyleCompact(attributes: AttributeCombination): string {
-  const key = attributesToKey(attributes);
-  
-  // Use abbreviated predefined names when available
-  const COMPACT_NAMES: Record<string, string> = {
-    '111111': 'Complete',
-    '110000': 'Hunter',
-    '110001': 'Hawk',
-    '010101': 'Marksman',
-    '010001': 'Finisher',
-    '010100': 'Sniper',
-    '011000': 'Deadeye',
-    '100100': 'Speedster',
-    '101100': 'Engine',
-    '001100': 'Artist',
-    '001001': 'Architect',
-    '001010': 'Powerhouse',
-    '011100': 'Maestro',
-    '101000': 'Catalyst',
-    '100001': 'Locomotive',
-    '000101': 'Enforcer',
-    '100010': 'Shadow',
-    '100011': 'Anchor',
-    '010010': 'Gladiator',
-    '000110': 'Guardian',
-    '000011': 'Sentinel',
-    '001011': 'Backbone',
-  };
-  
-  if (COMPACT_NAMES[key]) {
-    return COMPACT_NAMES[key];
-  }
-  
-  // Generate compact form for dynamic names
-  const selectedAttributes: string[] = [];
-  
-  if (attributes.has_pace) selectedAttributes.push('PAC');
-  if (attributes.has_shooting) selectedAttributes.push('SHO');
-  if (attributes.has_passing) selectedAttributes.push('PAS');
-  if (attributes.has_dribbling) selectedAttributes.push('DRI');
-  if (attributes.has_defending) selectedAttributes.push('DEF');
-  if (attributes.has_physical) selectedAttributes.push('PHY');
-  
-  const count = selectedAttributes.length;
-  
-  if (count === 0) return 'None';
-  
-  return selectedAttributes.join('+');
+  // Since all combinations now have names, just return the name
+  return generatePlaystyleName(attributes);
 }
 
 // Get attribute combination from selected keys
@@ -342,7 +325,7 @@ export function getAllPlaystyleOptions(): { attributes: AttributeCombination; na
   return options;
 }
 
-// Check if a playstyle name is predefined
+// Check if a playstyle name is predefined (now always true since all 64 are defined)
 export function isPredefinedPlaystyle(attributes: AttributeCombination): boolean {
   const key = attributesToKey(attributes);
   return PREDEFINED_PLAYSTYLES[key] !== undefined;

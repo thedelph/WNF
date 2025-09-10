@@ -15,7 +15,7 @@ interface AwardCardProps {
   description?: string;
   className?: string;
   icon?: React.ReactNode;
-  color?: 'blue' | 'orange' | 'purple' | 'green' | 'pink' | 'indigo' | 'teal';
+  color?: 'blue' | 'orange' | 'purple' | 'green' | 'pink' | 'indigo' | 'teal' | 'red' | 'rose' | 'amber' | 'yellow';
 }
 
 // Emoji medals for top three positions
@@ -28,7 +28,11 @@ const gradientColors = {
   green: 'from-emerald-300 via-emerald-500 to-emerald-700',
   pink: 'from-pink-300 via-pink-500 to-pink-700',
   indigo: 'from-indigo-300 via-indigo-500 to-indigo-700',
-  teal: 'from-teal-300 via-teal-500 to-teal-700'
+  teal: 'from-teal-300 via-teal-500 to-teal-700',
+  red: 'from-red-400 via-red-600 to-red-800',
+  rose: 'from-rose-400 via-rose-600 to-rose-800',
+  amber: 'from-amber-600 via-amber-700 to-amber-900',
+  yellow: 'from-yellow-600 via-yellow-700 to-yellow-900'
 };
 
 const shadowColors = {
@@ -38,7 +42,11 @@ const shadowColors = {
   green: 'shadow-emerald-500/50',
   pink: 'shadow-pink-500/50',
   indigo: 'shadow-indigo-500/50',
-  teal: 'shadow-teal-500/50'
+  teal: 'shadow-teal-500/50',
+  red: 'shadow-red-600/50',
+  rose: 'shadow-rose-600/50',
+  amber: 'shadow-amber-700/50',
+  yellow: 'shadow-amber-700/50'
 };
 
 export const AwardCard = ({ title, winners, description, className, icon, color = 'blue' }: AwardCardProps) => {

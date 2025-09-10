@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Award, Percent, TrendingUp, Shield } from 'lucide-react';
+import { Award, Percent, TrendingUp, Shield, TrendingDown, XCircle } from 'lucide-react';
 import { AwardCard } from './AwardCard';
 import { StatsCard } from './StatsCard';
 import { GoalDifferentialsCard } from './GoalDifferentialsCard';
@@ -146,6 +146,106 @@ export const PerformanceStats = ({ stats, selectedYear }: PerformanceStatsProps)
           }))}
           icon={<Shield className="w-6 h-6" />}
           color="indigo"
+        />
+      )}
+
+      {/* Longest Loss Streaks */}
+      <AwardCard
+        title="Longest Loss Streaks"
+        winners={stats.topLossStreaks
+          .sort((a, b) => (b?.maxLossStreak || 0) - (a?.maxLossStreak || 0))
+          .map(player => {
+            return {
+              name: player?.friendlyName,
+              value: (
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                  <span className="font-bold text-right whitespace-nowrap w-20">{player?.maxLossStreak} losses</span>
+                  {player?.maxLossStreakDate && (
+                    <span className="text-xs opacity-80 text-right whitespace-nowrap w-24">
+                      {new Intl.DateTimeFormat('en-GB', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric' 
+                      }).format(new Date(player?.maxLossStreakDate))}
+                    </span>
+                  )}
+                </div>
+              ),
+              rawValue: player?.maxLossStreak,
+              id: player?.id
+            }
+          })}
+        icon={<TrendingDown className="w-6 h-6" />}
+        color="red"
+        description="Consecutive losses (broken by wins or draws)"
+      />
+
+      {/* Current Loss Streaks - Only show for current year or all time */}
+      {(selectedYear === 'all' || selectedYear === new Date().getFullYear()) && (
+        <AwardCard
+          title="Current Loss Streaks"
+          winners={stats.currentLossStreaks.map((player: PlayerStats) => ({
+            name: player.friendlyName,
+            value: (
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                <span className="font-bold text-right whitespace-nowrap w-20">{player.currentLossStreak} losses</span>
+              </div>
+            ),
+            rawValue: player.currentLossStreak,
+            id: player.id
+          }))}
+          icon={<TrendingDown className="w-6 h-6" />}
+          color="rose"
+        />
+      )}
+
+      {/* Longest Winless Streaks */}
+      <AwardCard
+        title="Longest Winless Streaks"
+        winners={stats.topWinlessStreaks
+          .sort((a, b) => (b?.maxWinlessStreak || 0) - (a?.maxWinlessStreak || 0))
+          .map(player => {
+            return {
+              name: player?.friendlyName,
+              value: (
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                  <span className="font-bold text-right whitespace-nowrap w-20">{player?.maxWinlessStreak} games</span>
+                  {player?.maxWinlessStreakDate && (
+                    <span className="text-xs opacity-80 text-right whitespace-nowrap w-24">
+                      {new Intl.DateTimeFormat('en-GB', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric' 
+                      }).format(new Date(player?.maxWinlessStreakDate))}
+                    </span>
+                  )}
+                </div>
+              ),
+              rawValue: player?.maxWinlessStreak,
+              id: player?.id
+            }
+          })}
+        icon={<XCircle className="w-6 h-6" />}
+        color="amber"
+        description="Games without a win (broken only by wins)"
+      />
+
+      {/* Current Winless Streaks - Only show for current year or all time */}
+      {(selectedYear === 'all' || selectedYear === new Date().getFullYear()) && (
+        <AwardCard
+          title="Current Winless Streaks"
+          winners={stats.currentWinlessStreaks.map((player: PlayerStats) => ({
+            name: player.friendlyName,
+            value: (
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                <span className="font-bold text-right whitespace-nowrap w-20">{player.currentWinlessStreak} games</span>
+              </div>
+            ),
+            rawValue: player.currentWinlessStreak,
+            id: player.id
+          }))}
+          icon={<XCircle className="w-6 h-6" />}
+          color="yellow"
         />
       )}
 

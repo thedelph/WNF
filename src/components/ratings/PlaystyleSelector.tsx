@@ -112,27 +112,22 @@ export default function PlaystyleSelector({
         </div>
       </div>
       
-      {/* Dynamic playstyle preview */}
+      {/* Playstyle preview */}
       <div className="text-sm mt-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
         <div className="font-medium text-primary mb-1">
-          {currentAttributeCombination && isPredefinedPlaystyle(currentAttributeCombination) 
-            ? 'Classic Playstyle' 
-            : 'Generated Playstyle'}
+          Selected Playstyle
         </div>
-        <div className="text-lg font-bold text-primary flex items-center gap-2">
+        <div className="text-lg font-bold text-primary">
           {playstyleName}
-          {currentAttributeCombination && isPredefinedPlaystyle(currentAttributeCombination) && (
-            <span className="text-xs bg-primary/20 px-2 py-1 rounded">Predefined</span>
-          )}
         </div>
         {checkedAttributes.length > 0 && (
           <div className="text-xs opacity-70 mt-1">
-            Compact: {playstyleCompact} • {checkedAttributes.length} attribute{checkedAttributes.length !== 1 ? 's' : ''}
+            {checkedAttributes.length} attribute{checkedAttributes.length !== 1 ? 's' : ''} selected
           </div>
         )}
         {checkedAttributes.length === 0 && (
           <div className="text-xs opacity-70 mt-1">
-            Select attributes above to generate a playstyle
+            Select attributes above to choose a playstyle
           </div>
         )}
       </div>
