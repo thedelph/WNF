@@ -19,6 +19,24 @@ interface PlayerTransformationAnalysisProps {
   data: ParsedDebugData;
 }
 
+interface PlayerTransformation {
+  name: string;
+  baseSkill: number;
+  threeLayerRating: number;
+  change: number;
+  performanceCategory: string;
+  momentum: 'hot' | 'cold' | 'steady';
+  overallPerformance?: number;
+  recentPerformance?: number;
+  momentumScore?: number;
+  overallWinRate?: number;
+  recentWinRate?: number;
+  overallGoalDiff?: number;
+  recentGoalDiff?: number;
+  playstyle?: string;
+  topAttributes?: Array<{ name: string; value: number }>;
+}
+
 export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysisProps> = ({ data }) => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'scatter' | 'heatmap' | 'categories'>('scatter');
@@ -41,6 +59,28 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
           const hasPerformanceData = fullPlayer.overallPerformanceScore !== undefined && 
                                     fullPlayer.recentFormScore !== undefined;
           
+          // Get playstyle info if available
+          let playstyle = undefined;
+          let topAttributes = undefined;
+          
+          if (fullPlayer.playstyle_id) {
+            // We'll need to fetch this or pass it in
+            playstyle = 'Playstyle'; // Placeholder - will be fetched
+          }
+          
+          if (fullPlayer.derived_attributes) {
+            const attrs = fullPlayer.derived_attributes;
+            const attrArray = [
+              { name: 'Pace', value: attrs.pace },
+              { name: 'Shooting', value: attrs.shooting },
+              { name: 'Passing', value: attrs.passing },
+              { name: 'Dribbling', value: attrs.dribbling },
+              { name: 'Defending', value: attrs.defending },
+              { name: 'Physical', value: attrs.physical }
+            ].sort((a, b) => b.value - a.value).slice(0, 2);
+            topAttributes = attrArray;
+          }
+          
           return {
             ...transformedPlayer,
             // Add performance scores from full player data
@@ -51,7 +91,10 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
             overallWinRate: fullPlayer.overall_win_rate,
             recentWinRate: fullPlayer.win_rate,
             overallGoalDiff: fullPlayer.overall_goal_differential,
-            recentGoalDiff: fullPlayer.goal_differential
+            recentGoalDiff: fullPlayer.goal_differential,
+            // Add playstyle info
+            playstyle,
+            topAttributes
           };
         }
         
@@ -64,6 +107,27 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
       // Use performance scores from tier-based algorithm
       const hasPerformanceData = player.overallPerformanceScore !== undefined && 
                                 player.recentFormScore !== undefined;
+      
+      // Get playstyle info if available
+      let playstyle = undefined;
+      let topAttributes = undefined;
+      
+      if (player.playstyle_id) {
+        playstyle = 'Playstyle'; // Placeholder - will be fetched
+      }
+      
+      if (player.derived_attributes) {
+        const attrs = player.derived_attributes;
+        const attrArray = [
+          { name: 'Pace', value: attrs.pace },
+          { name: 'Shooting', value: attrs.shooting },
+          { name: 'Passing', value: attrs.passing },
+          { name: 'Dribbling', value: attrs.dribbling },
+          { name: 'Defending', value: attrs.defending },
+          { name: 'Physical', value: attrs.physical }
+        ].sort((a, b) => b.value - a.value).slice(0, 2);
+        topAttributes = attrArray;
+      }
       
       return {
         name: player.friendly_name,
@@ -80,7 +144,10 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
         overallWinRate: player.overall_win_rate,
         recentWinRate: player.win_rate,
         overallGoalDiff: player.overall_goal_differential,
-        recentGoalDiff: player.goal_differential
+        recentGoalDiff: player.goal_differential,
+        // Add playstyle info
+        playstyle,
+        topAttributes
       };
     });
   }, [data]);
@@ -96,7 +163,9 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
       overallWinRate: player.overallWinRate,
       recentWinRate: player.recentWinRate,
       overallGoalDiff: player.overallGoalDiff,
-      recentGoalDiff: player.recentGoalDiff
+      recentGoalDiff: player.recentGoalDiff,
+      playstyle: player.playstyle,
+      topAttributes: player.topAttributes
     }));
   }, [transformations]);
 
@@ -143,6 +212,14 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
               {data.momentum === 'cold' && '❄️'}
               {data.momentum === 'steady' && '●'}
             </p>
+            {data.topAttributes && data.topAttributes.length > 0 && (
+              <>
+                <div className="divider my-1"></div>
+                <p className="text-purple-600 font-medium">
+                  Top Attributes: {data.topAttributes.map(a => `${a.name} ${(a.value * 10).toFixed(0)}`).join(', ')}
+                </p>
+              </>
+            )}
           </div>
         </div>
       );

@@ -18,6 +18,56 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '05/09/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Playstyle Rating System (Beta)',
+            details: "Introduced a revolutionary new playstyle system with 24 unique playstyles across attacking, midfield, and defensive categories. Players can now assign playstyles when rating others, which automatically derives 6 key attributes: Pace, Shooting, Passing, Dribbling, Defending, and Physical. This feature is currently in beta and available to selected users for testing."
+          },
+          {
+            title: 'Enhanced Team Balancing Algorithm',
+            details: "Team balancing now uses a sophisticated three-layer system: Core Skills (60%), Derived Attributes from playstyles (30%), and Performance Metrics (10%). This creates more nuanced and balanced teams based on how players actually use their skills."
+          },
+          {
+            title: 'Player Attribute Visualization',
+            details: "Added radar chart visualizations in the admin dashboard to compare player attributes. Supports multi-player comparison with up to 4 players and shows all 6 derived attributes in an intuitive chart format."
+          },
+          {
+            title: 'Attribute-Based Playstyle Filtering',
+            details: "Intelligent filtering system allows users to select specific attributes (e.g., Pace + Dribbling) to find matching playstyles. Makes it easier to find the perfect playstyle for any player's abilities."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Advanced Filtering & Sorting',
+            details: "Enhanced the ratings page with new filtering options for playstyles, categories, and attribute-based searches. Added sorting by playstyle name and category for better organization."
+          },
+          {
+            title: 'Mobile Optimization',
+            details: "All playstyle features are fully optimized for mobile devices with compact attribute abbreviations and responsive radar charts."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Rating System Stability',
+            details: "Fixed critical database trigger conflicts that were causing 400 errors when saving playstyle ratings. The system now handles all rating operations smoothly."
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
     version: '1.2.0',
     date: '26/06/2025',
     sections: [

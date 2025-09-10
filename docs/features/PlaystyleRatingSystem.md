@@ -1,55 +1,63 @@
-# Playstyle Rating System Implementation
+# Playstyle Rating System Implementation (v2.0)
 
 ## Overview
-Adding a playstyle system to complement the existing Attack/Defense/Game IQ ratings. Players can select one playstyle when rating another player, which derives 6 additional attributes (Pace, Shooting, Passing, Dribbling, Defending, Physical) for enhanced team balancing and player profiling.
+A hybrid playstyle system that combines the best of predefined names with dynamic attribute selection. Players select attributes directly through checkboxes, and the system either shows a predefined playstyle name (like "Hunter", "Engine") or generates a descriptive name for new combinations. This system complements the existing Attack/Defense/Game IQ ratings with 6 derived attributes (Pace, Shooting, Passing, Dribbling, Defending, Physical) for enhanced team balancing and player profiling.
 
 ## System Design
 
 ### Core Concepts
-- **One playstyle per rating** (not three separate categories)
-- **24 total playstyles** across 3 categories (Attacking, Midfield, Defensive)
-- **6 derived attributes** calculated from playstyle selections
+- **Checkbox-first approach** - Select attributes directly, get playstyle name
+- **Hybrid naming system** - 24 predefined names + dynamic generation for other combinations
+- **Independent 1.0 weights** - Each attribute gets full weight (no percentage splitting)
+- **63 total combinations** - All possible attribute combinations supported
+- **6 derived attributes** calculated from attribute selections
 - **Default baseline** of 0 for all attributes (unrated players start at zero)
 - **Attributes are averaged** across all ratings a player receives
 - **Beta tester/Super admin only** feature during initial rollout
 
 ### Playstyle Categories & Definitions
 
-#### Attacking Styles (8 total)
+#### Predefined Attacking Styles (8 total)
 | Playstyle | Pace | Shooting | Passing | Dribbling | Defending | Physical | Description |
 |-----------|------|----------|---------|-----------|-----------|----------|-------------|
-| Complete Forward | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | Balanced all-round attacker |
+| Complete Forward | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | Balanced all-round attacker |
 | Hunter | 1.0 | 1.0 | 0 | 0 | 0 | 0 | Pace + Shooting |
-| Hawk | 0.67 | 0.67 | 0 | 0 | 0 | 0.67 | Pace + Shooting + Physical |
-| Marksman | 0 | 0.67 | 0 | 0.67 | 0 | 0.67 | Shooting + Dribbling + Physical |
+| Hawk | 1.0 | 1.0 | 0 | 0 | 0 | 1.0 | Pace + Shooting + Physical |
+| Marksman | 0 | 1.0 | 0 | 1.0 | 0 | 1.0 | Shooting + Dribbling + Physical |
 | Finisher | 0 | 1.0 | 0 | 0 | 0 | 1.0 | Shooting + Physical |
 | Sniper | 0 | 1.0 | 0 | 1.0 | 0 | 0 | Shooting + Dribbling |
 | Deadeye | 0 | 1.0 | 1.0 | 0 | 0 | 0 | Shooting + Passing |
 | Speedster | 1.0 | 0 | 0 | 1.0 | 0 | 0 | Pace + Dribbling |
 
-#### Midfield Styles (9 total)
+#### Predefined Midfield Styles (9 total)
 | Playstyle | Pace | Shooting | Passing | Dribbling | Defending | Physical | Description |
 |-----------|------|----------|---------|-----------|-----------|----------|-------------|
-| Box-to-Box | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | Balanced all-round midfielder |
-| Engine | 0.67 | 0 | 0.67 | 0.67 | 0 | 0 | Pace + Passing + Dribbling |
+| Box-to-Box | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | Balanced all-round midfielder |
+| Engine | 1.0 | 0 | 1.0 | 1.0 | 0 | 0 | Pace + Passing + Dribbling |
 | Artist | 0 | 0 | 1.0 | 1.0 | 0 | 0 | Passing + Dribbling |
 | Architect | 0 | 0 | 1.0 | 0 | 0 | 1.0 | Passing + Physical |
 | Powerhouse | 0 | 0 | 1.0 | 0 | 1.0 | 0 | Passing + Defending |
-| Maestro | 0 | 0.67 | 0.67 | 0.67 | 0 | 0 | Shooting + Passing + Dribbling |
+| Maestro | 0 | 1.0 | 1.0 | 1.0 | 0 | 0 | Shooting + Passing + Dribbling |
 | Catalyst | 1.0 | 0 | 1.0 | 0 | 0 | 0 | Pace + Passing |
 | Locomotive | 1.0 | 0 | 0 | 0 | 0 | 1.0 | Pace + Physical |
 | Enforcer | 0 | 0 | 0 | 1.0 | 0 | 1.0 | Dribbling + Physical |
 
-#### Defensive Styles (7 total)
+#### Predefined Defensive Styles (7 total)
 | Playstyle | Pace | Shooting | Passing | Dribbling | Defending | Physical | Description |
 |-----------|------|----------|---------|-----------|-----------|----------|-------------|
-| Complete Defender | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | 0.33 | Balanced all-round defender |
+| Complete Defender | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | Balanced all-round defender |
 | Shadow | 1.0 | 0 | 0 | 0 | 1.0 | 0 | Pace + Defending |
-| Anchor | 0.67 | 0 | 0 | 0 | 0.67 | 0.67 | Pace + Defending + Physical |
+| Anchor | 1.0 | 0 | 0 | 0 | 1.0 | 1.0 | Pace + Defending + Physical |
 | Gladiator | 0 | 1.0 | 0 | 0 | 1.0 | 0 | Shooting + Defending |
 | Guardian | 0 | 0 | 0 | 1.0 | 1.0 | 0 | Dribbling + Defending |
 | Sentinel | 0 | 0 | 0 | 0 | 1.0 | 1.0 | Defending + Physical |
-| Backbone | 0 | 0 | 0.67 | 0 | 0.67 | 0.67 | Passing + Defending + Physical |
+| Backbone | 0 | 0 | 1.0 | 0 | 1.0 | 1.0 | Passing + Defending + Physical |
+
+#### Dynamic Playstyles (39 additional combinations)
+Any attribute combination not covered by the 24 predefined names gets a dynamically generated name:
+- **Single attributes**: "Pace Specialist", "Shooting Specialist", etc.
+- **Multiple attributes**: "Pace & Defending", "Shooting & Passing & Physical", etc.
+- **All attributes**: "Complete Player" (predefined)
 
 ## Implementation Status
 
@@ -92,10 +100,10 @@ Adding a playstyle system to complement the existing Attack/Defense/Game IQ rati
 
 4. **Team Balancing Algorithm Updates** ✅
    - Modified `tierBasedSnakeDraft.ts` to include derived attributes
-   - Updated weighting system:
+   - Updated weighting system (rebalanced 2025-09-08):
      - Layer 1: Core ratings (Attack/Defense/Game IQ) - 60%
-     - Layer 2: Derived attributes - 30%
-     - Layer 3: Performance metrics - 10% (7% track record + 3% recent form)
+     - Layer 2: Derived attributes - 20%
+     - Layer 3: Performance metrics - 20% (12% track record + 8% recent form)
    - Added `derived_attributes` to TeamAssignment interface
    - Updated `useTeamBalancing.ts` to fetch and include derived attributes
    - Changed default attribute value from 0.35 to 0 for unrated players
@@ -184,15 +192,32 @@ Selecting "Pace + Dribbling" shows:
 
 This makes it easier to find the right playstyle based on your assessment of the player.
 
+## Version 2.0 Changes (Current)
+
+### Major Updates
+1. **Checkbox-first UI** - Select attributes directly, playstyle name is generated
+2. **Independent 1.0 weights** - Each attribute gets full weight, no percentage splitting
+3. **Hybrid naming** - Keeps 24 predefined names, generates names for 39 new combinations
+4. **No versatility penalty** - Players with more attributes get higher totals (fair representation)
+5. **Binary key mapping** - Fixed incorrect mappings (e.g., Sentinel vs Enforcer)
+6. **Team balancing update** - Normalized for 0-6 attribute range instead of fixed 2.0
+
+### Key Benefits
+- **More intuitive** - Check what you see, get appropriate name
+- **Fair scoring** - Versatile players no longer penalized
+- **Unlimited combinations** - All 63 possible combinations supported
+- **Preserves familiarity** - Classic names like "Hunter" and "Engine" retained
+- **Future-proof** - Easy to add new predefined names if patterns emerge
+
 ## Key Decisions Made
 
-1. **Single playstyle per rating** (not 3) - More intuitive, rate what you see
-2. **Zero default baseline** - Unrated players start at 0, must earn attributes through ratings
-3. **Balanced styles in all categories** - Every category has a "Complete" option
-4. **All weights sum to 2.0** - Perfect balance across all playstyles
+1. **Single rating per player** - More intuitive, rate what you see
+2. **Zero default baseline** - Unrated players start at 0, must earn attributes through ratings  
+3. **Independent weights** - Each attribute gets 1.0 (not percentage-based)
+4. **Hybrid naming** - Best of both worlds (predefined + dynamic)
 5. **Attributes as tendencies, not additional skills** - Avoids double-counting
 6. **Beta tester restriction** - Limited rollout during initial testing phase
-7. **24 total playstyles** - Comprehensive coverage including Speedster, Locomotive, Enforcer
+7. **63 total combinations** - Complete coverage of all possibilities
 
 ## Files Modified/Created
 

@@ -259,7 +259,8 @@ export const useTeamBalancing = () => {
           goal_differential: goalDifferential,
           overall_win_rate: overallWinRate,
           overall_goal_differential: overallGoalDifferential,
-          total_games: gamesPlayed
+          total_games: gamesPlayed,
+          derived_attributes: derivedAttributesMap.get(playerId) || null
         };
       });
 
@@ -331,6 +332,7 @@ export const useTeamBalancing = () => {
             overall_win_rate: overallWinRate,
             overall_goal_differential: overallGoalDifferential,
             total_games: gamesPlayed,
+            derived_attributes: derivedAttributesMap.get(reg.players.id) || null,
             team: isBlue ? 'blue' : 'orange'
           };
         });

@@ -10,10 +10,10 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
 
 #### Three-Layer Rating System
 - **Layer 1: Core Skills (60%)**: Average of Attack, Defense, and Game IQ ratings
-- **Layer 2: Derived Attributes (30%)**: Six attributes from playstyles (Pace, Shooting, Passing, Dribbling, Defending, Physical)
-- **Layer 3: Performance Metrics (10%)**: 
-  - Track Record (7%): Career win rate and goal differential
-  - Recent Form (3%): Last 10 games performance with momentum factor
+- **Layer 2: Derived Attributes (20%)**: Six attributes from playstyles (Pace, Shooting, Passing, Dribbling, Defending, Physical)
+- **Layer 3: Performance Metrics (20%)**: 
+  - Track Record (12%): Career win rate and goal differential with exponential penalties for <30% win rate
+  - Recent Form (8%): Last 10 games performance with momentum factor
 
 #### Key Functions:
 - `calculateThreeLayerRating()`: Computes adjusted player rating with skills, attributes, and performance
@@ -34,7 +34,7 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
 - Fixed `get_player_recent_goal_differentials` RPC function (was checking for 'played' status instead of 'selected')
 - Fixed optimization to start from Tier 5 and respect threshold stopping
 - Fixed Final Rankings Summary to use sorted player array
-- Updated to three-layer system with playstyle attributes (60/30/10 weighting)
+- Updated to three-layer system with playstyle attributes (60/20/20 weighting, rebalanced 2025-09-08)
 - Added tier distribution awareness to prevent extreme quality concentrations (2025-07-23)
 - Changed balance threshold from 0.5 to 0.3 for better optimization control
 - Implemented improvement-aware validation to allow beneficial swaps
@@ -133,7 +133,7 @@ The algorithm uses individual skill ratings in two distinct ways:
 - This prevents the same team from always getting the highest-rated player
 - The alternating pattern ensures fair distribution of picks across all tiers
 
-### Four-Layer Rating Example
+### Three-Layer Rating Example
 ```
 Player: Simon
   Base Skill: Attack=8.0, Defense=7.9, Game IQ=8.8
@@ -256,7 +256,7 @@ This ensures both statistical balance AND perceptual fairness in team compositio
 
 ## Key Differences from Original Algorithm
 
-1. **Player Evaluation**: Uses three-layer system with momentum (70/20/10 weights) vs five equal metrics
+1. **Player Evaluation**: Uses three-layer system with momentum (60/20/20 weights) vs five equal metrics
 2. **Team Formation**: True snake draft with randomized initial pick vs exhaustive search
 3. **Performance**: O(n log n) vs O(2^n) complexity
 4. **Philosophy**: Ensures tier distribution vs pure statistical balance
@@ -292,10 +292,10 @@ Player: Daniel
 - Daniel could jump above Jarman based on recent form
 - Larger swings in player rankings
 
-**Conservative Weights (70/20/10)**:
-- Base skills more dominant
-- Performance still matters but less dramatically
-- Preserves fundamental skill hierarchy better
+**Updated Weights (60/20/20)**:
+- Base skills remain dominant but attributes and performance more balanced
+- Enhanced performance penalties for catastrophic players (<30% win rate)
+- Statistical z-score scaling makes attributes league-relative rather than pure positive adjustments
 
 ## Known Issues Resolved
 
@@ -304,6 +304,52 @@ Player: Daniel
 3. **Rating Formula**: Fixed to allow both positive and negative adjustments
 4. **Optimization Order**: Fixed to start from Tier 5 (lowest) upwards
 5. **Threshold Stopping**: Optimization stops when balance ≤ 0.3
+
+## Statistical Scaling Calibration Fix (2025-09-08)
+
+### Problem Identified
+The original attribute implementation suffered from a critical calibration issue where all players received positive attribute adjustments instead of a realistic mix of positive and negative adjustments. This occurred because attributes provided pure positive scores (0-1 scale) rather than league-relative adjustments.
+
+### Root Cause Analysis
+- **Before Fix**: Simple division by 10 (`attributesScore / 10`) created adjustments ranging only ±0.001 to ±0.004
+- **Impact**: Insignificant adjustments that didn't meaningfully differentiate players
+- **Universal Positive Bias**: All players saw rating increases, disrupting the intended balance
+
+### Statistical Solution Implemented
+#### Z-Score Based Scaling
+```typescript
+// NEW: League-relative statistical approach
+function calculateLeagueAttributeStats(players: TeamAssignment[]) {
+  const attributeScores = players.map(p => calculateAttributeScore(p.derived_attributes));
+  const average = attributeScores.reduce((sum, score) => sum + score, 0) / attributeScores.length;
+  const variance = attributeScores.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / attributeScores.length;
+  const standardDeviation = Math.sqrt(variance);
+  return { average, standardDeviation, min: Math.min(...attributeScores), max: Math.max(...attributeScores) };
+}
+
+// Enhanced attribute adjustment calculation
+if (attributeStats.standardDeviation > 0) {
+  const zScore = (attributesScore - attributeStats.average) / attributeStats.standardDeviation;
+  const cappedZScore = Math.max(-2, Math.min(2, zScore)); // Cap at ±2 standard deviations
+  attributesAdjustment = cappedZScore * 0.15; // Range: ±0.3
+}
+```
+
+#### Key Improvements
+1. **League-Relative Adjustments**: Players now receive adjustments based on how they compare to league average
+2. **Meaningful Impact**: Adjustments now range ±0.05 to ±0.3 (50-75x more impactful)
+3. **Balanced Distribution**: Creates natural mix of positive and negative adjustments
+4. **Statistical Rigor**: Uses standard deviations to ensure fair scaling across different attribute distributions
+
+### Enhanced Performance Penalties
+- **Exponential Penalties**: Players with <30% win rate now receive exponential performance penalties
+- **Weight Rebalancing**: Increased performance weight from 10% to 20% to ensure catastrophic performers still get meaningful penalties
+- **Dynamic Thresholds**: Balance thresholds now adapt based on team characteristics rather than static 0.3
+
+### Results Achieved
+- **Before**: All players received positive adjustments (±0.001 to ±0.004)
+- **After**: Realistic mix of positive and negative adjustments (±0.05 to ±0.3)
+- **User Feedback**: Confirmed as "SIGNIFICANT IMPROVEMENT!" with properly calibrated attribute impact
 
 ## Enhanced Debug Log Features
 

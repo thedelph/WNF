@@ -2,9 +2,10 @@ import { TeamAssignment } from './types';
 import { calculateBalanceScore } from '../../../utils/teamBalancing';
 
 // Configuration constants for the three-layer system
-const WEIGHT_SKILL = 0.70;      // 70% base skills (more conservative)
-const WEIGHT_OVERALL = 0.20;    // 20% track record (reduced impact)
-const WEIGHT_RECENT = 0.10;     // 10% current form (reduced impact)
+const WEIGHT_SKILL = 0.60;      // 60% base skills (Attack/Defense/Game IQ)
+const WEIGHT_ATTRIBUTES = 0.20; // 20% derived attributes from playstyles (reduced from 30%)
+const WEIGHT_OVERALL = 0.12;    // 12% track record (career performance) (increased from 7%)
+const WEIGHT_RECENT = 0.08;     // 8% current form (recent performance) (increased from 3%)
 
 // Goal difference normalization ranges
 const OVERALL_GD_MIN = -50;
@@ -30,6 +31,9 @@ const MOMENTUM_WEIGHT = 0.10;           // Overall momentum contribution (reduce
 export interface PlayerWithRating extends TeamAssignment {
   threeLayerRating: number;
   baseSkillRating: number;
+  attributesScore?: number;
+  attributesAdjustment?: number;
+  hasPlaystyleRating?: boolean;
   overallPerformanceScore?: number;
   recentFormScore?: number;
   momentumScore?: number;
@@ -57,12 +61,133 @@ export interface TierBasedResult {
 }
 
 /**
+ * Calculate dynamic balance threshold based on team size and rating ranges
+ */
+function calculateDynamicBalanceThreshold(teamSize: number, ratingRange: { min: number; max: number }): number {
+  // Base threshold scales with team size (smaller teams need stricter balance)
+  const sizeBasedThreshold = Math.max(0.15, 0.5 / Math.sqrt(teamSize));
+  
+  // Rating range factor (wider ranges allow slightly higher thresholds)
+  const rangeFactor = Math.min(1.5, (ratingRange.max - ratingRange.min) / 3);
+  
+  // Combine factors with reasonable bounds
+  const dynamicThreshold = sizeBasedThreshold * rangeFactor;
+  
+  // Ensure threshold stays within reasonable bounds (0.15 to 0.5)
+  return Math.max(0.15, Math.min(0.5, dynamicThreshold));
+}
+
+/**
+ * Generate context-aware balance quality description
+ */
+function generateBalanceQualityDescription(
+  finalScore: number, 
+  balanceThreshold: number,
+  metrics: {
+    attackDiff: number;
+    defenseDiff: number; 
+    gameIqDiff: number;
+    attributeDiff?: number;
+    winRateDiff?: number;
+    goalDiffDiff?: number;
+  }
+): string {
+  const { attackDiff, defenseDiff, gameIqDiff, attributeDiff, winRateDiff, goalDiffDiff } = metrics;
+  
+  // Identify problematic areas (> 0.5 difference is significant)
+  const issues: string[] = [];
+  if (attackDiff > 0.5) issues.push('attack imbalance');
+  if (defenseDiff > 0.5) issues.push('defense imbalance');
+  if (gameIqDiff > 0.5) issues.push('game IQ imbalance');
+  if (attributeDiff && attributeDiff > 0.5) issues.push('attribute imbalance');
+  if (winRateDiff && winRateDiff > 5) issues.push('win rate gap');
+  if (goalDiffDiff && goalDiffDiff > 3) issues.push('goal differential gap');
+  
+  // Determine base quality level using dynamic threshold
+  let baseDescription: string;
+  if (finalScore <= balanceThreshold * 0.7) {
+    baseDescription = 'Excellent balance';
+  } else if (finalScore <= balanceThreshold) {
+    baseDescription = 'Good balance';
+  } else if (finalScore <= balanceThreshold * 2) {
+    baseDescription = 'Fair balance';
+  } else {
+    baseDescription = 'Poor balance';
+  }
+  
+  // Add context about specific issues
+  if (issues.length === 0) {
+    return `${baseDescription} across all metrics`;
+  } else if (issues.length === 1) {
+    return `${baseDescription} with ${issues[0]}`;
+  } else if (issues.length === 2) {
+    return `${baseDescription} with ${issues.join(' and ')}`;
+  } else {
+    return `${baseDescription} with multiple imbalances (${issues.slice(0, 2).join(', ')}, others)`;
+  }
+}
+
+/**
+ * Calculate league average attributes and standard deviation for relative comparisons
+ */
+function calculateLeagueAttributeStats(players: TeamAssignment[]): { 
+  average: number; 
+  standardDeviation: number;
+  min: number;
+  max: number;
+} {
+  const playersWithAttributes = players.filter(p => p.derived_attributes);
+  
+  if (playersWithAttributes.length === 0) {
+    return { 
+      average: 5.0, // Default neutral attribute score
+      standardDeviation: 1.0,
+      min: 5.0,
+      max: 5.0
+    };
+  }
+  
+  // Calculate all attribute scores
+  // With new system, each attribute is 0-1, and players can have 0-6 total
+  const attributeScores = playersWithAttributes.map(player => {
+    const attrs = player.derived_attributes!;
+    // Sum total attribute points (0-6 range) and normalize to 0-10 scale
+    const totalAttributePoints = 
+      attrs.pace + 
+      attrs.shooting + 
+      attrs.passing + 
+      attrs.dribbling + 
+      attrs.defending + 
+      attrs.physical;
+    
+    // Normalize: 0 attributes = 0, 6 attributes = 10
+    return (totalAttributePoints / 6) * 10;
+  });
+  
+  // Calculate statistics
+  const average = attributeScores.reduce((sum, score) => sum + score, 0) / attributeScores.length;
+  const min = Math.min(...attributeScores);
+  const max = Math.max(...attributeScores);
+  
+  // Calculate standard deviation
+  const variance = attributeScores.reduce((sum, score) => {
+    return sum + Math.pow(score - average, 2);
+  }, 0) / attributeScores.length;
+  const standardDeviation = Math.sqrt(variance);
+  
+  return { average, standardDeviation, min, max };
+}
+
+/**
  * Calculate the three-layer rating for a player
  * Combines base skill, overall performance, and recent form
  */
-function calculateThreeLayerRating(player: TeamAssignment): {
+function calculateThreeLayerRating(player: TeamAssignment, attributeStats: { average: number; standardDeviation: number; min: number; max: number }): {
   threeLayerRating: number;
   baseSkillRating: number;
+  attributesScore?: number;
+  attributesAdjustment?: number;
+  hasPlaystyleRating?: boolean;
   overallPerformanceScore?: number;
   recentFormScore?: number;
   momentumScore?: number;
@@ -78,39 +203,42 @@ function calculateThreeLayerRating(player: TeamAssignment): {
   let attributesScore = 0; // Default to 0 (no playstyle ratings)
   if (player.derived_attributes) {
     const attrs = player.derived_attributes;
-    // Average all attributes and convert from 0-1 to 0-10 scale
-    attributesScore = (
+    // With independent weights: sum attributes (each 0-1) directly
+    // Maintain the /6 * 10 scaling to keep scores comparable
+    const totalAttributePoints = 
       attrs.pace + 
       attrs.shooting + 
       attrs.passing + 
       attrs.dribbling + 
       attrs.defending + 
-      attrs.physical
-    ) / 6 * 10;
+      attrs.physical;
+    
+    // Scale to 0-10 range (max 6 attributes × 1.0 = 6.0, scale to 10)
+    attributesScore = (totalAttributePoints / 6) * 10;
   }
   
   // Check if player has enough games for performance metrics
+  let overallWinRate, overallGoalDiff, recentWinRate, recentGoalDiff;
+  
   if (!player.total_games || player.total_games < MIN_GAMES_FOR_STATS) {
-    // Players with < 10 games use skill rating and attributes only
-    const attributesAdjustment = attributesScore / 10; // 0-1 scale, 0 means no attributes
-    const finalRating = baseSkillRating * (1 + (WEIGHT_ATTRIBUTES * attributesAdjustment));
-    return {
-      threeLayerRating: finalRating,
-      baseSkillRating,
-      attributesScore,
-      momentumScore: 0,
-      momentumCategory: 'steady',
-      momentumAdjustment: 0
-    };
+    // New players get neutral performance scores for consistent scaling
+    overallWinRate = 0.5; // 50% neutral win rate
+    overallGoalDiff = 0;   // Neutral goal differential
+    recentWinRate = 0.5;   // 50% neutral win rate
+    recentGoalDiff = 0;    // Neutral goal differential
+  } else {
+    // Experienced players use their actual performance data
+    overallWinRate = player.overall_win_rate ?? 0.5;
+    overallGoalDiff = player.overall_goal_differential ?? 0;
+    recentWinRate = player.win_rate ?? 0.5;
+    recentGoalDiff = player.goal_differential ?? 0;
   }
   
   // Layer 2: Overall Performance (career track record)
-  let overallWinRate = player.overall_win_rate ?? 50;
-  // Convert to decimal if it's a percentage (> 1)
+  // Convert to decimal if it's a percentage (> 1) for experienced players
   if (overallWinRate > 1) {
     overallWinRate = overallWinRate / 100;
   }
-  const overallGoalDiff = player.overall_goal_differential ?? 0;
   
   // Normalize goal differential to 0-1 range
   const overallGdNorm = Math.max(0, Math.min(1, 
@@ -121,12 +249,10 @@ function calculateThreeLayerRating(player: TeamAssignment): {
                                   (overallGdNorm * GOAL_DIFF_WEIGHT);
   
   // Layer 3: Recent Form (last 10 games)
-  let recentWinRate = player.win_rate ?? 50;
-  // Convert to decimal if it's a percentage (> 1)
+  // Convert to decimal if it's a percentage (> 1) for experienced players
   if (recentWinRate > 1) {
     recentWinRate = recentWinRate / 100;
   }
-  const recentGoalDiff = player.goal_differential ?? 0;
   
   // Normalize recent goal differential
   const recentGdNorm = Math.max(0, Math.min(1,
@@ -162,11 +288,36 @@ function calculateThreeLayerRating(player: TeamAssignment): {
   // Score > 0.5 = boost, Score < 0.5 = penalty
   
   // Center the performance scores around 0 (subtract 0.5 to make neutral = 0)
-  const overallAdjustment = (overallPerformanceScore - 0.5) * 2; // Range: -1 to +1
-  const recentAdjustment = (recentFormScore - 0.5) * 2; // Range: -1 to +1
+  // Apply exponential penalties for catastrophic performers (< 30% win rate)
+  let overallAdjustment = (overallPerformanceScore - 0.5) * 2; // Range: -1 to +1
+  let recentAdjustment = (recentFormScore - 0.5) * 2; // Range: -1 to +1
   
-  // Calculate attributes adjustment (0-1 scale, 0 means no attributes)
-  const attributesAdjustment = attributesScore / 10;
+  // Apply catastrophic performance penalties for win rates < 30%
+  if (overallWinRate < 0.3) {
+    const catastrophicFactor = (0.3 - overallWinRate) * 2; // 0-0.6 extra penalty
+    overallAdjustment = overallAdjustment - catastrophicFactor; // Make more negative
+  }
+  
+  if (recentWinRate < 0.3) {
+    const recentCatastrophicFactor = (0.3 - recentWinRate) * 2;
+    recentAdjustment = recentAdjustment - recentCatastrophicFactor;
+  }
+  
+  // Calculate attributes adjustment using statistical scaling for meaningful impact
+  // This creates adjustments typically in the ±0.05 to ±0.3 range instead of ±0.001 to ±0.004
+  let attributesAdjustment = 0;
+  
+  if (attributeStats.standardDeviation > 0) {
+    // Standard deviation approach: scale by how many std devs from mean
+    const zScore = (attributesScore - attributeStats.average) / attributeStats.standardDeviation;
+    // Cap at ±2 standard deviations and scale to create ±0.3 max adjustment
+    const cappedZScore = Math.max(-2, Math.min(2, zScore));
+    attributesAdjustment = cappedZScore * 0.15; // Range: ±0.3
+  } else {
+    // Fallback: use range-based scaling if no variation
+    const range = Math.max(1.0, attributeStats.max - attributeStats.min);
+    attributesAdjustment = (attributesScore - attributeStats.average) / range * 0.3;
+  }
   
   // Apply weighted adjustments to base skill including momentum and attributes
   const finalRating = baseSkillRating * (1 + 
@@ -180,6 +331,8 @@ function calculateThreeLayerRating(player: TeamAssignment): {
     threeLayerRating: finalRating,
     baseSkillRating,
     attributesScore,
+    attributesAdjustment,
+    hasPlaystyleRating: attributesScore > 0,
     overallPerformanceScore,
     recentFormScore,
     momentumScore: momentum,
@@ -236,6 +389,88 @@ function calculateTierSizes(totalPlayers: number): number[] {
     
     return sizes;
   }
+}
+
+/**
+ * Calculate average attributes for a team
+ */
+function calculateTeamAttributes(team: PlayerWithRating[]): {
+  pace: number;
+  shooting: number;
+  passing: number;
+  dribbling: number;
+  defending: number;
+  physical: number;
+  hasAttributes: boolean;
+} {
+  // Filter players with attribute data
+  const playersWithAttributes = team.filter(p => p.derived_attributes);
+  
+  if (playersWithAttributes.length === 0) {
+    return {
+      pace: 0,
+      shooting: 0,
+      passing: 0,
+      dribbling: 0,
+      defending: 0,
+      physical: 0,
+      hasAttributes: false
+    };
+  }
+  
+  const total = playersWithAttributes.reduce((acc, player) => {
+    const attrs = player.derived_attributes!;
+    return {
+      pace: acc.pace + attrs.pace,
+      shooting: acc.shooting + attrs.shooting,
+      passing: acc.passing + attrs.passing,
+      dribbling: acc.dribbling + attrs.dribbling,
+      defending: acc.defending + attrs.defending,
+      physical: acc.physical + attrs.physical
+    };
+  }, {
+    pace: 0,
+    shooting: 0,
+    passing: 0,
+    dribbling: 0,
+    defending: 0,
+    physical: 0
+  });
+  
+  const count = playersWithAttributes.length;
+  return {
+    pace: total.pace / count,
+    shooting: total.shooting / count,
+    passing: total.passing / count,
+    dribbling: total.dribbling / count,
+    defending: total.defending / count,
+    physical: total.physical / count,
+    hasAttributes: true
+  };
+}
+
+/**
+ * Calculate attribute balance score between teams
+ */
+function calculateAttributeBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): number {
+  const blueAttrs = calculateTeamAttributes(blueTeam);
+  const orangeAttrs = calculateTeamAttributes(orangeTeam);
+  
+  // If neither team has attributes, return 0 (perfect balance)
+  if (!blueAttrs.hasAttributes && !orangeAttrs.hasAttributes) {
+    return 0;
+  }
+  
+  // Calculate differences for each attribute (convert from 0-1 to 0-10 scale for consistency)
+  const paceDiff = Math.abs(blueAttrs.pace - orangeAttrs.pace) * 10;
+  const shootingDiff = Math.abs(blueAttrs.shooting - orangeAttrs.shooting) * 10;
+  const passingDiff = Math.abs(blueAttrs.passing - orangeAttrs.passing) * 10;
+  const dribblingDiff = Math.abs(blueAttrs.dribbling - orangeAttrs.dribbling) * 10;
+  const defendingDiff = Math.abs(blueAttrs.defending - orangeAttrs.defending) * 10;
+  const physicalDiff = Math.abs(blueAttrs.physical - orangeAttrs.physical) * 10;
+  
+  // Return the maximum difference
+  return Math.max(paceDiff, shootingDiff, passingDiff, dribblingDiff, defendingDiff, physicalDiff);
 }
 
 /**
@@ -397,7 +632,7 @@ function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blu
 
 /**
  * Calculate balance score for tier-based teams
- * Uses only Attack, Defense, and Game IQ for balance calculation
+ * Uses Attack, Defense, Game IQ, and Derived Attributes for balance calculation
  */
 function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): number {
   if (blueTeam.length === 0 || orangeTeam.length === 0) {
@@ -414,12 +649,120 @@ function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: Pla
   const blueGameIq = blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / blueTeam.length;
   const orangeGameIq = orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / orangeTeam.length;
   
-  // Calculate the maximum difference
+  // Calculate skill differences
   const attackDiff = Math.abs(blueAttack - orangeAttack);
   const defenseDiff = Math.abs(blueDefense - orangeDefense);
   const gameIqDiff = Math.abs(blueGameIq - orangeGameIq);
   
-  return Math.max(attackDiff, defenseDiff, gameIqDiff);
+  // Calculate attribute balance score
+  const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
+  
+  // Weight skills at 80% and attributes at 20% to match rating calculation
+  const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff);
+  const combinedBalance = (skillBalance * 0.8) + (attributeBalance * 0.2);
+  
+  return combinedBalance;
+}
+
+/**
+ * Balance score details interface
+ */
+interface BalanceScoreDetails {
+  totalScore: number;
+  skillBalance: number;
+  attributeBalance: number;
+  attackDiff: number;
+  defenseDiff: number;
+  gameIqDiff: number;
+  paceDiff?: number;
+  shootingDiff?: number;
+  passingDiff?: number;
+  dribblingDiff?: number;
+  defendingDiff?: number;
+  physicalDiff?: number;
+  hasAttributes: boolean;
+  primaryFactor: 'skills' | 'attributes' | 'both';
+}
+
+/**
+ * Calculate detailed balance score with breakdown
+ */
+function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): BalanceScoreDetails {
+  if (blueTeam.length === 0 || orangeTeam.length === 0) {
+    return {
+      totalScore: 1000,
+      skillBalance: 1000,
+      attributeBalance: 0,
+      attackDiff: 0,
+      defenseDiff: 0,
+      gameIqDiff: 0,
+      hasAttributes: false,
+      primaryFactor: 'skills'
+    };
+  }
+  
+  // Calculate average ratings
+  const blueAttack = blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / blueTeam.length;
+  const orangeAttack = orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangeTeam.length;
+  
+  const blueDefense = blueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / blueTeam.length;
+  const orangeDefense = orangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangeTeam.length;
+  
+  const blueGameIq = blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / blueTeam.length;
+  const orangeGameIq = orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / orangeTeam.length;
+  
+  // Calculate skill differences
+  const attackDiff = Math.abs(blueAttack - orangeAttack);
+  const defenseDiff = Math.abs(blueDefense - orangeDefense);
+  const gameIqDiff = Math.abs(blueGameIq - orangeGameIq);
+  
+  // Calculate attribute balance score and individual diffs
+  const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
+  const blueAttrs = calculateTeamAttributes(blueTeam);
+  const orangeAttrs = calculateTeamAttributes(orangeTeam);
+  
+  const hasAttributes = blueAttrs.hasAttributes && orangeAttrs.hasAttributes;
+  let paceDiff = 0, shootingDiff = 0, passingDiff = 0, dribblingDiff = 0, defendingDiff = 0, physicalDiff = 0;
+  
+  if (hasAttributes) {
+    paceDiff = Math.abs(blueAttrs.pace - orangeAttrs.pace);
+    shootingDiff = Math.abs(blueAttrs.shooting - orangeAttrs.shooting);
+    passingDiff = Math.abs(blueAttrs.passing - orangeAttrs.passing);
+    dribblingDiff = Math.abs(blueAttrs.dribbling - orangeAttrs.dribbling);
+    defendingDiff = Math.abs(blueAttrs.defending - orangeAttrs.defending);
+    physicalDiff = Math.abs(blueAttrs.physical - orangeAttrs.physical);
+  }
+  
+  // Weight skills at 80% and attributes at 20% to match rating calculation
+  const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff);
+  const combinedBalance = (skillBalance * 0.8) + (attributeBalance * 0.2);
+  
+  // Determine primary factor
+  let primaryFactor: 'skills' | 'attributes' | 'both' = 'skills';
+  if (hasAttributes && attributeBalance > 0) {
+    const skillContribution = skillBalance * 0.8;
+    const attributeContribution = attributeBalance * 0.2;
+    if (attributeContribution > skillContribution * 0.5) {
+      primaryFactor = attributeContribution > skillContribution ? 'attributes' : 'both';
+    }
+  }
+  
+  return {
+    totalScore: combinedBalance,
+    skillBalance,
+    attributeBalance,
+    attackDiff,
+    defenseDiff,
+    gameIqDiff,
+    paceDiff,
+    shootingDiff,
+    passingDiff,
+    dribblingDiff,
+    defendingDiff,
+    physicalDiff,
+    hasAttributes,
+    primaryFactor
+  };
 }
 
 /**
@@ -429,7 +772,7 @@ function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: Pla
  * 2. No team has all the worst players from tiers with significant rating spreads
  */
 function validateTierDistribution(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): boolean {
-  const QUALITY_CONCENTRATION_THRESHOLD = 1.2; // Rating spread threshold for quality checking
+  const QUALITY_CONCENTRATION_THRESHOLD = 1.5; // Rating spread threshold for quality checking (relaxed)
   
   // Count players by tier for each team
   const blueTierCounts = new Map<number, number>();
@@ -517,7 +860,7 @@ function validateTierDistribution(blueTeam: PlayerWithRating[], orangeTeam: Play
  * Returns information about why distribution might be unfair
  */
 function getTierDistributionIssues(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): string | null {
-  const QUALITY_CONCENTRATION_THRESHOLD = 1.2;
+  const QUALITY_CONCENTRATION_THRESHOLD = 1.5; // Rating spread threshold for quality checking (relaxed)
   
   const blueTierCounts = new Map<number, number>();
   const orangeTierCounts = new Map<number, number>();
@@ -605,7 +948,8 @@ function isSwapAcceptable(
   beforeBlueTeam: PlayerWithRating[], 
   beforeOrangeTeam: PlayerWithRating[],
   afterBlueTeam: PlayerWithRating[], 
-  afterOrangeTeam: PlayerWithRating[]
+  afterOrangeTeam: PlayerWithRating[],
+  balanceImprovement?: number
 ): boolean {
   const beforeIssues = getTierDistributionIssues(beforeBlueTeam, beforeOrangeTeam);
   const afterIssues = getTierDistributionIssues(afterBlueTeam, afterOrangeTeam);
@@ -615,9 +959,10 @@ function isSwapAcceptable(
     return true;
   }
   
-  // If there were no issues before but issues after, swap creates new concentration (reject)
+  // If there were no issues before but issues after, swap creates new concentration
+  // Allow it if the balance improvement is significant (> 0.10)
   if (!beforeIssues && afterIssues) {
-    return false;
+    return balanceImprovement !== undefined && balanceImprovement > 0.10;
   }
   
   // If there were issues before but none after, swap fixes concentration (accept!)
@@ -628,8 +973,12 @@ function isSwapAcceptable(
   // Both before and after have issues - check if they're the same or different
   if (beforeIssues && afterIssues) {
     // If it's the same issue, swap doesn't make it worse (accept)
-    // If it's a different issue, swap might be creating a new problem (reject)
-    return beforeIssues === afterIssues;
+    // If it's a different issue, check if improvement is significant
+    if (beforeIssues === afterIssues) {
+      return true;
+    }
+    // Different issue - allow if improvement is significant
+    return balanceImprovement !== undefined && balanceImprovement > 0.10;
   }
   
   return false; // Default to reject if unclear
@@ -687,21 +1036,45 @@ function trySameTierSwaps(
       tempOrange[orangeIndex] = bluePlayer;
       
       const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+      const improvement = currentBalance - newBalance;
       
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
-      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange);
+      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
       
       if (debugLog) {
         debugLog.value += `    Trying ${bluePlayer.friendly_name} ↔ ${orangePlayer.friendly_name}: `;
         debugLog.value += `balance ${currentBalance.toFixed(3)} → ${newBalance.toFixed(3)}`;
         if (newBalance < currentBalance) {
-          debugLog.value += ` (improves by ${(currentBalance - newBalance).toFixed(3)})`;
+          const improvement = currentBalance - newBalance;
+          debugLog.value += ` (improves by ${improvement.toFixed(3)})`;
+          
+          // Add detailed reason for improvement
+          const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+          const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
+          
+          const skillImprovement = beforeDetails.skillBalance - afterDetails.skillBalance;
+          const attrImprovement = beforeDetails.attributeBalance - afterDetails.attributeBalance;
+          
+          if (afterDetails.hasAttributes && attrImprovement > 0.01) {
+            if (skillImprovement > 0.01) {
+              debugLog.value += ` [Skills+Attrs]`;
+            } else {
+              debugLog.value += ` [Attr-driven]`;
+            }
+          } else if (skillImprovement > 0.01) {
+            debugLog.value += ` [Skill-driven]`;
+          }
         }
         if (!isSwapOk) {
           const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          debugLog.value += ` → REJECTED (${issue})`;
+          debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
         } else if (newBalance < bestScore) {
-          debugLog.value += ` → ACCEPTED`;
+          const issue = getTierDistributionIssues(tempBlue, tempOrange);
+          if (issue && improvement > 0.10) {
+            debugLog.value += ` → ACCEPTED (allows ${issue} due to improvement ${improvement.toFixed(3)} > 0.10)`;
+          } else {
+            debugLog.value += ` → ACCEPTED`;
+          }
         } else {
           debugLog.value += ` → no improvement`;
         }
@@ -720,6 +1093,63 @@ function trySameTierSwaps(
     if (improved && bestSwap) {
       debugLog.value += `    Best same-tier swap: ${bestSwap.bluePlayer.friendly_name} ↔ ${bestSwap.orangePlayer.friendly_name}\n`;
       debugLog.value += `    Improvement: ${(currentBalance - bestScore).toFixed(3)} (${bestScore.toFixed(3)})\n`;
+      
+      // Add detailed explanation of what improved
+      const tempBlue = [...blueTeam];
+      const tempOrange = [...orangeTeam];
+      const blueIdx = tempBlue.findIndex(p => p.player_id === bestSwap.bluePlayer.player_id);
+      const orangeIdx = tempOrange.findIndex(p => p.player_id === bestSwap.orangePlayer.player_id);
+      if (blueIdx >= 0 && orangeIdx >= 0) {
+        tempBlue[blueIdx] = bestSwap.orangePlayer;
+        tempOrange[orangeIdx] = bestSwap.bluePlayer;
+        
+        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
+        
+        debugLog.value += `    Reason: `;
+        const improvements = [];
+        
+        // Check skill improvements
+        if (Math.abs(beforeDetails.attackDiff - afterDetails.attackDiff) > 0.1) {
+          improvements.push(`Attack ${beforeDetails.attackDiff.toFixed(1)}→${afterDetails.attackDiff.toFixed(1)}`);
+        }
+        if (Math.abs(beforeDetails.defenseDiff - afterDetails.defenseDiff) > 0.1) {
+          improvements.push(`Defense ${beforeDetails.defenseDiff.toFixed(1)}→${afterDetails.defenseDiff.toFixed(1)}`);
+        }
+        if (Math.abs(beforeDetails.gameIqDiff - afterDetails.gameIqDiff) > 0.1) {
+          improvements.push(`GameIQ ${beforeDetails.gameIqDiff.toFixed(1)}→${afterDetails.gameIqDiff.toFixed(1)}`);
+        }
+        
+        // Check attribute improvements
+        if (afterDetails.hasAttributes && afterDetails.attributeBalance < beforeDetails.attributeBalance - 0.01) {
+          const attrImprovements = [];
+          if (Math.abs(beforeDetails.paceDiff! - afterDetails.paceDiff!) > 0.05) {
+            attrImprovements.push('Pace');
+          }
+          if (Math.abs(beforeDetails.shootingDiff! - afterDetails.shootingDiff!) > 0.05) {
+            attrImprovements.push('Shooting');
+          }
+          if (Math.abs(beforeDetails.passingDiff! - afterDetails.passingDiff!) > 0.05) {
+            attrImprovements.push('Passing');
+          }
+          if (Math.abs(beforeDetails.dribblingDiff! - afterDetails.dribblingDiff!) > 0.05) {
+            attrImprovements.push('Dribbling');
+          }
+          if (Math.abs(beforeDetails.defendingDiff! - afterDetails.defendingDiff!) > 0.05) {
+            attrImprovements.push('Defending');
+          }
+          if (Math.abs(beforeDetails.physicalDiff! - afterDetails.physicalDiff!) > 0.05) {
+            attrImprovements.push('Physical');
+          }
+          
+          if (attrImprovements.length > 0) {
+            improvements.push(`Attributes(${attrImprovements.join(', ')})`);
+          }
+        }
+        
+        debugLog.value += improvements.length > 0 ? improvements.join(', ') : 'Overall balance';
+        debugLog.value += `\n`;
+      }
     } else {
       debugLog.value += `    No beneficial same-tier swaps found\n`;
     }
@@ -791,9 +1221,10 @@ function tryCrossTierSwaps(
       tempOrange[orangeIndex] = blueLower;
       
       const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+      const improvement = currentBalance - newBalance;
       
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
-      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange);
+      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
       
       if (debugLog) {
         debugLog.value += `    Trying ${blueLower.friendly_name}(T${lowerTier}) ↔ ${orangeUpper.friendly_name}(T${upperTier}): `;
@@ -803,9 +1234,14 @@ function tryCrossTierSwaps(
         }
         if (!isSwapOk) {
           const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          debugLog.value += ` → REJECTED (${issue})`;
+          debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
         } else if (newBalance < bestScore) {
-          debugLog.value += ` → ACCEPTED`;
+          const issue = getTierDistributionIssues(tempBlue, tempOrange);
+          if (issue && improvement > 0.10) {
+            debugLog.value += ` → ACCEPTED (allows ${issue} due to improvement ${improvement.toFixed(3)} > 0.10)`;
+          } else {
+            debugLog.value += ` → ACCEPTED`;
+          }
         } else {
           debugLog.value += ` → no improvement`;
         }
@@ -844,9 +1280,10 @@ function tryCrossTierSwaps(
       tempOrange[orangeIndex] = blueUpper;
       
       const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+      const improvement = currentBalance - newBalance;
       
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
-      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange);
+      const isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
       
       if (debugLog) {
         debugLog.value += `    Trying ${blueUpper.friendly_name}(T${upperTier}) ↔ ${orangeLower.friendly_name}(T${lowerTier}): `;
@@ -856,9 +1293,14 @@ function tryCrossTierSwaps(
         }
         if (!isSwapOk) {
           const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          debugLog.value += ` → REJECTED (${issue})`;
+          debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
         } else if (newBalance < bestScore) {
-          debugLog.value += ` → ACCEPTED`;
+          const issue = getTierDistributionIssues(tempBlue, tempOrange);
+          if (issue && improvement > 0.10) {
+            debugLog.value += ` → ACCEPTED (allows ${issue} due to improvement ${improvement.toFixed(3)} > 0.10)`;
+          } else {
+            debugLog.value += ` → ACCEPTED`;
+          }
         } else {
           debugLog.value += ` → no improvement`;
         }
@@ -883,6 +1325,63 @@ function tryCrossTierSwaps(
       debugLog.value += `    Best cross-tier swap: ${bestSwap.bluePlayer.friendly_name}(T${bestSwap.blueTier}) ↔ ${bestSwap.orangePlayer.friendly_name}(T${bestSwap.orangeTier})\n`;
       debugLog.value += `    Rating diff: ${Math.abs(bestSwap.bluePlayer.threeLayerRating - bestSwap.orangePlayer.threeLayerRating).toFixed(2)}\n`;
       debugLog.value += `    Improvement: ${(currentBalance - bestScore).toFixed(3)} (${bestScore.toFixed(3)})\n`;
+      
+      // Add detailed explanation for cross-tier swaps
+      const tempBlue = [...blueTeam];
+      const tempOrange = [...orangeTeam];
+      const blueIdx = tempBlue.findIndex(p => p.player_id === bestSwap.bluePlayer.player_id);
+      const orangeIdx = tempOrange.findIndex(p => p.player_id === bestSwap.orangePlayer.player_id);
+      if (blueIdx >= 0 && orangeIdx >= 0) {
+        tempBlue[blueIdx] = bestSwap.orangePlayer;
+        tempOrange[orangeIdx] = bestSwap.bluePlayer;
+        
+        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
+        
+        debugLog.value += `    Reason: `;
+        const improvements = [];
+        
+        // Check skill improvements
+        if (Math.abs(beforeDetails.attackDiff - afterDetails.attackDiff) > 0.1) {
+          improvements.push(`Attack ${beforeDetails.attackDiff.toFixed(1)}→${afterDetails.attackDiff.toFixed(1)}`);
+        }
+        if (Math.abs(beforeDetails.defenseDiff - afterDetails.defenseDiff) > 0.1) {
+          improvements.push(`Defense ${beforeDetails.defenseDiff.toFixed(1)}→${afterDetails.defenseDiff.toFixed(1)}`);
+        }
+        if (Math.abs(beforeDetails.gameIqDiff - afterDetails.gameIqDiff) > 0.1) {
+          improvements.push(`GameIQ ${beforeDetails.gameIqDiff.toFixed(1)}→${afterDetails.gameIqDiff.toFixed(1)}`);
+        }
+        
+        // Check attribute improvements
+        if (afterDetails.hasAttributes && afterDetails.attributeBalance < beforeDetails.attributeBalance - 0.01) {
+          const attrImprovements = [];
+          if (Math.abs(beforeDetails.paceDiff! - afterDetails.paceDiff!) > 0.05) {
+            attrImprovements.push('Pace');
+          }
+          if (Math.abs(beforeDetails.shootingDiff! - afterDetails.shootingDiff!) > 0.05) {
+            attrImprovements.push('Shooting');
+          }
+          if (Math.abs(beforeDetails.passingDiff! - afterDetails.passingDiff!) > 0.05) {
+            attrImprovements.push('Passing');
+          }
+          if (Math.abs(beforeDetails.dribblingDiff! - afterDetails.dribblingDiff!) > 0.05) {
+            attrImprovements.push('Dribbling');
+          }
+          if (Math.abs(beforeDetails.defendingDiff! - afterDetails.defendingDiff!) > 0.05) {
+            attrImprovements.push('Defending');
+          }
+          if (Math.abs(beforeDetails.physicalDiff! - afterDetails.physicalDiff!) > 0.05) {
+            attrImprovements.push('Physical');
+          }
+          
+          if (attrImprovements.length > 0) {
+            improvements.push(`Attributes(${attrImprovements.join(', ')})`);
+          }
+        }
+        
+        debugLog.value += improvements.length > 0 ? improvements.join(', ') : 'Overall balance';
+        debugLog.value += `\n`;
+      }
     } else {
       debugLog.value += `    No beneficial cross-tier swaps found\n`;
     }
@@ -898,6 +1397,8 @@ function tryCrossTierSwaps(
 function optimizeTeams(
   initialBlueTeam: PlayerWithRating[], 
   initialOrangeTeam: PlayerWithRating[],
+  teamSize: number,
+  ratingRange: { min: number; max: number },
   debugLog?: { value: string }
 ): {
   blueTeam: PlayerWithRating[];
@@ -911,6 +1412,9 @@ function optimizeTeams(
   let orangeTeam = [...initialOrangeTeam];
   let currentBalance = calculateTierBalanceScore(blueTeam, orangeTeam);
   let wasOptimized = false;
+  
+  // Calculate dynamic balance threshold based on team characteristics
+  const balanceThreshold = calculateDynamicBalanceThreshold(teamSize, ratingRange);
   let swapCount = 0;
   const swapDetails: Array<{ bluePlayer: string; orangePlayer: string; improvement: number; tier: number }> = [];
   
@@ -918,7 +1422,7 @@ function optimizeTeams(
     debugLog.value += 'STEP 6: INTEGRATED OPTIMIZATION PHASE\n';
     debugLog.value += '=====================================\n';
     debugLog.value += `Current Balance: ${currentBalance.toFixed(3)}\n`;
-    debugLog.value += `Threshold: ${BALANCE_THRESHOLD}\n`;
+    debugLog.value += `Dynamic Threshold: ${balanceThreshold.toFixed(3)} (team size: ${teamSize}, rating range: ${(ratingRange.max - ratingRange.min).toFixed(2)})\n`;
     const initialDistributionFair = validateTierDistribution(blueTeam, orangeTeam);
     const distributionIssue = getTierDistributionIssues(blueTeam, orangeTeam);
     if (initialDistributionFair) {
@@ -932,7 +1436,7 @@ function optimizeTeams(
   }
   
   // Only optimize if balance exceeds threshold
-  if (currentBalance <= BALANCE_THRESHOLD) {
+  if (currentBalance <= balanceThreshold) {
     if (debugLog) {
       debugLog.value += 'No optimization needed - balance is within threshold\n\n';
     }
@@ -974,9 +1478,9 @@ function optimizeTeams(
     const currentTier = allTiers[tierIndex];
     
     // Stop if we've reached acceptable balance
-    if (currentBalance <= BALANCE_THRESHOLD) {
+    if (currentBalance <= balanceThreshold) {
       if (debugLog) {
-        debugLog.value += `Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${BALANCE_THRESHOLD}), stopping optimization\n\n`;
+        debugLog.value += `Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${balanceThreshold}), stopping optimization\n\n`;
       }
       break;
     }
@@ -1033,9 +1537,9 @@ function optimizeTeams(
       totalIterations++;
       
       // Check if threshold reached
-      if (currentBalance <= BALANCE_THRESHOLD) {
+      if (currentBalance <= balanceThreshold) {
         if (debugLog) {
-          debugLog.value += `    Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${BALANCE_THRESHOLD}), stopping optimization\n\n`;
+          debugLog.value += `    Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${balanceThreshold}), stopping optimization\n\n`;
         }
         break;
       }
@@ -1116,9 +1620,9 @@ function optimizeTeams(
         totalIterations++;
         
         // Check if threshold reached
-        if (currentBalance <= BALANCE_THRESHOLD) {
+        if (currentBalance <= balanceThreshold) {
           if (debugLog) {
-            debugLog.value += `    Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${BALANCE_THRESHOLD}), stopping optimization\n\n`;
+            debugLog.value += `    Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${balanceThreshold}), stopping optimization\n\n`;
           }
           break;
         }
@@ -1263,8 +1767,12 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   debugLog += 'STEP 1: CALCULATING THREE-LAYER RATINGS\n';
   debugLog += '=====================================\n\n';
   
+  // Calculate league attribute statistics for relative comparisons
+  const attributeStats = calculateLeagueAttributeStats(players);
+  debugLog += `League Attribute Stats: avg=${attributeStats.average.toFixed(2)}, std=${attributeStats.standardDeviation.toFixed(2)}, range=${attributeStats.min.toFixed(2)}-${attributeStats.max.toFixed(2)}\n\n`;
+  
   const playersWithRatings: PlayerWithRating[] = players.map(player => {
-    const ratingInfo = calculateThreeLayerRating(player);
+    const ratingInfo = calculateThreeLayerRating(player, attributeStats);
     
     // Track rated vs new players for executive summary
     if (player.total_games && player.total_games >= MIN_GAMES_FOR_STATS) {
@@ -1276,6 +1784,17 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
     debugLog += `Player: ${player.friendly_name}\n`;
     debugLog += `  Base Skill: Attack=${player.attack_rating ?? 5}, Defense=${player.defense_rating ?? 5}, Game IQ=${player.game_iq_rating ?? 5}\n`;
     debugLog += `  Base Skill Rating: ${ratingInfo.baseSkillRating.toFixed(2)}\n`;
+    
+    // Add derived attributes logging
+    if (player.derived_attributes && ratingInfo.attributesScore && ratingInfo.attributesScore > 0) {
+      const attrs = player.derived_attributes;
+      debugLog += `  Derived Attributes: PAC=${attrs.pace.toFixed(2)}, SHO=${attrs.shooting.toFixed(2)}, PAS=${attrs.passing.toFixed(2)}, DRI=${attrs.dribbling.toFixed(2)}, DEF=${attrs.defending.toFixed(2)}, PHY=${attrs.physical.toFixed(2)}\n`;
+      debugLog += `  Attributes Score: ${ratingInfo.attributesScore.toFixed(2)} (avg ${(ratingInfo.attributesScore / 10).toFixed(3)} × 10)\n`;
+      debugLog += `  Attributes Adjustment: ${ratingInfo.attributesAdjustment ? (ratingInfo.attributesAdjustment > 0 ? '+' : '') + ratingInfo.attributesAdjustment.toFixed(3) : '0.000'} (${(WEIGHT_ATTRIBUTES * 100).toFixed(0)}% weight)\n`;
+    } else {
+      debugLog += `  Derived Attributes: None (no playstyle ratings)\n`;
+    }
+    
     debugLog += `  Total Games: ${player.total_games ?? 0}\n`;
     
     if (player.total_games && player.total_games >= 10) {
@@ -1530,9 +2049,49 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
     debugLog += `  ${players.length - 2 + i}. ${p.friendly_name}: ${p.threeLayerRating.toFixed(2)} (base: ${p.baseSkillRating.toFixed(2)}, ${changeStr})\n`;
   });
   
+  // Add Playstyle Distribution Table
+  debugLog += '\nPLAYSTYLE DISTRIBUTION\n';
+  debugLog += '======================\n';
+  
+  const playersWithPlaystyles = playersWithRatings.filter(p => p.hasPlaystyleRating);
+  const playstyleCoverage = (playersWithPlaystyles.length / players.length * 100).toFixed(0);
+  debugLog += `Playstyle Coverage: ${playstyleCoverage}% (${playersWithPlaystyles.length}/${players.length} players rated)\n\n`;
+  
+  debugLog += 'Player            | Has Playstyle | Top Attributes\n';
+  debugLog += '------------------|---------------|------------------------------\n';
+  
+  playersWithRatings.forEach(player => {
+    const nameCol = player.friendly_name.padEnd(16).substring(0, 16);
+    const hasPlaystyle = player.hasPlaystyleRating ? 'Yes' : 'No ';
+    
+    let topAttrs = '-';
+    if (player.derived_attributes && player.hasPlaystyleRating) {
+      const attrs = player.derived_attributes;
+      const attrArray = [
+        { name: 'PAC', value: attrs.pace },
+        { name: 'SHO', value: attrs.shooting },
+        { name: 'PAS', value: attrs.passing },
+        { name: 'DRI', value: attrs.dribbling },
+        { name: 'DEF', value: attrs.defending },
+        { name: 'PHY', value: attrs.physical }
+      ];
+      
+      // Sort by value and get top 2
+      attrArray.sort((a, b) => b.value - a.value);
+      const topTwo = attrArray.slice(0, 2).filter(a => a.value > 0);
+      
+      if (topTwo.length > 0) {
+        topAttrs = topTwo.map(a => `${a.name}(${a.value.toFixed(2)})`).join(', ');
+      }
+    }
+    
+    debugLog += `${nameCol} | ${hasPlaystyle}            | ${topAttrs}\n`;
+  });
+  
   // Algorithm Configuration
   debugLog += '\nALGORITHM CONFIGURATION:\n';
   debugLog += `  - Skill Weight: ${(WEIGHT_SKILL * 100).toFixed(0)}%\n`;
+  debugLog += `  - Attributes Weight: ${(WEIGHT_ATTRIBUTES * 100).toFixed(0)}%\n`;
   debugLog += `  - Overall Performance: ${(WEIGHT_OVERALL * 100).toFixed(0)}%\n`;
   debugLog += `  - Recent Form: ${(WEIGHT_RECENT * 100).toFixed(0)}%\n`;
   debugLog += `  - Momentum Bonus/Penalty: ${(MOMENTUM_WEIGHT_HOT * 100).toFixed(0)}%/${(MOMENTUM_WEIGHT_COLD * 100).toFixed(0)}%\n`;
@@ -1690,9 +2249,19 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   debugLog += `  Game IQ: ${(initialOrangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / initialOrangeTeam.length).toFixed(2)}\n\n`;
   
   // Step 6: Optimize if needed
+  // Calculate team size and rating range for dynamic threshold
+  const teamSize = Math.floor(playersWithRatings.length / 2);
+  const allRatings = playersWithRatings.map(p => p.threeLayerRating);
+  const ratingRange = {
+    min: Math.min(...allRatings),
+    max: Math.max(...allRatings)
+  };
+  
   const { blueTeam, orangeTeam, finalScore, wasOptimized, swapCount, swapDetails } = optimizeTeams(
     initialBlueTeam,
     initialOrangeTeam,
+    teamSize,
+    ratingRange,
     debugLogRef
   );
   debugLog = debugLogRef.value;
@@ -1747,6 +2316,23 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   debugLog += `Defense:        ${blueDefense.toFixed(2)}    ${orangeDefense.toFixed(2)}     ${Math.abs(blueDefense - orangeDefense).toFixed(2)}\n`;
   debugLog += `Game IQ:        ${blueGameIq.toFixed(2)}    ${orangeGameIq.toFixed(2)}     ${Math.abs(blueGameIq - orangeGameIq).toFixed(2)}\n`;
   
+  // Add derived attributes breakdown
+  const blueAttrs = calculateTeamAttributes(blueTeam);
+  const orangeAttrs = calculateTeamAttributes(orangeTeam);
+  
+  if (blueAttrs.hasAttributes || orangeAttrs.hasAttributes) {
+    debugLog += '\nAttributes:\n';
+    debugLog += `  Pace:         ${(blueAttrs.pace * 10).toFixed(2)}    ${(orangeAttrs.pace * 10).toFixed(2)}     ${(Math.abs(blueAttrs.pace - orangeAttrs.pace) * 10).toFixed(2)}\n`;
+    debugLog += `  Shooting:     ${(blueAttrs.shooting * 10).toFixed(2)}    ${(orangeAttrs.shooting * 10).toFixed(2)}     ${(Math.abs(blueAttrs.shooting - orangeAttrs.shooting) * 10).toFixed(2)}\n`;
+    debugLog += `  Passing:      ${(blueAttrs.passing * 10).toFixed(2)}    ${(orangeAttrs.passing * 10).toFixed(2)}     ${(Math.abs(blueAttrs.passing - orangeAttrs.passing) * 10).toFixed(2)}\n`;
+    debugLog += `  Dribbling:    ${(blueAttrs.dribbling * 10).toFixed(2)}    ${(orangeAttrs.dribbling * 10).toFixed(2)}     ${(Math.abs(blueAttrs.dribbling - orangeAttrs.dribbling) * 10).toFixed(2)}\n`;
+    debugLog += `  Defending:    ${(blueAttrs.defending * 10).toFixed(2)}    ${(orangeAttrs.defending * 10).toFixed(2)}     ${(Math.abs(blueAttrs.defending - orangeAttrs.defending) * 10).toFixed(2)}\n`;
+    debugLog += `  Physical:     ${(blueAttrs.physical * 10).toFixed(2)}    ${(orangeAttrs.physical * 10).toFixed(2)}     ${(Math.abs(blueAttrs.physical - orangeAttrs.physical) * 10).toFixed(2)}\n`;
+    
+    const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
+    debugLog += `  Overall Attr Balance: ${attributeBalance.toFixed(2)} (max difference)\n`;
+  }
+  
   // Add performance metrics if we have enough rated players
   const blueRatedCount = blueTeam.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS).length;
   const orangeRatedCount = orangeTeam.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS).length;
@@ -1760,17 +2346,42 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
     debugLog += `Goal Diff:      ${blueGoalDiff >= 0 ? '+' : ''}${blueGoalDiff.toFixed(0)}     ${orangeGoalDiff >= 0 ? '+' : ''}${orangeGoalDiff.toFixed(0)}      ${Math.abs(blueGoalDiff - orangeGoalDiff).toFixed(0)}\n`;
   }
   
-  // Balance quality description
-  let balanceDescription = '';
-  if (finalScore <= 0.2) {
-    balanceDescription = 'Excellent balance across all metrics';
-  } else if (finalScore <= 0.5) {
-    balanceDescription = 'Good balance with minor differences';
-  } else if (finalScore <= 1.0) {
-    balanceDescription = 'Fair balance with noticeable differences';
-  } else {
-    balanceDescription = 'Poor balance - consider manual adjustments';
+  // Balance quality description using context-aware analysis
+  const balanceThreshold = calculateDynamicBalanceThreshold(teamSize, ratingRange);
+  
+  // Calculate metric differences
+  const attackDiff = Math.abs(blueAttack - orangeAttack);
+  const defenseDiff = Math.abs(blueDefense - orangeDefense);
+  const gameIqDiff = Math.abs(blueGameIq - orangeGameIq);
+  
+  // Calculate attribute difference if available
+  let attributeDiff: number | undefined = undefined;
+  if (blueAttrs.hasAttributes && orangeAttrs.hasAttributes) {
+    attributeDiff = Math.abs(blueAttrs.overallScore - orangeAttrs.overallScore);
   }
+  
+  // Calculate performance metric differences if available
+  let winRateDiff: number | undefined = undefined;
+  let goalDiffDiff: number | undefined = undefined;
+  
+  if (blueWinRate && orangeWinRate) {
+    const blueWRNorm = blueWinRate > 1 ? blueWinRate : blueWinRate * 100;
+    const orangeWRNorm = orangeWinRate > 1 ? orangeWinRate : orangeWinRate * 100;
+    winRateDiff = Math.abs(blueWRNorm - orangeWRNorm);
+  }
+  
+  if (blueGoalDiff !== undefined && orangeGoalDiff !== undefined) {
+    goalDiffDiff = Math.abs(blueGoalDiff - orangeGoalDiff);
+  }
+  
+  const balanceDescription = generateBalanceQualityDescription(finalScore, balanceThreshold, {
+    attackDiff,
+    defenseDiff,
+    gameIqDiff,
+    attributeDiff,
+    winRateDiff,
+    goalDiffDiff
+  });
   
   debugLog += `\nOverall Balance Score: ${finalScore.toFixed(3)} (${balanceDescription})\n`;
   
@@ -1798,6 +2409,49 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   const blueExperiencePercent = (blueRatedCount / blueTeam.length * 100).toFixed(0);
   const orangeExperiencePercent = (orangeRatedCount / orangeTeam.length * 100).toFixed(0);
   debugLog += `Experience:  ${blueExperiencePercent}%     ${orangeExperiencePercent}%      ${blueRatedCount > orangeRatedCount ? 'Blue ↑' : orangeRatedCount > blueRatedCount ? 'Orange ↑' : 'Tie'}\n`;
+  
+  // Add attributes comparison if available
+  if (blueAttrs.hasAttributes || orangeAttrs.hasAttributes) {
+    debugLog += '\nAttributes:\n';
+    let blueAttrAdvantages = 0;
+    let orangeAttrAdvantages = 0;
+    
+    const paceDiff = blueAttrs.pace - orangeAttrs.pace;
+    debugLog += `  Pace:        ${(blueAttrs.pace * 10).toFixed(2)}    ${(orangeAttrs.pace * 10).toFixed(2)}    ${paceDiff > 0.05 ? 'Blue ↑' : paceDiff < -0.05 ? 'Orange ↑' : 'Tie'}\n`;
+    if (paceDiff > 0.05) blueAttrAdvantages++;
+    else if (paceDiff < -0.05) orangeAttrAdvantages++;
+    
+    const shootingDiff = blueAttrs.shooting - orangeAttrs.shooting;
+    debugLog += `  Shooting:    ${(blueAttrs.shooting * 10).toFixed(2)}    ${(orangeAttrs.shooting * 10).toFixed(2)}    ${shootingDiff > 0.05 ? 'Blue ↑' : shootingDiff < -0.05 ? 'Orange ↑' : 'Tie'}\n`;
+    if (shootingDiff > 0.05) blueAttrAdvantages++;
+    else if (shootingDiff < -0.05) orangeAttrAdvantages++;
+    
+    const passingDiff = blueAttrs.passing - orangeAttrs.passing;
+    debugLog += `  Passing:     ${(blueAttrs.passing * 10).toFixed(2)}    ${(orangeAttrs.passing * 10).toFixed(2)}    ${passingDiff > 0.05 ? 'Blue ↑' : passingDiff < -0.05 ? 'Orange ↑' : 'Tie'}\n`;
+    if (passingDiff > 0.05) blueAttrAdvantages++;
+    else if (passingDiff < -0.05) orangeAttrAdvantages++;
+    
+    const dribblingDiff = blueAttrs.dribbling - orangeAttrs.dribbling;
+    debugLog += `  Dribbling:   ${(blueAttrs.dribbling * 10).toFixed(2)}    ${(orangeAttrs.dribbling * 10).toFixed(2)}    ${dribblingDiff > 0.05 ? 'Blue ↑' : dribblingDiff < -0.05 ? 'Orange ↑' : 'Tie'}\n`;
+    if (dribblingDiff > 0.05) blueAttrAdvantages++;
+    else if (dribblingDiff < -0.05) orangeAttrAdvantages++;
+    
+    const defendingDiff = blueAttrs.defending - orangeAttrs.defending;
+    debugLog += `  Defending:   ${(blueAttrs.defending * 10).toFixed(2)}    ${(orangeAttrs.defending * 10).toFixed(2)}    ${defendingDiff > 0.05 ? 'Blue ↑' : defendingDiff < -0.05 ? 'Orange ↑' : 'Tie'}\n`;
+    if (defendingDiff > 0.05) blueAttrAdvantages++;
+    else if (defendingDiff < -0.05) orangeAttrAdvantages++;
+    
+    const physicalDiff = blueAttrs.physical - orangeAttrs.physical;
+    debugLog += `  Physical:    ${(blueAttrs.physical * 10).toFixed(2)}    ${(orangeAttrs.physical * 10).toFixed(2)}    ${physicalDiff > 0.05 ? 'Blue ↑' : physicalDiff < -0.05 ? 'Orange ↑' : 'Tie'}\n`;
+    if (physicalDiff > 0.05) blueAttrAdvantages++;
+    else if (physicalDiff < -0.05) orangeAttrAdvantages++;
+    
+    debugLog += `Attribute Advantage: ${blueAttrAdvantages > orangeAttrAdvantages ? `Blue (${blueAttrAdvantages}-${orangeAttrAdvantages})` : orangeAttrAdvantages > blueAttrAdvantages ? `Orange (${orangeAttrAdvantages}-${blueAttrAdvantages})` : 'Even'}\n`;
+    
+    // Add attribute advantages to overall count
+    if (blueAttrAdvantages > orangeAttrAdvantages) blueAdvantages++;
+    else if (orangeAttrAdvantages > blueAttrAdvantages) orangeAdvantages++;
+  }
   
   // Calculate overall advantage
   let teamAdvantageDescription = '';
@@ -2045,6 +2699,7 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
 ================
 Algorithm: Tier-Based Snake Draft
 Players: ${executiveSummaryData.totalPlayers} (${executiveSummaryData.ratedPlayers} rated, ${executiveSummaryData.newPlayers} new)
+Playstyle Coverage: ${playstyleCoverage}% (${playersWithPlaystyles.length}/${players.length} players rated)
 Tiers: ${executiveSummaryData.tierCount} (sizes: ${executiveSummaryData.tierSizes})
 Final Balance: ${executiveSummaryData.finalBalance.toFixed(3)} (${executiveSummaryData.balanceQuality} - all skills within ${executiveSummaryData.finalBalance.toFixed(2)})
 Optimization: ${executiveSummaryData.optimizationSwaps} swap${executiveSummaryData.optimizationSwaps !== 1 ? 's' : ''} made${executiveSummaryData.optimizationSwaps > 0 ? ` (${wasOptimized ? 'improved balance' : 'no improvement'})` : ''}

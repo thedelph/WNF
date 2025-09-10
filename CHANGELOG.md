@@ -26,10 +26,21 @@ All notable changes to the WNF project will be documented in this file.
 - **Team Balancing Algorithm**:
   - Three-layer rating calculation system
   - Layer 1 (60%): Core ratings (Attack/Defense/Game IQ)
-  - Layer 2 (30%): Derived attributes from playstyles
-  - Layer 3 (10%): Performance metrics (7% track record, 3% recent form)
+  - Layer 2 (20%): Derived attributes from playstyles (rebalanced September 8, 2025)
+  - Layer 3 (20%): Performance metrics (12% track record, 8% recent form, rebalanced September 8, 2025)
   - Unrated players default to 0 for all attributes (changed from 0.35)
   - Automatic attribute calculation via database triggers
+
+### Fixed - September 8, 2025
+- **Team Balancing Algorithm Calibration**:
+  - Fixed critical issue where all players received positive attribute adjustments instead of realistic mix
+  - Root cause: Attributes provided pure positive scores (0-1 scale) rather than league-relative adjustments
+  - Solution: Implemented statistical z-score scaling using league standard deviations
+  - Attribute adjustments now range ±0.05 to ±0.3 (50-75x more impactful than previous ±0.001 to ±0.004)
+  - Enhanced with exponential performance penalties for players with <30% win rate
+  - Weight rebalancing: Reduced attributes from 30% to 20%, increased performance from 10% to 20%
+  - Dynamic balance thresholds that adapt based on team characteristics
+  - Relaxed tier concentration rules from 1.2 to 1.5 rating spread threshold
 
 ## [Released]
 

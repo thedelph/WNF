@@ -7,6 +7,7 @@ import StarRating from '../components/StarRating';
 import { formatStarRating, getRatingButtonText } from '../utils/ratingFormatters';
 import RatingsExplanation from '../components/ratings/RatingsExplanation';
 import PlaystyleSelector from '../components/ratings/PlaystyleSelector';
+import { AttributeCombination, generatePlaystyleName, generatePlaystyleCompact } from '../types/playstyle';
 
 interface Player {
   id: string;
@@ -25,6 +26,15 @@ interface Player {
       name: string;
       category: string;
     } | null;
+    // New attribute columns (will be added later)
+    has_pace?: boolean;
+    has_shooting?: boolean;
+    has_passing?: boolean;
+    has_dribbling?: boolean;
+    has_defending?: boolean;
+    has_physical?: boolean;
+    generated_playstyle_name?: string;
+    generated_playstyle_compact?: string;
   };
 }
 
@@ -48,10 +58,25 @@ export default function Ratings() {
     defense: 0,
     gameIq: 0,
   });
-  const [selectedPlaystyleId, setSelectedPlaystyleId] = useState<string | null>(null);
+  const [selectedAttributes, setSelectedAttributes] = useState<AttributeCombination | null>(null);
+  const [availablePlaystyles, setAvailablePlaystyles] = useState<Array<{id: string; name: string; pace_weight: number; shooting_weight: number; passing_weight: number; dribbling_weight: number; defending_weight: number; physical_weight: number}>>([]);
+
+  const fetchPlaystyles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('playstyles')
+        .select('id, name, pace_weight, shooting_weight, passing_weight, dribbling_weight, defending_weight, physical_weight');
+
+      if (error) throw error;
+      setAvailablePlaystyles(data || []);
+    } catch (error: any) {
+      console.error('Error fetching playstyles:', error);
+    }
+  };
 
   useEffect(() => {
     fetchCurrentPlayer();
+    fetchPlaystyles();
   }, [user]);
 
   useEffect(() => {
@@ -72,7 +97,8 @@ export default function Ratings() {
       const query = searchQuery.toLowerCase().trim();
       result = result.filter(player => 
         player.friendly_name.toLowerCase().includes(query) ||
-        player.current_rating?.playstyles?.name?.toLowerCase().includes(query)
+        player.current_rating?.playstyles?.name?.toLowerCase().includes(query) ||
+        player.current_rating?.generated_playstyle_name?.toLowerCase().includes(query)
       );
     }
 
@@ -96,19 +122,42 @@ export default function Ratings() {
         result = result.filter(player => player.games_played >= 10);
         break;
       case 'has_playstyle':
-        result = result.filter(player => player.current_rating?.playstyle_id);
+        result = result.filter(player => {
+          const rating = player.current_rating;
+          // Support both old and new systems
+          return rating && (rating.playstyle_id || 
+                           (rating.has_pace || rating.has_shooting || rating.has_passing || 
+                            rating.has_dribbling || rating.has_defending || rating.has_physical));
+        });
         break;
       case 'no_playstyle':
-        result = result.filter(player => player.current_rating && !player.current_rating.playstyle_id);
+        result = result.filter(player => {
+          const rating = player.current_rating;
+          return rating && !rating.playstyle_id && 
+                 !(rating.has_pace || rating.has_shooting || rating.has_passing || 
+                   rating.has_dribbling || rating.has_defending || rating.has_physical);
+        });
         break;
       case 'attacking_style':
-        result = result.filter(player => player.current_rating?.playstyles?.category === 'attacking');
+        result = result.filter(player => {
+          const rating = player.current_rating;
+          return rating && (rating.playstyles?.category === 'attacking' ||
+                           (rating.has_pace || rating.has_shooting || rating.has_dribbling));
+        });
         break;
       case 'midfield_style':
-        result = result.filter(player => player.current_rating?.playstyles?.category === 'midfield');
+        result = result.filter(player => {
+          const rating = player.current_rating;
+          return rating && (rating.playstyles?.category === 'midfield' ||
+                           (rating.has_passing || rating.has_dribbling));
+        });
         break;
       case 'defensive_style':
-        result = result.filter(player => player.current_rating?.playstyles?.category === 'defensive');
+        result = result.filter(player => {
+          const rating = player.current_rating;
+          return rating && (rating.playstyles?.category === 'defensive' ||
+                           (rating.has_defending || rating.has_physical));
+        });
         break;
       default:
         break;
@@ -180,18 +229,29 @@ export default function Ratings() {
         break;
       case 'playstyle_name':
         result.sort((a, b) => {
-          const aName = a.current_rating?.playstyles?.name || 'zzz';
-          const bName = b.current_rating?.playstyles?.name || 'zzz';
+          const aName = a.current_rating?.playstyles?.name || 
+                        a.current_rating?.generated_playstyle_name || 'zzz';
+          const bName = b.current_rating?.playstyles?.name || 
+                        b.current_rating?.generated_playstyle_name || 'zzz';
           return aName.localeCompare(bName);
         });
         break;
       case 'playstyle_category':
         result.sort((a, b) => {
-          const aCategory = a.current_rating?.playstyles?.category || 'zzz';
-          const bCategory = b.current_rating?.playstyles?.category || 'zzz';
-          const aCat = aCategory === 'attacking' ? 0 : aCategory === 'midfield' ? 1 : aCategory === 'defensive' ? 2 : 3;
-          const bCat = bCategory === 'attacking' ? 0 : bCategory === 'midfield' ? 1 : bCategory === 'defensive' ? 2 : 3;
-          return aCat - bCat;
+          // Sort by primary attribute type: attacking (pace/shooting), midfield (passing/dribbling), defensive (defending/physical)
+          const getCategory = (rating: any) => {
+            if (!rating) return 3;
+            // Check old system first
+            if (rating.playstyles?.category === 'attacking') return 0;
+            if (rating.playstyles?.category === 'midfield') return 1;
+            if (rating.playstyles?.category === 'defensive') return 2;
+            // Check new system
+            if (rating.has_defending || rating.has_physical) return 2; // Defensive
+            if (rating.has_passing || rating.has_dribbling) return 1;  // Midfield
+            if (rating.has_pace || rating.has_shooting) return 0;      // Attacking
+            return 3; // No attributes
+          };
+          return getCategory(a.current_rating) - getCategory(b.current_rating);
         });
         break;
       default:
@@ -232,13 +292,14 @@ export default function Ratings() {
       if (error) throw error;
 
       // Get current user's ratings with playstyle information
-      const { data: existingRatings } = await supabase
+      // Since the new columns might not exist yet, we'll handle both old and new schemas
+      const { data: existingRatings, error: ratingsError } = await supabase
         .from('player_ratings')
         .select(`
           rated_player_id, 
           attack_rating, 
           defense_rating, 
-          game_iq_rating, 
+          game_iq_rating,
           playstyle_id,
           playstyles (
             id,
@@ -247,6 +308,10 @@ export default function Ratings() {
           )
         `)
         .eq('rater_id', currentPlayer.id);
+      
+      if (ratingsError) {
+        console.error('Error fetching ratings:', ratingsError);
+      }
 
       // Get WhatsApp status for all players
       const { data: whatsAppData, error: whatsAppError } = await supabase
@@ -283,28 +348,45 @@ export default function Ratings() {
     if (!selectedPlayer || !user?.id) return;
 
     try {
+      const ratingData: any = {
+        rater_id: currentPlayer.id,
+        rated_player_id: selectedPlayer.id,
+        attack_rating: ratings.attack,
+        defense_rating: ratings.defense,
+        game_iq_rating: ratings.gameIq,
+      };
+
+      // Map selected attributes to a playstyle_id (until new system is deployed)
+      if ((currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && selectedAttributes) {
+        // Find matching playstyle based on attributes
+        const matchingPlaystyle = availablePlaystyles.find(ps => {
+          // Check if weights match the selected attributes
+          return (
+            (ps.pace_weight > 0) === selectedAttributes.has_pace &&
+            (ps.shooting_weight > 0) === selectedAttributes.has_shooting &&
+            (ps.passing_weight > 0) === selectedAttributes.has_passing &&
+            (ps.dribbling_weight > 0) === selectedAttributes.has_dribbling &&
+            (ps.defending_weight > 0) === selectedAttributes.has_defending &&
+            (ps.physical_weight > 0) === selectedAttributes.has_physical
+          );
+        });
+
+        if (matchingPlaystyle) {
+          ratingData.playstyle_id = matchingPlaystyle.id;
+        }
+      }
+
       const { error } = await supabase
         .from('player_ratings')
-        .upsert(
-          {
-            rater_id: currentPlayer.id,
-            rated_player_id: selectedPlayer.id,
-            attack_rating: ratings.attack,
-            defense_rating: ratings.defense,
-            game_iq_rating: ratings.gameIq,
-            // Only include playstyle_id if user is a beta tester or super admin
-            playstyle_id: (currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) ? selectedPlaystyleId : null
-          },
-          {
-            onConflict: 'rater_id,rated_player_id'
-          }
-        );
+        .upsert(ratingData, {
+          onConflict: 'rater_id,rated_player_id'
+        });
 
       if (error) throw error;
 
       toast.success(`Successfully rated ${selectedPlayer.friendly_name}`);
       setSelectedPlayer(null);
-      setSelectedPlaystyleId(null); // Reset playstyle selection
+      setSelectedAttributes(null); // Reset attribute selection
       fetchPlayers(); // Refresh the list
     } catch (error: any) {
       toast.error(error.message);
@@ -496,8 +578,8 @@ export default function Ratings() {
               />
               {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && (
                 <PlaystyleSelector
-                  selectedPlaystyleId={selectedPlaystyleId}
-                  onPlaystyleChange={setSelectedPlaystyleId}
+                  selectedAttributes={selectedAttributes}
+                  onAttributesChange={setSelectedAttributes}
                 />
               )}
             </div>
@@ -555,22 +637,30 @@ export default function Ratings() {
                         <p>Attack: {formatStarRating(player.current_rating.attack_rating)}</p>
                         <p>Defense: {formatStarRating(player.current_rating.defense_rating)}</p>
                         <p>Game IQ: {formatStarRating(player.current_rating.game_iq_rating)}</p>
-                        {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && player.current_rating.playstyles && (
+                        {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && 
+                         (player.current_rating.playstyles || 
+                          (player.current_rating.generated_playstyle_name && 
+                           player.current_rating.generated_playstyle_name !== 'No Style Selected')) && (
                           <div className="mt-2">
                             <p className="font-semibold text-xs">Playstyle:</p>
                             <div className="flex flex-wrap items-center gap-1 mt-1">
                               <span className={`badge badge-xs ${
-                                player.current_rating.playstyles.category === 'attacking' 
-                                  ? 'badge-error' 
-                                  : player.current_rating.playstyles.category === 'midfield'
-                                  ? 'badge-warning'
-                                  : 'badge-info'
+                                player.current_rating.playstyles?.category === 'attacking' ||
+                                (!player.current_rating.playstyles && (player.current_rating.has_pace || player.current_rating.has_shooting))
+                                  ? 'badge-error'  // Attacking
+                                  : player.current_rating.playstyles?.category === 'midfield' ||
+                                    (!player.current_rating.playstyles && (player.current_rating.has_passing || player.current_rating.has_dribbling))
+                                  ? 'badge-warning'  // Midfield  
+                                  : 'badge-info'  // Defensive
                               }`}>
-                                {player.current_rating.playstyles.category === 'attacking' ? 'ATT' :
-                                 player.current_rating.playstyles.category === 'midfield' ? 'MID' : 'DEF'}
+                                {player.current_rating.playstyles?.category 
+                                  ? (player.current_rating.playstyles.category === 'attacking' ? 'ATT' :
+                                     player.current_rating.playstyles.category === 'midfield' ? 'MID' : 'DEF')
+                                  : ((player.current_rating.has_defending || player.current_rating.has_physical) ? 'DEF' :
+                                     (player.current_rating.has_passing || player.current_rating.has_dribbling) ? 'MID' : 'ATT')}
                               </span>
                               <span className="text-xs truncate">
-                                {player.current_rating.playstyles.name}
+                                {player.current_rating.playstyles?.name || player.current_rating.generated_playstyle_name}
                               </span>
                             </div>
                           </div>
@@ -588,7 +678,62 @@ export default function Ratings() {
                           defense: player.current_rating?.defense_rating || 0,
                           gameIq: player.current_rating?.game_iq_rating || 0
                         });
-                        setSelectedPlaystyleId(player.current_rating?.playstyle_id || null);
+                        // Set selected attributes from current rating
+                        const rating = player.current_rating;
+                        
+                        // Check if using new attribute system
+                        if (rating && (rating.has_pace || rating.has_shooting || rating.has_passing || 
+                                     rating.has_dribbling || rating.has_defending || rating.has_physical)) {
+                          setSelectedAttributes({
+                            has_pace: rating.has_pace || false,
+                            has_shooting: rating.has_shooting || false,
+                            has_passing: rating.has_passing || false,
+                            has_dribbling: rating.has_dribbling || false,
+                            has_defending: rating.has_defending || false,
+                            has_physical: rating.has_physical || false,
+                          });
+                        } 
+                        // Convert from old playstyle system
+                        else if (rating?.playstyles) {
+                          // Map old playstyle to attributes based on the playstyle definitions
+                          const playstyleToAttributes: Record<string, AttributeCombination> = {
+                            'Complete Forward': { has_pace: true, has_shooting: true, has_passing: true, has_dribbling: true, has_defending: true, has_physical: true },
+                            'Hunter': { has_pace: true, has_shooting: true, has_passing: false, has_dribbling: false, has_defending: false, has_physical: false },
+                            'Hawk': { has_pace: true, has_shooting: true, has_passing: false, has_dribbling: false, has_defending: false, has_physical: true },
+                            'Marksman': { has_pace: false, has_shooting: true, has_passing: false, has_dribbling: true, has_defending: false, has_physical: true },
+                            'Finisher': { has_pace: false, has_shooting: true, has_passing: false, has_dribbling: false, has_defending: false, has_physical: true },
+                            'Sniper': { has_pace: false, has_shooting: true, has_passing: false, has_dribbling: true, has_defending: false, has_physical: false },
+                            'Deadeye': { has_pace: false, has_shooting: true, has_passing: true, has_dribbling: false, has_defending: false, has_physical: false },
+                            'Speedster': { has_pace: true, has_shooting: false, has_passing: false, has_dribbling: true, has_defending: false, has_physical: false },
+                            'Box-to-Box': { has_pace: true, has_shooting: true, has_passing: true, has_dribbling: true, has_defending: true, has_physical: true },
+                            'Engine': { has_pace: true, has_shooting: false, has_passing: true, has_dribbling: true, has_defending: false, has_physical: false },
+                            'Artist': { has_pace: false, has_shooting: false, has_passing: true, has_dribbling: true, has_defending: false, has_physical: false },
+                            'Architect': { has_pace: false, has_shooting: false, has_passing: true, has_dribbling: false, has_defending: false, has_physical: true },
+                            'Powerhouse': { has_pace: false, has_shooting: false, has_passing: true, has_dribbling: false, has_defending: true, has_physical: false },
+                            'Maestro': { has_pace: false, has_shooting: true, has_passing: true, has_dribbling: true, has_defending: false, has_physical: false },
+                            'Catalyst': { has_pace: true, has_shooting: false, has_passing: true, has_dribbling: false, has_defending: false, has_physical: false },
+                            'Locomotive': { has_pace: true, has_shooting: false, has_passing: false, has_dribbling: false, has_defending: false, has_physical: true },
+                            'Enforcer': { has_pace: false, has_shooting: false, has_passing: false, has_dribbling: true, has_defending: false, has_physical: true },
+                            'Complete Defender': { has_pace: true, has_shooting: true, has_passing: true, has_dribbling: true, has_defending: true, has_physical: true },
+                            'Shadow': { has_pace: true, has_shooting: false, has_passing: false, has_dribbling: false, has_defending: true, has_physical: false },
+                            'Anchor': { has_pace: true, has_shooting: false, has_passing: false, has_dribbling: false, has_defending: true, has_physical: true },
+                            'Gladiator': { has_pace: false, has_shooting: true, has_passing: false, has_dribbling: false, has_defending: true, has_physical: false },
+                            'Guardian': { has_pace: false, has_shooting: false, has_passing: false, has_dribbling: true, has_defending: true, has_physical: false },
+                            'Sentinel': { has_pace: false, has_shooting: false, has_passing: false, has_dribbling: false, has_defending: true, has_physical: true },
+                            'Backbone': { has_pace: false, has_shooting: false, has_passing: true, has_dribbling: false, has_defending: true, has_physical: true }
+                          };
+                          
+                          const playstyleName = rating.playstyles.name;
+                          const attributes = playstyleToAttributes[playstyleName];
+                          
+                          if (attributes) {
+                            setSelectedAttributes(attributes);
+                          } else {
+                            setSelectedAttributes(null);
+                          }
+                        } else {
+                          setSelectedAttributes(null);
+                        }
                       }}
                     >
                       <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>

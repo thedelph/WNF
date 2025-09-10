@@ -3,7 +3,7 @@
 ## Overview
 The team balancing system ensures fair and competitive matches by automatically distributing players across two teams (Blue and Orange) based on multiple performance metrics.
 
-## Balancing Metrics (Updated September 5, 2025)
+## Balancing Metrics (Updated September 8, 2025)
 
 The system now considers **5 core metrics** plus **derived attributes** from playstyles:
 
@@ -37,13 +37,15 @@ The system now considers **5 core metrics** plus **derived attributes** from pla
    - Automatically calculated from player playstyle ratings
    - Unrated players default to 0
 
-## Algorithm (Updated September 5, 2025)
+## Algorithm (Updated September 8, 2025)
 
 ### Three-Layer Rating System (Tier-Based Snake Draft)
 When using the tier-based algorithm, player ratings are calculated with:
 - **Layer 1 (60%)**: Core skills (Attack/Defense/Game IQ)
-- **Layer 2 (30%)**: Derived attributes from playstyles
-- **Layer 3 (10%)**: Performance metrics (7% track record + 3% recent form)
+- **Layer 2 (20%)**: Derived attributes from playstyles
+- **Layer 3 (20%)**: Performance metrics (12% track record + 8% recent form)
+
+> **Note**: The weight distribution was rebalanced on September 8, 2025, reducing derived attributes from 30% to 20% and increasing performance metrics from 10% to 20%. This change was accompanied by a statistical scaling calibration fix that replaced simple attribute adjustments with z-score based scaling, creating more meaningful and balanced attribute impacts.
 
 ### Two-Phase Optimization Approach
 
@@ -153,9 +155,9 @@ An alternative team balancing approach that uses a tier-based snake draft system
 
 ### Key Features
 1. **Three-Layer Rating System**:
-   - Base Skill (70%): Average of Attack, Defense, and Game IQ
-   - Overall Performance (20%): Career win rate and goal differential
-   - Recent Form (10%): Last 10 games performance with momentum factor
+   - Core Skills (60%): Average of Attack, Defense, and Game IQ
+   - Derived Attributes (20%): Six attributes from playstyles (Pace, Shooting, Passing, Dribbling, Defending, Physical)
+   - Performance Metrics (20%): Career win rate and goal differential (12%) + recent form with momentum factor (8%)
 
 2. **True Snake Draft**:
    - Randomly selects which team picks first
