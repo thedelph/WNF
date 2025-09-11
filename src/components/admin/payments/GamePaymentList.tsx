@@ -152,19 +152,44 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
               
               <GamePaymentStats game={game} />
 
-              {/* Desktop table view */}
-              <div className="hidden sm:block overflow-x-auto mt-4">
-                <table className="table w-full">
-                  <thead>
-                    <tr>
-                      <th>Player</th>
-                      <th>Payment Status</th>
-                      <th>Payment Date</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {game.game_registrations?.map((reg) => (
+              {/* Check if there are registrations to display */}
+              {(!game.game_registrations || game.game_registrations.length === 0) ? (
+                <div className="text-center py-4 text-gray-500">
+                  No players found for this game. This may be a data loading issue.
+                </div>
+              ) : (
+                <>
+                  {/* Desktop table view */}
+                  <div className="hidden sm:block overflow-x-auto mt-4">
+                    <table className="table w-full">
+                      <thead>
+                        <tr>
+                          <th>Player</th>
+                          <th>Payment Status</th>
+                          <th>Payment Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {game.game_registrations.map((reg) => (
+                          <GamePaymentRow
+                            key={reg.player_id}
+                            registration={reg}
+                            gameId={game.id}
+                            sequenceNumber={game.sequence_number}
+                            paymentLink={game.payment_link}
+                            costPerPerson={game.cost_per_person}
+                            onUpdate={onUpdate}
+                            view="desktop"
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Mobile card view */}
+                  <div className="sm:hidden mt-3 space-y-3">
+                    {game.game_registrations.map((reg) => (
                       <GamePaymentRow
                         key={reg.player_id}
                         registration={reg}
@@ -173,28 +198,12 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
                         paymentLink={game.payment_link}
                         costPerPerson={game.cost_per_person}
                         onUpdate={onUpdate}
-                        view="desktop"
+                        view="mobile"
                       />
                     ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Mobile card view */}
-              <div className="sm:hidden mt-3 space-y-3">
-                {game.game_registrations?.map((reg) => (
-                  <GamePaymentRow
-                    key={reg.player_id}
-                    registration={reg}
-                    gameId={game.id}
-                    sequenceNumber={game.sequence_number}
-                    paymentLink={game.payment_link}
-                    costPerPerson={game.cost_per_person}
-                    onUpdate={onUpdate}
-                    view="mobile"
-                  />
-                ))}
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </motion.div>
         ))}

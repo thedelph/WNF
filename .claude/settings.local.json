@@ -26,7 +26,12 @@
       "Bash(test:*)",
       "Bash(rm:*)",
       "Bash(sed:*)",
-      "Read(//c/Users/ChrisHide/documents/github/wnf/wnf/src/pages/**)"
+      "Read(//c/Users/ChrisHide/documents/github/wnf/wnf/src/pages/**)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd //c:*)",
+      "Bash(PORT=5175 npm run dev)"
     ]
   },
   "enableAllProjectMcpServers": true,

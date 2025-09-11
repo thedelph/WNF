@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => {
 
     // Server configuration
     server: {
-      port: 5173,
-      strictPort: true,
+      port: 5175, // IMPORTANT: Must be 5175 for Supabase CORS configuration
+      strictPort: true, // Fail if port is already in use instead of trying another
       hmr: {
         overlay: true
       }

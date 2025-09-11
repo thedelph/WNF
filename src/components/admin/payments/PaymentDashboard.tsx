@@ -24,6 +24,9 @@ const PaymentDashboard: React.FC = () => {
       setLoading(true);
       
       // First fetch games with venue info
+      // IMPORTANT: Limited to 30 games to prevent Supabase query limits
+      // When fetching registrations for 60+ games, the IN query would hit
+      // Supabase's 1000 record limit, causing some games to show 0 players
       const { data: gamesData, error: gamesError } = await supabase
         .from('games')
         .select(`
@@ -31,51 +34,105 @@ const PaymentDashboard: React.FC = () => {
           venue:venues (*)
         `)
         .order('date', { ascending: false })
-        .lte('date', new Date().toISOString()); // Only fetch past games
+        .lte('date', new Date().toISOString()) // Only fetch past games
+        .limit(30); // Prevents query limit issues with large datasets
 
       if (gamesError) throw gamesError;
 
-      // Then fetch all game registrations with player info
-      const { data: registrationsData, error: regsError } = await supabase
-        .from('game_registrations')
-        .select(`
-          *,
-          player:players!game_registrations_player_id_fkey (
-            id,
-            friendly_name
-          ),
-          paid_by:players!game_registrations_paid_by_player_id_fkey (
-            id,
-            friendly_name
-          ),
-          payment_recipient:players!game_registrations_payment_recipient_id_fkey (
-            id,
-            friendly_name
-          ),
-          payment_verifier:players!game_registrations_payment_verified_by_fkey (
-            id,
-            friendly_name
-          )
-        `)
-        .in('game_id', gamesData?.map(game => game.id) || [])
-        .eq('status', 'selected'); // Only get selected players, we'll filter for payment status in JS
+      // Then fetch all game registrations for these games
+      const gameIds = gamesData?.map(game => game.id) || [];
+      console.log('Fetching registrations for games:', gameIds.length, 'games');
+      
+      // BATCH FETCHING: Split into groups of 10 games to avoid Supabase query limits
+      // Previously, querying 60+ games in one IN statement would return max 1000 records,
+      // causing games like #63 to show 0 players when their registrations weren't in the first 1000
+      let allRegistrations = [];
+      const batchSize = 10; // Optimal batch size to balance performance and query limits
+      
+      for (let i = 0; i < gameIds.length; i += batchSize) {
+        const batch = gameIds.slice(i, i + batchSize);
+        const { data: batchData, error: batchError } = await supabase
+          .from('game_registrations')
+          .select('*')
+          .in('game_id', batch);
+          
+        if (batchError) {
+          console.error('Error fetching registration batch:', batchError);
+          throw batchError;
+        }
+        
+        allRegistrations = [...allRegistrations, ...(batchData || [])];
+      }
+      
+      const registrationsData = allRegistrations;
+      
+      console.log('Raw registrations fetched:', registrationsData?.length);
+      
+      // Check for game 63 specifically
+      const game63Id = gamesData?.find(g => g.sequence_number === 63)?.id;
+      if (game63Id) {
+        const game63Regs = registrationsData?.filter(r => r.game_id === game63Id);
+        console.log(`Game 63 (ID: ${game63Id}) has ${game63Regs?.length} registrations in raw data`);
+      }
 
-      if (regsError) throw regsError;
+      // SEPARATE PLAYER FETCHING: Fetch player details separately to avoid join complexity
+      // game_registrations has multiple foreign keys to players table:
+      // - player_id, paid_by_player_id, payment_recipient_id, payment_verified_by
+      // This causes Supabase to error with "more than one relationship was found"
+      // Solution: Fetch players separately and join in JavaScript
+      const playerIds = [...new Set(registrationsData?.map(r => r.player_id).filter(Boolean) || [])];
+      const { data: playersData, error: playersError } = await supabase
+        .from('players')
+        .select('id, friendly_name')
+        .in('id', playerIds);
+
+      if (playersError) {
+        console.error('Error fetching players:', playersError);
+        throw playersError;
+      }
+
+      // Create a map for O(1) player lookups
+      const playerMap = new Map(playersData?.map(p => [p.id, p]) || []);
+
+      // Combine registrations with player data in JavaScript
+      const registrationsWithPlayers = registrationsData?.map(reg => ({
+        ...reg,
+        player: playerMap.get(reg.player_id) || null
+      })) || [];
+
+      console.log('Fetched registrations:', registrationsWithPlayers?.length, 'registrations');
+      console.log('Sample registration:', registrationsWithPlayers?.[0]);
 
       // Calculate the total amount owed for each registration
       const gamesWithRegistrations = gamesData?.map(game => {
-        const gameRegistrations = registrationsData?.filter(reg => reg.game_id === game.id) || [];
-        const selectedNonReservePlayers = gameRegistrations.filter(
-          reg => reg.status === 'selected' 
+        // Get all registrations for this game
+        const gameRegistrations = registrationsWithPlayers?.filter(reg => reg.game_id === game.id) || [];
+        
+        console.log(`Game ${game.sequence_number} (${game.date}): Found ${gameRegistrations.length} total registrations`);
+        
+        // Filter for selected players only (not reserves) AND make sure they have player data
+        const selectedPlayers = gameRegistrations.filter(
+          reg => reg.status === 'selected' && reg.player
         );
-        const costPerPerson = selectedNonReservePlayers.length ? 
-          game.pitch_cost / selectedNonReservePlayers.length : 
-          game.pitch_cost;
+        
+        // Log any registrations without player data
+        const missingPlayerData = gameRegistrations.filter(
+          reg => reg.status === 'selected' && !reg.player
+        );
+        if (missingPlayerData.length > 0) {
+          console.warn(`Game ${game.sequence_number}: ${missingPlayerData.length} selected players have no player data`, missingPlayerData);
+        }
+        
+        // Calculate cost per person based on selected players count
+        const playerCount = selectedPlayers.length || 1; // Avoid division by zero
+        const costPerPerson = game.pitch_cost ? game.pitch_cost / playerCount : 0;
+
+        console.log(`Game ${game.sequence_number}: ${selectedPlayers.length} selected players with data, cost per person: £${costPerPerson.toFixed(2)}`);
 
         return {
           ...game,
           cost_per_person: costPerPerson,
-          game_registrations: gameRegistrations.map(reg => ({
+          game_registrations: selectedPlayers.map(reg => ({
             ...reg,
             // Only require payment for past games where player was selected 
             payment_required: new Date(game.date) < new Date() && reg.status === 'selected',
