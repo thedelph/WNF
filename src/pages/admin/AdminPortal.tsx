@@ -12,6 +12,7 @@ import { SlotOffersCard } from '../../components/admin/cards/SlotOffersCard'
 import { TokenManagementCard } from '../../components/admin/cards/TokenManagementCard'
 import AccountManagementCard from '../../components/admin/cards/AccountManagementCard'
 import RoleManagementCard from '../../components/admin/cards/RoleManagementCard'
+import FeatureFlagManagementCard from '../../components/admin/cards/FeatureFlagManagementCard'
 import { PERMISSIONS } from '../../types/permissions'
 import ViewAsIndicator from '../../components/admin/ViewAsIndicator'
 
@@ -50,7 +51,8 @@ const AdminPortal: React.FC = () => {
           hasPermission(PERMISSIONS.MANAGE_HISTORY) && <HistoricalDataCard key="historical" />,
           hasPermission(PERMISSIONS.MANAGE_SLOTS) && <SlotOffersCard key="slots" />,
           hasPermission(PERMISSIONS.MANAGE_RATINGS) && <RatingsCard key="ratings" />,
-          isSuperAdmin && <RoleManagementCard key="roles" />
+          isSuperAdmin && <RoleManagementCard key="roles" />,
+          isSuperAdmin && <FeatureFlagManagementCard key="feature-flags" />
         ].filter(Boolean).map((card, index) => (
           <motion.div
             key={index}

@@ -8,6 +8,7 @@ import { formatStarRating, getRatingButtonText } from '../utils/ratingFormatters
 import RatingsExplanation from '../components/ratings/RatingsExplanation';
 import PlaystyleSelector from '../components/ratings/PlaystyleSelector';
 import { AttributeCombination, generatePlaystyleName, generatePlaystyleCompact } from '../types/playstyle';
+import BetaFeature from '../components/BetaFeature';
 
 interface Player {
   id: string;
@@ -647,12 +648,12 @@ export default function Ratings() {
                 onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
                 label="Game IQ Rating"
               />
-              {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && (
+              <BetaFeature featureFlag="playstyle_ratings" showMessage={false}>
                 <PlaystyleSelector
                   selectedAttributes={selectedAttributes}
                   onAttributesChange={setSelectedAttributes}
                 />
-              )}
+              </BetaFeature>
             </div>
 
             <div className="flex justify-end gap-2 mt-4">

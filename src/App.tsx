@@ -39,6 +39,7 @@ import { ScrollToTop } from './components/ui/ScrollToTop'
 import TokenManagement from './pages/admin/TokenManagement'
 import AccountManagement from './pages/admin/AccountManagement'
 import RoleManagement from './pages/admin/RoleManagement'
+import FeatureFlagManagement from './pages/admin/FeatureFlagManagement'
 import TeamBalancingVisualization from './pages/admin/TeamBalancingVisualization'
 
 // Create a client
@@ -90,6 +91,7 @@ const App: React.FC = () => {
                 <Route path="/admin/admins" element={<AdminManagement />} />
                 <Route path="/admin/permissions" element={<AdminPermissions />} />
                 <Route path="/admin/roles" element={<RoleManagement />} />
+                <Route path="/admin/feature-flags" element={<FeatureFlagManagement />} />
                 <Route path="/admin/games" element={<GameManagement />} />
                 <Route path="/admin/players" element={<Players />} />
                 <Route path="/admin/players/:id" element={<EditPlayer />} />

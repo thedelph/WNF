@@ -1,5 +1,6 @@
 import React from 'react';
 import { useBetaTester } from '../hooks/useBetaTester';
+import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import { useAdmin } from '../hooks/useAdmin';
 import { FaFlask, FaLock } from 'react-icons/fa';
 
@@ -8,6 +9,7 @@ interface BetaFeatureProps {
   fallback?: React.ReactNode;
   showMessage?: boolean;
   allowAdmins?: boolean;
+  featureFlag?: string; // New prop for feature flag name
 }
 
 /**
@@ -17,16 +19,58 @@ interface BetaFeatureProps {
  * @param fallback - Optional content to show to non-beta testers (defaults to nothing)
  * @param showMessage - Whether to show a "Beta feature" message when feature is hidden
  * @param allowAdmins - Whether to allow admins to see the feature regardless of beta status
+ * @param featureFlag - Optional feature flag name to check (uses new feature flag system)
  */
 const BetaFeature: React.FC<BetaFeatureProps> = ({ 
   children, 
   fallback = null,
   showMessage = true,
-  allowAdmins = true 
+  allowAdmins = true,
+  featureFlag
 }) => {
   const { isBetaTester, loading: betaLoading } = useBetaTester();
+  const { isEnabled: featureFlagEnabled, loading: flagLoading } = useFeatureFlag(featureFlag || '');
   const { isAdmin, loading: adminLoading } = useAdmin();
 
+  // Use feature flag system if a flag name is provided
+  if (featureFlag) {
+    if (flagLoading) {
+      return null;
+    }
+
+    if (!featureFlagEnabled) {
+      if (showMessage && fallback === null) {
+        return (
+          <div className="alert alert-warning shadow-lg">
+            <div>
+              <FaLock className="flex-shrink-0" />
+              <div>
+                <h3 className="font-bold">Feature Not Available</h3>
+                <div className="text-sm">This feature is not currently available for your account.</div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      return <>{fallback}</>;
+    }
+
+    return (
+      <div className="relative">
+        {!isAdmin && (
+          <div className="absolute top-0 right-0 z-10">
+            <span className="badge badge-warning badge-sm gap-1">
+              <FaFlask className="text-xs" />
+              Beta
+            </span>
+          </div>
+        )}
+        {children}
+      </div>
+    );
+  }
+
+  // Legacy beta tester check (for backward compatibility)
   if (betaLoading || (allowAdmins && adminLoading)) {
     return null;
   }
