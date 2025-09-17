@@ -69,11 +69,7 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
               <td className="hidden sm:table-cell">{formatRating(rating.game_iq_rating)}</td>
               <td className="hidden md:table-cell">
                 {rating.playstyle ? (
-                  <span className={`badge badge-sm ${
-                    rating.playstyle.category === 'attacking' ? 'badge-error' :
-                    rating.playstyle.category === 'midfield' ? 'badge-warning' :
-                    'badge-info'
-                  }`}>
+                  <span className="text-sm">
                     {rating.playstyle.name}
                   </span>
                 ) : (
@@ -86,11 +82,7 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
                   <span className="badge badge-xs">D: {formatRating(rating.defense_rating)}</span>
                   <span className="badge badge-xs">IQ: {formatRating(rating.game_iq_rating)}</span>
                   {rating.playstyle && (
-                    <span className={`badge badge-xs ${
-                      rating.playstyle.category === 'attacking' ? 'badge-error' :
-                      rating.playstyle.category === 'midfield' ? 'badge-warning' :
-                      'badge-info'
-                    }`}>
+                    <span className="text-xs">
                       {rating.playstyle.name}
                     </span>
                   )}

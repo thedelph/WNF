@@ -275,4 +275,5 @@ export interface FormationResult {
     blue: FormationDebugLog;
     orange: FormationDebugLog;
   };
+  consolidatedDebugLog?: any; // ConsolidatedFormationDebugLog type from formationSuggester
 }

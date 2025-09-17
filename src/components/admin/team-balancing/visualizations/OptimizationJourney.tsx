@@ -68,7 +68,245 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                   </div>
                 </div>
                 {swap.reason && (
-                  <p className="text-sm text-gray-600">{swap.reason}</p>
+                  <p className="text-sm text-gray-600 mb-3">{swap.reason}</p>
+                )}
+
+                {/* Metric Changes */}
+                {swap.metricChanges && Object.keys(swap.metricChanges).length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-base-300">
+                    {/* Plain text summary */}
+                    <div className="mb-3 p-2 bg-base-300 rounded text-sm">
+                      {/* Reason for swap */}
+                      <div className="mb-2">
+                        <p className="font-semibold text-xs uppercase text-gray-600 mb-1">📊 Reason</p>
+                        <p className="text-xs">
+                          {(() => {
+                            const reasons: string[] = [];
+
+                            // Identify the biggest imbalances before the swap
+                            if (swap.metricChanges?.attack && swap.metricChanges.attack.before > 0.15) {
+                              reasons.push(`Attack was imbalanced (${swap.metricChanges.attack.before.toFixed(2)} difference)`);
+                            }
+                            if (swap.metricChanges?.defense && swap.metricChanges.defense.before > 0.15) {
+                              reasons.push(`Defense was imbalanced (${swap.metricChanges.defense.before.toFixed(2)} difference)`);
+                            }
+                            if (swap.metricChanges?.gameIq && swap.metricChanges.gameIq.before > 0.15) {
+                              reasons.push(`Game IQ was imbalanced (${swap.metricChanges.gameIq.before.toFixed(2)} difference)`);
+                            }
+
+                            // Check for attribute imbalances
+                            const attrImbalances: string[] = [];
+                            ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical'].forEach(attr => {
+                              const metric = swap.metricChanges?.[attr as keyof typeof swap.metricChanges] as any;
+                              if (metric && metric.before > 0.5) {
+                                attrImbalances.push(attr.charAt(0).toUpperCase() + attr.slice(1));
+                              }
+                            });
+                            if (attrImbalances.length > 0) {
+                              reasons.push(`${attrImbalances.join(', ')} attributes were uneven`);
+                            }
+
+                            return reasons.length > 0 ? reasons.join('. ') : 'Teams needed better overall balance';
+                          })()}
+                        </p>
+                      </div>
+
+                      {/* Impact of swap */}
+                      <div>
+                        <p className="font-semibold text-xs uppercase text-gray-600 mb-1">✅ Impact</p>
+                        <p className="text-xs">
+                          {(() => {
+                            const improvements: string[] = [];
+                            const tradeoffs: string[] = [];
+
+                          // Check core skills
+                          if (swap.metricChanges.attack) {
+                            const diff = Math.abs(swap.metricChanges.attack.after - swap.metricChanges.attack.before);
+                            if (swap.metricChanges.attack.after < swap.metricChanges.attack.before) {
+                              improvements.push(`Attack balance improved by ${diff.toFixed(2)}`);
+                            } else {
+                              tradeoffs.push(`Attack difference increased by ${diff.toFixed(2)}`);
+                            }
+                          }
+
+                          if (swap.metricChanges.defense) {
+                            const diff = Math.abs(swap.metricChanges.defense.after - swap.metricChanges.defense.before);
+                            if (swap.metricChanges.defense.after < swap.metricChanges.defense.before) {
+                              improvements.push(`Defense balance improved by ${diff.toFixed(2)}`);
+                            } else {
+                              tradeoffs.push(`Defense difference increased by ${diff.toFixed(2)}`);
+                            }
+                          }
+
+                          if (swap.metricChanges.gameIq) {
+                            const diff = Math.abs(swap.metricChanges.gameIq.after - swap.metricChanges.gameIq.before);
+                            if (swap.metricChanges.gameIq.after < swap.metricChanges.gameIq.before) {
+                              improvements.push(`Game IQ balance improved by ${diff.toFixed(2)}`);
+                            } else {
+                              tradeoffs.push(`Game IQ difference increased by ${diff.toFixed(2)}`);
+                            }
+                          }
+
+                          // Check significant attribute changes
+                          const attributeChanges: string[] = [];
+                          const checkAttribute = (name: string, key: keyof typeof swap.metricChanges) => {
+                            const attr = swap.metricChanges[key] as any;
+                            if (attr) {
+                              const diff = Math.abs(attr.after - attr.before);
+                              if (diff > 0.05) { // Only show significant changes
+                                if (attr.after < attr.before) {
+                                  attributeChanges.push(`${name} (${diff.toFixed(2)} better)`);
+                                }
+                              }
+                            }
+                          };
+
+                          checkAttribute('Pace', 'pace');
+                          checkAttribute('Shooting', 'shooting');
+                          checkAttribute('Passing', 'passing');
+                          checkAttribute('Dribbling', 'dribbling');
+                          checkAttribute('Defending', 'defending');
+                          checkAttribute('Physical', 'physical');
+
+                          // Build summary
+                          let summary = '';
+                          if (improvements.length > 0) {
+                            summary += improvements.join(', ') + '. ';
+                          }
+                          if (tradeoffs.length > 0) {
+                            summary += 'Trade-off: ' + tradeoffs.join(', ') + '. ';
+                          }
+                          if (attributeChanges.length > 0) {
+                            summary += 'Attributes improved: ' + attributeChanges.join(', ') + '.';
+                          }
+
+                          // Check win rate gap
+                          if (swap.metricChanges.winRateGap) {
+                            const gapDiff = swap.metricChanges.winRateGap.after - swap.metricChanges.winRateGap.before;
+                            if (Math.abs(gapDiff) > 1) {
+                              if (gapDiff < 0) {
+                                summary += ` Win rate gap reduced by ${Math.abs(gapDiff).toFixed(1)}%.`;
+                              } else {
+                                summary += ` Win rate gap increased by ${gapDiff.toFixed(1)}%.`;
+                              }
+                            }
+                          }
+
+                            return summary || 'Overall balance improvement across multiple metrics.';
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs font-semibold text-gray-500 mb-2">DETAILED METRICS</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                      {/* Core Skills */}
+                      {swap.metricChanges.attack && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Attack:</span>
+                          <span className="text-gray-500">{swap.metricChanges.attack.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.attack.after < swap.metricChanges.attack.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.attack.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {swap.metricChanges.defense && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Defense:</span>
+                          <span className="text-gray-500">{swap.metricChanges.defense.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.defense.after < swap.metricChanges.defense.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.defense.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {swap.metricChanges.gameIq && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Game IQ:</span>
+                          <span className="text-gray-500">{swap.metricChanges.gameIq.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.gameIq.after < swap.metricChanges.gameIq.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.gameIq.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Attributes */}
+                      {swap.metricChanges.pace && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Pace:</span>
+                          <span className="text-gray-500">{swap.metricChanges.pace.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.pace.after < swap.metricChanges.pace.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.pace.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {swap.metricChanges.shooting && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Shooting:</span>
+                          <span className="text-gray-500">{swap.metricChanges.shooting.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.shooting.after < swap.metricChanges.shooting.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.shooting.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {swap.metricChanges.passing && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Passing:</span>
+                          <span className="text-gray-500">{swap.metricChanges.passing.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.passing.after < swap.metricChanges.passing.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.passing.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {swap.metricChanges.dribbling && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Dribbling:</span>
+                          <span className="text-gray-500">{swap.metricChanges.dribbling.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.dribbling.after < swap.metricChanges.dribbling.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.dribbling.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {swap.metricChanges.defending && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Defending:</span>
+                          <span className="text-gray-500">{swap.metricChanges.defending.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.defending.after < swap.metricChanges.defending.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.defending.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {swap.metricChanges.physical && (
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Physical:</span>
+                          <span className="text-gray-500">{swap.metricChanges.physical.before.toFixed(2)}</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.physical.after < swap.metricChanges.physical.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.physical.after.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Win Rate Gap */}
+                      {swap.metricChanges.winRateGap && (
+                        <div className="flex items-center gap-1 col-span-2">
+                          <span className="font-medium">Win Rate Gap:</span>
+                          <span className="text-gray-500">{swap.metricChanges.winRateGap.before.toFixed(1)}%</span>
+                          <span>→</span>
+                          <span className={swap.metricChanges.winRateGap.after < swap.metricChanges.winRateGap.before ? 'text-success' : 'text-warning'}>
+                            {swap.metricChanges.winRateGap.after.toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

@@ -3,6 +3,8 @@
 ## Overview
 A hybrid playstyle system that combines the best of predefined names with dynamic attribute selection. Players select attributes directly through checkboxes, and the system either shows a predefined playstyle name (like "Hunter", "Engine") or generates a descriptive name for new combinations. This system complements the existing Attack/Defense/Game IQ ratings with 6 derived attributes (Pace, Shooting, Passing, Dribbling, Defending, Physical) for enhanced team balancing and player profiling.
 
+**Status**: Live for all users (as of 2025-09-17)
+
 ## System Design
 
 ### Core Concepts
@@ -13,7 +15,7 @@ A hybrid playstyle system that combines the best of predefined names with dynami
 - **6 derived attributes** calculated from attribute selections
 - **Default baseline** of 0 for all attributes (unrated players start at zero)
 - **Attributes are averaged** across all ratings a player receives
-- **Beta tester/Super admin only** feature during initial rollout
+- **Available to all users** (was beta-restricted until 2025-09-17)
 
 ### Playstyle Categories & Definitions
 
@@ -82,7 +84,7 @@ Any attribute combination not covered by the 24 predefined names gets a dynamica
    
    - **Ratings Page Integration** (`/src/pages/Ratings.tsx`)
      - Added playstyle selector to rating modal
-     - Beta tester/Super admin restriction - only these users see playstyle selector
+     - Available to all users - playstyle selector visible in rating modal
      - Stores playstyle_id when submitting ratings
      - Loads existing playstyle when editing ratings
      - Shows playstyle on player rating cards
@@ -174,7 +176,7 @@ Final attributes:
 - **Playstyles are modifiers**: Show HOW players use their skills
 - **No double-counting**: Defending attribute doesn't add to Defense rating
 - **Fair defaults**: Unrated players get 0 for all attributes
-- **Beta tester restriction**: Only beta testers and super admins can assign playstyles
+- **Open to all users**: All players can now assign playstyles when rating
 
 ## Attribute-Based Filtering Feature
 
@@ -216,7 +218,7 @@ This makes it easier to find the right playstyle based on your assessment of the
 3. **Independent weights** - Each attribute gets 1.0 (not percentage-based)
 4. **Hybrid naming** - Best of both worlds (predefined + dynamic)
 5. **Attributes as tendencies, not additional skills** - Avoids double-counting
-6. **Beta tester restriction** - Limited rollout during initial testing phase
+6. **General availability** - Released to all users (was beta-restricted until 2025-09-17)
 7. **63 total combinations** - Complete coverage of all possibilities
 
 ## Files Modified/Created
@@ -238,6 +240,65 @@ This makes it easier to find the right playstyle based on your assessment of the
 - `/src/components/admin/team-balancing/tierBasedSnakeDraft.ts` - Integrated attributes into rating calculation
 - `/src/components/admin/team-balancing/useTeamBalancing.ts` - Fetches derived attributes for players
 - `/CLAUDE.md` - Added playstyle system documentation
+
+## Formation Integration
+
+### How Playstyles Map to Tactical Positions
+The 6 derived attributes are now the primary input for the Formation Suggester system, which automatically assigns players to optimal tactical positions based on their playstyle characteristics.
+
+#### Natural Position Detection
+Each playstyle maps to one or more natural positions:
+
+| Playstyle Category | Example Styles | Natural Positions | Key Attributes |
+|-------------------|----------------|------------------|----------------|
+| **Attacking** | Hunter, Finisher, Marksman | ST (Striker), W (Winger) | Shooting, Pace, Dribbling |
+| **Creative** | Maestro, Artist, Deadeye | CAM (Attacking Mid) | Passing, Dribbling, Shooting |
+| **Box-to-Box** | Engine, Box-to-Box | CM (Central Mid), W | Pace, Passing, Dribbling |
+| **Defensive Mid** | Powerhouse, Locomotive | CDM, CM | Defending, Physical, Passing |
+| **Defensive** | Sentinel, Anchor, Shadow | DEF, CDM | Defending, Physical, Pace |
+
+#### Position Suitability Calculation
+Each position has weighted attribute requirements:
+
+```typescript
+// Example: Striker position weights
+ST: {
+  shooting: 0.35,    // 35% - Primary requirement
+  pace: 0.25,        // 25% - Get in behind defenses
+  dribbling: 0.20,   // 20% - Beat defenders 1v1
+  physical: 0.10,    // 10% - Hold up play
+  passing: 0.05,     // 5%  - Link-up play
+  defending: 0.05    // 5%  - Pressing
+}
+```
+
+#### Formation Selection Based on Team Composition
+The system analyzes the collective playstyles to choose formations:
+- **Many attacking playstyles** → 3-1-3-1 or 3-1-2-2 (attack-heavy)
+- **Many defensive playstyles** → 3-2W-2-1 with CDM emphasis
+- **Balanced mix** → 3-4-1 or 3-2W-2-1
+
+#### Dynamic Assignment Algorithm
+1. **Phase 1**: Players with natural positions are assigned first (e.g., "Finisher" → ST)
+2. **Phase 2**: Remaining players assigned based on attribute compatibility
+3. **Phase 3**: Optimization through intelligent position swapping
+4. **Critical Fixes**: Players terribly misplaced (score < 2.0) get priority swaps
+
+### Integration Benefits
+- **Automatic position detection** - No manual position assignments needed
+- **Tactical flexibility** - Formations adapt to available playstyles
+- **Optimized team balance** - Players placed where attributes are maximized
+- **Visual feedback** - Debug logs show exactly why positions were assigned
+
+### Usage in Team Balancing
+After teams are selected via tier-based snake draft:
+1. Each team's playstyle composition is analyzed
+2. Appropriate formation is selected
+3. Players are assigned to positions based on attributes
+4. Swaps optimize overall team tactical fit
+5. Visual formation display shows final assignments
+
+For detailed documentation on the formation system, see [Formation Suggester Documentation](/docs/features/FormationSuggester.md).
 
 ## Future Enhancements
 

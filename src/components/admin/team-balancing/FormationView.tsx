@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FormationSuggestion, PlayerPositionAssignment, PositionType, FormationDebugLog } from './types';
-import { POSITION_DISPLAY_NAMES, POSITION_COLORS } from '../../../utils/teamBalancing/formationSuggester';
+import { POSITION_DISPLAY_NAMES, POSITION_COLORS, ConsolidatedFormationDebugLog } from '../../../utils/teamBalancing/formationSuggester';
 import { formatRating } from '../../../utils/ratingFormatters';
 import { FormationDebugView } from './FormationDebugView';
+import { ConsolidatedDebugView } from './ConsolidatedDebugView';
 
 interface FormationViewProps {
   formation: FormationSuggestion;
   teamColor: 'blue' | 'orange';
   showDetails?: boolean;
   debugLog?: FormationDebugLog;
+  consolidatedDebugLog?: ConsolidatedFormationDebugLog;
 }
 
-export const FormationView: React.FC<FormationViewProps> = ({ 
-  formation, 
+export const FormationView: React.FC<FormationViewProps> = ({
+  formation,
   teamColor,
   showDetails = true,
-  debugLog
+  debugLog,
+  consolidatedDebugLog
 }) => {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [expandedPositions, setExpandedPositions] = useState<Set<PositionType>>(new Set());
@@ -334,8 +337,11 @@ export const FormationView: React.FC<FormationViewProps> = ({
         </div>
       )}
       
-      {/* Debug Log */}
-      {debugLog && showDetails && (
+      {/* Debug Log - Show consolidated if available, otherwise show individual */}
+      {consolidatedDebugLog && showDetails && (
+        <ConsolidatedDebugView debugLog={consolidatedDebugLog} />
+      )}
+      {!consolidatedDebugLog && debugLog && showDetails && (
         <FormationDebugView debugLog={debugLog} teamColor={teamColor} />
       )}
     </div>

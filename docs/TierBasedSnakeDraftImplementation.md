@@ -8,10 +8,10 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
 ### 1. Core Algorithm Implementation
 **File**: `src/components/admin/team-balancing/tierBasedSnakeDraft.ts`
 
-#### Three-Layer Rating System
-- **Layer 1: Core Skills (60%)**: Average of Attack, Defense, and Game IQ ratings
-- **Layer 2: Derived Attributes (20%)**: Six attributes from playstyles (Pace, Shooting, Passing, Dribbling, Defending, Physical)
-- **Layer 3: Performance Metrics (20%)**: 
+#### Three-Layer Rating System (Updated 2025-01-17)
+- **Layer 1: Core Skills (65%)**: Average of Attack, Defense, and Game IQ ratings
+- **Layer 2: Derived Attributes (15%)**: Six attributes from playstyles (Pace, Shooting, Passing, Dribbling, Defending, Physical)
+- **Layer 3: Performance Metrics (20%)**:
   - Track Record (12%): Career win rate and goal differential with exponential penalties for <30% win rate
   - Recent Form (8%): Last 10 games performance with momentum factor
 
@@ -38,6 +38,14 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
 - Added tier distribution awareness to prevent extreme quality concentrations (2025-07-23)
 - Changed balance threshold from 0.5 to 0.3 for better optimization control
 - Implemented improvement-aware validation to allow beneficial swaps
+- **2025-01-17 Improvements**:
+  - Adjusted weight distribution: Skills 65%, Attributes 15%, Performance 20%
+  - Implemented dynamic attribute balance thresholds based on improvement score
+  - Added win rate gap consideration for threshold adjustments
+  - Enabled multiple optimization rounds (up to 3) for cascading improvements
+  - Enhanced debug logging with specific metric changes and rejection reasons
+  - Fine-tuned thresholds: improvement >0.09 gets 1.1 threshold (was 1.0)
+  - Win rate penalty only applies when gap >10% AND worsens significantly
 
 ### 2. Data Structure Updates
 **File**: `src/components/admin/team-balancing/types.ts`
@@ -254,13 +262,44 @@ Final Tier Distribution: CONCENTRATED (Orange would get all bottom players in Ti
 
 This ensures both statistical balance AND perceptual fairness in team composition.
 
+### Dynamic Attribute Balance Thresholds (Added 2025-01-17)
+
+The algorithm now uses dynamic thresholds that adapt based on the potential improvement from a swap:
+
+#### Threshold Calculation
+```typescript
+const getAttributeBalanceThreshold = (improvement: number, winRateGapBefore: number = 0, winRateGapAfter: number = 0): number => {
+  let baseThreshold: number;
+  if (improvement > 0.2) {
+    baseThreshold = 1.5;  // Very permissive for major improvements
+  } else if (improvement > 0.09) {
+    baseThreshold = 1.1;  // Moderately permissive
+  } else if (improvement > 0.05) {
+    baseThreshold = 0.85; // Slightly permissive
+  } else {
+    baseThreshold = 0.5;  // Standard threshold for minor changes
+  }
+
+  // Only penalize if gap exceeds 10% AND worsens significantly
+  if (winRateGapAfter > 10 && winRateGapAfter > winRateGapBefore * 1.5) {
+    baseThreshold *= 0.75;
+  }
+  return baseThreshold;
+};
+```
+
+#### Benefits
+- **Adaptive Acceptance**: More lenient for swaps that significantly improve balance
+- **Win Rate Protection**: Prevents creating large competitive gaps between teams
+- **Cascading Improvements**: Multiple optimization rounds can find secondary improvements
+
 ## Key Differences from Original Algorithm
 
-1. **Player Evaluation**: Uses three-layer system with momentum (60/20/20 weights) vs five equal metrics
+1. **Player Evaluation**: Uses three-layer system with momentum (65/15/20 weights) vs five equal metrics
 2. **Team Formation**: True snake draft with randomized initial pick vs exhaustive search
 3. **Performance**: O(n log n) vs O(2^n) complexity
 4. **Philosophy**: Ensures tier distribution vs pure statistical balance
-5. **Optimization**: Tier-constrained same-tier swaps only, preserves clustering prevention
+5. **Optimization**: Tier-constrained with dynamic thresholds, allows multiple rounds
 6. **Skill Usage**: Averages skills for ranking, but keeps them separate for balance checking
 7. **Fairness**: Random team selection for first pick ensures different patterns each week
 
@@ -287,13 +326,14 @@ Player: Daniel
 ```
 
 ### Weight Comparison
-**Old Weights (60/25/15)**:
-- More volatile transformations
-- Daniel could jump above Jarman based on recent form
-- Larger swings in player rankings
+**Old Weights (60/20/20)**:
+- More volatile transformations with attributes having high impact
+- Could create excessive adjustments based on playstyles
 
-**Updated Weights (60/20/20)**:
-- Base skills remain dominant but attributes and performance more balanced
+**Current Weights (65/15/20) - Updated 2025-01-17**:
+- Base skills more dominant (65%) to prioritize core abilities
+- Reduced attribute weight (15%) prevents playstyle from overshadowing skill
+- Maintained performance weight (20%) for meaningful win rate/goal diff impact
 - Enhanced performance penalties for catastrophic players (<30% win rate)
 - Statistical z-score scaling makes attributes league-relative rather than pure positive adjustments
 
@@ -388,15 +428,27 @@ Tier 3: 🔵🔵🟠 (2B/1O)
 - **Major Rating Boosts**: Highlights players whose ratings increased due to strong performance
 - **Momentum Analysis**: Identifies hot streaks (🔥) and cold streaks (❄️) with specific win rate changes
 
-#### Key Decisions Section
-When optimization occurs, explains WHY swaps were made:
+#### Key Decisions Section (Enhanced 2025-01-17)
+When optimization occurs, now provides detailed metric breakdowns:
 ```
 KEY DECISIONS
 =============
-Swap 1: Zhao ↔ James H
-  Why: Attack balance (James H: 2.1 vs Zhao: 5.6); Similar overall ratings maintain tier integrity
-  Impact: Balance improved by 0.212
+Swap 1: Chris H ↔ Jude
+  Why: Overall balance improvement
+  Impact: Balance improved by 0.120
+
+  Detailed Changes:
+    Attack: 0.02 → 0.20
+    Defense: 0.27 → 0.20
+    Attributes: Pass: 0.00 → 0.07, Phys: 0.00 → 0.07
+    Win Rate Gap: 5.6% → 5.6% (no change)
 ```
+
+The enhanced logging shows:
+- Specific skill balance changes (before → after)
+- Individual attribute changes
+- Win rate gap impact
+- Clear rejection reasons with thresholds
 
 #### Draft Value Analysis
 - **Best Value Picks**: Players who exceeded their tier's average rating
@@ -420,11 +472,14 @@ Attack:      6.16    6.35    Orange ↑
 Defense:     6.61    6.24    Blue ↑
 ```
 
-### Optimization Tracking
+### Optimization Tracking (Enhanced 2025-01-17)
 - Shows initial vs final balance scores
 - Details each swap with quantified improvement
 - Identifies which skills were better distributed
 - Explains when optimization stops (threshold reached)
+- **New**: Tracks multiple optimization rounds
+- **New**: Shows specific metric changes for each attempted swap
+- **New**: Provides clear rejection reasons with attribute imbalance values
 
 ## Future Improvements
 
@@ -462,3 +517,88 @@ A comprehensive full-page visualization has been implemented to showcase the ent
 - Export-ready visualizations for sharing with other admins
 
 For detailed documentation, see: `/docs/features/TeamBalancingVisualization.md`
+
+## Formation Suggestions
+
+### Overview
+After teams are selected through the tier-based snake draft, the Formation Suggester system automatically analyzes each team's composition and assigns players to optimal tactical positions based on their playstyle attributes.
+
+### Integration with Team Balancing
+
+The formation system operates as the final phase of team generation:
+
+1. **Team Selection**: Tier-based snake draft creates balanced teams
+2. **Composition Analysis**: Each team's playstyles are analyzed
+3. **Formation Selection**: Appropriate tactical formation chosen (3-2W-2-1, 3-4-1, etc.)
+4. **Position Assignment**: Players assigned to positions matching their attributes
+5. **Optimization**: Intelligent swaps to improve tactical fit
+6. **Visual Output**: Formation displayed in pitch view with player positions
+
+### How Formations Are Selected
+
+The system analyzes the collective playstyles of each team:
+
+- **Attacking Heavy** (many Hunters, Finishers, Marksmen):
+  - Selects 3-1-3-1 or 3-1-2-2 formations
+  - Emphasizes ST and CAM positions
+
+- **Defensive Heavy** (many Sentinels, Anchors, Shadows):
+  - Selects 3-2W-2-1 with CDM emphasis
+  - Prioritizes DEF and CDM positions
+
+- **Balanced Mix**:
+  - Selects 3-4-1 or standard 3-2W-2-1
+  - Even distribution across positions
+
+### Position Assignment Algorithm
+
+#### Three-Phase Process
+1. **Natural Fits**: Players with natural positions assigned first (e.g., "Finisher" → ST)
+2. **Best Available**: Remaining players matched by attribute compatibility
+3. **Forced Assignments**: Any leftovers placed in least-bad positions
+
+#### Critical Mismatch Handling
+- Identifies terribly misplaced players (score < 2.0)
+- Prioritizes fixing these through intelligent swaps
+- Example: Tom K (Finisher) misplaced at CM gets swapped to ST
+
+### Debug Integration
+
+The consolidated debug log includes formation information:
+```
+=== FORMATION SELECTION ===
+BLUE: 3-2W-2-1
+  Reasoning: 3 attacking, 2 defensive, 4 balanced players
+  Composition: 3 ATK, 2 DEF, 4 BAL
+  Playstyle Coverage: 9/9
+
+=== PLAYER ASSIGNMENTS ===
+  ✓ Stephen (6.6/3.7/5.1) [PAC:1.0 SHO:0.7]
+    Style: Hunter | Score: 5.45 | Natural position fit (Phase 1)
+```
+
+### Visual Display
+
+The team balancing page shows:
+- **Formation Overview**: Pitch visualization with player positions
+- **Position Details**: Expandable sections for each position
+- **Area Strength**: Defensive, Midfield, Attack balance scores
+- **Assignment Notes**: Reasoning for position decisions
+
+### Benefits of Formation Integration
+
+1. **Tactical Awareness**: Teams aren't just balanced statistically, but tactically coherent
+2. **Position Optimization**: Players placed where their attributes are maximized
+3. **Visual Clarity**: Clear representation of team structure
+4. **Strategic Planning**: Helps teams understand their tactical approach
+5. **Automatic Adaptation**: Formations adjust to available player types
+
+### Configuration
+
+The formation system uses:
+- **6 Derived Attributes**: Pace, Shooting, Passing, Dribbling, Defending, Physical
+- **Position Weights**: Customizable requirements for each position
+- **Relative Requirements**: Dynamic thresholds based on player pool
+- **Swap Optimization**: Intelligent position exchanges to improve fit
+
+For detailed documentation on the formation system, see: `/docs/features/FormationSuggester.md`

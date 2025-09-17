@@ -19,7 +19,24 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
   const fetchRecentRatings = async () => {
     try {
       setLoading(true);
-      
+
+      // Fetch all playstyles first
+      const { data: playstyles, error: playstylesError } = await supabaseAdmin
+        .from('playstyles')
+        .select('id, name, category');
+
+      if (playstylesError) throw playstylesError;
+
+      // Create a map of playstyles by id
+      const playstylesMap = new Map();
+      playstyles?.forEach(ps => {
+        playstylesMap.set(ps.id, {
+          id: ps.id,
+          name: ps.name,
+          category: ps.category
+        });
+      });
+
       // Build query with optional rater filter
       let query = supabaseAdmin
         .from('player_ratings')
@@ -33,48 +50,48 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
           rater_id,
           rated_player_id,
           playstyle_id,
-          playstyles (
-            id,
-            name,
-            category
-          )
+          has_pace,
+          has_shooting,
+          has_passing,
+          has_dribbling,
+          has_defending,
+          has_physical
         `);
-        
+
       if (raterId) {
         query = query.eq('rater_id', raterId);
       }
-      
+
       const { data, error } = await query
         .order('updated_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      
-      
+
       if (!data || data.length === 0) {
         setRecentRatings([]);
         return;
       }
-      
+
       // Fetch player details for all unique player IDs
       const playerIds = [...new Set([
         ...data.map(r => r.rater_id),
         ...data.map(r => r.rated_player_id)
       ])].filter(Boolean);
-      
+
       const { data: playersData, error: playersError } = await supabaseAdmin
         .from('players')
         .select('id, friendly_name, is_admin')
         .in('id', playerIds);
-        
+
       if (playersError) throw playersError;
-      
+
       // Create a map for quick lookup
       const playersMap = new Map(
         (playersData || []).map(p => [p.id, p])
       );
-      
+
       // Fetch previous values from history for each rating
       const ratingsWithHistory = await Promise.all(
         data.map(async (rating) => {
@@ -86,20 +103,15 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
             .lt('changed_at', rating.updated_at || rating.created_at)
             .order('changed_at', { ascending: false })
             .limit(1);
-            
+
           const previousRating = historyData?.[0] || null;
-          
-          // Fetch previous playstyle details if there was a previous playstyle
+
+          // Get previous playstyle from the map if it exists
           let previousPlaystyle = null;
           if (previousRating?.playstyle_id) {
-            const { data: playstyleData } = await supabaseAdmin
-              .from('playstyles')
-              .select('id, name, category')
-              .eq('id', previousRating.playstyle_id)
-              .single();
-            previousPlaystyle = playstyleData;
+            previousPlaystyle = playstylesMap.get(previousRating.playstyle_id) || null;
           }
-            
+
           return {
             ...rating,
             previous_attack_rating: previousRating?.attack_rating ?? null,
@@ -110,15 +122,55 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
           };
         })
       );
-      
+
+      // Import functions from playstyle utils
+      const { generatePlaystyleName } = await import('../../../../types/playstyle');
+
       // Map the data to match the Rating type
-      const formattedData = ratingsWithHistory.map(item => ({
-        ...item,
-        rater: playersMap.get(item.rater_id) || null,
-        rated_player: playersMap.get(item.rated_player_id) || null,
-        playstyle: item.playstyles || null
-      })).filter(item => item.rater && item.rated_player);
-      
+      const formattedData = ratingsWithHistory.map(item => {
+        let playstyle = null;
+
+        // If there's a playstyle_id, use the predefined playstyle
+        if (item.playstyle_id) {
+          playstyle = playstylesMap.get(item.playstyle_id);
+        }
+        // If there are attribute boolean fields, generate the playstyle name
+        else if (item.has_pace !== null || item.has_shooting !== null ||
+                 item.has_passing !== null || item.has_dribbling !== null ||
+                 item.has_defending !== null || item.has_physical !== null) {
+          const attributes = {
+            has_pace: item.has_pace || false,
+            has_shooting: item.has_shooting || false,
+            has_passing: item.has_passing || false,
+            has_dribbling: item.has_dribbling || false,
+            has_defending: item.has_defending || false,
+            has_physical: item.has_physical || false
+          };
+
+          const generatedName = generatePlaystyleName(attributes);
+
+          // Determine category based on attributes
+          let category: 'attacking' | 'midfield' | 'defensive' = 'midfield';
+          if ((attributes.has_shooting || attributes.has_pace) && !attributes.has_defending) {
+            category = 'attacking';
+          } else if (attributes.has_defending && !attributes.has_shooting) {
+            category = 'defensive';
+          }
+
+          playstyle = {
+            id: 'generated',
+            name: generatedName,
+            category: category
+          };
+        }
+
+        return {
+          ...item,
+          rater: playersMap.get(item.rater_id) || null,
+          rated_player: playersMap.get(item.rated_player_id) || null,
+          playstyle: playstyle
+        };
+      }).filter(item => item.rater && item.rated_player);
 
       setRecentRatings(formattedData);
     } catch (error) {

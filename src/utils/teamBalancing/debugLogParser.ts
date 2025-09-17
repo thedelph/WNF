@@ -57,6 +57,18 @@ export interface ParsedDebugData {
     tier: number;
     improvement: number;
     reason?: string;
+    metricChanges?: {
+      attack?: { before: number; after: number };
+      defense?: { before: number; after: number };
+      gameIq?: { before: number; after: number };
+      pace?: { before: number; after: number };
+      shooting?: { before: number; after: number };
+      passing?: { before: number; after: number };
+      dribbling?: { before: number; after: number };
+      defending?: { before: number; after: number };
+      physical?: { before: number; after: number };
+      winRateGap?: { before: number; after: number };
+    };
   }>;
   keyInsights: {
     majorBoosts: Array<{ player: string; boost: number; reason: string }>;
@@ -381,19 +393,88 @@ export function parseDebugLog(debugLog: string): ParsedDebugData {
     }
   }
 
-  // Parse optimization swaps
+  // Parse optimization swaps from execution logs
+  const executingSwapMatches = debugLog.matchAll(/Executing (same-tier|cross-tier) swap: ([^↔]+) ↔ ([^\n]+)[\s\S]*?Balance improved: ([\d.]+) → ([\d.]+)([\s\S]*?)(?=Executing|Tier \d+ optimization complete|Integrated optimization complete|$)/g);
+  for (const match of executingSwapMatches) {
+    const bluePlayerMatch = match[2].match(/([^(]+)(?:\(T\d+\))?/);
+    const orangePlayerMatch = match[3].match(/([^(]+)(?:\(T\d+\))?/);
+
+    if (bluePlayerMatch && orangePlayerMatch) {
+      const swap: any = {
+        bluePlayer: bluePlayerMatch[1].trim(),
+        orangePlayer: orangePlayerMatch[1].trim(),
+        tier: 0, // Will be filled from KEY DECISIONS or OPTIMIZATION IMPACT
+        improvement: parseFloat(match[4]) - parseFloat(match[5]), // before - after
+        metricChanges: {}
+      };
+
+      // Parse metric changes from the captured section
+      const metricSection = match[6];
+
+      // Parse core skill changes
+      const attackMatch = metricSection.match(/Attack: ([\d.]+) → ([\d.]+)/);
+      if (attackMatch) {
+        swap.metricChanges.attack = { before: parseFloat(attackMatch[1]), after: parseFloat(attackMatch[2]) };
+      }
+
+      const defenseMatch = metricSection.match(/Defense: ([\d.]+) → ([\d.]+)/);
+      if (defenseMatch) {
+        swap.metricChanges.defense = { before: parseFloat(defenseMatch[1]), after: parseFloat(defenseMatch[2]) };
+      }
+
+      const gameIqMatch = metricSection.match(/Game IQ: ([\d.]+) → ([\d.]+)/);
+      if (gameIqMatch) {
+        swap.metricChanges.gameIq = { before: parseFloat(gameIqMatch[1]), after: parseFloat(gameIqMatch[2]) };
+      }
+
+      // Parse attribute changes
+      const paceMatch = metricSection.match(/Pace: ([\d.]+) → ([\d.]+)/);
+      if (paceMatch) {
+        swap.metricChanges.pace = { before: parseFloat(paceMatch[1]), after: parseFloat(paceMatch[2]) };
+      }
+
+      const shootingMatch = metricSection.match(/Shooting: ([\d.]+) → ([\d.]+)/);
+      if (shootingMatch) {
+        swap.metricChanges.shooting = { before: parseFloat(shootingMatch[1]), after: parseFloat(shootingMatch[2]) };
+      }
+
+      const passingMatch = metricSection.match(/Passing: ([\d.]+) → ([\d.]+)/);
+      if (passingMatch) {
+        swap.metricChanges.passing = { before: parseFloat(passingMatch[1]), after: parseFloat(passingMatch[2]) };
+      }
+
+      const dribblingMatch = metricSection.match(/Dribbling: ([\d.]+) → ([\d.]+)/);
+      if (dribblingMatch) {
+        swap.metricChanges.dribbling = { before: parseFloat(dribblingMatch[1]), after: parseFloat(dribblingMatch[2]) };
+      }
+
+      const defendingMatch = metricSection.match(/Defending: ([\d.]+) → ([\d.]+)/);
+      if (defendingMatch) {
+        swap.metricChanges.defending = { before: parseFloat(defendingMatch[1]), after: parseFloat(defendingMatch[2]) };
+      }
+
+      const physicalMatch = metricSection.match(/Physical: ([\d.]+) → ([\d.]+)/);
+      if (physicalMatch) {
+        swap.metricChanges.physical = { before: parseFloat(physicalMatch[1]), after: parseFloat(physicalMatch[2]) };
+      }
+
+      const winRateMatch = metricSection.match(/Win Rate Gap: ([\d.]+)% → ([\d.]+)%/);
+      if (winRateMatch) {
+        swap.metricChanges.winRateGap = { before: parseFloat(winRateMatch[1]), after: parseFloat(winRateMatch[2]) };
+      }
+
+      data.optimizationSwaps.push(swap);
+    }
+  }
+
+  // Try to get tier information from OPTIMIZATION IMPACT section
   const optimizationSection = debugLog.match(/OPTIMIZATION IMPACT[\s\S]*?(?=KEY DECISIONS|DRAFT VALUE|$)/);
   if (optimizationSection) {
-    const swapLines = optimizationSection[0].match(/\d+\. ([^(]+) \(Blue\) ↔ ([^(]+) \(Orange\)[\s\S]*?Tier: (\d+), Improvement: ([\d.]+)/g) || [];
-    swapLines.forEach(swapLine => {
-      const match = swapLine.match(/\d+\. ([^(]+) \(Blue\) ↔ ([^(]+) \(Orange\)[\s\S]*?Tier: (\d+), Improvement: ([\d.]+)/);
-      if (match) {
-        data.optimizationSwaps.push({
-          bluePlayer: match[1].trim(),
-          orangePlayer: match[2].trim(),
-          tier: parseInt(match[3]),
-          improvement: parseFloat(match[4])
-        });
+    const swapLines = optimizationSection[0].match(/\d+\. ([^(]+) \(Blue\) ↔ ([^(]+) \(Orange\)[\s\S]*?Tier: (\d+)/g) || [];
+    swapLines.forEach((swapLine, index) => {
+      const match = swapLine.match(/\d+\. ([^(]+) \(Blue\) ↔ ([^(]+) \(Orange\)[\s\S]*?Tier: (\d+)/);
+      if (match && index < data.optimizationSwaps.length) {
+        data.optimizationSwaps[index].tier = parseInt(match[3]);
       }
     });
   }

@@ -34,7 +34,8 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
         goal_differential: p.goal_differential,
         overall_win_rate: p.overall_win_rate,
         overall_goal_differential: p.overall_goal_differential,
-        total_games: p.total_games
+        total_games: p.total_games,
+        derived_attributes: p.derived_attributes  // Now includes playstyle attributes!
       }));
     };
     
@@ -393,17 +394,19 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
       {viewMode === 'formation' && formationSuggestions && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <FormationView 
-              formation={formationSuggestions.blueFormation} 
+            <FormationView
+              formation={formationSuggestions.blueFormation}
               teamColor="blue"
               showDetails={true}
               debugLog={formationSuggestions.debugLog?.blue}
+              consolidatedDebugLog={formationSuggestions.consolidatedDebugLog}
             />
-            <FormationView 
-              formation={formationSuggestions.orangeFormation} 
+            <FormationView
+              formation={formationSuggestions.orangeFormation}
               teamColor="orange"
               showDetails={true}
               debugLog={formationSuggestions.debugLog?.orange}
+              consolidatedDebugLog={formationSuggestions.consolidatedDebugLog}
             />
           </div>
           

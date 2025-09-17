@@ -30,16 +30,16 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
           game_iq
         `)
         .or('attack_rating.gt.0,defense_rating.gt.0,game_iq.gt.0');
-      
+
       if (playersError) throw playersError;
-      
+
       // Fetch derived attributes for all players
       const { data: derivedAttributesData, error: derivedError } = await supabaseAdmin
         .from('player_derived_attributes')
         .select('*');
-        
+
       if (derivedError) throw derivedError;
-      
+
       // Create a map of derived attributes by player_id
       const derivedAttributesMap = new Map();
       derivedAttributesData?.forEach(attr => {
@@ -50,6 +50,23 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
           dribbling: attr.dribbling_rating,
           defending: attr.defending_rating,
           physical: attr.physical_rating
+        });
+      });
+
+      // Fetch all playstyles separately to avoid join issues
+      const { data: playstyles, error: playstylesError } = await supabaseAdmin
+        .from('playstyles')
+        .select('id, name, category');
+
+      if (playstylesError) throw playstylesError;
+
+      // Create a map of playstyles by id
+      const playstylesMap = new Map();
+      playstyles?.forEach(ps => {
+        playstylesMap.set(ps.id, {
+          id: ps.id,
+          name: ps.name,
+          category: ps.category
         });
       });
 
@@ -65,15 +82,17 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
               game_iq_rating,
               created_at,
               updated_at,
+              playstyle_id,
+              has_pace,
+              has_shooting,
+              has_passing,
+              has_dribbling,
+              has_defending,
+              has_physical,
               rater:players!player_ratings_rater_id_fkey(
                 id,
                 friendly_name,
                 is_admin
-              ),
-              playstyle:playstyles(
-                id,
-                name,
-                category
               )
             `)
             .eq('rated_player_id', player.id)
@@ -81,13 +100,62 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
 
           if (ratingsError) throw ratingsError;
 
+          // Import functions from playstyle utils
+          const { generatePlaystyleName } = await import('../../../../types/playstyle');
+
           // Map the playstyle data correctly for each rating
-          const mappedRatings = (ratingsData || []).map(rating => ({
-            ...rating,
-            rater: rating.rater,
-            playstyle: rating.playstyle || null
-          }));
-          
+          const mappedRatings = (ratingsData || []).map(rating => {
+            // If there's a playstyle_id, use the predefined playstyle
+            if (rating.playstyle_id) {
+              return {
+                ...rating,
+                rater: rating.rater,
+                playstyle: playstylesMap.get(rating.playstyle_id)
+              };
+            }
+
+            // If there are attribute boolean fields, generate the playstyle name
+            if (rating.has_pace !== null || rating.has_shooting !== null ||
+                rating.has_passing !== null || rating.has_dribbling !== null ||
+                rating.has_defending !== null || rating.has_physical !== null) {
+              const attributes = {
+                has_pace: rating.has_pace || false,
+                has_shooting: rating.has_shooting || false,
+                has_passing: rating.has_passing || false,
+                has_dribbling: rating.has_dribbling || false,
+                has_defending: rating.has_defending || false,
+                has_physical: rating.has_physical || false
+              };
+
+              const generatedName = generatePlaystyleName(attributes);
+
+              // Determine category based on attributes
+              let category: 'attacking' | 'midfield' | 'defensive' = 'midfield';
+              if ((attributes.has_shooting || attributes.has_pace) && !attributes.has_defending) {
+                category = 'attacking';
+              } else if (attributes.has_defending && !attributes.has_shooting) {
+                category = 'defensive';
+              }
+
+              return {
+                ...rating,
+                rater: rating.rater,
+                playstyle: {
+                  id: 'generated',
+                  name: generatedName,
+                  category: category
+                }
+              };
+            }
+
+            // No playstyle data
+            return {
+              ...rating,
+              rater: rating.rater,
+              playstyle: null
+            };
+          });
+
           return {
             ...player,
             ratings: mappedRatings,

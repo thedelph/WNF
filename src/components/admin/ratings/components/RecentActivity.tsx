@@ -118,12 +118,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                   
                   {/* Playstyle changes */}
                   {(rating.playstyle || rating.previous_playstyle) && (
-                    <div className={`badge badge-sm ${
-                      rating.playstyle?.category === 'attacking' ? 'badge-error' :
-                      rating.playstyle?.category === 'midfield' ? 'badge-warning' :
-                      rating.playstyle?.category === 'defensive' ? 'badge-info' :
-                      'badge-ghost'
-                    }`}>
+                    <div className="badge badge-sm badge-ghost">
                       {(() => {
                         if (!rating.previous_playstyle && rating.playstyle) {
                           // New playstyle added
@@ -140,7 +135,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                               {rating.previous_playstyle.name}
                             </span>
                           );
-                        } else if (rating.previous_playstyle && rating.playstyle && 
+                        } else if (rating.previous_playstyle && rating.playstyle &&
                                    rating.previous_playstyle.id !== rating.playstyle.id) {
                           // Playstyle changed
                           return (

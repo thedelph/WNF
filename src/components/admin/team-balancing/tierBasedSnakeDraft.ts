@@ -2,10 +2,10 @@ import { TeamAssignment } from './types';
 import { calculateBalanceScore } from '../../../utils/teamBalancing';
 
 // Configuration constants for the three-layer system
-const WEIGHT_SKILL = 0.60;      // 60% base skills (Attack/Defense/Game IQ)
-const WEIGHT_ATTRIBUTES = 0.20; // 20% derived attributes from playstyles (reduced from 30%)
-const WEIGHT_OVERALL = 0.12;    // 12% track record (career performance) (increased from 7%)
-const WEIGHT_RECENT = 0.08;     // 8% current form (recent performance) (increased from 3%)
+const WEIGHT_SKILL = 0.65;      // 65% base skills (Attack/Defense/Game IQ) - increased from 60%
+const WEIGHT_ATTRIBUTES = 0.15; // 15% derived attributes from playstyles - reduced from 20%
+const WEIGHT_OVERALL = 0.12;    // 12% track record (career performance)
+const WEIGHT_RECENT = 0.08;     // 8% current form (recent performance)
 
 // Goal difference normalization ranges
 const OVERALL_GD_MIN = -50;
@@ -20,7 +20,30 @@ const GOAL_DIFF_WEIGHT = 0.3;
 // Other constants
 const MIN_GAMES_FOR_STATS = 10;
 const BALANCE_THRESHOLD = 0.3;
-const ATTRIBUTE_BALANCE_THRESHOLD = 0.5; // Max acceptable attribute difference
+
+// Dynamic attribute balance threshold based on improvement score
+// More lenient for swaps that provide significant improvement
+const getAttributeBalanceThreshold = (improvement: number, winRateGapBefore: number = 0, winRateGapAfter: number = 0): number => {
+  let baseThreshold: number;
+
+  // Base thresholds based on improvement
+  if (improvement > 0.2) {
+    baseThreshold = 1.5;  // Very lenient for big improvements
+  } else if (improvement > 0.09) {
+    baseThreshold = 1.1;  // Moderately lenient (was 0.10 → 1.0)
+  } else if (improvement > 0.05) {
+    baseThreshold = 0.85; // Slightly lenient
+  } else {
+    baseThreshold = 0.5;  // Strict for minimal improvements
+  }
+
+  // Only penalize if gap exceeds 10% AND worsens significantly
+  if (winRateGapAfter > 10 && winRateGapAfter > winRateGapBefore * 1.5) {
+    baseThreshold *= 0.75; // Make threshold 25% stricter
+  }
+
+  return baseThreshold;
+};
 
 // Momentum constants
 const MOMENTUM_THRESHOLD_SMALL = 0.1;   // Below this, no momentum effect
@@ -672,10 +695,10 @@ function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: Pla
   // Calculate attribute balance score
   const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
   
-  // Weight skills at 70% and attributes at 30% to give more importance to attribute balance
-  // This helps prevent teams with drastically different playstyles
+  // Weight skills at 85% and attributes at 15% to reduce attribute blocking
+  // This makes core skills more important while still considering playstyles
   const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff);
-  const combinedBalance = (skillBalance * 0.7) + (attributeBalance * 0.3);
+  const combinedBalance = (skillBalance * 0.85) + (attributeBalance * 0.15);
   
   return combinedBalance;
 }
@@ -698,6 +721,10 @@ interface BalanceScoreDetails {
   physicalDiff?: number;
   hasAttributes: boolean;
   primaryFactor: 'skills' | 'attributes' | 'both';
+  blueWinRate?: number;
+  orangeWinRate?: number;
+  blueGoalDiff?: number;
+  orangeGoalDiff?: number;
 }
 
 /**
@@ -749,10 +776,16 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
     physicalDiff = Math.abs(blueAttrs.physical - orangeAttrs.physical);
   }
   
-  // Weight skills at 80% and attributes at 20% to match rating calculation
+  // Calculate win rate and goal diff for teams
+  const blueWinRate = blueTeam.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / blueTeam.length;
+  const orangeWinRate = orangeTeam.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / orangeTeam.length;
+  const blueGoalDiff = blueTeam.reduce((sum, p) => sum + (p.goal_differential ?? 0), 0);
+  const orangeGoalDiff = orangeTeam.reduce((sum, p) => sum + (p.goal_differential ?? 0), 0);
+
+  // Weight skills at 85% and attributes at 15% to match updated rating calculation
   const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff);
-  const combinedBalance = (skillBalance * 0.8) + (attributeBalance * 0.2);
-  
+  const combinedBalance = (skillBalance * 0.85) + (attributeBalance * 0.15);
+
   // Determine primary factor
   let primaryFactor: 'skills' | 'attributes' | 'both' = 'skills';
   if (hasAttributes && attributeBalance > 0) {
@@ -777,7 +810,11 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
     defendingDiff,
     physicalDiff,
     hasAttributes,
-    primaryFactor
+    primaryFactor,
+    blueWinRate,
+    orangeWinRate,
+    blueGoalDiff,
+    orangeGoalDiff
   };
 }
 
@@ -1001,6 +1038,131 @@ function isSwapAcceptable(
 }
 
 /**
+ * Generate comprehensive swap analysis showing all metrics and specific rejection reasons
+ */
+function generateComprehensiveSwapAnalysis(
+  bluePlayer: PlayerWithRating,
+  orangePlayer: PlayerWithRating,
+  beforeDetails: BalanceScoreDetails,
+  afterDetails: BalanceScoreDetails,
+  improvement: number,
+  attributeBalance: number,
+  attributeThreshold: number,
+  isSwapOk: boolean,
+  tierIssue: string | null
+): string {
+  let analysis = '';
+
+  // Show improvement status
+  if (improvement > 0) {
+    analysis += ` (improves by ${improvement.toFixed(3)})`;
+  } else if (improvement < 0) {
+    analysis += ` (worsens by ${Math.abs(improvement).toFixed(3)})`;
+  } else {
+    analysis += ` (no change)`;
+  }
+
+  // Show skill changes
+  const skillChanges: string[] = [];
+  if (Math.abs(beforeDetails.attackDiff - afterDetails.attackDiff) > 0.01) {
+    skillChanges.push(`Attack: ${beforeDetails.attackDiff.toFixed(2)}→${afterDetails.attackDiff.toFixed(2)}`);
+  }
+  if (Math.abs(beforeDetails.defenseDiff - afterDetails.defenseDiff) > 0.01) {
+    skillChanges.push(`Defense: ${beforeDetails.defenseDiff.toFixed(2)}→${afterDetails.defenseDiff.toFixed(2)}`);
+  }
+  if (Math.abs(beforeDetails.gameIqDiff - afterDetails.gameIqDiff) > 0.01) {
+    skillChanges.push(`GameIQ: ${beforeDetails.gameIqDiff.toFixed(2)}→${afterDetails.gameIqDiff.toFixed(2)}`);
+  }
+
+  if (skillChanges.length > 0) {
+    analysis += `\n      Skills: ${skillChanges.join(', ')}`;
+  }
+
+  // Show attribute changes if available
+  if (afterDetails.hasAttributes && beforeDetails.paceDiff !== undefined) {
+    const attrChanges: string[] = [];
+    const threshold = 0.1;
+
+    // Identify problematic attributes (>1.0 difference)
+    const problematicAttrs: string[] = [];
+
+    if (afterDetails.paceDiff && afterDetails.paceDiff > 1.0) problematicAttrs.push(`Pace(${afterDetails.paceDiff.toFixed(2)})`);
+    if (afterDetails.shootingDiff && afterDetails.shootingDiff > 1.0) problematicAttrs.push(`Shooting(${afterDetails.shootingDiff.toFixed(2)})`);
+    if (afterDetails.passingDiff && afterDetails.passingDiff > 1.0) problematicAttrs.push(`Passing(${afterDetails.passingDiff.toFixed(2)})`);
+    if (afterDetails.dribblingDiff && afterDetails.dribblingDiff > 1.0) problematicAttrs.push(`Dribbling(${afterDetails.dribblingDiff.toFixed(2)})`);
+    if (afterDetails.defendingDiff && afterDetails.defendingDiff > 1.0) problematicAttrs.push(`Defending(${afterDetails.defendingDiff.toFixed(2)})`);
+    if (afterDetails.physicalDiff && afterDetails.physicalDiff > 1.0) problematicAttrs.push(`Physical(${afterDetails.physicalDiff.toFixed(2)})`);
+
+    if (problematicAttrs.length > 0) {
+      analysis += `\n      HIGH IMBALANCE: ${problematicAttrs.join(', ')}`;
+    }
+
+    // Show all attribute changes - use lower threshold for accepted swaps
+    const attrThreshold = isSwapOk ? 0.05 : threshold;
+
+    if (Math.abs((beforeDetails.paceDiff ?? 0) - (afterDetails.paceDiff ?? 0)) > attrThreshold) {
+      attrChanges.push(`Pace: ${(beforeDetails.paceDiff ?? 0).toFixed(2)}→${(afterDetails.paceDiff ?? 0).toFixed(2)}`);
+    }
+    if (Math.abs((beforeDetails.shootingDiff ?? 0) - (afterDetails.shootingDiff ?? 0)) > attrThreshold) {
+      attrChanges.push(`Shoot: ${(beforeDetails.shootingDiff ?? 0).toFixed(2)}→${(afterDetails.shootingDiff ?? 0).toFixed(2)}`);
+    }
+    if (Math.abs((beforeDetails.passingDiff ?? 0) - (afterDetails.passingDiff ?? 0)) > attrThreshold) {
+      attrChanges.push(`Pass: ${(beforeDetails.passingDiff ?? 0).toFixed(2)}→${(afterDetails.passingDiff ?? 0).toFixed(2)}`);
+    }
+    if (Math.abs((beforeDetails.dribblingDiff ?? 0) - (afterDetails.dribblingDiff ?? 0)) > attrThreshold) {
+      attrChanges.push(`Drib: ${(beforeDetails.dribblingDiff ?? 0).toFixed(2)}→${(afterDetails.dribblingDiff ?? 0).toFixed(2)}`);
+    }
+    if (Math.abs((beforeDetails.defendingDiff ?? 0) - (afterDetails.defendingDiff ?? 0)) > attrThreshold) {
+      attrChanges.push(`Def: ${(beforeDetails.defendingDiff ?? 0).toFixed(2)}→${(afterDetails.defendingDiff ?? 0).toFixed(2)}`);
+    }
+    if (Math.abs((beforeDetails.physicalDiff ?? 0) - (afterDetails.physicalDiff ?? 0)) > attrThreshold) {
+      attrChanges.push(`Phys: ${(beforeDetails.physicalDiff ?? 0).toFixed(2)}→${(afterDetails.physicalDiff ?? 0).toFixed(2)}`);
+    }
+
+    // Always show attributes for accepted swaps or if there are changes
+    if (attrChanges.length > 0 || (isSwapOk && improvement > 0)) {
+      if (attrChanges.length === 0) {
+        // Show current state if no significant changes
+        analysis += `\n      Attributes: balanced (no significant changes)`;
+      } else {
+        analysis += `\n      Attributes: ${attrChanges.join(', ')}`;
+      }
+    }
+  }
+
+  // Show win rate and goal diff if significant
+  const blueWinRate = beforeDetails.blueWinRate ?? 0;
+  const orangeWinRate = beforeDetails.orangeWinRate ?? 0;
+  const afterBlueWR = afterDetails.blueWinRate ?? 0;
+  const afterOrangeWR = afterDetails.orangeWinRate ?? 0;
+
+  if (Math.abs((blueWinRate - orangeWinRate) - (afterBlueWR - afterOrangeWR)) > 1) {
+    const wrBefore = Math.abs(blueWinRate - orangeWinRate).toFixed(1);
+    const wrAfter = Math.abs(afterBlueWR - afterOrangeWR).toFixed(1);
+    analysis += `\n      Win Rate Gap: ${wrBefore}%→${wrAfter}%`;
+  }
+
+  // Add rejection reason
+  if (!isSwapOk) {
+    analysis += `\n      → REJECTED: `;
+    if (attributeBalance > attributeThreshold) {
+      analysis += `Attribute imbalance ${attributeBalance.toFixed(2)} exceeds threshold ${attributeThreshold.toFixed(2)}`;
+      if (improvement > 0) {
+        analysis += ` (improvement ${improvement.toFixed(3)} not enough to offset)`;
+      }
+    } else if (tierIssue) {
+      analysis += tierIssue;
+    } else if (improvement < 0.10) {
+      analysis += `Insufficient improvement (${improvement.toFixed(3)} < 0.10)`;
+    }
+  } else if (improvement > 0) {
+    analysis += `\n      → ACCEPTED`;
+  }
+
+  return analysis;
+}
+
+/**
  * Generate detailed improvement message showing specific skills and attributes
  */
 function generateImprovementDetails(
@@ -1113,50 +1275,50 @@ function trySameTierSwaps(
       
       // Calculate attribute balance for this swap
       const attributeBalance = calculateAttributeBalanceScore(tempBlue, tempOrange);
-      
+
+      // Calculate win rate gaps for threshold adjustment
+      const blueWinRateBefore = blueTeam.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / blueTeam.length;
+      const orangeWinRateBefore = orangeTeam.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / orangeTeam.length;
+      const winRateGapBefore = Math.abs(blueWinRateBefore - orangeWinRateBefore);
+
+      const blueWinRateAfter = tempBlue.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / tempBlue.length;
+      const orangeWinRateAfter = tempOrange.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / tempOrange.length;
+      const winRateGapAfter = Math.abs(blueWinRateAfter - orangeWinRateAfter);
+
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
       let isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
-      
+
       // Additional check: reject swaps that create excessive attribute imbalance
-      // unless they provide significant overall improvement
-      if (isSwapOk && attributeBalance > ATTRIBUTE_BALANCE_THRESHOLD) {
-        // Only accept high attribute imbalance if overall improvement is significant
-        if (improvement < 0.2) {
-          isSwapOk = false;
-        }
+      // using dynamic threshold based on improvement score and win rate gap
+      const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+      if (isSwapOk && attributeBalance > attributeThreshold) {
+        // Reject if attribute imbalance exceeds the dynamic threshold
+        isSwapOk = false;
       }
       
       if (debugLog) {
         debugLog.value += `    Trying ${bluePlayer.friendly_name} ↔ ${orangePlayer.friendly_name}: `;
         debugLog.value += `balance ${currentBalance.toFixed(3)} → ${newBalance.toFixed(3)}`;
-        if (newBalance < currentBalance) {
-          const improvement = currentBalance - newBalance;
-          debugLog.value += ` (improves by ${improvement.toFixed(3)})`;
-          
-          // Add detailed reason for improvement
-          const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
-          const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
-          
-          const improvementDetails = generateImprovementDetails(beforeDetails, afterDetails);
-          debugLog.value += improvementDetails;
-        }
-        if (!isSwapOk) {
-          const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          if (attributeBalance > ATTRIBUTE_BALANCE_THRESHOLD && improvement < 0.2) {
-            debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${ATTRIBUTE_BALANCE_THRESHOLD}, improvement ${improvement.toFixed(3)} < 0.20)`;
-          } else {
-            debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
-          }
-        } else if (newBalance < bestScore) {
-          const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          if (issue && improvement > 0.10) {
-            debugLog.value += ` → ACCEPTED (allows ${issue} due to improvement ${improvement.toFixed(3)} > 0.10)`;
-          } else {
-            debugLog.value += ` → ACCEPTED`;
-          }
-        } else {
-          debugLog.value += ` → no improvement`;
-        }
+
+        // Always calculate detailed metrics for comprehensive analysis
+        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
+        const issue = getTierDistributionIssues(tempBlue, tempOrange);
+
+        // Generate comprehensive analysis
+        const swapAnalysis = generateComprehensiveSwapAnalysis(
+          bluePlayer,
+          orangePlayer,
+          beforeDetails,
+          afterDetails,
+          improvement,
+          attributeBalance,
+          attributeThreshold,
+          isSwapOk,
+          issue
+        );
+
+        debugLog.value += swapAnalysis;
         debugLog.value += `\n`;
       }
       
@@ -1271,17 +1433,25 @@ function tryCrossTierSwaps(
       
       // Calculate attribute balance for this swap
       const attributeBalance = calculateAttributeBalanceScore(tempBlue, tempOrange);
-      
+
+      // Calculate win rate gaps for threshold adjustment
+      const blueWinRateBefore = blueTeam.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / blueTeam.length;
+      const orangeWinRateBefore = orangeTeam.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / orangeTeam.length;
+      const winRateGapBefore = Math.abs(blueWinRateBefore - orangeWinRateBefore);
+
+      const blueWinRateAfter = tempBlue.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / tempBlue.length;
+      const orangeWinRateAfter = tempOrange.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / tempOrange.length;
+      const winRateGapAfter = Math.abs(blueWinRateAfter - orangeWinRateAfter);
+
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
       let isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
-      
+
       // Additional check: reject swaps that create excessive attribute imbalance
-      // unless they provide significant overall improvement
-      if (isSwapOk && attributeBalance > ATTRIBUTE_BALANCE_THRESHOLD) {
-        // Only accept high attribute imbalance if overall improvement is significant
-        if (improvement < 0.2) {
-          isSwapOk = false;
-        }
+      // using dynamic threshold based on improvement score and win rate gap
+      const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+      if (isSwapOk && attributeBalance > attributeThreshold) {
+        // Reject if attribute imbalance exceeds the dynamic threshold
+        isSwapOk = false;
       }
       
       if (debugLog) {
@@ -1292,8 +1462,9 @@ function tryCrossTierSwaps(
         }
         if (!isSwapOk) {
           const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          if (attributeBalance > ATTRIBUTE_BALANCE_THRESHOLD && improvement < 0.2) {
-            debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${ATTRIBUTE_BALANCE_THRESHOLD}, improvement ${improvement.toFixed(3)} < 0.20)`;
+          const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+          if (attributeBalance > attributeThreshold) {
+            debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${attributeThreshold.toFixed(2)} for improvement ${improvement.toFixed(3)})`;
           } else {
             debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
           }
@@ -1346,17 +1517,25 @@ function tryCrossTierSwaps(
       
       // Calculate attribute balance for this swap
       const attributeBalance = calculateAttributeBalanceScore(tempBlue, tempOrange);
-      
+
+      // Calculate win rate gaps for threshold adjustment
+      const blueWinRateBefore = blueTeam.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / blueTeam.length;
+      const orangeWinRateBefore = orangeTeam.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / orangeTeam.length;
+      const winRateGapBefore = Math.abs(blueWinRateBefore - orangeWinRateBefore);
+
+      const blueWinRateAfter = tempBlue.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / tempBlue.length;
+      const orangeWinRateAfter = tempOrange.reduce((sum, p) => sum + (p.win_rate ?? 50), 0) / tempOrange.length;
+      const winRateGapAfter = Math.abs(blueWinRateAfter - orangeWinRateAfter);
+
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
       let isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
-      
+
       // Additional check: reject swaps that create excessive attribute imbalance
-      // unless they provide significant overall improvement
-      if (isSwapOk && attributeBalance > ATTRIBUTE_BALANCE_THRESHOLD) {
-        // Only accept high attribute imbalance if overall improvement is significant
-        if (improvement < 0.2) {
-          isSwapOk = false;
-        }
+      // using dynamic threshold based on improvement score and win rate gap
+      const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+      if (isSwapOk && attributeBalance > attributeThreshold) {
+        // Reject if attribute imbalance exceeds the dynamic threshold
+        isSwapOk = false;
       }
       
       if (debugLog) {
@@ -1367,8 +1546,9 @@ function tryCrossTierSwaps(
         }
         if (!isSwapOk) {
           const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          if (attributeBalance > ATTRIBUTE_BALANCE_THRESHOLD && improvement < 0.2) {
-            debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${ATTRIBUTE_BALANCE_THRESHOLD}, improvement ${improvement.toFixed(3)} < 0.20)`;
+          const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+          if (attributeBalance > attributeThreshold) {
+            debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${attributeThreshold.toFixed(2)} for improvement ${improvement.toFixed(3)})`;
           } else {
             debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
           }
@@ -1516,10 +1696,22 @@ function optimizeTeams(
   
   let totalIterations = 0;
   const MAX_ITERATIONS = 100;
-  
-  // Integrated optimization: for each tier, try same-tier then cross-tier swaps
-  // Start from lowest tier upwards (Tier 5 → Tier 4 → Tier 3 → Tier 2 → Tier 1)
-  for (let tierIndex = 0; tierIndex < allTiers.length; tierIndex++) {
+  const MAX_OPTIMIZATION_ROUNDS = 3; // Allow up to 3 full optimization rounds
+  let optimizationRound = 0;
+  let madeSwapThisRound = true;
+
+  // Continue optimization rounds while improvements are being made
+  while (madeSwapThisRound && optimizationRound < MAX_OPTIMIZATION_ROUNDS && currentBalance > balanceThreshold) {
+    madeSwapThisRound = false;
+    optimizationRound++;
+
+    if (debugLog && optimizationRound > 1) {
+      debugLog.value += `Starting optimization round ${optimizationRound} (balance: ${currentBalance.toFixed(3)})\n\n`;
+    }
+
+    // Integrated optimization: for each tier, try same-tier then cross-tier swaps
+    // Start from lowest tier upwards (Tier 5 → Tier 4 → Tier 3 → Tier 2 → Tier 1)
+    for (let tierIndex = 0; tierIndex < allTiers.length; tierIndex++) {
     const currentTier = allTiers[tierIndex];
     
     // Stop if we've reached acceptable balance
@@ -1553,22 +1745,57 @@ function optimizeTeams(
       const blueIndex = blueTeam.findIndex(p => p.player_id === sameTierResult.bestSwap.bluePlayer.player_id);
       const orangeIndex = orangeTeam.findIndex(p => p.player_id === sameTierResult.bestSwap.orangePlayer.player_id);
       
+      // Calculate before swap details
+      const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+
       if (debugLog) {
         debugLog.value += `  Executing same-tier swap: ${sameTierResult.bestSwap.bluePlayer.friendly_name} ↔ ${sameTierResult.bestSwap.orangePlayer.friendly_name}\n`;
         debugLog.value += `    Balance improved: ${currentBalance.toFixed(3)} → ${sameTierResult.bestScore.toFixed(3)}\n`;
       }
-      
+
       blueTeam[blueIndex] = sameTierResult.bestSwap.orangePlayer;
       orangeTeam[orangeIndex] = sameTierResult.bestSwap.bluePlayer;
       swapCount++;
-      
-      // Calculate reason for the swap
-      const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
-      const tempBlue = [...blueTeam];
-      const tempOrange = [...orangeTeam];
-      tempBlue[blueIndex] = sameTierResult.bestSwap.orangePlayer;
-      tempOrange[orangeIndex] = sameTierResult.bestSwap.bluePlayer;
-      const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
+
+      // Calculate after swap details
+      const afterDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+
+      // Log detailed metric changes
+      if (debugLog) {
+        debugLog.value += `    Metric Changes:\n`;
+        debugLog.value += `      Attack: ${beforeDetails.attackDiff.toFixed(2)} → ${afterDetails.attackDiff.toFixed(2)}\n`;
+        debugLog.value += `      Defense: ${beforeDetails.defenseDiff.toFixed(2)} → ${afterDetails.defenseDiff.toFixed(2)}\n`;
+        debugLog.value += `      Game IQ: ${beforeDetails.gameIqDiff.toFixed(2)} → ${afterDetails.gameIqDiff.toFixed(2)}\n`;
+        if (beforeDetails.hasAttributes && afterDetails.hasAttributes) {
+          debugLog.value += `      Attributes:\n`;
+          if (Math.abs(beforeDetails.paceDiff! - afterDetails.paceDiff!) > 0.01) {
+            debugLog.value += `        Pace: ${beforeDetails.paceDiff!.toFixed(2)} → ${afterDetails.paceDiff!.toFixed(2)}\n`;
+          }
+          if (Math.abs(beforeDetails.shootingDiff! - afterDetails.shootingDiff!) > 0.01) {
+            debugLog.value += `        Shooting: ${beforeDetails.shootingDiff!.toFixed(2)} → ${afterDetails.shootingDiff!.toFixed(2)}\n`;
+          }
+          if (Math.abs(beforeDetails.passingDiff! - afterDetails.passingDiff!) > 0.01) {
+            debugLog.value += `        Passing: ${beforeDetails.passingDiff!.toFixed(2)} → ${afterDetails.passingDiff!.toFixed(2)}\n`;
+          }
+          if (Math.abs(beforeDetails.dribblingDiff! - afterDetails.dribblingDiff!) > 0.01) {
+            debugLog.value += `        Dribbling: ${beforeDetails.dribblingDiff!.toFixed(2)} → ${afterDetails.dribblingDiff!.toFixed(2)}\n`;
+          }
+          if (Math.abs(beforeDetails.defendingDiff! - afterDetails.defendingDiff!) > 0.01) {
+            debugLog.value += `        Defending: ${beforeDetails.defendingDiff!.toFixed(2)} → ${afterDetails.defendingDiff!.toFixed(2)}\n`;
+          }
+          if (Math.abs(beforeDetails.physicalDiff! - afterDetails.physicalDiff!) > 0.01) {
+            debugLog.value += `        Physical: ${beforeDetails.physicalDiff!.toFixed(2)} → ${afterDetails.physicalDiff!.toFixed(2)}\n`;
+          }
+        }
+        if (beforeDetails.blueWinRate && afterDetails.blueWinRate) {
+          const winRateGapBefore = Math.abs(beforeDetails.blueWinRate - beforeDetails.orangeWinRate!);
+          const winRateGapAfter = Math.abs(afterDetails.blueWinRate - afterDetails.orangeWinRate!);
+          if (Math.abs(winRateGapBefore - winRateGapAfter) > 0.5) {
+            debugLog.value += `      Win Rate Gap: ${winRateGapBefore.toFixed(1)}% → ${winRateGapAfter.toFixed(1)}%\n`;
+          }
+        }
+      }
+
       const detailedReason = generateImprovementDetails(beforeDetails, afterDetails);
       
       // Track swap details
@@ -1589,7 +1816,8 @@ function optimizeTeams(
       
       currentBalance = sameTierResult.bestScore;
       wasOptimized = true;
-      totalIterations++;
+      madeSwapThisRound = true;
+      totalIterations++
       
       // Check if threshold reached
       if (currentBalance <= balanceThreshold) {
@@ -1624,22 +1852,57 @@ function optimizeTeams(
         const blueIndex = blueTeam.findIndex(p => p.player_id === crossTierResult.bestSwap.bluePlayer.player_id);
         const orangeIndex = orangeTeam.findIndex(p => p.player_id === crossTierResult.bestSwap.orangePlayer.player_id);
         
+        // Calculate before swap details
+        const beforeCrossDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+
         if (debugLog) {
           debugLog.value += `  Executing cross-tier swap: ${crossTierResult.bestSwap.bluePlayer.friendly_name}(T${crossTierResult.bestSwap.blueTier}) ↔ ${crossTierResult.bestSwap.orangePlayer.friendly_name}(T${crossTierResult.bestSwap.orangeTier})\n`;
           debugLog.value += `    Balance improved: ${currentBalance.toFixed(3)} → ${crossTierResult.bestScore.toFixed(3)}\n`;
         }
-        
+
         blueTeam[blueIndex] = crossTierResult.bestSwap.orangePlayer;
         orangeTeam[orangeIndex] = crossTierResult.bestSwap.bluePlayer;
         swapCount++;
-        
-        // Calculate reason for the swap
-        const beforeCrossDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
-        const tempCrossBlue = [...blueTeam];
-        const tempCrossOrange = [...orangeTeam];
-        tempCrossBlue[blueIndex] = crossTierResult.bestSwap.orangePlayer;
-        tempCrossOrange[orangeIndex] = crossTierResult.bestSwap.bluePlayer;
-        const afterCrossDetails = calculateDetailedBalanceScore(tempCrossBlue, tempCrossOrange);
+
+        // Calculate after swap details
+        const afterCrossDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+
+        // Log detailed metric changes
+        if (debugLog) {
+          debugLog.value += `    Metric Changes:\n`;
+          debugLog.value += `      Attack: ${beforeCrossDetails.attackDiff.toFixed(2)} → ${afterCrossDetails.attackDiff.toFixed(2)}\n`;
+          debugLog.value += `      Defense: ${beforeCrossDetails.defenseDiff.toFixed(2)} → ${afterCrossDetails.defenseDiff.toFixed(2)}\n`;
+          debugLog.value += `      Game IQ: ${beforeCrossDetails.gameIqDiff.toFixed(2)} → ${afterCrossDetails.gameIqDiff.toFixed(2)}\n`;
+          if (beforeCrossDetails.hasAttributes && afterCrossDetails.hasAttributes) {
+            debugLog.value += `      Attributes:\n`;
+            if (Math.abs(beforeCrossDetails.paceDiff! - afterCrossDetails.paceDiff!) > 0.01) {
+              debugLog.value += `        Pace: ${beforeCrossDetails.paceDiff!.toFixed(2)} → ${afterCrossDetails.paceDiff!.toFixed(2)}\n`;
+            }
+            if (Math.abs(beforeCrossDetails.shootingDiff! - afterCrossDetails.shootingDiff!) > 0.01) {
+              debugLog.value += `        Shooting: ${beforeCrossDetails.shootingDiff!.toFixed(2)} → ${afterCrossDetails.shootingDiff!.toFixed(2)}\n`;
+            }
+            if (Math.abs(beforeCrossDetails.passingDiff! - afterCrossDetails.passingDiff!) > 0.01) {
+              debugLog.value += `        Passing: ${beforeCrossDetails.passingDiff!.toFixed(2)} → ${afterCrossDetails.passingDiff!.toFixed(2)}\n`;
+            }
+            if (Math.abs(beforeCrossDetails.dribblingDiff! - afterCrossDetails.dribblingDiff!) > 0.01) {
+              debugLog.value += `        Dribbling: ${beforeCrossDetails.dribblingDiff!.toFixed(2)} → ${afterCrossDetails.dribblingDiff!.toFixed(2)}\n`;
+            }
+            if (Math.abs(beforeCrossDetails.defendingDiff! - afterCrossDetails.defendingDiff!) > 0.01) {
+              debugLog.value += `        Defending: ${beforeCrossDetails.defendingDiff!.toFixed(2)} → ${afterCrossDetails.defendingDiff!.toFixed(2)}\n`;
+            }
+            if (Math.abs(beforeCrossDetails.physicalDiff! - afterCrossDetails.physicalDiff!) > 0.01) {
+              debugLog.value += `        Physical: ${beforeCrossDetails.physicalDiff!.toFixed(2)} → ${afterCrossDetails.physicalDiff!.toFixed(2)}\n`;
+            }
+          }
+          if (beforeCrossDetails.blueWinRate && afterCrossDetails.blueWinRate) {
+            const winRateGapBefore = Math.abs(beforeCrossDetails.blueWinRate - beforeCrossDetails.orangeWinRate!);
+            const winRateGapAfter = Math.abs(afterCrossDetails.blueWinRate - afterCrossDetails.orangeWinRate!);
+            if (Math.abs(winRateGapBefore - winRateGapAfter) > 0.5) {
+              debugLog.value += `      Win Rate Gap: ${winRateGapBefore.toFixed(1)}% → ${winRateGapAfter.toFixed(1)}%\n`;
+            }
+          }
+        }
+
         const crossReason = generateImprovementDetails(beforeCrossDetails, afterCrossDetails);
         
         // Track swap details  
@@ -1682,7 +1945,8 @@ function optimizeTeams(
         
         currentBalance = crossTierResult.bestScore;
         wasOptimized = true;
-        totalIterations++;
+        madeSwapThisRound = true;
+        totalIterations++
         
         // Check if threshold reached
         if (currentBalance <= balanceThreshold) {
@@ -1698,10 +1962,11 @@ function optimizeTeams(
       debugLog.value += `  Tier ${currentTier} optimization complete. Current balance: ${currentBalance.toFixed(3)}\n\n`;
     }
   }
-  
+  } // End of while loop for optimization rounds
+
   if (debugLog) {
     if (wasOptimized) {
-      debugLog.value += `Integrated optimization complete after ${totalIterations} iterations\n`;
+      debugLog.value += `Integrated optimization complete after ${totalIterations} iterations across ${optimizationRound} round(s)\n`;
       debugLog.value += `Final balance: ${currentBalance.toFixed(3)}\n`;
     } else {
       debugLog.value += 'No beneficial swaps found\n';
