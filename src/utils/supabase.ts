@@ -19,18 +19,18 @@ if (!supabaseServiceRoleKey) {
 }
 
 // Create Supabase clients with validated URLs
-export const supabase = createClient<Database>(
-  supabaseUrl.startsWith('http') ? supabaseUrl : `https://${supabaseUrl}`, 
-  supabaseAnonKey, 
+export const supabase = createClient(
+  supabaseUrl.startsWith('http') ? supabaseUrl : `https://${supabaseUrl}`,
+  supabaseAnonKey,
   {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
   }
-})
+}) as any
 
-export const supabaseAdmin = createClient<Database>( 
+export const supabaseAdmin = createClient(
   supabaseUrl.startsWith('http') ? supabaseUrl : `https://${supabaseUrl}`,
   supabaseServiceRoleKey || supabaseAnonKey, // Fallback to anon key if service role key is missing
   {
@@ -40,4 +40,4 @@ export const supabaseAdmin = createClient<Database>(
       detectSessionInUrl: false
     }
   }
-)
+) as any

@@ -232,7 +232,7 @@ Reply to this message with names of any reserves outside of this group that want
                 if (aIsToken !== bIsToken) return aIsToken ? -1 : 1;
                 
                 // Second priority: Sort by XP
-                return (playerXpMap.get(b.player?.id || '') || 0) - (playerXpMap.get(a.player?.id || '') || 0);
+                return Number(playerXpMap.get(b.player?.id || '') || 0) - Number(playerXpMap.get(a.player?.id || '') || 0);
               })
               .forEach(reg => {
                 const xp = playerXpMap.get(reg.player?.id || '') || 0;
@@ -253,7 +253,7 @@ Reply to this message with names of any reserves outside of this group that want
           if (reservePlayers?.length > 0) {
             message += `\n\n🔄 Reserves in XP order (${reservePlayers.length}):\n`;
             reservePlayers
-              .sort((a, b) => (playerXpMap.get(b.player?.id || '') || 0) - (playerXpMap.get(a.player?.id || '') || 0))
+              .sort((a, b) => Number(playerXpMap.get(b.player?.id || '') || 0) - Number(playerXpMap.get(a.player?.id || '') || 0))
               .forEach(reg => {
                 const xp = playerXpMap.get(reg.player?.id || '') || 0;
                 const playerUnpaid = reg.player?.unpaid_games || 0;
@@ -267,7 +267,7 @@ Reply to this message with names of any reserves outside of this group that want
           if (droppedOut?.length > 0) {
             message += '\n\n❌ Dropped Out:\n';
             droppedOut
-              .sort((a, b) => (playerXpMap.get(b.player?.id || '') || 0) - (playerXpMap.get(a.player?.id || '') || 0))
+              .sort((a, b) => Number(playerXpMap.get(b.player?.id || '') || 0) - Number(playerXpMap.get(a.player?.id || '') || 0))
               .forEach(reg => {
                 const xp = playerXpMap.get(reg.player?.id || '') || 0;
                 message += `\n${reg.player?.friendly_name || 'Unknown'} (${xp} XP)`;
