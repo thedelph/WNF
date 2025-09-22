@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useViewAsUser } from '../hooks/useViewAsUser';
+import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import StarRating from '../components/StarRating';
 import { formatStarRating, getRatingButtonText } from '../utils/ratingFormatters';
 import RatingsExplanation from '../components/ratings/RatingsExplanation';
@@ -41,6 +43,8 @@ type FilterOption = 'all' | 'rated' | 'unrated' | 'min_games';
 
 export default function Ratings() {
   const { user } = useAuth();
+  const viewAsUser = useViewAsUser();
+  const { isEnabled: playstyleFeatureEnabled } = useFeatureFlag('playstyle_ratings');
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,13 +79,13 @@ export default function Ratings() {
   useEffect(() => {
     fetchCurrentPlayer();
     fetchPlaystyles();
-  }, [user]);
+  }, [user, viewAsUser.userId, viewAsUser.isViewingAs]);
 
   useEffect(() => {
     if (currentPlayer) {
       fetchPlayers();
     }
-  }, [user, currentPlayer]);
+  }, [user, currentPlayer, viewAsUser.userId]);
 
   useEffect(() => {
     applyFiltersAndSort();
@@ -311,12 +315,27 @@ export default function Ratings() {
 
   const fetchCurrentPlayer = async () => {
     try {
-      if (!user?.id) return;
+      // Use ViewAs user if active, otherwise use actual user
+      const effectiveUserId = viewAsUser.userId;
 
+      if (!effectiveUserId) return;
+
+      // If we're viewing as someone, we already have their player info
+      if (viewAsUser.isViewingAs && viewAsUser.playerId) {
+        setCurrentPlayer({
+          id: viewAsUser.playerId,
+          friendly_name: viewAsUser.friendlyName || '',
+          is_beta_tester: viewAsUser.isBetaTester,
+          is_super_admin: viewAsUser.isSuperAdmin
+        });
+        return;
+      }
+
+      // Otherwise fetch player data normally
       const { data: player, error } = await supabase
         .from('players')
         .select('id, friendly_name, is_beta_tester, is_super_admin')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveUserId)
         .single();
 
       if (error) throw error;
@@ -329,7 +348,9 @@ export default function Ratings() {
 
   const fetchPlayers = async () => {
     try {
-      if (!user?.id || !currentPlayer) return;
+      // Check for effective user (ViewAs or actual)
+      const effectiveUserId = viewAsUser.userId;
+      if (!effectiveUserId || !currentPlayer) return;
 
       // Get all players and their game count with the current user
       const { data: playersWithGames, error } = await supabase
@@ -411,7 +432,7 @@ export default function Ratings() {
       };
 
       // Save attributes directly to database columns
-      if ((currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && selectedAttributes) {
+      if (playstyleFeatureEnabled && selectedAttributes) {
         ratingData.has_pace = selectedAttributes.has_pace || false;
         ratingData.has_shooting = selectedAttributes.has_shooting || false;
         ratingData.has_passing = selectedAttributes.has_passing || false;
@@ -436,7 +457,7 @@ export default function Ratings() {
         } else {
           ratingData.playstyle_id = null; // Clear if no match
         }
-      } else if ((currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin)) {
+      } else if (playstyleFeatureEnabled) {
         // Clear attributes if none selected
         ratingData.has_pace = false;
         ratingData.has_shooting = false;
@@ -485,7 +506,20 @@ export default function Ratings() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-4">Player Ratings</h1>
-      
+
+      {/* Show whose ratings are being viewed when in ViewAs mode */}
+      {viewAsUser.isViewingAs && currentPlayer && (
+        <div className="alert alert-info mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>
+            Viewing ratings as <strong>{currentPlayer.friendly_name}</strong> -
+            These are the ratings {currentPlayer.friendly_name} has given to other players
+          </span>
+        </div>
+      )}
+
       <RatingsExplanation />
       
       {/* Advanced Filters Section */}
@@ -552,7 +586,7 @@ export default function Ratings() {
                           <option value="game_iq_desc">Game IQ Rating (High to Low)</option>
                         </>
                       )}
-                      {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && filterOption !== 'unrated' && (
+                      {playstyleFeatureEnabled && filterOption !== 'unrated' && (
                         <>
                           <option value="playstyle_name">Playstyle (A-Z)</option>
                           <option value="playstyle_category">Playstyle Category</option>
@@ -581,7 +615,7 @@ export default function Ratings() {
                       <option value="rated">Rated Players</option>
                       <option value="unrated">Unrated Players</option>
                       <option value="min_games">10+ Games</option>
-                      {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && (
+                      {playstyleFeatureEnabled && (
                         <>
                           <option value="has_playstyle">Has Playstyle</option>
                           <option value="no_playstyle">No Playstyle</option>
@@ -630,7 +664,20 @@ export default function Ratings() {
             <h2 className="text-xl font-semibold">
               Rate {selectedPlayer.friendly_name}
             </h2>
-            
+
+            {/* ViewAs Mode Warning */}
+            {viewAsUser.isViewingAs && (
+              <div className="alert alert-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <div className="font-bold">View-Only Mode</div>
+                  <div className="text-xs">You're viewing what {currentPlayer?.friendly_name} sees. Cannot submit ratings in this mode.</div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <StarRating
                 rating={ratings.attack}
@@ -647,10 +694,12 @@ export default function Ratings() {
                 onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
                 label="Game IQ Rating"
               />
-              <PlaystyleSelector
-                selectedAttributes={selectedAttributes}
-                onAttributesChange={setSelectedAttributes}
-              />
+              {playstyleFeatureEnabled && (
+                <PlaystyleSelector
+                  selectedAttributes={selectedAttributes}
+                  onAttributesChange={setSelectedAttributes}
+                />
+              )}
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
@@ -663,13 +712,16 @@ export default function Ratings() {
                 Cancel
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2"
-                onClick={handleRatingSubmit}
+                whileHover={{ scale: viewAsUser.isViewingAs ? 1 : 1.05 }}
+                whileTap={{ scale: viewAsUser.isViewingAs ? 1 : 0.95 }}
+                className={`btn ${viewAsUser.isViewingAs ? 'btn-disabled' : 'bg-primary hover:bg-primary/90'} text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2`}
+                onClick={viewAsUser.isViewingAs ? undefined : handleRatingSubmit}
+                disabled={viewAsUser.isViewingAs}
               >
                 <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-                <span className="font-medium">SUBMIT RATING</span>
+                <span className="font-medium">
+                  {viewAsUser.isViewingAs ? 'CANNOT SUBMIT (VIEW-ONLY)' : 'SUBMIT RATING'}
+                </span>
               </motion.button>
             </div>
           </motion.div>
@@ -706,7 +758,7 @@ export default function Ratings() {
                         <p>Attack: {formatStarRating(player.current_rating.attack_rating)}</p>
                         <p>Defense: {formatStarRating(player.current_rating.defense_rating)}</p>
                         <p>Game IQ: {formatStarRating(player.current_rating.game_iq_rating)}</p>
-                        {(currentPlayer?.is_beta_tester || currentPlayer?.is_super_admin) && (() => {
+                        {playstyleFeatureEnabled && (() => {
                           const rating = player.current_rating;
                           // Generate playstyle name from attributes
                           let playstyleName = '';

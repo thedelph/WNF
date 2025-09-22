@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useViewAs } from '../context/ViewAsContext';
 import { supabase } from '../utils/supabase';
 
 interface FeatureFlagStatus {
@@ -10,6 +11,7 @@ interface FeatureFlagStatus {
 
 export const useFeatureFlag = (flagName: string): FeatureFlagStatus => {
   const { user } = useAuth();
+  const { viewAsUser, isViewingAs } = useViewAs();
   const [isEnabled, setIsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -37,33 +39,49 @@ export const useFeatureFlag = (flagName: string): FeatureFlagStatus => {
           return;
         }
 
+        // Determine which user to check - ViewAs user or actual user
+        const effectiveUserId = isViewingAs && viewAsUser ? viewAsUser.user_id : user?.id;
+
         // If no user, check if flag is enabled for production
-        if (!user) {
+        if (!effectiveUserId) {
           setIsEnabled(flagData.enabled_for?.includes('production') || false);
           setLoading(false);
           return;
         }
 
         // Check if user is specifically targeted
-        if (flagData.enabled_user_ids?.includes(user.id)) {
+        if (flagData.enabled_user_ids?.includes(effectiveUserId)) {
           setIsEnabled(true);
           setLoading(false);
           return;
         }
 
-        // Fetch user data to check roles
-        const { data: playerData, error: playerError } = await supabase
-          .from('players')
-          .select('id, is_beta_tester, is_admin, is_super_admin')
-          .eq('user_id', user.id)
-          .single();
+        // If viewing as, use the viewAsUser data directly
+        let playerData;
+        if (isViewingAs && viewAsUser) {
+          playerData = {
+            id: viewAsUser.id,
+            is_beta_tester: viewAsUser.is_beta_tester,
+            is_admin: viewAsUser.is_admin,
+            is_super_admin: viewAsUser.is_super_admin
+          };
+        } else {
+          // Fetch user data to check roles
+          const { data, error: playerError } = await supabase
+            .from('players')
+            .select('id, is_beta_tester, is_admin, is_super_admin')
+            .eq('user_id', effectiveUserId)
+            .single();
 
-        if (playerError || !playerData) {
-          // User not found in players table, check if production is enabled
-          setIsEnabled(flagData.enabled_for?.includes('production') || false);
-          setLoading(false);
-          return;
+          if (playerError || !data) {
+            // User not found in players table, check if production is enabled
+            setIsEnabled(flagData.enabled_for?.includes('production') || false);
+            setLoading(false);
+            return;
+          }
+          playerData = data;
         }
+
 
         // Check enabled_for array based on user roles
         const enabledFor = flagData.enabled_for || [];
@@ -108,7 +126,7 @@ export const useFeatureFlag = (flagName: string): FeatureFlagStatus => {
     };
 
     checkFeatureFlag();
-  }, [user, flagName]);
+  }, [user, flagName, isViewingAs, viewAsUser]);
 
   return { isEnabled, loading, error };
 };

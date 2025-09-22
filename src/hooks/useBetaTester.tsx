@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useViewAs } from '../context/ViewAsContext'
 import { supabase } from '../utils/supabase'
 
 interface BetaTesterStatus {
@@ -10,6 +11,7 @@ interface BetaTesterStatus {
 
 export const useBetaTester = (): BetaTesterStatus => {
   const { user } = useAuth()
+  const { viewAsUser, isViewingAs } = useViewAs()
   const [isBetaTester, setIsBetaTester] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -17,6 +19,13 @@ export const useBetaTester = (): BetaTesterStatus => {
   useEffect(() => {
     const checkBetaTesterStatus = async () => {
       try {
+        // If in "view as" mode, use the emulated user's beta status
+        if (isViewingAs && viewAsUser) {
+          setIsBetaTester(viewAsUser.is_beta_tester || false)
+          setLoading(false)
+          return
+        }
+
         if (!user) {
           setIsBetaTester(false)
           return
@@ -40,7 +49,7 @@ export const useBetaTester = (): BetaTesterStatus => {
     }
 
     checkBetaTesterStatus()
-  }, [user])
+  }, [user, isViewingAs, viewAsUser])
 
   return { isBetaTester, loading, error }
 }

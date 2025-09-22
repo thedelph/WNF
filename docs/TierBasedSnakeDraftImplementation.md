@@ -46,6 +46,13 @@ Implemented a tier-based snake draft algorithm alongside the existing optimal te
   - Enhanced debug logging with specific metric changes and rejection reasons
   - Fine-tuned thresholds: improvement >0.09 gets 1.1 threshold (was 1.0)
   - Win rate penalty only applies when gap >10% AND worsens significantly
+- **2025-09-22 Optimization Breakthrough**:
+  - Restructured attribute balance calculation from MAX to weighted average with penalty multipliers (25% for >3.0, 50% for >4.0)
+  - Enhanced dynamic threshold system with three factors: improvement magnitude, current balance score, failed attempts
+  - Implemented multi-pass optimization strategy: Skills Focus (2x threshold), Balanced (1x), Fine-tuning (0.8x)
+  - Added `calculateSwapPriority()` function for intelligent swap ranking
+  - Introduced fallback strategies for extreme constraint relaxation when no swaps found
+  - Result: 80% balance improvement (0.216 vs 1.061), now makes 3-5 beneficial swaps instead of 0
 
 ### 2. Data Structure Updates
 **File**: `src/components/admin/team-balancing/types.ts`

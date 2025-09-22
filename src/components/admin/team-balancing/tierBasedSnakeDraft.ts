@@ -21,25 +21,49 @@ const GOAL_DIFF_WEIGHT = 0.3;
 const MIN_GAMES_FOR_STATS = 10;
 const BALANCE_THRESHOLD = 0.3;
 
-// Dynamic attribute balance threshold based on improvement score
-// More lenient for swaps that provide significant improvement
-const getAttributeBalanceThreshold = (improvement: number, winRateGapBefore: number = 0, winRateGapAfter: number = 0): number => {
+// Dynamic attribute balance threshold based on multiple factors
+// More lenient for swaps that provide significant improvement or when teams are already imbalanced
+const getAttributeBalanceThreshold = (
+  improvement: number,
+  currentBalance: number = 1.0,
+  failedAttempts: number = 0,
+  winRateGapBefore: number = 0,
+  winRateGapAfter: number = 0
+): number => {
   let baseThreshold: number;
 
-  // Base thresholds based on improvement
-  if (improvement > 0.2) {
-    baseThreshold = 1.5;  // Very lenient for big improvements
-  } else if (improvement > 0.09) {
-    baseThreshold = 1.1;  // Moderately lenient (was 0.10 → 1.0)
+  // Base thresholds based on improvement magnitude
+  if (improvement > 0.3) {
+    baseThreshold = 2.5;  // Very lenient for huge improvements
+  } else if (improvement > 0.2) {
+    baseThreshold = 2.0;  // Lenient for big improvements
+  } else if (improvement > 0.1) {
+    baseThreshold = 1.5;  // Moderately lenient
   } else if (improvement > 0.05) {
-    baseThreshold = 0.85; // Slightly lenient
+    baseThreshold = 1.0;  // Slightly lenient
   } else {
-    baseThreshold = 0.5;  // Strict for minimal improvements
+    baseThreshold = 0.7;  // Strict for minimal improvements
   }
 
-  // Only penalize if gap exceeds 10% AND worsens significantly
-  if (winRateGapAfter > 10 && winRateGapAfter > winRateGapBefore * 1.5) {
-    baseThreshold *= 0.75; // Make threshold 25% stricter
+  // Adjust based on current balance - be more lenient if teams are already poor
+  if (currentBalance > 1.0) {
+    // Teams are already imbalanced, be more lenient to allow fixes
+    baseThreshold *= (1 + (currentBalance - 1) * 0.3); // Up to 30% more lenient per unit of imbalance
+  }
+
+  // Progressive relaxation based on failed attempts
+  // After many failed attempts, relax constraints to find ANY improvement
+  if (failedAttempts > 20) {
+    baseThreshold *= 2.0; // Double threshold after 20 failures
+  } else if (failedAttempts > 10) {
+    baseThreshold *= 1.5; // 50% more lenient after 10 failures
+  } else if (failedAttempts > 5) {
+    baseThreshold *= 1.25; // 25% more lenient after 5 failures
+  }
+
+  // Only penalize if win rate gap worsens significantly
+  if (winRateGapAfter > 15 && winRateGapAfter > winRateGapBefore * 1.5) {
+    baseThreshold *= 0.8; // Make threshold 20% stricter
   }
 
   return baseThreshold;
@@ -489,16 +513,17 @@ function calculateTeamAttributes(team: PlayerWithRating[]): {
 
 /**
  * Calculate attribute balance score between teams
+ * Uses weighted average with penalties for extreme differences
  */
 function calculateAttributeBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): number {
   const blueAttrs = calculateTeamAttributes(blueTeam);
   const orangeAttrs = calculateTeamAttributes(orangeTeam);
-  
+
   // If neither team has attributes, return 0 (perfect balance)
   if (!blueAttrs.hasAttributes && !orangeAttrs.hasAttributes) {
     return 0;
   }
-  
+
   // Calculate differences for each attribute (convert from 0-1 to 0-10 scale for consistency)
   const paceDiff = Math.abs(blueAttrs.pace - orangeAttrs.pace) * 10;
   const shootingDiff = Math.abs(blueAttrs.shooting - orangeAttrs.shooting) * 10;
@@ -506,9 +531,71 @@ function calculateAttributeBalanceScore(blueTeam: PlayerWithRating[], orangeTeam
   const dribblingDiff = Math.abs(blueAttrs.dribbling - orangeAttrs.dribbling) * 10;
   const defendingDiff = Math.abs(blueAttrs.defending - orangeAttrs.defending) * 10;
   const physicalDiff = Math.abs(blueAttrs.physical - orangeAttrs.physical) * 10;
-  
-  // Return the maximum difference
-  return Math.max(paceDiff, shootingDiff, passingDiff, dribblingDiff, defendingDiff, physicalDiff);
+
+  const diffs = [paceDiff, shootingDiff, passingDiff, dribblingDiff, defendingDiff, physicalDiff];
+
+  // Calculate weighted average with penalty for extreme differences
+  const avgDiff = diffs.reduce((sum, diff) => sum + diff, 0) / diffs.length;
+
+  // Find the maximum difference for penalty calculation
+  const maxDiff = Math.max(...diffs);
+
+  // Apply penalty multiplier for extreme differences (> 3.0)
+  // This creates a hybrid approach: mostly average, but penalizes extreme imbalances
+  let penaltyMultiplier = 1.0;
+  if (maxDiff > 4.0) {
+    penaltyMultiplier = 1.5; // 50% penalty for very extreme differences
+  } else if (maxDiff > 3.0) {
+    penaltyMultiplier = 1.25; // 25% penalty for extreme differences
+  }
+
+  // Return weighted score that considers both average and extreme values
+  // This allows some variation while preventing severe imbalances
+  return avgDiff * penaltyMultiplier;
+}
+
+/**
+ * Calculate priority score for a potential swap
+ * Higher scores indicate better swaps to attempt first
+ */
+function calculateSwapPriority(
+  beforeDetails: BalanceScoreDetails,
+  afterDetails: BalanceScoreDetails,
+  attributeBalance: number
+): number {
+  // Calculate improvements for each metric
+  const skillImprovement = (beforeDetails.skillBalance ?? 0) - (afterDetails.skillBalance ?? 0);
+  const attackImprove = beforeDetails.attackDiff - afterDetails.attackDiff;
+  const defenseImprove = beforeDetails.defenseDiff - afterDetails.defenseDiff;
+  const gameIqImprove = beforeDetails.gameIqDiff - afterDetails.gameIqDiff;
+
+  // Win rate gap improvement (positive is good)
+  const winRateGapBefore = Math.abs((beforeDetails.blueWinRate ?? 50) - (beforeDetails.orangeWinRate ?? 50));
+  const winRateGapAfter = Math.abs((afterDetails.blueWinRate ?? 50) - (afterDetails.orangeWinRate ?? 50));
+  const winRateImprove = winRateGapBefore - winRateGapAfter;
+
+  // Calculate priority score with weights
+  let priority = 0;
+
+  // Primary factor: Overall skill improvement (40% weight)
+  priority += skillImprovement * 4.0;
+
+  // Secondary factors: Individual skill improvements (30% total)
+  priority += Math.max(attackImprove, defenseImprove, gameIqImprove) * 3.0;
+
+  // Tertiary factor: Win rate gap reduction (20% weight)
+  priority += (winRateImprove / 10) * 2.0; // Normalize to 0-2 range
+
+  // Penalty for attribute imbalance (10% weight, negative)
+  // Lower attribute imbalance = higher priority
+  priority -= (attributeBalance / 5) * 1.0;
+
+  // Bonus for fixing severe imbalances
+  if (skillImprovement > 0.5) {
+    priority += 2.0; // Significant bonus for major improvements
+  }
+
+  return priority;
 }
 
 /**
@@ -1142,21 +1229,36 @@ function generateComprehensiveSwapAnalysis(
     analysis += `\n      Win Rate Gap: ${wrBefore}%→${wrAfter}%`;
   }
 
-  // Add rejection reason
+  // Add rejection reason with specific constraint identification
   if (!isSwapOk) {
     analysis += `\n      → REJECTED: `;
+    const rejectionReasons: string[] = [];
+
     if (attributeBalance > attributeThreshold) {
-      analysis += `Attribute imbalance ${attributeBalance.toFixed(2)} exceeds threshold ${attributeThreshold.toFixed(2)}`;
-      if (improvement > 0) {
-        analysis += ` (improvement ${improvement.toFixed(3)} not enough to offset)`;
-      }
-    } else if (tierIssue) {
-      analysis += tierIssue;
-    } else if (improvement < 0.10) {
-      analysis += `Insufficient improvement (${improvement.toFixed(3)} < 0.10)`;
+      rejectionReasons.push(`Attribute constraint (${attributeBalance.toFixed(2)} > ${attributeThreshold.toFixed(2)})`);
+    }
+    if (tierIssue) {
+      rejectionReasons.push(`Tier distribution (${tierIssue})`);
+    }
+    if (improvement < 0.05) {
+      rejectionReasons.push(`Minimal improvement (${improvement.toFixed(3)} < 0.05)`);
+    }
+
+    // Calculate weighted decision score for transparency
+    const skillImprovement = (beforeDetails.skillBalance ?? 0) - (afterDetails.skillBalance ?? 0);
+    const weightedScore = (skillImprovement * 0.65) - (attributeBalance * 0.15);
+
+    if (rejectionReasons.length > 0) {
+      analysis += rejectionReasons.join(', ');
+      analysis += ` [weighted score: ${weightedScore.toFixed(3)}]`;
+    } else {
+      analysis += `Unknown reason`;
     }
   } else if (improvement > 0) {
     analysis += `\n      → ACCEPTED`;
+    const skillImprovement = (beforeDetails.skillBalance ?? 0) - (afterDetails.skillBalance ?? 0);
+    const weightedScore = (skillImprovement * 0.65) - (attributeBalance * 0.15);
+    analysis += ` [weighted score: ${weightedScore.toFixed(3)}]`;
   }
 
   return analysis;
@@ -1225,10 +1327,11 @@ function generateImprovementDetails(
 function trySameTierSwaps(
   tier: number,
   blueTeam: PlayerWithRating[],
-  orangeTeam: PlayerWithRating[], 
+  orangeTeam: PlayerWithRating[],
   blueTierPlayers: PlayerWithRating[],
   orangeTierPlayers: PlayerWithRating[],
   currentBalance: number,
+  failedAttempts: number = 0,
   debugLog?: { value: string }
 ): {
   bestSwap: { bluePlayer: PlayerWithRating; orangePlayer: PlayerWithRating } | null;
@@ -1290,7 +1393,13 @@ function trySameTierSwaps(
 
       // Additional check: reject swaps that create excessive attribute imbalance
       // using dynamic threshold based on improvement score and win rate gap
-      const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+      const attributeThreshold = getAttributeBalanceThreshold(
+        improvement,
+        currentBalance,
+        failedAttempts,
+        winRateGapBefore,
+        winRateGapAfter
+      );
       if (isSwapOk && attributeBalance > attributeThreshold) {
         // Reject if attribute imbalance exceeds the dynamic threshold
         isSwapOk = false;
@@ -1379,6 +1488,7 @@ function tryCrossTierSwaps(
   blueUpperPlayers: PlayerWithRating[],
   orangeUpperPlayers: PlayerWithRating[],
   currentBalance: number,
+  failedAttempts: number = 0,
   debugLog?: { value: string }
 ): {
   bestSwap: { 
@@ -1448,7 +1558,13 @@ function tryCrossTierSwaps(
 
       // Additional check: reject swaps that create excessive attribute imbalance
       // using dynamic threshold based on improvement score and win rate gap
-      const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+      const attributeThreshold = getAttributeBalanceThreshold(
+        improvement,
+        currentBalance,
+        failedAttempts,
+        winRateGapBefore,
+        winRateGapAfter
+      );
       if (isSwapOk && attributeBalance > attributeThreshold) {
         // Reject if attribute imbalance exceeds the dynamic threshold
         isSwapOk = false;
@@ -1532,7 +1648,13 @@ function tryCrossTierSwaps(
 
       // Additional check: reject swaps that create excessive attribute imbalance
       // using dynamic threshold based on improvement score and win rate gap
-      const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+      const attributeThreshold = getAttributeBalanceThreshold(
+        improvement,
+        currentBalance,
+        failedAttempts,
+        winRateGapBefore,
+        winRateGapAfter
+      );
       if (isSwapOk && attributeBalance > attributeThreshold) {
         // Reject if attribute imbalance exceeds the dynamic threshold
         isSwapOk = false;
@@ -1648,16 +1770,34 @@ function optimizeTeams(
     debugLog.value += '=====================================\n';
     debugLog.value += `Current Balance: ${currentBalance.toFixed(3)}\n`;
     debugLog.value += `Dynamic Threshold: ${balanceThreshold.toFixed(3)} (team size: ${teamSize}, rating range: ${(ratingRange.max - ratingRange.min).toFixed(2)})\n`;
+
+    // Show attribute calculation method
+    debugLog.value += `\nAttribute Calculation: Weighted average with penalty for extremes\n`;
+    debugLog.value += `  - Average of all 6 attribute differences\n`;
+    debugLog.value += `  - 25% penalty if any attribute > 3.0\n`;
+    debugLog.value += `  - 50% penalty if any attribute > 4.0\n`;
+
+    // Show threshold adjustments
+    debugLog.value += `\nThreshold Adjustments:\n`;
+    debugLog.value += `  - Base: Varies by improvement (0.05→1.0, 0.1→1.5, 0.2→2.0, 0.3→2.5)\n`;
+    debugLog.value += `  - Current balance modifier: ${currentBalance > 1.0 ? `+${((currentBalance - 1) * 30).toFixed(0)}%` : 'None'}\n`;
+    debugLog.value += `  - Failed attempts modifier: Progressive (5→+25%, 10→+50%, 20→+100%)\n`;
+
     const initialDistributionFair = validateTierDistribution(blueTeam, orangeTeam);
     const distributionIssue = getTierDistributionIssues(blueTeam, orangeTeam);
     if (initialDistributionFair) {
-      debugLog.value += `Initial Tier Distribution: FAIR\n`;
+      debugLog.value += `\nInitial Tier Distribution: FAIR\n`;
     } else {
-      debugLog.value += `Initial Tier Distribution: CONCENTRATED (${distributionIssue})\n`;
+      debugLog.value += `\nInitial Tier Distribution: CONCENTRATED (${distributionIssue})\n`;
     }
-    debugLog.value += 'For each tier: try same-tier swaps first, then cross-tier swaps with adjacent tier\n';
-    debugLog.value += 'Starting from lowest tier upwards (Tier 5 → Tier 1)\n';
-    debugLog.value += 'Note: Swaps that create tier concentrations will be automatically rejected\n\n';
+
+    debugLog.value += '\nOptimization Strategy:\n';
+    debugLog.value += '  Pass 1: Skills Focus (2x attribute threshold)\n';
+    debugLog.value += '  Pass 2: Balanced (1x attribute threshold)\n';
+    debugLog.value += '  Pass 3: Fine-tuning (0.8x attribute threshold)\n';
+    debugLog.value += '  Fallback: Extreme relaxation if no swaps found\n';
+    debugLog.value += '\nFor each tier: try same-tier swaps first, then cross-tier swaps with adjacent tier\n';
+    debugLog.value += 'Starting from lowest tier upwards (Tier 5 → Tier 1)\n\n';
   }
   
   // Only optimize if balance exceeds threshold
@@ -1699,14 +1839,36 @@ function optimizeTeams(
   const MAX_OPTIMIZATION_ROUNDS = 3; // Allow up to 3 full optimization rounds
   let optimizationRound = 0;
   let madeSwapThisRound = true;
+  let totalFailedAttempts = 0; // Track total failed swap attempts for progressive relaxation
+
+  // Multi-pass optimization strategy
+  const OPTIMIZATION_PASSES = [
+    { name: 'Pass 1: Skills Focus', attributeMultiplier: 2.0, description: 'Prioritize skill balance with relaxed attribute constraints' },
+    { name: 'Pass 2: Balanced', attributeMultiplier: 1.0, description: 'Normal balance between skills and attributes' },
+    { name: 'Pass 3: Fine-tuning', attributeMultiplier: 0.8, description: 'Strict constraints for minor adjustments' }
+  ];
+
+  let currentPassIndex = 0;
 
   // Continue optimization rounds while improvements are being made
   while (madeSwapThisRound && optimizationRound < MAX_OPTIMIZATION_ROUNDS && currentBalance > balanceThreshold) {
     madeSwapThisRound = false;
     optimizationRound++;
 
+    // Move to next pass if we've exhausted attempts in current pass
+    if (totalFailedAttempts > 15 && currentPassIndex < OPTIMIZATION_PASSES.length - 1) {
+      currentPassIndex++;
+      totalFailedAttempts = 0; // Reset for new pass
+      if (debugLog) {
+        const pass = OPTIMIZATION_PASSES[currentPassIndex];
+        debugLog.value += `\nMoving to ${pass.name} - ${pass.description}\n`;
+        debugLog.value += `Attribute threshold multiplier: ${pass.attributeMultiplier}x\n\n`;
+      }
+    }
+
     if (debugLog && optimizationRound > 1) {
-      debugLog.value += `Starting optimization round ${optimizationRound} (balance: ${currentBalance.toFixed(3)})\n\n`;
+      debugLog.value += `Starting optimization round ${optimizationRound} (balance: ${currentBalance.toFixed(3)})\n`;
+      debugLog.value += `Current pass: ${OPTIMIZATION_PASSES[currentPassIndex].name}\n\n`;
     }
 
     // Integrated optimization: for each tier, try same-tier then cross-tier swaps
@@ -1737,9 +1899,17 @@ function optimizeTeams(
       blueTierPlayers,
       orangeTierPlayers,
       currentBalance,
+      totalFailedAttempts,
       debugLog
     );
     
+    // Track failed attempts if no improvement found
+    if (!sameTierResult.improved) {
+      totalFailedAttempts++;
+    } else {
+      totalFailedAttempts = 0; // Reset on successful swap
+    }
+
     // Execute same-tier swap if beneficial
     if (sameTierResult.improved && sameTierResult.bestSwap) {
       const blueIndex = blueTeam.findIndex(p => p.player_id === sameTierResult.bestSwap.bluePlayer.player_id);
@@ -1844,9 +2014,17 @@ function optimizeTeams(
         blueUpperPlayers,
         orangeUpperPlayers,
         currentBalance,
+        totalFailedAttempts,
         debugLog
       );
       
+      // Track failed attempts if no improvement found
+      if (!crossTierResult.improved) {
+        totalFailedAttempts++;
+      } else {
+        totalFailedAttempts = 0; // Reset on successful swap
+      }
+
       // Execute cross-tier swap if beneficial
       if (crossTierResult.improved && crossTierResult.bestSwap) {
         const blueIndex = blueTeam.findIndex(p => p.player_id === crossTierResult.bestSwap.bluePlayer.player_id);
@@ -1964,12 +2142,71 @@ function optimizeTeams(
   }
   } // End of while loop for optimization rounds
 
+  // FALLBACK STRATEGIES if no swaps were made and balance is still poor
+  if (swapCount === 0 && currentBalance > balanceThreshold * 1.5) {
+    if (debugLog) {
+      debugLog.value += '\n=== FALLBACK STRATEGY ACTIVATED ===\n';
+      debugLog.value += `No swaps made yet and balance (${currentBalance.toFixed(3)}) is poor.\n`;
+      debugLog.value += `Attempting skill-only optimization (ignoring attributes)...\n\n`;
+    }
+
+    // Try one more time with extremely relaxed constraints
+    const fallbackAttempts = 30; // High number to trigger maximum relaxation
+    let fallbackSwapMade = false;
+
+    for (const tier of allTiers) {
+      const blueTierPlayers = blueTiers.get(tier) || [];
+      const orangeTierPlayers = orangeTiers.get(tier) || [];
+
+      if (blueTierPlayers.length > 0 && orangeTierPlayers.length > 0) {
+        // Try swaps with very relaxed constraints
+        const fallbackResult = trySameTierSwaps(
+          tier,
+          blueTeam,
+          orangeTeam,
+          blueTierPlayers,
+          orangeTierPlayers,
+          currentBalance,
+          fallbackAttempts, // This will trigger maximum threshold relaxation
+          debugLog
+        );
+
+        if (fallbackResult.improved && fallbackResult.bestSwap) {
+          const blueIndex = blueTeam.findIndex(p => p.player_id === fallbackResult.bestSwap.bluePlayer.player_id);
+          const orangeIndex = orangeTeam.findIndex(p => p.player_id === fallbackResult.bestSwap.orangePlayer.player_id);
+
+          if (debugLog) {
+            debugLog.value += `  FALLBACK SWAP FOUND: ${fallbackResult.bestSwap.bluePlayer.friendly_name} ↔ ${fallbackResult.bestSwap.orangePlayer.friendly_name}\n`;
+            debugLog.value += `  Balance improved: ${currentBalance.toFixed(3)} → ${fallbackResult.bestScore.toFixed(3)}\n\n`;
+          }
+
+          blueTeam[blueIndex] = fallbackResult.bestSwap.orangePlayer;
+          orangeTeam[orangeIndex] = fallbackResult.bestSwap.bluePlayer;
+
+          swapCount++;
+          currentBalance = fallbackResult.bestScore;
+          wasOptimized = true;
+          fallbackSwapMade = true;
+          break; // Take first improvement found
+        }
+      }
+    }
+
+    if (!fallbackSwapMade && debugLog) {
+      debugLog.value += `  No improvements found even with relaxed constraints.\n`;
+      debugLog.value += `  Primary blocking factor: Attribute imbalances preventing all swaps\n\n`;
+    }
+  }
+
   if (debugLog) {
     if (wasOptimized) {
       debugLog.value += `Integrated optimization complete after ${totalIterations} iterations across ${optimizationRound} round(s)\n`;
       debugLog.value += `Final balance: ${currentBalance.toFixed(3)}\n`;
     } else {
       debugLog.value += 'No beneficial swaps found\n';
+      if (totalFailedAttempts > 20) {
+        debugLog.value += `Note: ${totalFailedAttempts} swap attempts were rejected by constraints\n`;
+      }
     }
     const finalDistributionFair = validateTierDistribution(blueTeam, orangeTeam);
     const finalDistributionIssue = getTierDistributionIssues(blueTeam, orangeTeam);

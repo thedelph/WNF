@@ -200,12 +200,21 @@ const AdminManagement: React.FC = () => {
       permissions = Array.from(rolePermissions)
     }
 
+    // Fetch additional user data
+    const { data: playerData } = await supabase
+      .from('players')
+      .select('user_id, is_beta_tester')
+      .eq('id', admin.id)
+      .single()
+
     // Set the view as admin context
     setViewAsAdmin({
       id: admin.id,
+      user_id: playerData?.user_id || '',
       friendly_name: admin.friendly_name,
       is_admin: admin.is_admin,
       is_super_admin: admin.is_super_admin,
+      is_beta_tester: playerData?.is_beta_tester || false,
       permissions,
       roleName: admin.admin_roles?.[0]?.role?.name
     })
