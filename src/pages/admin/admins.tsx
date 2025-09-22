@@ -164,7 +164,7 @@ const AdminManagement: React.FC = () => {
     })
   }, [admins, searchQuery])
 
-  const handleViewAs = () => {
+  const handleViewAs = async () => {
     if (!selectedViewAsAdmin) {
       toast.error('Please select an admin to view as')
       return
