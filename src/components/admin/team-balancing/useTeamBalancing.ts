@@ -180,7 +180,12 @@ export const useTeamBalancing = () => {
               passing: attr.passing_rating,
               dribbling: attr.dribbling_rating,
               defending: attr.defending_rating,
-              physical: attr.physical_rating
+              physical: attr.physical_rating,
+              // New fields for most common playstyle tracking
+              mostCommonPlaystyleId: attr.most_common_playstyle_id || null,
+              mostCommonPlaystyleConfidence: attr.most_common_playstyle_confidence || null,
+              mostCommonCustomAttributes: attr.most_common_custom_attributes || null,
+              playstyleDistribution: attr.playstyle_distribution || null
             });
           });
         }

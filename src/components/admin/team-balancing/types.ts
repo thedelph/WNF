@@ -35,6 +35,18 @@ export interface TeamAssignment {
     dribbling: number;
     defending: number;
     physical: number;
+    // New fields for most common playstyle tracking
+    mostCommonPlaystyleId?: string | null;
+    mostCommonPlaystyleConfidence?: number | null;
+    mostCommonCustomAttributes?: {
+      has_pace: boolean;
+      has_shooting: boolean;
+      has_passing: boolean;
+      has_dribbling: boolean;
+      has_defending: boolean;
+      has_physical: boolean;
+    } | null;
+    playstyleDistribution?: Record<string, number> | null;
   } | null;
 }
 

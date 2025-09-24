@@ -7,6 +7,7 @@ import {
   FormationSuggestion,
   FormationResult
 } from '../../components/admin/team-balancing/types';
+import { findBestMatchingPlaystyle, PlaystyleWeights, PLAYSTYLE_DEFINITIONS } from './playstyleDefinitions';
 
 /**
  * Enhanced position weight configurations using all 6 attributes
@@ -91,41 +92,158 @@ const ENHANCED_POSITION_WEIGHTS: Record<PositionType, EnhancedPositionWeights> =
 };
 
 /**
+ * Map of playstyle IDs to their names (from database)
+ * These are the predefined playstyles from the playstyles table
+ */
+const PLAYSTYLE_ID_TO_NAME: Record<string, string> = {
+  // Attacking (all 19 from database)
+  '63d39f4f-fa86-45df-b460-1646ae883e6b': 'Ace',
+  '6d76cd60-fed9-4acf-9955-9d3e5f291899': 'Attacker',
+  '805eda95-b70f-45c6-98e8-6a6a0ee9a62b': 'Deadeye',
+  'eeae4c3e-d006-4d48-addc-df55b69a369d': 'Dribbler',
+  'b0f29c12-db18-4ae6-9d76-51f47240b3fe': 'Finisher',
+  'defb5e68-7dae-45a1-af76-9f25dc1f60e9': 'Forward',
+  '14bed117-fe73-494d-b600-022d4a7b06de': 'Genius',
+  '0d6622ab-b07f-4b57-bf43-d41b37b2fc9f': 'Hawk',
+  '3b6c8e35-aff2-4e0b-8f9d-70f2cd561c1b': 'Hunter',
+  '8e89a996-1c15-4876-a4dc-deabfadc465e': 'Magician',
+  '625e3030-e57c-411f-bf58-6bc85486a5f2': 'Marksman',
+  '26cc03a3-bde7-4e6d-b822-d8affbedc03d': 'Phenomenon',
+  '70a2c1a4-4d22-411c-86b9-2c13fc301251': 'Poacher',
+  '88dde498-6f3d-4354-892a-422d7b9ec1e8': 'Predator',
+  'd8c868b9-04b5-43cc-b1ae-e740f783788f': 'Shooter',
+  '95619cd5-caf6-401f-9aec-dc6f24f1767f': 'Sniper',
+  'd5c54379-4229-4305-9728-d84508c83073': 'Speedster',
+  '8b72a3a3-0420-4a50-94f7-072b048fdd67': 'Striker',
+  '1a01bec7-b944-4709-ac8e-b37a5ecc610d': 'Target Man',
+
+  // Midfield (all 24 from database)
+  '4870d6fd-f6ee-4fab-8337-551eb0e97bc8': 'All-Rounder',
+  '29ab3d96-d6d9-40ea-8dac-0b34e0008aac': 'Architect',
+  'a74e47ef-9663-4b8d-9483-22838d11207c': 'Artist',
+  'fdd48802-dc17-4a1c-a0c7-44f123db5e1b': 'Box-to-Box',
+  '7f04ab71-4bee-4c6e-820e-b1aff2a7785e': 'Captain',
+  '8aa5db61-1b0f-4376-bad0-a7508e93b849': 'Catalyst',
+  'c4c89505-04c0-4f62-9686-2452cdf13256': 'Conductor',
+  '341d3deb-b40c-43a2-bb43-70d2ee78ce1b': 'Dynamo',
+  'ee15bfff-7911-4a1b-ae70-661569c4dcbe': 'Enforcer',
+  '45c223d7-3de7-46f1-af30-9861fd26137b': 'Engine',
+  'c6716b40-6050-41b7-a78b-9a4b0d4b06f2': 'Leader',
+  '33f73992-1115-4f94-a141-b666424239ed': 'Legend',
+  '8c828370-ac09-4350-864f-aebc4bee6272': 'Locomotive',
+  'f50d01df-1901-4887-89b6-7a8c228aae1e': 'Maestro',
+  '628bb7d6-cf26-4ee4-944c-2b87afa40302': 'Mastermind',
+  '74173611-c766-4a66-8fef-3e8efad27197': 'Orchestrator',
+  '8f076a5e-18b5-4601-b57d-9f984622a7ea': 'Playmaker',
+  '5a1e237b-e747-4bce-bf94-6e5f2c9e2f2d': 'Powerhouse',
+  '6553224c-8499-4d7c-8c23-fe00cff0b826': 'Powerplayer',
+  '2409d027-8339-4335-9330-c9f84883a7dc': 'Regista',
+  'f3796f78-a832-4496-afff-17a16567a0d6': 'Sprinter',
+  'b392ef95-9aa0-4f84-ae55-77a38f80d74e': 'Tactician',
+  'a9b381e7-8d2d-4a5a-a044-a0e6f7daea6f': 'Technician',
+  '185e04c6-3016-452c-b4f6-f27a699ab949': 'Virtuoso',
+
+  // Defensive (all 20 from database)
+  'c99e86bc-a30d-49a7-b709-4f2e99836ba1': 'Anchor',
+  '06794967-d4cb-4b4f-8f08-e6f1591cec83': 'Backbone',
+  '7b7816be-39df-41b8-9893-25d24bf85322': 'Ball Winner',
+  '60390bb3-be73-4836-98d8-bc55cd1e9598': 'Commander',
+  'fabe8865-ad30-4d00-b17f-baa7afba10a6': 'Defender',
+  'b76b4f0c-07f0-402f-8828-f00a4534cbb5': 'Destroyer',
+  '31ce58fc-dd22-4390-b6c1-f75d6364c7ad': 'General',
+  '60dfeae6-1f4d-44dd-82e7-4becf13b9a8d': 'Gladiator',
+  '6dcb1d90-3996-4372-b98b-8b2a9cf837ef': 'Guardian',
+  '1bcee34a-bbc0-4291-bba1-f3dbbea9aacf': 'Interceptor',
+  '864ee073-b38f-4f0b-b609-35ca655479c6': 'Libero',
+  'e205a70d-354b-4afc-a717-d74251c93aae': 'Machine',
+  '68220d0a-793f-46e1-b023-7041ac496001': 'Sentinel',
+  '38298184-9fdb-44fe-855b-85846fd44676': 'Shadow',
+  'f7889b1a-85e7-4ca0-8b9c-430e04e82c6d': 'Stopper',
+  'fd8753fe-4e6f-45ac-a58b-f277b3ea6177': 'Sweeper',
+  '0abf8256-d4a0-4a98-82e7-7cac9cd787f6': 'Tank',
+  '5b68e96e-8a64-4d87-a4e3-7eaf33c27151': 'Terminator',
+  '3b3b4b82-484d-47c7-9982-6308280e0d16': 'Titan',
+  '97d0a665-8b50-466d-816d-376ce38423c1': 'Warrior'
+};
+
+/**
  * Playstyle to ideal positions mapping
  */
 const PLAYSTYLE_IDEAL_POSITIONS: Record<string, PositionType[]> = {
   // Attacking styles
+  'Ace': ['ST', 'CAM'],
+  'Attacker': ['ST', 'W'],
   'Complete Forward': ['ST'],
-  'Hunter': ['ST', 'W'],
-  'Hawk': ['ST'],
-  'Marksman': ['ST', 'CAM'],
-  'Finisher': ['ST'],
-  'Sniper': ['CAM', 'ST'],
   'Deadeye': ['CAM', 'CM'],
+  'Dribbler': ['W', 'CAM'],
+  'Finisher': ['ST'],
+  'Forward': ['ST'],
+  'Genius': ['CAM', 'ST'],
+  'Hawk': ['ST'],
+  'Hunter': ['ST', 'W'],
+  'Magician': ['CAM', 'W'],
+  'Marksman': ['ST', 'CAM'],
+  'Phenomenon': ['ST', 'CAM'],
+  'Poacher': ['ST'],
+  'Predator': ['ST', 'W'],
+  'Shooter': ['ST'],
+  'Sniper': ['CAM', 'ST'],
   'Speedster': ['W', 'ST'],
+  'Striker': ['ST'],
+  'Target Man': ['ST'],
 
   // Midfield styles
-  'Box-to-Box': ['CM', 'CDM'],
-  'Engine': ['CM', 'W', 'CAM'],
-  'Artist': ['CAM', 'CM'],
+  'All-Rounder': ['CM', 'CAM', 'CDM'],
   'Architect': ['CDM', 'CM'],
-  'Powerhouse': ['CDM', 'CM'],
-  'Maestro': ['CAM'],
+  'Artist': ['CAM', 'CM'],
+  'Box-to-Box': ['CM', 'CDM'],
+  'Captain': ['CM', 'CDM'],
   'Catalyst': ['CM', 'W'],
-  'Locomotive': ['CM', 'CDM'],
+  'Conductor': ['CM', 'CAM'],
+  'Dynamo': ['CM', 'W'],
   'Enforcer': ['CDM', 'CM'],
+  'Engine': ['CM', 'W', 'CAM'],
+  'Leader': ['CM', 'CDM'],
+  'Legend': ['CM', 'CAM', 'CDM'],
+  'Locomotive': ['CM', 'CDM'],
+  'Maestro': ['CAM'],
+  'Mastermind': ['CAM', 'CM'],
+  'Orchestrator': ['CAM', 'CM'],
+  'Playmaker': ['CAM', 'CM'],
+  'Powerhouse': ['CDM', 'CM'],
+  'Powerplayer': ['CDM', 'CM'],
+  'Regista': ['CDM', 'CM'],
+  'Sprinter': ['W', 'CM'],
+  'Tactician': ['CM', 'CDM'],
+  'Technician': ['CAM', 'CM'],
+  'Virtuoso': ['CAM', 'CM'],
 
   // Defensive styles
-  'Complete Defender': ['DEF'],
-  'Shadow': ['DEF', 'CDM'],
   'Anchor': ['DEF', 'CDM'],
+  'Backbone': ['CDM', 'DEF'],
+  'Ball Winner': ['CDM', 'DEF'],
+  'Commander': ['DEF', 'CDM'],
+  'Complete Defender': ['DEF'],
+  'Defender': ['DEF'],
+  'Destroyer': ['CDM', 'DEF'],
+  'General': ['DEF', 'CDM'],
   'Gladiator': ['DEF', 'W'],
   'Guardian': ['DEF', 'W'],
+  'Interceptor': ['DEF', 'CDM'],
+  'Libero': ['DEF', 'CDM'],
+  'Machine': ['CDM', 'DEF'],
   'Sentinel': ['DEF', 'CDM'],
-  'Backbone': ['CDM', 'DEF'],
+  'Shadow': ['DEF', 'CDM'],
+  'Stopper': ['DEF'],
+  'Sweeper': ['DEF'],
+  'Tank': ['DEF', 'CDM'],
+  'Terminator': ['DEF', 'CDM'],
+  'Titan': ['DEF'],
+  'Warrior': ['DEF', 'CDM'],
 
   // Balanced/Versatile styles
-  'Versatile': ['CM', 'W', 'CDM'] // Multiple high attributes - adaptable player
+  'Versatile': ['CM', 'W', 'CDM'], // Multiple high attributes - adaptable player
+  'Complete Player': ['CM', 'CAM', 'CDM']
 };
 
 /**
@@ -290,9 +408,92 @@ function getRelativeClassification(value: number, stats: AttributeStats): 'high'
 }
 
 /**
+ * Detect playstyle for a player using similarity-based matching
+ * This finds the best match among all 65 predefined playstyles based on actual averaged attributes
+ */
+function detectPlaystyleForPlayer(
+  player: TeamAssignment,
+  requirements: RelativeRequirements
+): string | null {
+  if (!player.derived_attributes) {
+    return null;
+  }
+
+  const attrs = player.derived_attributes;
+
+  // Convert player attributes to weights object for similarity calculation
+  const playerWeights: PlaystyleWeights = {
+    pace: attrs.pace,
+    shooting: attrs.shooting,
+    passing: attrs.passing,
+    dribbling: attrs.dribbling,
+    defending: attrs.defending,
+    physical: attrs.physical
+  };
+
+  // Find the best matching playstyle based on actual averaged attributes
+  // Using 0.3 (30%) as minimum similarity threshold
+  const match = findBestMatchingPlaystyle(playerWeights, 0.3);
+
+  if (match) {
+    // Store the match confidence for debugging (optional)
+    (player as any).__playstyleSimilarity = match.similarity;
+    return match.playstyle.name;
+  }
+
+  // If no good match (very rare), fall back to relative detection
+  return detectPlaystyleFromAttributesRelative(attrs, requirements);
+}
+
+/**
+ * Detect playstyle from attributes with fuzzy matching tolerance
+ */
+function detectPlaystyleFromAttributesWithFuzzyMatch(
+  attrs: NonNullable<TeamAssignment['derived_attributes']>,
+  requirements: RelativeRequirements,
+  tolerance: number = 0.15
+): string | null {
+  // Try exact predefined playstyle matches with tolerance
+  const predefinedMatches: Array<{name: string, diff: number}> = [];
+
+  // Check Hunter: Pace + Shooting
+  const hunterDiff = Math.abs((attrs.pace + attrs.shooting) - 2.0);
+  if (hunterDiff <= tolerance * 2) predefinedMatches.push({name: 'Hunter', diff: hunterDiff});
+
+  // Check Engine: Pace + Passing + Dribbling
+  const engineDiff = Math.abs((attrs.pace + attrs.passing + attrs.dribbling) - 3.0);
+  if (engineDiff <= tolerance * 3) predefinedMatches.push({name: 'Engine', diff: engineDiff});
+
+  // Check Sentinel: Defending + Physical
+  const sentinelDiff = Math.abs((attrs.defending + attrs.physical) - 2.0);
+  if (sentinelDiff <= tolerance * 2) predefinedMatches.push({name: 'Sentinel', diff: sentinelDiff});
+
+  // Check Powerhouse: Passing + Defending
+  const powerhouseDiff = Math.abs((attrs.passing + attrs.defending) - 2.0);
+  if (powerhouseDiff <= tolerance * 2) predefinedMatches.push({name: 'Powerhouse', diff: powerhouseDiff});
+
+  // Check Finisher: Shooting + Physical
+  const finisherDiff = Math.abs((attrs.shooting + attrs.physical) - 2.0);
+  if (finisherDiff <= tolerance * 2) predefinedMatches.push({name: 'Finisher', diff: finisherDiff});
+
+  // Check Speedster: Pace + Dribbling
+  const speedsterDiff = Math.abs((attrs.pace + attrs.dribbling) - 2.0);
+  if (speedsterDiff <= tolerance * 2) predefinedMatches.push({name: 'Speedster', diff: speedsterDiff});
+
+  // Return best fuzzy match if found
+  if (predefinedMatches.length > 0) {
+    predefinedMatches.sort((a, b) => a.diff - b.diff);
+    return predefinedMatches[0].name;
+  }
+
+  // Fall back to relative classification method
+  return detectPlaystyleFromAttributesRelative(attrs, requirements);
+}
+
+/**
  * Detect playstyle from attributes using relative comparisons to player pool
  */
-function detectPlaystyleFromAttributes(
+function detectPlaystyleFromAttributesRelative(
   attrs: NonNullable<TeamAssignment['derived_attributes']>,
   requirements: RelativeRequirements
 ): string | null {
@@ -415,8 +616,7 @@ function scoreFormationFit(
     const adequate: PositionType[] = [];
 
     // Check playstyle-based natural positions
-    const playstyle = player.derived_attributes ?
-      detectPlaystyleFromAttributes(player.derived_attributes, requirements) : null;
+    const playstyle = detectPlaystyleForPlayer(player, requirements);
     const idealPositions = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
 
     // Check each position
@@ -1004,20 +1204,29 @@ function optimizeAssignments(
       );
 
       if (sourceIndex !== -1 && targetIndex !== -1) {
+        // Calculate specialist status for swapped players
+        const problemPlayerPlaystyle = detectPlaystyleForPlayer(problem.player, requirements);
+        const problemPlayerIdealPositions = problemPlayerPlaystyle ? PLAYSTYLE_IDEAL_POSITIONS[problemPlayerPlaystyle] || [] : [];
+        const problemPlayerIsSpecialist = problemPlayerIdealPositions.includes(bestSwap.fromPosition);
+
+        const swapPlayerPlaystyle = detectPlaystyleForPlayer(bestSwap.player, requirements);
+        const swapPlayerIdealPositions = swapPlayerPlaystyle ? PLAYSTYLE_IDEAL_POSITIONS[swapPlayerPlaystyle] || [] : [];
+        const swapPlayerIsSpecialist = swapPlayerIdealPositions.includes(problem.position);
+
         // Swap the players
         const temp = positions[bestSwap.fromPosition][sourceIndex];
         positions[bestSwap.fromPosition][sourceIndex] = {
           player: problem.player,
           position: bestSwap.fromPosition,
           score: calculateEnhancedPositionScore(problem.player, bestSwap.fromPosition, requirements),
-          isSpecialist: false,
+          isSpecialist: problemPlayerIsSpecialist,
           alternativePositions: []
         };
         positions[problem.position][targetIndex] = {
           player: bestSwap.player,
           position: problem.position,
           score: calculateEnhancedPositionScore(bestSwap.player, problem.position, requirements),
-          isSpecialist: false,
+          isSpecialist: swapPlayerIsSpecialist,
           alternativePositions: []
         };
 
@@ -1216,8 +1425,7 @@ function assignPlayersToPositions(
   }> = [];
 
   team.forEach(player => {
-    const playstyle = player.derived_attributes ?
-      detectPlaystyleFromAttributes(player.derived_attributes, requirements) : null;
+    const playstyle = detectPlaystyleForPlayer(player, requirements);
     const idealPositions = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
 
     // Update player analysis
