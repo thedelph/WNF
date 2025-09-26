@@ -2,6 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { PlayerStats } from '../../types/player';
 import StarRating from '../StarRating';
+import PlaystyleSelector from '../ratings/PlaystyleSelector';
+import { AttributeCombination } from '../../types/playstyle';
 
 interface RatingModalProps {
   player: PlayerStats;
@@ -15,6 +17,8 @@ interface RatingModalProps {
     defense: number;
     gameIq: number;
   }>>;
+  selectedAttributes: AttributeCombination | null;
+  onAttributesChange: (attributes: AttributeCombination | null) => void;
   onClose: () => void;
   onSubmit: () => void;
 }
@@ -27,6 +31,8 @@ export const RatingModal: React.FC<RatingModalProps> = ({
   player,
   ratings,
   setRatings,
+  selectedAttributes,
+  onAttributesChange,
   onClose,
   onSubmit
 }) => {
@@ -62,6 +68,10 @@ export const RatingModal: React.FC<RatingModalProps> = ({
             rating={ratings.gameIq}
             onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
             label="Game IQ Rating"
+          />
+          <PlaystyleSelector
+            selectedAttributes={selectedAttributes}
+            onAttributesChange={onAttributesChange}
           />
         </div>
 

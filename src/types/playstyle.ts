@@ -330,3 +330,17 @@ export function isPredefinedPlaystyle(attributes: AttributeCombination): boolean
   const key = attributesToKey(attributes);
   return PREDEFINED_PLAYSTYLES[key] !== undefined;
 }
+
+// Generate attribute abbreviations for display (e.g., "PAC + SHO + PHY")
+export function generateAttributeAbbreviations(attributes: AttributeCombination): string {
+  const abbreviations: string[] = [];
+
+  if (attributes.has_pace) abbreviations.push('PAC');
+  if (attributes.has_shooting) abbreviations.push('SHO');
+  if (attributes.has_passing) abbreviations.push('PAS');
+  if (attributes.has_dribbling) abbreviations.push('DRI');
+  if (attributes.has_defending) abbreviations.push('DEF');
+  if (attributes.has_physical) abbreviations.push('PHY');
+
+  return abbreviations.join(' + ');
+}

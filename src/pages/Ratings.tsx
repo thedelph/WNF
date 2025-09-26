@@ -4,12 +4,11 @@ import { supabase } from '../utils/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { useViewAsUser } from '../hooks/useViewAsUser';
-import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import StarRating from '../components/StarRating';
 import { formatStarRating, getRatingButtonText } from '../utils/ratingFormatters';
 import RatingsExplanation from '../components/ratings/RatingsExplanation';
 import PlaystyleSelector from '../components/ratings/PlaystyleSelector';
-import { AttributeCombination, generatePlaystyleName, generatePlaystyleCompact } from '../types/playstyle';
+import { AttributeCombination, generatePlaystyleName, generatePlaystyleCompact, generateAttributeAbbreviations } from '../types/playstyle';
 
 interface Player {
   id: string;
@@ -44,7 +43,6 @@ type FilterOption = 'all' | 'rated' | 'unrated' | 'min_games';
 export default function Ratings() {
   const { user } = useAuth();
   const viewAsUser = useViewAsUser();
-  const { isEnabled: playstyleFeatureEnabled } = useFeatureFlag('playstyle_ratings');
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -432,7 +430,7 @@ export default function Ratings() {
       };
 
       // Save attributes directly to database columns
-      if (playstyleFeatureEnabled && selectedAttributes) {
+      if (selectedAttributes) {
         ratingData.has_pace = selectedAttributes.has_pace || false;
         ratingData.has_shooting = selectedAttributes.has_shooting || false;
         ratingData.has_passing = selectedAttributes.has_passing || false;
@@ -457,7 +455,7 @@ export default function Ratings() {
         } else {
           ratingData.playstyle_id = null; // Clear if no match
         }
-      } else if (playstyleFeatureEnabled) {
+      } else {
         // Clear attributes if none selected
         ratingData.has_pace = false;
         ratingData.has_shooting = false;
@@ -586,7 +584,7 @@ export default function Ratings() {
                           <option value="game_iq_desc">Game IQ Rating (High to Low)</option>
                         </>
                       )}
-                      {playstyleFeatureEnabled && filterOption !== 'unrated' && (
+                      {filterOption !== 'unrated' && (
                         <>
                           <option value="playstyle_name">Playstyle (A-Z)</option>
                           <option value="playstyle_category">Playstyle Category</option>
@@ -615,15 +613,13 @@ export default function Ratings() {
                       <option value="rated">Rated Players</option>
                       <option value="unrated">Unrated Players</option>
                       <option value="min_games">10+ Games</option>
-                      {playstyleFeatureEnabled && (
-                        <>
-                          <option value="has_playstyle">Has Playstyle</option>
-                          <option value="no_playstyle">No Playstyle</option>
-                          <option value="attacking_style">Attacking Styles</option>
-                          <option value="midfield_style">Midfield Styles</option>
-                          <option value="defensive_style">Defensive Styles</option>
-                        </>
-                      )}
+                      <>
+                        <option value="has_playstyle">Has Playstyle</option>
+                        <option value="no_playstyle">No Playstyle</option>
+                        <option value="attacking_style">Attacking Styles</option>
+                        <option value="midfield_style">Midfield Styles</option>
+                        <option value="defensive_style">Defensive Styles</option>
+                      </>
                     </select>
                   </div>
                 </div>
@@ -694,12 +690,10 @@ export default function Ratings() {
                 onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
                 label="Game IQ Rating"
               />
-              {playstyleFeatureEnabled && (
-                <PlaystyleSelector
-                  selectedAttributes={selectedAttributes}
-                  onAttributesChange={setSelectedAttributes}
-                />
-              )}
+              <PlaystyleSelector
+                selectedAttributes={selectedAttributes}
+                onAttributesChange={setSelectedAttributes}
+              />
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
@@ -758,7 +752,7 @@ export default function Ratings() {
                         <p>Attack: {formatStarRating(player.current_rating.attack_rating)}</p>
                         <p>Defense: {formatStarRating(player.current_rating.defense_rating)}</p>
                         <p>Game IQ: {formatStarRating(player.current_rating.game_iq_rating)}</p>
-                        {playstyleFeatureEnabled && (() => {
+                        {(() => {
                           const rating = player.current_rating;
                           // Generate playstyle name from attributes
                           let playstyleName = '';
@@ -781,16 +775,35 @@ export default function Ratings() {
                             playstyleName = generatePlaystyleName(attributes);
                           }
                           
-                          return playstyleName && playstyleName !== 'No Style Selected' ? (
-                            <div className="mt-2">
-                              <p className="font-semibold text-xs">Playstyle:</p>
-                              <div className="mt-1">
-                                <span className="text-xs font-medium text-primary">
-                                  {playstyleName}
-                                </span>
+                          if (playstyleName && playstyleName !== 'No Style Selected') {
+                            // Get the attributes for abbreviations
+                            const attributes: AttributeCombination = {
+                              has_pace: rating.has_pace || false,
+                              has_shooting: rating.has_shooting || false,
+                              has_passing: rating.has_passing || false,
+                              has_dribbling: rating.has_dribbling || false,
+                              has_defending: rating.has_defending || false,
+                              has_physical: rating.has_physical || false,
+                            };
+                            const abbreviations = generateAttributeAbbreviations(attributes);
+
+                            return (
+                              <div className="mt-2">
+                                <p className="font-semibold text-xs">Playstyle:</p>
+                                <div className="mt-1">
+                                  <span className="text-xs font-medium text-primary">
+                                    {playstyleName}
+                                  </span>
+                                  {abbreviations && (
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      ({abbreviations})
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ) : null;
+                            );
+                          }
+                          return null;
                         })()}
                       </div>
                     )}

@@ -23,6 +23,7 @@ import TokenStatus from '../components/profile/TokenStatus';
 import { executeWithRetry } from '../utils/network';
 import { useTokenStatus } from '../hooks/useTokenStatus';
 import WinRateGraph from '../components/profile/WinRateGraph';
+import { AttributeCombination } from '../types/playstyle';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -48,6 +49,17 @@ export default function PlayerProfileNew() {
     defense: 0,
     gameIq: 0,
   });
+  const [selectedAttributes, setSelectedAttributes] = useState<AttributeCombination | null>(null);
+  const [availablePlaystyles, setAvailablePlaystyles] = useState<Array<{
+    id: string;
+    name: string;
+    pace_weight: number;
+    shooting_weight: number;
+    passing_weight: number;
+    dribbling_weight: number;
+    defending_weight: number;
+    physical_weight: number
+  }>>([]);
 
   // Use custom hook for game history management
   const {
@@ -61,7 +73,21 @@ export default function PlayerProfileNew() {
 
   const { tokenStatus, loading: tokenLoading } = useTokenStatus(player?.id || '');
 
+  const fetchPlaystyles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('playstyles')
+        .select('id, name, pace_weight, shooting_weight, passing_weight, dribbling_weight, defending_weight, physical_weight');
+
+      if (error) throw error;
+      setAvailablePlaystyles(data || []);
+    } catch (error: any) {
+      console.error('Error fetching playstyles:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchPlaystyles();
     const fetchPlayerData = async () => {
       try {
         setLoading(true);
@@ -365,7 +391,7 @@ export default function PlayerProfileNew() {
           const { data: ratingData, error: ratingError } = await executeWithRetry(
             () => supabase
               .from('player_ratings')
-              .select('attack_rating, defense_rating, game_iq_rating')
+              .select('attack_rating, defense_rating, game_iq_rating, has_pace, has_shooting, has_passing, has_dribbling, has_defending, has_physical')
               .eq('rater_id', currentPlayerId)
               .eq('rated_player_id', playerData.id)
               .maybeSingle()
@@ -543,25 +569,62 @@ export default function PlayerProfileNew() {
         return;
       }
 
+      const ratingData: any = {
+        rater_id: currentPlayer.id,
+        rated_player_id: player.id,
+        attack_rating: ratings.attack,
+        defense_rating: ratings.defense,
+        game_iq_rating: ratings.gameIq
+      };
+
+      // Save attributes directly to database columns
+      if (selectedAttributes) {
+        ratingData.has_pace = selectedAttributes.has_pace || false;
+        ratingData.has_shooting = selectedAttributes.has_shooting || false;
+        ratingData.has_passing = selectedAttributes.has_passing || false;
+        ratingData.has_dribbling = selectedAttributes.has_dribbling || false;
+        ratingData.has_defending = selectedAttributes.has_defending || false;
+        ratingData.has_physical = selectedAttributes.has_physical || false;
+
+        // Also try to find matching playstyle for backward compatibility
+        const matchingPlaystyle = availablePlaystyles.find(ps => {
+          return (
+            (ps.pace_weight > 0) === selectedAttributes.has_pace &&
+            (ps.shooting_weight > 0) === selectedAttributes.has_shooting &&
+            (ps.passing_weight > 0) === selectedAttributes.has_passing &&
+            (ps.dribbling_weight > 0) === selectedAttributes.has_dribbling &&
+            (ps.defending_weight > 0) === selectedAttributes.has_defending &&
+            (ps.physical_weight > 0) === selectedAttributes.has_physical
+          );
+        });
+
+        if (matchingPlaystyle) {
+          ratingData.playstyle_id = matchingPlaystyle.id;
+        } else {
+          ratingData.playstyle_id = null; // Clear if no match
+        }
+      } else {
+        // Clear attributes if none selected
+        ratingData.has_pace = false;
+        ratingData.has_shooting = false;
+        ratingData.has_passing = false;
+        ratingData.has_dribbling = false;
+        ratingData.has_defending = false;
+        ratingData.has_physical = false;
+        ratingData.playstyle_id = null;
+      }
+
       const { error } = await supabase
         .from('player_ratings')
-        .upsert(
-          {
-            rater_id: currentPlayer.id,
-            rated_player_id: player.id,
-            attack_rating: ratings.attack,
-            defense_rating: ratings.defense,
-            game_iq_rating: ratings.gameIq
-          },
-          {
-            onConflict: 'rater_id,rated_player_id'
-          }
-        );
+        .upsert(ratingData, {
+          onConflict: 'rater_id,rated_player_id'
+        });
 
       if (error) throw error;
 
       toast.success(`Successfully rated ${player.friendly_name}`);
       setShowRatingModal(false);
+      setSelectedAttributes(null);
       
       // Refresh player data to update ratings
       const { data: myRating, error: ratingError } = await supabase
@@ -723,12 +786,48 @@ export default function PlayerProfileNew() {
           <PlayerRating
             player={player}
             user={user}
-            onRatePlayer={() => {
+            onRatePlayer={async () => {
               setRatings({
                 attack: player.my_rating?.attack_rating || 0,
                 defense: player.my_rating?.defense_rating || 0,
                 gameIq: player.my_rating?.game_iq_rating || 0
               });
+
+              // Load existing playstyle attributes if available
+              if (user) {
+                const { data: currentPlayer } = await supabase
+                  .from('players')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .single();
+
+                if (currentPlayer) {
+                  const { data: existingRating } = await supabase
+                    .from('player_ratings')
+                    .select('has_pace, has_shooting, has_passing, has_dribbling, has_defending, has_physical')
+                    .eq('rater_id', currentPlayer.id)
+                    .eq('rated_player_id', player.id)
+                    .maybeSingle();
+
+                  if (existingRating) {
+                    const attributes: AttributeCombination = {
+                      has_pace: existingRating.has_pace || false,
+                      has_shooting: existingRating.has_shooting || false,
+                      has_passing: existingRating.has_passing || false,
+                      has_dribbling: existingRating.has_dribbling || false,
+                      has_defending: existingRating.has_defending || false,
+                      has_physical: existingRating.has_physical || false
+                    };
+
+                    // Only set if at least one attribute is true
+                    const hasAnyAttribute = Object.values(attributes).some(v => v);
+                    if (hasAnyAttribute) {
+                      setSelectedAttributes(attributes);
+                    }
+                  }
+                }
+              }
+
               setShowRatingModal(true);
             }}
             ratings={ratings}
@@ -776,7 +875,12 @@ export default function PlayerProfileNew() {
           player={player}
           ratings={ratings}
           setRatings={setRatings}
-          onClose={() => setShowRatingModal(false)}
+          selectedAttributes={selectedAttributes}
+          onAttributesChange={setSelectedAttributes}
+          onClose={() => {
+            setShowRatingModal(false);
+            setSelectedAttributes(null);
+          }}
           onSubmit={handleRatingSubmit}
         />
       )}
