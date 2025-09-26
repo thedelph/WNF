@@ -112,7 +112,7 @@ export const FormationView: React.FC<FormationViewProps> = ({
   };
 
   const expandAll = () => {
-    const allPositions: PositionType[] = ['DEF', 'CDM', 'CM', 'CAM', 'ST'];
+    const allPositions: PositionType[] = ['DEF', 'WB', 'W', 'CDM', 'CM', 'CAM', 'ST'];
     setExpandedPositions(new Set(allPositions.filter(pos => formation.positions[pos].length > 0)));
   };
 
@@ -165,7 +165,7 @@ export const FormationView: React.FC<FormationViewProps> = ({
 
   const renderPitchView = () => {
     // Simplified pitch visualization with positions
-    const { DEF, W, CDM, CM, CAM, ST } = formation.positions;
+    const { DEF, WB, W, CDM, CM, CAM, ST } = formation.positions;
     
     return (
       <div className={`relative bg-gradient-to-b from-green-50 to-green-100 rounded-lg p-6 border-2 ${getTeamColorClass()} min-h-[400px]`}>
@@ -213,9 +213,9 @@ export const FormationView: React.FC<FormationViewProps> = ({
           </div>
         )}
         
-        {/* Winger line - positioned between defense and midfield */}
+        {/* Winger line - attacking wide players */}
         {W.length > 0 && (
-          <div className="flex justify-center gap-6 mb-6">
+          <div className="flex justify-between px-4 mb-6">
             {W.map(player => (
               <div key={player.player.player_id} className="w-20 sm:w-24">
                 {renderPlayerCard(player, true)}
@@ -223,9 +223,19 @@ export const FormationView: React.FC<FormationViewProps> = ({
             ))}
           </div>
         )}
-        
-        {/* Defense line */}
-        {DEF.length > 0 && (
+
+        {/* Wingback line - defensive wide players */}
+        {WB.length > 0 && (
+          <div className="flex justify-between px-4 mb-6">
+            {WB.map(player => (
+              <div key={player.player.player_id} className="w-20 sm:w-24">
+                {renderPlayerCard(player, true)}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Defense line */}        {DEF.length > 0 && (
           <div className="flex justify-center gap-3">
             {DEF.map(player => (
               <div key={player.player.player_id} className="w-20 sm:w-24">
@@ -236,12 +246,13 @@ export const FormationView: React.FC<FormationViewProps> = ({
         )}
         
         {/* Position labels on the side */}
-        <div className="absolute left-2 top-6 text-xs text-gray-600 space-y-12 hidden lg:block">
-          {ST.length > 0 && <div>ATK</div>}
+        <div className="absolute left-2 top-6 text-xs text-gray-600 space-y-8 hidden lg:block">
+          {ST.length > 0 && <div>ST</div>}
           {CAM.length > 0 && <div>CAM</div>}
           {CM.length > 0 && <div>CM</div>}
           {CDM.length > 0 && <div>CDM</div>}
-          {W.length > 0 && <div>WING</div>}
+          {W.length > 0 && <div>W</div>}
+          {WB.length > 0 && <div>WB</div>}
           {DEF.length > 0 && <div>DEF</div>}
         </div>
       </div>
@@ -291,7 +302,7 @@ export const FormationView: React.FC<FormationViewProps> = ({
               </button>
             </div>
           </div>
-          {(['ST', 'CAM', 'CM', 'CDM', 'W', 'DEF'] as PositionType[]).map(position => {
+          {(['ST', 'CAM', 'W', 'CM', 'CDM', 'WB', 'DEF'] as PositionType[]).map(position => {
             const players = formation.positions[position];
             if (players.length === 0) return null;
             return renderPositionGroup(position, players);

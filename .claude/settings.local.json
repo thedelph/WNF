@@ -32,7 +32,10 @@
       "Bash(taskkill:*)",
       "Bash(cmd //c:*)",
       "Bash(PORT=5175 npm run dev)",
-      "mcp__supabase__generate_typescript_types"
+      "mcp__supabase__generate_typescript_types",
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(awk:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

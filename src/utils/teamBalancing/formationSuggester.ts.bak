@@ -237,10 +237,10 @@ const PLAYSTYLE_IDEAL_POSITIONS: Record<string, PositionType[]> = {
   'Complete Defender': ['DEF'],
   'Defender': ['DEF'],
   'Destroyer': ['CDM', 'DEF'],
-  'General': ['CDM', 'CM', 'WB'],
+  'General': ['DEF', 'CDM', 'WB'],
   'Gladiator': ['DEF', 'WB'],
   'Guardian': ['DEF', 'WB'],
-  'Interceptor': ['CDM', 'WB'],
+  'Interceptor': ['DEF', 'CDM', 'WB'],
   'Libero': ['DEF', 'CDM'],
   'Machine': ['CDM', 'DEF'],
   'Sentinel': ['DEF', 'CDM'],
@@ -432,48 +432,10 @@ function getRatingBasedIdealPositions(player: TeamAssignment): PositionType[] {
 
   const positions: PositionType[] = [];
 
-  // PRIORITY 1: CHECK VERSATILITY FIRST - Versatile players should be in flexible positions
-  if (isVersatilePlayer(player)) {
-    positions.push("CM");  // Primary choice - uses all attributes
-    if (defense > 5.5) positions.push("CDM");
-    if (attack > 5.5) positions.push('CAM');
-    return positions; // Early return for versatile players
-  }
-  // PRIORITY 2: CHECK PACE FOR WIDE POSITIONS - Fast players need dynamic roles
-  if (attrs?.pace && attrs.pace >= 0.8) {
-    if (defense > attack) {
-      positions.push('WB'); // Fast defensive players are wingbacks
-    } else {
-      positions.push('W');  // Fast attacking players are wingers
-    }
-    if (gameIq > 7.0) positions.push('CM');
-    if (attack > 6.5 && attrs?.shooting > 0.6) positions.push('ST');
-    return positions; // Early return - pace is wasted at DEF
-  }
-
-  // CHECK HIGH GAME IQ - Tactical masterminds should be in central positions
-  if (gameIq >= 9.0) {
-    // Elite IQ (9.0+): Central positions ONLY, no DEF/wide roles
-    positions.push('CM');  // Primary choice for orchestration
-    // Only CDM if they have defensive capability
-    if (defense > 5.0 && attrs && (attrs.defending >= 0.5 || attrs.physical >= 0.4)) {
-      positions.push('CDM');
-    }
-    positions.push('CAM'); // Can create from advanced position
-    // Early return - skip all other position logic for elite IQ
-    return positions;
-  }
-
   // Strong defensive orientation
   if (defense > attack + 1.0) {
-    // Only add DEF if not high IQ and not fast (pace and intelligence wasted in pure defense)
-    if (gameIq < 8.0 && (!attrs?.pace || attrs.pace < 0.7)) {
-      positions.push('DEF');
-    }
-    // CDM requires actual defensive capability
-    if (defense > 6.5 && gameIq > 6.0 && attrs && (attrs.defending >= 0.5 || attrs.physical >= 0.4)) {
-      positions.push('CDM');
-    }
+    positions.push('DEF');
+    if (defense > 6.5 && gameIq > 6.0) positions.push('CDM');
     // Wingback: defensive player with pace
     if (attrs?.pace > 0.6 && (attrs?.defending > 0.3 || defense > 5.5)) {
       positions.push('WB');
@@ -484,17 +446,14 @@ function getRatingBasedIdealPositions(player: TeamAssignment): PositionType[] {
     if (attrs?.shooting > 0.7) positions.push('ST');
     if (attack > 6.5 && gameIq > 6.0) positions.push('CAM');
     // Winger: attacking player with pace (must have attack > defense)
-    if (attrs?.pace > 0.7 && (attrs?.shooting > 0.4 || attrs?.dribbling > 0.6)) {
+    if (attrs?.pace > 0.6 && (attrs?.shooting > 0.4 || attrs?.dribbling > 0.6)) {
       positions.push('W');
     }
   }
   // Balanced player
   else if (Math.abs(attack - defense) < 1.0 && gameIq > 6.5) {
     positions.push('CM');
-    // CDM requires defensive capability
-    if (defense > 6.0 && attrs && (attrs.defending >= 0.5 || attrs.physical >= 0.4)) {
-      positions.push('CDM');
-    }
+    if (defense > 6.0) positions.push('CDM');
     if (attack > 6.0) positions.push('CAM');
     // Balanced player with pace could be wingback
     if (attrs?.pace > 0.7 && defense > 5.0) {
@@ -504,37 +463,14 @@ function getRatingBasedIdealPositions(player: TeamAssignment): PositionType[] {
 
   // Add position based on specific attributes
   if (attrs) {
-    // Only suggest DEF if strong defending AND not fast
-    if (attrs.defending > 0.7 && defense >= attack && attrs.pace < 0.6 && !positions.includes('DEF')) {
-      positions.push('DEF');
-    }
-    if (attrs.shooting > 0.7 && attack > defense && !positions.includes('ST')) positions.push('ST');
+    if (attrs.defending > 0.7 && !positions.includes('DEF')) positions.push('DEF');
+    if (attrs.shooting > 0.7 && !positions.includes('ST')) positions.push('ST');
     if (attrs.passing > 0.8 && gameIq > 6.5 && !positions.includes('CM')) positions.push('CM');
     // Only suggest W if attacking, only suggest WB if defensive
     if (attrs.pace > 0.8) {
       if (attack > defense && !positions.includes('W')) positions.push('W');
       if (defense >= attack && !positions.includes('WB')) positions.push('WB');
     }
-  }
-  // High Game IQ players (8.0+) are natural fits for central positions
-  if (gameIq >= 8.0) {
-    // Exceptional tactical intelligence means they excel in orchestrating play
-    if (!positions.includes('CM')) positions.push('CM');
-    // Only CDM if they have defensive capability
-    if (gameIq >= 8.5 && !positions.includes('CDM') && attrs && (attrs.defending >= 0.5 || attrs.physical >= 0.4)) {
-      positions.push('CDM');
-    }
-    if (gameIq >= 9.0 && !positions.includes('CAM')) positions.push('CAM'); // Elite playmaker
-
-    // Remove wide positions for high IQ players if they were added
-    // Remove DEF position for high IQ players - tactical intelligence wasted in pure defense
-    const defIndex = positions.indexOf('DEF');
-    if (defIndex > -1) positions.splice(defIndex, 1);
-    // Their tactical intelligence is better utilized centrally
-    const wIndex = positions.indexOf('W');
-    if (wIndex > -1) positions.splice(wIndex, 1);
-    const wbIndex = positions.indexOf('WB');
-    if (wbIndex > -1) positions.splice(wbIndex, 1);
   }
 
   return positions;
@@ -879,48 +815,11 @@ function tryFormationVariants(
 /**
  * Select best formation based on player pool
  */
-/**
- * Get debug info about formation selection
- */
-function getFormationSelectionDebug(
-  team: TeamAssignment[],
-  requirements: RelativeRequirements,
-  selectedFormation: FormationTemplate
-): string {
-  // Count WB candidates
-  const wbCandidates = team.filter(player => {
-    const ratingBasedPos = getRatingBasedIdealPositions(player);
-    const playstyle = detectPlaystyleForPlayer(player, requirements);
-    const playstylePos = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
-    let idealPositions = [...new Set([...ratingBasedPos, ...playstylePos])];
-    // Apply filtering
-    const attrs = player.derived_attributes;
-    if (isVersatilePlayer(player)) {
-      idealPositions = idealPositions.filter(p => p !== 'DEF');
-      if (!idealPositions.includes('CM')) idealPositions.push('CM');
-    }
-    if (attrs?.pace && attrs.pace >= 0.8) {
-      idealPositions = idealPositions.filter(p => p !== 'DEF');
-      if (player.defense_rating > player.attack_rating && !idealPositions.includes('WB')) {
-        idealPositions.push('WB');
-      }
-    }
-    return idealPositions.includes('WB') && (attrs?.pace ?? 0) >= 0.4;
-  });
-
-  // Count fast players
-  const fastPlayers = team.filter(p => (p.derived_attributes?.pace ?? 0) >= 0.8);
-  const versatilePlayers = team.filter(p => isVersatilePlayer(p));
-  const highIqPlayers = team.filter(p => (p.game_iq_rating ?? 5) >= 8.0);
-
-  return `WB: ${wbCandidates.length}, Fast: ${fastPlayers.length}, Versatile: ${versatilePlayers.length}, HighIQ: ${highIqPlayers.length}`;
-}
-
 function selectBestFormation(
   team: TeamAssignment[],
   requirements: RelativeRequirements
 ): FormationTemplate {
-  const outfieldCount = team.length; // All players are outfield (rotating keeper)
+  const outfieldCount = team.length - 1; // Account for rotating keeper
 
   const validFormations = FORMATION_TEMPLATES.filter(
     f => outfieldCount >= f.minPlayers && outfieldCount <= f.maxPlayers
@@ -948,25 +847,8 @@ function selectBestFormation(
     const ratingBasedPos = getRatingBasedIdealPositions(player);
     const playstyle = detectPlaystyleForPlayer(player, requirements);
     const playstylePos = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
-    let idealPositions = [...new Set([...ratingBasedPos, ...playstylePos])];
-    // Apply same filtering as in assignPlayersToPositions
-    if (isVersatilePlayer(player)) {
-      idealPositions = idealPositions.filter(p => p !== "DEF");
-      if (!idealPositions.includes("CM")) idealPositions.push("CM");
-    }
-    const attrs = player.derived_attributes;
-    if (attrs?.pace && attrs.pace >= 0.8) {
-      idealPositions = idealPositions.filter(p => p !== "DEF");
-      if (player.defense_rating > player.attack_rating && !idealPositions.includes("WB")) {
-        idealPositions.push("WB");
-      }
-    }
-    // WB requires minimum pace (0.4) to be considered a viable candidate
-    if (idealPositions.includes('WB')) {
-      const pace = player.derived_attributes?.pace ?? 0;
-      return pace >= 0.4;
-    }
-    return false;
+    const idealPositions = [...new Set([...ratingBasedPos, ...playstylePos])];
+    return idealPositions.includes('WB');
   }).length;
 
   // Count W candidates (attacking wingers)
@@ -974,65 +856,22 @@ function selectBestFormation(
     const ratingBasedPos = getRatingBasedIdealPositions(player);
     const playstyle = detectPlaystyleForPlayer(player, requirements);
     const playstylePos = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
-    let idealPositions = [...new Set([...ratingBasedPos, ...playstylePos])];
-    // Apply same filtering
-    const attrs = player.derived_attributes;
-    if (attrs?.pace && attrs.pace >= 0.8) {
-      idealPositions = idealPositions.filter(p => p !== "DEF");
-      if (player.attack_rating > player.defense_rating && !idealPositions.includes("W")) {
-        idealPositions.push("W");
-      }
-    }
-    // W requires minimum pace (0.5) to be considered a viable candidate
-    if (idealPositions.includes('W')) {
-      const pace = player.derived_attributes?.pace ?? 0;
-      return pace >= 0.5;
-    }
-    return false;
-  }).length;
-  // Count high Game IQ players (8.0+) who would excel in central positions
-  const highIqCandidates = team.filter(player => {
-    const gameIq = player.game_iq_rating ?? 5;
-    return gameIq >= 8.0;
-  }).length;
-  // Count versatile players who should be in central positions
-  const versatilePlayers = team.filter(player => isVersatilePlayer(player)).length;
-
-  // Count fast players (pace >= 0.8) who should NOT be at DEF
-  const fastPlayers = team.filter(player => {
-    const pace = player.derived_attributes?.pace ?? 0;
-    return pace >= 0.8;
+    const idealPositions = [...new Set([...ratingBasedPos, ...playstylePos])];
+    return idealPositions.includes('W');
   }).length;
 
-  // Prefer formations based on available candidates
+  // If we have WB candidates, prefer formations with WB positions
   let formationsToScore = validFormations;
-
-  // Prioritize formations based on player pool capabilities
-  if (versatilePlayers >= 3 || highIqCandidates >= 3) {
-    // With many versatile or high IQ players, prefer central-heavy formations
+  if (wbCandidates >= 2) {
+    // Sort formations to prioritize those with WB positions
     formationsToScore = [...validFormations].sort((a, b) => {
-      const centralA = a.positions.CDM + a.positions.CM + a.positions.CAM;
-      const centralB = b.positions.CDM + b.positions.CM + b.positions.CAM;
-      return centralB - centralA; // Prefer more central positions
-    });
-  } else if (fastPlayers >= 2) {
-    // With fast players, prefer formations with WB to utilize pace
-    formationsToScore = [...validFormations].sort((a, b) => {
-      // Prioritize WB formations for fast players
-      const wbDiff = b.positions.WB - a.positions.WB;
-      if (wbDiff !== 0) return wbDiff;
-      // Avoid heavy DEF formations that waste pace
-      return a.positions.DEF - b.positions.DEF;
-    });
-  } else if (wbCandidates >= 2) {
-    // Only prefer WB formations if we have enough viable candidates
-    formationsToScore = [...validFormations].sort((a, b) => {
+      // Prefer formations with exactly 2 WB if we have 2+ candidates
       if (a.positions.WB === 2 && b.positions.WB !== 2) return -1;
       if (b.positions.WB === 2 && a.positions.WB !== 2) return 1;
       return b.positions.WB - a.positions.WB;
     });
   } else if (wCandidates >= 2) {
-    // Only prefer W formations if we have enough viable candidates
+    // If no WB but have W candidates, prefer formations with W positions
     formationsToScore = [...validFormations].sort((a, b) => {
       if (a.positions.W === 2 && b.positions.W !== 2) return -1;
       if (b.positions.W === 2 && a.positions.W !== 2) return 1;
@@ -1055,28 +894,6 @@ function selectBestFormation(
     } else if (wCandidates >= 2 && formation.positions.W === 2) {
       bonusScore *= 1.1; // 10% bonus for matching W formation
     }
-    // PENALTY for formations requiring more wide players than available
-    if (formation.positions.WB > wbCandidates) {
-      // Significant penalty for each missing WB candidate
-      const deficit = formation.positions.WB - wbCandidates;
-      bonusScore *= (1 - deficit * 0.15); // 15% penalty per missing WB
-    }
-    if (formation.positions.W > wCandidates) {
-      // Significant penalty for each missing W candidate
-      const deficit = formation.positions.W - wCandidates;
-      bonusScore *= (1 - deficit * 0.15); // 15% penalty per missing W
-    }
-    // Bonus for formations with more central positions when high IQ players are available
-    if (highIqCandidates >= 2) {
-      const centralPositions = formation.positions.CDM + formation.positions.CM + formation.positions.CAM;
-      const totalPositions = Object.values(formation.positions).reduce((a, b) => a + b, 0);
-      const centralRatio = centralPositions / totalPositions;
-
-      // Bonus increases with more central positions (up to 25% bonus)
-      if (centralRatio > 0.4) {
-        bonusScore *= 1 + (centralRatio * 0.25); // Up to 25% bonus for highly central formations
-      }
-    }
 
     if (bonusScore > bestScore) {
       bestScore = bonusScore;
@@ -1085,6 +902,7 @@ function selectBestFormation(
     }
   }
 
+  console.log(`Selected formation ${bestFormation.name}: ${bestDetails} (WB candidates: ${wbCandidates}, W candidates: ${wCandidates})`);
 
   // Try formation variants for better fit
   const optimizedFormation = tryFormationVariants(bestFormation, team, requirements);
@@ -1096,7 +914,7 @@ function selectBestFormation(
  * Formation templates
  */
 const FORMATION_TEMPLATES: FormationTemplate[] = [
-  // 7 player formations
+  // 7 outfield (8 total with keeper)
   {
     name: '3-3-1',
     positions: { DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
@@ -1122,7 +940,7 @@ const FORMATION_TEMPLATES: FormationTemplate[] = [
     maxPlayers: 7
   },
 
-  // 8 player formations
+  // 8 outfield (9 total with keeper)
   {
     name: '4-3-1',
     positions: { DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
@@ -1160,7 +978,7 @@ const FORMATION_TEMPLATES: FormationTemplate[] = [
     maxPlayers: 8
   },
 
-  // 9 player formations (standard for rotating keeper)
+  // 9 outfield (10 total with keeper)
   {
     name: '4-4-1',
     positions: { DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
@@ -1197,31 +1015,8 @@ const FORMATION_TEMPLATES: FormationTemplate[] = [
     minPlayers: 9,
     maxPlayers: 9
   },
-  {
-    name: '3-3-3',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 3 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  {
-    name: '3-2-2-2',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 2, CM: 2, CAM: 0, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  {
-    name: '3-1-3-2',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  {
-    name: '2-2WB-2-1-2',
-    positions: { DEF: 2, WB: 2, W: 0, CDM: 2, CM: 1, CAM: 0, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  // 10 player formations (not used in 9v9)
+
+  // 10 outfield (11 total with keeper)
   {
     name: '4-5-1',
     positions: { DEF: 4, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
@@ -1318,16 +1113,6 @@ function calculateEnhancedPositionScore(
 
   if (player.derived_attributes) {
     score = fromAttributes * 0.7 + fromRatings * 0.3;
-    // Apply attribute utilization penalty
-    const utilization = calculateAttributeUtilization(player, position);
-    if (utilization < 0.6) {
-      // Heavy penalty for poor attribute utilization
-      score *= utilization; // Direct multiplication - 40% utilization = 40% score
-    } else if (utilization < 0.8) {
-      // Moderate penalty for suboptimal utilization
-      score *= (0.8 + utilization * 0.25); // Softer penalty for 60-80% utilization
-    }
-    // No penalty for 80%+ utilization
   } else {
     score = fromRatings;
   }
@@ -1335,78 +1120,6 @@ function calculateEnhancedPositionScore(
   return score;
 }
 
-/**
- * Calculate attribute utilization for a position
- * Returns percentage of player's attributes that are actually used in this position
- */
-function calculateAttributeUtilization(
-  player: TeamAssignment,
-  position: PositionType
-): number {
-  const attrs = player.derived_attributes;
-  if (!attrs) return 1.0; // No penalty if no attributes
-
-  // Define which attributes each position actually uses (threshold > 0.05 in weights)
-  const positionUsesAttribute: Record<PositionType, Set<string>> = {
-    DEF: new Set(['defending', 'physical', 'passing']),
-    WB: new Set(['defending', 'pace', 'physical', 'passing', 'dribbling']),
-    W: new Set(['pace', 'dribbling', 'passing', 'shooting']),
-    CDM: new Set(['defending', 'physical', 'passing', 'gameIq']),
-    CM: new Set(['passing', 'dribbling', 'defending', 'pace', 'gameIq']),
-    CAM: new Set(['passing', 'dribbling', 'shooting', 'pace', 'gameIq']),
-    ST: new Set(['shooting', 'pace', 'dribbling', 'physical']),
-  };
-
-  const usedAttributes = positionUsesAttribute[position];
-  let totalAttributeValue = 0;
-  let usedAttributeValue = 0;
-
-  // Calculate total vs used attribute values
-  const attributeMap = {
-    pace: attrs.pace,
-    shooting: attrs.shooting,
-    passing: attrs.passing,
-    dribbling: attrs.dribbling,
-    defending: attrs.defending,
-    physical: attrs.physical
-  };
-
-  for (const [attrName, value] of Object.entries(attributeMap)) {
-    if (value > 0.3) { // Only count significant attributes
-      totalAttributeValue += value;
-      if (usedAttributes.has(attrName)) {
-        usedAttributeValue += value;
-      }
-    }
-  }
-
-  // Return utilization percentage (avoid division by zero)
-  if (totalAttributeValue === 0) return 1.0;
-  return usedAttributeValue / totalAttributeValue;
-}
-
-/**
- * Detect if a player is versatile (has many balanced attributes)
- */
-function isVersatilePlayer(player: TeamAssignment): boolean {
-  const attrs = player.derived_attributes;
-  if (!attrs) return false;
-
-  // Count attributes above 0.5
-  let goodAttributes = 0;
-  if (attrs.pace >= 0.5) goodAttributes++;
-  if (attrs.shooting >= 0.5) goodAttributes++;
-  if (attrs.passing >= 0.5) goodAttributes++;
-  if (attrs.dribbling >= 0.5) goodAttributes++;
-  if (attrs.defending >= 0.5) goodAttributes++;
-  if (attrs.physical >= 0.5) goodAttributes++;
-
-  // Versatile if 4+ attributes are good OR playstyle is "General" or "All-Rounder"
-  const versatilePlaystyles = ['General', 'All-Rounder', 'Complete'];
-  const playstyle = (player as any).playstyle_name || '';
-
-  return goodAttributes >= 4 || versatilePlaystyles.some(style => playstyle.includes(style));
-}
 /**
  * Determine if player is attacking, defensive, or balanced based on attributes
  */
@@ -2050,58 +1763,7 @@ function assignPlayersToPositions(
     const ratingBasedPositions = getRatingBasedIdealPositions(player);
 
     // Combine both approaches - union of playstyle and rating-based positions
-    let idealPositions = [...new Set([...playstyleIdealPositions, ...ratingBasedPositions])];
-
-    // Override playstyle positions for special cases
-    // Versatile players should NOT be at DEF
-    if (isVersatilePlayer(player)) {
-      idealPositions = idealPositions.filter(p => p !== 'DEF');
-      if (!idealPositions.includes('CM')) idealPositions.push('CM');
-    }
-    // Very fast players should NOT be at DEF
-    const attrs = player.derived_attributes;
-    if (attrs?.pace && attrs.pace >= 0.8) {
-      idealPositions = idealPositions.filter(p => p !== 'DEF');
-      if (player.defense_rating > player.attack_rating && !idealPositions.includes('WB')) {
-        idealPositions.push('WB');
-      } else if (!idealPositions.includes('W')) {
-        idealPositions.push('W');
-      }
-    }
-    // CDM requires actual defensive capability
-    if (idealPositions.includes("CDM")) {
-      if (!attrs || (attrs.defending < 0.5 && attrs.physical < 0.4)) {
-        idealPositions = idealPositions.filter(p => p !== "CDM");
-      }
-    }
-
-    // CAM fallback: If player only has CAM but formation lacks it, add fallback positions
-    if (idealPositions.includes('CAM') && formation.positions.CAM === 0) {
-      const attrs = player.derived_attributes;
-      // Remove CAM from ideal positions since it's not available
-      idealPositions = idealPositions.filter(p => p !== 'CAM');
-
-      // Add fallback positions based on attributes
-      if (attrs?.passing > 0.7 || player.game_iq_rating > 6.5) {
-        idealPositions.push('CM');  // Good passers/smart players go to CM
-      }
-      if ((attrs?.shooting > 0.6 || player.attack_rating > 6.0) && !idealPositions.includes('ST')) {
-        idealPositions.push('ST');  // Good shooters/attackers can play ST
-      }
-      if (attrs?.pace > 0.6 && attrs?.dribbling > 0.5 && !idealPositions.includes('W')) {
-    // CDM requires actual defensive capability
-    if (idealPositions.includes("CDM")) {
-      if (!attrs || (attrs.defending < 0.5 && attrs.physical < 0.4)) {
-        idealPositions = idealPositions.filter(p => p !== "CDM");
-      }
-    }
-        idealPositions.push('W');  // Pacey dribblers can play W
-      }
-      // If still no positions, default to CM
-      if (idealPositions.length === 0) {
-        idealPositions.push('CM');
-      }
-    }
+    const idealPositions = [...new Set([...playstyleIdealPositions, ...ratingBasedPositions])];
 
     // Log mismatches for debugging
     const hasConflict = ratingBasedPositions.length > 0 &&
@@ -2129,7 +1791,7 @@ function assignPlayersToPositions(
     (['DEF', 'WB', 'W', 'CDM', 'CM', 'CAM', 'ST'] as PositionType[]).forEach(position => {
       const score = calculateEnhancedPositionScore(player, position, requirements);
       const isNatural = idealPositions.includes(position);
-      const finalScore = isNatural ? score * 1.2 : score;  // Reduced from 1.3x to 1.2x
+      const finalScore = isNatural ? score * 1.3 : score;
 
       playerScores.push({
         player,
@@ -2170,169 +1832,82 @@ function assignPlayersToPositions(
     playerFlexibility.set(player.player_id, naturalPositions);
   });
 
-  // Phase 1: Assign natural fits first, choosing best position for multi-position players
-  // Group natural fits by player to handle multi-position players
-  const naturalFitsByPlayer = new Map<string, Array<{player: TeamAssignment, position: PositionType, score: number, isNatural: boolean}>>();
+  // Phase 1: Assign natural fits first, prioritizing less flexible players
+  // Sort natural fits by flexibility (less flexible first) and position importance
+  const naturalFits = playerScores.filter(ps => ps.isNatural);
+  naturalFits.sort((a, b) => {
+    const flexA = playerFlexibility.get(a.player.player_id) || 99;
+    const flexB = playerFlexibility.get(b.player.player_id) || 99;
 
-  playerScores.filter(ps => ps.isNatural).forEach(ps => {
-    const existing = naturalFitsByPlayer.get(ps.player.player_id) || [];
-    existing.push(ps);
-    naturalFitsByPlayer.set(ps.player.player_id, existing);
-  });
+    // First by flexibility (less flexible first)
+    if (flexA !== flexB) return flexA - flexB;
 
-  // Sort players by flexibility (less flexible first)
-  const sortedPlayers = Array.from(naturalFitsByPlayer.entries()).sort((a, b) => {
-    const flexA = playerFlexibility.get(a[0]) || 99;
-    const flexB = playerFlexibility.get(b[0]) || 99;
-    return flexA - flexB;
-  });
+    // Then by position importance
+    const importA = POSITION_IMPORTANCE[a.position] || 0;
+    const importB = POSITION_IMPORTANCE[b.position] || 0;
+    if (importA !== importB) return importB - importA;
 
-  // Assign each player to their best available natural position
-  sortedPlayers.forEach(([playerId, playerPositions]) => {
-    if (assignedPlayers.has(playerId)) return;
+    // For same position, sort by position-specific attributes
+    if (a.position === b.position) {
+      const attrsA = a.player.derived_attributes;
+      const attrsB = b.player.derived_attributes;
 
-    // For players with multiple natural positions, choose the best one based on:
-    // 1. Formation needs (positions with fewer candidates)
-    // 2. Player attributes matching position requirements
-    // 3. Position score
-    let bestAssignment: typeof playerPositions[0] | null = null;
-    let bestPriority = -1;
-
-    for (const ps of playerPositions) {
-      const { player, position, score } = ps;
-
-      // Skip if position is full
-      if (positionCounts[position] >= formation.positions[position]) continue;
-      // Hard pace requirements for certain positions
-      const attrs = player.derived_attributes;
-      if (attrs) {
-        // W (winger) requires minimum pace - skip if too slow
-        if (position === 'W' && attrs.pace < 0.5) continue;
-        // WB (wingback) also requires some pace for overlapping runs
-        if (position === 'WB' && attrs.pace < 0.4) continue;
-      }
-
-      // Calculate priority for this position assignment
-      let priority = score;
-
-      // Bonus for positions with fewer natural candidates
-      const naturalCandidatesForPosition = Array.from(naturalFitsByPlayer.values())
-        .flat()
-        .filter(p => p.position === position && !assignedPlayers.has(p.player.player_id))
-        .length;
-      priority += (10 - naturalCandidatesForPosition) * 0.5;
-
-      // Special handling for wide positions based on attributes
-      if (attrs) {
-        // Strong preference for WB if player has high pace + defending
-        if (position === 'WB' && attrs.pace > 0.6 && attrs.defending > 0.3) {
-          priority += 2.0;  // Strong bonus for natural wingbacks
+      if (attrsA && attrsB) {
+        switch(a.position) {
+          case 'CDM':
+            // CDM: prioritize defending attribute
+            return (attrsB.defending - attrsA.defending) * 10 + (b.player.defense_rating ?? 5) - (a.player.defense_rating ?? 5);
+          case 'CM':
+            // CM: prioritize passing and game IQ
+            return (attrsB.passing - attrsA.passing) * 10 + (b.player.game_iq_rating ?? 5) - (a.player.game_iq_rating ?? 5);
+          case 'ST':
+            // ST: prioritize shooting
+            return (attrsB.shooting - attrsA.shooting) * 10 + (b.player.attack_rating ?? 5) - (a.player.attack_rating ?? 5);
+          case 'W':
+            // W: prioritize pace and dribbling
+            return ((attrsB.pace + attrsB.dribbling) - (attrsA.pace + attrsA.dribbling)) * 5;
+          case 'WB':
+            // WB: prioritize pace and defending
+            return ((attrsB.pace + attrsB.defending) - (attrsA.pace + attrsA.defending)) * 5;
+          case 'DEF':
+            // DEF: prioritize defending and physical
+            return ((attrsB.defending + attrsB.physical) - (attrsA.defending + attrsA.physical)) * 5;
         }
-        // Strong preference for W if player has high pace + attacking attributes
-        if (position === 'W' && attrs.pace > 0.6 && (attrs.shooting > 0.4 || attrs.dribbling > 0.5)) {
-          priority += 2.0;  // Strong bonus for natural wingers
-        }
-        // Strong preference for ST if player has high pace (crucial for strikers)
-        if (position === 'ST') {
-          priority += attrs.pace * 5.0;  // Pace is critical for strikers (increased weight)
-          priority += attrs.shooting * 1.5;  // Shooting also important
-        }
-        // Avoid DEF for pacey players who could be WB
-        if (position === 'DEF' && attrs.pace > 0.7 && formation.positions.WB > 0) {
-          priority -= 1.0;  // Penalty for wasting pace at DEF
-        }
-      // Versatility bonuses - versatile players should be in central positions
-      const isVersatile = isVersatilePlayer(player);
-  if (isVersatile) {
-        if (position === 'CM') priority += 3.0;  // Strong bonus for versatile CM
-        if (position === 'CDM') priority += 2.0; // Good bonus for versatile CDM
-        if (position === 'CAM') priority += 1.5; // Bonus for versatile CAM
-        if (position === 'DEF') priority -= 2.0; // Penalty for wasting versatility at DEF
-      }
-
-      // STRONG pace penalties - fast players MUST NOT be at static positions
-      if (attrs && attrs.pace >= 0.8) {
-        if (position === 'DEF') {
-          priority -= 5.0; // Massive penalty for elite pace at DEF
-        }
-        if (position === 'WB') {
-          priority += 3.0; // Strong bonus for pace at WB
-        }
-        if (position === 'W') {
-          priority += 2.5; // Strong bonus for pace at W
-        }
-      }
-      }
-      // Game IQ bonuses and penalties for tactical intelligence utilization
-      const gameIq = player.game_iq_rating ?? 5;
-      const leagueAverageIq = 6.21; // From debug log league averages
-      const iqAdvantage = gameIq - leagueAverageIq;
-
-      // High Game IQ players get VERY strong bonuses for central positions
-      if (gameIq >= 9.0) {
-        // Elite IQ (9.0+): Massive bonuses for central positions
-        if (position === 'CDM') priority += iqAdvantage * 4.0; // Can orchestrate from deep
-        if (position === 'CM') priority += iqAdvantage * 5.0; // Primary playmaker role
-        if (position === 'CAM') priority += iqAdvantage * 4.0; // Creative hub
-
-        // Strong penalties for non-central positions
-        if (position === 'DEF') priority -= iqAdvantage * 2.0; // Huge penalty for pure defense
-        if (position === 'WB' || position === 'W') {
-          priority -= iqAdvantage * 2.5; // Massive penalty for wide positions
-        }
-      } else if (gameIq >= 8.0) {
-        // High IQ (8.0-8.9): Strong bonuses for central positions
-        if (position === 'CDM') priority += iqAdvantage * 2.5; // Defensive orchestrator
-        if (position === 'CM') priority += iqAdvantage * 3.0; // Central playmaker
-        if (position === 'CAM') priority += iqAdvantage * 2.5; // Attacking midfielder
-
-        // Penalties for non-central positions
-        if (position === 'DEF') priority -= iqAdvantage * 1.0; // Penalty for pure defense
-        if (position === 'WB' || position === 'W') {
-          priority -= iqAdvantage * 1.5; // Significant penalty for wasting intelligence
-        }
-      }
-
-      // Medium Game IQ players (6.5-8.0) get moderate central bonuses
-      if (gameIq >= 6.5 && gameIq < 8.0) {
-        if (position === 'CDM' || position === 'CM' || position === 'CAM') {
-          priority += iqAdvantage * 0.8; // Moderate bonus for central positions
-        }
-      }
-
-      if (priority > bestPriority) {
-        bestPriority = priority;
-        bestAssignment = ps;
       }
     }
 
-    // Assign player to their best natural position
-    if (bestAssignment) {
-      const { player, position, score } = bestAssignment;
+    // Finally by score
+    return b.score - a.score;
+  });
 
-      positions[position].push({
-        player,
-        position,
-        score,
-        isSpecialist: true,
-        alternativePositions: []
-      });
+  naturalFits.forEach(({ player, position, score, isNatural }) => {
+    if (assignedPlayers.has(player.player_id)) return;
+    if (positionCounts[position] >= formation.positions[position]) return;
 
-      assignedPlayers.add(player.player_id);
-      positionCounts[position]++;
-      positionAnalysis[position].players.push(player.friendly_name);
-      positionAnalysis[position].naturalFits++;
+    positions[position].push({
+      player,
+      position,
+      score,
+      isSpecialist: isNatural,
+      alternativePositions: []
+    });
 
-      const playerAnalysis = debugLog.playerAnalysis.find(
-        p => p.playerId === player.player_id && p.team === teamColor
-      );
-      if (playerAnalysis) {
-        playerAnalysis.assignedPosition = position;
-        playerAnalysis.assignmentReason = `Natural position fit (Phase 1) - best of ${playerPositions.length} natural positions`;
-        playerAnalysis.isNaturalPosition = true;
-      }
+    assignedPlayers.add(player.player_id);
+    positionCounts[position]++;
+    positionAnalysis[position].players.push(player.friendly_name);
+    positionAnalysis[position].naturalFits++;
+
+    const playerAnalysis = debugLog.playerAnalysis.find(
+      p => p.playerId === player.player_id && p.team === teamColor
+    );
+    if (playerAnalysis) {
+      playerAnalysis.assignedPosition = position;
+      playerAnalysis.assignmentReason = 'Natural position fit (Phase 1)';
+      playerAnalysis.isNaturalPosition = true;
     }
-  });  // Phase 2: Fill remaining by best score with suitability constraints
+  });
+
+  // Phase 2: Fill remaining by best score with suitability constraints
   playerScores.forEach(({ player, position, score, isNatural }) => {
     if (assignedPlayers.has(player.player_id)) return;
     if (positionCounts[position] >= formation.positions[position]) return;
@@ -2345,11 +1920,11 @@ function assignPlayersToPositions(
     // Prevent terrible mismatches in Phase 2 - stronger constraints
     let skipAssignment = false;
 
-    // DEF position constraints: need good defense OR defensive attributes (relaxed)
+    // DEF position constraints: need good defense AND defensive attributes
     if (position === 'DEF') {
-      const hasDefensiveCapability = defense > 6.0 || // Good defense rating alone is sufficient
-                                     (defense > 5.0 && (attrs?.defending > 0.3 || attrs?.physical > 0.5));
-      const clearlyAttacking = attack > defense + 1.5 && attrs?.shooting > 0.6;
+      const hasDefensiveCapability = defense > 5.5 && (attrs?.defending > 0.4 || attrs?.physical > 0.6);
+      const clearlyAttacking = (attack > defense && attrs?.shooting > 0.6) ||
+                               (attrs?.passing > 0.8 && attrs?.shooting > 0.6);
       if (!hasDefensiveCapability || clearlyAttacking) {
         skipAssignment = true;
       }
@@ -2384,27 +1959,15 @@ function assignPlayersToPositions(
       }
     }
 
-    // CDM position constraints: need STRONG defensive capability and physical presence
+    // CDM position constraints: need defensive capability
     if (position === 'CDM') {
-      // CDM requires both defensive ability AND physical/defensive attributes
-      const hasDefensiveCapability = defense > 6.0 &&
-                                     (attrs?.defending >= 0.5 || attrs?.physical >= 0.4);
-      const hasMinimumDefense = defense > 5.5 && attrs?.defending >= 0.5 && attrs?.physical >= 0.3;
-      const clearlyAttacking = attrs?.shooting > 0.7 && attack > defense + 1.0;
-
-      // Must have either strong defense or decent defense with good attributes
-      if (!(hasDefensiveCapability || hasMinimumDefense) || clearlyAttacking) {
+      const hasDefensiveCapability = defense > 5.0 && attrs?.defending > 0.3;
+      const clearlyAttacking = attrs?.shooting > 0.7 && attack > defense;
+      if (!hasDefensiveCapability || clearlyAttacking) {
         skipAssignment = true;
       }
     }
-    // Game IQ constraints: prevent high IQ players from being assigned to wide positions
-    const gameIq = player.game_iq_rating ?? 5;
-    if (gameIq >= 8.0) {
-      // High IQ players (8.0+) should not be assigned to wide positions in Phase 2
-      if (position === 'WB' || position === 'W') {
-        skipAssignment = true; // Block wide position assignment for tactical masterminds
-      }
-    }
+
     // Skip if position is clearly unsuitable
     if (skipAssignment) return;
 
@@ -2484,41 +2047,33 @@ function assignPlayersToPositions(
           if (score > bestScore || bestScore === 0) {
             bestScore = score;
             bestPosition = position;
-            foundPosition = true;  // Mark that we found a position
           }
         }
       });
     }
 
-    // Only assign if we actually found an available position
-    if (foundPosition && positionCounts[bestPosition] < formation.positions[bestPosition]) {
-      positions[bestPosition].push({
-        player,
-        position: bestPosition,
-        score: bestScore,
-        isSpecialist: false,
-        alternativePositions: []
-      });
+    positions[bestPosition].push({
+      player,
+      position: bestPosition,
+      score: bestScore,
+      isSpecialist: false,
+      alternativePositions: []
+    });
 
-      assignedPlayers.add(player.player_id);
-      positionCounts[bestPosition]++;
-      positionAnalysis[bestPosition].players.push(player.friendly_name);
-      positionAnalysis[bestPosition].compromises++;
+    assignedPlayers.add(player.player_id);
+    positionCounts[bestPosition]++;
+    positionAnalysis[bestPosition].players.push(player.friendly_name);
+    positionAnalysis[bestPosition].compromises++;
 
-      const playerAnalysis = debugLog.playerAnalysis.find(
-        p => p.playerId === player.player_id && p.team === teamColor
-      );
-      if (playerAnalysis) {
-        playerAnalysis.assignedPosition = bestPosition;
-        playerAnalysis.assignmentReason = 'Forced assignment (Phase 3)';
-        playerAnalysis.isNaturalPosition = false;
-      }
-    } else {
-      // Log if we couldn't assign a player (should not happen in balanced teams)
-      debugLog.optimizationNotes.push(
-        `${player.friendly_name}: Could not assign to any position (all positions full)`
-      );
-    }  });
+    const playerAnalysis = debugLog.playerAnalysis.find(
+      p => p.playerId === player.player_id && p.team === teamColor
+    );
+    if (playerAnalysis) {
+      playerAnalysis.assignedPosition = bestPosition;
+      playerAnalysis.assignmentReason = 'Forced assignment (Phase 3)';
+      playerAnalysis.isNaturalPosition = false;
+    }
+  });
 
   // Optimize poor assignments
   optimizeAssignments(positions, team, requirements, debugLog, teamColor);
@@ -2745,9 +2300,7 @@ export function suggestFormations(
 
   // Select best formations
   const blueFormation = selectBestFormation(blueTeam, requirements);
-  const blueFormationDebug = getFormationSelectionDebug(blueTeam, requirements, blueFormation);
   const orangeFormation = selectBestFormation(orangeTeam, requirements);
-  const orangeFormationDebug = getFormationSelectionDebug(orangeTeam, requirements, orangeFormation);
 
   // Update debug log
   const blueComposition = analyzeTeamComposition(blueTeam);
@@ -2755,13 +2308,13 @@ export function suggestFormations(
 
   debugLog.formationSelection.blue = {
     formation: blueFormation.name,
-    reasoning: `${blueComposition.attackingPlayers} attacking, ${blueComposition.defensivePlayers} defensive, ${blueComposition.balancedPlayers} balanced players. ${blueFormationDebug}`,
+    reasoning: `${blueComposition.attackingPlayers} attacking, ${blueComposition.defensivePlayers} defensive, ${blueComposition.balancedPlayers} balanced players`,
     teamComposition: blueComposition
   };
 
   debugLog.formationSelection.orange = {
     formation: orangeFormation.name,
-    reasoning: `${orangeComposition.attackingPlayers} attacking, ${orangeComposition.defensivePlayers} defensive, ${orangeComposition.balancedPlayers} balanced players. ${orangeFormationDebug}`,
+    reasoning: `${orangeComposition.attackingPlayers} attacking, ${orangeComposition.defensivePlayers} defensive, ${orangeComposition.balancedPlayers} balanced players`,
     teamComposition: orangeComposition
   };
 

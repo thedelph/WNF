@@ -27,6 +27,8 @@ export interface TeamAssignment {
   overall_win_rate?: number | null; // Overall career win rate
   overall_goal_differential?: number | null; // Overall career goal differential
   total_games?: number | null; // Add total games count
+  tier?: number; // Tier from tier-based snake draft (1-5 typically)
+  threeLayerRating?: number; // Three-layer rating from tier system
   // Derived attributes from playstyle ratings
   derived_attributes?: {
     pace: number;
@@ -149,7 +151,7 @@ export interface AlgorithmComparison {
 /**
  * Position types for formation suggestions
  */
-export type PositionType = 'DEF' | 'W' | 'CDM' | 'CM' | 'CAM' | 'ST';
+export type PositionType = 'DEF' | 'WB' | 'W' | 'CDM' | 'CM' | 'CAM' | 'ST';
 
 /**
  * Position weights for calculating player suitability
@@ -181,7 +183,8 @@ export interface FormationTemplate {
   name: string;
   positions: {
     DEF: number;
-    W: number;    // Wingers
+    WB: number;   // Wingbacks (defensive wide players)
+    W: number;    // Wingers (attacking wide players)
     CDM: number;
     CM: number;
     CAM: number;
@@ -198,7 +201,8 @@ export interface FormationSuggestion {
   formation: string;
   positions: {
     DEF: PlayerPositionAssignment[];
-    W: PlayerPositionAssignment[];    // Wingers
+    WB: PlayerPositionAssignment[];     // Wingbacks
+    W: PlayerPositionAssignment[];      // Wingers
     CDM: PlayerPositionAssignment[];
     CM: PlayerPositionAssignment[];
     CAM: PlayerPositionAssignment[];

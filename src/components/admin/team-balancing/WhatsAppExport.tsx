@@ -111,12 +111,12 @@ ${blueTeamText}`;
         return `${POSITION_DISPLAY_NAMES[positionType]}: ${names}`;
       };
       
-      const blueFormationText = ['DEF', 'W', 'CDM', 'CM', 'CAM', 'ST']
+      const blueFormationText = ['DEF', 'WB', 'W', 'CDM', 'CM', 'CAM', 'ST']
         .map(pos => formatPositionGroup(formationSuggestions.blueFormation.positions, pos as PositionType))
         .filter(text => text !== '')
         .join('\n');
       
-      const orangeFormationText = ['DEF', 'W', 'CDM', 'CM', 'CAM', 'ST']
+      const orangeFormationText = ['DEF', 'WB', 'W', 'CDM', 'CM', 'CAM', 'ST']
         .map(pos => formatPositionGroup(formationSuggestions.orangeFormation.positions, pos as PositionType))
         .filter(text => text !== '')
         .join('\n');
