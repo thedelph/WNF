@@ -156,27 +156,6 @@ export default function Ratings() {
                    rating.has_dribbling || rating.has_defending || rating.has_physical);
         });
         break;
-      case 'attacking_style':
-        result = result.filter(player => {
-          const rating = player.current_rating;
-          return rating && (rating.playstyles?.category === 'attacking' ||
-                           (rating.has_pace || rating.has_shooting || rating.has_dribbling));
-        });
-        break;
-      case 'midfield_style':
-        result = result.filter(player => {
-          const rating = player.current_rating;
-          return rating && (rating.playstyles?.category === 'midfield' ||
-                           (rating.has_passing || rating.has_dribbling));
-        });
-        break;
-      case 'defensive_style':
-        result = result.filter(player => {
-          const rating = player.current_rating;
-          return rating && (rating.playstyles?.category === 'defensive' ||
-                           (rating.has_defending || rating.has_physical));
-        });
-        break;
       default:
         break;
     }
@@ -284,24 +263,6 @@ export default function Ratings() {
           }
           
           return aName.localeCompare(bName);
-        });
-        break;
-      case 'playstyle_category':
-        result.sort((a, b) => {
-          // Sort by primary attribute type: attacking (pace/shooting), midfield (passing/dribbling), defensive (defending/physical)
-          const getCategory = (rating: any) => {
-            if (!rating) return 3;
-            // Check old system first
-            if (rating.playstyles?.category === 'attacking') return 0;
-            if (rating.playstyles?.category === 'midfield') return 1;
-            if (rating.playstyles?.category === 'defensive') return 2;
-            // Check new system
-            if (rating.has_defending || rating.has_physical) return 2; // Defensive
-            if (rating.has_passing || rating.has_dribbling) return 1;  // Midfield
-            if (rating.has_pace || rating.has_shooting) return 0;      // Attacking
-            return 3; // No attributes
-          };
-          return getCategory(a.current_rating) - getCategory(b.current_rating);
         });
         break;
       default:
@@ -585,10 +546,7 @@ export default function Ratings() {
                         </>
                       )}
                       {filterOption !== 'unrated' && (
-                        <>
-                          <option value="playstyle_name">Playstyle (A-Z)</option>
-                          <option value="playstyle_category">Playstyle Category</option>
-                        </>
+                        <option value="playstyle_name">Playstyle (A-Z)</option>
                       )}
                     </select>
                   </div>
@@ -616,9 +574,6 @@ export default function Ratings() {
                       <>
                         <option value="has_playstyle">Has Playstyle</option>
                         <option value="no_playstyle">No Playstyle</option>
-                        <option value="attacking_style">Attacking Styles</option>
-                        <option value="midfield_style">Midfield Styles</option>
-                        <option value="defensive_style">Defensive Styles</option>
                       </>
                     </select>
                   </div>
