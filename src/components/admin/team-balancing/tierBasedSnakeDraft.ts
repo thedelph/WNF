@@ -337,6 +337,7 @@ function calculateThreeLayerRating(player: TeamAssignment, attributeStats: { ave
   
   // Maximum allowed adjustment to prevent extreme rating changes
   const MAX_RATING_ADJUSTMENT = 0.15; // 15% max change from base rating
+  const MAX_ABSOLUTE_ADJUSTMENT = 0.5; // Maximum ±0.5 rating points adjustment
   
   // Center the performance scores around 0 (subtract 0.5 to make neutral = 0)
   // Apply exponential penalties for catastrophic performers (< 30% win rate)
@@ -383,11 +384,17 @@ function calculateThreeLayerRating(player: TeamAssignment, attributeStats: { ave
                          (MOMENTUM_WEIGHT * momentumAdjustment);
   
   // Cap the total combined adjustment to ±15% of base rating
-  const cappedTotalAdjustment = Math.max(-MAX_RATING_ADJUSTMENT, 
+  const cappedTotalAdjustment = Math.max(-MAX_RATING_ADJUSTMENT,
                                          Math.min(MAX_RATING_ADJUSTMENT, totalAdjustment));
-  
+
   // Apply the capped adjustment to base skill
-  const finalRating = baseSkillRating * (1 + cappedTotalAdjustment);
+  const percentageAdjusted = baseSkillRating * (1 + cappedTotalAdjustment);
+
+  // Also apply absolute cap to prevent extreme adjustments (±0.5 max)
+  const absoluteAdjustment = percentageAdjusted - baseSkillRating;
+  const cappedAbsoluteAdjustment = Math.max(-MAX_ABSOLUTE_ADJUSTMENT,
+                                            Math.min(MAX_ABSOLUTE_ADJUSTMENT, absoluteAdjustment));
+  const finalRating = baseSkillRating + cappedAbsoluteAdjustment;
   
   return {
     threeLayerRating: finalRating,
@@ -555,6 +562,178 @@ function calculateAttributeBalanceScore(blueTeam: PlayerWithRating[], orangeTeam
 }
 
 /**
+ * Shooting distribution analysis for ensuring balanced shooting threats
+ */
+interface ShootingDistribution {
+  percentiles: { p25: number; p50: number; p75: number; p90: number };
+  nonZeroMean: number;
+  nonZeroCount: number;
+  totalCount: number;
+}
+
+/**
+ * Analyze shooting distribution across all players
+ */
+function analyzeShootingDistribution(players: PlayerWithRating[]): ShootingDistribution {
+  const shootingValues = players
+    .filter(p => p.derived_attributes?.shooting !== undefined)
+    .map(p => p.derived_attributes!.shooting)
+    .sort((a, b) => a - b);
+
+  const nonZeroValues = shootingValues.filter(v => v > 0);
+
+  return {
+    percentiles: {
+      p25: shootingValues[Math.floor(shootingValues.length * 0.25)] || 0,
+      p50: shootingValues[Math.floor(shootingValues.length * 0.50)] || 0,
+      p75: shootingValues[Math.floor(shootingValues.length * 0.75)] || 0,
+      p90: shootingValues[Math.floor(shootingValues.length * 0.90)] || 0
+    },
+    nonZeroMean: nonZeroValues.length > 0
+      ? nonZeroValues.reduce((a, b) => a + b, 0) / nonZeroValues.length
+      : 0,
+    nonZeroCount: nonZeroValues.length,
+    totalCount: shootingValues.length
+  };
+}
+
+/**
+ * Categorize a player's shooting threat level based on field distribution
+ */
+function categorizeShootingThreat(
+  player: PlayerWithRating,
+  distribution: ShootingDistribution
+): 'elite' | 'primary' | 'secondary' | 'none' {
+  const shooting = player.derived_attributes?.shooting || 0;
+
+  if (shooting >= distribution.percentiles.p90) return 'elite';
+  if (shooting >= distribution.percentiles.p75) return 'primary';
+  if (shooting >= distribution.percentiles.p50 && shooting > 0) return 'secondary';
+  return 'none';
+}
+
+/**
+ * Get team shooting profile (count of each threat level)
+ */
+function getTeamShootingProfile(
+  team: PlayerWithRating[],
+  distribution: ShootingDistribution
+): { elite: number; primary: number; secondary: number; none: number } {
+  const profile = { elite: 0, primary: 0, secondary: 0, none: 0 };
+
+  team.forEach(player => {
+    const category = categorizeShootingThreat(player, distribution);
+    profile[category]++;
+  });
+
+  return profile;
+}
+
+/**
+ * Calculate shooting statistics for the player pool
+ */
+function calculateShootingStats(players: PlayerWithRating[]): {
+  mean: number;
+  stdDev: number;
+  variance: number;
+} {
+  const shootingValues = players
+    .map(p => p.derived_attributes?.shooting || 0)
+    .filter(v => v >= 0);
+
+  if (shootingValues.length === 0) {
+    return { mean: 0, stdDev: 0, variance: 0 };
+  }
+
+  const mean = shootingValues.reduce((sum, v) => sum + v, 0) / shootingValues.length;
+  const variance = shootingValues.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / shootingValues.length;
+  const stdDev = Math.sqrt(variance);
+
+  return { mean, stdDev, variance };
+}
+
+/**
+ * Calculate shooting imbalance between teams using relative metrics
+ */
+function calculateShootingImbalance(
+  blueTeam: PlayerWithRating[],
+  orangeTeam: PlayerWithRating[],
+  distribution: ShootingDistribution
+): number {
+  const totalPlayers = blueTeam.length + orangeTeam.length;
+
+  // Calculate team shooting statistics
+  const blueShootingValues = blueTeam.map(p => p.derived_attributes?.shooting || 0);
+  const orangeShootingValues = orangeTeam.map(p => p.derived_attributes?.shooting || 0);
+
+  const blueMean = blueShootingValues.reduce((sum, v) => sum + v, 0) / blueTeam.length;
+  const orangeMean = orangeShootingValues.reduce((sum, v) => sum + v, 0) / orangeTeam.length;
+
+  // Calculate percentile coverage for each team
+  const blueAboveP50 = blueTeam.filter(p => (p.derived_attributes?.shooting || 0) > distribution.percentiles.p50).length;
+  const orangeAboveP50 = orangeTeam.filter(p => (p.derived_attributes?.shooting || 0) > distribution.percentiles.p50).length;
+
+  const blueAboveP75 = blueTeam.filter(p => (p.derived_attributes?.shooting || 0) >= distribution.percentiles.p75).length;
+  const orangeAboveP75 = orangeTeam.filter(p => (p.derived_attributes?.shooting || 0) >= distribution.percentiles.p75).length;
+
+  const blueAboveP25 = blueTeam.filter(p => (p.derived_attributes?.shooting || 0) > distribution.percentiles.p25).length;
+  const orangeAboveP25 = orangeTeam.filter(p => (p.derived_attributes?.shooting || 0) > distribution.percentiles.p25).length;
+
+  // Calculate relative imbalance scores (normalized by team size)
+  const p50Imbalance = Math.abs(blueAboveP50 / blueTeam.length - orangeAboveP50 / orangeTeam.length);
+  const p75Imbalance = Math.abs(blueAboveP75 / blueTeam.length - orangeAboveP75 / orangeTeam.length);
+  const p25Imbalance = Math.abs(blueAboveP25 / blueTeam.length - orangeAboveP25 / orangeTeam.length);
+
+  // Weight different percentiles by importance
+  const percentileImbalance = (p75Imbalance * 3.0) + (p50Imbalance * 2.0) + (p25Imbalance * 1.0);
+
+  // Calculate mean difference relative to overall distribution
+  const meanDifference = Math.abs(blueMean - orangeMean);
+
+  // Calculate shooting diversity for each team (entropy-based)
+  const calculateDiversity = (team: PlayerWithRating[]) => {
+    const counts = {
+      high: team.filter(p => (p.derived_attributes?.shooting || 0) >= distribution.percentiles.p75).length,
+      mid: team.filter(p => {
+        const s = p.derived_attributes?.shooting || 0;
+        return s >= distribution.percentiles.p25 && s < distribution.percentiles.p75;
+      }).length,
+      low: team.filter(p => (p.derived_attributes?.shooting || 0) < distribution.percentiles.p25).length
+    };
+
+    const total = team.length;
+    const proportions = [counts.high / total, counts.mid / total, counts.low / total];
+
+    // Calculate entropy (higher = more diverse = better)
+    const entropy = -proportions
+      .filter(p => p > 0)
+      .reduce((sum, p) => sum + p * Math.log(p), 0);
+
+    return entropy;
+  };
+
+  const blueDiversity = calculateDiversity(blueTeam);
+  const orangeDiversity = calculateDiversity(orangeTeam);
+  const diversityGap = Math.abs(blueDiversity - orangeDiversity);
+
+  // Get elite shooter counts for clustering penalty
+  const blueElite = blueTeam.filter(p => (p.derived_attributes?.shooting || 0) >= distribution.percentiles.p90).length;
+  const orangeElite = orangeTeam.filter(p => (p.derived_attributes?.shooting || 0) >= distribution.percentiles.p90).length;
+
+  // Significant penalty for elite shooter clustering
+  const eliteGap = Math.abs(blueElite - orangeElite);
+  const eliteClusteringPenalty = eliteGap > 1 ? eliteGap * 8.0 : eliteGap * 2.0; // Heavy penalty, especially for gap > 1
+
+  // Combine metrics with weights (including elite clustering)
+  const totalImbalance = (percentileImbalance * 4.0) +  // Most important
+                         (meanDifference * 2.0) +         // Important
+                         (diversityGap * 1.0) +           // Less important
+                         eliteClusteringPenalty;          // Critical for balance
+
+  return totalImbalance;
+}
+
+/**
  * Calculate priority score for a potential swap
  * Higher scores indicate better swaps to attempt first
  */
@@ -599,26 +778,25 @@ function calculateSwapPriority(
 }
 
 /**
- * Apply snake draft within tiers
+ * Apply snake draft with a specific starting team
  */
-function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blueTeam: PlayerWithRating[]; orangeTeam: PlayerWithRating[] } {
+function applySnakeDraftWithStart(
+  tiers: TierInfo[],
+  startWithBlue: boolean,
+  debugLog?: { value: string }
+): { blueTeam: PlayerWithRating[]; orangeTeam: PlayerWithRating[] } {
   const blueTeam: PlayerWithRating[] = [];
   const orangeTeam: PlayerWithRating[] = [];
-  
+
   // Calculate total players to determine target team sizes
   const totalPlayers = tiers.reduce((sum, tier) => sum + tier.players.length, 0);
   const targetTeamSize = Math.floor(totalPlayers / 2);
-  
-  // Randomly determine which team picks first in Tier 1
-  let bluePicksFirst = Math.random() < 0.5;
+
+  // Use specified starting team
+  let bluePicksFirst = startWithBlue;
   const initialFirstPicker = bluePicksFirst ? 'Blue' : 'Orange';
-  
-  if (debugLog) {
-    debugLog.value += '\nSTEP 4: SNAKE DRAFT PROCESS\n';
-    debugLog.value += '===========================\n';
-    debugLog.value += `Randomly selected ${initialFirstPicker} team to pick first\n`;
-    debugLog.value += `Target team size: ${targetTeamSize} players each (${totalPlayers} total)\n\n`;
-  }
+
+  // Suppress detailed logging during testing phase
   
   // Pre-calculate how the standard snake draft would distribute players
   let simulatedBlueCount = 0;
@@ -652,7 +830,8 @@ function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blu
     const tierPlayers = [...tier.players]; // Copy to avoid mutation
     currentTierIndex = tierIndex;
     
-    if (debugLog) {
+    // Only log during actual draft, not during testing
+    if (debugLog && !debugLog.value.includes("Testing")) {
       debugLog.value += `Tier ${tier.tierNumber} Draft:\n`;
       debugLog.value += `  ${bluePicksFirst ? 'Blue' : 'Orange'} picks first\n`;
     }
@@ -756,6 +935,73 @@ function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blu
 }
 
 /**
+ * Apply snake draft deterministically by trying both starting options
+ * Returns the configuration with better initial balance
+ */
+function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blueTeam: PlayerWithRating[]; orangeTeam: PlayerWithRating[] } {
+  if (debugLog) {
+    debugLog.value += '\nSTEP 4: DETERMINISTIC SNAKE DRAFT\n';
+    debugLog.value += '=================================\n';
+    debugLog.value += 'Testing both starting options to find optimal configuration...\n\n';
+  }
+
+  // Try both starting options
+  const tempLog = { value: 'Testing configurations...\n' };
+  const blueFirstResult = applySnakeDraftWithStart(tiers, true, tempLog);
+  const blueFirstBalance = calculateTierBalanceScore(blueFirstResult.blueTeam, blueFirstResult.orangeTeam);
+
+  const orangeFirstResult = applySnakeDraftWithStart(tiers, false, tempLog);
+  const orangeFirstBalance = calculateTierBalanceScore(orangeFirstResult.blueTeam, orangeFirstResult.orangeTeam);
+
+  // Also consider shooting distribution when selecting configuration
+  const allPlayers = [...blueFirstResult.blueTeam, ...blueFirstResult.orangeTeam];
+  const shootingDist = analyzeShootingDistribution(allPlayers);
+
+  const blueFirstShooting = calculateShootingImbalance(
+    blueFirstResult.blueTeam,
+    blueFirstResult.orangeTeam,
+    shootingDist
+  );
+
+  const orangeFirstShooting = calculateShootingImbalance(
+    orangeFirstResult.blueTeam,
+    orangeFirstResult.orangeTeam,
+    shootingDist
+  );
+
+  // Combine balance and shooting scores (shooting weighted at 20% of decision)
+  const blueFirstCombined = blueFirstBalance + (blueFirstShooting * 0.2);
+  const orangeFirstCombined = orangeFirstBalance + (orangeFirstShooting * 0.2);
+
+  // Choose the better configuration based on combined score
+  const betterConfiguration = blueFirstCombined <= orangeFirstCombined ? 'Blue' : 'Orange';
+  const betterResult = blueFirstCombined <= orangeFirstCombined ? blueFirstResult : orangeFirstResult;
+  const betterBalance = Math.min(blueFirstBalance, orangeFirstBalance);
+  const betterShooting = betterConfiguration === 'Blue' ? blueFirstShooting : orangeFirstShooting;
+
+  if (debugLog) {
+    debugLog.value += `Blue first: balance=${blueFirstBalance.toFixed(3)}, shooting=${blueFirstShooting.toFixed(2)}, combined=${blueFirstCombined.toFixed(3)}\n`;
+    debugLog.value += `Orange first: balance=${orangeFirstBalance.toFixed(3)}, shooting=${orangeFirstShooting.toFixed(2)}, combined=${orangeFirstCombined.toFixed(3)}\n`;
+    debugLog.value += `Selected: ${betterConfiguration} team picking first (better combined score)\n\n`;
+
+    // Now do the actual draft with logging
+    debugLog.value += 'EXECUTING SELECTED CONFIGURATION\n';
+    debugLog.value += '================================\n';
+
+    const totalPlayers = tiers.reduce((sum, tier) => sum + tier.players.length, 0);
+    const targetTeamSize = Math.floor(totalPlayers / 2);
+    debugLog.value += `${betterConfiguration} team picks first\n`;
+    debugLog.value += `Target team size: ${targetTeamSize} players each (${totalPlayers} total)\n\n`;
+
+    // Re-run with logging for the selected configuration
+    const finalResult = applySnakeDraftWithStart(tiers, betterConfiguration === 'Blue', debugLog);
+    return finalResult;
+  }
+
+  return betterResult;
+}
+
+/**
  * Calculate balance score for tier-based teams
  * Uses Attack, Defense, Game IQ, and Derived Attributes for balance calculation
  */
@@ -806,6 +1052,7 @@ interface BalanceScoreDetails {
   dribblingDiff?: number;
   defendingDiff?: number;
   physicalDiff?: number;
+  shootingImbalance?: number; // Weighted shooting threat distribution score
   hasAttributes: boolean;
   primaryFactor: 'skills' | 'attributes' | 'both';
   blueWinRate?: number;
@@ -869,9 +1116,37 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
   const blueGoalDiff = blueTeam.reduce((sum, p) => sum + (p.goal_differential ?? 0), 0);
   const orangeGoalDiff = orangeTeam.reduce((sum, p) => sum + (p.goal_differential ?? 0), 0);
 
+  // Calculate shooting imbalance (threat distribution)
+  const allPlayers = [...blueTeam, ...orangeTeam];
+  const shootingDistribution = analyzeShootingDistribution(allPlayers);
+  const shootingImbalance = calculateShootingImbalance(blueTeam, orangeTeam, shootingDistribution);
+
   // Weight skills at 85% and attributes at 15% to match updated rating calculation
   const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff);
-  const combinedBalance = (skillBalance * 0.85) + (attributeBalance * 0.15);
+
+  // Include shooting imbalance as a factor (normalized to same scale as skills)
+  // Normalize shooting imbalance to 0-10 scale (typical range is 0-10)
+  const normalizedShootingImbalance = Math.min(shootingImbalance, 10);
+
+  // Dynamic shooting weight based on imbalance level
+  // Base weight is 10%, scales up to 25% when shooting imbalance is severe
+  const shootingStats = calculateShootingStats(allPlayers);
+  const relativeShootingImbalance = shootingStats.stdDev > 0
+    ? normalizedShootingImbalance / (shootingStats.stdDev * 2)
+    : normalizedShootingImbalance / 5;
+
+  // Weight increases from 10% to 25% based on severity
+  const dynamicShootingWeight = Math.min(0.25, 0.10 + (relativeShootingImbalance * 0.15));
+
+  // Adjust weights to maintain total of 100%
+  const remainingWeight = 1.0 - dynamicShootingWeight;
+  const skillWeight = remainingWeight * 0.833; // ~75% of remaining
+  const attributeWeight = remainingWeight * 0.167; // ~15% of remaining
+
+  // Combine with dynamic weights
+  const combinedBalance = (skillBalance * skillWeight) +
+                         (attributeBalance * attributeWeight) +
+                         (normalizedShootingImbalance * dynamicShootingWeight);
 
   // Determine primary factor
   let primaryFactor: 'skills' | 'attributes' | 'both' = 'skills';
@@ -882,7 +1157,7 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
       primaryFactor = attributeContribution > skillContribution ? 'attributes' : 'both';
     }
   }
-  
+
   return {
     totalScore: combinedBalance,
     skillBalance,
@@ -896,6 +1171,7 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
     dribblingDiff,
     defendingDiff,
     physicalDiff,
+    shootingImbalance,
     hasAttributes,
     primaryFactor,
     blueWinRate,
@@ -1082,46 +1358,161 @@ function getTierDistributionIssues(blueTeam: PlayerWithRating[], orangeTeam: Pla
 
 /**
  * Improved validation that allows swaps unless they make concentrations worse
- * Returns true if the swap is acceptable (doesn't worsen existing concentrations)
+ * Returns object with acceptance status and rejection reason if applicable
  */
 function isSwapAcceptable(
-  beforeBlueTeam: PlayerWithRating[], 
+  beforeBlueTeam: PlayerWithRating[],
   beforeOrangeTeam: PlayerWithRating[],
-  afterBlueTeam: PlayerWithRating[], 
+  afterBlueTeam: PlayerWithRating[],
   afterOrangeTeam: PlayerWithRating[],
   balanceImprovement?: number
-): boolean {
+): { acceptable: boolean; rejectReason?: string } {
+  // First check tier distribution issues
   const beforeIssues = getTierDistributionIssues(beforeBlueTeam, beforeOrangeTeam);
   const afterIssues = getTierDistributionIssues(afterBlueTeam, afterOrangeTeam);
-  
+
+  // Calculate shooting distribution for all players
+  const allPlayers = [...beforeBlueTeam, ...beforeOrangeTeam];
+  const shootingDist = analyzeShootingDistribution(allPlayers);
+  const shootingStats = calculateShootingStats(allPlayers);
+
+  // HARD CONSTRAINT: Check elite shooter clustering
+  // Count elite shooters (p90 and above) before and after
+  const beforeBlueElite = beforeBlueTeam.filter(p =>
+    (p.derived_attributes?.shooting || 0) >= shootingDist.percentiles.p90
+  ).length;
+  const beforeOrangeElite = beforeOrangeTeam.filter(p =>
+    (p.derived_attributes?.shooting || 0) >= shootingDist.percentiles.p90
+  ).length;
+  const afterBlueElite = afterBlueTeam.filter(p =>
+    (p.derived_attributes?.shooting || 0) >= shootingDist.percentiles.p90
+  ).length;
+  const afterOrangeElite = afterOrangeTeam.filter(p =>
+    (p.derived_attributes?.shooting || 0) >= shootingDist.percentiles.p90
+  ).length;
+
+  const beforeEliteGap = Math.abs(beforeBlueElite - beforeOrangeElite);
+  const afterEliteGap = Math.abs(afterBlueElite - afterOrangeElite);
+
+  // Reject if swap creates elite shooter clustering (gap > 1)
+  // UNLESS it fixes an existing clustering issue
+  if (afterEliteGap > 1) {
+    // Only allow if this reduces existing elite gap
+    if (afterEliteGap >= beforeEliteGap) {
+      // Check if overall improvement is exceptional (> 0.30)
+      if (balanceImprovement === undefined || balanceImprovement < 0.30) {
+        return { acceptable: false, rejectReason: `Elite shooter clustering (gap: ${afterEliteGap})` }; // VETO
+      }
+    }
+  }
+
+  // Check shooting balance before and after the swap
+  const beforeShootingImbalance = calculateShootingImbalance(beforeBlueTeam, beforeOrangeTeam, shootingDist);
+  const afterShootingImbalance = calculateShootingImbalance(afterBlueTeam, afterOrangeTeam, shootingDist);
+
+  // Check if swap significantly improves shooting distribution
+  const shootingImprovement = beforeShootingImbalance - afterShootingImbalance;
+
+  // Dynamic improvement threshold based on standard deviation
+  const significantImprovement = shootingStats.stdDev * 0.5; // Half a standard deviation
+  if (shootingImprovement > significantImprovement) {
+    // This swap significantly improves shooting balance - prioritize it
+    return { acceptable: true };
+  }
+
+  // Standard deviation-based constraint for shooting balance
+  const afterBlueShooting = afterBlueTeam.map(p => p.derived_attributes?.shooting || 0);
+  const afterOrangeShooting = afterOrangeTeam.map(p => p.derived_attributes?.shooting || 0);
+
+  const afterBlueMean = afterBlueShooting.reduce((sum, v) => sum + v, 0) / afterBlueTeam.length;
+  const afterOrangeMean = afterOrangeShooting.reduce((sum, v) => sum + v, 0) / afterOrangeTeam.length;
+
+  const shootingMeanGap = Math.abs(afterBlueMean - afterOrangeMean);
+
+  // Reject if mean gap exceeds 1.5 standard deviations
+  const maxAcceptableGap = shootingStats.stdDev * 1.5;
+  if (shootingMeanGap > maxAcceptableGap && shootingStats.stdDev > 0.1) {
+    // Only reject if this makes shooting worse than before
+    const beforeBlueMean = beforeBlueTeam.map(p => p.derived_attributes?.shooting || 0)
+      .reduce((sum, v) => sum + v, 0) / beforeBlueTeam.length;
+    const beforeOrangeMean = beforeOrangeTeam.map(p => p.derived_attributes?.shooting || 0)
+      .reduce((sum, v) => sum + v, 0) / beforeOrangeTeam.length;
+    const beforeGap = Math.abs(beforeBlueMean - beforeOrangeMean);
+
+    if (shootingMeanGap > beforeGap) {
+      // Allow if overall balance improvement is substantial
+      if (balanceImprovement === undefined || balanceImprovement < 0.15) {
+        return { acceptable: false, rejectReason: `Shooting mean gap ${shootingMeanGap.toFixed(2)} > ${maxAcceptableGap.toFixed(2)}` };
+      }
+    }
+  }
+
+  // Percentile distribution constraint
+  const afterBlueAboveP50 = afterBlueTeam.filter(p =>
+    (p.derived_attributes?.shooting || 0) > shootingDist.percentiles.p50
+  ).length;
+  const afterOrangeAboveP50 = afterOrangeTeam.filter(p =>
+    (p.derived_attributes?.shooting || 0) > shootingDist.percentiles.p50
+  ).length;
+
+  // Reject if one team has less than 20% of shooters above median
+  const blueShooterRatio = afterBlueAboveP50 / afterBlueTeam.length;
+  const orangeShooterRatio = afterOrangeAboveP50 / afterOrangeTeam.length;
+  const minShooterRatio = 0.2; // At least 20% of team should be above median
+
+  if (blueShooterRatio < minShooterRatio || orangeShooterRatio < minShooterRatio) {
+    // Check if this fixes an existing problem
+    const beforeBlueAboveP50 = beforeBlueTeam.filter(p =>
+      (p.derived_attributes?.shooting || 0) > shootingDist.percentiles.p50
+    ).length;
+    const beforeOrangeAboveP50 = beforeOrangeTeam.filter(p =>
+      (p.derived_attributes?.shooting || 0) > shootingDist.percentiles.p50
+    ).length;
+
+    const beforeBlueRatio = beforeBlueAboveP50 / beforeBlueTeam.length;
+    const beforeOrangeRatio = beforeOrangeAboveP50 / beforeOrangeTeam.length;
+
+    // Only reject if this makes things worse
+    if (blueShooterRatio < beforeBlueRatio || orangeShooterRatio < beforeOrangeRatio) {
+      if (balanceImprovement === undefined || balanceImprovement < 0.10) {
+        return { acceptable: false, rejectReason: `Insufficient shooters above median (Blue: ${(blueShooterRatio * 100).toFixed(0)}%, Orange: ${(orangeShooterRatio * 100).toFixed(0)}%)` };
+      }
+    }
+  }
+
+  // Original tier distribution logic
   // If no issues before or after, swap is acceptable
   if (!beforeIssues && !afterIssues) {
-    return true;
+    return { acceptable: true };
   }
-  
+
   // If there were no issues before but issues after, swap creates new concentration
   // Allow it if the balance improvement is significant (> 0.10)
   if (!beforeIssues && afterIssues) {
-    return balanceImprovement !== undefined && balanceImprovement > 0.10;
+    return balanceImprovement !== undefined && balanceImprovement > 0.10
+      ? { acceptable: true }
+      : { acceptable: false, rejectReason: afterIssues || 'Tier concentration created' };
   }
-  
+
   // If there were issues before but none after, swap fixes concentration (accept!)
   if (beforeIssues && !afterIssues) {
-    return true;
+    return { acceptable: true };
   }
-  
+
   // Both before and after have issues - check if they're the same or different
   if (beforeIssues && afterIssues) {
     // If it's the same issue, swap doesn't make it worse (accept)
     // If it's a different issue, check if improvement is significant
     if (beforeIssues === afterIssues) {
-      return true;
+      return { acceptable: true };
     }
     // Different issue - allow if improvement is significant
-    return balanceImprovement !== undefined && balanceImprovement > 0.10;
+    return balanceImprovement !== undefined && balanceImprovement > 0.10
+      ? { acceptable: true }
+      : { acceptable: false, rejectReason: `Changed tier issue: ${afterIssues}` };
   }
-  
-  return false; // Default to reject if unclear
+
+  return { acceptable: false, rejectReason: 'Unknown validation failure' }; // Default to reject if unclear
 }
 
 /**
@@ -1389,7 +1780,9 @@ function trySameTierSwaps(
       const winRateGapAfter = Math.abs(blueWinRateAfter - orangeWinRateAfter);
 
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
-      let isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
+      const swapValidation = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
+      let isSwapOk = swapValidation.acceptable;
+      const swapRejectReason = swapValidation.rejectReason;
 
       // Additional check: reject swaps that create excessive attribute imbalance
       // using dynamic threshold based on improvement score and win rate gap
@@ -1500,7 +1893,21 @@ function tryCrossTierSwaps(
   bestScore: number;
   improved: boolean;
 } {
-  const MAX_RATING_DIFFERENCE = 1.5;
+  // Soft tier boundaries: Allow more flexible rating differences for players at tier edges
+  const SOFT_BOUNDARY_THRESHOLD = 0.2; // Players within 0.2 rating of tier boundary
+  const MAX_RATING_DIFFERENCE_SOFT = 2.0; // More lenient for edge players
+  const MAX_RATING_DIFFERENCE_NORMAL = 1.5; // Standard restriction
+
+  // Helper to check if players are at tier edges (for soft boundaries)
+  const isAtTierEdge = (player: PlayerWithRating, tierPlayers: PlayerWithRating[]): boolean => {
+    if (tierPlayers.length === 0) return false;
+    const ratings = tierPlayers.map(p => p.threeLayerRating).sort((a, b) => a - b);
+    const minRating = ratings[0];
+    const maxRating = ratings[ratings.length - 1];
+    const playerRating = player.threeLayerRating;
+    return Math.abs(playerRating - minRating) <= SOFT_BOUNDARY_THRESHOLD ||
+           Math.abs(playerRating - maxRating) <= SOFT_BOUNDARY_THRESHOLD;
+  };
 
   if (debugLog && (blueLowerPlayers.length > 0 || orangeLowerPlayers.length > 0) && 
      (blueUpperPlayers.length > 0 || orangeUpperPlayers.length > 0)) {
@@ -1524,7 +1931,13 @@ function tryCrossTierSwaps(
   for (const blueLower of blueLowerPlayers) {
     for (const orangeUpper of orangeUpperPlayers) {
       const ratingDiff = Math.abs(blueLower.threeLayerRating - orangeUpper.threeLayerRating);
-      if (ratingDiff > MAX_RATING_DIFFERENCE) continue;
+
+      // Use soft boundary if either player is at their tier edge
+      const blueAtEdge = isAtTierEdge(blueLower, blueLowerPlayers);
+      const orangeAtEdge = isAtTierEdge(orangeUpper, orangeUpperPlayers);
+      const maxDiff = (blueAtEdge || orangeAtEdge) ? MAX_RATING_DIFFERENCE_SOFT : MAX_RATING_DIFFERENCE_NORMAL;
+
+      if (ratingDiff > maxDiff) continue;
       
       // Create temporary teams with this cross-tier swap
       const tempBlue = [...blueTeam];
@@ -1554,7 +1967,9 @@ function tryCrossTierSwaps(
       const winRateGapAfter = Math.abs(blueWinRateAfter - orangeWinRateAfter);
 
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
-      let isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
+      const swapValidation = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
+      let isSwapOk = swapValidation.acceptable;
+      const swapRejectReason = swapValidation.rejectReason;
 
       // Additional check: reject swaps that create excessive attribute imbalance
       // using dynamic threshold based on improvement score and win rate gap
@@ -1577,12 +1992,18 @@ function tryCrossTierSwaps(
           debugLog.value += ` (improves by ${(currentBalance - newBalance).toFixed(3)})`;
         }
         if (!isSwapOk) {
-          const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
-          if (attributeBalance > attributeThreshold) {
-            debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${attributeThreshold.toFixed(2)} for improvement ${improvement.toFixed(3)})`;
+          if (swapRejectReason) {
+            // Use the rejection reason from isSwapAcceptable
+            debugLog.value += ` → REJECTED (${swapRejectReason})`;
           } else {
-            debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
+            // Fallback to old logic if no specific reason
+            const issue = getTierDistributionIssues(tempBlue, tempOrange);
+            const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+            if (attributeBalance > attributeThreshold) {
+              debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${attributeThreshold.toFixed(2)} for improvement ${improvement.toFixed(3)})`;
+            } else {
+              debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
+            }
           }
         } else if (newBalance < bestScore) {
           const issue = getTierDistributionIssues(tempBlue, tempOrange);
@@ -1614,7 +2035,13 @@ function tryCrossTierSwaps(
   for (const orangeLower of orangeLowerPlayers) {
     for (const blueUpper of blueUpperPlayers) {
       const ratingDiff = Math.abs(orangeLower.threeLayerRating - blueUpper.threeLayerRating);
-      if (ratingDiff > MAX_RATING_DIFFERENCE) continue;
+
+      // Use soft boundary if either player is at their tier edge
+      const orangeAtEdge = isAtTierEdge(orangeLower, orangeLowerPlayers);
+      const blueAtEdge = isAtTierEdge(blueUpper, blueUpperPlayers);
+      const maxDiff = (orangeAtEdge || blueAtEdge) ? MAX_RATING_DIFFERENCE_SOFT : MAX_RATING_DIFFERENCE_NORMAL;
+
+      if (ratingDiff > maxDiff) continue;
       
       // Create temporary teams with this cross-tier swap
       const tempBlue = [...blueTeam];
@@ -1644,7 +2071,9 @@ function tryCrossTierSwaps(
       const winRateGapAfter = Math.abs(blueWinRateAfter - orangeWinRateAfter);
 
       // Check if this swap is acceptable (doesn't worsen existing concentrations)
-      let isSwapOk = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
+      const swapValidation = isSwapAcceptable(blueTeam, orangeTeam, tempBlue, tempOrange, improvement);
+      let isSwapOk = swapValidation.acceptable;
+      const swapRejectReason = swapValidation.rejectReason;
 
       // Additional check: reject swaps that create excessive attribute imbalance
       // using dynamic threshold based on improvement score and win rate gap
@@ -1667,12 +2096,18 @@ function tryCrossTierSwaps(
           debugLog.value += ` (improves by ${(currentBalance - newBalance).toFixed(3)})`;
         }
         if (!isSwapOk) {
-          const issue = getTierDistributionIssues(tempBlue, tempOrange);
-          const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
-          if (attributeBalance > attributeThreshold) {
-            debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${attributeThreshold.toFixed(2)} for improvement ${improvement.toFixed(3)})`;
+          if (swapRejectReason) {
+            // Use the rejection reason from isSwapAcceptable
+            debugLog.value += ` → REJECTED (${swapRejectReason})`;
           } else {
-            debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
+            // Fallback to old logic if no specific reason
+            const issue = getTierDistributionIssues(tempBlue, tempOrange);
+            const attributeThreshold = getAttributeBalanceThreshold(improvement, winRateGapBefore, winRateGapAfter);
+            if (attributeBalance > attributeThreshold) {
+              debugLog.value += ` → REJECTED (attribute imbalance ${attributeBalance.toFixed(2)} > ${attributeThreshold.toFixed(2)} for improvement ${improvement.toFixed(3)})`;
+            } else {
+              debugLog.value += ` → REJECTED (${issue}, improvement ${improvement.toFixed(3)} < 0.10)`;
+            }
           }
         } else if (newBalance < bestScore) {
           const issue = getTierDistributionIssues(tempBlue, tempOrange);
@@ -1836,7 +2271,7 @@ function optimizeTeams(
   
   let totalIterations = 0;
   const MAX_ITERATIONS = 100;
-  const MAX_OPTIMIZATION_ROUNDS = 3; // Allow up to 3 full optimization rounds
+  const MAX_OPTIMIZATION_ROUNDS = 5; // Increased from 3 to allow more optimization attempts
   let optimizationRound = 0;
   let madeSwapThisRound = true;
   let totalFailedAttempts = 0; // Track total failed swap attempts for progressive relaxation
@@ -1856,7 +2291,7 @@ function optimizeTeams(
     optimizationRound++;
 
     // Move to next pass if we've exhausted attempts in current pass
-    if (totalFailedAttempts > 15 && currentPassIndex < OPTIMIZATION_PASSES.length - 1) {
+    if (totalFailedAttempts > 30 && currentPassIndex < OPTIMIZATION_PASSES.length - 1) {
       currentPassIndex++;
       totalFailedAttempts = 0; // Reset for new pass
       if (debugLog) {
@@ -2134,8 +2569,143 @@ function optimizeTeams(
           break;
         }
       }
+
+      // Phase 3: If stuck after many attempts, try non-adjacent tier swaps for elite shooter balance
+      if (!crossTierResult.improved && totalFailedAttempts > 25) {
+        // Calculate current shooting imbalance focusing on elite shooters
+        const shootingDist = analyzeShootingDistribution([...blueTeam, ...orangeTeam]);
+        const shootingImbalance = calculateShootingImbalance(blueTeam, orangeTeam, shootingDist);
+
+        // Count elite shooters
+        const blueElite = blueTeam.filter(p => (p.derived_attributes?.shooting || 0) >= shootingDist.percentiles.p90).length;
+        const orangeElite = orangeTeam.filter(p => (p.derived_attributes?.shooting || 0) >= shootingDist.percentiles.p90).length;
+        const eliteGap = Math.abs(blueElite - orangeElite);
+
+        // Only try non-adjacent swaps if shooting imbalance is significant OR elite shooter clustering exists
+        if (shootingImbalance > 1.5 || eliteGap > 1) {
+          if (debugLog) {
+            debugLog.value += `  Shooting imbalance detected (score: ${shootingImbalance.toFixed(2)}, elite gap: ${eliteGap})\n`;
+            debugLog.value += `  Attempting non-adjacent tier swaps to fix shooter distribution\n`;
+          }
+
+          // Try swaps with all other tiers to fix shooting
+          for (let otherTierIndex = 0; otherTierIndex < allTiers.length; otherTierIndex++) {
+            if (otherTierIndex === tierIndex || otherTierIndex === tierIndex + 1) continue; // Skip current and adjacent
+
+            const otherTier = allTiers[otherTierIndex];
+            const otherBluePlayers = blueTiers.get(otherTier) || [];
+            const otherOrangePlayers = orangeTiers.get(otherTier) || [];
+
+            // Only try if there are players to swap
+            if ((blueTierPlayers.length === 0 && orangeTierPlayers.length === 0) ||
+                (otherBluePlayers.length === 0 && otherOrangePlayers.length === 0)) {
+              continue;
+            }
+
+            const nonAdjacentResult = tryCrossTierSwaps(
+              currentTier,
+              otherTier,
+              blueTeam,
+              orangeTeam,
+              blueTierPlayers,
+              orangeTierPlayers,
+              otherBluePlayers,
+              otherOrangePlayers,
+              currentBalance,
+              totalFailedAttempts,
+              debugLog
+            );
+
+            if (nonAdjacentResult.improved && nonAdjacentResult.bestSwap) {
+              const blueIndex = blueTeam.findIndex(p => p.player_id === nonAdjacentResult.bestSwap.bluePlayer.player_id);
+              const orangeIndex = orangeTeam.findIndex(p => p.player_id === nonAdjacentResult.bestSwap.orangePlayer.player_id);
+
+              const beforeNonAdjacentDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+
+              if (debugLog) {
+                debugLog.value += `  Executing non-adjacent tier swap for shooting balance:\n`;
+                debugLog.value += `    ${nonAdjacentResult.bestSwap.bluePlayer.friendly_name} (T${nonAdjacentResult.bestSwap.blueTier}) ↔ `;
+                debugLog.value += `${nonAdjacentResult.bestSwap.orangePlayer.friendly_name} (T${nonAdjacentResult.bestSwap.orangeTier})\n`;
+                debugLog.value += `    Balance improved: ${currentBalance.toFixed(3)} → ${nonAdjacentResult.bestScore.toFixed(3)}\n`;
+              }
+
+              // Perform the swap
+              blueTeam[blueIndex] = nonAdjacentResult.bestSwap.orangePlayer;
+              orangeTeam[orangeIndex] = nonAdjacentResult.bestSwap.bluePlayer;
+              swapCount++;
+
+              const afterNonAdjacentDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+
+              // Log detailed metric changes
+              if (debugLog) {
+                debugLog.value += `    Metric Changes:\n`;
+                debugLog.value += `      Attack: ${beforeNonAdjacentDetails.attackDiff.toFixed(2)} → ${afterNonAdjacentDetails.attackDiff.toFixed(2)}\n`;
+                debugLog.value += `      Defense: ${beforeNonAdjacentDetails.defenseDiff.toFixed(2)} → ${afterNonAdjacentDetails.defenseDiff.toFixed(2)}\n`;
+                debugLog.value += `      Game IQ: ${beforeNonAdjacentDetails.gameIqDiff.toFixed(2)} → ${afterNonAdjacentDetails.gameIqDiff.toFixed(2)}\n`;
+                if (beforeNonAdjacentDetails.shootingDiff !== undefined && afterNonAdjacentDetails.shootingDiff !== undefined) {
+                  debugLog.value += `      Shooting: ${beforeNonAdjacentDetails.shootingDiff.toFixed(2)} → ${afterNonAdjacentDetails.shootingDiff.toFixed(2)}\n`;
+                }
+              }
+
+              const nonAdjacentReason = generateImprovementDetails(beforeNonAdjacentDetails, afterNonAdjacentDetails);
+              swapDetails.push({
+                bluePlayer: nonAdjacentResult.bestSwap.bluePlayer.friendly_name,
+                orangePlayer: nonAdjacentResult.bestSwap.orangePlayer.friendly_name,
+                improvement: currentBalance - nonAdjacentResult.bestScore,
+                tier: -2, // Special marker for non-adjacent tier swaps
+                reason: nonAdjacentReason ? nonAdjacentReason.replace(/^\s*\[/, '').replace(/\]\s*$/, '') : 'Shooting balance improvement'
+              });
+
+              // Update tier groups
+              const blueTierOld = nonAdjacentResult.bestSwap.blueTier;
+              const orangeTierOld = nonAdjacentResult.bestSwap.orangeTier;
+
+              // Remove players from old tiers
+              const blueOldTierPlayers = blueTiers.get(blueTierOld);
+              const orangeOldTierPlayers = orangeTiers.get(orangeTierOld);
+
+              if (blueOldTierPlayers) {
+                const playerIndex = blueOldTierPlayers.findIndex(p => p.player_id === nonAdjacentResult.bestSwap.bluePlayer.player_id);
+                if (playerIndex !== -1) {
+                  blueOldTierPlayers.splice(playerIndex, 1);
+                }
+              }
+
+              if (orangeOldTierPlayers) {
+                const playerIndex = orangeOldTierPlayers.findIndex(p => p.player_id === nonAdjacentResult.bestSwap.orangePlayer.player_id);
+                if (playerIndex !== -1) {
+                  orangeOldTierPlayers.splice(playerIndex, 1);
+                }
+              }
+
+              // Add players to new tiers
+              if (!blueTiers.has(orangeTierOld)) blueTiers.set(orangeTierOld, []);
+              if (!orangeTiers.has(blueTierOld)) orangeTiers.set(blueTierOld, []);
+
+              blueTiers.get(orangeTierOld)!.push(nonAdjacentResult.bestSwap.orangePlayer);
+              orangeTiers.get(blueTierOld)!.push(nonAdjacentResult.bestSwap.bluePlayer);
+
+              currentBalance = nonAdjacentResult.bestScore;
+              wasOptimized = true;
+              madeSwapThisRound = true;
+              totalFailedAttempts = 0;
+              totalIterations++;
+
+              // Check if threshold reached
+              if (currentBalance <= balanceThreshold) {
+                if (debugLog) {
+                  debugLog.value += `    Balance threshold reached (${currentBalance.toFixed(3)} ≤ ${balanceThreshold}), stopping optimization\n\n`;
+                }
+                break;
+              }
+
+              break; // Exit the loop after successful swap
+            }
+          }
+        }
+      }
     }
-    
+
     if (debugLog) {
       debugLog.value += `  Tier ${currentTier} optimization complete. Current balance: ${currentBalance.toFixed(3)}\n\n`;
     }
@@ -2899,7 +3469,48 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
     const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
     debugLog += `  Overall Attr Balance: ${attributeBalance.toFixed(2)} (max difference)\n`;
   }
-  
+
+  // Add shooting distribution analysis
+  const allPlayers = [...blueTeam, ...orangeTeam];
+  const shootingDist = analyzeShootingDistribution(allPlayers);
+  const shootingImbalanceScore = calculateShootingImbalance(blueTeam, orangeTeam, shootingDist);
+
+  debugLog += '\nSHOOTING DISTRIBUTION ANALYSIS\n';
+  debugLog += '==============================\n';
+  debugLog += `Field Statistics:\n`;
+  debugLog += `  Players with shooting ability: ${shootingDist.nonZeroCount}/${shootingDist.totalCount}\n`;
+  debugLog += `  Percentiles: 50th=${shootingDist.percentiles.p50.toFixed(2)}, 75th=${shootingDist.percentiles.p75.toFixed(2)}, 90th=${shootingDist.percentiles.p90.toFixed(2)}\n`;
+  debugLog += `  Non-zero mean: ${shootingDist.nonZeroMean.toFixed(2)}\n`;
+
+  const blueProfile = getTeamShootingProfile(blueTeam, shootingDist);
+  const orangeProfile = getTeamShootingProfile(orangeTeam, shootingDist);
+
+  debugLog += `\nTeam Shooting Profiles:\n`;
+  debugLog += `  Blue:   Elite=${blueProfile.elite}, Primary=${blueProfile.primary}, Secondary=${blueProfile.secondary}, None=${blueProfile.none}\n`;
+  debugLog += `  Orange: Elite=${orangeProfile.elite}, Primary=${orangeProfile.primary}, Secondary=${orangeProfile.secondary}, None=${orangeProfile.none}\n`;
+
+  // List specific shooting threats
+  const blueShooters = blueTeam
+    .filter(p => categorizeShootingThreat(p, shootingDist) !== 'none')
+    .map(p => {
+      const category = categorizeShootingThreat(p, shootingDist);
+      const shooting = p.derived_attributes?.shooting || 0;
+      return `${p.friendly_name}(${shooting.toFixed(2)}-${category[0].toUpperCase()})`;
+    });
+
+  const orangeShooters = orangeTeam
+    .filter(p => categorizeShootingThreat(p, shootingDist) !== 'none')
+    .map(p => {
+      const category = categorizeShootingThreat(p, shootingDist);
+      const shooting = p.derived_attributes?.shooting || 0;
+      return `${p.friendly_name}(${shooting.toFixed(2)}-${category[0].toUpperCase()})`;
+    });
+
+  debugLog += `\nShooting Threats:\n`;
+  debugLog += `  Blue:   ${blueShooters.length > 0 ? blueShooters.join(', ') : 'NONE ⚠️'}\n`;
+  debugLog += `  Orange: ${orangeShooters.length > 0 ? orangeShooters.join(', ') : 'NONE ⚠️'}\n`;
+  debugLog += `  Imbalance Score: ${shootingImbalanceScore.toFixed(2)}${shootingImbalanceScore > 5.0 ? ' ⚠️ (High)' : ''}\n`;
+
   // Add performance metrics if we have enough rated players
   const blueRatedCount = blueTeam.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS).length;
   const orangeRatedCount = orangeTeam.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS).length;
