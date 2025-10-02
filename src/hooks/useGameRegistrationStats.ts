@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { Registration } from '../types/playerSelection';
+import { findClosestPlaystyle } from '../utils/playstyleUtils';
+import { PREDEFINED_PLAYSTYLES } from '../data/playstyles';
 
 interface PlayerStats {
   xp: number;
@@ -21,6 +23,10 @@ interface PlayerStats {
   rank: number | undefined;
   unpaidGames?: number;
   unpaidGamesModifier?: number;
+  averagedPlaystyle?: string;
+  playstyleMatchDistance?: number;
+  playstyleCategory?: 'attacking' | 'midfield' | 'defensive';
+  playstyleRatingsCount?: number;
 }
 
 interface UseGameRegistrationStatsReturn {
@@ -83,12 +89,43 @@ export const useGameRegistrationStats = (
 
         if (regStreakError) throw regStreakError;
 
+        // Get player averaged attributes for playstyle matching
+        const { data: derivedAttrsData, error: derivedAttrsError } = await supabase
+          .from('player_derived_attributes')
+          .select(`
+            player_id,
+            pace_rating,
+            shooting_rating,
+            passing_rating,
+            dribbling_rating,
+            defending_rating,
+            physical_rating,
+            total_ratings_count
+          `)
+          .in('player_id', playerIds);
+
+        if (derivedAttrsError) throw derivedAttrsError;
+
         // Create a map of registration streak data for easy lookup
         const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
           ...acc,
           [player.friendly_name]: {
             registrationStreak: player.current_streak_length || 0,
             registrationStreakApplies: player.bonus_applies || false
+          }
+        }), {});
+
+        // Create a map of derived attributes for easy lookup
+        const derivedAttrsMap = derivedAttrsData?.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.player_id]: {
+            pace_rating: player.pace_rating,
+            shooting_rating: player.shooting_rating,
+            passing_rating: player.passing_rating,
+            dribbling_rating: player.dribbling_rating,
+            defending_rating: player.defending_rating,
+            physical_rating: player.physical_rating,
+            total_ratings_count: player.total_ratings_count
           }
         }), {});
 
@@ -121,9 +158,14 @@ export const useGameRegistrationStats = (
         const stats = playerData?.reduce((acc, player) => {
           // Check if player has dropped out
           const isDroppedOut = registrationStatusMap[player.id] === 'dropped_out';
-          
+
           // Only count unpaid games if player hasn't dropped out AND the game is unpaid
           const shouldCountUnpaidGames = !isDroppedOut && player.unpaid_games > 0;
+
+          // Calculate closest playstyle match
+          const playerAttributes = derivedAttrsMap[player.id];
+          const playstyleMatch = playerAttributes ?
+            findClosestPlaystyle(playerAttributes, PREDEFINED_PLAYSTYLES) : null;
 
           return {
             ...acc,
@@ -145,7 +187,11 @@ export const useGameRegistrationStats = (
               registrationStreak: regStreakMap[player.friendly_name]?.registrationStreak || 0,
               registrationStreakApplies: regStreakMap[player.friendly_name]?.registrationStreakApplies || false,
               unpaidGames: shouldCountUnpaidGames ? player.unpaid_games : 0,
-              unpaidGamesModifier: shouldCountUnpaidGames ? player.unpaid_games * -0.5 : 0
+              unpaidGamesModifier: shouldCountUnpaidGames ? player.unpaid_games * -0.5 : 0,
+              averagedPlaystyle: playstyleMatch?.playstyleName,
+              playstyleMatchDistance: playstyleMatch?.matchDistance,
+              playstyleCategory: playstyleMatch?.category,
+              playstyleRatingsCount: playerAttributes?.total_ratings_count || 0
             }
           };
         }, {});

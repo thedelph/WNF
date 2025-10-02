@@ -52,9 +52,15 @@ export interface ExtendedPlayerData extends PlayerStats {
   benchWarmerStreak?: number;  
   registrationStreakBonus?: number; 
   registrationStreakBonusApplies?: boolean; 
-  using_token?: boolean; 
-  had_token?: boolean; 
-  status?: 'selected' | 'reserve' | 'dropped_out' | 'none'; 
+  using_token?: boolean;
+  had_token?: boolean;
+  status?: 'selected' | 'reserve' | 'dropped_out' | 'none';
+  averagedPlaystyle?: string;
+  playstyleMatchDistance?: number;
+  playstyleCategory?: 'attacking' | 'midfield' | 'defensive';
+  playstyleRatingsCount?: number;
+  unpaidGames?: number;
+  unpaidGamesModifier?: number;
 }
 
 export interface PlayerSelectionResultsProps {

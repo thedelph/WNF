@@ -40,6 +40,10 @@ interface PlayerCardProps {
   registrationStreakBonus?: number
   registrationStreakBonusApplies?: boolean
   usingToken?: boolean
+  averagedPlaystyle?: string
+  playstyleMatchDistance?: number
+  playstyleCategory?: 'attacking' | 'midfield' | 'defensive'
+  playstyleRatingsCount?: number
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -74,6 +78,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   registrationStreakBonus = 0,
   registrationStreakBonusApplies = false,
   usingToken = false,
+  averagedPlaystyle,
+  playstyleMatchDistance,
+  playstyleCategory,
+  playstyleRatingsCount,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -153,6 +161,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               registrationStreakBonus={registrationStreakBonus}
               registrationStreakBonusApplies={registrationStreakBonusApplies}
               usingToken={usingToken}
+              averagedPlaystyle={averagedPlaystyle}
+              playstyleMatchDistance={playstyleMatchDistance}
+              playstyleCategory={playstyleCategory}
+              playstyleRatingsCount={playstyleRatingsCount}
             />
           ) : (
             <PlayerCardBack

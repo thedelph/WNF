@@ -14,6 +14,8 @@ import { useTokenStatus } from '../hooks/useTokenStatus'
 import { formatDate, executeWithRetry, calculateRarity } from '../utils/profileHelpers'
 import { ExtendedPlayerData } from '../types/profile'
 import { Tooltip } from '../components/ui/Tooltip'
+import { findClosestPlaystyle } from '../utils/playstyleUtils'
+import { PREDEFINED_PLAYSTYLES } from '../data/playstyles'
 
 export default function Component() {
   const { user } = useAuth()
@@ -255,13 +257,46 @@ export default function Component() {
               .eq('player_id', playerData.id)
               .single()
           );
-          
+
           if (!unpaidError && unpaidData) {
             unpaidGamesCount = unpaidData.count || 0;
           }
         } catch (unpaidCountError) {
           console.error('Error fetching unpaid games count:', unpaidCountError);
           // Continue without unpaid games count
+        }
+
+        // Fetch player averaged attributes for playstyle
+        let playstyleData = null;
+        let playstyleMatch = null;
+        try {
+          const { data: derivedAttrsData, error: derivedAttrsError } = await executeWithRetry(
+            () => supabase
+              .from('player_derived_attributes')
+              .select(`
+                pace_rating,
+                shooting_rating,
+                passing_rating,
+                dribbling_rating,
+                defending_rating,
+                physical_rating,
+                total_ratings_count
+              `)
+              .eq('player_id', playerData.id)
+              .maybeSingle()
+          );
+
+          if (!derivedAttrsError && derivedAttrsData) {
+            playstyleData = derivedAttrsData;
+            // Calculate closest playstyle match
+            playstyleMatch = findClosestPlaystyle(derivedAttrsData, PREDEFINED_PLAYSTYLES);
+            console.log('Player playstyle match:', playstyleMatch);
+          } else if (derivedAttrsError) {
+            console.error('Error fetching playstyle data:', derivedAttrsError);
+          }
+        } catch (playstyleError) {
+          console.error('Error processing playstyle data:', playstyleError);
+          // Continue without playstyle data
         }
 
         // Combine the data with safe access
@@ -291,7 +326,11 @@ export default function Component() {
           bench_warmer_streak: playerData.bench_warmer_streak || 0,
           registrationStreak: registrationStreakData?.current_streak_length || 0,
           registrationStreakApplies: registrationStreakData?.bonus_applies || false,
-          unpaidGames: unpaidGamesCount
+          unpaidGames: unpaidGamesCount,
+          averagedPlaystyle: playstyleMatch?.playstyleName,
+          playstyleMatchDistance: playstyleMatch?.matchDistance,
+          playstyleCategory: playstyleMatch?.category,
+          playstyleRatingsCount: playstyleData?.total_ratings_count || 0
         };
 
         // Add debug logs to track XP data
@@ -346,14 +385,19 @@ export default function Component() {
                 console.warn('Registration missing game data:', reg);
                 return null;
               }
-              
+
               return {
                 sequence: reg.games.sequence_number,
                 status: reg.status,
                 is_historical: reg.games.is_historical
               };
             }).filter(Boolean) || [], // Filter out null values
-            latestSequence: latestSequence // Add latest sequence to profile data
+            latestSequence: latestSequence, // Add latest sequence to profile data
+            // Preserve playstyle fields
+            averagedPlaystyle: profileData.averagedPlaystyle,
+            playstyleMatchDistance: profileData.playstyleMatchDistance,
+            playstyleCategory: profileData.playstyleCategory,
+            playstyleRatingsCount: profileData.playstyleRatingsCount
           };
 
           setProfile(updatedProfileData);

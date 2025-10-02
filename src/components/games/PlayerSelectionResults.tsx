@@ -15,6 +15,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { PlayerCard } from '../player-card';
 import { WeightedSelectionExplanation } from './WeightedSelectionExplanation';
+import { findClosestPlaystyle } from '../../utils/playstyleUtils';
+import { PREDEFINED_PLAYSTYLES } from '../../data/playstyles';
 
 interface SelectionReasoningProps {
   selectedPlayers: any[];
@@ -280,12 +282,41 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
 
         if (regStreakError) throw regStreakError;
 
+        // Get player averaged attributes for playstyle matching
+        const { data: derivedAttrsData, error: derivedAttrsError } = await supabase
+          .from('player_derived_attributes')
+          .select(`
+            player_id,
+            pace_rating,
+            shooting_rating,
+            passing_rating,
+            dribbling_rating,
+            defending_rating,
+            physical_rating
+          `)
+          .in('player_id', playerIds);
+
+        if (derivedAttrsError) throw derivedAttrsError;
+
         // Create a map of registration streak data for easy lookup
         const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
           ...acc,
           [player.friendly_name]: {
             registrationStreak: player.current_streak_length || 0,
             registrationStreakApplies: player.bonus_applies || false
+          }
+        }), {});
+
+        // Create a map of derived attributes for easy lookup
+        const derivedAttrsMap = derivedAttrsData?.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.player_id]: {
+            pace_rating: player.pace_rating,
+            shooting_rating: player.shooting_rating,
+            passing_rating: player.passing_rating,
+            dribbling_rating: player.dribbling_rating,
+            defending_rating: player.defending_rating,
+            physical_rating: player.physical_rating
           }
         }), {});
 
@@ -309,29 +340,39 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
         }), {});
 
         // Transform into record for easy lookup
-        const stats = playerData?.reduce((acc, player) => ({
-          ...acc,
-          [player.id]: {
-            xp: player.player_xp?.xp || 0,
-            rarity: player.player_xp?.rarity || 'Amateur',
-            caps: player.caps || 0,
-            activeBonuses: player.active_bonuses || 0,
-            activePenalties: player.active_penalties || 0,
-            currentStreak: player.current_streak || 0,
-            maxStreak: player.max_streak || 0,
-            benchWarmerStreak: player.bench_warmer_streak || 0,
-            wins: winRateMap[player.id]?.wins || 0,
-            draws: winRateMap[player.id]?.draws || 0,
-            losses: winRateMap[player.id]?.losses || 0,
-            totalGames: winRateMap[player.id]?.totalGames || 0,
-            winRate: winRateMap[player.id]?.winRate || 0,
-            rank: player.player_xp?.rank || undefined,
-            unpaidGames: player.unpaid_games || 0,
-            unpaidGamesModifier: player.unpaid_games_modifier || 0,
-            registrationStreakBonus: regStreakMap[selectedPlayers.find(p => p.id === player.id)?.friendly_name || reservePlayers.find(p => p.id === player.id)?.friendly_name || droppedOutPlayers.find(p => p.id === player.id)?.friendly_name]?.registrationStreak || 0,
-            registrationStreakBonusApplies: regStreakMap[selectedPlayers.find(p => p.id === player.id)?.friendly_name || reservePlayers.find(p => p.id === player.id)?.friendly_name || droppedOutPlayers.find(p => p.id === player.id)?.friendly_name]?.registrationStreakApplies || false
-          }
-        }), {});
+        const stats = playerData?.reduce((acc, player) => {
+          // Calculate closest playstyle match
+          const playerAttributes = derivedAttrsMap[player.id];
+          const playstyleMatch = playerAttributes ?
+            findClosestPlaystyle(playerAttributes, PREDEFINED_PLAYSTYLES) : null;
+
+          return {
+            ...acc,
+            [player.id]: {
+              xp: player.player_xp?.xp || 0,
+              rarity: player.player_xp?.rarity || 'Amateur',
+              caps: player.caps || 0,
+              activeBonuses: player.active_bonuses || 0,
+              activePenalties: player.active_penalties || 0,
+              currentStreak: player.current_streak || 0,
+              maxStreak: player.max_streak || 0,
+              benchWarmerStreak: player.bench_warmer_streak || 0,
+              wins: winRateMap[player.id]?.wins || 0,
+              draws: winRateMap[player.id]?.draws || 0,
+              losses: winRateMap[player.id]?.losses || 0,
+              totalGames: winRateMap[player.id]?.totalGames || 0,
+              winRate: winRateMap[player.id]?.winRate || 0,
+              rank: player.player_xp?.rank || undefined,
+              unpaidGames: player.unpaid_games || 0,
+              unpaidGamesModifier: player.unpaid_games_modifier || 0,
+              registrationStreakBonus: regStreakMap[selectedPlayers.find(p => p.id === player.id)?.friendly_name || reservePlayers.find(p => p.id === player.id)?.friendly_name || droppedOutPlayers.find(p => p.id === player.id)?.friendly_name]?.registrationStreak || 0,
+              registrationStreakBonusApplies: regStreakMap[selectedPlayers.find(p => p.id === player.id)?.friendly_name || reservePlayers.find(p => p.id === player.id)?.friendly_name || droppedOutPlayers.find(p => p.id === player.id)?.friendly_name]?.registrationStreakApplies || false,
+              averagedPlaystyle: playstyleMatch?.playstyleName,
+              playstyleMatchDistance: playstyleMatch?.matchDistance,
+              playstyleCategory: playstyleMatch?.category
+            }
+          };
+        }, {});
 
         setPlayerStats(stats);
       } catch (err) {
@@ -349,7 +390,10 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
   const getPlayerWithRank = (player) => {
     return {
       ...player,
-      rank: playerStats[player.id]?.rank
+      rank: playerStats[player.id]?.rank,
+      averagedPlaystyle: playerStats[player.id]?.averagedPlaystyle,
+      playstyleMatchDistance: playerStats[player.id]?.playstyleMatchDistance,
+      playstyleCategory: playerStats[player.id]?.playstyleCategory
     };
   };
 

@@ -31,7 +31,14 @@ export interface PlayerCardProps {
   unpaidGamesModifier: number
   registrationStreakBonus?: number // Length of current registration streak
   registrationStreakBonusApplies?: boolean // Whether the bonus should be applied
+  averagedPlaystyle?: string // Closest matching playstyle name based on averaged attributes
+  playstyleMatchDistance?: number // Distance score for color coding (0-6, lower is better)
+  playstyleCategory?: 'attacking' | 'midfield' | 'defensive' // Playstyle category
+  playstyleRatingsCount?: number // Number of playstyle ratings contributing to the average
 }
+
+// Type alias for Player used in grid components
+export type Player = PlayerCardProps
 
 export interface PlayerCardModifiersProps {
   currentStreak: number

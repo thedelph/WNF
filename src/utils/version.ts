@@ -18,6 +18,39 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.3.1',
+    date: '26/09/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Averaged Playstyle Display on Player Cards',
+            details: "Player cards now display averaged playstyles in the bottom left corner. Shows the closest matching playstyle based on averaged ratings from other players. Displays 'TBD' for players with fewer than 5 ratings, with a progress wheel showing how many more ratings are needed. Once 5+ ratings are received, shows the actual playstyle with a match quality indicator."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Playstyle Badge Requirements',
+            details: "Playstyle badges now require a minimum of 5 ratings from other players to display the calculated playstyle, ensuring more accurate representation. Players with fewer ratings see 'TBD' with a progress indicator."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Playstyle Display Consistency',
+            details: "Fixed issue where playstyles were not displaying correctly on game registration pages. Added missing data fetching for playstyle rating counts in game registration components."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.3.0',
     date: '05/09/2025',
     sections: [

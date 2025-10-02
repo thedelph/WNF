@@ -78,6 +78,10 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
                 registrationStreakBonusApplies={stats[registration.player.id].registrationStreakApplies}
                 whatsapp_group_member={registration.player.whatsapp_group_member}
                 usingToken={registration.using_token}
+                averagedPlaystyle={playerStats[registration.player.id]?.averagedPlaystyle}
+                playstyleMatchDistance={playerStats[registration.player.id]?.playstyleMatchDistance}
+                playstyleCategory={playerStats[registration.player.id]?.playstyleCategory}
+                playstyleRatingsCount={playerStats[registration.player.id]?.playstyleRatingsCount}
               />
             </motion.div>
           );

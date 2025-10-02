@@ -53,10 +53,10 @@ export default function Ratings() {
   const [whatsAppMembersOnly, setWhatsAppMembersOnly] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
-  const [ratings, setRatings] = useState<{ attack: number; defense: number; gameIq: number }>({
-    attack: 0,
-    defense: 0,
-    gameIq: 0,
+  const [ratings, setRatings] = useState<{ attack: number | null; defense: number | null; gameIq: number | null }>({
+    attack: null,
+    defense: null,
+    gameIq: null,
   });
   const [selectedAttributes, setSelectedAttributes] = useState<AttributeCombination | null>(null);
   const [availablePlaystyles, setAvailablePlaystyles] = useState<Array<{id: string; name: string; pace_weight: number; shooting_weight: number; passing_weight: number; dribbling_weight: number; defending_weight: number; physical_weight: number}>>([]);
@@ -385,9 +385,9 @@ export default function Ratings() {
       const ratingData: any = {
         rater_id: currentPlayer.id,
         rated_player_id: selectedPlayer.id,
-        attack_rating: ratings.attack,
-        defense_rating: ratings.defense,
-        game_iq_rating: ratings.gameIq,
+        attack_rating: ratings.attack === 0 ? null : ratings.attack,
+        defense_rating: ratings.defense === 0 ? null : ratings.defense,
+        game_iq_rating: ratings.gameIq === 0 ? null : ratings.gameIq,
       };
 
       // Save attributes directly to database columns
@@ -769,9 +769,9 @@ export default function Ratings() {
                       onClick={() => {
                         setSelectedPlayer(player);
                         setRatings({
-                          attack: player.current_rating?.attack_rating || 0,
-                          defense: player.current_rating?.defense_rating || 0,
-                          gameIq: player.current_rating?.game_iq_rating || 0
+                          attack: player.current_rating?.attack_rating ?? null,
+                          defense: player.current_rating?.defense_rating ?? null,
+                          gameIq: player.current_rating?.game_iq_rating ?? null
                         });
                         // Set selected attributes from current rating
                         const rating = player.current_rating;

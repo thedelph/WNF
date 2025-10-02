@@ -18,6 +18,25 @@ interface LayoutProps {
  * Extra Large Desktop: 6 cards per row
  */
 export const PlayerGridLayout: React.FC<LayoutProps> = ({ players }) => {
+  // Debug logging to see what data we have
+  const playersWithPlaystyle = players.filter(p => p.averagedPlaystyle);
+  console.log('🎮 PlayerGridLayout - Players data:', {
+    total: players.length,
+    withPlaystyle: playersWithPlaystyle.length,
+    sample: players.slice(0, 2).map(p => ({
+      friendlyName: p.friendlyName,
+      averagedPlaystyle: p.averagedPlaystyle,
+      playstyleMatchDistance: p.playstyleMatchDistance,
+      playstyleCategory: p.playstyleCategory
+    }))
+  });
+
+  // Check Chris H specifically
+  const chrisH = players.find(p => p.friendlyName === 'Chris H');
+  if (chrisH) {
+    console.log('🎮 PlayerGridLayout - Chris H data:', chrisH);
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-6 place-items-center">
       <AnimatePresence>
@@ -62,6 +81,10 @@ export const PlayerGridLayout: React.FC<LayoutProps> = ({ players }) => {
               registrationStreakBonusApplies={player.registrationStreakBonusApplies}
               unpaidGames={player.unpaidGames}
               unpaidGamesModifier={player.unpaidGamesModifier}
+              averagedPlaystyle={player.averagedPlaystyle}
+              playstyleMatchDistance={player.playstyleMatchDistance}
+              playstyleCategory={player.playstyleCategory}
+              playstyleRatingsCount={player.playstyleRatingsCount}
             />
           </motion.div>
         ))}

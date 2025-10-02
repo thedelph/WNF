@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Medal, Sparkles } from 'lucide-react'
 import { PiCoinDuotone } from "react-icons/pi"
@@ -10,19 +10,23 @@ import RankShield from './RankShield'
 import { usePlayerPenalties } from '../../hooks/usePlayerPenalties'
 import { useUser } from '../../hooks/useUser'
 import { Tooltip } from '../ui/Tooltip'
+import { getMatchPercentage } from '../../utils/playstyleUtils'
+import { generateAttributeAbbreviations } from '../../types/playstyle'
+import { PREDEFINED_PLAYSTYLES } from '../../data/playstyles'
 
 /**
  * Displays the front face of the player card with primary information
  * Note: unpaidGames only includes past games that are unpaid and over 24 hours old
  */
-export const PlayerCardFront: React.FC<PlayerCardProps & { 
-  rank?: number, 
-  isFlipped?: boolean, 
+export const PlayerCardFront: React.FC<PlayerCardProps & {
+  rank?: number,
+  isFlipped?: boolean,
   unpaidGames?: number, // Number of past unpaid games
   unpaidGamesModifier?: number, // XP modifier from past unpaid games (-50% per game)
   registrationStreakBonus?: number,
   registrationStreakBonusApplies?: boolean,
   usingToken?: boolean,
+  playstyleRatingsCount?: number,
 }> = ({
   id,
   friendlyName,
@@ -50,9 +54,23 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   registrationStreakBonus = 0,
   registrationStreakBonusApplies = false,
   usingToken = false,
+  averagedPlaystyle,
+  playstyleMatchDistance,
+  playstyleCategory,
+  playstyleRatingsCount,
 }) => {
+  // Debug logging for playstyle props
+  if (friendlyName === 'Chris H' || friendlyName === 'Nathan') {
+    console.log(`🎨 PlayerCardFront - ${friendlyName} props:`, {
+      averagedPlaystyle,
+      playstyleMatchDistance,
+      playstyleCategory
+    });
+  }
+
   const { dropoutPenalties } = usePlayerPenalties(id)
   const { player } = useUser()
+  const [showPlaystyleDetails, setShowPlaystyleDetails] = useState(false)
 
   const streakModifier = currentStreak * 0.1
   const bonusModifier = activeBonuses * 0.1
@@ -63,8 +81,59 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
 
   // Calculate total XP modifier including registration streak bonus
   // Note: unpaidGamesModifier is now calculated in XPBreakdown component to properly handle dropped out players
-  const totalXpModifier = (1 + streakModifier + bonusModifier + penaltyModifier + dropoutModifier + benchWarmerModifier + 
+  const totalXpModifier = (1 + streakModifier + bonusModifier + penaltyModifier + dropoutModifier + benchWarmerModifier +
     (registrationStreakBonusApplies ? registrationStreakModifier : 0))
+
+  // Calculate match percentage for the fill wheel
+  const getMatchFillPercentage = (distance: number | undefined) => {
+    if (distance === undefined || distance === null) return 0;
+    return getMatchPercentage(distance);
+  };
+
+  // Create SVG circle progress indicator
+  const MatchWheel = ({ percentage }: { percentage: number }) => {
+    const radius = 5;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (percentage / 100) * circumference;
+
+    return (
+      <svg width="12" height="12" className="rotate-[-90deg] flex-shrink-0">
+        {/* Background circle */}
+        <circle
+          cx="6"
+          cy="6"
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className="opacity-20"
+        />
+        {/* Filled circle */}
+        <circle
+          cx="6"
+          cy="6"
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="transition-all duration-500"
+        />
+      </svg>
+    );
+  };
+
+  // Get match quality text
+  const getMatchQualityText = (distance: number | undefined) => {
+    if (!distance) return '';
+    const percentage = getMatchPercentage(distance);
+    if (distance <= 0.33) return `Perfect Match (${percentage}%)`;
+    if (distance <= 0.80) return `Excellent Match (${percentage}%)`;
+    if (distance <= 1.25) return `Good Match (${percentage}%)`;
+    if (distance <= 1.75) return `Moderate Match (${percentage}%)`;
+    return `Weak Match (${percentage}%)`;
+  };
 
   return (
     <div className="card-body p-4">
@@ -218,10 +287,98 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
       />
 
       <div className="mt-auto">
+        {/* "You" badge if applicable - positioned separately */}
         {player?.id === id && (
-          <div className="absolute bottom-4 left-4 badge badge-neutral">You</div>
+          <div className="absolute bottom-12 left-4">
+            <div className="badge badge-neutral">You</div>
+          </div>
         )}
-        <div className="absolute bottom-4 right-4 badge badge-outline">{rarity}</div>
+
+        {/* Bottom badges container - ensures perfect alignment */}
+        <div className="absolute bottom-4 left-0 right-0 px-4 flex justify-between items-center">
+          {/* Playstyle badge on the left - show "TBD" if less than 5 ratings */}
+          {averagedPlaystyle ? (() => {
+            // Check if we have enough ratings (5 or more)
+            const hasEnoughRatings = playstyleRatingsCount && playstyleRatingsCount >= 5;
+            const displayText = hasEnoughRatings ? averagedPlaystyle : 'TBD';
+
+            // Find the matching playstyle to get its attributes (only if we have enough ratings)
+            const matchingPlaystyle = hasEnoughRatings ? PREDEFINED_PLAYSTYLES.find(p => p.name === averagedPlaystyle) : null;
+            const abbreviations = matchingPlaystyle ? generateAttributeAbbreviations({
+              has_pace: matchingPlaystyle.has_pace,
+              has_shooting: matchingPlaystyle.has_shooting,
+              has_passing: matchingPlaystyle.has_passing,
+              has_dribbling: matchingPlaystyle.has_dribbling,
+              has_defending: matchingPlaystyle.has_defending,
+              has_physical: matchingPlaystyle.has_physical,
+            }) : '';
+
+            // Build tooltip content
+            let tooltipContent = '';
+            if (hasEnoughRatings) {
+              const matchQuality = getMatchQualityText(playstyleMatchDistance);
+              tooltipContent = abbreviations
+                ? `${matchQuality}\nAttributes: ${abbreviations}`
+                : matchQuality;
+            } else {
+              tooltipContent = `Needs ${5 - (playstyleRatingsCount || 0)} more ratings`;
+            }
+
+            // On mobile, clicking toggles showing the details
+            const handleClick = (e: React.MouseEvent) => {
+              // Prevent card flip on badge click
+              e.stopPropagation();
+              // Only toggle on touch devices (and only if we have enough ratings)
+              if ('ontouchstart' in window && hasEnoughRatings) {
+                setShowPlaystyleDetails(!showPlaystyleDetails);
+              }
+            };
+
+            // Calculate wheel percentage based on context
+            const wheelPercentage = hasEnoughRatings
+              ? getMatchFillPercentage(playstyleMatchDistance)  // Match quality wheel
+              : ((playstyleRatingsCount || 0) / 5) * 100;      // Progress wheel (e.g., 4/5 = 80%)
+
+            return (
+              <Tooltip content={tooltipContent}>
+                <div
+                  className="badge badge-outline badge-sm inline-flex items-center gap-1 cursor-pointer select-none"
+                  onClick={handleClick}
+                >
+                  <MatchWheel percentage={wheelPercentage} />
+                  <span>{displayText}</span>
+                </div>
+              </Tooltip>
+            );
+          })() : <div />}
+
+          {/* Rarity badge on the right */}
+          <div className="badge badge-outline badge-sm">{rarity}</div>
+        </div>
+
+        {/* Mobile-only expanded view - positioned separately */}
+        {showPlaystyleDetails && averagedPlaystyle && playstyleRatingsCount && playstyleRatingsCount >= 5 && (() => {
+          const matchingPlaystyle = PREDEFINED_PLAYSTYLES.find(p => p.name === averagedPlaystyle);
+          const abbreviations = matchingPlaystyle ? generateAttributeAbbreviations({
+            has_pace: matchingPlaystyle.has_pace,
+            has_shooting: matchingPlaystyle.has_shooting,
+            has_passing: matchingPlaystyle.has_passing,
+            has_dribbling: matchingPlaystyle.has_dribbling,
+            has_defending: matchingPlaystyle.has_defending,
+            has_physical: matchingPlaystyle.has_physical,
+          }) : '';
+
+          if (abbreviations) {
+            return (
+              <div className="absolute bottom-12 left-4 sm:hidden">
+                <div className="badge badge-outline badge-xs">
+                  <span className="text-[10px] opacity-75">{abbreviations}</span>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
     </div>
   )

@@ -7,6 +7,8 @@ import { LoadingSpinner } from '../LoadingSpinner';
 import { ViewToggle } from './views/ViewToggle';
 import { FaUsers } from 'react-icons/fa';
 import { useGlobalXP } from '../../hooks/useGlobalXP';
+import { findClosestPlaystyle } from '../../utils/playstyleUtils';
+import { PREDEFINED_PLAYSTYLES } from '../../data/playstyles';
 
 interface TeamSelectionResultsProps {
   gameId: string;
@@ -203,12 +205,41 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
 
         if (regStreakError) throw regStreakError;
 
+        // Get player averaged attributes for playstyle matching
+        const { data: derivedAttrsData, error: derivedAttrsError } = await supabase
+          .from('player_derived_attributes')
+          .select(`
+            player_id,
+            pace_rating,
+            shooting_rating,
+            passing_rating,
+            dribbling_rating,
+            defending_rating,
+            physical_rating
+          `)
+          .in('player_id', playerIds);
+
+        if (derivedAttrsError) throw derivedAttrsError;
+
         // Create a map of registration streak data for easy lookup by friendly name
         const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
           ...acc,
           [player.friendly_name]: {
             registrationStreak: player.current_streak_length || 0,
             registrationStreakApplies: player.bonus_applies || false
+          }
+        }), {});
+
+        // Create a map of derived attributes for easy lookup
+        const derivedAttrsMap = derivedAttrsData?.reduce((acc: any, player: any) => ({
+          ...acc,
+          [player.player_id]: {
+            pace_rating: player.pace_rating,
+            shooting_rating: player.shooting_rating,
+            passing_rating: player.passing_rating,
+            dribbling_rating: player.dribbling_rating,
+            defending_rating: player.defending_rating,
+            physical_rating: player.physical_rating
           }
         }), {});
 
@@ -236,7 +267,12 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
           // Find the matching player in the selection to get friendly_name
           const selectedPlayer = [...(selection?.selected_players || []), ...(selection?.reserve_players || [])]
             .find(p => p.id === player.id);
-          
+
+          // Calculate closest playstyle match
+          const playerAttributes = derivedAttrsMap[player.id];
+          const playstyleMatch = playerAttributes ?
+            findClosestPlaystyle(playerAttributes, PREDEFINED_PLAYSTYLES) : null;
+
           return {
             ...acc,
             [player.id]: {
@@ -257,7 +293,10 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               unpaidGames: player.unpaid_games || 0,
               unpaidGamesModifier: player.unpaid_games_modifier || 0,
               registrationStreakBonus: regStreakMap[selectedPlayer?.friendly_name]?.registrationStreak || 0,
-              registrationStreakBonusApplies: regStreakMap[selectedPlayer?.friendly_name]?.registrationStreakApplies || false
+              registrationStreakBonusApplies: regStreakMap[selectedPlayer?.friendly_name]?.registrationStreakApplies || false,
+              averagedPlaystyle: playstyleMatch?.playstyleName,
+              playstyleMatchDistance: playstyleMatch?.matchDistance,
+              playstyleCategory: playstyleMatch?.category
             }
           };
         }, {});
@@ -363,6 +402,9 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier || 0}
                       registrationStreakBonus={playerStats[player.id]?.registrationStreakBonus || 0}
                       registrationStreakBonusApplies={playerStats[player.id]?.registrationStreakBonusApplies}
+                      averagedPlaystyle={playerStats[player.id]?.averagedPlaystyle}
+                      playstyleMatchDistance={playerStats[player.id]?.playstyleMatchDistance}
+                      playstyleCategory={playerStats[player.id]?.playstyleCategory}
                     />
                   </motion.div>
                 ))}
@@ -413,6 +455,9 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       unpaidGamesModifier={playerStats[player.id]?.unpaidGamesModifier || 0}
                       registrationStreakBonus={playerStats[player.id]?.registrationStreakBonus || 0}
                       registrationStreakBonusApplies={playerStats[player.id]?.registrationStreakBonusApplies}
+                      averagedPlaystyle={playerStats[player.id]?.averagedPlaystyle}
+                      playstyleMatchDistance={playerStats[player.id]?.playstyleMatchDistance}
+                      playstyleCategory={playerStats[player.id]?.playstyleCategory}
                     />
                   </motion.div>
                 ))}

@@ -4,6 +4,44 @@ import type { ExtendedPlayerData } from 'src/types/profile'
 import { Tooltip } from '../ui/Tooltip'
 import { Shield } from 'lucide-react'
 import type { RarityTier } from '../../utils/rarityCalculations'
+import { generateAttributeAbbreviations } from '../../types/playstyle'
+import { PREDEFINED_PLAYSTYLES } from '../../data/playstyles'
+
+/**
+ * MatchWheel component for showing fill percentage
+ */
+const MatchWheel = ({ percentage }: { percentage: number }) => {
+  const radius = 6; // Slightly larger for profile page
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+  return (
+    <svg width="14" height="14" className="rotate-[-90deg] flex-shrink-0">
+      {/* Background circle */}
+      <circle
+        cx="7"
+        cy="7"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        opacity="0.3"
+      />
+      {/* Progress circle */}
+      <circle
+        cx="7"
+        cy="7"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        className="transition-all duration-300 ease-out"
+      />
+    </svg>
+  );
+};
 
 /**
  * Helper function to determine the badge class based on rarity tier
@@ -134,7 +172,7 @@ export default function ProfileHeader({
             </Tooltip>
           </div>
 
-          {/* XP and Rarity Display */}
+          {/* XP, Rarity and Playstyle Display */}
           <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 items-center sm:items-start">
             <div className="badge badge-lg badge-primary">
               {profile.total_xp || profile.xp} XP
@@ -144,6 +182,53 @@ export default function ProfileHeader({
                 {profile.rarity}
               </div>
             )}
+            {profile.averagedPlaystyle && (() => {
+              // Check if we have enough ratings (5 or more)
+              const hasEnoughRatings = profile.playstyleRatingsCount && profile.playstyleRatingsCount >= 5;
+              const displayText = hasEnoughRatings ? profile.averagedPlaystyle : 'TBD';
+
+              // Find the matching playstyle to get its attributes (only if we have enough ratings)
+              const matchingPlaystyle = hasEnoughRatings ? PREDEFINED_PLAYSTYLES.find(p => p.name === profile.averagedPlaystyle) : null;
+              const abbreviations = matchingPlaystyle ? generateAttributeAbbreviations({
+                has_pace: matchingPlaystyle.has_pace,
+                has_shooting: matchingPlaystyle.has_shooting,
+                has_passing: matchingPlaystyle.has_passing,
+                has_dribbling: matchingPlaystyle.has_dribbling,
+                has_defending: matchingPlaystyle.has_defending,
+                has_physical: matchingPlaystyle.has_physical,
+              }) : '';
+
+              // Build tooltip content
+              let tooltipContent = '';
+              if (hasEnoughRatings) {
+                const matchPercentage = profile.playstyleMatchDistance
+                  ? Math.max(0, Math.min(100, 100 - (profile.playstyleMatchDistance * 100 / 6)))
+                  : 0;
+                const matchQuality = matchPercentage >= 80 ? 'Excellent match' :
+                                     matchPercentage >= 60 ? 'Good match' :
+                                     matchPercentage >= 40 ? 'Fair match' : 'Weak match';
+                tooltipContent = `Your playstyle based on averaged ratings from other players\n${matchQuality} (${Math.round(matchPercentage)}%)`;
+                if (abbreviations) {
+                  tooltipContent += `\nAttributes: ${abbreviations}`;
+                }
+              } else {
+                tooltipContent = `Playstyle will be shown after ${5 - (profile.playstyleRatingsCount || 0)} more players rate you`;
+              }
+
+              // Calculate wheel percentage based on context
+              const wheelPercentage = hasEnoughRatings
+                ? Math.max(0, Math.min(100, 100 - ((profile.playstyleMatchDistance || 0) * 100 / 6)))  // Match quality wheel
+                : ((profile.playstyleRatingsCount || 0) / 5) * 100;  // Progress wheel
+
+              return (
+                <Tooltip content={tooltipContent}>
+                  <div className="badge badge-lg badge-secondary inline-flex items-center gap-1">
+                    <MatchWheel percentage={wheelPercentage} />
+                    <span>{displayText}</span>
+                  </div>
+                </Tooltip>
+              );
+            })()}
           </div>
 
           {/* Rank Display */}

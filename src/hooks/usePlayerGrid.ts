@@ -3,6 +3,8 @@ import { toast } from 'react-hot-toast';
 import { supabase } from '../utils/supabase';
 import { Player } from '../components/player-card/PlayerCardTypes';
 import { executeBatchQueries } from '../utils/network';
+import { findClosestPlaystyle } from '../utils/playstyleUtils';
+import { PREDEFINED_PLAYSTYLES } from '../data/playstyles';
 
 /**
  * Custom hook for managing player grid data and state
@@ -62,7 +64,21 @@ export const usePlayerGrid = () => {
           // Player streak stats (for correct max streak values)
           () => supabase
             .from('player_streak_stats')
-            .select('friendly_name, longest_streak, longest_streak_period')
+            .select('friendly_name, longest_streak, longest_streak_period'),
+
+          // Player averaged attributes for playstyle matching
+          () => supabase
+            .from('player_derived_attributes')
+            .select(`
+              player_id,
+              pace_rating,
+              shooting_rating,
+              passing_rating,
+              dribbling_rating,
+              defending_rating,
+              physical_rating,
+              total_ratings_count
+            `)
         ];
 
         // Execute all queries with retry logic
@@ -77,8 +93,13 @@ export const usePlayerGrid = () => {
           winRateData,
           unpaidGamesData,
           registrationStreakData,
-          streakStatsData
+          streakStatsData,
+          derivedAttributesData
         ] = results;
+
+        // Debug logging for playstyle data
+        console.log('🎯 usePlayerGrid - Derived attributes data:', derivedAttributesData);
+        console.log('🎯 usePlayerGrid - Number of players with attributes:', derivedAttributesData?.length || 0);
 
         // Create maps for efficient lookups
         const winRateMap = (winRateData || []).reduce((acc, player) => {
@@ -117,11 +138,28 @@ export const usePlayerGrid = () => {
           return acc;
         }, {} as Record<string, { longestStreak: number, longestStreakPeriod: any }>);
 
+        // Create map for derived attributes
+        const derivedAttributesMap = (derivedAttributesData || []).reduce((acc, player) => {
+          acc[player.player_id] = {
+            pace_rating: player.pace_rating,
+            shooting_rating: player.shooting_rating,
+            passing_rating: player.passing_rating,
+            dribbling_rating: player.dribbling_rating,
+            defending_rating: player.defending_rating,
+            physical_rating: player.physical_rating,
+            total_ratings_count: player.total_ratings_count
+          };
+          return acc;
+        }, {} as Record<string, any>);
+
+        console.log('🎯 usePlayerGrid - Derived attributes map:', derivedAttributesMap);
+        console.log('🎯 usePlayerGrid - Player IDs in map:', Object.keys(derivedAttributesMap));
+
         // Combine all data
         const combinedPlayers = (playersData || []).map(player => {
           // Use the longest_streak from player_streak_stats if available, otherwise fall back to max_streak from players table
           const correctMaxStreak = streakStatsMap[player.friendly_name]?.longestStreak || 0;
-          
+
           // Log for debugging if there's a discrepancy
           if (streakStatsMap[player.friendly_name]?.longestStreak !== correctMaxStreak) {
             console.log(`Max streak discrepancy for ${player.friendly_name}:`, {
@@ -130,7 +168,21 @@ export const usePlayerGrid = () => {
               using: correctMaxStreak
             });
           }
-          
+
+          // Calculate closest playstyle match
+          const playerAttributes = derivedAttributesMap[player.id];
+          const playstyleMatch = playerAttributes ?
+            findClosestPlaystyle(playerAttributes, PREDEFINED_PLAYSTYLES) : null;
+
+          // Debug logging for specific players
+          if (player.friendly_name === 'Chris H' || player.friendly_name === 'Nathan') {
+            console.log(`🎯 usePlayerGrid - ${player.friendly_name}:`, {
+              playerId: player.id,
+              attributes: playerAttributes,
+              playstyleMatch: playstyleMatch
+            });
+          }
+
           return {
             id: player.id,
             friendlyName: player.friendly_name,
@@ -159,9 +211,31 @@ export const usePlayerGrid = () => {
             unpaidGames: unpaidGamesMap[player.friendly_name]?.unpaidGames || 0,
             unpaidGamesModifier: unpaidGamesMap[player.friendly_name]?.unpaidGamesModifier || 0,
             registrationStreakBonus: registrationStreakMap[player.friendly_name]?.registrationStreak || 0,
-            registrationStreakBonusApplies: registrationStreakMap[player.friendly_name]?.registrationStreakApplies || false
+            registrationStreakBonusApplies: registrationStreakMap[player.friendly_name]?.registrationStreakApplies || false,
+            averagedPlaystyle: playstyleMatch?.playstyleName,
+            playstyleMatchDistance: playstyleMatch?.matchDistance,
+            playstyleCategory: playstyleMatch?.category,
+            playstyleRatingsCount: playerAttributes?.total_ratings_count || 0
           };
         });
+
+        // Debug log to see how many players have playstyles
+        const playersWithPlaystyles = combinedPlayers.filter(p => p.averagedPlaystyle);
+        console.log('🎯 usePlayerGrid - Players with playstyles:', {
+          total: combinedPlayers.length,
+          withPlaystyles: playersWithPlaystyles.length,
+          sample: playersWithPlaystyles.slice(0, 3).map(p => ({
+            name: p.friendlyName,
+            playstyle: p.averagedPlaystyle,
+            distance: p.playstyleMatchDistance
+          }))
+        });
+
+        // Debug Chris H specifically in the final array
+        const chrisHFinal = combinedPlayers.find(p => p.friendlyName === 'Chris H');
+        if (chrisHFinal) {
+          console.log('🎯 usePlayerGrid - Chris H final object:', chrisHFinal);
+        }
 
         setPlayers(combinedPlayers);
       } catch (err: any) {

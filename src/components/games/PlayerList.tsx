@@ -66,7 +66,12 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 status={player.status}
                 registrationStreakBonus={player.registrationStreakBonus}
                 registrationStreakBonusApplies={player.registrationStreakBonusApplies}
+                unpaidGames={player.unpaidGames || 0}
+                unpaidGamesModifier={player.unpaidGamesModifier || 0}
                 usingToken={player.using_token}
+                averagedPlaystyle={player.averagedPlaystyle}
+                playstyleMatchDistance={player.playstyleMatchDistance}
+                playstyleCategory={player.playstyleCategory}
               />
               {renderPlayerExtra && renderPlayerExtra(player)}
             </div>

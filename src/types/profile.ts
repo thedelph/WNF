@@ -62,4 +62,8 @@ export interface ExtendedPlayerData {
   registrationStreakApplies?: boolean;
   unpaidGames?: number;
   latestSequence?: number;
+  averagedPlaystyle?: string;
+  playstyleMatchDistance?: number;
+  playstyleCategory?: 'attacking' | 'midfield' | 'defensive';
+  playstyleRatingsCount?: number;
 }

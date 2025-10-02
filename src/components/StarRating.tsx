@@ -2,18 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface StarRatingProps {
-  rating: number;
-  onChange: (rating: number) => void;
+  rating: number | null;
+  onChange: (rating: number | null) => void;
   label: string;
 }
 
 const StarRating: React.FC<StarRatingProps> = ({ rating, onChange, label }) => {
   const [hover, setHover] = useState<number | null>(null);
-  const [inputValue, setInputValue] = useState<string>('0');
+  const [inputValue, setInputValue] = useState<string>('');
 
   // Update input value when rating prop changes
   useEffect(() => {
-    setInputValue(String(rating / 2));
+    if (rating === null || rating === 0) {
+      setInputValue('');
+    } else {
+      setInputValue(String(rating / 2));
+    }
   }, [rating]);
 
   const handleStarHover = (index: number, isHalf: boolean) => {
@@ -44,8 +48,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onChange, label }) => {
 
   const handleInputBlur = () => {
     if (inputValue === '') {
-      setInputValue('0');
-      onChange(0);
+      onChange(null);
     }
   };
 
@@ -70,7 +73,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onChange, label }) => {
       <div className="flex gap-1">
         {[...Array(5)].map((_, i) => {
           const starIndex = i + 1;
-          const currentRating = hover ?? rating;
+          const currentRating = hover ?? rating ?? 0;
           const isFullStar = currentRating >= starIndex * 2;
           const isHalfStar = currentRating === starIndex * 2 - 1;
 
