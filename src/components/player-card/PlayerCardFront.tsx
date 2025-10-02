@@ -342,7 +342,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
             return (
               <Tooltip content={tooltipContent}>
                 <div
-                  className="badge badge-outline badge-sm inline-flex items-center gap-1 cursor-pointer select-none"
+                  className="badge badge-outline badge-md inline-flex items-center gap-2 px-3 py-2 cursor-pointer select-none"
                   onClick={handleClick}
                 >
                   <MatchWheel percentage={wheelPercentage} />
@@ -353,7 +353,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
           })() : <div />}
 
           {/* Rarity badge on the right */}
-          <div className="badge badge-outline badge-sm">{rarity}</div>
+          <div className="badge badge-outline badge-md px-3 py-2">{rarity}</div>
         </div>
 
         {/* Mobile-only expanded view - positioned separately */}
