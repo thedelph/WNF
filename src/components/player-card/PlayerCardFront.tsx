@@ -373,7 +373,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
             return (
               <div className={`absolute left-4 sm:hidden ${player?.id === id ? 'bottom-16' : 'bottom-12'}`}>
                 <div className="badge badge-outline badge-xs">
-                  <span className="text-[10px] opacity-75">{abbreviations} • {matchPercentage}%</span>
+                  <span className="text-[10px] opacity-75">{abbreviations} • {matchPercentage}% match</span>
                 </div>
               </div>
             );
