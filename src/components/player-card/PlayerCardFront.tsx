@@ -367,12 +367,13 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
             has_defending: matchingPlaystyle.has_defending,
             has_physical: matchingPlaystyle.has_physical,
           }) : '';
+          const matchPercentage = getMatchFillPercentage(playstyleMatchDistance);
 
           if (abbreviations) {
             return (
               <div className={`absolute left-4 sm:hidden ${player?.id === id ? 'bottom-16' : 'bottom-12'}`}>
                 <div className="badge badge-outline badge-xs">
-                  <span className="text-[10px] opacity-75">{abbreviations}</span>
+                  <span className="text-[10px] opacity-75">{abbreviations} • {matchPercentage}%</span>
                 </div>
               </div>
             );
