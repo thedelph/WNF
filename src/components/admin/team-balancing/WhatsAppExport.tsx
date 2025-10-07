@@ -1,14 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FaCopy } from 'react-icons/fa';
 import { TeamAssignment } from './types';
 import { toast } from 'react-hot-toast';
 import { calculateTeamComparison } from './teamBalanceCalcs';
 import { suggestFormations, POSITION_DISPLAY_NAMES } from '../../../utils/teamBalancing/formationSuggester';
 import { PositionType } from './types';
+import { supabase } from '../../../utils/supabase';
 
 interface WhatsAppExportProps {
   blueTeam: TeamAssignment[];
   orangeTeam: TeamAssignment[];
+  gameId?: string;
 }
 
 /**
@@ -17,12 +19,48 @@ interface WhatsAppExportProps {
  * @param blueTeam - Array of blue team assignments
  * @param orangeTeam - Array of orange team assignments
  */
-export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({ 
-  blueTeam, 
-  orangeTeam 
+export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
+  blueTeam,
+  orangeTeam,
+  gameId
 }) => {
   const [includeFormation, setIncludeFormation] = useState(false);
-  
+  const [shieldPlayers, setShieldPlayers] = useState<Array<{ friendly_name: string; frozen_streak_value: number }>>([]);
+
+  // Fetch shield token users if gameId is provided
+  useEffect(() => {
+    if (!gameId) return;
+
+    const fetchShieldPlayers = async () => {
+      const { data, error } = await supabase
+        .from('shield_token_usage')
+        .select(`
+          players!shield_token_usage_player_id_fkey(
+            friendly_name,
+            frozen_streak_value
+          )
+        `)
+        .eq('game_id', gameId);
+
+      if (error) {
+        console.error('Error fetching shield players:', error);
+        return;
+      }
+
+      if (data) {
+        const shieldData = data
+          .map((item: any) => ({
+            friendly_name: item.players?.friendly_name || '',
+            frozen_streak_value: item.players?.frozen_streak_value || 0
+          }))
+          .filter(p => p.friendly_name);
+        setShieldPlayers(shieldData);
+      }
+    };
+
+    fetchShieldPlayers();
+  }, [gameId]);
+
   // Calculate formation suggestions when enabled
   const formationSuggestions = useMemo(() => {
     if (!includeFormation || blueTeam.length === 0 || orangeTeam.length === 0) {
@@ -72,7 +110,7 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
       calculatedOrangeGoalDiff: orangeGoalDiff
     });
     
-    return `📋 Proposed Teams For Next Game
+    let message = `📋 Proposed Teams For Next Game
 
 🟠 Orange Team
 ⚔ Attack: ${stats.orange.attack?.toFixed(1) ?? '0.0'}
@@ -101,6 +139,16 @@ ${orangeTeamText}
 
 🔵 Blue Team (${blueTeam.length}):
 ${blueTeamText}`;
+
+    // Add shield protection section if there are protected players
+    if (shieldPlayers.length > 0) {
+      message += '\n\n🛡️ Protected Players (using streak shields):\n';
+      shieldPlayers
+        .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
+        .forEach(player => {
+          message += `🛡️ ${player.friendly_name} (${player.frozen_streak_value} game streak frozen at +${player.frozen_streak_value * 10}% XP)\n`;
+        });
+    }
 
     // Add formation suggestions if enabled
     if (includeFormation && formationSuggestions) {

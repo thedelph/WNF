@@ -27,6 +27,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   registrationStreakBonusApplies?: boolean,
   usingToken?: boolean,
   playstyleRatingsCount?: number,
+  shieldActive?: boolean,
+  frozenStreakValue?: number | null,
 }> = ({
   id,
   friendlyName,
@@ -58,6 +60,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   playstyleMatchDistance,
   playstyleCategory,
   playstyleRatingsCount,
+  shieldActive = false,
+  frozenStreakValue = null,
 }) => {
   // Debug logging for playstyle props
   if (friendlyName === 'Chris H' || friendlyName === 'Nathan') {
@@ -218,7 +222,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
           </Tooltip>
         </div>
       )}
-      
+
       {/* Rank Shield */}
       {rank && !isFlipped && (
         <div className="absolute top-2 right-2 z-10">
@@ -269,6 +273,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
 
       {/* Modifiers Section */}
       <PlayerCardModifiers
+        playerId={id}
         currentStreak={currentStreak}
         streakModifier={streakModifier}
         dropoutPenalties={dropoutPenalties}
@@ -284,6 +289,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         registrationStreakBonus={registrationStreakBonus}
         registrationStreakBonusApplies={registrationStreakBonusApplies}
         status={status}
+        shieldActive={shieldActive}
+        frozenStreakValue={frozenStreakValue}
       />
 
       <div className="mt-auto">

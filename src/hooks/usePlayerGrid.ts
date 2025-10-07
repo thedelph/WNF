@@ -36,6 +36,8 @@ export const usePlayerGrid = () => {
               active_penalties,
               current_streak,
               bench_warmer_streak,
+              shield_active,
+              frozen_streak_value,
               player_xp (
                 xp,
                 rank,
@@ -215,7 +217,9 @@ export const usePlayerGrid = () => {
             averagedPlaystyle: playstyleMatch?.playstyleName,
             playstyleMatchDistance: playstyleMatch?.matchDistance,
             playstyleCategory: playstyleMatch?.category,
-            playstyleRatingsCount: playerAttributes?.total_ratings_count || 0
+            playstyleRatingsCount: playerAttributes?.total_ratings_count || 0,
+            shieldActive: player.shield_active || false,
+            frozenStreakValue: player.frozen_streak_value || null
           };
         });
 

@@ -85,6 +85,8 @@ export const PlayerGridLayout: React.FC<LayoutProps> = ({ players }) => {
               playstyleMatchDistance={player.playstyleMatchDistance}
               playstyleCategory={player.playstyleCategory}
               playstyleRatingsCount={player.playstyleRatingsCount}
+              shieldActive={player.shieldActive}
+              frozenStreakValue={player.frozenStreakValue}
             />
           </motion.div>
         ))}

@@ -35,7 +35,8 @@
       "mcp__supabase__generate_typescript_types",
       "Bash(python:*)",
       "Bash(git add:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

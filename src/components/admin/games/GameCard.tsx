@@ -64,8 +64,8 @@ export const GameCard: React.FC<Props> = ({
   const handleWhatsAppShare = async () => {
     try {
       console.log('Starting WhatsApp share process');
-      
-      // First, get all WhatsApp group members 
+
+      // First, get all WhatsApp group members
       const { data: players, error: playersError } = await supabase
         .from('players')
         .select('id, friendly_name, whatsapp_group_member')
@@ -78,6 +78,23 @@ export const GameCard: React.FC<Props> = ({
         return;
       }
       console.log(`Fetched ${players?.length} WhatsApp group members`);
+
+      // Fetch shield token usage for this game
+      const { data: shieldUsage, error: shieldError } = await supabase
+        .from('shield_token_usage')
+        .select(`
+          player_id,
+          players!shield_token_usage_player_id_fkey(
+            friendly_name,
+            frozen_streak_value
+          )
+        `)
+        .eq('game_id', game.id);
+
+      if (shieldError) {
+        console.error('Error fetching shield usage:', shieldError);
+      }
+      console.log(`Fetched ${shieldUsage?.length || 0} shield token users`);
 
       // Query the public_player_token_status view which contains eligibility data
       // This view handles all the complex eligibility logic including:
@@ -167,10 +184,10 @@ Reply to this message with names of any reserves outside of this group that want
 
           // Add token information if there are eligible players with active tokens
           const showTokenSection = true; // Always show even if no eligible players
-          
+
           if (showTokenSection) {
             message += '\n\nThe following players, react with 🪙 if you want to guarantee a spot this week (but you likely won\'t get a spot next week):\n';
-            
+
             if (eligiblePlayers.length > 0) {
               // Sort players alphabetically by name
               [...eligiblePlayers]
@@ -185,6 +202,17 @@ Reply to this message with names of any reserves outside of this group that want
             }
           }
 
+          // Add shield token section if there are players using shields
+          if (shieldUsage && shieldUsage.length > 0) {
+            message += '\n\n🛡️ Players using streak protection this week:\n';
+            [...shieldUsage]
+              .sort((a: any, b: any) => (a.players?.friendly_name || '').localeCompare(b.players?.friendly_name || ''))
+              .forEach((usage: any) => {
+                const frozenStreak = usage.players?.frozen_streak_value || 0;
+                message += `\n🛡️ ${usage.players?.friendly_name} (protecting ${frozenStreak} game streak)`;
+              });
+          }
+
           message += `\n\nRegistration closes ${regEndDate} at ${regEndTime}`;
           break;
 
@@ -192,34 +220,38 @@ Reply to this message with names of any reserves outside of this group that want
           // Get all selected players (both merit and random)
           const selectedPlayers = game.game_registrations?.filter(reg => reg.status === 'selected');
           const reservePlayers = game.game_registrations?.filter(reg => reg.status === 'reserve');
-          
+
           // Get additional data for reasoning
           const tokenPlayers = selectedPlayers?.filter(reg => reg.using_token) || [];
           const meritPlayers = selectedPlayers?.filter(reg => reg.selection_method === 'merit') || [];
           const randomPlayers = selectedPlayers?.filter(reg => reg.selection_method === 'random') || [];
-          
+
           // Get player unpaid games data for penalty indicator
           // Now included in the player data from game_registrations
           const allPlayersWithStatus = [...(selectedPlayers || []), ...(reservePlayers || [])];
           const playersWithUnpaidGames = allPlayersWithStatus.filter(reg => (reg.player?.unpaid_games || 0) > 0);
-          
+
           // Add selection reasoning summary
           message += '\n';
-          
+
           if (tokenPlayers.length > 0) {
             message += `\n🪙 ${tokenPlayers.length} Guaranteed token${tokenPlayers.length > 1 ? 's' : ''} used this week`;
           }
-          
+
           if (meritPlayers.length > 0) {
             message += `\n✅ First ${meritPlayers.length} players chosen by XP`;
           }
-          
+
           if (randomPlayers.length > 0) {
             message += `\n🎲 Remaining ${randomPlayers.length} players chosen at random`;
           }
-          
+
           if (playersWithUnpaidGames.length > 0) {
             message += `\n💰 XP penalty due to missing payments`;
+          }
+
+          if (shieldUsage && shieldUsage.length > 0) {
+            message += `\n🛡️ ${shieldUsage.length} player${shieldUsage.length > 1 ? 's' : ''} using streak protection this week`;
           }
 
           if (selectedPlayers?.length > 0) {
@@ -274,13 +306,24 @@ Reply to this message with names of any reserves outside of this group that want
               });
           }
 
+          // Add shield protection section
+          if (shieldUsage && shieldUsage.length > 0) {
+            message += '\n\n🛡️ Protected Players (using streak shields):\n';
+            [...shieldUsage]
+              .sort((a: any, b: any) => (a.players?.friendly_name || '').localeCompare(b.players?.friendly_name || ''))
+              .forEach((usage: any) => {
+                const frozenStreak = usage.players?.frozen_streak_value || 0;
+                message += `\n🛡️ ${usage.players?.friendly_name} (${frozenStreak} game streak frozen at +${frozenStreak * 10}% XP)`;
+              });
+          }
+
           // Add explanation about reserve streak bonus for next week
           const reservePlayersCount = reservePlayers?.length || 0;
-          
+
           if (reservePlayersCount > 0) {
             message += '\n\n📈 Players not selected this week get boosted chances for random selection next week';
           }
-          
+
           // Add drop-out message
           message += '\n\nAnyone needs to drop out (inc reserves) please let me know 👍';
           break;

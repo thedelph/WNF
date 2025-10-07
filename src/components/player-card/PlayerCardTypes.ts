@@ -35,12 +35,15 @@ export interface PlayerCardProps {
   playstyleMatchDistance?: number // Distance score for color coding (0-6, lower is better)
   playstyleCategory?: 'attacking' | 'midfield' | 'defensive' // Playstyle category
   playstyleRatingsCount?: number // Number of playstyle ratings contributing to the average
+  shieldActive?: boolean // Whether player has active shield protection
+  frozenStreakValue?: number | null // The streak value frozen by the shield
 }
 
 // Type alias for Player used in grid components
 export type Player = PlayerCardProps
 
 export interface PlayerCardModifiersProps {
+  playerId?: string
   currentStreak: number
   streakModifier: number
   dropoutPenalties: number
@@ -56,6 +59,8 @@ export interface PlayerCardModifiersProps {
   registrationStreakBonus?: number
   registrationStreakBonusApplies?: boolean
   status?: string
+  shieldActive?: boolean
+  frozenStreakValue?: number | null
 }
 
 export interface PlayerCardStatsProps {
@@ -64,6 +69,8 @@ export interface PlayerCardStatsProps {
   draws: number
   losses: number
   totalGames: number
+  shieldActive?: boolean
+  frozenStreakValue?: number | null
 }
 
 export interface PlayerCardBadgesProps {

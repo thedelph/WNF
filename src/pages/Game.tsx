@@ -9,6 +9,8 @@ import { GameRegistration } from '../components/game/GameRegistration';
 
 import { RegisteredPlayers } from '../components/game/RegisteredPlayers';
 
+import { ShieldTokenPlayers } from '../components/game/ShieldTokenPlayers';
+
 import { PlayerSelectionResults } from '../components/games/PlayerSelectionResults';
 
 import { TeamSelectionResults } from '../components/games/TeamSelectionResults';
@@ -45,6 +47,12 @@ interface PlayerDataState {
   }>;
   reservePlayers: Player[];
   selectionNotes: string[];
+  shieldTokenUsers: Array<{
+    player: Player;
+    used_at: string;
+    frozen_streak_value: number;
+    frozen_streak_modifier: number;
+  }>;
 }
 
 // Define type for registration streak data
@@ -82,7 +90,8 @@ const Game = () => {
     registrations: [],
     selectedPlayers: [],
     reservePlayers: [],
-    selectionNotes: []
+    selectionNotes: [],
+    shieldTokenUsers: []
   });
 
   const [useToken, setUseToken] = useState(false);
@@ -232,8 +241,52 @@ const Game = () => {
         reservePlayers: registrations
           .filter((reg: GameRegistrationType) => reg.status === 'reserve' && reg.player)
           .map((reg: GameRegistrationType) => reg.player!),
-        selectionNotes: []
+        selectionNotes: [],
+        shieldTokenUsers: []
       });
+
+      // Fetch shield token users for this game
+      if (game?.id) {
+        const { data: shieldUsers, error: shieldError } = await supabase
+          .from('shield_token_usage')
+          .select(`
+            used_at,
+            frozen_streak_value,
+            frozen_streak_modifier,
+            player:players!shield_token_usage_player_id_fkey (
+              id,
+              friendly_name,
+              caps,
+              active_bonuses,
+              active_penalties,
+              current_streak,
+              max_streak,
+              avatar_svg,
+              whatsapp_group_member,
+              unpaid_games,
+              unpaid_games_modifier,
+              shield_active,
+              frozen_streak_value,
+              frozen_streak_modifier
+            )
+          `)
+          .eq('game_id', game.id)
+          .eq('is_active', true);
+
+        if (!shieldError && shieldUsers) {
+          setPlayerData(prev => ({
+            ...prev,
+            shieldTokenUsers: shieldUsers
+              .filter(su => su.player)
+              .map(su => ({
+                player: su.player!,
+                used_at: su.used_at || new Date().toISOString(),
+                frozen_streak_value: su.frozen_streak_value,
+                frozen_streak_modifier: su.frozen_streak_modifier
+              }))
+          }));
+        }
+      }
 
     } catch (error) {
 
@@ -473,10 +526,13 @@ const Game = () => {
             useToken={useToken}
             setUseToken={setUseToken}
           />
-          <RegisteredPlayers 
-            registrations={playerData.registrations} 
-            maxPlayers={upcomingGame.max_players} 
-            randomSlots={upcomingGame.random_slots || 0} 
+          <RegisteredPlayers
+            registrations={playerData.registrations}
+            maxPlayers={upcomingGame.max_players}
+            randomSlots={upcomingGame.random_slots || 0}
+          />
+          <ShieldTokenPlayers
+            shieldTokenUsers={playerData.shieldTokenUsers}
           />
         </>
       )}

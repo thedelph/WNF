@@ -44,6 +44,8 @@ interface PlayerCardProps {
   playstyleMatchDistance?: number
   playstyleCategory?: 'attacking' | 'midfield' | 'defensive'
   playstyleRatingsCount?: number
+  shieldActive?: boolean
+  frozenStreakValue?: number | null
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -82,6 +84,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   playstyleMatchDistance,
   playstyleCategory,
   playstyleRatingsCount,
+  shieldActive = false,
+  frozenStreakValue = null,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -165,6 +169,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               playstyleMatchDistance={playstyleMatchDistance}
               playstyleCategory={playstyleCategory}
               playstyleRatingsCount={playstyleRatingsCount}
+              shieldActive={shieldActive}
+              frozenStreakValue={frozenStreakValue}
             />
           ) : (
             <PlayerCardBack
@@ -182,6 +188,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               rarity={rarity}
               avatarSvg={avatarSvg}
               whatsapp_group_member={whatsapp_group_member}
+              shieldActive={shieldActive}
+              frozenStreakValue={frozenStreakValue}
             />
           )}
         </div>

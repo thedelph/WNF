@@ -18,6 +18,11 @@ type Player = {
   manual_caps_override?: boolean
   whatsapp_group_member?: 'Yes' | 'No' | 'Proxy'
   whatsapp_mobile_number?: string
+  shield_tokens_available?: number
+  games_played_since_shield_launch?: number
+  shield_active?: boolean
+  frozen_streak_value?: number
+  frozen_streak_modifier?: number
 }
 
 const EditPlayer: React.FC = () => {
@@ -118,7 +123,9 @@ const EditPlayer: React.FC = () => {
           ...(player.defense_rating ? { defense_rating: player.defense_rating } : {}),
           ...(player.game_iq ? { game_iq: player.game_iq } : {}),
           whatsapp_group_member: player.whatsapp_group_member || null,
-          whatsapp_mobile_number: player.whatsapp_mobile_number || null
+          whatsapp_mobile_number: player.whatsapp_mobile_number || null,
+          shield_tokens_available: player.shield_tokens_available || 0,
+          games_played_since_shield_launch: player.games_played_since_shield_launch || 0
         })
         .eq('id', id)
 
@@ -230,8 +237,9 @@ const EditPlayer: React.FC = () => {
             name="attack_rating"
             value={player.attack_rating || ''}
             onChange={handleChange}
-            min="1"
+            min="0"
             max="10"
+            step="0.01"
             className="input input-bordered w-full"
           />
         </div>
@@ -245,8 +253,9 @@ const EditPlayer: React.FC = () => {
             name="defense_rating"
             value={player.defense_rating || ''}
             onChange={handleChange}
-            min="1"
+            min="0"
             max="10"
+            step="0.01"
             className="input input-bordered w-full"
           />
         </div>
@@ -260,11 +269,68 @@ const EditPlayer: React.FC = () => {
             name="game_iq"
             value={player.game_iq || ''}
             onChange={handleChange}
-            min="1"
+            min="0"
             max="10"
+            step="0.01"
             className="input input-bordered w-full"
           />
         </div>
+
+        {/* Shield Token Section */}
+        <div className="divider">Shield Tokens</div>
+
+        <div className="alert alert-info mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span className="text-sm">Shield tokens protect player streaks when they can't play. View-only unless admin override needed.</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="form-control">
+            <label className="label" htmlFor="shield_tokens_available">
+              <span className="label-text">Shield Tokens Available</span>
+              <span className="label-text-alt">Max: 4</span>
+            </label>
+            <input
+              type="number"
+              id="shield_tokens_available"
+              name="shield_tokens_available"
+              value={player.shield_tokens_available || 0}
+              onChange={handleChange}
+              min="0"
+              max="4"
+              className="input input-bordered w-full"
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label" htmlFor="games_played_since_shield_launch">
+              <span className="label-text">Games Played (Shield System)</span>
+              <span className="label-text-alt">1 token per 10 games</span>
+            </label>
+            <input
+              type="number"
+              id="games_played_since_shield_launch"
+              name="games_played_since_shield_launch"
+              value={player.games_played_since_shield_launch || 0}
+              onChange={handleChange}
+              min="0"
+              className="input input-bordered w-full"
+            />
+          </div>
+        </div>
+
+        {player.shield_active && (
+          <div className="alert alert-success mt-4">
+            <span className="text-lg">🛡️</span>
+            <div>
+              <h3 className="font-bold">Active Shield Protection</h3>
+              <div className="text-sm">
+                Frozen Streak: {player.frozen_streak_value} games (+{(player.frozen_streak_modifier || 0) * 100}% XP)
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="form-control">
           <label className="label cursor-pointer">
             <span className="label-text">Test User</span>

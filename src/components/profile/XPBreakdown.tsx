@@ -27,6 +27,8 @@ interface XPBreakdownProps {
     registrationStreak?: number;
     registrationStreakApplies?: boolean;
     unpaidGames: number; // Number of unpaid games (required)
+    shieldActive?: boolean; // Whether player has active shield protection
+    frozenStreakValue?: number | null; // Frozen streak value when shield is active
   };
   showTotal?: boolean;
 }
@@ -90,7 +92,11 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   });
 
   // Calculate streak modifier (+10% per streak level)
-  const streakModifier = stats.currentStreak * 0.1;
+  // Use frozen streak value if shield is active, otherwise use current streak
+  const effectiveStreak = stats.shieldActive && stats.frozenStreakValue !== null && stats.frozenStreakValue !== undefined
+    ? stats.frozenStreakValue
+    : stats.currentStreak;
+  const streakModifier = effectiveStreak * 0.1;
 
   // Calculate reserve modifier (+5% only if reserve in most recent game)
   const reserveModifier = stats.benchWarmerStreak ? stats.benchWarmerStreak * 0.05 : 0;
@@ -204,12 +210,16 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                 {console.log('[XPBreakdown] ReserveXPSection props:', { reserveXP: stats.reserveXP, reserveCount: stats.reserveCount })}
 
                 {/* Attendance Streak Section */}
-                {stats.currentStreak > 0 && (
+                {effectiveStreak > 0 && (
                   <StreakSection
-                    title="Attendance Streak"
-                    streakCount={stats.currentStreak}
+                    title={stats.shieldActive && stats.frozenStreakValue ? "🛡️ Protected Streak" : "Attendance Streak"}
+                    streakCount={effectiveStreak}
                     bonusPerStreak={10}
-                    description={`${stats.currentStreak} game streak (+${(stats.currentStreak * 10)}% XP)`}
+                    description={
+                      stats.shieldActive && stats.frozenStreakValue
+                        ? `${effectiveStreak} game streak frozen by shield (+${(effectiveStreak * 10)}% XP protected)`
+                        : `${effectiveStreak} game streak (+${(effectiveStreak * 10)}% XP)`
+                    }
                   />
                 )}
 

@@ -11,9 +11,11 @@ export const PlayerCardStats: React.FC<PlayerCardStatsProps> = ({
   draws,
   losses,
   totalGames,
+  shieldActive = false,
+  frozenStreakValue = null,
 }) => {
   return (
-    <div className="bg-black/30 rounded-lg p-4 w-full space-y-2">
+    <div className="rounded-lg p-4 w-full space-y-2 bg-black/30">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Trophy className="w-4 h-4" />

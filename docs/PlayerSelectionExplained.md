@@ -43,12 +43,39 @@ The player selection process is automatically triggered when a game's registrati
      → A's token returned, B's token consumed
      ```
 
-3. **Payment Priority (Merit Selection)**
+3. **Shield Token System**
+   - Players earn shield tokens to protect their XP streak when they can't play (holidays, illness, injury)
+   - **Earning Shields**:
+     - Players earn 1 shield token per 10 games played
+     - Maximum of 4 shield tokens can be held at once
+     - Token accrual is tracked via `games_played_since_shield_launch` counter
+   - **Using Shields**:
+     - Shields must be used INSTEAD of registering (pre-emptive, like booking annual leave)
+     - Players activate shields during the registration window for games they will miss
+     - No retroactive usage allowed
+     - **Cancellable**: Players can cancel shield usage and get their token back during registration window (similar to unregister/register pattern)
+     - Once registration closes, shield usage becomes final and cannot be cancelled
+   - **Streak Protection Mechanics**:
+     - When a shield is used, the player's `current_streak` and XP modifier are frozen
+     - `frozen_streak_value` and `frozen_streak_modifier` maintain the protected values
+     - `shield_active` flag indicates the player has active protection
+     - The frozen streak remains locked until the player naturally reaches that level again through consecutive games
+     - XP calculations use `frozen_streak_value` instead of `current_streak` when shield is active
+   - **Losing Protection**:
+     - If a player misses another game without using another shield, protection is removed
+     - Streak resets to 0 if protection is lost
+     - Once a player plays enough consecutive games to reach their frozen streak level, the shield protection ends naturally
+   - **Visual Indicators**:
+     - 🛡️ emoji shows in player cards, WhatsApp messages, and UI when shield is active
+     - Protected players shown in separate section during team announcements
+     - Admin interface allows manual token issuance and shield removal for edge cases
+
+4. **Payment Priority (Merit Selection)**
    - **Players with unpaid games are moved to the bottom of merit selection** to maximally disincentivise missing payments
    - This penalty applies before all other criteria including XP
    - Among players with same payment status (paid vs unpaid), normal sorting rules apply
 
-4. **XP Priority**
+5. **XP Priority**
    - After payment and token slots are allocated, XP becomes the primary sorting mechanism
    - Players who used a token in the previous sequential game are pushed to the bottom of the list
    - Among token-cooldown players, normal sorting rules apply (XP, WhatsApp, etc.)
@@ -56,13 +83,14 @@ The player selection process is automatically triggered when a game's registrati
      - Tiebreakers (WhatsApp, Streak, Caps, Registration Time) only apply when XP values are exactly equal
      - A lower XP player can never be selected over a higher XP player in merit selection
    - Non-token users are displayed after token users, sorted by XP
+   - **Note**: Players with active shield protection maintain their frozen streak XP modifier during selection calculations
 
-5. **WhatsApp Status Equivalence**
+6. **WhatsApp Status Equivalence**
    - "Proxy" status is treated exactly the same as "Yes" for all purposes
    - Both statuses receive equal priority in both merit tiebreakers and random selection
    - Only "No" and NULL are treated as non-WhatsApp members
 
-6. **Random Selection Priority**
+7. **Random Selection Priority**
    - **Payment and WhatsApp Priority System**
      - Players are grouped into 4 priority tiers:
        1. **WhatsApp members with no unpaid games** (highest priority)
