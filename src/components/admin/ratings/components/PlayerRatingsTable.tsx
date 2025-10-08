@@ -45,6 +45,9 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
             <th className="hidden sm:table-cell" onClick={() => onSort('game_iq_rating')} >
               <span className="cursor-pointer">Game IQ</span>
             </th>
+            <th className="hidden sm:table-cell" onClick={() => onSort('gk_rating')} >
+              <span className="cursor-pointer">GK</span>
+            </th>
             <th className="hidden md:table-cell">Playstyle</th>
             <th className="sm:hidden">Ratings</th>
             <th>Date</th>
@@ -67,6 +70,7 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
               <td className="hidden sm:table-cell">{formatRating(rating.attack_rating)}</td>
               <td className="hidden sm:table-cell">{formatRating(rating.defense_rating)}</td>
               <td className="hidden sm:table-cell">{formatRating(rating.game_iq_rating)}</td>
+              <td className="hidden sm:table-cell">{formatRating(rating.gk_rating)}</td>
               <td className="hidden md:table-cell">
                 {rating.playstyle ? (
                   <span className="text-sm">
@@ -81,6 +85,7 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
                   <span className="badge badge-xs">A: {formatRating(rating.attack_rating)}</span>
                   <span className="badge badge-xs">D: {formatRating(rating.defense_rating)}</span>
                   <span className="badge badge-xs">IQ: {formatRating(rating.game_iq_rating)}</span>
+                  <span className="badge badge-xs">GK: {formatRating(rating.gk_rating)}</span>
                   {rating.playstyle && (
                     <span className="text-xs">
                       {rating.playstyle.name}

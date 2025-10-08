@@ -21,6 +21,7 @@ interface Player {
     attack_rating: number;
     defense_rating: number;
     game_iq_rating: number;
+    gk_rating: number;
     playstyle_id?: string | null;
     playstyles?: {
       id: string;
@@ -37,7 +38,7 @@ interface Player {
   };
 }
 
-type SortOption = 'alphabetical' | 'games_played' | 'rated' | 'unrated' | 'attack_asc' | 'attack_desc' | 'defense_asc' | 'defense_desc' | 'game_iq_asc' | 'game_iq_desc';
+type SortOption = 'alphabetical' | 'games_played' | 'rated' | 'unrated' | 'attack_asc' | 'attack_desc' | 'defense_asc' | 'defense_desc' | 'game_iq_asc' | 'game_iq_desc' | 'gk_asc' | 'gk_desc';
 type FilterOption = 'all' | 'rated' | 'unrated' | 'min_games';
 
 export default function Ratings() {
@@ -53,10 +54,11 @@ export default function Ratings() {
   const [whatsAppMembersOnly, setWhatsAppMembersOnly] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
-  const [ratings, setRatings] = useState<{ attack: number | null; defense: number | null; gameIq: number | null }>({
+  const [ratings, setRatings] = useState<{ attack: number | null; defense: number | null; gameIq: number | null; gk: number | null }>({
     attack: null,
     defense: null,
     gameIq: null,
+    gk: null,
   });
   const [selectedAttributes, setSelectedAttributes] = useState<AttributeCombination | null>(null);
   const [availablePlaystyles, setAvailablePlaystyles] = useState<Array<{id: string; name: string; pace_weight: number; shooting_weight: number; passing_weight: number; dribbling_weight: number; defending_weight: number; physical_weight: number}>>([]);
@@ -224,6 +226,20 @@ export default function Ratings() {
           return (b.current_rating.game_iq_rating || 0) - (a.current_rating.game_iq_rating || 0);
         });
         break;
+      case 'gk_asc':
+        result.sort((a, b) => {
+          if (!a.current_rating) return 1;
+          if (!b.current_rating) return -1;
+          return (a.current_rating.gk_rating || 0) - (b.current_rating.gk_rating || 0);
+        });
+        break;
+      case 'gk_desc':
+        result.sort((a, b) => {
+          if (!a.current_rating) return 1;
+          if (!b.current_rating) return -1;
+          return (b.current_rating.gk_rating || 0) - (a.current_rating.gk_rating || 0);
+        });
+        break;
       case 'playstyle_name':
         result.sort((a, b) => {
           // Get playstyle name for a
@@ -324,10 +340,11 @@ export default function Ratings() {
       const { data: existingRatings, error: ratingsError } = await supabase
         .from('player_ratings')
         .select(`
-          rated_player_id, 
-          attack_rating, 
-          defense_rating, 
+          rated_player_id,
+          attack_rating,
+          defense_rating,
           game_iq_rating,
+          gk_rating,
           playstyle_id,
           has_pace,
           has_shooting,
@@ -388,6 +405,7 @@ export default function Ratings() {
         attack_rating: ratings.attack === 0 ? null : ratings.attack,
         defense_rating: ratings.defense === 0 ? null : ratings.defense,
         game_iq_rating: ratings.gameIq === 0 ? null : ratings.gameIq,
+        gk_rating: ratings.gk === 0 ? null : ratings.gk,
       };
 
       // Save attributes directly to database columns
@@ -522,8 +540,8 @@ export default function Ratings() {
                       value={sortOption}
                       onChange={(e) => {
                         if (
-                          filterOption === 'unrated' && 
-                          (e.target.value.includes('attack') || e.target.value.includes('defense') || e.target.value.includes('game_iq'))
+                          filterOption === 'unrated' &&
+                          (e.target.value.includes('attack') || e.target.value.includes('defense') || e.target.value.includes('game_iq') || e.target.value.includes('gk'))
                         ) {
                           setSortOption('alphabetical');
                           return;
@@ -543,6 +561,8 @@ export default function Ratings() {
                           <option value="defense_desc">Defense Rating (High to Low)</option>
                           <option value="game_iq_asc">Game IQ Rating (Low to High)</option>
                           <option value="game_iq_desc">Game IQ Rating (High to Low)</option>
+                          <option value="gk_asc">GK Rating (Low to High)</option>
+                          <option value="gk_desc">GK Rating (High to Low)</option>
                         </>
                       )}
                       {filterOption !== 'unrated' && (
@@ -559,8 +579,8 @@ export default function Ratings() {
                       onChange={(e) => {
                         const newFilter = e.target.value as FilterOption;
                         if (
-                          newFilter === 'unrated' && 
-                          (sortOption.includes('attack') || sortOption.includes('defense') || sortOption.includes('game_iq'))
+                          newFilter === 'unrated' &&
+                          (sortOption.includes('attack') || sortOption.includes('defense') || sortOption.includes('game_iq') || sortOption.includes('gk'))
                         ) {
                           setSortOption('alphabetical');
                         }
@@ -645,6 +665,11 @@ export default function Ratings() {
                 onChange={(value) => setRatings(prev => ({ ...prev, gameIq: value }))}
                 label="Game IQ Rating"
               />
+              <StarRating
+                rating={ratings.gk}
+                onChange={(value) => setRatings(prev => ({ ...prev, gk: value }))}
+                label="GK Rating"
+              />
               <PlaystyleSelector
                 selectedAttributes={selectedAttributes}
                 onAttributesChange={setSelectedAttributes}
@@ -707,6 +732,7 @@ export default function Ratings() {
                         <p>Attack: {formatStarRating(player.current_rating.attack_rating)}</p>
                         <p>Defense: {formatStarRating(player.current_rating.defense_rating)}</p>
                         <p>Game IQ: {formatStarRating(player.current_rating.game_iq_rating)}</p>
+                        <p>GK: {formatStarRating(player.current_rating.gk_rating)}</p>
                         {(() => {
                           const rating = player.current_rating;
                           // Generate playstyle name from attributes
@@ -771,7 +797,8 @@ export default function Ratings() {
                         setRatings({
                           attack: player.current_rating?.attack_rating ?? null,
                           defense: player.current_rating?.defense_rating ?? null,
-                          gameIq: player.current_rating?.game_iq_rating ?? null
+                          gameIq: player.current_rating?.game_iq_rating ?? null,
+                          gk: player.current_rating?.gk_rating ?? null
                         });
                         // Set selected attributes from current rating
                         const rating = player.current_rating;

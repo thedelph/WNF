@@ -391,7 +391,7 @@ export default function PlayerProfileNew() {
           const { data: ratingData, error: ratingError } = await executeWithRetry(
             () => supabase
               .from('player_ratings')
-              .select('attack_rating, defense_rating, game_iq_rating, has_pace, has_shooting, has_passing, has_dribbling, has_defending, has_physical')
+              .select('attack_rating, defense_rating, game_iq_rating, gk_rating, has_pace, has_shooting, has_passing, has_dribbling, has_defending, has_physical')
               .eq('rater_id', currentPlayerId)
               .eq('rated_player_id', playerData.id)
               .maybeSingle()
@@ -512,10 +512,11 @@ export default function PlayerProfileNew() {
           bench_warmer_streak: playerData.bench_warmer_streak || 0,
           token_status: tokenStatus,
           games_played_together: gamesPlayedTogether,
-          my_rating: myRating ? { 
-            attack_rating: myRating.attack_rating, 
+          my_rating: myRating ? {
+            attack_rating: myRating.attack_rating,
             defense_rating: myRating.defense_rating,
-            game_iq_rating: myRating.game_iq_rating || 0
+            game_iq_rating: myRating.game_iq_rating || 0,
+            gk_rating: myRating.gk_rating || 0
           } : null,
           unpaidGames: unpaidGamesCount,
           registrationStreak: registrationStreakData?.current_streak_length || 0,
@@ -574,7 +575,8 @@ export default function PlayerProfileNew() {
         rated_player_id: player.id,
         attack_rating: ratings.attack,
         defense_rating: ratings.defense,
-        game_iq_rating: ratings.gameIq
+        game_iq_rating: ratings.gameIq,
+        gk_rating: ratings.gk
       };
 
       // Save attributes directly to database columns
@@ -629,7 +631,7 @@ export default function PlayerProfileNew() {
       // Refresh player data to update ratings
       const { data: myRating, error: ratingError } = await supabase
         .from('player_ratings')
-        .select('attack_rating, defense_rating, game_iq_rating')
+        .select('attack_rating, defense_rating, game_iq_rating, gk_rating')
         .eq('rater_id', currentPlayer.id)
         .eq('rated_player_id', player.id)
         .maybeSingle();

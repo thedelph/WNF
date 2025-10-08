@@ -3,7 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Memories
-- Run date via base before adding/editing any documentation to ensure you've got the correct date.
+- Run date via bash before adding/editing any documentation to ensure you've got the correct date.
+- GK Rating Feature added (2025-10-08): Fourth rating metric for goalkeeper ability. Measures shot-stopping, positioning, distribution, command of area, and 1v1 ability on 0-10 scale (displayed as 0-5 stars). Database columns: `gk_rating` in player_ratings table, `gk` and `average_gk_rating` in players table. Trigger function `update_player_average_ratings()` updated to calculate GK averages. UI components updated: Ratings.tsx (rating modal + display), RatingsExplanation.tsx (🥅 GK section), PlayerRatingsTable.tsx, admin hooks (usePlayerRatings, useRaterStats), PlayerProfile.tsx, EditPlayer.tsx. GK rating follows same null-safe pattern as other ratings using formatRating() utility. Currently not included in team balancing algorithm - intended for formation suggestions/goalkeeper rotation decisions in 9v9 games.
 - Academy tier added (2025-06-18): Players with 0 caps and 0 XP are now "Academy" (deep teal gradient), while players with >0 caps and 0 XP remain "Retired" (black). This distinction helps differentiate new players from inactive ones.
 - When the user wants to commit changes to GitHub, ask if they'd like to use the Git MCP server commands instead of bash git commands.
 - Team Announcement Phase enhanced (2025-06-18): Now supports two-stage pasting - first paste player registration message, then team announcement message with 🟠 Orange Team and 🔵 Blue Team sections. Attack/Defense ratings removed from game creation form. Default pitch cost updated to £54.

@@ -78,6 +78,7 @@ export const useRaterStats = (isSuperAdmin: boolean) => {
               attack_rating,
               defense_rating,
               game_iq_rating,
+              gk_rating,
               created_at,
               updated_at,
               playstyle_id,

@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { Rating } from '../types';
 import { formatRating } from '../../../../utils/ratingFormatters';
-import { FaClock, FaUser, FaStar, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { FaClock, FaUser, FaStar, FaArrowUp, FaArrowDown, FaFutbol, FaShieldAlt, FaBrain } from 'react-icons/fa';
+import { GiGoalKeeper } from 'react-icons/gi';
 
 interface RecentActivityProps {
   recentRatings: Rating[];
@@ -28,7 +29,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
   const getRatingChangeDisplay = (current: number, previous: number | null | undefined) => {
     const change = getRatingChange(current, previous);
     if (change === null) return null;
-    
+
     if (change > 0) {
       return (
         <span className="text-success text-xs flex items-center gap-0.5 ml-1">
@@ -45,6 +46,39 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
       );
     }
     return null;
+  };
+
+  const getChangedRatingIcons = (rating: Rating) => {
+    const icons = [];
+
+    // Show icon if the rating changed from a previous value (but not if it stayed the same)
+    const attackChange = getRatingChange(rating.attack_rating, rating.previous_attack_rating);
+    if (attackChange !== null && attackChange !== 0 && rating.previous_attack_rating !== null && rating.previous_attack_rating !== undefined) {
+      icons.push(<FaFutbol key="attack" className="text-orange-500" title="Attack rating changed" />);
+    }
+
+    const defenseChange = getRatingChange(rating.defense_rating, rating.previous_defense_rating);
+    if (defenseChange !== null && defenseChange !== 0 && rating.previous_defense_rating !== null && rating.previous_defense_rating !== undefined) {
+      icons.push(<FaShieldAlt key="defense" className="text-blue-500" title="Defense rating changed" />);
+    }
+
+    const gameIqChange = getRatingChange(rating.game_iq_rating, rating.previous_game_iq_rating);
+    if (gameIqChange !== null && gameIqChange !== 0 && rating.previous_game_iq_rating !== null && rating.previous_game_iq_rating !== undefined) {
+      icons.push(<FaBrain key="gameiq" className="text-purple-500" title="Game IQ rating changed" />);
+    }
+
+    const gkChange = getRatingChange(rating.gk_rating, rating.previous_gk_rating);
+    if (gkChange !== null && gkChange !== 0 && rating.previous_gk_rating !== null && rating.previous_gk_rating !== undefined) {
+      icons.push(<GiGoalKeeper key="gk" className="text-green-500" title="GK rating changed" />);
+    }
+
+    // If no icons were added (meaning this is likely a new rating or first-time GK rating),
+    // show GK icon if GK rating exists and wasn't previously rated
+    if (icons.length === 0 && rating.gk_rating && (rating.previous_gk_rating === null || rating.previous_gk_rating === undefined)) {
+      icons.push(<GiGoalKeeper key="gk" className="text-green-500" title="GK rating added" />);
+    }
+
+    return icons;
   };
   if (loading) {
     return (
@@ -100,6 +134,9 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                   </div>
                   <span className="text-base-content/70 text-sm">rated</span>
                   <span className="font-medium">{rating.rated_player?.friendly_name || 'Unknown'}</span>
+                  <div className="flex items-center gap-1 ml-2">
+                    {getChangedRatingIcons(rating)}
+                  </div>
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mt-2 text-sm">
@@ -115,7 +152,11 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                     <span>IQ: {formatRating(rating.game_iq_rating)}</span>
                     {getRatingChangeDisplay(rating.game_iq_rating, rating.previous_game_iq_rating)}
                   </div>
-                  
+                  <div className="badge badge-sm flex items-center">
+                    <span>GK: {formatRating(rating.gk_rating)}</span>
+                    {getRatingChangeDisplay(rating.gk_rating, rating.previous_gk_rating)}
+                  </div>
+
                   {/* Playstyle changes */}
                   {(rating.playstyle || rating.previous_playstyle) && (
                     <div className="badge badge-sm badge-ghost">

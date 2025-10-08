@@ -99,7 +99,7 @@ const RatingsExplanation: React.FC = () => {
 
                 {/* Game IQ Rating Section */}
                 <div className="collapse collapse-arrow bg-base-100">
-                  <input type="checkbox" /> 
+                  <input type="checkbox" />
                   <div className="collapse-title font-medium text-primary">
                     🧠 Game IQ Rating
                   </div>
@@ -115,8 +115,34 @@ const RatingsExplanation: React.FC = () => {
                       </ul>
                       <div className="bg-info/20 p-3 rounded-md mt-3">
                         <p className="text-xs">
-                          <span className="font-medium">Note:</span> Game IQ is independent of physical ability. A player can have high Game IQ 
+                          <span className="font-medium">Note:</span> Game IQ is independent of physical ability. A player can have high Game IQ
                           but lower attack/defense ratings, or vice versa.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GK Rating Section */}
+                <div className="collapse collapse-arrow bg-base-100">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-medium text-primary">
+                    🥅 GK Rating
+                  </div>
+                  <div className="collapse-content">
+                    <div className="text-sm opacity-70 space-y-4">
+                      <p className="font-medium">What to consider when rating goalkeeping:</p>
+                      <ul className="list-disc list-inside space-y-2 ml-4">
+                        <li><span className="font-medium">Shot-Stopping:</span> Ability to make saves, reflexes, and positioning in goal</li>
+                        <li><span className="font-medium">Command of Area:</span> Confidence coming for crosses, organizing the defense</li>
+                        <li><span className="font-medium">Distribution:</span> Throwing accuracy, kicking quality, starting attacks from the back</li>
+                        <li><span className="font-medium">1v1 Ability:</span> Performance in one-on-one situations with attackers</li>
+                        <li><span className="font-medium">Positioning:</span> Angle management, staying on line, coming off the line when needed</li>
+                      </ul>
+                      <div className="bg-info/20 p-3 rounded-md mt-3">
+                        <p className="text-xs">
+                          <span className="font-medium">Note:</span> Since we rotate keepers in 9v9 games, this rating helps with deciding
+                          who plays in goal and when. It's not just about ability - some players are more willing to play GK than others.
                         </p>
                       </div>
                     </div>

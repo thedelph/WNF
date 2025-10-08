@@ -12,6 +12,7 @@ type Player = {
   attack_rating?: number
   defense_rating?: number
   game_iq?: number
+  gk_rating?: number
   is_test_user: boolean
   is_beta_tester: boolean
   calculated_caps?: number
@@ -122,6 +123,7 @@ const EditPlayer: React.FC = () => {
           ...(player.attack_rating ? { attack_rating: player.attack_rating } : {}),
           ...(player.defense_rating ? { defense_rating: player.defense_rating } : {}),
           ...(player.game_iq ? { game_iq: player.game_iq } : {}),
+          ...(player.gk_rating ? { gk_rating: player.gk_rating } : {}),
           whatsapp_group_member: player.whatsapp_group_member || null,
           whatsapp_mobile_number: player.whatsapp_mobile_number || null,
           shield_tokens_available: player.shield_tokens_available || 0,
@@ -268,6 +270,22 @@ const EditPlayer: React.FC = () => {
             id="game_iq"
             name="game_iq"
             value={player.game_iq || ''}
+            onChange={handleChange}
+            min="0"
+            max="10"
+            step="0.01"
+            className="input input-bordered w-full"
+          />
+        </div>
+        <div className="form-control">
+          <label className="label" htmlFor="gk_rating">
+            <span className="label-text">GK Rating</span>
+          </label>
+          <input
+            type="number"
+            id="gk_rating"
+            name="gk_rating"
+            value={player.gk_rating || ''}
             onChange={handleChange}
             min="0"
             max="10"

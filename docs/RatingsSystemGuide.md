@@ -22,13 +22,14 @@ The WNF Ratings System allows players to confidentially rate other players they 
 ### Rating Criteria
 - Players can rate others only after playing 5 games with them
 - Ratings are confidential and only visible to administrators
-- Players can rate attack, defense, and game IQ skills on a scale of 0-10
+- Players can rate attack, defense, game IQ, and GK skills on a scale of 0-10
 - Players can also assign playstyles to complement the core ratings
 
 ### Rating Definitions
 - **Attack Rating**: Measures both offensive skills AND tendency to play in attacking positions
-- **Defense Rating**: Measures both defensive skills AND tendency to play in defensive positions  
+- **Defense Rating**: Measures both defensive skills AND tendency to play in defensive positions
 - **Game IQ Rating**: Measures tactical awareness, positioning, decision-making, and understanding of game flow
+- **GK Rating**: Measures goalkeeper ability including shot-stopping, positioning, distribution, command of area, and 1v1 ability
 
 ### Rating Process
 1. After completing a game, eligible players can rate their teammates
@@ -78,13 +79,13 @@ The WNF Ratings System allows players to confidentially rate other players they 
 
 #### Ratings Received View
 - Shows who rated each player
-- Displays individual attack and defense ratings
+- Displays individual attack, defense, game IQ, and GK ratings
 - Includes timestamp information
 - Sortable by rater name, ratings, or date
 
 #### Ratings Given View
 - Shows who each player has rated
-- Displays given attack and defense ratings
+- Displays given attack, defense, game IQ, and GK ratings
 - Includes timestamp information
 - Sortable by rated player name, ratings, or date
 
@@ -94,6 +95,8 @@ The WNF Ratings System allows players to confidentially rate other players they 
 - Player/Rater Name (alphabetical)
 - Attack Rating (numerical)
 - Defense Rating (numerical)
+- Game IQ Rating (numerical)
+- GK Rating (numerical)
 - Date (chronological)
 
 #### Filtering
@@ -181,3 +184,4 @@ graph TD
 - Added null safety checks for player data
 - Added expandable ratings explanation section (June 26, 2025)
 - Integrated Game IQ rating throughout the system
+- Added GK (Goalkeeper) rating feature (October 8, 2025)

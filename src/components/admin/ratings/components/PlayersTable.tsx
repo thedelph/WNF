@@ -70,6 +70,12 @@ export const PlayersTable: React.FC<PlayersTableProps> = ({
                 {getSortIcon('game_iq')}
               </span>
             </th>
+            <th onClick={() => onSort('average_gk_rating')} className="cursor-pointer hidden lg:table-cell">
+              <span className="flex items-center gap-1">
+                GK
+                {getSortIcon('average_gk_rating')}
+              </span>
+            </th>
             <th onClick={() => onSort('total_ratings')} className="cursor-pointer">
               <span className="flex items-center gap-1">
                 <span className="hidden sm:inline">Total</span>
@@ -95,12 +101,14 @@ export const PlayersTable: React.FC<PlayersTableProps> = ({
               <td className="hidden sm:table-cell">{formatRating(player.attack_rating)}</td>
               <td className="hidden sm:table-cell">{formatRating(player.defense_rating)}</td>
               <td className="hidden md:table-cell">{formatRating(player.game_iq)}</td>
+              <td className="hidden lg:table-cell">{formatRating(player.average_gk_rating)}</td>
               <td>{player.ratings?.length || 0}</td>
               <td className="sm:hidden">
                 <div className="flex flex-col gap-1">
                   <span className="badge badge-xs">A: {formatRating(player.attack_rating)}</span>
                   <span className="badge badge-xs">D: {formatRating(player.defense_rating)}</span>
                   <span className="badge badge-xs">IQ: {formatRating(player.game_iq)}</span>
+                  <span className="badge badge-xs">GK: {formatRating(player.average_gk_rating)}</span>
                 </div>
               </td>
             </motion.tr>

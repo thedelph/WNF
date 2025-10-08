@@ -45,6 +45,7 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
           attack_rating,
           defense_rating,
           game_iq_rating,
+          gk_rating,
           created_at,
           updated_at,
           rater_id,
@@ -98,7 +99,7 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
           // Get the most recent history entry before the current update
           const { data: historyData } = await supabaseAdmin
             .from('player_ratings_history')
-            .select('attack_rating, defense_rating, game_iq_rating, playstyle_id')
+            .select('attack_rating, defense_rating, game_iq_rating, gk_rating, playstyle_id')
             .eq('rating_id', rating.id)
             .lt('changed_at', rating.updated_at || rating.created_at)
             .order('changed_at', { ascending: false })
@@ -117,6 +118,7 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
             previous_attack_rating: previousRating?.attack_rating ?? null,
             previous_defense_rating: previousRating?.defense_rating ?? null,
             previous_game_iq_rating: previousRating?.game_iq_rating ?? null,
+            previous_gk_rating: previousRating?.gk_rating ?? null,
             previous_playstyle_id: previousRating?.playstyle_id ?? null,
             previous_playstyle: previousPlaystyle
           };

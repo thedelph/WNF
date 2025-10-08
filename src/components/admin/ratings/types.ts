@@ -3,14 +3,15 @@ export interface Rating {
   attack_rating: number;
   defense_rating: number;
   game_iq_rating: number;
+  gk_rating: number;
   created_at: string;
   updated_at?: string;
-  rater: { 
+  rater: {
     id: string;
     friendly_name: string;
     is_admin: boolean;
   };
-  rated_player: { 
+  rated_player: {
     id: string;
     friendly_name: string;
   };
@@ -18,6 +19,7 @@ export interface Rating {
   previous_attack_rating?: number;
   previous_defense_rating?: number;
   previous_game_iq_rating?: number;
+  previous_gk_rating?: number;
   previous_playstyle_id?: string | null;
   // Playstyle information
   playstyle?: {
@@ -40,6 +42,7 @@ export interface Player {
   attack_rating: number;
   defense_rating: number;
   game_iq: number;
+  average_gk_rating: number;
   ratings: Rating[];
   // Derived attributes from playstyle ratings
   derived_attributes?: {
@@ -53,7 +56,7 @@ export interface Player {
 }
 
 export interface SortConfig {
-  key: 'friendly_name' | 'attack_rating' | 'defense_rating' | 'game_iq' | 'game_iq_rating' | 'total_ratings';
+  key: 'friendly_name' | 'attack_rating' | 'defense_rating' | 'game_iq' | 'game_iq_rating' | 'gk_rating' | 'average_gk_rating' | 'total_ratings';
   direction: 'asc' | 'desc';
 }
 
@@ -64,5 +67,7 @@ export interface FilterConfig {
   maxDefense: number;
   minGameIq: number;
   maxGameIq: number;
+  minGk: number;
+  maxGk: number;
   minTotalRatings: number;
 }

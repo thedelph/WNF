@@ -22,6 +22,7 @@ export interface TeamAssignment {
   attack_rating: number | null;
   defense_rating: number | null;
   game_iq_rating: number | null;
+  gk_rating: number | null;
   win_rate?: number | null; // Recent win rate (last 10 games)
   goal_differential?: number | null; // Goal differential from last 10 games
   overall_win_rate?: number | null; // Overall career win rate
