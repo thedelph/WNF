@@ -178,51 +178,83 @@ function generateBalanceQualityDescription(
 /**
  * Calculate league average attributes and standard deviation for relative comparisons
  */
-function calculateLeagueAttributeStats(players: TeamAssignment[]): { 
-  average: number; 
+/**
+ * Calculate goal differential statistics from the actual player pool
+ */
+function calculateGoalDiffStats(players: TeamAssignment[]): {
+  overallMin: number;
+  overallMax: number;
+  recentMin: number;
+  recentMax: number;
+} {
+  const playersWithStats = players.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS);
+
+  if (playersWithStats.length === 0) {
+    // Fallback to hardcoded values if no experienced players
+    return {
+      overallMin: OVERALL_GD_MIN,
+      overallMax: OVERALL_GD_MAX,
+      recentMin: RECENT_GD_MIN,
+      recentMax: RECENT_GD_MAX
+    };
+  }
+
+  const overallGDs = playersWithStats.map(p => p.overall_goal_differential ?? 0);
+  const recentGDs = playersWithStats.map(p => p.goal_differential ?? 0);
+
+  return {
+    overallMin: Math.min(...overallGDs),
+    overallMax: Math.max(...overallGDs),
+    recentMin: Math.min(...recentGDs),
+    recentMax: Math.max(...recentGDs)
+  };
+}
+
+function calculateLeagueAttributeStats(players: TeamAssignment[]): {
+  average: number;
   standardDeviation: number;
   min: number;
   max: number;
 } {
   const playersWithAttributes = players.filter(p => p.derived_attributes);
-  
+
   if (playersWithAttributes.length === 0) {
-    return { 
+    return {
       average: 5.0, // Default neutral attribute score
       standardDeviation: 1.0,
       min: 5.0,
       max: 5.0
     };
   }
-  
+
   // Calculate all attribute scores
   // With new system, each attribute is 0-1, and players can have 0-6 total
   const attributeScores = playersWithAttributes.map(player => {
     const attrs = player.derived_attributes!;
     // Sum total attribute points (0-6 range) and normalize to 0-10 scale
-    const totalAttributePoints = 
-      attrs.pace + 
-      attrs.shooting + 
-      attrs.passing + 
-      attrs.dribbling + 
-      attrs.defending + 
+    const totalAttributePoints =
+      attrs.pace +
+      attrs.shooting +
+      attrs.passing +
+      attrs.dribbling +
+      attrs.defending +
       attrs.physical;
-    
+
     // Normalize: 0 attributes = 0, 6 attributes = 10
     return (totalAttributePoints / 6) * 10;
   });
-  
+
   // Calculate statistics
   const average = attributeScores.reduce((sum, score) => sum + score, 0) / attributeScores.length;
   const min = Math.min(...attributeScores);
   const max = Math.max(...attributeScores);
-  
+
   // Calculate standard deviation
   const variance = attributeScores.reduce((sum, score) => {
     return sum + Math.pow(score - average, 2);
   }, 0) / attributeScores.length;
   const standardDeviation = Math.sqrt(variance);
-  
+
   return { average, standardDeviation, min, max };
 }
 
@@ -230,7 +262,11 @@ function calculateLeagueAttributeStats(players: TeamAssignment[]): {
  * Calculate the three-layer rating for a player
  * Combines base skill, overall performance, and recent form
  */
-function calculateThreeLayerRating(player: TeamAssignment, attributeStats: { average: number; standardDeviation: number; min: number; max: number }): {
+function calculateThreeLayerRating(
+  player: TeamAssignment,
+  attributeStats: { average: number; standardDeviation: number; min: number; max: number },
+  goalDiffStats: { overallMin: number; overallMax: number; recentMin: number; recentMax: number }
+): {
   threeLayerRating: number;
   baseSkillRating: number;
   attributesScore?: number;
@@ -287,42 +323,49 @@ function calculateThreeLayerRating(player: TeamAssignment, attributeStats: { ave
   if (overallWinRate > 1) {
     overallWinRate = overallWinRate / 100;
   }
-  
-  // Normalize goal differential to 0-1 range
-  const overallGdNorm = Math.max(0, Math.min(1, 
-    (overallGoalDiff - OVERALL_GD_MIN) / (OVERALL_GD_MAX - OVERALL_GD_MIN)
+
+  // Normalize goal differential using actual player pool range (percentile-based)
+  const gdRange = Math.max(1, goalDiffStats.overallMax - goalDiffStats.overallMin);
+  const overallGdNorm = Math.max(0, Math.min(1,
+    (overallGoalDiff - goalDiffStats.overallMin) / gdRange
   ));
-  
-  const overallPerformanceScore = (overallWinRate * WIN_RATE_WEIGHT) + 
-                                  (overallGdNorm * GOAL_DIFF_WEIGHT);
+
+  // Performance score: center around 0.5 (neutral performance)
+  // Win rate and goal diff are already normalized to 0-1, so we combine them
+  // then center them for proper adjustment calculation
+  const overallPerformanceScore = (overallWinRate + overallGdNorm) / 2;
   
   // Layer 3: Recent Form (last 10 games)
   // Convert to decimal if it's a percentage (> 1) for experienced players
   if (recentWinRate > 1) {
     recentWinRate = recentWinRate / 100;
   }
-  
-  // Normalize recent goal differential
+
+  // Normalize recent goal differential using actual player pool range
+  const recentGdRange = Math.max(1, goalDiffStats.recentMax - goalDiffStats.recentMin);
   const recentGdNorm = Math.max(0, Math.min(1,
-    (recentGoalDiff - RECENT_GD_MIN) / (RECENT_GD_MAX - RECENT_GD_MIN)
+    (recentGoalDiff - goalDiffStats.recentMin) / recentGdRange
   ));
-  
-  const recentFormScore = (recentWinRate * WIN_RATE_WEIGHT) + 
-                         (recentGdNorm * GOAL_DIFF_WEIGHT);
+
+  // Recent form score: center around 0.5 (neutral performance)
+  const recentFormScore = (recentWinRate + recentGdNorm) / 2;
   
   // Momentum calculation: Compare recent form to overall performance
   const momentum = recentFormScore - overallPerformanceScore;
   let momentumAdjustment = 0;
   let momentumCategory: 'hot' | 'cold' | 'steady' = 'steady';
-  
+
+  // Only apply momentum if both the momentum is significant AND the recent form is genuinely good/bad
+  // This prevents penalizing players with strong overall records but slightly lower recent form
   if (Math.abs(momentum) >= MOMENTUM_THRESHOLD_SMALL) {
-    if (momentum > 0) {
-      // Hot streak - performing better than usual
+    if (momentum > 0 && recentWinRate > 0.50) {
+      // Hot streak - performing better than usual AND recent form is above average
       momentumCategory = 'hot';
       const scaledMomentum = Math.min(momentum / MOMENTUM_THRESHOLD_LARGE, 1);
       momentumAdjustment = scaledMomentum * MOMENTUM_WEIGHT_HOT;
-    } else {
-      // Cold streak - performing worse than usual
+    } else if (momentum < 0 && recentWinRate < 0.40 && overallWinRate < 0.45) {
+      // Cold streak - performing worse than usual AND both recent AND overall form are poor
+      // Don't penalize players with strong overall records for recent bad luck
       momentumCategory = 'cold';
       const scaledMomentum = Math.min(Math.abs(momentum) / MOMENTUM_THRESHOLD_LARGE, 1);
       momentumAdjustment = -scaledMomentum * MOMENTUM_WEIGHT_COLD;
@@ -340,19 +383,19 @@ function calculateThreeLayerRating(player: TeamAssignment, attributeStats: { ave
   const MAX_ABSOLUTE_ADJUSTMENT = 0.5; // Maximum ±0.5 rating points adjustment
   
   // Center the performance scores around 0 (subtract 0.5 to make neutral = 0)
-  // Apply exponential penalties for catastrophic performers (< 30% win rate)
   let overallAdjustment = (overallPerformanceScore - 0.5) * 2; // Range: -1 to +1
   let recentAdjustment = (recentFormScore - 0.5) * 2; // Range: -1 to +1
-  
+
   // Apply catastrophic performance penalties for win rates < 30%
-  if (overallWinRate < 0.3) {
-    const catastrophicFactor = (0.3 - overallWinRate) * 2; // 0-0.6 extra penalty
-    overallAdjustment = overallAdjustment - catastrophicFactor; // Make more negative
+  // Only apply if the score isn't already heavily penalized
+  if (overallWinRate < 0.3 && overallAdjustment > -0.5) {
+    const catastrophicFactor = (0.3 - overallWinRate) * 1.5; // 0-0.45 extra penalty (reduced from 2x)
+    overallAdjustment = Math.min(overallAdjustment - catastrophicFactor, overallAdjustment); // Make more negative
   }
-  
-  if (recentWinRate < 0.3) {
-    const recentCatastrophicFactor = (0.3 - recentWinRate) * 2;
-    recentAdjustment = recentAdjustment - recentCatastrophicFactor;
+
+  if (recentWinRate < 0.3 && recentAdjustment > -0.5) {
+    const recentCatastrophicFactor = (0.3 - recentWinRate) * 1.5;
+    recentAdjustment = Math.min(recentAdjustment - recentCatastrophicFactor, recentAdjustment);
   }
   
   // Cap individual performance adjustments to prevent extreme changes
@@ -547,6 +590,19 @@ function calculateAttributeBalanceScore(blueTeam: PlayerWithRating[], orangeTeam
   // Find the maximum difference for penalty calculation
   const maxDiff = Math.max(...diffs);
 
+  // NEW: Complementary strengths balancing for attributes
+  // Count how many attributes each team "wins" (is better at)
+  const blueWins =
+    (blueAttrs.pace > orangeAttrs.pace ? 1 : 0) +
+    (blueAttrs.shooting > orangeAttrs.shooting ? 1 : 0) +
+    (blueAttrs.passing > orangeAttrs.passing ? 1 : 0) +
+    (blueAttrs.dribbling > orangeAttrs.dribbling ? 1 : 0) +
+    (blueAttrs.defending > orangeAttrs.defending ? 1 : 0) +
+    (blueAttrs.physical > orangeAttrs.physical ? 1 : 0);
+
+  // Dominance factor: 0 = perfectly balanced (3 wins each), 1 = total dominance (6-0 or 0-6)
+  const attributeDominance = Math.abs(blueWins - 3.0) / 3.0;
+
   // Apply penalty multiplier for extreme differences (> 3.0)
   // This creates a hybrid approach: mostly average, but penalizes extreme imbalances
   let penaltyMultiplier = 1.0;
@@ -556,9 +612,15 @@ function calculateAttributeBalanceScore(blueTeam: PlayerWithRating[], orangeTeam
     penaltyMultiplier = 1.25; // 25% penalty for extreme differences
   }
 
-  // Return weighted score that considers both average and extreme values
-  // This allows some variation while preventing severe imbalances
-  return avgDiff * penaltyMultiplier;
+  // Apply dominance penalty similar to skill balance
+  // If dominance = 0 (3-3 split): use 80% of avg diff (reward complementary attributes moderately)
+  // If dominance = 1 (6-0 split): use 100% of avg diff (penalize one-sided dominance)
+  // Changed from 0.7-0.3 to 0.8-0.2 (attributes are less critical than core skills)
+  const dominancePenalty = 0.8 + (attributeDominance * 0.2);
+
+  // Return weighted score that considers both average, extreme values, and dominance
+  // This allows some variation while preventing severe imbalances and one-sided teams
+  return avgDiff * penaltyMultiplier * dominancePenalty;
 }
 
 /**
@@ -1009,30 +1071,47 @@ function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: Pla
   if (blueTeam.length === 0 || orangeTeam.length === 0) {
     return 1000; // Very high score for empty teams
   }
-  
+
   // Calculate average ratings
   const blueAttack = blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / blueTeam.length;
   const orangeAttack = orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangeTeam.length;
-  
+
   const blueDefense = blueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / blueTeam.length;
   const orangeDefense = orangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangeTeam.length;
-  
+
   const blueGameIq = blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / blueTeam.length;
   const orangeGameIq = orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / orangeTeam.length;
-  
+
   // Calculate skill differences
   const attackDiff = Math.abs(blueAttack - orangeAttack);
   const defenseDiff = Math.abs(blueDefense - orangeDefense);
   const gameIqDiff = Math.abs(blueGameIq - orangeGameIq);
-  
+
+  // NEW: Complementary strengths balancing
+  // Count how many skills each team "wins" (is better at)
+  const blueWins =
+    (blueAttack > orangeAttack ? 1 : 0) +
+    (blueDefense > orangeDefense ? 1 : 0) +
+    (blueGameIq > orangeGameIq ? 1 : 0);
+
+  // Dominance factor: 0 = perfectly balanced (1.5 wins each), 1 = total dominance (3-0 or 0-3)
+  // Ideal: each team wins ~1.5 skills (rounded to nearest 0.5)
+  const dominanceFactor = Math.abs(blueWins - 1.5) / 1.5;
+
+  // Apply dominance penalty to skill balance
+  // If dominance = 0 (1.5-1.5 split): use 70% of max diff (reward complementary strengths moderately)
+  // If dominance = 1 (3-0 split): use 100% of max diff (penalize one-sided dominance)
+  // Changed from 0.5-0.5 to 0.7-0.3 to prevent premature optimization stopping
+  const maxSkillDiff = Math.max(attackDiff, defenseDiff, gameIqDiff);
+  const skillBalance = maxSkillDiff * (0.7 + dominanceFactor * 0.3);
+
   // Calculate attribute balance score
   const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
-  
+
   // Weight skills at 85% and attributes at 15% to reduce attribute blocking
   // This makes core skills more important while still considering playstyles
-  const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff);
   const combinedBalance = (skillBalance * 0.85) + (attributeBalance * 0.15);
-  
+
   return combinedBalance;
 }
 
@@ -2903,13 +2982,17 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   // Step 1: Calculate three-layer ratings for all players
   debugLog += 'STEP 1: CALCULATING THREE-LAYER RATINGS\n';
   debugLog += '=====================================\n\n';
-  
+
   // Calculate league attribute statistics for relative comparisons
   const attributeStats = calculateLeagueAttributeStats(players);
   debugLog += `League Attribute Stats: avg=${attributeStats.average.toFixed(2)}, std=${attributeStats.standardDeviation.toFixed(2)}, range=${attributeStats.min.toFixed(2)}-${attributeStats.max.toFixed(2)}\n\n`;
-  
+
+  // Calculate goal differential statistics from actual player pool
+  const goalDiffStats = calculateGoalDiffStats(players);
+  debugLog += `Goal Diff Stats: Overall range=${goalDiffStats.overallMin} to ${goalDiffStats.overallMax}, Recent range=${goalDiffStats.recentMin} to ${goalDiffStats.recentMax}\n\n`;
+
   const playersWithRatings: PlayerWithRating[] = players.map(player => {
-    const ratingInfo = calculateThreeLayerRating(player, attributeStats);
+    const ratingInfo = calculateThreeLayerRating(player, attributeStats, goalDiffStats);
     
     // Track rated vs new players for executive summary
     if (player.total_games && player.total_games >= MIN_GAMES_FOR_STATS) {
@@ -3435,28 +3518,39 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   // Add Team Balance Breakdown
   debugLog += '\nTEAM BALANCE BREAKDOWN\n';
   debugLog += '======================\n';
-  
+
   // Calculate team statistics including performance metrics
   const blueWinRate = blueTeam.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS)
     .reduce((sum, p, _, arr) => sum + (p.win_rate ?? 50) / arr.length, 0);
   const orangeWinRate = orangeTeam.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS)
     .reduce((sum, p, _, arr) => sum + (p.win_rate ?? 50) / arr.length, 0);
-    
+
   const blueGoalDiff = blueTeam.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS)
     .reduce((sum, p, _, arr) => sum + (p.goal_differential ?? 0) / arr.length, 0);
   const orangeGoalDiff = orangeTeam.filter(p => p.total_games && p.total_games >= MIN_GAMES_FOR_STATS)
     .reduce((sum, p, _, arr) => sum + (p.goal_differential ?? 0) / arr.length, 0);
-  
+
+  // Calculate skill wins for complementary strengths display
+  const blueSkillWins =
+    (blueAttack > orangeAttack ? 1 : 0) +
+    (blueDefense > orangeDefense ? 1 : 0) +
+    (blueGameIq > orangeGameIq ? 1 : 0);
+  const skillDominance = Math.abs(blueSkillWins - 1.5) / 1.5;
+
   // Format the breakdown table
   debugLog += '                Blue    Orange   Difference\n';
   debugLog += `Attack:         ${blueAttack.toFixed(2)}    ${orangeAttack.toFixed(2)}     ${Math.abs(blueAttack - orangeAttack).toFixed(2)}\n`;
   debugLog += `Defense:        ${blueDefense.toFixed(2)}    ${orangeDefense.toFixed(2)}     ${Math.abs(blueDefense - orangeDefense).toFixed(2)}\n`;
   debugLog += `Game IQ:        ${blueGameIq.toFixed(2)}    ${orangeGameIq.toFixed(2)}     ${Math.abs(blueGameIq - orangeGameIq).toFixed(2)}\n`;
+
+  // Add skill distribution info
+  const orangeSkillWins = 3 - blueSkillWins;
+  debugLog += `\nSkill Distribution: Blue wins ${blueSkillWins}/3, Orange wins ${orangeSkillWins}/3 (dominance: ${skillDominance.toFixed(2)})\n`;
   
   // Add derived attributes breakdown
   const blueAttrs = calculateTeamAttributes(blueTeam);
   const orangeAttrs = calculateTeamAttributes(orangeTeam);
-  
+
   if (blueAttrs.hasAttributes || orangeAttrs.hasAttributes) {
     debugLog += '\nAttributes:\n';
     debugLog += `  Pace:         ${(blueAttrs.pace * 10).toFixed(2)}    ${(orangeAttrs.pace * 10).toFixed(2)}     ${(Math.abs(blueAttrs.pace - orangeAttrs.pace) * 10).toFixed(2)}\n`;
@@ -3465,9 +3559,21 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
     debugLog += `  Dribbling:    ${(blueAttrs.dribbling * 10).toFixed(2)}    ${(orangeAttrs.dribbling * 10).toFixed(2)}     ${(Math.abs(blueAttrs.dribbling - orangeAttrs.dribbling) * 10).toFixed(2)}\n`;
     debugLog += `  Defending:    ${(blueAttrs.defending * 10).toFixed(2)}    ${(orangeAttrs.defending * 10).toFixed(2)}     ${(Math.abs(blueAttrs.defending - orangeAttrs.defending) * 10).toFixed(2)}\n`;
     debugLog += `  Physical:     ${(blueAttrs.physical * 10).toFixed(2)}    ${(orangeAttrs.physical * 10).toFixed(2)}     ${(Math.abs(blueAttrs.physical - orangeAttrs.physical) * 10).toFixed(2)}\n`;
-    
+
+    // Calculate attribute wins for complementary strengths display
+    const blueAttrWins =
+      (blueAttrs.pace > orangeAttrs.pace ? 1 : 0) +
+      (blueAttrs.shooting > orangeAttrs.shooting ? 1 : 0) +
+      (blueAttrs.passing > orangeAttrs.passing ? 1 : 0) +
+      (blueAttrs.dribbling > orangeAttrs.dribbling ? 1 : 0) +
+      (blueAttrs.defending > orangeAttrs.defending ? 1 : 0) +
+      (blueAttrs.physical > orangeAttrs.physical ? 1 : 0);
+    const orangeAttrWins = 6 - blueAttrWins;
+    const attrDominance = Math.abs(blueAttrWins - 3.0) / 3.0;
+
     const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
-    debugLog += `  Overall Attr Balance: ${attributeBalance.toFixed(2)} (max difference)\n`;
+    debugLog += `  Overall Attr Balance: ${attributeBalance.toFixed(2)} (weighted average)\n`;
+    debugLog += `  Attribute Distribution: Blue wins ${blueAttrWins}/6, Orange wins ${orangeAttrWins}/6 (dominance: ${attrDominance.toFixed(2)})\n`;
   }
 
   // Add shooting distribution analysis
