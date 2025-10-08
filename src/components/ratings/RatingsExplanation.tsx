@@ -141,8 +141,8 @@ const RatingsExplanation: React.FC = () => {
                       </ul>
                       <div className="bg-info/20 p-3 rounded-md mt-3">
                         <p className="text-xs">
-                          <span className="font-medium">Note:</span> Since we rotate keepers in 9v9 games, this rating helps with deciding
-                          who plays in goal and when. It's not just about ability - some players are more willing to play GK than others.
+                          <span className="font-medium">Note:</span> Since we rotate keepers in 9v9 games, everyone should go in goal at least once per game
+                          (ideally ~7 minutes each).
                         </p>
                       </div>
                     </div>
@@ -151,7 +151,7 @@ const RatingsExplanation: React.FC = () => {
 
                 {/* Playstyle Rating Section */}
                 <div className="collapse collapse-arrow bg-base-100">
-                  <input type="checkbox" /> 
+                  <input type="checkbox" />
                   <div className="collapse-title font-medium text-primary">
                     ⚡ Playstyle Rating
                   </div>
@@ -159,11 +159,11 @@ const RatingsExplanation: React.FC = () => {
                     <div className="text-sm opacity-70 space-y-4">
                       <p className="font-medium">How Playstyles Work:</p>
                       <p>
-                        Playstyles complement your Attack/Defense/Game IQ ratings by showing <span className="font-medium">HOW</span> a player uses their skills.
-                        Each playstyle automatically derives 6 attributes that enhance team balancing.
+                        Playstyles complement your Attack/Defense/Game IQ/GK ratings by showing <span className="font-medium">HOW</span> a player uses their skills.
+                        Select the attributes that best describe the player's strengths.
                       </p>
-                      
-                      <p className="font-medium">The 6 Derived Attributes:</p>
+
+                      <p className="font-medium">The 6 Attributes to Choose From:</p>
                       <ul className="list-disc list-inside space-y-2 ml-4">
                         <li><span className="font-medium">Pace:</span> Speed and acceleration</li>
                         <li><span className="font-medium">Shooting:</span> Finishing and shot power</li>
@@ -172,61 +172,20 @@ const RatingsExplanation: React.FC = () => {
                         <li><span className="font-medium">Defending:</span> Tackling and positioning</li>
                         <li><span className="font-medium">Physical:</span> Strength and stamina</li>
                       </ul>
-                      
-                      <p className="font-medium mt-3">24 Available Playstyles:</p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div>
-                          <span className="font-medium text-error">Attacking (8)</span>
-                          <ul className="ml-2 mt-1">
-                            <li>• Complete Forward</li>
-                            <li>• Hunter</li>
-                            <li>• Hawk</li>
-                            <li>• Marksman</li>
-                            <li>• Finisher</li>
-                            <li>• Sniper</li>
-                            <li>• Deadeye</li>
-                            <li>• Speedster</li>
-                          </ul>
-                        </div>
-                        <div>
-                          <span className="font-medium text-warning">Midfield (9)</span>
-                          <ul className="ml-2 mt-1">
-                            <li>• Box-to-Box</li>
-                            <li>• Engine</li>
-                            <li>• Artist</li>
-                            <li>• Architect</li>
-                            <li>• Powerhouse</li>
-                            <li>• Maestro</li>
-                            <li>• Catalyst</li>
-                            <li>• Locomotive</li>
-                            <li>• Enforcer</li>
-                          </ul>
-                        </div>
-                        <div>
-                          <span className="font-medium text-info">Defensive (7)</span>
-                          <ul className="ml-2 mt-1">
-                            <li>• Complete Defender</li>
-                            <li>• Shadow</li>
-                            <li>• Anchor</li>
-                            <li>• Gladiator</li>
-                            <li>• Guardian</li>
-                            <li>• Sentinel</li>
-                            <li>• Backbone</li>
-                          </ul>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-warning/20 p-3 rounded-md mt-3">
-                        <p className="text-xs">
-                          <span className="font-medium">Tip:</span> Use the "Filter by attributes" feature above the playstyle dropdown
-                          to find playstyles matching specific attributes (e.g., select Pace + Dribbling to find Speedster).
-                        </p>
-                      </div>
-                      
+
                       <div className="bg-info/20 p-3 rounded-md mt-3">
                         <p className="text-xs">
-                          <span className="font-medium">Note:</span> When multiple players rate someone, their playstyle attributes are automatically averaged
-                          to provide a balanced assessment of their playing style.
+                          <span className="font-medium">How it works:</span> Simply check the boxes for attributes the player possesses.
+                          The system will automatically generate an appropriate playstyle name based on your selections. There are 63 possible
+                          combinations, with recognizable names like "Hunter" (Pace + Shooting) or "Engine" (Pace + Passing + Dribbling)
+                          for common combinations.
+                        </p>
+                      </div>
+
+                      <div className="bg-warning/20 p-3 rounded-md mt-3">
+                        <p className="text-xs">
+                          <span className="font-medium">Tip:</span> Use the "Filter by attributes" feature to preview which playstyle names
+                          match specific attribute combinations before making your selection.
                         </p>
                       </div>
                     </div>
