@@ -25,6 +25,8 @@ const ShieldTokenManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [issuing, setIssuing] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [removingToken, setRemovingToken] = useState<string | null>(null);
+  const [resettingProgress, setResettingProgress] = useState<string | null>(null);
 
   // Fetch all players and their shield status
   const fetchShieldData = async () => {
@@ -133,6 +135,77 @@ const ShieldTokenManagement: React.FC = () => {
       toast.error(error.message || 'Failed to remove shield protection');
     } finally {
       setRemoving(null);
+    }
+  };
+
+  // Remove shield tokens from player
+  const handleRemoveToken = async (playerId: string, playerName: string, currentTokens: number) => {
+    if (!confirm(`Remove 1 shield token from ${playerName}? They currently have ${currentTokens} token${currentTokens !== 1 ? 's' : ''}.`)) {
+      return;
+    }
+
+    try {
+      setRemovingToken(playerId);
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data, error } = await supabase.rpc('remove_shield_tokens', {
+        p_player_id: playerId,
+        p_amount: 1,
+        p_reason: 'Manually removed by admin',
+        p_admin_id: user?.id || null
+      });
+
+      if (error) throw error;
+
+      const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
+
+      if (result?.success) {
+        toast.success(`${result.message}. ${playerName} now has ${result.tokens_now} token${result.tokens_now !== 1 ? 's' : ''}.`);
+        await fetchShieldData();
+      } else {
+        toast.error(result?.message || 'Failed to remove token');
+      }
+    } catch (error: any) {
+      console.error('Error removing token:', error);
+      toast.error(error.message || 'Failed to remove shield token');
+    } finally {
+      setRemovingToken(null);
+    }
+  };
+
+  // Reset shield progress tracking
+  const handleResetProgress = async (playerId: string, playerName: string, currentGames: number) => {
+    if (!confirm(`Reset shield progress for ${playerName}? This will reset their games played from ${currentGames} to 0. Their tokens will NOT be affected.`)) {
+      return;
+    }
+
+    try {
+      setResettingProgress(playerId);
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data, error } = await supabase.rpc('reset_shield_progress', {
+        p_player_id: playerId,
+        p_reason: 'Manually reset by admin',
+        p_admin_id: user?.id || null
+      });
+
+      if (error) throw error;
+
+      const result = Array.isArray(data) && data.length > 0 ? data[0] : data;
+
+      if (result?.success) {
+        toast.success(`${result.message} for ${playerName}`);
+        await fetchShieldData();
+      } else {
+        toast.error(result?.message || 'Failed to reset progress');
+      }
+    } catch (error: any) {
+      console.error('Error resetting progress:', error);
+      toast.error(error.message || 'Failed to reset shield progress');
+    } finally {
+      setResettingProgress(null);
     }
   };
 
@@ -325,7 +398,7 @@ const ShieldTokenManagement: React.FC = () => {
 
                   {/* Actions */}
                   <td>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {/* Issue Token Button */}
                       <button
                         onClick={() => handleIssueToken(player.id, player.friendly_name)}
@@ -347,6 +420,22 @@ const ShieldTokenManagement: React.FC = () => {
                         )}
                       </button>
 
+                      {/* Remove Token Button */}
+                      {player.shield_tokens_available > 0 && (
+                        <button
+                          onClick={() => handleRemoveToken(player.id, player.friendly_name, player.shield_tokens_available)}
+                          disabled={removingToken === player.id}
+                          className="btn btn-error btn-xs"
+                          title="Remove 1 shield token"
+                        >
+                          {removingToken === player.id ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                          ) : (
+                            '-Token'
+                          )}
+                        </button>
+                      )}
+
                       {/* Remove Shield Button */}
                       {player.shield_active && (
                         <button
@@ -359,6 +448,22 @@ const ShieldTokenManagement: React.FC = () => {
                             <span className="loading loading-spinner loading-xs"></span>
                           ) : (
                             'Remove Shield'
+                          )}
+                        </button>
+                      )}
+
+                      {/* Reset Progress Button */}
+                      {player.games_played_since_shield_launch > 0 && (
+                        <button
+                          onClick={() => handleResetProgress(player.id, player.friendly_name, player.games_played_since_shield_launch)}
+                          disabled={resettingProgress === player.id}
+                          className="btn btn-warning btn-xs"
+                          title="Reset games played progress"
+                        >
+                          {resettingProgress === player.id ? (
+                            <span className="loading loading-spinner loading-xs"></span>
+                          ) : (
+                            'Reset Progress'
                           )}
                         </button>
                       )}

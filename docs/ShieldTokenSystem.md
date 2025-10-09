@@ -230,6 +230,22 @@ Core processing function called after player selection:
   - If no shield: normal streak decay
 - Returns: Array of `{player_id, action_taken, details}`
 
+#### 7. `remove_shield_tokens(player_id, amount, reason, admin_id)`
+Removes shield tokens from a player (admin only):
+- Decrements `shield_tokens_available` by specified amount (minimum 0)
+- Validates player has tokens to remove
+- Logs action in `shield_token_history` with action_type 'admin_remove'
+- Used by: admin override for testing corrections or policy violations
+- Returns: `{success: boolean, message: text, tokens_now: int}`
+
+#### 8. `reset_shield_progress(player_id, reason, admin_id)`
+Resets shield progress tracking (admin only):
+- Resets `games_played_since_shield_launch` to 0
+- Does NOT affect `shield_tokens_available` (tokens remain)
+- Logs action in `shield_token_history` with action_type 'progress_reset'
+- Used by: admin override for testing corrections or fresh start
+- Returns: `{success: boolean, message: text, games_before: int}`
+
 ### Database Triggers
 
 #### Trigger 1: Automatic Token Issuance
@@ -540,10 +556,14 @@ Players can view their shield status:
 Admins can manage shields:
 - **Admin Panel > Shield Token Management**: Available at `/admin/shields`
   - View all players' shield status with statistics dashboard
-  - Issue tokens manually (admin override)
-  - Remove active shield protection
+  - **Issue tokens manually** (+Token button - green)
+  - **Remove tokens** (-Token button - red, shows when player has tokens)
+  - **Remove active shield protection** (Remove Shield button - red, shows when shield active)
+  - **Reset progress tracking** (Reset Progress button - yellow, shows when games > 0)
   - View shield usage history and progress
   - Search/filter players by name
+  - All actions require confirmation dialog
+  - All actions logged in `shield_token_history` with admin ID
   - Accessible to admins with `MANAGE_PLAYERS` permission
 
 ## Edge Cases and Rules
@@ -637,6 +657,20 @@ SELECT issue_shield_token(
 
 ### Manual Token Removal
 ```sql
+SELECT remove_shield_tokens(
+    '<player_id>',
+    1,  -- amount to remove
+    'Admin removed for testing correction',
+    '<admin_user_id>'
+);
+```
+- Removes specified number of tokens
+- Prevents going below 0
+- Logs removal with admin ID
+- Use cases: testing cleanup, policy violations, corrections
+
+### Manual Shield Protection Removal
+```sql
 SELECT remove_shield_protection(
     '<player_id>',
     'Admin removed due to policy violation',
@@ -656,6 +690,19 @@ SELECT return_shield_token(
 ```
 - Returns used token
 - Updates history
+
+### Reset Shield Progress
+```sql
+SELECT reset_shield_progress(
+    '<player_id>',
+    'Admin reset for testing',
+    '<admin_user_id>'
+);
+```
+- Resets `games_played_since_shield_launch` to 0
+- Does NOT affect existing tokens
+- Logs reset with admin ID
+- Use cases: testing cleanup, fresh start, data corrections
 
 ## Monitoring and Analytics
 
@@ -792,6 +839,19 @@ LIMIT 10;
 - Check database logs for trigger errors
 - Manually issue if needed: `SELECT issue_shield_token(...)`
 
+### Need to remove test tokens or reset progress
+**Cause**: Testing or data correction needed.
+
+**Solution**:
+- Go to `/admin/shields` (Shield Token Management page)
+- Find the player using search
+- Use **-Token button** to remove tokens one at a time
+- Use **Reset Progress button** to reset `games_played_since_shield_launch` to 0
+- Both actions require confirmation and are logged in history
+- Alternatively, use SQL functions directly:
+  - `SELECT remove_shield_tokens('<player_id>', 1, 'Testing cleanup', '<admin_id>')`
+  - `SELECT reset_shield_progress('<player_id>', 'Testing cleanup', '<admin_id>')`
+
 ## Support and Feedback
 
 For issues or questions:
@@ -801,6 +861,25 @@ For issues or questions:
 4. Contact admin team for manual intervention if needed
 
 ## Changelog
+
+**v1.0.6** - Admin Token Removal & Progress Reset (2025-10-09)
+- **New Admin Functions**:
+  - Created `remove_shield_tokens()` database function for removing tokens from players
+  - Created `reset_shield_progress()` database function for resetting games played tracking
+  - Both functions include validation, history logging, and admin tracking
+- **Admin UI Enhancements**:
+  - Added "-Token" button (red) to remove tokens one at a time
+  - Added "Reset Progress" button (yellow) to reset games played counter
+  - Buttons conditionally show based on player state (tokens > 0, games > 0)
+  - All actions require confirmation dialogs
+  - Actions column now uses `flex-wrap` for better mobile layout
+- **Documentation Updates**:
+  - Added new functions to Core Database Functions section
+  - Expanded Admin Override Capabilities with examples
+  - Updated Managing Shields section with detailed button descriptions
+  - Added troubleshooting guide for removing test data
+- **Use Cases**: Testing cleanup, data corrections, policy violations, fresh starts
+- Migration: `add_admin_shield_token_controls.sql`
 
 **v1.0.5** - Profile Page Integration & Max Token Fix (2025-10-10)
 - **Shield Token Status on Profile Pages**:
