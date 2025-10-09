@@ -42,6 +42,7 @@ import RoleManagement from './pages/admin/RoleManagement'
 import FeatureFlagManagement from './pages/admin/FeatureFlagManagement'
 import TeamBalancingVisualization from './pages/admin/TeamBalancingVisualization'
 import SessionDiagnostics from './pages/admin/SessionDiagnostics'
+import ShieldTokenManagement from './pages/admin/ShieldTokenManagement'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -111,6 +112,7 @@ const App: React.FC = () => {
                 <Route path="/admin/team-balancing/visualization" element={<TeamBalancingVisualization />} />
                 <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
                 <Route path="/admin/tokens" element={<TokenManagement />} />
+                <Route path="/admin/shields" element={<ShieldTokenManagement />} />
                 <Route path="/admin/account-management" element={<AccountManagement />} />
                 <Route path="/admin/session-diagnostics" element={<SessionDiagnostics />} />
                 <Route path="/notifications" element={<NotificationsPage />} />

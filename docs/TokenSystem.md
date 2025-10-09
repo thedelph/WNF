@@ -265,6 +265,30 @@ SELECT * FROM get_token_history(
 
 ## Frontend Components
 
+### TokenStatus Component
+Located in: `src/components/profile/TokenStatus.tsx`
+- Comprehensive status display on player profile pages
+- Shows token status badge (AVAILABLE, INELIGIBLE, CONSUMED, etc.)
+- Displays eligibility requirements with checkmarks/crosses:
+  - WhatsApp Member status
+  - Recent Activity (played in 1 of last 10 games)
+  - Selection Cooldown (not selected in last 3 games)
+  - No Outstanding Payments
+- Shows last used date when applicable
+- Displays outstanding payment count if blocking eligibility
+- **Expandable Explainer Section** (2025-10-10):
+  - Button: "What are Priority Tokens?" toggles explanation panel
+  - Covers all token system mechanics in user-friendly language:
+    - What priority tokens are (guaranteed slots for casual players)
+    - How to earn them (eligibility requirements)
+    - How to use them (toggle during registration)
+    - Token validity (re-calculated weekly, not indefinite)
+    - Important notes (one token limit, forgiveness system, cooldown effect)
+    - Strategy tip (save for when you really need them, most valuable when attendance is spotty)
+  - Uses Framer Motion for smooth expand/collapse animation
+  - Consistent styling with Shield Token explainer
+  - DaisyUI components with custom bg-base-300 panel
+
 ### TokenToggle
 Located in: `src/components/game/TokenToggle.tsx`
 - Shows token availability with a coin icon

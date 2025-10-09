@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { PiCoinDuotone } from "react-icons/pi";
 import { BsCheckCircle, BsXCircle } from "react-icons/bs";
@@ -20,10 +21,10 @@ interface TokenStatusProps {
 }
 
 // Component to display token status with animations and tooltips
-export default function TokenStatus({ 
-  status, 
-  lastUsedAt, 
-  createdAt, 
+export default function TokenStatus({
+  status,
+  lastUsedAt,
+  createdAt,
   isEligible,
   recentGames,
   hasPlayedInLastTenGames,
@@ -34,6 +35,8 @@ export default function TokenStatus({
   playerName,
   whatsappGroupMember,
 }: TokenStatusProps) {
+  const [explanationOpen, setExplanationOpen] = useState(false);
+
   // Format dates for display with safety checks
   const formatDate = (date: string | undefined) => {
     if (!date) return 'N/A';
@@ -234,6 +237,90 @@ export default function TokenStatus({
             </div>
           </Tooltip>
         )}
+
+        {/* Expandable Explanation Section */}
+        <div className="mt-2">
+          <button
+            onClick={() => setExplanationOpen(!explanationOpen)}
+            className="btn btn-sm btn-outline w-full"
+          >
+            <PiCoinDuotone size={16} />
+            {explanationOpen ? 'Hide' : 'What are Priority Tokens?'}
+          </button>
+
+          {explanationOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-3 p-3 bg-base-300 rounded-lg text-sm space-y-2"
+            >
+              <div>
+                <h4 className="font-bold mb-1 flex items-center gap-1">
+                  <PiCoinDuotone size={14} className="text-yellow-400" />
+                  What are Priority Tokens?
+                </h4>
+                <p className="text-xs opacity-90">
+                  Priority tokens give you a <strong>guaranteed slot</strong> in any game. They're designed for
+                  casual players who want to join occasionally while maintaining priority for regular players
+                  through the XP system.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold mb-1">How to Earn Them</h4>
+                <p className="text-xs opacity-90">
+                  Tokens are issued automatically when you meet all eligibility requirements shown above:
+                </p>
+                <ul className="text-xs opacity-90 list-disc list-inside space-y-1 mt-1">
+                  <li>Be a member of the WhatsApp group</li>
+                  <li>Played in at least 1 of the last 10 games</li>
+                  <li>Not been selected in any of the last 3 games</li>
+                  <li>Have no outstanding payments</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold mb-1">How to Use Them</h4>
+                <p className="text-xs opacity-90">
+                  When registering for a game, toggle the priority token option to guarantee your spot.
+                  Your token will be consumed once the game completes.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold mb-1">Token Validity</h4>
+                <p className="text-xs opacity-90">
+                  Your eligibility is <strong>re-calculated every week</strong>. If you no longer meet the requirements
+                  (e.g., you get selected for a game), your token will be removed.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold mb-1">Important Notes</h4>
+                <ul className="text-xs opacity-90 list-disc list-inside space-y-1">
+                  <li>You can only have <strong>one active token</strong> at a time</li>
+                  <li>Tokens bypass the normal XP-based selection process</li>
+                  <li>If you drop out or the game is cancelled, your token is returned</li>
+                  <li><strong>Token Forgiveness:</strong> If your XP would have qualified you for selection anyway, your token is automatically returned</li>
+                  <li><strong>Cooldown Effect:</strong> After using a token, you're de-prioritized in the next game's merit selection (bottom of the list)</li>
+                  <li>You must meet eligibility criteria again to receive a new token after using one</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold mb-1">💡 Strategy Tip</h4>
+                <p className="text-xs opacity-90">
+                  Save your token for games you really want to play! The token forgiveness system means if you're
+                  a regular player with high XP, your token will be returned if you would have been selected anyway.
+                  This makes tokens most valuable when your attendance has been spotty or when you're coming back
+                  after missing several games.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

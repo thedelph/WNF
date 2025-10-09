@@ -11,6 +11,7 @@ import ProfileContent from '../components/profile/ProfileContent'
 import EditNameModal from '../components/profile/EditNameModal'
 import PasswordChangeSection from '../components/profile/PasswordChangeSection'
 import { useTokenStatus } from '../hooks/useTokenStatus'
+import { useShieldStatus } from '../hooks/useShieldStatus'
 import { formatDate, executeWithRetry, calculateRarity } from '../utils/profileHelpers'
 import { ExtendedPlayerData } from '../types/profile'
 import { Tooltip } from '../components/ui/Tooltip'
@@ -30,6 +31,7 @@ export default function Component() {
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
   const [showPasswordReset, setShowPasswordReset] = useState(false)
   const { tokenStatus } = useTokenStatus(playerId || '')
+  const { shieldStatus, loading: shieldLoading } = useShieldStatus(playerId)
 
   // Function to load profile data
   const loadProfile = async () => {
@@ -561,6 +563,8 @@ export default function Component() {
               <ProfileContent
                 profile={profile}
                 tokenStatus={tokenStatus}
+                shieldStatus={shieldStatus}
+                shieldLoading={shieldLoading}
               />
             </div>
           </>

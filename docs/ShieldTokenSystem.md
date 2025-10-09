@@ -286,7 +286,55 @@ Handles shield token usage and cancellation:
 - `isUsing`: Loading state (shared between use and return operations)
 - `error`: Error state
 
-#### 4. `ShieldTokenDisplay` Component
+#### 4. `ShieldTokenStatus` Component (v1.0.5)
+Located in: `src/components/profile/ShieldTokenStatus.tsx`
+
+Comprehensive shield token status display for player profile pages:
+- Shows token count with shield emoji (X/4 max)
+- Displays active shield badge when protecting a streak (shows frozen streak value)
+- Progress toward next token:
+  - Visual progress bar (0-100%)
+  - Games counter (X/10 games)
+  - Games remaining until next token
+  - Special handling when at max capacity (4/4):
+    - Shows warning alert instead of progress bar
+    - Message: "Maximum tokens reached - Use a token to start earning your next one"
+- **Expandable Explainer Section**:
+  - Button: "What are Shield Tokens?" toggles explanation panel
+  - Comprehensive coverage of shield system:
+    - What shield tokens are (streak protection for absences)
+    - How to earn them (1 per 10 games, max 4)
+    - How to use them (game page or WhatsApp 🛡️ emoji before registration closes)
+    - **Registration vs Shield mutual exclusivity** (EITHER register OR shield, not both)
+    - **Registration deadline enforcement** (all actions final after registration closes, no retroactive usage)
+    - Important rules (1 shield per game, can cancel before registration closes)
+    - **Strategy tip for multi-week absences** (need enough shields to cover entire absence, or don't use any)
+  - Uses Framer Motion for smooth expand/collapse animation
+  - Consistent styling with Priority Token explainer (bg-base-300 panel)
+- Loading state with spinner
+- Handles missing data gracefully (shows 0 tokens and reset progress)
+- Optional `playerName` prop for viewing other players' profiles
+
+Props:
+```typescript
+{
+  tokensAvailable: number (0-4)
+  gamesTowardNextToken: number (0-9)
+  gamesUntilNextToken: number (1-10)
+  shieldActive: boolean
+  frozenStreakValue: number | null
+  isLoading: boolean
+  playerName?: string  // For viewing other players
+}
+```
+
+Integrated into:
+- `Profile.tsx` - Own profile page at `/profile`
+- `PlayerProfile.tsx` - Other players' profiles at `/players/:id` or `/player/:friendlyName`
+- Positioned after Priority Token Status section for consistent UX
+- Real-time updates via `useShieldStatus` hook subscriptions
+
+#### 5. `ShieldTokenDisplay` Component
 Visual display showing:
 - 0-4 shield emoji icons (filled/grayed based on availability)
 - Active shield indicator with checkmark
@@ -308,7 +356,7 @@ Props:
 }
 ```
 
-#### 5. `ShieldTokenButton` Component
+#### 6. `ShieldTokenButton` Component
 Full button with confirmation modal and cancellation support:
 - **Use Mode** (when no active shield):
   - Warning button (🛡️) with token count badge
@@ -337,14 +385,14 @@ Props:
 }
 ```
 
-#### 6. `ShieldTokenBadge` Component
+#### 7. `ShieldTokenBadge` Component
 Compact badge for player cards:
 - Shows token count OR "Active" if shield active
 - Color: warning (yellow) for available, success (green) for active
 - Size options: xs, sm, md
 - Returns null if no tokens and no active shield
 
-#### 7. Updated `GameRegistration` Component
+#### 8. Updated `GameRegistration` Component
 Enhanced registration flow with mutual exclusivity:
 - **Register Interest button**:
   - Normal flow when no shield active and not registered
@@ -364,7 +412,7 @@ Enhanced registration flow with mutual exclusivity:
   - Cannot use shield while registered to play
   - Clear visual feedback and instructions for both states
 
-#### 8. Updated `PlayerCard` Components
+#### 9. Updated `PlayerCard` Components
 Player cards now show shield protection visually:
 
 **PlayerCardModifiers Component** (Streak row):
@@ -415,10 +463,11 @@ The shield system integrates with existing player selection:
      - Removes shield protection if they had one
      - Resets streak to 0
 
-4. **XP Calculation** (future enhancement):
+4. **XP Calculation** (integrated v1.0.4):
    - If player has `shield_active = true`:
      - Use `frozen_streak_modifier` instead of `current_streak * 0.1`
      - Ensures consistent XP even when not playing
+     - Implemented in `calculate_player_xp()` function
 
 ### RLS Policies
 
@@ -489,12 +538,13 @@ Players can view their shield status:
 - **Player Cards**: Shield emoji indicator if active
 
 Admins can manage shields:
-- **Admin Panel > Shield Token Management**: (future)
-  - View all players' shield status
+- **Admin Panel > Shield Token Management**: Available at `/admin/shields`
+  - View all players' shield status with statistics dashboard
   - Issue tokens manually (admin override)
-  - Remove tokens if needed
-  - View shield usage history
-  - Search/filter players
+  - Remove active shield protection
+  - View shield usage history and progress
+  - Search/filter players by name
+  - Accessible to admins with `MANAGE_PLAYERS` permission
 
 ## Edge Cases and Rules
 
@@ -751,6 +801,56 @@ For issues or questions:
 4. Contact admin team for manual intervention if needed
 
 ## Changelog
+
+**v1.0.5** - Profile Page Integration & Max Token Fix (2025-10-10)
+- **Shield Token Status on Profile Pages**:
+  - Created `ShieldTokenStatus` component for comprehensive shield token information display
+  - Integrated into both `Profile.tsx` (own profile) and `PlayerProfile.tsx` (viewing other players)
+  - Component displays:
+    - Token count with shield emoji (X/4 max)
+    - Active shield badge when protecting a streak
+    - Progress bar toward next token (X/10 games) with visual progress indicator
+    - Expandable explanation section covering:
+      - What shield tokens are and how they work
+      - How to earn them (1 per 10 games)
+      - How to use them (game page or WhatsApp 🛡️ emoji)
+      - Registration vs shield token mutual exclusivity rules
+      - Registration deadline enforcement (all actions final after registration closes)
+      - Multi-week absence strategy tips
+      - Important usage notes and restrictions
+  - Positioned after Priority Token Status section for consistent user experience
+  - Real-time updates via `useShieldStatus` hook subscriptions
+- **Max Token Progress Fix**:
+  - Fixed frontend display to show warning alert when at max tokens (4/4) instead of misleading progress
+  - Alert message: "Maximum tokens reached (4/4) - Use a token to start earning your next one"
+  - Progress bar and games counter hidden when at maximum capacity
+  - **Backend Fix**: Updated `trigger_issue_shield_tokens()` to only increment `games_played_since_shield_launch` when player has < 4 tokens
+  - This prevents progress from accumulating while at max capacity
+  - Progress resumes automatically when a token is used (drops to 3/4)
+  - Migration: `20251010_fix_shield_token_progress_at_max.sql`
+- **Documentation Improvements**:
+  - Added clarification that players must choose EITHER register OR use shield - not both
+  - Emphasized that registration close is the final deadline for all actions
+  - Clarified that forgetting to react before registration closes means no retroactive shield usage
+  - Added strategy guidance for multi-week absences (need enough shields to cover entire absence)
+  - Updated timing information: shields can only be cancelled before registration closes (not "before teams are announced")
+  - All user-facing text now accurately reflects the registration window as the action deadline
+
+**v1.0.4** - XP Integration & Admin Portal Fixes (2025-10-09)
+- **XP Calculation Integration**:
+  - Fixed `calculate_player_xp()` function to use `frozen_streak_modifier` when shield is active
+  - Players with active shields now maintain their frozen XP bonus correctly
+  - XP calculations now check `shield_active` flag and use frozen modifier instead of calculating from current_streak
+  - Migration: `20251009_fix_xp_calculation_shield_integration.sql`
+- **Admin Portal Integration**:
+  - Added Shield Token Management route at `/admin/shields`
+  - Created `ShieldTokenManagementCard` component for admin portal
+  - Shield management now accessible to admins with `MANAGE_PLAYERS` permission
+  - Admin portal displays shield management card alongside other admin tools
+- **System Verification**:
+  - Confirmed `trigger_process_shields_on_selection` fires correctly on `games.status = 'players_announced'`
+  - Verified shield processing integration with player selection workflow
+  - All core database functions tested and working correctly
 
 **v1.0.3** - Player Card Visual Enhancements (2025-10-02)
 - **Enhanced Player Card Shield Indicators**:

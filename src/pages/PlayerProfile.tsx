@@ -20,8 +20,10 @@ import { Tooltip } from '../components/ui/Tooltip';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { fromUrlFriendly } from '../utils/urlHelpers';
 import TokenStatus from '../components/profile/TokenStatus';
+import ShieldTokenStatus from '../components/profile/ShieldTokenStatus';
 import { executeWithRetry } from '../utils/network';
 import { useTokenStatus } from '../hooks/useTokenStatus';
+import { useShieldStatus } from '../hooks/useShieldStatus';
 import WinRateGraph from '../components/profile/WinRateGraph';
 import { AttributeCombination } from '../types/playstyle';
 
@@ -72,6 +74,7 @@ export default function PlayerProfileNew() {
   } = useGameHistory();
 
   const { tokenStatus, loading: tokenLoading } = useTokenStatus(player?.id || '');
+  const { shieldStatus, loading: shieldLoading } = useShieldStatus(player?.id);
 
   const fetchPlaystyles = async () => {
     try {
@@ -762,7 +765,7 @@ export default function PlayerProfileNew() {
         {player && tokenStatus && (
           <div className="col-span-12 lg:col-span-4 xl:col-span-3">
             <div className="sticky top-4">
-              <TokenStatus 
+              <TokenStatus
                 status={tokenStatus?.status || 'NO_TOKEN'}
                 lastUsedAt={tokenStatus?.lastUsedAt}
                 nextTokenAt={tokenStatus?.nextTokenAt}
@@ -778,6 +781,33 @@ export default function PlayerProfileNew() {
                 isLoading={tokenLoading}
               />
             </div>
+          </div>
+        )}
+
+        {/* Shield Token Status */}
+        {player && (
+          <div className="w-full">
+            {shieldStatus ? (
+              <ShieldTokenStatus
+                tokensAvailable={shieldStatus.tokensAvailable}
+                gamesTowardNextToken={shieldStatus.gamesTowardNextToken}
+                gamesUntilNextToken={shieldStatus.gamesUntilNextToken}
+                shieldActive={shieldStatus.shieldActive}
+                frozenStreakValue={shieldStatus.frozenStreakValue}
+                isLoading={shieldLoading}
+                playerName={player.friendly_name}
+              />
+            ) : (
+              <ShieldTokenStatus
+                tokensAvailable={0}
+                gamesTowardNextToken={0}
+                gamesUntilNextToken={10}
+                shieldActive={false}
+                frozenStreakValue={null}
+                isLoading={shieldLoading}
+                playerName={player.friendly_name}
+              />
+            )}
           </div>
         )}
       </motion.div>

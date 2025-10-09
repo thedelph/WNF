@@ -2,19 +2,25 @@ import { motion } from 'framer-motion'
 import StatsGrid from './StatsGrid'
 import XPBreakdown from './XPBreakdown'
 import TokenStatus from './TokenStatus'
+import ShieldTokenStatus from './ShieldTokenStatus'
 import PaymentHistory from './PaymentHistory'
 // Import types from the root src directory
 import type { ExtendedPlayerData } from 'src/types/profile'
 import type { TokenStatus as TokenStatusType } from 'src/hooks/useTokenStatus'
+import type { ShieldStatus } from 'src/hooks/useShieldStatus'
 
 interface ProfileContentProps {
   profile: ExtendedPlayerData | null
   tokenStatus: TokenStatusType | null
+  shieldStatus: ShieldStatus | null
+  shieldLoading: boolean
 }
 
-export default function ProfileContent({ 
-  profile, 
-  tokenStatus
+export default function ProfileContent({
+  profile,
+  tokenStatus,
+  shieldStatus,
+  shieldLoading
 }: ProfileContentProps) {
   if (!profile) return null
 
@@ -93,7 +99,7 @@ export default function ProfileContent({
           className="bg-base-200 rounded-box p-6 shadow-lg"
         >
           <h2 className="text-xl sm:text-2xl font-bold mb-4">Token Status</h2>
-          <TokenStatus 
+          <TokenStatus
             status={tokenStatus.status}
             lastUsedAt={tokenStatus.lastUsedAt}
             createdAt={tokenStatus.createdAt}
@@ -107,6 +113,35 @@ export default function ProfileContent({
           />
         </motion.div>
       )}
+
+      {/* Shield Token Status Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="bg-base-200 rounded-box p-6 shadow-lg"
+      >
+        <h2 className="text-xl sm:text-2xl font-bold mb-4">Shield Token Status</h2>
+        {shieldStatus ? (
+          <ShieldTokenStatus
+            tokensAvailable={shieldStatus.tokensAvailable}
+            gamesTowardNextToken={shieldStatus.gamesTowardNextToken}
+            gamesUntilNextToken={shieldStatus.gamesUntilNextToken}
+            shieldActive={shieldStatus.shieldActive}
+            frozenStreakValue={shieldStatus.frozenStreakValue}
+            isLoading={shieldLoading}
+          />
+        ) : (
+          <ShieldTokenStatus
+            tokensAvailable={0}
+            gamesTowardNextToken={0}
+            gamesUntilNextToken={10}
+            shieldActive={false}
+            frozenStreakValue={null}
+            isLoading={shieldLoading}
+          />
+        )}
+      </motion.div>
 
       {/* Payment History Section */}
       <motion.div
