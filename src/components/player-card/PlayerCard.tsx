@@ -46,6 +46,8 @@ interface PlayerCardProps {
   playstyleRatingsCount?: number
   shieldActive?: boolean
   frozenStreakValue?: number | null
+  recentGames?: number
+  gameParticipation?: boolean[]
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -86,6 +88,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   playstyleRatingsCount,
   shieldActive = false,
   frozenStreakValue = null,
+  recentGames = 0,
+  gameParticipation = new Array(40).fill(false),
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -171,6 +175,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               playstyleRatingsCount={playstyleRatingsCount}
               shieldActive={shieldActive}
               frozenStreakValue={frozenStreakValue}
+              recentGames={recentGames}
+              gameParticipation={gameParticipation}
             />
           ) : (
             <PlayerCardBack

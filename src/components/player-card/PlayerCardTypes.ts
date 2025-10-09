@@ -37,6 +37,8 @@ export interface PlayerCardProps {
   playstyleRatingsCount?: number // Number of playstyle ratings contributing to the average
   shieldActive?: boolean // Whether player has active shield protection
   frozenStreakValue?: number | null // The streak value frozen by the shield
+  recentGames?: number // Number of games played in last 40 completed games (XP-relevant window)
+  gameParticipation?: boolean[] // Array of 40 booleans showing participation in each of the last 40 games (index 0 = oldest, 39 = most recent)
 }
 
 // Type alias for Player used in grid components

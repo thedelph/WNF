@@ -27,6 +27,7 @@ interface PlayerStats {
   playstyleMatchDistance?: number;
   playstyleCategory?: 'attacking' | 'midfield' | 'defensive';
   playstyleRatingsCount?: number;
+  recentGames?: number;
 }
 
 interface UseGameRegistrationStatsReturn {
@@ -106,6 +107,39 @@ export const useGameRegistrationStats = (
 
         if (derivedAttrsError) throw derivedAttrsError;
 
+        // Get the last 40 completed games to find the actual cutoff sequence
+        const { data: latestGameData, error: latestGameError } = await supabase
+          .from('games')
+          .select('id, sequence_number')
+          .eq('completed', true)
+          .eq('is_historical', true)
+          .order('sequence_number', { ascending: false })
+          .limit(40);
+
+        if (latestGameError) throw latestGameError;
+
+        // Get the game IDs for the last 40 games
+        const last40GameIds = (latestGameData || []).map(g => g.id);
+
+        // Get game registrations ONLY for the last 40 games (fixes 1000 row limit issue)
+        const { data: gameRegistrationsData, error: gameRegsError } = await supabase
+          .from('game_registrations')
+          .select(`
+            player_id,
+            game_id,
+            status,
+            games!inner (
+              sequence_number,
+              is_historical,
+              completed
+            )
+          `)
+          .in('player_id', playerIds)
+          .in('game_id', last40GameIds)
+          .eq('status', 'selected');
+
+        if (gameRegsError) throw gameRegsError;
+
         // Create a map of registration streak data for easy lookup
         const regStreakMap = regStreakData?.reduce((acc: any, player: any) => ({
           ...acc,
@@ -128,6 +162,14 @@ export const useGameRegistrationStats = (
             total_ratings_count: player.total_ratings_count
           }
         }), {});
+
+        // Calculate recent games (last 40 completed games)
+        // Since we filtered registrations to only last 40 games, just count them per player
+        const recentGamesMap = gameRegistrationsData?.reduce((acc: any, registration: any) => {
+          const playerId = registration.player_id;
+          acc[playerId] = (acc[playerId] || 0) + 1;
+          return acc;
+        }, {}) || {};
 
         // Get win rates and game stats
         const { data: winRateData, error: winRateError } = await supabase
@@ -191,7 +233,8 @@ export const useGameRegistrationStats = (
               averagedPlaystyle: playstyleMatch?.playstyleName,
               playstyleMatchDistance: playstyleMatch?.matchDistance,
               playstyleCategory: playstyleMatch?.category,
-              playstyleRatingsCount: playerAttributes?.total_ratings_count || 0
+              playstyleRatingsCount: playerAttributes?.total_ratings_count || 0,
+              recentGames: recentGamesMap[player.id] || 0
             }
           };
         }, {});

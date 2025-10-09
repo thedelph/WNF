@@ -2,6 +2,14 @@
 
 The Player Card component is a key UI element that displays player information in an interactive, flippable card format. It shows various player statistics, achievements, and status indicators.
 
+## Card Statistics Layout (Updated 2025-10-09)
+
+The card has been restructured to prioritize XP-relevant information:
+- **Front face**: Shows "Last 40 Games" - the number of games played in the last 40 completed games (the XP calculation window)
+- **Back face**: Shows "Caps" - total career games played across all time
+
+This change aligns the displayed statistics with the XP system, which only considers the last 40 games when calculating base XP (games 40+ ago contribute 0 XP).
+
 ## Component Structure
 
 The Player Card system is split into several components for better maintainability:
@@ -57,6 +65,54 @@ The player card uses different background styles to represent the player's rarit
 The player's rarity tier is displayed in a badge at the bottom right corner of the card. Rank shields are only shown for players with XP > 0 (non-Retired players).
 
 ## Implementation Details
+
+### Recent Games Calculation
+
+The "Last 40 Games" statistic displays how many of the last 40 completed games a player has participated in. This aligns with the XP system's 40-game rolling window.
+
+1. **Query Optimization** (Fixed 2025-10-09):
+   - Initial implementation hit Supabase's 1,000 row limit when fetching all game registrations
+   - **Solution**: Sequential queries that filter at the database level
+   - First fetches the last 40 completed games to get their IDs
+   - Then fetches only registrations for those specific games (~718 rows vs 1,175+)
+   - See [RecentGamesQueryLimitFix.md](../fixes/RecentGamesQueryLimitFix.md) for details
+
+2. **Data Sources**:
+   - `games` table: Identifies the last 40 completed historical games
+   - `game_registrations` table: Counts player participation in those games
+   - Filter: `status = 'selected'` (only counts actual game participation, not reserves)
+
+3. **Implementation**:
+   ```typescript
+   // Step 1: Get last 40 games
+   const { data: latestGameData } = await supabase
+     .from('games')
+     .select('id, sequence_number')
+     .eq('completed', true)
+     .eq('is_historical', true)
+     .order('sequence_number', { ascending: false })
+     .limit(40);
+
+   const last40GameIds = latestGameData.map(g => g.id);
+
+   // Step 2: Fetch registrations ONLY for those games
+   const { data: gameRegistrationsData } = await supabase
+     .from('game_registrations')
+     .select('player_id, game_id, status')
+     .in('game_id', last40GameIds)
+     .eq('status', 'selected');
+
+   // Step 3: Count per player
+   const recentGamesMap = gameRegistrationsData.reduce((acc, reg) => {
+     acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
+     return acc;
+   }, {});
+   ```
+
+4. **Display Location**:
+   - Front of card (replaces old Caps position)
+   - Uses Activity icon to represent game participation
+   - Shown as "X/40" format (e.g., "36/40")
 
 ### Attendance Streak Data
 The player card displays attendance streak information with the following implementation:
@@ -184,7 +240,8 @@ See individual component documentation for detailed prop information:
 | xp | number | Player's experience points |
 | rank | number? | Player's global rank from the database (optional) |
 | isFlipped | boolean? | Whether the card is currently flipped (controls rank shield visibility) |
-| caps | number | Player's total caps |
+| caps | number | Player's total caps (shown on back of card) |
+| recentGames | number? | Number of games played in last 40 completed games (shown on front of card) |
 | benchWarmerStreak | number | Player's consecutive games in reserves |
 
 ## Usage
@@ -198,6 +255,7 @@ import { PlayerCard } from '../components/player-card/PlayerCard';
   xp={1000}
   rank={14} // Global rank from player_xp table
   caps={5}
+  recentGames={4} // Games played in last 40 completed games
   benchWarmerStreak={3}
   // ... other props
 />

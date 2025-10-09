@@ -37,10 +37,13 @@ SELECT
   - Player had reserve status (`status = 'reserve'`)
   - Game is completed (`completed = true`)
   - Game is historical (`is_historical = true`)
+  - **Within last 40 games** (`(latest_sequence - sequence_number) < 40`)
+  - **Not a late reserve** (`late_reserve = false OR late_reserve IS NULL`)
 
 ### reserve_xp
 - Calculated as: `reserve_games * 5`
 - Each reserve appearance is worth 5 XP
+- **Only counts reserve games within the last 40 games** (matching base XP decay)
 
 ### total_xp
 - Fetched from the `player_xp` table
@@ -85,6 +88,8 @@ const { data } = await supabase
 2. **Performance**: This view performs multiple aggregations, consider materialized view for large datasets
 3. **Reserve XP**: Only counts historical games to ensure accuracy
 4. **Unpaid Games**: 24-hour grace period before penalties apply
+5. **40-Game Window**: Reserve XP respects the same 40-game decay system as base XP (fixed 2025-10-09, see [Reserve XP 40-Game Limit Fix](../fixes/ReserveXP40GameLimitFix.md))
+6. **Late Reserves**: Late reserves (registered after window closes) are excluded from reserve XP calculations
 
 ## Maintenance
 
@@ -107,3 +112,4 @@ SELECT * FROM player_xp_breakdown WHERE friendly_name = 'Lewis';
 - [XP System Explained](../XPSystemExplained.md)
 - [Player Profile Component](../components/PlayerProfile.md)
 - [Database Functions](../DatabaseFunctions.md)
+- [Reserve XP 40-Game Limit Fix](../fixes/ReserveXP40GameLimitFix.md)

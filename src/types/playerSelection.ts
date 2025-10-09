@@ -61,6 +61,7 @@ export interface ExtendedPlayerData extends PlayerStats {
   playstyleRatingsCount?: number;
   unpaidGames?: number;
   unpaidGamesModifier?: number;
+  recentGames?: number;
 }
 
 export interface PlayerSelectionResultsProps {

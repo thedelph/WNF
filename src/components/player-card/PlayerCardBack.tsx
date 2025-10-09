@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Trophy, Star, ListChecks, Flame, DollarSign } from 'lucide-react'
+import { Trophy, Star, Medal, Flame, DollarSign } from 'lucide-react'
 import { PlayerCardProps } from './PlayerCardTypes'
 import WhatsAppIndicator from '../indicators/WhatsAppIndicator'
 import { toUrlFriendly } from '../../utils/urlHelpers'
@@ -11,6 +11,7 @@ import { toUrlFriendly } from '../../utils/urlHelpers'
 export const PlayerCardBack: React.FC<PlayerCardProps> = ({
   id,
   friendlyName,
+  caps,
   winRate,
   wins,
   draws,
@@ -129,10 +130,10 @@ export const PlayerCardBack: React.FC<PlayerCardProps> = ({
 
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-1.5">
-            <ListChecks className="w-4 h-4" />
-            <span className="text-sm">Total Games</span>
+            <Medal className="w-4 h-4" />
+            <span className="text-sm">Caps</span>
           </div>
-          <span className="font-bold text-sm">{totalGames}</span>
+          <span className="font-bold text-sm">{caps}</span>
         </div>
 
         <div className="flex justify-between items-center">

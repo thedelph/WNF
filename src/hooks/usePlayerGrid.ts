@@ -21,7 +21,21 @@ export const usePlayerGrid = () => {
         setLoading(true);
         setError(null);
 
-        // Define all queries
+        // First, get the last 40 completed games to determine which games to query registrations for
+        const { data: latestGameData, error: gamesError } = await supabase
+          .from('games')
+          .select('id, sequence_number')
+          .eq('completed', true)
+          .eq('is_historical', true)
+          .order('sequence_number', { ascending: false })
+          .limit(40);
+
+        if (gamesError) throw gamesError;
+
+        // Get the game IDs for the last 40 games
+        const last40GameIds = (latestGameData || []).map(g => g.id);
+
+        // Define queries that can run in parallel
         const queries = [
           // Players query
           () => supabase
@@ -62,7 +76,7 @@ export const usePlayerGrid = () => {
           () => supabase
             .from('player_current_registration_streak_bonus')
             .select('friendly_name, current_streak_length, bonus_applies'),
-            
+
           // Player streak stats (for correct max streak values)
           () => supabase
             .from('player_streak_stats')
@@ -80,7 +94,23 @@ export const usePlayerGrid = () => {
               defending_rating,
               physical_rating,
               total_ratings_count
+            `),
+
+          // Game registrations ONLY for the last 40 games (fixes 1000 row limit issue)
+          () => supabase
+            .from('game_registrations')
+            .select(`
+              player_id,
+              game_id,
+              status,
+              games!inner (
+                sequence_number,
+                is_historical,
+                completed
+              )
             `)
+            .in('game_id', last40GameIds)
+            .eq('status', 'selected')
         ];
 
         // Execute all queries with retry logic
@@ -96,7 +126,8 @@ export const usePlayerGrid = () => {
           unpaidGamesData,
           registrationStreakData,
           streakStatsData,
-          derivedAttributesData
+          derivedAttributesData,
+          gameRegistrationsData
         ] = results;
 
         // Debug logging for playstyle data
@@ -156,6 +187,47 @@ export const usePlayerGrid = () => {
 
         console.log('🎯 usePlayerGrid - Derived attributes map:', derivedAttributesMap);
         console.log('🎯 usePlayerGrid - Player IDs in map:', Object.keys(derivedAttributesMap));
+
+        // Calculate recent games (last 40 completed games)
+        // Create a map of game IDs to their position in the last 40 games (0 = oldest, 39 = most recent)
+        const gameIdToIndexMap = (latestGameData || []).reduce((acc, game, index) => {
+          // Reverse the index so 0 is the oldest game and 39 is the most recent
+          acc[game.id] = 39 - index;
+          return acc;
+        }, {} as Record<string, number>);
+
+        // For each player, create a boolean array showing participation in each of the 40 games
+        const recentGamesParticipationMap = (gameRegistrationsData || []).reduce((acc, registration) => {
+          const playerId = registration.player_id;
+          const gameIndex = gameIdToIndexMap[registration.game_id];
+
+          if (!acc[playerId]) {
+            acc[playerId] = new Array(40).fill(false);
+          }
+
+          if (gameIndex !== undefined) {
+            acc[playerId][gameIndex] = true;
+          }
+
+          return acc;
+        }, {} as Record<string, boolean[]>);
+
+        // Count total games for backwards compatibility
+        const recentGamesMap = Object.entries(recentGamesParticipationMap).reduce((acc, [playerId, participation]) => {
+          acc[playerId] = participation.filter(Boolean).length;
+          return acc;
+        }, {} as Record<string, number>);
+
+        const last40SequenceNumbers = (latestGameData || []).map(g => g.sequence_number);
+        console.log('🎯 usePlayerGrid - Recent games calculation:', {
+          last40GamesCount: latestGameData?.length || 0,
+          last40SequenceNumbers: last40SequenceNumbers.slice(0, 5),
+          minSequence: last40SequenceNumbers.length > 0 ? Math.min(...last40SequenceNumbers) : 0,
+          maxSequence: last40SequenceNumbers.length > 0 ? Math.max(...last40SequenceNumbers) : 0,
+          totalRegistrations: gameRegistrationsData?.length || 0,
+          playersWithRecentGames: Object.keys(recentGamesMap).length,
+          sampleCounts: Object.entries(recentGamesMap).slice(0, 3).map(([id, count]) => ({ id, count }))
+        });
 
         // Combine all data
         const combinedPlayers = (playersData || []).map(player => {
@@ -219,7 +291,9 @@ export const usePlayerGrid = () => {
             playstyleCategory: playstyleMatch?.category,
             playstyleRatingsCount: playerAttributes?.total_ratings_count || 0,
             shieldActive: player.shield_active || false,
-            frozenStreakValue: player.frozen_streak_value || null
+            frozenStreakValue: player.frozen_streak_value || null,
+            recentGames: recentGamesMap[player.id] || 0,
+            gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(false)
           };
         });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Medal, Sparkles } from 'lucide-react'
+import { Medal, Sparkles, Activity } from 'lucide-react'
 import { PiCoinDuotone } from "react-icons/pi"
 import { PlayerCardProps } from './PlayerCardTypes'
 import { PlayerCardModifiers } from './PlayerCardModifiers'
@@ -13,6 +13,7 @@ import { Tooltip } from '../ui/Tooltip'
 import { getMatchPercentage } from '../../utils/playstyleUtils'
 import { generateAttributeAbbreviations } from '../../types/playstyle'
 import { PREDEFINED_PLAYSTYLES } from '../../data/playstyles'
+import { GameParticipationWheel } from './GameParticipationWheel'
 
 /**
  * Displays the front face of the player card with primary information
@@ -29,6 +30,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   playstyleRatingsCount?: number,
   shieldActive?: boolean,
   frozenStreakValue?: number | null,
+  recentGames?: number,
+  gameParticipation?: boolean[], // Array of 40 booleans showing participation in each of the last 40 games
 }> = ({
   id,
   friendlyName,
@@ -62,6 +65,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   playstyleRatingsCount,
   shieldActive = false,
   frozenStreakValue = null,
+  recentGames = 0,
+  gameParticipation = new Array(40).fill(false),
 }) => {
   // Debug logging for playstyle props
   if (friendlyName === 'Chris H' || friendlyName === 'Nathan') {
@@ -260,14 +265,26 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         </div>
       </div>
 
-      {/* Caps Section */}
-      <div className="bg-black/30 rounded-lg p-3 mb-4">
+      {/* Recent Games Section (Last 40) */}
+      <div className="bg-black/30 rounded-lg p-2 mb-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Medal className="w-5 h-5" />
-            <span className="text-sm">Caps</span>
+            <Activity className="w-4 h-4" />
+            <span className="text-xs">Last 40 Games</span>
           </div>
-          <span className="text-2xl font-bold">{caps}</span>
+          {/* Number with participation wheel */}
+          <div className="relative flex items-center justify-center" style={{ width: '60px', height: '60px' }}>
+            {/* Participation wheel */}
+            <GameParticipationWheel
+              participation={gameParticipation}
+              rarity={rarity}
+              size={60}
+            />
+            {/* Number centered on top */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl font-bold leading-none" style={{ marginTop: '-2px' }}>{recentGames}</span>
+            </div>
+          </div>
         </div>
       </div>
 

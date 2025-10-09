@@ -82,6 +82,7 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
                 playstyleMatchDistance={playerStats[registration.player.id]?.playstyleMatchDistance}
                 playstyleCategory={playerStats[registration.player.id]?.playstyleCategory}
                 playstyleRatingsCount={playerStats[registration.player.id]?.playstyleRatingsCount}
+                recentGames={playerStats[registration.player.id]?.recentGames || 0}
               />
             </motion.div>
           );
