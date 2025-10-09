@@ -97,6 +97,7 @@ export const usePlayerGrid = () => {
             `),
 
           // Game registrations ONLY for the last 40 games (fixes 1000 row limit issue)
+          // Fetch both 'selected' and 'reserve' statuses
           () => supabase
             .from('game_registrations')
             .select(`
@@ -110,7 +111,7 @@ export const usePlayerGrid = () => {
               )
             `)
             .in('game_id', last40GameIds)
-            .eq('status', 'selected')
+            .in('status', ['selected', 'reserve'])
         ];
 
         // Execute all queries with retry logic
@@ -196,25 +197,26 @@ export const usePlayerGrid = () => {
           return acc;
         }, {} as Record<string, number>);
 
-        // For each player, create a boolean array showing participation in each of the 40 games
+        // For each player, create an array showing participation status in each of the 40 games
+        // Values: 'selected' | 'reserve' | null
         const recentGamesParticipationMap = (gameRegistrationsData || []).reduce((acc, registration) => {
           const playerId = registration.player_id;
           const gameIndex = gameIdToIndexMap[registration.game_id];
 
           if (!acc[playerId]) {
-            acc[playerId] = new Array(40).fill(false);
+            acc[playerId] = new Array(40).fill(null);
           }
 
           if (gameIndex !== undefined) {
-            acc[playerId][gameIndex] = true;
+            acc[playerId][gameIndex] = registration.status; // 'selected' or 'reserve'
           }
 
           return acc;
-        }, {} as Record<string, boolean[]>);
+        }, {} as Record<string, Array<'selected' | 'reserve' | null>>);
 
-        // Count total games for backwards compatibility
+        // Count total games for backwards compatibility (only count 'selected')
         const recentGamesMap = Object.entries(recentGamesParticipationMap).reduce((acc, [playerId, participation]) => {
-          acc[playerId] = participation.filter(Boolean).length;
+          acc[playerId] = participation.filter(status => status === 'selected').length;
           return acc;
         }, {} as Record<string, number>);
 
@@ -293,7 +295,7 @@ export const usePlayerGrid = () => {
             shieldActive: player.shield_active || false,
             frozenStreakValue: player.frozen_streak_value || null,
             recentGames: recentGamesMap[player.id] || 0,
-            gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(false)
+            gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(null)
           };
         });
 

@@ -31,7 +31,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   shieldActive?: boolean,
   frozenStreakValue?: number | null,
   recentGames?: number,
-  gameParticipation?: boolean[], // Array of 40 booleans showing participation in each of the last 40 games
+  gameParticipation?: Array<'selected' | 'reserve' | null>, // Array of 40 elements showing participation status in each of the last 40 games
 }> = ({
   id,
   friendlyName,
@@ -66,7 +66,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   shieldActive = false,
   frozenStreakValue = null,
   recentGames = 0,
-  gameParticipation = new Array(40).fill(false),
+  gameParticipation = new Array(40).fill(null),
 }) => {
   // Debug logging for playstyle props
   if (friendlyName === 'Chris H' || friendlyName === 'Nathan') {
@@ -270,7 +270,10 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
-            <span className="text-xs">Last 40 Games</span>
+            <div className="text-xs text-center leading-tight">
+              <div>Last 40 Games</div>
+              <div>{gameParticipation.filter(s => s === 'reserve').length > 0 ? 'Played/Reserve' : 'Played'}</div>
+            </div>
           </div>
           {/* Number with participation wheel */}
           <div className="relative flex items-center justify-center" style={{ width: '60px', height: '60px' }}>
@@ -282,7 +285,12 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
             />
             {/* Number centered on top */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold leading-none" style={{ marginTop: '-2px' }}>{recentGames}</span>
+              <div className="flex items-center leading-none" style={{ marginTop: '-2px' }}>
+                <span className="text-2xl font-bold">{recentGames}</span>
+                {gameParticipation.filter(s => s === 'reserve').length > 0 && (
+                  <span className="text-xs font-normal opacity-70">/{gameParticipation.filter(s => s === 'reserve').length}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

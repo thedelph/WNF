@@ -47,7 +47,7 @@ interface PlayerCardProps {
   shieldActive?: boolean
   frozenStreakValue?: number | null
   recentGames?: number
-  gameParticipation?: boolean[]
+  gameParticipation?: Array<'selected' | 'reserve' | null>
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -89,7 +89,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   shieldActive = false,
   frozenStreakValue = null,
   recentGames = 0,
-  gameParticipation = new Array(40).fill(false),
+  gameParticipation = new Array(40).fill(null),
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 

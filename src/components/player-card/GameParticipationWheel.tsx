@@ -2,15 +2,17 @@ import React from 'react';
 import { getRarityColor, getRarityColorInactive, type Rarity } from '../../utils/rarityColors';
 
 interface GameParticipationWheelProps {
-  /** Boolean array of 40 elements showing participation in each of the last 40 games */
-  participation: boolean[];
+  /** Array of 40 elements showing participation status: 'selected' | 'reserve' | null */
+  participation: Array<'selected' | 'reserve' | null>;
   /** Player's rarity tier for color theming */
   rarity?: Rarity;
   /** Size of the wheel in pixels */
   size?: number;
-  /** Color for active segments (participated) - overrides rarity color if provided */
+  /** Color for selected segments (played) - overrides rarity color if provided */
   activeColor?: string;
-  /** Color for inactive segments (didn't participate) */
+  /** Color for reserve segments (registered but not selected) - defaults to semi-transparent active color */
+  reserveColor?: string;
+  /** Color for inactive segments (didn't register) */
   inactiveColor?: string;
 }
 
@@ -27,11 +29,23 @@ export const GameParticipationWheel: React.FC<GameParticipationWheelProps> = ({
   rarity,
   size = 60,
   activeColor,
+  reserveColor,
   inactiveColor = 'rgba(255, 255, 255, 0.1)'
 }) => {
   // Use rarity-based color if no explicit color provided
   const finalActiveColor = activeColor || getRarityColor(rarity);
   const finalInactiveColor = inactiveColor || getRarityColorInactive();
+
+  // Reserve color is semi-transparent version of active color (40% opacity)
+  const baseColor = finalActiveColor;
+  // Convert hex to rgba with 40% opacity
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+  const finalReserveColor = reserveColor || hexToRgba(baseColor, 0.4);
   const center = size / 2;
   const outerRadius = size / 2 - 1.5;
   const innerRadius = size / 2 - 6; // 4.5px thick segments (proportional to 60px size)
@@ -91,14 +105,25 @@ export const GameParticipationWheel: React.FC<GameParticipationWheelProps> = ({
       />
 
       {/* Render all 40 segments */}
-      {participation.map((isActive, index) => (
-        <path
-          key={index}
-          d={createSegmentPath(index)}
-          fill={isActive ? finalActiveColor : finalInactiveColor}
-          className={isActive ? 'transition-all duration-300' : ''}
-        />
-      ))}
+      {participation.map((status, index) => {
+        let fillColor: string;
+        if (status === 'selected') {
+          fillColor = finalActiveColor;
+        } else if (status === 'reserve') {
+          fillColor = 'rgba(255, 255, 255, 1)'; // White
+        } else {
+          fillColor = finalInactiveColor;
+        }
+
+        return (
+          <path
+            key={index}
+            d={createSegmentPath(index)}
+            fill={fillColor}
+            className={status ? 'transition-all duration-300' : ''}
+          />
+        );
+      })}
     </svg>
   );
 };
