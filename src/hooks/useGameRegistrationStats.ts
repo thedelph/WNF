@@ -28,6 +28,7 @@ interface PlayerStats {
   playstyleCategory?: 'attacking' | 'midfield' | 'defensive';
   playstyleRatingsCount?: number;
   recentGames?: number;
+  gameParticipation?: Array<'selected' | 'reserve' | null>;
 }
 
 interface UseGameRegistrationStatsReturn {
@@ -121,6 +122,13 @@ export const useGameRegistrationStats = (
         // Get the game IDs for the last 40 games
         const last40GameIds = (latestGameData || []).map(g => g.id);
 
+        // Create a map of game IDs to their position in the last 40 games (0 = oldest, 39 = most recent)
+        const gameIdToIndexMap = (latestGameData || []).reduce((acc, game, index) => {
+          // Reverse the index so 0 is the oldest game and 39 is the most recent
+          acc[game.id] = 39 - index;
+          return acc;
+        }, {} as Record<string, number>);
+
         // Get game registrations ONLY for the last 40 games (fixes 1000 row limit issue)
         const { data: gameRegistrationsData, error: gameRegsError } = await supabase
           .from('game_registrations')
@@ -136,7 +144,7 @@ export const useGameRegistrationStats = (
           `)
           .in('player_id', playerIds)
           .in('game_id', last40GameIds)
-          .eq('status', 'selected');
+          .in('status', ['selected', 'reserve']);
 
         if (gameRegsError) throw gameRegsError;
 
@@ -164,12 +172,28 @@ export const useGameRegistrationStats = (
         }), {});
 
         // Calculate recent games (last 40 completed games)
-        // Since we filtered registrations to only last 40 games, just count them per player
-        const recentGamesMap = gameRegistrationsData?.reduce((acc: any, registration: any) => {
+        // For each player, create an array showing participation status in each of the 40 games
+        // Values: 'selected' | 'reserve' | null
+        const recentGamesParticipationMap = gameRegistrationsData?.reduce((acc: any, registration: any) => {
           const playerId = registration.player_id;
-          acc[playerId] = (acc[playerId] || 0) + 1;
+          const gameIndex = gameIdToIndexMap[registration.game_id];
+
+          if (!acc[playerId]) {
+            acc[playerId] = new Array(40).fill(null);
+          }
+
+          if (gameIndex !== undefined) {
+            acc[playerId][gameIndex] = registration.status; // 'selected' or 'reserve'
+          }
+
           return acc;
-        }, {}) || {};
+        }, {} as Record<string, Array<'selected' | 'reserve' | null>>) || {};
+
+        // Count total games for backwards compatibility (only count 'selected')
+        const recentGamesMap = Object.entries(recentGamesParticipationMap).reduce((acc: any, [playerId, participation]) => {
+          acc[playerId] = participation.filter(status => status === 'selected').length;
+          return acc;
+        }, {} as Record<string, number>);
 
         // Get win rates and game stats
         const { data: winRateData, error: winRateError } = await supabase
@@ -234,7 +258,8 @@ export const useGameRegistrationStats = (
               playstyleMatchDistance: playstyleMatch?.matchDistance,
               playstyleCategory: playstyleMatch?.category,
               playstyleRatingsCount: playerAttributes?.total_ratings_count || 0,
-              recentGames: recentGamesMap[player.id] || 0
+              recentGames: recentGamesMap[player.id] || 0,
+              gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(null)
             }
           };
         }, {});
