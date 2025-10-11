@@ -206,7 +206,7 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
         if (regStreakError) throw regStreakError;
 
         // Get player averaged attributes for playstyle matching
-        const { data: derivedAttrsData, error: derivedAttrsError } = await supabase
+        const { data: derivedAttrsData, error: derivedAttrsError} = await supabase
           .from('player_derived_attributes')
           .select(`
             player_id,
@@ -215,7 +215,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             passing_rating,
             dribbling_rating,
             defending_rating,
-            physical_rating
+            physical_rating,
+            total_ratings_count
           `)
           .in('player_id', playerIds);
 
@@ -239,7 +240,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             passing_rating: player.passing_rating,
             dribbling_rating: player.dribbling_rating,
             defending_rating: player.defending_rating,
-            physical_rating: player.physical_rating
+            physical_rating: player.physical_rating,
+            total_ratings_count: player.total_ratings_count
           }
         }), {});
 
@@ -261,6 +263,56 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             winRate: player.win_rate
           }
         }), {});
+
+        // Get last 40 completed historical games for recent games calculation
+        const { data: latestGameData, error: gameError } = await supabase
+          .from('games')
+          .select('id, sequence_number')
+          .eq('completed', true)
+          .eq('is_historical', true)
+          .order('sequence_number', { ascending: false })
+          .limit(40);
+
+        if (gameError) throw gameError;
+
+        const last40GameIds = latestGameData?.map(g => g.id) || [];
+
+        // Fetch registrations ONLY for those 40 games to avoid query limits
+        const { data: gameRegistrationsData, error: regError } = await supabase
+          .from('game_registrations')
+          .select('player_id, game_id, status')
+          .in('game_id', last40GameIds);
+
+        if (regError) throw regError;
+
+        // Build participation arrays for each player
+        // Note: Index 0 = oldest game (40 games ago), Index 39 = most recent game
+        const participationMap: Record<string, Array<'selected' | 'reserve' | null>> = {};
+
+        playerIds.forEach(playerId => {
+          const participation = new Array(40).fill(null);
+
+          latestGameData?.forEach((game, index) => {
+            const registration = gameRegistrationsData?.find(
+              r => r.player_id === playerId && r.game_id === game.id
+            );
+
+            if (registration) {
+              // Reverse the index so 0 is the oldest game and 39 is the most recent
+              participation[39 - index] = registration.status === 'selected' ? 'selected' : 'reserve';
+            }
+          });
+
+          participationMap[playerId] = participation;
+        });
+
+        // Count recent games (selected status only) per player
+        const recentGamesMap = gameRegistrationsData?.reduce((acc, reg) => {
+          if (reg.status === 'selected') {
+            acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
+          }
+          return acc;
+        }, {} as Record<string, number>);
 
         // Transform into record for easy lookup
         const stats = playerData?.reduce((acc, player) => {
@@ -296,7 +348,10 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               registrationStreakBonusApplies: regStreakMap[selectedPlayer?.friendly_name]?.registrationStreakApplies || false,
               averagedPlaystyle: playstyleMatch?.playstyleName,
               playstyleMatchDistance: playstyleMatch?.matchDistance,
-              playstyleCategory: playstyleMatch?.category
+              playstyleCategory: playstyleMatch?.category,
+              playstyleRatingsCount: derivedAttrsMap[player.id]?.total_ratings_count || 0,
+              recentGames: recentGamesMap?.[player.id] || 0,
+              gameParticipation: participationMap[player.id] || new Array(40).fill(null)
             }
           };
         }, {});
@@ -405,6 +460,9 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       averagedPlaystyle={playerStats[player.id]?.averagedPlaystyle}
                       playstyleMatchDistance={playerStats[player.id]?.playstyleMatchDistance}
                       playstyleCategory={playerStats[player.id]?.playstyleCategory}
+                      playstyleRatingsCount={playerStats[player.id]?.playstyleRatingsCount || 0}
+                      recentGames={playerStats[player.id]?.recentGames || 0}
+                      gameParticipation={playerStats[player.id]?.gameParticipation || new Array(40).fill(null)}
                     />
                   </motion.div>
                 ))}
@@ -458,6 +516,9 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       averagedPlaystyle={playerStats[player.id]?.averagedPlaystyle}
                       playstyleMatchDistance={playerStats[player.id]?.playstyleMatchDistance}
                       playstyleCategory={playerStats[player.id]?.playstyleCategory}
+                      playstyleRatingsCount={playerStats[player.id]?.playstyleRatingsCount || 0}
+                      recentGames={playerStats[player.id]?.recentGames || 0}
+                      gameParticipation={playerStats[player.id]?.gameParticipation || new Array(40).fill(null)}
                     />
                   </motion.div>
                 ))}

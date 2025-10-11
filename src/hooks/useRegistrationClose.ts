@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabase, supabaseAdmin } from '../utils/supabase';
 import { utcToUkTime } from '../utils/dateUtils';
+import { handlePlayerSelection } from '../utils/playerSelection';
 
 interface UseRegistrationCloseProps {
   game?: any;
@@ -136,19 +137,45 @@ export const useRegistrationClose = (props?: UseRegistrationCloseProps) => {
       }
 
       const { id, max_players, random_slots } = props.game;
-      
-      // Use a transaction to ensure atomic updates
-      const { error: txError } = await supabase.rpc('process_registration_close', {
-        p_game_id: id,
-        p_max_players: max_players,
-        p_random_slots: random_slots
+
+      // Calculate merit slots (max_players minus random_slots)
+      const meritSlots = max_players - random_slots;
+
+      // Execute player selection FIRST (before changing status)
+      console.log(`Starting player selection for game ${id}: ${meritSlots} merit slots + ${random_slots} random slots`);
+      const selectionResult = await handlePlayerSelection({
+        gameId: id,
+        xpSlots: meritSlots,
+        randomSlots: random_slots,
       });
 
-      if (txError) {
-        if (txError.message?.includes('permission')) {
-          throw new Error('You do not have permission to close registration. Please contact an administrator.');
-        }
-        throw txError;
+      if (!selectionResult.success) {
+        throw new Error(selectionResult.error || 'Player selection failed');
+      }
+
+      console.log(`Player selection completed successfully: ${selectionResult.selectedPlayers.length} players selected`);
+
+      // Only update game status AFTER player selection succeeds
+      const { error: statusError } = await supabaseAdmin
+        .from('games')
+        .update({ status: 'players_announced' })
+        .eq('id', id)
+        .eq('status', 'open'); // Only update if still open (prevents race conditions)
+
+      if (statusError) {
+        throw new Error(`Failed to update game status: ${statusError.message}`);
+      }
+
+      console.log(`Game status updated to players_announced`);
+
+      // Process shield streak protection after player selection
+      try {
+        await supabaseAdmin.rpc('process_shield_streak_protection', {
+          p_game_id: id
+        });
+      } catch (shieldError: any) {
+        // Log shield processing errors but don't fail the entire process
+        console.error('Error processing shield protection:', shieldError);
       }
 
       if (props.onGameUpdated) {

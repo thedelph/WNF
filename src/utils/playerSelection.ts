@@ -301,13 +301,15 @@ export const handlePlayerSelection = async ({
     ) => {
       try {
         console.log(`Updating player ${playerId} to status: ${status}, method: ${selectionMethod}`);
-        
+
         // Use the SECURITY DEFINER RPC function to update the registration
+        // Bypass permission check since this is an automated system process
         const { data, error } = await supabaseAdmin.rpc('update_game_registration', {
           p_game_id: gameId,
           p_player_id: playerId,
           p_status: status,
-          p_selection_method: selectionMethod
+          p_selection_method: selectionMethod,
+          p_bypass_permission: true
         });
 
         if (error) {

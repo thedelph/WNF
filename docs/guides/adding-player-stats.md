@@ -11,9 +11,10 @@ When adding a new player stat/modifier, you need to update several interconnecte
    - Contains the raw data for the stat/modifier
 
 2. **Parent Components** (Need to fetch and pass data)
-   - `TeamSelectionResults.tsx`
-   - `PlayerSelectionResults.tsx`
-   - `RegisteredPlayers.tsx`
+   - `TeamSelectionResults.tsx` - Shows teams after selection
+   - `PlayerSelectionResults.tsx` - Shows selected/reserve/dropped players
+   - `RegisteredPlayers.tsx` - Shows players before selection
+   - `useGameRegistrationStats.ts` - Hook used by RegisteredPlayers
    - Any other components that render player cards
 
 3. **Player Card Components**
@@ -131,8 +132,18 @@ Add the rendering logic in `PlayerCardModifiers.tsx`:
 
 ## Related Files
 
+**Player Card Components:**
 - `/src/components/player-card/PlayerCard.tsx`
 - `/src/components/player-card/PlayerCardModifiers.tsx`
-- `/src/components/games/TeamSelectionResults.tsx`
-- `/src/components/games/PlayerSelectionResults.tsx`
-- `/src/components/games/RegisteredPlayers.tsx`
+- `/src/components/player-card/PlayerCardFront.tsx`
+
+**Parent Components (need data fetching and prop passing):**
+- `/src/components/games/TeamSelectionResults.tsx` - Shows teams after selection
+- `/src/components/games/PlayerSelectionResults.tsx` - Shows selected/reserve/dropped players
+- `/src/components/game/RegisteredPlayers.tsx` - Shows players before selection
+- `/src/hooks/useGameRegistrationStats.ts` - Shared hook for RegisteredPlayers and PlayerList
+
+**Important Notes:**
+- `useGameRegistrationStats.ts` is the canonical implementation for recent games data
+- When adding game participation data, ensure array indices match: Index 0 = oldest game, Index 39 = most recent
+- See `/docs/components/PlayerCard.md` for details on recent games implementation

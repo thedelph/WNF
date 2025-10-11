@@ -100,19 +100,50 @@ The "Last 40 Games" statistic displays how many of the last 40 completed games a
      .from('game_registrations')
      .select('player_id, game_id, status')
      .in('game_id', last40GameIds)
-     .eq('status', 'selected');
+     .in('status', ['selected', 'reserve']);
 
-   // Step 3: Count per player
+   // Step 3: Build participation arrays with CORRECT INDEX ORDER
+   // CRITICAL: Index 0 = oldest game, Index 39 = most recent game
+   const participationMap = {};
+   playerIds.forEach(playerId => {
+     const participation = new Array(40).fill(null);
+
+     latestGameData?.forEach((game, index) => {
+       const registration = gameRegistrationsData?.find(
+         r => r.player_id === playerId && r.game_id === game.id
+       );
+
+       if (registration) {
+         // Reverse index: 0 becomes 39, 1 becomes 38, etc.
+         participation[39 - index] = registration.status;
+       }
+     });
+
+     participationMap[playerId] = participation;
+   });
+
+   // Step 4: Count recent games per player (selected only)
    const recentGamesMap = gameRegistrationsData.reduce((acc, reg) => {
-     acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
+     if (reg.status === 'selected') {
+       acc[reg.player_id] = (acc[reg.player_id] || 0) + 1;
+     }
      return acc;
    }, {});
    ```
 
-4. **Display Location**:
+4. **Index Order Consistency** (Fixed 2025-10-11):
+   - **Critical requirement**: All components MUST use the same index order
+   - **Standard**: Index 0 = oldest game (40 games ago), Index 39 = most recent game
+   - **Why**: GameParticipationWheel displays segments chronologically left-to-right
+   - **Implementation**: Use `participation[39 - index]` when iterating over `latestGameData`
+   - **Fixed components**: PlayerSelectionResults.tsx and TeamSelectionResults.tsx
+   - **Reference**: useGameRegistrationStats.ts (canonical implementation)
+
+5. **Display Location**:
    - Front of card (replaces old Caps position)
    - Uses Activity icon to represent game participation
    - Shown as "X/40" format (e.g., "36/40")
+   - With reserves: "X/Y" format (e.g., "36/5" = 36 played, 5 reserve)
 
 ### Attendance Streak Data
 The player card displays attendance streak information with the following implementation:

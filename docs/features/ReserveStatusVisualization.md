@@ -1,7 +1,7 @@
 # Reserve Status Visualization Feature
 
-**Date**: 2025-10-09
-**Status**: Implemented
+**Date**: 2025-10-09 (Updated 2025-10-11)
+**Status**: Implemented (Extended to all player card views)
 
 ## Overview
 
@@ -141,20 +141,43 @@ interface GameParticipationWheelProps {
 
 ## Implementation Files
 
-### Data Layer
+### Data Layer (Initial Implementation 2025-10-09)
 - `src/hooks/usePlayerGrid.ts` - Fetches participation data with 3 states
-- `src/hooks/useGameRegistrationStats.ts` - Similar query updates
+- `src/hooks/useGameRegistrationStats.ts` - Canonical implementation with proper index order
 
-### Components
-- `src/components/player-card/GameParticipationWheel.tsx` - Wheel visualization
+### Components (All Views)
+- `src/components/player-card/GameParticipationWheel.tsx` - Wheel visualization (shared component)
 - `src/components/player-card/PlayerCardFront.tsx` - Integration and display
 - `src/components/player-card/PlayerCard.tsx` - Prop passing
 - `src/components/player-card/grid/PlayerGridLayout.tsx` - Grid integration
-- `src/components/games/PlayerList.tsx` - List integration
+- `src/components/games/PlayerList.tsx` - List integration (via usePlayerGrid)
+- `src/components/game/RegisteredPlayers.tsx` - Registration view (via useGameRegistrationStats)
+
+### Extended Implementation (2025-10-11)
+- `src/components/games/PlayerSelectionResults.tsx` - Player selection results view
+- `src/components/games/TeamSelectionResults.tsx` - Team announcement view
 
 ### Types
 - `src/components/player-card/PlayerCardTypes.ts` - Type definitions
 - `src/utils/rarityColors.ts` - Color mapping utility
+
+### Index Order Requirement
+
+**CRITICAL**: All implementations must use consistent array index ordering:
+- **Index 0** = oldest game (40 games ago)
+- **Index 39** = most recent game
+
+This ensures the GameParticipationWheel displays segments chronologically (oldest to newest, clockwise from top).
+
+**Implementation pattern:**
+```typescript
+latestGameData?.forEach((game, index) => {
+  // Always reverse the index: 0 becomes 39, 1 becomes 38, etc.
+  participation[39 - index] = registration.status;
+});
+```
+
+The canonical implementation is in `useGameRegistrationStats.ts` (lines 126-130).
 
 ## Benefits
 

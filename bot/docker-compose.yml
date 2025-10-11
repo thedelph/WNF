@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  wnf-whatsapp-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wnf-whatsapp-bot
+    restart: unless-stopped
+
+    # Environment variables (override with .env file)
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - PORT=3001
+      - WA_SESSION_PATH=/app/sessions
+      - WA_GROUP_ID=${WA_GROUP_ID}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - ADMIN_PHONE_NUMBERS=${ADMIN_PHONE_NUMBERS}
+
+    # Persistent volumes
+    volumes:
+      # WhatsApp session data (CRITICAL - don't lose this!)
+      - whatsapp-sessions:/app/sessions
+      # Log files
+      - whatsapp-logs:/app/logs
+
+    # Port mapping (for local access and Cloudflare Tunnel)
+    ports:
+      - "3001:3001"
+
+    # Resource limits (adjust based on your server)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Network
+    networks:
+      - wnf-network
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Named volumes for persistence
+volumes:
+  whatsapp-sessions:
+    driver: local
+  whatsapp-logs:
+    driver: local
+
+# Network
+networks:
+  wnf-network:
+    driver: bridge

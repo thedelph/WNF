@@ -1,8 +1,10 @@
 # Recent Games Query Limit Fix
 
-**Date**: 2025-10-09
+**Date**: 2025-10-09 (Updated 2025-10-11)
 **Author**: Claude Code
 **Issue**: Player cards showing incorrect "Last 40 Games" counts due to Supabase query row limit
+
+**Update 2025-10-11**: Extended fix to PlayerSelectionResults and TeamSelectionResults components. Also fixed index order inconsistency in participation arrays.
 
 ## Problem
 
@@ -110,6 +112,8 @@ const recentGamesMap = (gameRegistrationsData || []).reduce((acc, registration) 
 
 ## Files Modified
 
+### Initial Fix (2025-10-09)
+
 1. **src/hooks/usePlayerGrid.ts** (lines 24-208)
    - Changed from parallel queries to sequential (fetch games first, then registrations)
    - Added `.in('game_id', last40GameIds)` filter to registration query
@@ -119,6 +123,20 @@ const recentGamesMap = (gameRegistrationsData || []).reduce((acc, registration) 
 2. **src/hooks/useGameRegistrationStats.ts** (lines 110-172)
    - Applied identical fix as usePlayerGrid
    - Ensures consistent counts across player grid and game registration views
+   - Includes reserve status tracking in participation arrays
+
+### Extension & Index Order Fix (2025-10-11)
+
+3. **src/components/games/PlayerSelectionResults.tsx** (lines 342-389)
+   - Added sequential query structure for recent games data
+   - Implemented participation array with correct index order (39 - index)
+   - Extended to show both selected and reserve status in GameParticipationWheel
+   - Fixed: Wheel segments were displaying backwards (newest to oldest instead of oldest to newest)
+
+4. **src/components/games/TeamSelectionResults.tsx** (lines 265-312)
+   - Applied identical implementation as PlayerSelectionResults
+   - Ensures team selection page shows accurate recent games data
+   - Fixed same index order issue for consistency across all views
 
 ## Impact
 
@@ -131,17 +149,61 @@ All players now show correct "Last 40 Games" counts matching database reality:
 - Chris H: 28 → **36** ✓
 - Daniel: 27 → **37** ✓
 
+## Index Order Issue (Discovered 2025-10-11)
+
+### Problem
+When implementing the fix in PlayerSelectionResults and TeamSelectionResults, the GameParticipationWheel segments displayed in reverse order (newest games on left, oldest on right) compared to other components.
+
+### Root Cause
+The canonical implementation in `useGameRegistrationStats.ts` reverses array indices when building participation arrays:
+
+```typescript
+// Lines 126-130 in useGameRegistrationStats.ts
+const gameIdToIndexMap = (latestGameData || []).reduce((acc, game, index) => {
+  // Reverse the index so 0 is the oldest game and 39 is the most recent
+  acc[game.id] = 39 - index;
+  return acc;
+}, {} as Record<string, number>);
+```
+
+**Standard**: Index 0 = oldest game, Index 39 = most recent game
+
+The initial implementation in PlayerSelectionResults and TeamSelectionResults used raw indices without reversing, causing the wheel to display backwards.
+
+### Solution
+Updated both components to match the canonical index order:
+
+```typescript
+// Use 39 - index when building participation arrays
+latestGameData?.forEach((game, index) => {
+  if (registration) {
+    participation[39 - index] = registration.status;
+  }
+});
+```
+
+### Lesson Learned
+When implementing features that display chronological data across multiple components, establish and document the canonical index order early. All implementations must strictly follow the same convention to ensure visual consistency.
+
 ## Prevention
 
 1. **Query Limits**: Always be aware of Supabase's 1,000 row default limit when fetching large datasets
 2. **Filter Early**: Apply filters at the database level before hitting row limits
 3. **Test with Production Data**: Mock data with low row counts won't expose these issues
 4. **Monitor Debug Logs**: Watch for `totalRegistrations` values approaching 1,000 as a warning sign
+5. **Index Order Consistency**: When implementing participation/timeline arrays, always reference the canonical implementation (useGameRegistrationStats.ts) for correct index ordering
 
 ## Testing
 
-After implementation:
+### Initial Fix (2025-10-09)
 - All players display accurate "Last 40 Games" counts
 - Console log shows `totalRegistrations: 718` (down from 1,000+)
 - Debug output includes sample counts for verification
 - No data truncation warnings in browser console
+
+### Extension & Index Order Fix (2025-10-11)
+- PlayerSelectionResults page shows correct recent games counts
+- TeamSelectionResults page shows correct recent games counts
+- GameParticipationWheel segments display in correct chronological order (oldest to newest, left to right)
+- All components (PlayerList, RegisteredPlayers, PlayerSelectionResults, TeamSelectionResults) show consistent wheel visualization
+- Reserve status (white segments) displays correctly alongside selected status (colored segments)

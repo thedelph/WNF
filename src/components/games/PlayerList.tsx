@@ -72,6 +72,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 averagedPlaystyle={player.averagedPlaystyle}
                 playstyleMatchDistance={player.playstyleMatchDistance}
                 playstyleCategory={player.playstyleCategory}
+                playstyleRatingsCount={player.playstyleRatingsCount}
                 recentGames={player.recentGames}
                 gameParticipation={player.gameParticipation}
               />
