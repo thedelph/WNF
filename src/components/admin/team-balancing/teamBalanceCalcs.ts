@@ -15,19 +15,21 @@ export const calculateTeamStats = (team: TeamAssignment[]) => {
   // Return empty stats for empty teams
   if (!team || team.length === 0) {
     return {
-      attack: 0, 
-      defense: 0, 
+      attack: 0,
+      defense: 0,
       gameIq: 0,
+      gk: 0,
       winRate: 0,
       goalDifferential: 0,
       playerCount: 0
     };
   }
 
-  // Calculate attack, defense, and game IQ averages
+  // Calculate attack, defense, game IQ, and GK averages
   const blueAttack = team.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / team.length;
   const blueDefense = team.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / team.length;
   const blueGameIq = team.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / team.length;
+  const blueGk = team.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / team.length;
   
   // Filter out players with no game history for win rate calculation
   // No longer requiring 10+ games, just need valid data
@@ -77,13 +79,14 @@ export const calculateTeamStats = (team: TeamAssignment[]) => {
     }))
   });
     
-  return { 
-    attack: blueAttack, 
-    defense: blueDefense, 
+  return {
+    attack: blueAttack,
+    defense: blueDefense,
     gameIq: blueGameIq,
+    gk: blueGk,
     winRate: blueWinRate,
     goalDifferential: blueGoalDiff,
-    playerCount: team.length 
+    playerCount: team.length
   };
 };
 
@@ -125,27 +128,31 @@ export const calculateTeamComparison = (blueTeam: TeamAssignment[], orangeTeam: 
   const attackDiff = Math.abs(blue.attack - orange.attack);
   const defenseDiff = Math.abs(blue.defense - orange.defense);
   const gameIqDiff = Math.abs(blue.gameIq - orange.gameIq);
-  
+  const gkDiff = Math.abs(blue.gk - orange.gk);
+
   // Only calculate stat differences if we have valid data (no longer requiring 10+ games)
-  const hasWinRateData = 
-    blueTeam.some(p => p.win_rate !== null && p.win_rate !== undefined) && 
+  const hasWinRateData =
+    blueTeam.some(p => p.win_rate !== null && p.win_rate !== undefined) &&
     orangeTeam.some(p => p.win_rate !== null && p.win_rate !== undefined);
-  
+
   const hasGoalDiffData =
     blueTeam.some(p => p.goal_differential !== null && p.goal_differential !== undefined) &&
     orangeTeam.some(p => p.goal_differential !== null && p.goal_differential !== undefined);
-  
+
   const winRateDiff = hasWinRateData ? Math.abs(blue.winRate - orange.winRate) : 0;
   const goalDifferentialDiff = hasGoalDiffData ? Math.abs(blue.goalDifferential - orange.goalDifferential) : 0;
-  
-  // Calculate overall balance score (lower is better) with equal 20% weighting
-  const weightedAttackDiff = attackDiff * 0.20;
-  const weightedDefenseDiff = defenseDiff * 0.20;
-  const weightedGameIqDiff = gameIqDiff * 0.20;
+
+  // Calculate overall balance score (lower is better)
+  // Core Skills: 60% (Attack 15%, Defense 15%, Game IQ 15%, GK 15%)
+  // Performance: 40% (Win Rate 20%, Goal Differential 20%)
+  const weightedAttackDiff = attackDiff * 0.15;
+  const weightedDefenseDiff = defenseDiff * 0.15;
+  const weightedGameIqDiff = gameIqDiff * 0.15;
+  const weightedGkDiff = gkDiff * 0.15;
   const weightedWinRateDiff = winRateDiff * 0.20;
   const weightedGoalDiffDiff = goalDifferentialDiff * 0.20;
-  
-  const currentScore = weightedAttackDiff + weightedDefenseDiff + weightedGameIqDiff + weightedWinRateDiff + weightedGoalDiffDiff;
+
+  const currentScore = weightedAttackDiff + weightedDefenseDiff + weightedGameIqDiff + weightedGkDiff + weightedWinRateDiff + weightedGoalDiffDiff;
   
   // Calculate normalized values for visualization
   // We'll use typical expected ranges for each metric to normalize them
@@ -158,20 +165,24 @@ export const calculateTeamComparison = (blueTeam: TeamAssignment[], orangeTeam: 
   const maxAttackDiff = 2.0;       // 2.0 points is a significant attack rating difference
   const maxDefenseDiff = 2.0;      // 2.0 points is a significant defense rating difference
   const maxGameIqDiff = 2.0;       // 2.0 points is a significant game IQ rating difference
+  const maxGkDiff = 2.0;           // 2.0 points is a significant GK rating difference
   const maxWinRateDiff = 20.0;     // 20% is a significant win rate difference
   const maxGoalDiffDiff = 20.0;    // 20 goals is a significant goal differential difference
-  
+
   // Calculate normalized differences (0-1 scale)
   const normalizedAttackDiff = normalizeValue(attackDiff, maxAttackDiff);
   const normalizedDefenseDiff = normalizeValue(defenseDiff, maxDefenseDiff);
   const normalizedGameIqDiff = normalizeValue(gameIqDiff, maxGameIqDiff);
+  const normalizedGkDiff = normalizeValue(gkDiff, maxGkDiff);
   const normalizedWinRateDiff = normalizeValue(winRateDiff, maxWinRateDiff);
   const normalizedGoalDiffDiff = normalizeValue(goalDifferentialDiff, maxGoalDiffDiff);
-  
-  // Calculate normalized weighted differences (each 0-0.20 scale)
-  const normalizedWeightedAttackDiff = normalizedAttackDiff * 0.20;
-  const normalizedWeightedDefenseDiff = normalizedDefenseDiff * 0.20;
-  const normalizedWeightedGameIqDiff = normalizedGameIqDiff * 0.20;
+
+  // Calculate normalized weighted differences
+  // Core Skills: 15% each, Performance: 20% each
+  const normalizedWeightedAttackDiff = normalizedAttackDiff * 0.15;
+  const normalizedWeightedDefenseDiff = normalizedDefenseDiff * 0.15;
+  const normalizedWeightedGameIqDiff = normalizedGameIqDiff * 0.15;
+  const normalizedWeightedGkDiff = normalizedGkDiff * 0.15;
   const normalizedWeightedWinRateDiff = normalizedWinRateDiff * 0.20;
   const normalizedWeightedGoalDiffDiff = normalizedGoalDiffDiff * 0.20;
   
@@ -181,6 +192,7 @@ export const calculateTeamComparison = (blueTeam: TeamAssignment[], orangeTeam: 
     attackDiff,
     defenseDiff,
     gameIqDiff,
+    gkDiff,
     winRateDiff,
     goalDifferentialDiff,
     currentScore,
@@ -188,11 +200,13 @@ export const calculateTeamComparison = (blueTeam: TeamAssignment[], orangeTeam: 
     normalizedAttackDiff,
     normalizedDefenseDiff,
     normalizedGameIqDiff,
+    normalizedGkDiff,
     normalizedWinRateDiff,
     normalizedGoalDiffDiff,
     normalizedWeightedAttackDiff,
     normalizedWeightedDefenseDiff,
     normalizedWeightedGameIqDiff,
+    normalizedWeightedGkDiff,
     normalizedWeightedWinRateDiff,
     normalizedWeightedGoalDiffDiff
   };

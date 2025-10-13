@@ -49,14 +49,17 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
   const getTeamStats = (team: PlayerWithRating[]) => {
     const rated = team.filter(p => (p.total_games || 0) >= 10);
     const newPlayers = team.filter(p => (p.total_games || 0) < 10);
-    
+    const permanentGKs = team.filter(p => p.isPermanentGK);
+
     return {
       total: team.length,
       rated: rated.length,
       new: newPlayers.length,
+      permanentGKs: permanentGKs.length,
       avgAttack: team.reduce((sum, p) => sum + (p.attack_rating || 0), 0) / team.length,
       avgDefense: team.reduce((sum, p) => sum + (p.defense_rating || 0), 0) / team.length,
       avgGameIQ: team.reduce((sum, p) => sum + (p.game_iq_rating || 0), 0) / team.length,
+      avgGK: team.reduce((sum, p) => sum + (p.gk_rating || 0), 0) / team.length,
       avgWinRate: rated.reduce((sum, p) => sum + (p.win_rate || 0), 0) / (rated.length || 1),
       avgGoalDiff: rated.reduce((sum, p) => sum + (p.goal_differential || 0), 0) / (rated.length || 1)
     };
@@ -123,10 +126,15 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
       `}
     >
       <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold truncate">{player.friendly_name}</h4>
+        <div className="flex items-center gap-2 flex-1">
+          <h4 className="font-bold truncate">{player.friendly_name}</h4>
+          {player.isPermanentGK && (
+            <span className="badge badge-xs badge-warning">🥅 GK</span>
+          )}
+        </div>
         <span className="badge badge-sm">Tier {player.tier}</span>
       </div>
-      <div className="grid grid-cols-3 gap-1 text-xs">
+      <div className="grid grid-cols-2 gap-1 text-xs">
         <div>
           <span className="text-gray-500">ATK:</span> {formatRating(player.attack_rating)}
         </div>
@@ -135,6 +143,9 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
         </div>
         <div>
           <span className="text-gray-500">IQ:</span> {formatRating(player.game_iq_rating)}
+        </div>
+        <div>
+          <span className="text-gray-500">GK:</span> {formatRating(player.gk_rating)}
         </div>
       </div>
       {(player.total_games || 0) >= 10 && (
@@ -266,6 +277,12 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                   <td>{Math.abs(blueStats.new - orangeStats.new)}</td>
                 </tr>
                 <tr>
+                  <td className="font-medium">Permanent GKs</td>
+                  <td>{blueStats.permanentGKs}</td>
+                  <td>{orangeStats.permanentGKs}</td>
+                  <td>{Math.abs(blueStats.permanentGKs - orangeStats.permanentGKs)}</td>
+                </tr>
+                <tr>
                   <td className="font-medium">Avg Attack</td>
                   <td>{blueStats.avgAttack.toFixed(2)}</td>
                   <td>{orangeStats.avgAttack.toFixed(2)}</td>
@@ -282,6 +299,12 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                   <td>{blueStats.avgGameIQ.toFixed(2)}</td>
                   <td>{orangeStats.avgGameIQ.toFixed(2)}</td>
                   <td>{Math.abs(blueStats.avgGameIQ - orangeStats.avgGameIQ).toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td className="font-medium">Avg GK Rating</td>
+                  <td>{blueStats.avgGK.toFixed(2)}</td>
+                  <td>{orangeStats.avgGK.toFixed(2)}</td>
+                  <td>{Math.abs(blueStats.avgGK - orangeStats.avgGK).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td className="font-medium">Avg Win Rate</td>
@@ -322,6 +345,12 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                     <span>Superior Game IQ (+{(blueStats.avgGameIQ - orangeStats.avgGameIQ).toFixed(2)})</span>
                   </div>
                 )}
+                {blueStats.avgGK > orangeStats.avgGK && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🥅</span>
+                    <span>Superior GK Rating (+{(blueStats.avgGK - orangeStats.avgGK).toFixed(2)})</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="bg-orange-50 p-4 rounded-lg">
@@ -343,6 +372,12 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">🧠</span>
                     <span>Superior Game IQ (+{(orangeStats.avgGameIQ - blueStats.avgGameIQ).toFixed(2)})</span>
+                  </div>
+                )}
+                {orangeStats.avgGK > blueStats.avgGK && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🥅</span>
+                    <span>Superior GK Rating (+{(orangeStats.avgGK - blueStats.avgGK).toFixed(2)})</span>
                   </div>
                 )}
               </div>
@@ -445,6 +480,9 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                 {(() => {
                   const playstyleCount = new Map<string, { count: number; players: string[] }>();
                   blueTeam.forEach(player => {
+                    // Exclude permanent GKs as they don't play outfield positions
+                    if (player.isPermanentGK) return;
+
                     const styleSummary = getPlaystyleSummary(player) || 'No Playstyle Data';
                     if (!playstyleCount.has(styleSummary)) {
                       playstyleCount.set(styleSummary, { count: 0, players: [] });
@@ -482,6 +520,9 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                 {(() => {
                   const playstyleCount = new Map<string, { count: number; players: string[] }>();
                   orangeTeam.forEach(player => {
+                    // Exclude permanent GKs as they don't play outfield positions
+                    if (player.isPermanentGK) return;
+
                     const styleSummary = getPlaystyleSummary(player) || 'No Playstyle Data';
                     if (!playstyleCount.has(styleSummary)) {
                       playstyleCount.set(styleSummary, { count: 0, players: [] });
@@ -529,8 +570,11 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                     const blueAttrs = { pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 };
                     const orangeAttrs = { pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 };
                     let blueCount = 0, orangeCount = 0;
-                    
+
                     blueTeam.forEach(p => {
+                      // Exclude permanent GKs as they don't play outfield positions
+                      if (p.isPermanentGK) return;
+
                       if (p.derived_attributes) {
                         blueAttrs.pace += p.derived_attributes.pace;
                         blueAttrs.shooting += p.derived_attributes.shooting;
@@ -541,8 +585,11 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                         blueCount++;
                       }
                     });
-                    
+
                     orangeTeam.forEach(p => {
+                      // Exclude permanent GKs as they don't play outfield positions
+                      if (p.isPermanentGK) return;
+
                       if (p.derived_attributes) {
                         orangeAttrs.pace += p.derived_attributes.pace;
                         orangeAttrs.shooting += p.derived_attributes.shooting;
@@ -594,8 +641,11 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                   const blueAttrs = { pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 };
                   const orangeAttrs = { pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 };
                   let blueCount = 0, orangeCount = 0;
-                  
+
                   blueTeam.forEach(p => {
+                    // Exclude permanent GKs as they don't play outfield positions
+                    if (p.isPermanentGK) return;
+
                     if (p.derived_attributes) {
                       blueAttrs.pace += p.derived_attributes.pace;
                       blueAttrs.shooting += p.derived_attributes.shooting;
@@ -606,8 +656,11 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                       blueCount++;
                     }
                   });
-                  
+
                   orangeTeam.forEach(p => {
+                    // Exclude permanent GKs as they don't play outfield positions
+                    if (p.isPermanentGK) return;
+
                     if (p.derived_attributes) {
                       orangeAttrs.pace += p.derived_attributes.pace;
                       orangeAttrs.shooting += p.derived_attributes.shooting;

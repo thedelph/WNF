@@ -86,14 +86,14 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
       orangeTeamStats: stats.orange
     });
     
-    // Format team lists with player emojis
+    // Format team lists with player emojis (mark permanent GKs)
     const blueTeamText = blueTeam
-      .map(p => `👤 ${p.friendly_name}`)
+      .map(p => `${p.isPermanentGK ? '🧤' : '👤'} ${p.friendly_name}`)
       .sort()
       .join('\n');
-      
+
     const orangeTeamText = orangeTeam
-      .map(p => `👤 ${p.friendly_name}`)
+      .map(p => `${p.isPermanentGK ? '🧤' : '👤'} ${p.friendly_name}`)
       .sort()
       .join('\n');
     
@@ -110,12 +110,18 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
       calculatedOrangeGoalDiff: orangeGoalDiff
     });
     
+    // Calculate GK rating difference
+    const gkDiff = stats.blue.gk !== undefined && stats.orange.gk !== undefined
+      ? Math.abs(stats.blue.gk - stats.orange.gk)
+      : 0;
+
     let message = `📋 Proposed Teams For Next Game
 
 🟠 Orange Team
 ⚔ Attack: ${stats.orange.attack?.toFixed(1) ?? '0.0'}
 🛡 Defense: ${stats.orange.defense?.toFixed(1) ?? '0.0'}
 🧠 Game IQ: ${stats.orange.gameIq?.toFixed(1) ?? '0.0'}
+🧤 GK: ${stats.orange.gk?.toFixed(1) ?? '0.0'}
 🏆 Win Rate: ${Math.round(stats.orange.winRate ?? 0)}%
 ⚽ Goal Diff: ${stats.orange.goalDifferential ?? 0}
 
@@ -123,6 +129,7 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
 ⚔ Attack: ${stats.blue.attack?.toFixed(1) ?? '0.0'}
 🛡 Defense: ${stats.blue.defense?.toFixed(1) ?? '0.0'}
 🧠 Game IQ: ${stats.blue.gameIq?.toFixed(1) ?? '0.0'}
+🧤 GK: ${stats.blue.gk?.toFixed(1) ?? '0.0'}
 🏆 Win Rate: ${Math.round(stats.blue.winRate ?? 0)}%
 ⚽ Goal Diff: ${stats.blue.goalDifferential ?? 0}
 
@@ -130,6 +137,7 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
 ⚔ Attack Diff: ${stats.attackDiff?.toFixed(1) ?? '0.0'}
 🛡 Defense Diff: ${stats.defenseDiff?.toFixed(1) ?? '0.0'}
 🧠 Game IQ Diff: ${stats.gameIqDiff?.toFixed(1) ?? '0.0'}
+🧤 GK Diff: ${gkDiff.toFixed(1)}
 🏆 Win Rate Diff: ${stats.winRateDiff?.toFixed(1) ?? '0.0'}%
 ${goalDiffDiffText}
 ⚖ Balance Score: ${stats.currentScore?.toFixed(1) ?? '0.0'}
@@ -139,6 +147,12 @@ ${orangeTeamText}
 
 🔵 Blue Team (${blueTeam.length}):
 ${blueTeamText}`;
+
+    // Add note about permanent GK if any exist
+    const hasPermanentGK = blueTeam.some(p => p.isPermanentGK) || orangeTeam.some(p => p.isPermanentGK);
+    if (hasPermanentGK) {
+      message += '\n\n🧤 = Permanent Goalkeeper for this game';
+    }
 
     // Add shield protection section if there are protected players
     if (shieldPlayers.length > 0) {
@@ -155,20 +169,24 @@ ${blueTeamText}`;
       const formatPositionGroup = (positions: any, positionType: PositionType) => {
         const players = positions[positionType];
         if (!players || players.length === 0) return '';
-        const names = players.map((p: any) => p.player.friendly_name).join(', ');
+        const names = players.map((p: any) => {
+          // Mark permanent GK with 🧤 emoji
+          const emoji = p.player.isPermanentGK ? '🧤 ' : '';
+          return `${emoji}${p.player.friendly_name}`;
+        }).join(', ');
         return `${POSITION_DISPLAY_NAMES[positionType]}: ${names}`;
       };
-      
-      const blueFormationText = ['DEF', 'WB', 'W', 'CDM', 'CM', 'CAM', 'ST']
+
+      const blueFormationText = ['GK', 'DEF', 'WB', 'W', 'CDM', 'CM', 'CAM', 'ST']
         .map(pos => formatPositionGroup(formationSuggestions.blueFormation.positions, pos as PositionType))
         .filter(text => text !== '')
         .join('\n');
-      
-      const orangeFormationText = ['DEF', 'WB', 'W', 'CDM', 'CM', 'CAM', 'ST']
+
+      const orangeFormationText = ['GK', 'DEF', 'WB', 'W', 'CDM', 'CM', 'CAM', 'ST']
         .map(pos => formatPositionGroup(formationSuggestions.orangeFormation.positions, pos as PositionType))
         .filter(text => text !== '')
         .join('\n');
-      
+
       message += `\n\n📋 Suggested Formations\n\n`;
       message += `🟠 Orange (${formationSuggestions.orangeFormation.formation}):\n${orangeFormationText}\n\n`;
       message += `🔵 Blue (${formationSuggestions.blueFormation.formation}):\n${blueFormationText}`;

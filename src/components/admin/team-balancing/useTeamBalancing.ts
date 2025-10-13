@@ -58,6 +58,8 @@ export const useTeamBalancing = () => {
             defense_rating,
             game_iq,
             average_game_iq_rating,
+            gk,
+            average_gk_rating,
             caps
           )
         `)
@@ -260,7 +262,8 @@ export const useTeamBalancing = () => {
           attack_rating: reg.players.attack_rating || 5,
           defense_rating: reg.players.defense_rating || 5,
           game_iq_rating: reg.players.game_iq ?? reg.players.average_game_iq_rating ?? 5,
-          win_rate: winRate, 
+          gk_rating: reg.players.gk ?? reg.players.average_gk_rating ?? 5,
+          win_rate: winRate,
           goal_differential: goalDifferential,
           overall_win_rate: overallWinRate,
           overall_goal_differential: overallGoalDifferential,
@@ -287,6 +290,7 @@ export const useTeamBalancing = () => {
               attack_rating: player.attack_rating,
               defense_rating: player.defense_rating,
               game_iq_rating: player.game_iq_rating ?? 5,
+              gk_rating: player.gk_rating ?? 5,
               win_rate: player.win_rate,
               goal_differential: player.goal_differential,
               overall_win_rate: player.overall_win_rate,
@@ -303,6 +307,7 @@ export const useTeamBalancing = () => {
               attack_rating: player.attack_rating,
               defense_rating: player.defense_rating,
               game_iq_rating: player.game_iq_rating ?? 5,
+              gk_rating: player.gk_rating ?? 5,
               win_rate: player.win_rate,
               goal_differential: player.goal_differential,
               overall_win_rate: player.overall_win_rate,
@@ -332,6 +337,7 @@ export const useTeamBalancing = () => {
             attack_rating: reg.players.attack_rating,
             defense_rating: reg.players.defense_rating,
             game_iq_rating: reg.players.game_iq ?? reg.players.average_game_iq_rating ?? 5,
+            gk_rating: reg.players.gk ?? reg.players.average_gk_rating ?? 5,
             win_rate: winRate,
             goal_differential: goalDifferential,
             overall_win_rate: overallWinRate,
@@ -374,24 +380,28 @@ export const useTeamBalancing = () => {
         avgAttack: blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / blueTeam.length,
         avgDefense: blueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / blueTeam.length,
         avgGameIq: blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / blueTeam.length,
+        avgGk: blueTeam.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / blueTeam.length,
         totalAttack: blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0),
         totalDefense: blueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0),
         totalGameIq: blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0),
+        totalGk: blueTeam.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0),
         playerCount: blueTeam.length,
-        avgRating: blueTeam.reduce((sum, p) => sum + ((p.attack_rating ?? 0) + (p.defense_rating ?? 0) + (p.game_iq_rating ?? 0))/3, 0) / blueTeam.length,
-        totalRating: blueTeam.reduce((sum, p) => sum + ((p.attack_rating ?? 0) + (p.defense_rating ?? 0) + (p.game_iq_rating ?? 0))/3, 0)
+        avgRating: blueTeam.reduce((sum, p) => sum + ((p.attack_rating ?? 0) + (p.defense_rating ?? 0) + (p.game_iq_rating ?? 0) + (p.gk_rating ?? 0))/4, 0) / blueTeam.length,
+        totalRating: blueTeam.reduce((sum, p) => sum + ((p.attack_rating ?? 0) + (p.defense_rating ?? 0) + (p.game_iq_rating ?? 0) + (p.gk_rating ?? 0))/4, 0)
       };
-      
+
       const orangeStats = {
         avgAttack: orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / orangeTeam.length,
         avgDefense: orangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / orangeTeam.length,
         avgGameIq: orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / orangeTeam.length,
+        avgGk: orangeTeam.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / orangeTeam.length,
         totalAttack: orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0),
         totalDefense: orangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0),
         totalGameIq: orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0),
+        totalGk: orangeTeam.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0),
         playerCount: orangeTeam.length,
-        avgRating: orangeTeam.reduce((sum, p) => sum + ((p.attack_rating ?? 0) + (p.defense_rating ?? 0) + (p.game_iq_rating ?? 0))/3, 0) / orangeTeam.length,
-        totalRating: orangeTeam.reduce((sum, p) => sum + ((p.attack_rating ?? 0) + (p.defense_rating ?? 0) + (p.game_iq_rating ?? 0))/3, 0)
+        avgRating: orangeTeam.reduce((sum, p) => sum + ((p.attack_rating ?? 0) + (p.defense_rating ?? 0) + (p.game_iq_rating ?? 0) + (p.gk_rating ?? 0))/4, 0) / orangeTeam.length,
+        totalRating: orangeTeam.reduce((sum, p) => sum + ((p.attack_rating ?? 0) + (p.defense_rating ?? 0) + (p.game_iq_rating ?? 0) + (p.gk_rating ?? 0))/4, 0)
       };
       
       const teamAssignmentData = {

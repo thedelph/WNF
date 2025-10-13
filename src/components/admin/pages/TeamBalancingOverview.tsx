@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { TeamList } from '../team-balancing/TeamList';
 import { TeamStats } from '../team-balancing/TeamStats';
 import { toast } from 'react-hot-toast';
@@ -17,6 +17,7 @@ import { TierBasedTeamGenerator } from '../team-balancing/TierBasedTeamGenerator
 import { TeamAlgorithmComparison } from '../team-balancing/TeamAlgorithmComparison';
 import { TierBasedResult } from '../team-balancing/tierBasedSnakeDraft';
 import { Tooltip } from '../../ui/Tooltip';
+import { supabase } from '../../../utils/supabase';
 
 /**
  * TeamBalancingOverview component
@@ -25,9 +26,10 @@ import { Tooltip } from '../../ui/Tooltip';
  */
 const TeamBalancingOverview = () => {
   // Get team balancing data and functions from the hook
-  const { 
-    isLoading, 
-    error, 
+  const {
+    isLoading,
+    error,
+    game,
     assignments,
     updateAssignments,
     saveTeamAssignments,
@@ -38,7 +40,10 @@ const TeamBalancingOverview = () => {
   // Player selection and swap state
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [selectedSwap, setSelectedSwap] = useState<PlayerSwapSuggestion | null>(null);
-  
+
+  // Permanent GK selection state
+  const [permanentGKIds, setPermanentGKIds] = useState<string[]>([]);
+
   // Focus metric for swap recommendations
   const [focusMetric, setFocusMetric] = useState<'attack' | 'defense' | 'gameIq' | 'winRate' | 'goalDifferential' | null>(null);
   
@@ -59,8 +64,69 @@ const TeamBalancingOverview = () => {
     orangeTeam: TeamAssignment[];
     score: number;
   } | null>(null);
-  
+
   const [tierBasedResult, setTierBasedResult] = useState<TierBasedResult | null>(null);
+
+  // Load permanent GK selections from database when game changes
+  useEffect(() => {
+    if (!game?.id) return;
+
+    const loadPermanentGKs = async () => {
+      const { data, error } = await supabase
+        .from('permanent_goalkeepers')
+        .select('player_id')
+        .eq('game_id', game.id);
+
+      if (error) {
+        console.error('Error loading permanent GKs:', error);
+        return;
+      }
+
+      if (data) {
+        setPermanentGKIds(data.map(row => row.player_id));
+      }
+    };
+
+    loadPermanentGKs();
+  }, [game?.id]);
+
+  // Save permanent GK selections to database when they change
+  useEffect(() => {
+    if (!game?.id) return;
+
+    const savePermanentGKs = async () => {
+      // Delete all existing selections for this game
+      const { error: deleteError } = await supabase
+        .from('permanent_goalkeepers')
+        .delete()
+        .eq('game_id', game.id);
+
+      if (deleteError) {
+        console.error('Error deleting old permanent GKs:', deleteError);
+        return;
+      }
+
+      // Insert new selections if any
+      if (permanentGKIds.length > 0) {
+        const { error: insertError } = await supabase
+          .from('permanent_goalkeepers')
+          .insert(
+            permanentGKIds.map(playerId => ({
+              game_id: game.id,
+              player_id: playerId
+            }))
+          );
+
+        if (insertError) {
+          console.error('Error saving permanent GKs:', insertError);
+        }
+      }
+    };
+
+    // Debounce the save operation slightly
+    const timeoutId = setTimeout(savePermanentGKs, 300);
+    return () => clearTimeout(timeoutId);
+  }, [permanentGKIds, game?.id]);
 
   // Memoize filtered teams to prevent unnecessary recalculations
   const teams = useMemo(() => {
@@ -143,6 +209,19 @@ const TeamBalancingOverview = () => {
     
     return rankings;
   }, [relevantSwaps, selectedPlayer]);
+
+  // Handle permanent GK toggle
+  const handlePermanentGKToggle = useCallback((playerId: string) => {
+    setPermanentGKIds(prev => {
+      if (prev.includes(playerId)) {
+        // Remove if already selected
+        return prev.filter(id => id !== playerId);
+      } else {
+        // Add if not selected
+        return [...prev, playerId];
+      }
+    });
+  }, []);
 
   // Handle player selection
   const handlePlayerSelect = useCallback((playerId: string) => {
@@ -357,9 +436,10 @@ const TeamBalancingOverview = () => {
             </ul>
           </div>
           
-          <WhatsAppExport 
-            blueTeam={teams.blueTeam} 
-            orangeTeam={teams.orangeTeam} 
+          <WhatsAppExport
+            blueTeam={teams.blueTeam}
+            orangeTeam={teams.orangeTeam}
+            gameId={game?.id}
           />
         </div>
       </div>
@@ -377,13 +457,77 @@ const TeamBalancingOverview = () => {
 
       {/* Preview controls - only show when a preview is active */}
       {previewState.active && (
-        <PreviewSwapControls 
+        <PreviewSwapControls
           isPreviewActive={previewState.active}
           onExecutePreviewSwap={handleExecutePreviewSwap}
           onCancelPreview={handleCancelPreview}
         />
       )}
-      
+
+      {/* Permanent GK Selection */}
+      <div className="mb-6 collapse collapse-arrow bg-base-100 border">
+        <input type="checkbox" />
+        <div className="collapse-title text-lg font-medium">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🥅</span>
+            <span>Permanent Goalkeeper Selection</span>
+            {permanentGKIds.length > 0 && (
+              <span className="badge badge-primary">{permanentGKIds.length} selected</span>
+            )}
+            <Tooltip content="Select players who will stay in goal for the full game (e.g., injured players volunteering as GK). These players will be distributed evenly between teams before standard team balancing." />
+          </div>
+        </div>
+        <div className="collapse-content">
+          <p className="text-sm opacity-70 mb-4">
+            Select players who will play as permanent goalkeepers for this game.
+            This is useful when a player is injured but willing to stay in net.
+            Permanent GKs are balanced based on their GK rating (70%), Game IQ (20%), and performance (10%).
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {assignments
+              .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
+              .map(player => (
+                <label
+                  key={player.player_id}
+                  className="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-base-200"
+                >
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-sm"
+                    checked={permanentGKIds.includes(player.player_id)}
+                    onChange={() => handlePermanentGKToggle(player.player_id)}
+                  />
+                  <span className="text-sm">
+                    {player.friendly_name}
+                    <span className="text-xs opacity-60 ml-1">
+                      (GK: {(player.gk_rating ?? 5).toFixed(1)})
+                    </span>
+                  </span>
+                </label>
+              ))}
+          </div>
+
+          {permanentGKIds.length > 0 && (
+            <div className="mt-4 p-3 bg-info/10 rounded">
+              <p className="text-sm">
+                <strong>Selected permanent GKs:</strong>{' '}
+                {permanentGKIds.map(id => {
+                  const player = assignments.find(p => p.player_id === id);
+                  return player?.friendly_name;
+                }).join(', ')}
+              </p>
+              <button
+                className="btn btn-xs btn-ghost mt-2"
+                onClick={() => setPermanentGKIds([])}
+              >
+                Clear All
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Optimal Team Generator */}
       <OptimalTeamGenerator
         allPlayers={assignments}
@@ -413,18 +557,19 @@ const TeamBalancingOverview = () => {
       {/* Tier-Based Team Generator */}
       <TierBasedTeamGenerator
         allPlayers={assignments}
+        permanentGKIds={permanentGKIds}
         onApplyTeams={(blueTeam, orangeTeam) => {
           // Update all assignments with the new team assignments
           const updatedAssignments = [...assignments].map(player => {
             const bluePlayer = blueTeam.find(p => p.player_id === player.player_id);
             if (bluePlayer) return { ...player, team: 'blue' };
-            
+
             const orangePlayer = orangeTeam.find(p => p.player_id === player.player_id);
             if (orangePlayer) return { ...player, team: 'orange' };
-            
+
             return player;
           });
-          
+
           updateAssignments(updatedAssignments);
         }}
         onResultGenerated={setTierBasedResult}

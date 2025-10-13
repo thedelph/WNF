@@ -78,8 +78,13 @@ const PlayerCard = ({
       <div className="card-body p-4">
         <div className="flex justify-between items-center">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold">{player.friendly_name}</h3>
-            
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold">{player.friendly_name}</h3>
+              {player.isPermanentGK && (
+                <span className="badge badge-sm badge-warning">🥅 Permanent GK</span>
+              )}
+            </div>
+
             {/* Stats grid layout */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1">
               {/* Ratings */}
@@ -91,11 +96,17 @@ const PlayerCard = ({
                 <span className="text-xs font-medium w-16">Defense:</span>
                 <span className="text-sm font-semibold">{formatRating(player.defense_rating)}</span>
               </div>
-              
+
               {/* Game IQ */}
               <div className="flex items-center">
                 <span className="text-xs font-medium w-16">Game IQ:</span>
                 <span className="text-sm font-semibold">{formatRating(player.game_iq_rating)}</span>
+              </div>
+
+              {/* GK Rating */}
+              <div className="flex items-center">
+                <span className="text-xs font-medium w-16">GK:</span>
+                <span className="text-sm font-semibold">{formatRating(player.gk_rating)}</span>
               </div>
               
               {/* Win Rate */}

@@ -331,41 +331,94 @@ export function parseDebugLog(debugLog: string): ParsedDebugData {
   }
 
   // Parse snake draft picks
-  const draftSection = debugLog.match(/STEP 4: SNAKE DRAFT PROCESS[\s\S]*?(?=STEP 5:|Initial Balance:|$)/);
+  const draftSection = debugLog.match(/STEP 4: SNAKE DRAFT PROCESS[\s\S]*?(?=STEP 5:|STEP 6:|Initial Balance:|$)/);
   if (draftSection) {
-    const tierDraftMatches = draftSection[0].matchAll(/Tier (\d+) Draft:([\s\S]*?)(?=Tier \d+ Draft:|Current totals:|Initial Balance:|$)/g);
-    let globalPickNumber = 0;
-    
-    for (const tierMatch of tierDraftMatches) {
-      const tierNum = parseInt(tierMatch[1]);
-      const draftContent = tierMatch[2];
-      const picks: Array<{ player: string; team: 'blue' | 'orange'; pickNumber: number; rating: number }> = [];
-      
-      const pickMatches = draftContent.matchAll(/Pick \d+: ([^→]+) → (Blue|Orange)/g);
-      for (const pickMatch of pickMatches) {
-        globalPickNumber++;
-        const playerName = pickMatch[1].trim();
-        
-        // Find player rating from tier data
-        let rating = 0;
-        for (const tier of data.tierData) {
-          const player = tier.players.find(p => p.name === playerName);
-          if (player) {
-            rating = player.rating;
-            break;
+    // Try new format first: EXECUTING SELECTED CONFIGURATION
+    const executingSection = draftSection[0].match(/EXECUTING SELECTED CONFIGURATION[\s\S]*?(?=STEP 5:|STEP 6:|$)/);
+
+    if (executingSection) {
+      // New format: picks listed sequentially with tier boundaries marked by "→ Next tier:"
+      let currentTier = 1;
+      let globalPickNumber = 0;
+      let currentTierPicks: Array<{ player: string; team: 'blue' | 'orange'; pickNumber: number; rating: number }> = [];
+
+      const lines = executingSection[0].split('\n');
+
+      for (const line of lines) {
+        // Check for pick line: "  Pick X: PlayerName → Team"
+        const pickMatch = line.match(/Pick \d+: ([^→]+) → (Blue|Orange)/);
+        if (pickMatch) {
+          globalPickNumber++;
+          const playerName = pickMatch[1].trim();
+
+          // Find player rating from tier data
+          let rating = 0;
+          for (const tier of data.tierData) {
+            const player = tier.players.find(p => p.name === playerName);
+            if (player) {
+              rating = player.rating;
+              break;
+            }
+          }
+
+          currentTierPicks.push({
+            player: playerName,
+            team: pickMatch[2].toLowerCase() as 'blue' | 'orange',
+            pickNumber: globalPickNumber,
+            rating
+          });
+        }
+
+        // Check for tier boundary: "→ Next tier:"
+        if (line.includes('→ Next tier:') || line.includes('Current totals:')) {
+          if (currentTierPicks.length > 0) {
+            data.snakeDraftPicks.push({ tier: currentTier, picks: [...currentTierPicks] });
+            currentTier++;
+            currentTierPicks = [];
           }
         }
-        
-        picks.push({
-          player: playerName,
-          team: pickMatch[2].toLowerCase() as 'blue' | 'orange',
-          pickNumber: globalPickNumber,
-          rating
-        });
       }
-      
-      if (picks.length > 0) {
-        data.snakeDraftPicks.push({ tier: tierNum, picks });
+
+      // Add final tier picks
+      if (currentTierPicks.length > 0) {
+        data.snakeDraftPicks.push({ tier: currentTier, picks: currentTierPicks });
+      }
+    } else {
+      // Old format: "Tier X Draft:"
+      const tierDraftMatches = draftSection[0].matchAll(/Tier (\d+) Draft:([\s\S]*?)(?=Tier \d+ Draft:|Current totals:|Initial Balance:|$)/g);
+      let globalPickNumber = 0;
+
+      for (const tierMatch of tierDraftMatches) {
+        const tierNum = parseInt(tierMatch[1]);
+        const draftContent = tierMatch[2];
+        const picks: Array<{ player: string; team: 'blue' | 'orange'; pickNumber: number; rating: number }> = [];
+
+        const pickMatches = draftContent.matchAll(/Pick \d+: ([^→]+) → (Blue|Orange)/g);
+        for (const pickMatch of pickMatches) {
+          globalPickNumber++;
+          const playerName = pickMatch[1].trim();
+
+          // Find player rating from tier data
+          let rating = 0;
+          for (const tier of data.tierData) {
+            const player = tier.players.find(p => p.name === playerName);
+            if (player) {
+              rating = player.rating;
+              break;
+            }
+          }
+
+          picks.push({
+            player: playerName,
+            team: pickMatch[2].toLowerCase() as 'blue' | 'orange',
+            pickNumber: globalPickNumber,
+            rating
+          });
+        }
+
+        if (picks.length > 0) {
+          data.snakeDraftPicks.push({ tier: tierNum, picks });
+        }
       }
     }
   }
@@ -467,17 +520,51 @@ export function parseDebugLog(debugLog: string): ParsedDebugData {
     }
   }
 
+  // Helper function to find player's tier from tierData
+  const findPlayerTier = (playerName: string): number => {
+    for (const tier of data.tierData) {
+      const player = tier.players.find(p => p.name.trim() === playerName.trim());
+      if (player) {
+        return tier.tierNumber;
+      }
+    }
+    return 0;
+  };
+
   // Try to get tier information from OPTIMIZATION IMPACT section
   const optimizationSection = debugLog.match(/OPTIMIZATION IMPACT[\s\S]*?(?=KEY DECISIONS|DRAFT VALUE|$)/);
   if (optimizationSection) {
-    const swapLines = optimizationSection[0].match(/\d+\. ([^(]+) \(Blue\) ↔ ([^(]+) \(Orange\)[\s\S]*?Tier: (\d+)/g) || [];
+    const swapLines = optimizationSection[0].match(/\d+\. ([^(]+) \(Blue\) ↔ ([^(]+) \(Orange\)[\s\S]*?(?:Tier: (\d+)|Cross-tier swap)/g) || [];
     swapLines.forEach((swapLine, index) => {
-      const match = swapLine.match(/\d+\. ([^(]+) \(Blue\) ↔ ([^(]+) \(Orange\)[\s\S]*?Tier: (\d+)/);
+      const match = swapLine.match(/\d+\. ([^(]+) \(Blue\) ↔ ([^(]+) \(Orange\)[\s\S]*?(?:Tier: (\d+)|Cross-tier swap)/);
       if (match && index < data.optimizationSwaps.length) {
-        data.optimizationSwaps[index].tier = parseInt(match[3]);
+        const bluePlayer = match[1].trim();
+        const orangePlayer = match[2].trim();
+
+        if (match[3]) {
+          // Same-tier swap - use the explicit tier number
+          data.optimizationSwaps[index].tier = parseInt(match[3]);
+        } else {
+          // Cross-tier swap - find tiers from player data
+          const blueTier = findPlayerTier(bluePlayer);
+          const orangeTier = findPlayerTier(orangePlayer);
+
+          // Use the lower tier number (more conservative display)
+          // Store as negative to indicate cross-tier in visualization if needed
+          data.optimizationSwaps[index].tier = Math.min(blueTier, orangeTier);
+        }
       }
     });
   }
+
+  // For any swaps that still have tier 0, try to determine from player names
+  data.optimizationSwaps.forEach(swap => {
+    if (swap.tier === 0) {
+      const blueTier = findPlayerTier(swap.bluePlayer);
+      const orangeTier = findPlayerTier(swap.orangePlayer);
+      swap.tier = Math.min(blueTier, orangeTier);
+    }
+  });
 
   // Parse key decisions for swap reasons
   const decisionsSection = debugLog.match(/KEY DECISIONS[\s\S]*?(?=DRAFT VALUE|$)/);

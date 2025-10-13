@@ -23,6 +23,17 @@ interface EnhancedPositionWeights extends PositionWeights {
 }
 
 const ENHANCED_POSITION_WEIGHTS: Record<PositionType, EnhancedPositionWeights> = {
+  GK: {
+    attack: 0.00,
+    defense: 0.10,
+    gameIq: 0.30,
+    shooting: 0.00,
+    pace: 0.00,
+    dribbling: 0.00,
+    physical: 0.30,
+    passing: 0.00,
+    defending: 0.30
+  },
   ST: {
     attack: 0.10,
     defense: 0.02,
@@ -735,6 +746,7 @@ function scoreFormationFit(
   // Track which players naturally fit which positions
   const playerPositionFits = new Map<string, { natural: PositionType[], adequate: PositionType[], flexibility: number }>();
   const positionCandidates: Record<PositionType, { natural: string[], adequate: string[] }> = {
+    GK: { natural: [], adequate: [] },
     DEF: { natural: [], adequate: [] },
     WB: { natural: [], adequate: [] },
     W: { natural: [], adequate: [] },
@@ -1099,178 +1111,178 @@ const FORMATION_TEMPLATES: FormationTemplate[] = [
   // 7 player formations
   {
     name: '3-3-1',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 7,
-    maxPlayers: 7
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 8,
+    maxPlayers: 8
   },
   {
     name: '2-2WB-2-1',
-    positions: { DEF: 2, WB: 2, W: 0, CDM: 1, CM: 1, CAM: 0, ST: 1 },
-    minPlayers: 7,
-    maxPlayers: 7
+    positions: { GK: 1, DEF: 2, WB: 2, W: 0, CDM: 1, CM: 1, CAM: 0, ST: 1 },
+    minPlayers: 8,
+    maxPlayers: 8
   },
   {
     name: '2-2W-2-1',
-    positions: { DEF: 2, WB: 0, W: 2, CDM: 1, CM: 1, CAM: 0, ST: 1 },
-    minPlayers: 7,
-    maxPlayers: 7
+    positions: { GK: 1, DEF: 2, WB: 0, W: 2, CDM: 1, CM: 1, CAM: 0, ST: 1 },
+    minPlayers: 8,
+    maxPlayers: 8
   },
   {
     name: '3-2-1-1',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 0, CM: 2, CAM: 1, ST: 1 },
-    minPlayers: 7,
-    maxPlayers: 7
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 2, CAM: 1, ST: 1 },
+    minPlayers: 8,
+    maxPlayers: 8
   },
 
   // 8 player formations
   {
     name: '4-3-1',
-    positions: { DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-4-1',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-2WB-2-1',
-    positions: { DEF: 3, WB: 2, W: 0, CDM: 0, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 1, DEF: 3, WB: 2, W: 0, CDM: 0, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-2W-2-1',
-    positions: { DEF: 3, WB: 0, W: 2, CDM: 1, CM: 1, CAM: 0, ST: 1 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 1, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 1, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-3-2',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 2 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 2 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-2-1-2',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 0, CM: 2, CAM: 1, ST: 2 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 2, CAM: 1, ST: 2 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
 
   // 9 player formations (standard for rotating keeper)
   {
     name: '4-4-1',
-    positions: { DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '3-2WB-3-1',
-    positions: { DEF: 3, WB: 2, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 3, WB: 2, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '5-3-1',
-    positions: { DEF: 5, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 5, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 1 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '3-5-1',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '3-2W-3-1',
-    positions: { DEF: 3, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '4-3-2',
-    positions: { DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 2 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '3-3-3',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 3 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 3 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '3-2-2-2',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 2, CM: 2, CAM: 0, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 2, CM: 2, CAM: 0, ST: 2 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '3-1-3-2',
-    positions: { DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '2-2WB-2-1-2',
-    positions: { DEF: 2, WB: 2, W: 0, CDM: 2, CM: 1, CAM: 0, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
+    positions: { GK: 1, DEF: 2, WB: 2, W: 0, CDM: 2, CM: 1, CAM: 0, ST: 2 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   // 10 player formations (not used in 9v9)
   {
     name: '4-5-1',
-    positions: { DEF: 4, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
+    minPlayers: 11,
+    maxPlayers: 11
   },
   {
     name: '3-2WB-4-1',
-    positions: { DEF: 3, WB: 2, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 1, DEF: 3, WB: 2, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
+    minPlayers: 11,
+    maxPlayers: 11
   },
   {
     name: '4-2W-3-1',
-    positions: { DEF: 4, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 1, DEF: 4, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 11,
+    maxPlayers: 11
   },
   {
     name: '4-4-2',
-    positions: { DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
+    minPlayers: 11,
+    maxPlayers: 11
   },
   {
     name: '3-2W-3-2',
-    positions: { DEF: 3, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 2 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 1, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 2 },
+    minPlayers: 11,
+    maxPlayers: 11
   },
 
   // 11 outfield (12 total with keeper)
   {
     name: '4-5-2',
-    positions: { DEF: 4, WB: 0, W: 0, CDM: 2, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 11,
-    maxPlayers: 11
+    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 2, CM: 3, CAM: 0, ST: 2 },
+    minPlayers: 12,
+    maxPlayers: 12
   },
   {
     name: '4-2W-3-1-1',
-    positions: { DEF: 4, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 1, ST: 1 },
-    minPlayers: 11,
-    maxPlayers: 11
+    positions: { GK: 1, DEF: 4, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 1, ST: 1 },
+    minPlayers: 12,
+    maxPlayers: 12
   },
   {
     name: '5-4-2',
-    positions: { DEF: 5, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 11,
-    maxPlayers: 11
+    positions: { GK: 1, DEF: 5, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
+    minPlayers: 12,
+    maxPlayers: 12
   }
 ];
 
@@ -1510,7 +1522,7 @@ function optimizeAssignments(
 
       // Position priority (higher = more critical)
       const positionPriority: Record<PositionType, number> = {
-        ST: 5, CAM: 4, CDM: 3, CM: 2, W: 2, WB: 2, DEF: 1
+        GK: 6, ST: 5, CAM: 4, CDM: 3, CM: 2, W: 2, WB: 2, DEF: 1
       };
 
       // Check for critical attribute mismatches
@@ -2018,8 +2030,27 @@ function assignPlayersToPositions(
   teamColor: 'blue' | 'orange'
 ): FormationSuggestion {
   const positions: FormationSuggestion['positions'] = {
-    DEF: [], WB: [], W: [], CDM: [], CM: [], CAM: [], ST: []
+    GK: [], DEF: [], WB: [], W: [], CDM: [], CM: [], CAM: [], ST: []
   };
+
+  // Separate permanent GKs from outfield players
+  const permanentGKs = team.filter(p => p.isPermanentGK);
+  const outfieldPlayers = team.filter(p => !p.isPermanentGK);
+
+  // Assign permanent GKs first
+  permanentGKs.forEach(gk => {
+    positions.GK.push({
+      player: gk,
+      position: 'GK',
+      score: 10.0,  // Perfect score for permanent GK
+      isSpecialist: true,
+      alternativePositions: []
+    });
+
+    debugLog.optimizationNotes.push(
+      `${gk.friendly_name}: Permanent GK assignment (GK rating: ${(gk.gk_rating ?? 0).toFixed(1)})`
+    );
+  });
 
   const positionAnalysis = debugLog.positionAnalysis[teamColor];
 
@@ -2036,7 +2067,7 @@ function assignPlayersToPositions(
     };
   });
 
-  // Calculate all position scores
+  // Calculate all position scores (only for outfield players)
   const playerScores: Array<{
     player: TeamAssignment;
     position: PositionType;
@@ -2044,7 +2075,7 @@ function assignPlayersToPositions(
     isNatural: boolean;
   }> = [];
 
-  team.forEach(player => {
+  outfieldPlayers.forEach(player => {
     const playstyle = detectPlaystyleForPlayer(player, requirements);
     const playstyleIdealPositions = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
     const ratingBasedPositions = getRatingBasedIdealPositions(player);
@@ -2851,6 +2882,7 @@ export function suggestFormations(
  * Export position display names for UI
  */
 export const POSITION_DISPLAY_NAMES: Record<PositionType, string> = {
+  GK: 'Goalkeeper',
   DEF: 'Defense',
   WB: 'Wingback',
   W: 'Winger',
@@ -2864,6 +2896,7 @@ export const POSITION_DISPLAY_NAMES: Record<PositionType, string> = {
  * Export position colors for UI
  */
 export const POSITION_COLORS: Record<PositionType, string> = {
+  GK: 'bg-gray-100 text-gray-800 border-gray-300',
   DEF: 'bg-red-100 text-red-800 border-red-300',
   WB: 'bg-amber-100 text-amber-800 border-amber-300',
   W: 'bg-purple-100 text-purple-800 border-purple-300',

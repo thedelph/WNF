@@ -2,8 +2,8 @@ import { TeamAssignment } from './types';
 import { calculateBalanceScore } from '../../../utils/teamBalancing';
 
 // Configuration constants for the three-layer system
-const WEIGHT_SKILL = 0.65;      // 65% base skills (Attack/Defense/Game IQ) - increased from 60%
-const WEIGHT_ATTRIBUTES = 0.15; // 15% derived attributes from playstyles - reduced from 20%
+const WEIGHT_SKILL = 0.60;      // 60% base skills (Attack/Defense/Game IQ/GK - 15% each)
+const WEIGHT_ATTRIBUTES = 0.20; // 20% derived attributes from playstyles
 const WEIGHT_OVERALL = 0.12;    // 12% track record (career performance)
 const WEIGHT_RECENT = 0.08;     // 8% current form (recent performance)
 
@@ -262,6 +262,78 @@ function calculateLeagueAttributeStats(players: TeamAssignment[]): {
  * Calculate the three-layer rating for a player
  * Combines base skill, overall performance, and recent form
  */
+/**
+ * Calculates rating for permanent goalkeepers (players staying in goal for full game)
+ * Formula: GK 70%, Game IQ 20%, Performance 10%
+ * Ignores Attack, Defense, and Playstyle Attributes since they won't play outfield
+ */
+function calculatePermanentGKRating(
+  player: TeamAssignment,
+  goalDiffStats: { overallMin: number; overallMax: number; recentMin: number; recentMax: number }
+): {
+  threeLayerRating: number;
+  baseSkillRating: number;
+  overallPerformanceScore?: number;
+  recentFormScore?: number;
+} {
+  // Primary skill: GK ability (70% weight)
+  const gkRating = player.gk_rating ?? 5;
+
+  // Secondary skill: Game IQ for positioning/distribution (20% weight)
+  const gameIqRating = player.game_iq_rating ?? 5;
+
+  // Base rating: weighted average of GK (70%) and Game IQ (20%) = 90%
+  const baseSkillRating = (gkRating * 0.70) + (gameIqRating * 0.20);
+
+  // Performance component (10% total): reliability factor
+  let overallWinRate, overallGoalDiff, recentWinRate, recentGoalDiff;
+
+  if (!player.total_games || player.total_games < MIN_GAMES_FOR_STATS) {
+    overallWinRate = 0.5;
+    overallGoalDiff = 0;
+    recentWinRate = 0.5;
+    recentGoalDiff = 0;
+  } else {
+    overallWinRate = player.overall_win_rate ?? 0.5;
+    overallGoalDiff = player.overall_goal_differential ?? 0;
+    recentWinRate = player.win_rate ?? 0.5;
+    recentGoalDiff = player.goal_differential ?? 0;
+  }
+
+  // Convert percentages to decimals
+  if (overallWinRate > 1) overallWinRate = overallWinRate / 100;
+  if (recentWinRate > 1) recentWinRate = recentWinRate / 100;
+
+  // Normalize goal differentials
+  const gdRange = Math.max(1, goalDiffStats.overallMax - goalDiffStats.overallMin);
+  const overallGdNorm = Math.max(0, Math.min(1,
+    (overallGoalDiff - goalDiffStats.overallMin) / gdRange
+  ));
+
+  const recentGdRange = Math.max(1, goalDiffStats.recentMax - goalDiffStats.recentMin);
+  const recentGdNorm = Math.max(0, Math.min(1,
+    (recentGoalDiff - goalDiffStats.recentMin) / recentGdRange
+  ));
+
+  // Performance scores (centered around 0.5)
+  const overallPerformanceScore = (overallWinRate + overallGdNorm) / 2;
+  const recentFormScore = (recentWinRate + recentGdNorm) / 2;
+
+  // Performance adjustment: 5% overall, 5% recent = 10% total
+  const overallAdjustment = (overallPerformanceScore - 0.5) * 2 * 0.05; // ±5% max
+  const recentAdjustment = (recentFormScore - 0.5) * 2 * 0.05; // ±5% max
+
+  // Final rating: base (90%) + performance adjustments (10%)
+  const threeLayerRating = baseSkillRating + overallAdjustment + recentAdjustment;
+
+  return {
+    threeLayerRating,
+    baseSkillRating,
+    overallPerformanceScore,
+    recentFormScore
+  };
+}
+
 function calculateThreeLayerRating(
   player: TeamAssignment,
   attributeStats: { average: number; standardDeviation: number; min: number; max: number },
@@ -279,9 +351,10 @@ function calculateThreeLayerRating(
   momentumAdjustment?: number;
 } {
   // Layer 1: Base Skill Rating (core ability)
-  const baseSkillRating = ((player.attack_rating ?? 5) + 
-                          (player.defense_rating ?? 5) + 
-                          (player.game_iq_rating ?? 5)) / 3;
+  const baseSkillRating = ((player.attack_rating ?? 5) +
+                          (player.defense_rating ?? 5) +
+                          (player.game_iq_rating ?? 5) +
+                          (player.gk_rating ?? 5)) / 4;
   
   // Layer 2: Derived Attributes from Playstyles
   let attributesScore = 0; // Default to 0 (no playstyle ratings)
@@ -1002,8 +1075,8 @@ function applySnakeDraftWithStart(
  */
 function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blueTeam: PlayerWithRating[]; orangeTeam: PlayerWithRating[] } {
   if (debugLog) {
-    debugLog.value += '\nSTEP 4: DETERMINISTIC SNAKE DRAFT\n';
-    debugLog.value += '=================================\n';
+    debugLog.value += '\nSTEP 4: SNAKE DRAFT PROCESS\n';
+    debugLog.value += '============================\n';
     debugLog.value += 'Testing both starting options to find optimal configuration...\n\n';
   }
 
@@ -1831,13 +1904,18 @@ function trySameTierSwaps(
   // Try all possible swaps within this tier
   for (const bluePlayer of blueTierPlayers) {
     for (const orangePlayer of orangeTierPlayers) {
+      // Skip if either player is a permanent GK
+      if (bluePlayer.isPermanentGK || orangePlayer.isPermanentGK) {
+        continue;
+      }
+
       // Create temporary teams with this swap
       const tempBlue = [...blueTeam];
       const tempOrange = [...orangeTeam];
-      
+
       const blueIndex = tempBlue.findIndex(p => p.player_id === bluePlayer.player_id);
       const orangeIndex = tempOrange.findIndex(p => p.player_id === orangePlayer.player_id);
-      
+
       if (blueIndex === -1 || orangeIndex === -1) continue;
       
       tempBlue[blueIndex] = orangePlayer;
@@ -2009,6 +2087,11 @@ function tryCrossTierSwaps(
   // Try Blue lower tier ↔ Orange upper tier
   for (const blueLower of blueLowerPlayers) {
     for (const orangeUpper of orangeUpperPlayers) {
+      // Skip if either player is a permanent GK
+      if (blueLower.isPermanentGK || orangeUpper.isPermanentGK) {
+        continue;
+      }
+
       const ratingDiff = Math.abs(blueLower.threeLayerRating - orangeUpper.threeLayerRating);
 
       // Use soft boundary if either player is at their tier edge
@@ -2113,6 +2196,11 @@ function tryCrossTierSwaps(
   // Try Orange lower tier ↔ Blue upper tier
   for (const orangeLower of orangeLowerPlayers) {
     for (const blueUpper of blueUpperPlayers) {
+      // Skip if either player is a permanent GK
+      if (orangeLower.isPermanentGK || blueUpper.isPermanentGK) {
+        continue;
+      }
+
       const ratingDiff = Math.abs(orangeLower.threeLayerRating - blueUpper.threeLayerRating);
 
       // Use soft boundary if either player is at their tier edge
@@ -2938,8 +3026,17 @@ function formatPerformanceDescription(winRate: number, goalDiff: number, isOvera
 /**
  * Main function: Find optimal team balance using tier-based snake draft
  */
-export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedResult {
+export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKIds: string[] = []): TierBasedResult {
   let debugLog = '=== TIER-BASED SNAKE DRAFT DEBUG LOG ===\n\n';
+
+  // Add permanent GK section to debug log if any are selected
+  if (permanentGKIds.length > 0) {
+    debugLog += '⚠️  PERMANENT GOALKEEPERS SELECTED\n';
+    debugLog += '===============================\n';
+    debugLog += `${permanentGKIds.length} player(s) designated as permanent goalkeepers\n`;
+    debugLog += 'These players will be distributed evenly before standard team balancing\n';
+    debugLog += 'and will not be involved in optimization swaps.\n\n';
+  }
   
   // Add Executive Summary placeholder - will be filled after processing
   let executiveSummaryData = {
@@ -3370,22 +3467,90 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   playersWithRatings.forEach((player, index) => {
     debugLog += `${index + 1}. ${player.friendly_name}: ${player.threeLayerRating.toFixed(2)}\n`;
   });
-  
-  // Step 3: Create tiers
-  const tierSizes = calculateTierSizes(players.length);
+
+  // Phase 0: Permanent GK Assignment (if any)
+  let permanentGKsBlue: PlayerWithRating[] = [];
+  let permanentGKsOrange: PlayerWithRating[] = [];
+  let regularPlayers = [...playersWithRatings];
+
+  if (permanentGKIds.length > 0) {
+    debugLog += '\n🥅 PHASE 0: PERMANENT GOALKEEPER ASSIGNMENT\n';
+    debugLog += '==========================================\n';
+
+    // Separate permanent GKs from regular players
+    const permanentGKPlayers = playersWithRatings.filter(p => permanentGKIds.includes(p.player_id));
+    regularPlayers = playersWithRatings.filter(p => !permanentGKIds.includes(p.player_id));
+
+    // Calculate permanent GK ratings and sort by rating
+    const permanentGKsWithRatings = permanentGKPlayers.map(player => {
+      const gkRatingInfo = calculatePermanentGKRating(player, goalDiffStats);
+      debugLog += `\n${player.friendly_name} (Permanent GK):\n`;
+      debugLog += `  GK Rating: ${player.gk_rating ?? 5}\n`;
+      debugLog += `  Game IQ: ${player.game_iq_rating ?? 5}\n`;
+      if (player.total_games && player.total_games >= 10) {
+        debugLog += `  Overall Performance: ${gkRatingInfo.overallPerformanceScore?.toFixed(3) ?? 'N/A'}\n`;
+        debugLog += `  Recent Form: ${gkRatingInfo.recentFormScore?.toFixed(3) ?? 'N/A'}\n`;
+      }
+      debugLog += `  Permanent GK Rating: ${gkRatingInfo.threeLayerRating.toFixed(2)}\n`;
+      return {
+        ...player,
+        ...gkRatingInfo,
+        isPermanentGK: true
+      };
+    }).sort((a, b) => b.threeLayerRating - a.threeLayerRating);
+
+    // Distribute permanent GKs evenly (alternating, starting with highest rated)
+    debugLog += '\nDistribution:\n';
+    permanentGKsWithRatings.forEach((gk, index) => {
+      if (index % 2 === 0) {
+        permanentGKsBlue.push(gk);
+        debugLog += `  🔵 Blue Team: ${gk.friendly_name} (Rating: ${gk.threeLayerRating.toFixed(2)})\n`;
+      } else {
+        permanentGKsOrange.push(gk);
+        debugLog += `  🟠 Orange Team: ${gk.friendly_name} (Rating: ${gk.threeLayerRating.toFixed(2)})\n`;
+      }
+    });
+
+    debugLog += `\nPermanent GKs Distributed: ${permanentGKsBlue.length} Blue, ${permanentGKsOrange.length} Orange\n`;
+    debugLog += `Remaining Players for Standard Balancing: ${regularPlayers.length}\n`;
+
+    // VALIDATION: Ensure no permanent GKs leaked into regularPlayers
+    const permanentGKInRegular = regularPlayers.filter(p => permanentGKIds.includes(p.player_id));
+    if (permanentGKInRegular.length > 0) {
+      const bugDetails = permanentGKInRegular.map(p => `${p.friendly_name} (ID: ${p.player_id})`).join(', ');
+      debugLog += `\n❌ BUG DETECTED: Permanent GKs found in regularPlayers: ${bugDetails}\n`;
+      debugLog += `This should never happen! Permanent GKs must be filtered out before tier creation.\n\n`;
+      throw new Error(`CRITICAL BUG: Permanent GKs found in regularPlayers: ${bugDetails}`);
+    }
+    debugLog += `\n✅ Validation Passed: Confirmed 0 permanent GKs in regular players\n`;
+
+    // Debug logging for troubleshooting
+    debugLog += `\nDEBUG INFO:\n`;
+    debugLog += `  permanentGKIds array: [${permanentGKIds.join(', ')}]\n`;
+    debugLog += `  regularPlayers (first 5): [${regularPlayers.slice(0, 5).map(p => `${p.friendly_name}(${p.player_id})`).join(', ')}]\n`;
+    debugLog += `  Total playersWithRatings: ${playersWithRatings.length}\n`;
+    debugLog += `  Total regularPlayers: ${regularPlayers.length}\n`;
+    debugLog += `  Total permanent GKs: ${permanentGKsBlue.length + permanentGKsOrange.length}\n`;
+  }
+
+  // Step 3: Create tiers (using only regular players)
+  const tierSizes = calculateTierSizes(regularPlayers.length);
   executiveSummaryData.tierCount = tierSizes.length;
   executiveSummaryData.tierSizes = tierSizes.join('-');
-  
-  debugLog += `\nSTEP 3: CREATING TIERS\n`;
-  debugLog += '====================\n';
-  debugLog += `Total Players: ${players.length}\n`;
+
+  debugLog += `\nSTEP 3: CREATING TIERS (REGULAR PLAYERS ONLY)\n`;
+  debugLog += '================================================\n';
+  debugLog += `Regular Players for Tiering: ${regularPlayers.length}\n`;
+  if (permanentGKIds.length > 0) {
+    debugLog += `Permanent GKs (excluded from tiers): ${permanentGKsBlue.length + permanentGKsOrange.length}\n`;
+  }
   debugLog += `Tier Sizes: ${tierSizes.join(', ')}\n\n`;
-  
+
   const tiers: TierInfo[] = [];
   let playerIndex = 0;
-  
+
   tierSizes.forEach((size, tierIndex) => {
-    const tierPlayers = playersWithRatings.slice(playerIndex, playerIndex + size);
+    const tierPlayers = regularPlayers.slice(playerIndex, playerIndex + size);
     
     // Assign tier number to each player
     tierPlayers.forEach(p => p.tier = tierIndex + 1);
@@ -3477,7 +3642,7 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
     max: Math.max(...allRatings)
   };
   
-  const { blueTeam, orangeTeam, finalScore, wasOptimized, swapCount, swapDetails } = optimizeTeams(
+  let { blueTeam, orangeTeam, finalScore, wasOptimized, swapCount, swapDetails } = optimizeTeams(
     initialBlueTeam,
     initialOrangeTeam,
     teamSize,
@@ -3487,7 +3652,23 @@ export function findTierBasedTeamBalance(players: TeamAssignment[]): TierBasedRe
   debugLog = debugLogRef.value;
   executiveSummaryData.optimizationSwaps = swapCount;
   executiveSummaryData.finalBalance = finalScore;
-  
+
+  // Add permanent GKs back to teams
+  if (permanentGKsBlue.length > 0 || permanentGKsOrange.length > 0) {
+    debugLog += '\n🥅 ADDING PERMANENT GOALKEEPERS TO FINAL TEAMS\n';
+    debugLog += '============================================\n';
+    blueTeam = [...blueTeam, ...permanentGKsBlue];
+    orangeTeam = [...orangeTeam, ...permanentGKsOrange];
+    debugLog += `Blue Team: Added ${permanentGKsBlue.length} permanent GK(s)\n`;
+    debugLog += `Orange Team: Added ${permanentGKsOrange.length} permanent GK(s)\n`;
+    permanentGKsBlue.forEach(gk => {
+      debugLog += `  🔵 ${gk.friendly_name} (GK Rating: ${gk.gk_rating ?? 5}, Overall: ${gk.threeLayerRating.toFixed(2)})\n`;
+    });
+    permanentGKsOrange.forEach(gk => {
+      debugLog += `  🟠 ${gk.friendly_name} (GK Rating: ${gk.gk_rating ?? 5}, Overall: ${gk.threeLayerRating.toFixed(2)})\n`;
+    });
+  }
+
   // Step 7: Calculate confidence
   const confidence = calculateConfidence(playersWithRatings);
   

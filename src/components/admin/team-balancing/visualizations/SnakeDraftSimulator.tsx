@@ -14,8 +14,15 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
   const [viewMode, setViewMode] = useState<'simulator' | 'flow' | 'analysis'>('simulator');
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Extract permanent GKs from team data
+  const permanentGKs = {
+    blue: data.blueTeam?.filter(p => p.isPermanentGK) || [],
+    orange: data.orangeTeam?.filter(p => p.isPermanentGK) || []
+  };
+  const hasPermanentGKs = permanentGKs.blue.length > 0 || permanentGKs.orange.length > 0;
+
   // Flatten all picks for simulation
-  const allPicks = data.snakeDraftPicks.flatMap(tier => 
+  const allPicks = data.snakeDraftPicks.flatMap(tier =>
     tier.picks.map(pick => ({ ...pick, tier: tier.tier }))
   );
 
@@ -70,11 +77,17 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
     }
   };
 
+  // Helper to get full player data with GK rating
+  const getPlayerData = (playerName: string, team: 'blue' | 'orange') => {
+    const teamData = team === 'blue' ? data.blueTeam : data.orangeTeam;
+    return teamData?.find(p => p.friendly_name === playerName);
+  };
+
   // Get current state of teams
   const getCurrentTeams = () => {
     const blue: typeof allPicks = [];
     const orange: typeof allPicks = [];
-    
+
     for (let i = 0; i <= currentPick && i < allPicks.length; i++) {
       if (allPicks[i]?.team === 'blue') {
         blue.push(allPicks[i]);
@@ -82,7 +95,7 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
         orange.push(allPicks[i]);
       }
     }
-    
+
     return { blue, orange };
   };
 
@@ -91,6 +104,51 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
   // Draft simulator view
   const SimulatorView = () => (
     <div className="space-y-6">
+      {/* Phase 0: Permanent GK Assignments */}
+      {hasPermanentGKs && (
+        <div className="mb-6 p-4 bg-base-200 rounded-lg border-2 border-warning">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">🥅</span>
+            <h3 className="font-bold text-lg">PHASE 0: Permanent Goalkeeper Assignment</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <div className="font-semibold text-blue-700 mb-2">Blue Team</div>
+              {permanentGKs.blue.length > 0 ? (
+                <div className="space-y-2">
+                  {permanentGKs.blue.map(gk => (
+                    <div key={gk.player_id} className="flex justify-between items-center">
+                      <span className="font-medium">{gk.friendly_name}</span>
+                      <span className="text-sm">GK: {formatRating(gk.gk_rating)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-gray-500 text-sm">No permanent GK</span>
+              )}
+            </div>
+            <div className="bg-orange-50 p-3 rounded-lg">
+              <div className="font-semibold text-orange-700 mb-2">Orange Team</div>
+              {permanentGKs.orange.length > 0 ? (
+                <div className="space-y-2">
+                  {permanentGKs.orange.map(gk => (
+                    <div key={gk.player_id} className="flex justify-between items-center">
+                      <span className="font-medium">{gk.friendly_name}</span>
+                      <span className="text-sm">GK: {formatRating(gk.gk_rating)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-gray-500 text-sm">No permanent GK</span>
+              )}
+            </div>
+          </div>
+          <div className="text-xs text-gray-600 bg-base-100 p-2 rounded">
+            ℹ️ Permanent GKs are assigned before the snake draft and remain with their team throughout the game
+          </div>
+        </div>
+      )}
+
       {/* Controls */}
       <div className="flex flex-col md:flex-row items-center justify-center gap-4">
         <div className="flex gap-2">
@@ -145,29 +203,34 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
       </div>
 
       {/* Current Pick Display */}
-      {currentPick < allPicks.length && allPicks[currentPick] && (
-        <motion.div
-          key={currentPick}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          <div className="text-2xl font-bold mb-2">
-            Pick #{allPicks[currentPick].pickNumber}
-          </div>
-          <div className={`
-            inline-block px-6 py-3 rounded-lg text-lg font-medium
-            ${allPicks[currentPick].team === 'blue' 
-              ? 'bg-blue-100 text-blue-700 border-2 border-blue-300' 
-              : 'bg-orange-100 text-orange-700 border-2 border-orange-300'}
-          `}>
-            {allPicks[currentPick].player} → {allPicks[currentPick].team === 'blue' ? 'Blue' : 'Orange'} Team
-          </div>
-          <div className="text-sm text-gray-500 mt-2">
-            Tier {allPicks[currentPick].tier} • Rating: {allPicks[currentPick].rating?.toFixed(2) || 'N/A'}
-          </div>
-        </motion.div>
-      )}
+      {currentPick < allPicks.length && allPicks[currentPick] && (() => {
+        const pick = allPicks[currentPick];
+        const playerData = getPlayerData(pick.player, pick.team);
+        return (
+          <motion.div
+            key={currentPick}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center"
+          >
+            <div className="text-2xl font-bold mb-2">
+              Pick #{pick.pickNumber}
+            </div>
+            <div className={`
+              inline-block px-6 py-3 rounded-lg text-lg font-medium
+              ${pick.team === 'blue'
+                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+                : 'bg-orange-100 text-orange-700 border-2 border-orange-300'}
+            `}>
+              {pick.player} → {pick.team === 'blue' ? 'Blue' : 'Orange'} Team
+            </div>
+            <div className="text-sm text-gray-500 mt-2">
+              Tier {pick.tier} • Rating: {pick.rating?.toFixed(2) || 'N/A'}
+              {playerData?.gk_rating && ` • GK: ${formatRating(playerData.gk_rating)}`}
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* Draft Board */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -178,26 +241,36 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
           </h3>
           <div className="space-y-2">
             <AnimatePresence>
-              {currentBlueTeam.map((pick, index) => (
-                <motion.div
-                  key={`${pick.player}-${index}`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white p-2 rounded flex justify-between items-center"
-                >
-                  <div>
-                    <span className="font-medium">{pick.player}</span>
-                    <span className="text-xs text-gray-500 ml-2">
-                      Tier {pick.tier}
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    Pick #{pick.pickNumber}
-                  </div>
-                </motion.div>
-              ))}
+              {currentBlueTeam.map((pick, index) => {
+                const playerData = getPlayerData(pick.player, 'blue');
+                return (
+                  <motion.div
+                    key={`${pick.player}-${index}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-white p-2 rounded"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium">{pick.player}</span>
+                        <span className="text-xs text-gray-500 ml-2">
+                          Tier {pick.tier}
+                        </span>
+                      </div>
+                      <div className="text-sm">
+                        Pick #{pick.pickNumber}
+                      </div>
+                    </div>
+                    {playerData?.gk_rating && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        GK: {formatRating(playerData.gk_rating)}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         </div>
@@ -209,26 +282,36 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
           </h3>
           <div className="space-y-2">
             <AnimatePresence>
-              {currentOrangeTeam.map((pick, index) => (
-                <motion.div
-                  key={`${pick.player}-${index}`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white p-2 rounded flex justify-between items-center"
-                >
-                  <div>
-                    <span className="font-medium">{pick.player}</span>
-                    <span className="text-xs text-gray-500 ml-2">
-                      Tier {pick.tier}
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    Pick #{pick.pickNumber}
-                  </div>
-                </motion.div>
-              ))}
+              {currentOrangeTeam.map((pick, index) => {
+                const playerData = getPlayerData(pick.player, 'orange');
+                return (
+                  <motion.div
+                    key={`${pick.player}-${index}`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-white p-2 rounded"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium">{pick.player}</span>
+                        <span className="text-xs text-gray-500 ml-2">
+                          Tier {pick.tier}
+                        </span>
+                      </div>
+                      <div className="text-sm">
+                        Pick #{pick.pickNumber}
+                      </div>
+                    </div>
+                    {playerData?.gk_rating && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        GK: {formatRating(playerData.gk_rating)}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         </div>

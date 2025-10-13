@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface TierBasedTeamGeneratorProps {
   allPlayers: TeamAssignment[];
+  permanentGKIds?: string[];
   onApplyTeams: (blueTeam: TeamAssignment[], orangeTeam: TeamAssignment[]) => void;
   onResultGenerated?: (result: TierBasedResult) => void;
 }
@@ -19,6 +20,7 @@ interface TierBasedTeamGeneratorProps {
  */
 export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
   allPlayers,
+  permanentGKIds = [],
   onApplyTeams,
   onResultGenerated
 }) => {
@@ -36,9 +38,9 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
 
     try {
       toast.loading('Generating tier-based teams...');
-      
-      const result = findTierBasedTeamBalance(allPlayers);
-      
+
+      const result = findTierBasedTeamBalance(allPlayers, permanentGKIds);
+
       setTierBasedResult(result);
       if (result.debugLog) {
         setDebugLog(result.debugLog);
@@ -46,7 +48,7 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
       if (onResultGenerated) {
         onResultGenerated(result);
       }
-      
+
       toast.dismiss();
       toast.success('Generated tier-based team configuration!');
     } catch (error) {

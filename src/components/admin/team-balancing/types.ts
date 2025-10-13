@@ -3,9 +3,11 @@ export interface TeamStats {
   avgAttack: number;
   avgDefense: number;
   avgGameIq: number;
+  avgGk: number;
   totalAttack: number;
   totalDefense: number;
   totalGameIq: number;
+  totalGk: number;
   playerCount: number;
   avgRating: number;
   totalRating: number;
@@ -23,6 +25,7 @@ export interface TeamAssignment {
   defense_rating: number | null;
   game_iq_rating: number | null;
   gk_rating: number | null;
+  isPermanentGK?: boolean; // True if player is designated as permanent goalkeeper for this game
   win_rate?: number | null; // Recent win rate (last 10 games)
   goal_differential?: number | null; // Goal differential from last 10 games
   overall_win_rate?: number | null; // Overall career win rate
@@ -90,10 +93,11 @@ export interface PlayerSwapSuggestion {
   attackDiffImprovement: number;
   defenseDiffImprovement: number;
   gameIqDiffImprovement: number;
+  gkDiffImprovement: number;
   winRateDiffImprovement?: number;
   goalDiffImprovement?: number;
   totalDiffImprovement: number;
-  primaryImpactMetric?: 'attack' | 'defense' | 'gameIq' | 'winRate' | 'goalDifferential'; // The metric most improved by this swap
+  primaryImpactMetric?: 'attack' | 'defense' | 'gameIq' | 'gk' | 'winRate' | 'goalDifferential'; // The metric most improved by this swap
 }
 
 /**
@@ -152,7 +156,7 @@ export interface AlgorithmComparison {
 /**
  * Position types for formation suggestions
  */
-export type PositionType = 'DEF' | 'WB' | 'W' | 'CDM' | 'CM' | 'CAM' | 'ST';
+export type PositionType = 'GK' | 'DEF' | 'WB' | 'W' | 'CDM' | 'CM' | 'CAM' | 'ST';
 
 /**
  * Position weights for calculating player suitability
@@ -183,6 +187,7 @@ export interface PlayerPositionAssignment {
 export interface FormationTemplate {
   name: string;
   positions: {
+    GK: number;   // Goalkeeper
     DEF: number;
     WB: number;   // Wingbacks (defensive wide players)
     W: number;    // Wingers (attacking wide players)
@@ -201,6 +206,7 @@ export interface FormationTemplate {
 export interface FormationSuggestion {
   formation: string;
   positions: {
+    GK: PlayerPositionAssignment[];     // Goalkeeper
     DEF: PlayerPositionAssignment[];
     WB: PlayerPositionAssignment[];     // Wingbacks
     W: PlayerPositionAssignment[];      // Wingers

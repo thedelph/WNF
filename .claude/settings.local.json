@@ -37,7 +37,9 @@
       "Bash(git add:*)",
       "Bash(awk:*)",
       "Bash(find:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Read(//c/Users/chris/Documents/GitHub/WNF/src/components/admin/pages/**)",
+      "Read(//c/Users/chris/Documents/GitHub/WNF/src/pages/admin/**)"
     ]
   },
   "enableAllProjectMcpServers": true,

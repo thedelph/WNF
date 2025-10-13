@@ -154,20 +154,27 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
 
   // Prepare scatter plot data
   const scatterData = useMemo(() => {
-    return transformations.map(player => ({
-      name: player.name,
-      baseSkill: player.baseSkill,
-      finalRating: player.threeLayerRating,
-      change: player.change,
-      momentum: player.momentum,
-      overallWinRate: player.overallWinRate,
-      recentWinRate: player.recentWinRate,
-      overallGoalDiff: player.overallGoalDiff,
-      recentGoalDiff: player.recentGoalDiff,
-      playstyle: player.playstyle,
-      topAttributes: player.topAttributes
-    }));
-  }, [transformations]);
+    const allPlayers = [...(data.blueTeam || []), ...(data.orangeTeam || [])];
+    return transformations.map(player => {
+      // Get GK rating from full player data
+      const fullPlayer = allPlayers.find(p => p.friendly_name === player.name);
+      return {
+        name: player.name,
+        baseSkill: player.baseSkill,
+        finalRating: player.threeLayerRating,
+        change: player.change,
+        momentum: player.momentum,
+        overallWinRate: player.overallWinRate,
+        recentWinRate: player.recentWinRate,
+        overallGoalDiff: player.overallGoalDiff,
+        recentGoalDiff: player.recentGoalDiff,
+        playstyle: player.playstyle,
+        topAttributes: player.topAttributes,
+        gkRating: fullPlayer?.gk_rating,
+        isPermanentGK: fullPlayer?.isPermanentGK
+      };
+    });
+  }, [transformations, data.blueTeam, data.orangeTeam]);
 
   // Get color for momentum
   const getMomentumColor = (momentum: 'hot' | 'cold' | 'steady') => {
@@ -196,10 +203,16 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
       const data = payload[0].payload;
       return (
         <div className="bg-base-100 p-4 rounded-lg shadow-lg border">
-          <p className="font-bold text-lg mb-2">{data.name}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="font-bold text-lg">{data.name}</p>
+            {data.isPermanentGK && <span className="badge badge-xs badge-warning">🥅 GK</span>}
+          </div>
           <div className="space-y-1 text-sm">
             <p>Base Skill: {formatRating(data.baseSkill)}</p>
             <p>Final Rating: {formatRating(data.finalRating)}</p>
+            {data.gkRating !== undefined && data.gkRating !== null && (
+              <p>GK Rating: {formatRating(data.gkRating)}</p>
+            )}
             <p className={`font-medium ${data.change > 0 ? 'text-success' : data.change < 0 ? 'text-error' : ''}`}>
               Change: {data.change > 0 ? '+' : ''}{data.change.toFixed(2)}
             </p>
@@ -331,8 +344,9 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
   
   // Heatmap view
   const HeatmapView = () => {
-    const metrics = ['Base Skill', 'Final Rating', 'Change', 'Overall Perf', 'Recent Form'];
-    
+    const metrics = ['Base Skill', 'Final Rating', 'Change', 'GK Rating', 'Overall Perf', 'Recent Form'];
+    const allPlayers = [...(data.blueTeam || []), ...(data.orangeTeam || [])];
+
     interface HeatmapRow {
       name: string;
       values: number[];
@@ -341,21 +355,26 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
       momentum: string;
       interpretation: string;
     }
-    
+
     const heatmapData: HeatmapRow[] = transformations.map(player => {
       // Use performance scores from the algorithm
-      const hasPerformanceData = player.overallPerformance !== undefined && 
+      const hasPerformanceData = player.overallPerformance !== undefined &&
                                 player.recentPerformance !== undefined;
-      
+
       const overallPerf = hasPerformanceData ? player.overallPerformance : null;
       const recentForm = hasPerformanceData ? player.recentPerformance : null;
-      
+
+      // Get GK rating from full player data
+      const fullPlayer = allPlayers.find(p => p.friendly_name === player.name);
+      const gkRating = fullPlayer?.gk_rating || 0;
+
       return {
         name: player.name,
         values: [
           player.baseSkill,
           player.threeLayerRating,
           player.change,
+          gkRating, // GK rating
           hasPerformanceData ? (player.overallPerformance - 0.5) * 2 : 0, // Center around 0
           hasPerformanceData ? (player.recentPerformance - 0.5) * 2 : 0  // Center around 0
         ],
@@ -372,8 +391,8 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
       const values = heatmapData.map(d => d.values[index]);
       const min = Math.min(...values);
       const max = Math.max(...values);
-      
-      if (index === 2 || index === 3 || index === 4) { // Change metrics
+
+      if (index === 2 || index === 4 || index === 5) { // Change metrics (not GK rating at index 3)
         if (value > 0) {
           // For positive values, normalize from 0 to max
           const positiveMax = Math.max(...values.filter(v => v > 0), 0);
@@ -412,17 +431,17 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
               <tr key={player.name} className="hover">
                 <td className="font-medium">{player.name}</td>
                 {player.values.map((value, index) => (
-                  <td 
+                  <td
                     key={index}
                     className="text-center"
                     style={{ backgroundColor: getColorIntensity(value, index) }}
                   >
-                    {index === 3 ? (
-                      player.overallPerf !== null 
+                    {index === 4 ? (
+                      player.overallPerf !== null
                         ? player.overallPerf.toFixed(3)
                         : 'N/A'
                     ) :
-                     index === 4 ? (
+                     index === 5 ? (
                       player.recentForm !== null
                         ? player.recentForm.toFixed(3)
                         : 'N/A'
