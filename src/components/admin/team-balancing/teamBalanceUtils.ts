@@ -205,12 +205,13 @@ export const findOptimalTeamBalance = (players: TeamAssignment[]): TeamBalance =
  * Calculate the impact of each metric on the overall balance score
  * @param blueTeam - Blue team players
  * @param orangeTeam - Orange team players
+ * @param permanentGKIds - Optional array of permanent goalkeeper player IDs
  * @returns Object containing the impact of each metric
  */
-export const calculateMetricImpact = (blueTeam: TeamAssignment[], orangeTeam: TeamAssignment[]) => {
+export const calculateMetricImpact = (blueTeam: TeamAssignment[], orangeTeam: TeamAssignment[], permanentGKIds?: string[]) => {
     // Calculate original balance metrics
-    const { attackDiff, defenseDiff, gameIqDiff, winRateDiff, goalDifferentialDiff } = 
-        calculateTeamComparison(blueTeam, orangeTeam);
+    const { attackDiff, defenseDiff, gameIqDiff, winRateDiff, goalDifferentialDiff } =
+        calculateTeamComparison(blueTeam, orangeTeam, permanentGKIds);
     
     // Calculate the contribution of each metric to the overall score
     const totalDiff = attackDiff + defenseDiff + gameIqDiff + winRateDiff + goalDifferentialDiff;

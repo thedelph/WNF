@@ -95,31 +95,44 @@ const TeamBalancingOverview = () => {
     if (!game?.id) return;
 
     const savePermanentGKs = async () => {
-      // Delete all existing selections for this game
-      const { error: deleteError } = await supabase
-        .from('permanent_goalkeepers')
-        .delete()
-        .eq('game_id', game.id);
-
-      if (deleteError) {
-        console.error('Error deleting old permanent GKs:', deleteError);
-        return;
-      }
-
-      // Insert new selections if any
-      if (permanentGKIds.length > 0) {
-        const { error: insertError } = await supabase
+      try {
+        // Delete all existing selections for this game
+        const { error: deleteError } = await supabase
           .from('permanent_goalkeepers')
-          .insert(
-            permanentGKIds.map(playerId => ({
-              game_id: game.id,
-              player_id: playerId
-            }))
-          );
+          .delete()
+          .eq('game_id', game.id);
 
-        if (insertError) {
-          console.error('Error saving permanent GKs:', insertError);
+        if (deleteError) {
+          console.error('Error deleting old permanent GKs:', deleteError);
+          toast.error('Failed to save permanent goalkeeper selection');
+          return;
         }
+
+        // Insert new selections if any
+        if (permanentGKIds.length > 0) {
+          const { error: insertError } = await supabase
+            .from('permanent_goalkeepers')
+            .insert(
+              permanentGKIds.map(playerId => ({
+                game_id: game.id,
+                player_id: playerId
+              }))
+            );
+
+          if (insertError) {
+            console.error('Error saving permanent GKs:', insertError);
+            toast.error('Failed to save permanent goalkeeper selection');
+            return;
+          }
+        }
+
+        // Show success toast (only if there are permanent GKs selected)
+        if (permanentGKIds.length > 0) {
+          toast.success(`Saved ${permanentGKIds.length} permanent goalkeeper${permanentGKIds.length > 1 ? 's' : ''}`);
+        }
+      } catch (error) {
+        console.error('Unexpected error saving permanent GKs:', error);
+        toast.error('An unexpected error occurred while saving');
       }
     };
 
@@ -131,13 +144,25 @@ const TeamBalancingOverview = () => {
   // Memoize filtered teams to prevent unnecessary recalculations
   const teams = useMemo(() => {
     if (!assignments) return { blueTeam: [], orangeTeam: [] };
-    
+
     // Filter out null teams and only include players assigned to a specific team
-    const blueTeam = assignments.filter(p => p.team === 'blue');
-    const orangeTeam = assignments.filter(p => p.team === 'orange');
-    
+    // Also mark permanent GKs with the isPermanentGK flag
+    const blueTeam = assignments
+      .filter(p => p.team === 'blue')
+      .map(p => ({
+        ...p,
+        isPermanentGK: permanentGKIds.includes(p.player_id)
+      }));
+
+    const orangeTeam = assignments
+      .filter(p => p.team === 'orange')
+      .map(p => ({
+        ...p,
+        isPermanentGK: permanentGKIds.includes(p.player_id)
+      }));
+
     return { blueTeam, orangeTeam };
-  }, [assignments]);
+  }, [assignments, permanentGKIds]);
 
   // Calculate team stats and comparison
   const teamStats = useMemo(() => {
@@ -156,10 +181,10 @@ const TeamBalancingOverview = () => {
     }
 
     const { blueTeam, orangeTeam } = teams;
-    const stats = calculateTeamComparison(blueTeam, orangeTeam);
+    const stats = calculateTeamComparison(blueTeam, orangeTeam, permanentGKIds);
     console.log('Calculated team stats:', stats);
     return stats;
-  }, [assignments, teams]);
+  }, [assignments, teams, permanentGKIds]);
 
   // Calculate swap recommendations
   const swapSuggestions = useMemo(() => {
@@ -176,8 +201,8 @@ const TeamBalancingOverview = () => {
   // Calculate metric impact for the current team configuration
   const metricImpact = useMemo(() => {
     if (!teams.blueTeam.length || !teams.orangeTeam.length) return null;
-    return calculateMetricImpact(teams.blueTeam, teams.orangeTeam);
-  }, [teams]);
+    return calculateMetricImpact(teams.blueTeam, teams.orangeTeam, permanentGKIds);
+  }, [teams, permanentGKIds]);
   
   // Filter swap suggestions based on selected player or get top recommendations
   const relevantSwaps = useMemo(() => {
@@ -305,39 +330,39 @@ const TeamBalancingOverview = () => {
   // Calculate stats for a swap
   const calculateSwapStats = useCallback((swapToCalculate: PlayerSwapSuggestion): TeamComparison | null => {
     const { bluePlayer, orangePlayer } = swapToCalculate;
-    
+
     // Make a deep copy of the current teams
     const newBlueTeam = [...teams.blueTeam];
     const newOrangeTeam = [...teams.orangeTeam];
-    
+
     // Find and remove the players from their current teams
     const bluePlayerIndex = newBlueTeam.findIndex(p => p.player_id === bluePlayer.player_id);
     const orangePlayerIndex = newOrangeTeam.findIndex(p => p.player_id === orangePlayer.player_id);
-    
+
     if (bluePlayerIndex === -1 || orangePlayerIndex === -1) {
       return null;
     }
-    
+
     const bluePlayerCopy = { ...newBlueTeam[bluePlayerIndex] };
     const orangePlayerCopy = { ...newOrangeTeam[orangePlayerIndex] };
-    
+
     newBlueTeam.splice(bluePlayerIndex, 1);
     newOrangeTeam.splice(orangePlayerIndex, 1);
-    
+
     // Add players to their new teams
     newBlueTeam.push({ ...orangePlayerCopy, team: 'blue' as const });
     newOrangeTeam.push({ ...bluePlayerCopy, team: 'orange' as const });
-    
-    // Calculate new stats
-    const comparison = calculateTeamComparison(newBlueTeam, newOrangeTeam);
+
+    // Calculate new stats (pass permanentGKIds)
+    const comparison = calculateTeamComparison(newBlueTeam, newOrangeTeam, permanentGKIds);
     const improvement = teamStats.currentScore - comparison.currentScore;
-    
+
     return {
       ...comparison,
       totalDiff: comparison.currentScore,
       improvement
     };
-  }, [teams, teamStats]);
+  }, [teams, teamStats, permanentGKIds]);
 
   // Handle swap selection
   const handleSwapSelect = useCallback((swap: PlayerSwapSuggestion) => {
@@ -440,6 +465,7 @@ const TeamBalancingOverview = () => {
             blueTeam={teams.blueTeam}
             orangeTeam={teams.orangeTeam}
             gameId={game?.id}
+            permanentGKIds={permanentGKIds}
           />
         </div>
       </div>
@@ -517,12 +543,17 @@ const TeamBalancingOverview = () => {
                   return player?.friendly_name;
                 }).join(', ')}
               </p>
-              <button
-                className="btn btn-xs btn-ghost mt-2"
-                onClick={() => setPermanentGKIds([])}
-              >
-                Clear All
-              </button>
+              <div className="flex gap-2 mt-2">
+                <button
+                  className="btn btn-xs btn-ghost"
+                  onClick={() => setPermanentGKIds([])}
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="text-xs opacity-70 mt-2">
+                💾 Auto-saved to database
+              </div>
             </div>
           )}
         </div>

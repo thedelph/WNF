@@ -1073,7 +1073,7 @@ function applySnakeDraftWithStart(
  * Apply snake draft deterministically by trying both starting options
  * Returns the configuration with better initial balance
  */
-function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blueTeam: PlayerWithRating[]; orangeTeam: PlayerWithRating[] } {
+function applySnakeDraft(tiers: TierInfo[], permanentGKIds: string[] = [], debugLog?: { value: string }): { blueTeam: PlayerWithRating[]; orangeTeam: PlayerWithRating[] } {
   if (debugLog) {
     debugLog.value += '\nSTEP 4: SNAKE DRAFT PROCESS\n';
     debugLog.value += '============================\n';
@@ -1083,10 +1083,10 @@ function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blu
   // Try both starting options
   const tempLog = { value: 'Testing configurations...\n' };
   const blueFirstResult = applySnakeDraftWithStart(tiers, true, tempLog);
-  const blueFirstBalance = calculateTierBalanceScore(blueFirstResult.blueTeam, blueFirstResult.orangeTeam);
+  const blueFirstBalance = calculateTierBalanceScore(blueFirstResult.blueTeam, blueFirstResult.orangeTeam, permanentGKIds);
 
   const orangeFirstResult = applySnakeDraftWithStart(tiers, false, tempLog);
-  const orangeFirstBalance = calculateTierBalanceScore(orangeFirstResult.blueTeam, orangeFirstResult.orangeTeam);
+  const orangeFirstBalance = calculateTierBalanceScore(orangeFirstResult.blueTeam, orangeFirstResult.orangeTeam, permanentGKIds);
 
   // Also consider shooting distribution when selecting configuration
   const allPlayers = [...blueFirstResult.blueTeam, ...blueFirstResult.orangeTeam];
@@ -1138,44 +1138,72 @@ function applySnakeDraft(tiers: TierInfo[], debugLog?: { value: string }): { blu
 
 /**
  * Calculate balance score for tier-based teams
- * Uses Attack, Defense, Game IQ, and Derived Attributes for balance calculation
+ * Uses Attack, Defense, Game IQ, GK, and Derived Attributes for balance calculation
  */
-function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): number {
+function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[], permanentGKIds?: string[]): number {
   if (blueTeam.length === 0 || orangeTeam.length === 0) {
     return 1000; // Very high score for empty teams
   }
 
+  // Identify permanent goalkeepers in each team
+  const bluePermanentGKs = blueTeam.filter(p => permanentGKIds?.includes(p.player_id));
+  const orangePermanentGKs = orangeTeam.filter(p => permanentGKIds?.includes(p.player_id));
+
+  // Calculate outfield players (excluding permanent GKs)
+  const blueOutfield = blueTeam.filter(p => !permanentGKIds?.includes(p.player_id));
+  const orangeOutfield = orangeTeam.filter(p => !permanentGKIds?.includes(p.player_id));
+
+  // For attack and defense: use outfield players only (or full team if no outfield players)
+  const bluePlayersForOutfield = blueOutfield.length > 0 ? blueOutfield : blueTeam;
+  const orangePlayersForOutfield = orangeOutfield.length > 0 ? orangeOutfield : orangeTeam;
+
   // Calculate average ratings
-  const blueAttack = blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / blueTeam.length;
-  const orangeAttack = orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangeTeam.length;
+  // Attack and Defense: EXCLUDE permanent GKs (they're in goal)
+  const blueAttack = bluePlayersForOutfield.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / bluePlayersForOutfield.length;
+  const orangeAttack = orangePlayersForOutfield.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangePlayersForOutfield.length;
 
-  const blueDefense = blueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / blueTeam.length;
-  const orangeDefense = orangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangeTeam.length;
+  const blueDefense = bluePlayersForOutfield.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / bluePlayersForOutfield.length;
+  const orangeDefense = orangePlayersForOutfield.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangePlayersForOutfield.length;
 
+  // Game IQ: INCLUDE all players (positioning/awareness matters for everyone including GK)
   const blueGameIq = blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / blueTeam.length;
   const orangeGameIq = orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / orangeTeam.length;
+
+  // Calculate GK ratings
+  // If team has permanent GK(s), use the highest rated permanent GK's rating
+  // Otherwise, use team average
+
+  const blueGk = bluePermanentGKs.length > 0
+    ? Math.max(...bluePermanentGKs.map(p => p.gk_rating ?? 5))
+    : blueTeam.reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / blueTeam.length;
+
+  const orangeGk = orangePermanentGKs.length > 0
+    ? Math.max(...orangePermanentGKs.map(p => p.gk_rating ?? 5))
+    : orangeTeam.reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / orangeTeam.length;
 
   // Calculate skill differences
   const attackDiff = Math.abs(blueAttack - orangeAttack);
   const defenseDiff = Math.abs(blueDefense - orangeDefense);
   const gameIqDiff = Math.abs(blueGameIq - orangeGameIq);
+  const gkDiff = Math.abs(blueGk - orangeGk);
 
   // NEW: Complementary strengths balancing
   // Count how many skills each team "wins" (is better at)
   const blueWins =
     (blueAttack > orangeAttack ? 1 : 0) +
     (blueDefense > orangeDefense ? 1 : 0) +
-    (blueGameIq > orangeGameIq ? 1 : 0);
+    (blueGameIq > orangeGameIq ? 1 : 0) +
+    (blueGk > orangeGk ? 1 : 0);
 
-  // Dominance factor: 0 = perfectly balanced (1.5 wins each), 1 = total dominance (3-0 or 0-3)
-  // Ideal: each team wins ~1.5 skills (rounded to nearest 0.5)
-  const dominanceFactor = Math.abs(blueWins - 1.5) / 1.5;
+  // Dominance factor: 0 = perfectly balanced (2.0 wins each), 1 = total dominance (4-0 or 0-4)
+  // Ideal: each team wins ~2.0 skills (rounded to nearest 0.5)
+  const dominanceFactor = Math.abs(blueWins - 2.0) / 2.0;
 
   // Apply dominance penalty to skill balance
-  // If dominance = 0 (1.5-1.5 split): use 70% of max diff (reward complementary strengths moderately)
-  // If dominance = 1 (3-0 split): use 100% of max diff (penalize one-sided dominance)
+  // If dominance = 0 (2-2 split): use 70% of max diff (reward complementary strengths moderately)
+  // If dominance = 1 (4-0 split): use 100% of max diff (penalize one-sided dominance)
   // Changed from 0.5-0.5 to 0.7-0.3 to prevent premature optimization stopping
-  const maxSkillDiff = Math.max(attackDiff, defenseDiff, gameIqDiff);
+  const maxSkillDiff = Math.max(attackDiff, defenseDiff, gameIqDiff, gkDiff);
   const skillBalance = maxSkillDiff * (0.7 + dominanceFactor * 0.3);
 
   // Calculate attribute balance score
@@ -1198,6 +1226,7 @@ interface BalanceScoreDetails {
   attackDiff: number;
   defenseDiff: number;
   gameIqDiff: number;
+  gkDiff: number;
   paceDiff?: number;
   shootingDiff?: number;
   passingDiff?: number;
@@ -1216,7 +1245,7 @@ interface BalanceScoreDetails {
 /**
  * Calculate detailed balance score with breakdown
  */
-function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[]): BalanceScoreDetails {
+function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: PlayerWithRating[], permanentGKIds: string[] = []): BalanceScoreDetails {
   if (blueTeam.length === 0 || orangeTeam.length === 0) {
     return {
       totalScore: 1000,
@@ -1225,25 +1254,51 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
       attackDiff: 0,
       defenseDiff: 0,
       gameIqDiff: 0,
+      gkDiff: 0,
       hasAttributes: false,
       primaryFactor: 'skills'
     };
   }
-  
+
+  // Identify permanent goalkeepers in each team
+  const bluePermanentGKs = blueTeam.filter(p => permanentGKIds.includes(p.player_id));
+  const orangePermanentGKs = orangeTeam.filter(p => permanentGKIds.includes(p.player_id));
+
+  // Calculate outfield players (excluding permanent GKs)
+  const blueOutfield = blueTeam.filter(p => !permanentGKIds.includes(p.player_id));
+  const orangeOutfield = orangeTeam.filter(p => !permanentGKIds.includes(p.player_id));
+
+  // For attack and defense: use outfield players only (or full team if no outfield players)
+  const bluePlayersForOutfield = blueOutfield.length > 0 ? blueOutfield : blueTeam;
+  const orangePlayersForOutfield = orangeOutfield.length > 0 ? orangeOutfield : orangeTeam;
+
   // Calculate average ratings
-  const blueAttack = blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / blueTeam.length;
-  const orangeAttack = orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangeTeam.length;
-  
-  const blueDefense = blueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / blueTeam.length;
-  const orangeDefense = orangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangeTeam.length;
-  
+  // Attack and Defense: EXCLUDE permanent GKs (they're in goal)
+  const blueAttack = bluePlayersForOutfield.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / bluePlayersForOutfield.length;
+  const orangeAttack = orangePlayersForOutfield.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangePlayersForOutfield.length;
+
+  const blueDefense = bluePlayersForOutfield.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / bluePlayersForOutfield.length;
+  const orangeDefense = orangePlayersForOutfield.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangePlayersForOutfield.length;
+
+  // Game IQ: INCLUDE all players (positioning/awareness matters for everyone including GK)
   const blueGameIq = blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / blueTeam.length;
   const orangeGameIq = orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / orangeTeam.length;
-  
+
+  // Calculate GK ratings (use permanent GK rating if applicable, otherwise team average)
+
+  const blueGk = bluePermanentGKs.length > 0
+    ? Math.max(...bluePermanentGKs.map(p => p.gk_rating ?? 5))
+    : blueTeam.reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / blueTeam.length;
+
+  const orangeGk = orangePermanentGKs.length > 0
+    ? Math.max(...orangePermanentGKs.map(p => p.gk_rating ?? 5))
+    : orangeTeam.reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / orangeTeam.length;
+
   // Calculate skill differences
   const attackDiff = Math.abs(blueAttack - orangeAttack);
   const defenseDiff = Math.abs(blueDefense - orangeDefense);
   const gameIqDiff = Math.abs(blueGameIq - orangeGameIq);
+  const gkDiff = Math.abs(blueGk - orangeGk);
   
   // Calculate attribute balance score and individual diffs
   const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
@@ -1274,7 +1329,7 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
   const shootingImbalance = calculateShootingImbalance(blueTeam, orangeTeam, shootingDistribution);
 
   // Weight skills at 85% and attributes at 15% to match updated rating calculation
-  const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff);
+  const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff, gkDiff);
 
   // Include shooting imbalance as a factor (normalized to same scale as skills)
   // Normalize shooting imbalance to 0-10 scale (typical range is 0-10)
@@ -1317,6 +1372,7 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
     attackDiff,
     defenseDiff,
     gameIqDiff,
+    gkDiff,
     paceDiff,
     shootingDiff,
     passingDiff,
@@ -1874,6 +1930,7 @@ function trySameTierSwaps(
   blueTierPlayers: PlayerWithRating[],
   orangeTierPlayers: PlayerWithRating[],
   currentBalance: number,
+  permanentGKIds: string[] = [],
   failedAttempts: number = 0,
   debugLog?: { value: string }
 ): {
@@ -1920,8 +1977,8 @@ function trySameTierSwaps(
       
       tempBlue[blueIndex] = orangePlayer;
       tempOrange[orangeIndex] = bluePlayer;
-      
-      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+
+      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange, permanentGKIds);
       const improvement = currentBalance - newBalance;
       
       // Calculate attribute balance for this swap
@@ -1960,8 +2017,8 @@ function trySameTierSwaps(
         debugLog.value += `balance ${currentBalance.toFixed(3)} → ${newBalance.toFixed(3)}`;
 
         // Always calculate detailed metrics for comprehensive analysis
-        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
-        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
+        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
+        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange, permanentGKIds);
         const issue = getTierDistributionIssues(tempBlue, tempOrange);
 
         // Generate comprehensive analysis
@@ -2003,8 +2060,8 @@ function trySameTierSwaps(
         tempBlue[blueIdx] = bestSwap.orangePlayer;
         tempOrange[orangeIdx] = bestSwap.bluePlayer;
         
-        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
-        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
+        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
+        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange, permanentGKIds);
         
         const detailedImprovements = generateImprovementDetails(beforeDetails, afterDetails);
         
@@ -2038,13 +2095,14 @@ function tryCrossTierSwaps(
   blueUpperPlayers: PlayerWithRating[],
   orangeUpperPlayers: PlayerWithRating[],
   currentBalance: number,
+  permanentGKIds: string[] = [],
   failedAttempts: number = 0,
   debugLog?: { value: string }
 ): {
-  bestSwap: { 
-    bluePlayer: PlayerWithRating; 
-    orangePlayer: PlayerWithRating; 
-    blueTier: number; 
+  bestSwap: {
+    bluePlayer: PlayerWithRating;
+    orangePlayer: PlayerWithRating;
+    blueTier: number;
     orangeTier: number;
   } | null;
   bestScore: number;
@@ -2112,8 +2170,8 @@ function tryCrossTierSwaps(
       
       tempBlue[blueIndex] = orangeUpper;
       tempOrange[orangeIndex] = blueLower;
-      
-      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+
+      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange, permanentGKIds);
       const improvement = currentBalance - newBalance;
       
       // Calculate attribute balance for this swap
@@ -2221,8 +2279,8 @@ function tryCrossTierSwaps(
       
       tempBlue[blueIndex] = orangeLower;
       tempOrange[orangeIndex] = blueUpper;
-      
-      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange);
+
+      const newBalance = calculateTierBalanceScore(tempBlue, tempOrange, permanentGKIds);
       const improvement = currentBalance - newBalance;
       
       // Calculate attribute balance for this swap
@@ -2317,8 +2375,8 @@ function tryCrossTierSwaps(
         tempBlue[blueIdx] = bestSwap.orangePlayer;
         tempOrange[orangeIdx] = bestSwap.bluePlayer;
         
-        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
-        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange);
+        const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
+        const afterDetails = calculateDetailedBalanceScore(tempBlue, tempOrange, permanentGKIds);
         
         const detailedImprovements = generateImprovementDetails(beforeDetails, afterDetails);
         
@@ -2344,10 +2402,11 @@ function tryCrossTierSwaps(
  * Starting from lowest tier upwards (Tier 5 → Tier 1)
  */
 function optimizeTeams(
-  initialBlueTeam: PlayerWithRating[], 
+  initialBlueTeam: PlayerWithRating[],
   initialOrangeTeam: PlayerWithRating[],
   teamSize: number,
   ratingRange: { min: number; max: number },
+  permanentGKIds: string[] = [],
   debugLog?: { value: string }
 ): {
   blueTeam: PlayerWithRating[];
@@ -2359,7 +2418,7 @@ function optimizeTeams(
 } {
   let blueTeam = [...initialBlueTeam];
   let orangeTeam = [...initialOrangeTeam];
-  let currentBalance = calculateTierBalanceScore(blueTeam, orangeTeam);
+  let currentBalance = calculateTierBalanceScore(blueTeam, orangeTeam, permanentGKIds);
   let wasOptimized = false;
   
   // Calculate dynamic balance threshold based on team characteristics
@@ -2501,6 +2560,7 @@ function optimizeTeams(
       blueTierPlayers,
       orangeTierPlayers,
       currentBalance,
+      permanentGKIds,
       totalFailedAttempts,
       debugLog
     );
@@ -2518,7 +2578,7 @@ function optimizeTeams(
       const orangeIndex = orangeTeam.findIndex(p => p.player_id === sameTierResult.bestSwap.orangePlayer.player_id);
       
       // Calculate before swap details
-      const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+      const beforeDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
 
       if (debugLog) {
         debugLog.value += `  Executing same-tier swap: ${sameTierResult.bestSwap.bluePlayer.friendly_name} ↔ ${sameTierResult.bestSwap.orangePlayer.friendly_name}\n`;
@@ -2530,7 +2590,7 @@ function optimizeTeams(
       swapCount++;
 
       // Calculate after swap details
-      const afterDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+      const afterDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
 
       // Log detailed metric changes
       if (debugLog) {
@@ -2616,6 +2676,7 @@ function optimizeTeams(
         blueUpperPlayers,
         orangeUpperPlayers,
         currentBalance,
+        permanentGKIds,
         totalFailedAttempts,
         debugLog
       );
@@ -2633,7 +2694,7 @@ function optimizeTeams(
         const orangeIndex = orangeTeam.findIndex(p => p.player_id === crossTierResult.bestSwap.orangePlayer.player_id);
         
         // Calculate before swap details
-        const beforeCrossDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+        const beforeCrossDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
 
         if (debugLog) {
           debugLog.value += `  Executing cross-tier swap: ${crossTierResult.bestSwap.bluePlayer.friendly_name}(T${crossTierResult.bestSwap.blueTier}) ↔ ${crossTierResult.bestSwap.orangePlayer.friendly_name}(T${crossTierResult.bestSwap.orangeTier})\n`;
@@ -2645,7 +2706,7 @@ function optimizeTeams(
         swapCount++;
 
         // Calculate after swap details
-        const afterCrossDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+        const afterCrossDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
 
         // Log detailed metric changes
         if (debugLog) {
@@ -2779,6 +2840,7 @@ function optimizeTeams(
               otherBluePlayers,
               otherOrangePlayers,
               currentBalance,
+              permanentGKIds,
               totalFailedAttempts,
               debugLog
             );
@@ -2787,7 +2849,7 @@ function optimizeTeams(
               const blueIndex = blueTeam.findIndex(p => p.player_id === nonAdjacentResult.bestSwap.bluePlayer.player_id);
               const orangeIndex = orangeTeam.findIndex(p => p.player_id === nonAdjacentResult.bestSwap.orangePlayer.player_id);
 
-              const beforeNonAdjacentDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+              const beforeNonAdjacentDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
 
               if (debugLog) {
                 debugLog.value += `  Executing non-adjacent tier swap for shooting balance:\n`;
@@ -2801,7 +2863,7 @@ function optimizeTeams(
               orangeTeam[orangeIndex] = nonAdjacentResult.bestSwap.bluePlayer;
               swapCount++;
 
-              const afterNonAdjacentDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam);
+              const afterNonAdjacentDetails = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
 
               // Log detailed metric changes
               if (debugLog) {
@@ -2904,6 +2966,7 @@ function optimizeTeams(
           blueTierPlayers,
           orangeTierPlayers,
           currentBalance,
+          permanentGKIds,
           fallbackAttempts, // This will trigger maximum threshold relaxation
           debugLog
         );
@@ -3577,7 +3640,7 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
   
   // Step 4: Apply snake draft
   const debugLogRef = { value: debugLog };
-  const { blueTeam: initialBlueTeam, orangeTeam: initialOrangeTeam } = applySnakeDraft(tiers, debugLogRef);
+  const { blueTeam: initialBlueTeam, orangeTeam: initialOrangeTeam } = applySnakeDraft(tiers, permanentGKIds, debugLogRef);
   debugLog = debugLogRef.value;
   
   // Add visual snake draft representation
@@ -3619,7 +3682,7 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
   debugLog += '\n\n';
   
   // Step 5: Calculate initial balance score
-  const initialScore = calculateTierBalanceScore(initialBlueTeam, initialOrangeTeam);
+  const initialScore = calculateTierBalanceScore(initialBlueTeam, initialOrangeTeam, permanentGKIds);
   
   debugLog += 'STEP 5: INITIAL BALANCE SCORE\n';
   debugLog += '============================\n';
@@ -3647,6 +3710,7 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
     initialOrangeTeam,
     teamSize,
     ratingRange,
+    permanentGKIds,
     debugLogRef
   );
   debugLog = debugLogRef.value;
@@ -3689,13 +3753,39 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
   // Calculate team averages for all metrics (needed for multiple sections)
   const blueAvgRating = blueTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / blueTeam.length;
   const orangeAvgRating = orangeTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / orangeTeam.length;
-  const blueAttack = blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / blueTeam.length;
-  const orangeAttack = orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangeTeam.length;
-  const blueDefense = blueTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / blueTeam.length;
-  const orangeDefense = orangeTeam.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangeTeam.length;
+
+  // Identify permanent goalkeepers for proper stat calculations
+  const bluePermanentGKs = blueTeam.filter(p => permanentGKIds.includes(p.player_id));
+  const orangePermanentGKs = orangeTeam.filter(p => permanentGKIds.includes(p.player_id));
+
+  // Calculate outfield players (excluding permanent GKs)
+  const blueOutfield = blueTeam.filter(p => !permanentGKIds.includes(p.player_id));
+  const orangeOutfield = orangeTeam.filter(p => !permanentGKIds.includes(p.player_id));
+
+  // For attack and defense: use outfield players only (or full team if no outfield players)
+  const bluePlayersForOutfield = blueOutfield.length > 0 ? blueOutfield : blueTeam;
+  const orangePlayersForOutfield = orangeOutfield.length > 0 ? orangeOutfield : orangeTeam;
+
+  // Attack and Defense: EXCLUDE permanent GKs (they're in goal)
+  const blueAttack = bluePlayersForOutfield.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / bluePlayersForOutfield.length;
+  const orangeAttack = orangePlayersForOutfield.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangePlayersForOutfield.length;
+  const blueDefense = bluePlayersForOutfield.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / bluePlayersForOutfield.length;
+  const orangeDefense = orangePlayersForOutfield.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangePlayersForOutfield.length;
+
+  // Game IQ: INCLUDE all players (positioning/awareness matters for everyone including GK)
   const blueGameIq = blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / blueTeam.length;
   const orangeGameIq = orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / orangeTeam.length;
-  
+
+  // Calculate GK ratings (use permanent GK rating if applicable, otherwise team average)
+
+  const blueGk = bluePermanentGKs.length > 0
+    ? Math.max(...bluePermanentGKs.map(p => p.gk_rating ?? 5))
+    : blueTeam.reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / blueTeam.length;
+
+  const orangeGk = orangePermanentGKs.length > 0
+    ? Math.max(...orangePermanentGKs.map(p => p.gk_rating ?? 5))
+    : orangeTeam.reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / orangeTeam.length;
+
   // Add Team Balance Breakdown
   debugLog += '\nTEAM BALANCE BREAKDOWN\n';
   debugLog += '======================\n';
@@ -3715,18 +3805,20 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
   const blueSkillWins =
     (blueAttack > orangeAttack ? 1 : 0) +
     (blueDefense > orangeDefense ? 1 : 0) +
-    (blueGameIq > orangeGameIq ? 1 : 0);
-  const skillDominance = Math.abs(blueSkillWins - 1.5) / 1.5;
+    (blueGameIq > orangeGameIq ? 1 : 0) +
+    (blueGk > orangeGk ? 1 : 0);
+  const skillDominance = Math.abs(blueSkillWins - 2.0) / 2.0;
 
   // Format the breakdown table
   debugLog += '                Blue    Orange   Difference\n';
   debugLog += `Attack:         ${blueAttack.toFixed(2)}    ${orangeAttack.toFixed(2)}     ${Math.abs(blueAttack - orangeAttack).toFixed(2)}\n`;
   debugLog += `Defense:        ${blueDefense.toFixed(2)}    ${orangeDefense.toFixed(2)}     ${Math.abs(blueDefense - orangeDefense).toFixed(2)}\n`;
   debugLog += `Game IQ:        ${blueGameIq.toFixed(2)}    ${orangeGameIq.toFixed(2)}     ${Math.abs(blueGameIq - orangeGameIq).toFixed(2)}\n`;
+  debugLog += `GK:             ${blueGk.toFixed(2)}    ${orangeGk.toFixed(2)}     ${Math.abs(blueGk - orangeGk).toFixed(2)}\n`;
 
   // Add skill distribution info
-  const orangeSkillWins = 3 - blueSkillWins;
-  debugLog += `\nSkill Distribution: Blue wins ${blueSkillWins}/3, Orange wins ${orangeSkillWins}/3 (dominance: ${skillDominance.toFixed(2)})\n`;
+  const orangeSkillWins = 4 - blueSkillWins;
+  debugLog += `\nSkill Distribution: Blue wins ${blueSkillWins}/4, Orange wins ${orangeSkillWins}/4 (dominance: ${skillDominance.toFixed(2)})\n`;
   
   // Add derived attributes breakdown
   const blueAttrs = calculateTeamAttributes(blueTeam);
@@ -3861,7 +3953,9 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
   else if (orangeDefense > blueDefense) orangeAdvantages++;
   if (blueGameIq > orangeGameIq) blueAdvantages++;
   else if (orangeGameIq > blueGameIq) orangeAdvantages++;
-  
+  if (blueGk > orangeGk) blueAdvantages++;
+  else if (orangeGk > blueGk) orangeAdvantages++;
+
   // Add Team Strength Comparison
   debugLog += '\nTEAM STRENGTH COMPARISON\n';
   debugLog += '=======================\n';
@@ -3870,7 +3964,8 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
   debugLog += `Attack:      ${blueAttack.toFixed(2)}    ${orangeAttack.toFixed(2)}    ${blueAttack > orangeAttack ? 'Blue ↑' : orangeAttack > blueAttack ? 'Orange ↑' : 'Tie'}\n`;
   debugLog += `Defense:     ${blueDefense.toFixed(2)}    ${orangeDefense.toFixed(2)}    ${blueDefense > orangeDefense ? 'Blue ↑' : orangeDefense > blueDefense ? 'Orange ↑' : 'Tie'}\n`;
   debugLog += `Game IQ:     ${blueGameIq.toFixed(2)}    ${orangeGameIq.toFixed(2)}    ${blueGameIq > orangeGameIq ? 'Blue ↑' : orangeGameIq > blueGameIq ? 'Orange ↑' : 'Tie'}\n`;
-  
+  debugLog += `GK:          ${blueGk.toFixed(2)}    ${orangeGk.toFixed(2)}    ${blueGk > orangeGk ? 'Blue ↑' : orangeGk > blueGk ? 'Orange ↑' : 'Tie'}\n`;
+
   const blueExperiencePercent = (blueRatedCount / blueTeam.length * 100).toFixed(0);
   const orangeExperiencePercent = (orangeRatedCount / orangeTeam.length * 100).toFixed(0);
   debugLog += `Experience:  ${blueExperiencePercent}%     ${orangeExperiencePercent}%      ${blueRatedCount > orangeRatedCount ? 'Blue ↑' : orangeRatedCount > blueRatedCount ? 'Orange ↑' : 'Tie'}\n`;

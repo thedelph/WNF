@@ -11,6 +11,7 @@ interface WhatsAppExportProps {
   blueTeam: TeamAssignment[];
   orangeTeam: TeamAssignment[];
   gameId?: string;
+  permanentGKIds?: string[];
 }
 
 /**
@@ -18,11 +19,13 @@ interface WhatsAppExportProps {
  * Creates a formatted text message with team assignments for sharing
  * @param blueTeam - Array of blue team assignments
  * @param orangeTeam - Array of orange team assignments
+ * @param permanentGKIds - Optional array of permanent goalkeeper player IDs
  */
 export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
   blueTeam,
   orangeTeam,
-  gameId
+  gameId,
+  permanentGKIds
 }) => {
   const [includeFormation, setIncludeFormation] = useState(false);
   const [shieldPlayers, setShieldPlayers] = useState<Array<{ friendly_name: string; frozen_streak_value: number }>>([]);
@@ -70,8 +73,8 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
   }, [blueTeam, orangeTeam, includeFormation]);
   
   const generateWhatsAppMessage = () => {
-    // Calculate team stats
-    const stats = calculateTeamComparison(blueTeam, orangeTeam);
+    // Calculate team stats (pass permanentGKIds for correct calculations)
+    const stats = calculateTeamComparison(blueTeam, orangeTeam, permanentGKIds);
     
     // Use the goal differential values directly from the team stats
     // These are already calculated correctly in the calculateTeamComparison function

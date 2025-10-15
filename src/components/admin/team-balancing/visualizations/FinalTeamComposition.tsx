@@ -51,15 +51,26 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
     const newPlayers = team.filter(p => (p.total_games || 0) < 10);
     const permanentGKs = team.filter(p => p.isPermanentGK);
 
+    // For attack and defense: use outfield players only (excluding permanent GKs)
+    const outfieldPlayers = team.filter(p => !p.isPermanentGK);
+    const playersForOutfield = outfieldPlayers.length > 0 ? outfieldPlayers : team;
+
+    // Calculate GK rating: use permanent GK's rating if available, otherwise team average
+    const avgGK = permanentGKs.length > 0
+      ? Math.max(...permanentGKs.map(p => p.gk_rating || 0))
+      : team.reduce((sum, p) => sum + (p.gk_rating || 0), 0) / team.length;
+
     return {
       total: team.length,
       rated: rated.length,
       new: newPlayers.length,
       permanentGKs: permanentGKs.length,
-      avgAttack: team.reduce((sum, p) => sum + (p.attack_rating || 0), 0) / team.length,
-      avgDefense: team.reduce((sum, p) => sum + (p.defense_rating || 0), 0) / team.length,
+      // Attack and Defense: EXCLUDE permanent GKs (they're in goal)
+      avgAttack: playersForOutfield.reduce((sum, p) => sum + (p.attack_rating || 0), 0) / playersForOutfield.length,
+      avgDefense: playersForOutfield.reduce((sum, p) => sum + (p.defense_rating || 0), 0) / playersForOutfield.length,
+      // Game IQ: INCLUDE all players (positioning/awareness matters for everyone)
       avgGameIQ: team.reduce((sum, p) => sum + (p.game_iq_rating || 0), 0) / team.length,
-      avgGK: team.reduce((sum, p) => sum + (p.gk_rating || 0), 0) / team.length,
+      avgGK,
       avgWinRate: rated.reduce((sum, p) => sum + (p.win_rate || 0), 0) / (rated.length || 1),
       avgGoalDiff: rated.reduce((sum, p) => sum + (p.goal_differential || 0), 0) / (rated.length || 1)
     };

@@ -9,9 +9,10 @@ import { TeamAssignment } from './types';
 /**
  * Calculates comprehensive team statistics based on player ratings
  * @param team - Array of team assignments
+ * @param permanentGKIds - Optional array of player IDs who are permanent goalkeepers
  * @returns Object containing team statistics
  */
-export const calculateTeamStats = (team: TeamAssignment[]) => {
+export const calculateTeamStats = (team: TeamAssignment[], permanentGKIds?: string[]) => {
   // Return empty stats for empty teams
   if (!team || team.length === 0) {
     return {
@@ -25,11 +26,29 @@ export const calculateTeamStats = (team: TeamAssignment[]) => {
     };
   }
 
-  // Calculate attack, defense, game IQ, and GK averages
-  const blueAttack = team.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / team.length;
-  const blueDefense = team.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / team.length;
+  // Identify permanent goalkeepers in this team
+  const permanentGKs = team.filter(p => permanentGKIds?.includes(p.player_id));
+  const outfieldPlayers = team.filter(p => !permanentGKIds?.includes(p.player_id));
+
+  // Calculate attack and defense averages (EXCLUDING permanent GKs)
+  const playersForOutfieldStats = outfieldPlayers.length > 0 ? outfieldPlayers : team;
+  const blueAttack = playersForOutfieldStats.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / playersForOutfieldStats.length;
+  const blueDefense = playersForOutfieldStats.reduce((sum, p) => sum + (p.defense_rating ?? 0), 0) / playersForOutfieldStats.length;
+
+  // Calculate game IQ average (INCLUDING permanent GKs)
   const blueGameIq = team.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / team.length;
-  const blueGk = team.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / team.length;
+
+  // Calculate GK rating:
+  // - If team has permanent GK(s), use the highest rated permanent GK's rating
+  // - Otherwise, use team average
+  let blueGk: number;
+  if (permanentGKs.length > 0) {
+    // Use the highest GK rating among permanent GKs
+    blueGk = Math.max(...permanentGKs.map(p => p.gk_rating ?? 0));
+  } else {
+    // Use team average
+    blueGk = team.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / team.length;
+  }
   
   // Filter out players with no game history for win rate calculation
   // No longer requiring 10+ games, just need valid data
@@ -94,12 +113,13 @@ export const calculateTeamStats = (team: TeamAssignment[]) => {
  * Calculates metrics for comparing two teams
  * @param blueTeam - Array of blue team assignments
  * @param orangeTeam - Array of orange team assignments
+ * @param permanentGKIds - Optional array of player IDs who are permanent goalkeepers
  * @returns Object containing comparison metrics and individual team stats
  */
-export const calculateTeamComparison = (blueTeam: TeamAssignment[], orangeTeam: TeamAssignment[]) => {
+export const calculateTeamComparison = (blueTeam: TeamAssignment[], orangeTeam: TeamAssignment[], permanentGKIds?: string[]) => {
   // Calculate stats for each team
-  const blue = calculateTeamStats(blueTeam);
-  const orange = calculateTeamStats(orangeTeam);
+  const blue = calculateTeamStats(blueTeam, permanentGKIds);
+  const orange = calculateTeamStats(orangeTeam, permanentGKIds);
   
   // Debug: Calculate total goal differential across all players
   const allPlayers = [...blueTeam, ...orangeTeam];
