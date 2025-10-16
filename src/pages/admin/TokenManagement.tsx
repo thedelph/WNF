@@ -10,6 +10,7 @@ import { TokenData } from '../../types/tokens';
 const TokenManagement: React.FC = () => {
   const { isAdmin } = useAdmin();
   const [tokenData, setTokenData] = useState<TokenData[]>([]);
+  const [allTokens, setAllTokens] = useState<TokenData[]>([]); // Store all tokens for stats
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -30,12 +31,10 @@ const TokenManagement: React.FC = () => {
         throw playersError;
       }
 
-      // Then get active tokens only
+      // Get ALL tokens (both used and unused) for comprehensive statistics
       const { data: tokens, error: tokensError } = await supabase
         .from('player_tokens')
         .select('*')
-        .is('used_at', null)
-        .or('expires_at.is.null,expires_at.gt.now()')
         .order('issued_at', { ascending: false });
 
       if (tokensError) {
@@ -163,11 +162,11 @@ const TokenManagement: React.FC = () => {
       const formattedData = players.map(player => {
         const eligibility = eligibilityMap.get(player.id);
         const token = tokenMap.get(player.id);
-        
+
         // If player is eligible, they should get a fresh token
         // If not eligible, any existing token should be expired
         const shouldHaveToken = eligibility?.is_eligible;
-        
+
         // A token is only valid if:
         // 1. The player is currently eligible
         // 2. The token exists and hasn't been used
@@ -190,6 +189,35 @@ const TokenManagement: React.FC = () => {
       });
 
       setTokenData(formattedData);
+
+      // Store all tokens (with player names) for TokenStats
+      // This includes both used and unused tokens for accurate statistics
+      const allTokensWithNames = tokens?.map(token => {
+        const player = players.find(p => p.id === token.player_id);
+        const eligibility = eligibilityMap.get(token.player_id);
+        return {
+          id: token.id,
+          player_id: token.player_id,
+          friendly_name: player?.friendly_name || 'Unknown',
+          whatsapp_group_member: player?.whatsapp_group_member,
+          is_eligible: eligibility?.is_eligible,
+          selected_games: eligibility?.selected_games,
+          unpaid_games: eligibility?.unpaid_games,
+          reason: eligibility?.reason,
+          issued_at: token.issued_at,
+          expires_at: token.expires_at,
+          used_at: token.used_at,
+          used_game_id: token.used_game_id
+        };
+      }) || [];
+
+      // Combine tokens with player data to ensure we have eligibility for all players
+      // Players without tokens still need to be counted for eligibility stats
+      const playersWithoutActiveTokens = formattedData.filter(
+        player => !allTokensWithNames.some(token => token.player_id === player.player_id)
+      );
+
+      setAllTokens([...allTokensWithNames, ...playersWithoutActiveTokens]);
     } catch (error) {
       console.error('Error fetching token data:', error);
       toast.error('Failed to load token data');
@@ -322,7 +350,7 @@ const TokenManagement: React.FC = () => {
               />
             </div>
 
-            <TokenStats tokens={tokenData.filter(t => t.issued_at !== null)} />
+            <TokenStats tokens={allTokens} />
           </div>
 
           <TokenTable 

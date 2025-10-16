@@ -297,10 +297,11 @@ export const handlePlayerSelection = async ({
     const updatePlayerStatus = async (
       playerId: string,
       status: 'selected' | 'reserve',
-      selectionMethod: 'token' | 'merit' | 'random' | 'none'
+      selectionMethod: 'token' | 'merit' | 'random' | 'none',
+      usingToken?: boolean
     ) => {
       try {
-        console.log(`Updating player ${playerId} to status: ${status}, method: ${selectionMethod}`);
+        console.log(`Updating player ${playerId} to status: ${status}, method: ${selectionMethod}, usingToken: ${usingToken}`);
 
         // Use the SECURITY DEFINER RPC function to update the registration
         // Bypass permission check since this is an automated system process
@@ -309,6 +310,7 @@ export const handlePlayerSelection = async ({
           p_player_id: playerId,
           p_status: status,
           p_selection_method: selectionMethod,
+          p_using_token: usingToken !== undefined ? usingToken : null,
           p_bypass_permission: true
         });
 
@@ -344,9 +346,10 @@ export const handlePlayerSelection = async ({
       for (const player of players.filter(player => player.using_token)) {
         const wouldGetInByMerit = tokenUsersSelectedByMerit.some(p => p.id === player.id);
         await updatePlayerStatus(
-          player.id, 
-          'selected', 
-          wouldGetInByMerit ? 'merit' : 'token'
+          player.id,
+          'selected',
+          wouldGetInByMerit ? 'merit' : 'token',
+          !wouldGetInByMerit // Only keep using_token=true if they wouldn't get in by merit
         );
       }
 

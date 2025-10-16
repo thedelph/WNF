@@ -11,6 +11,7 @@ import { TeamSection } from './TeamSection'
 import { PlayerSearch } from './PlayerSearch'
 import { Tooltip } from '../../../components/ui/Tooltip'
 import { StatusChangeHistory } from './StatusChangeHistory'
+import { TokenUsageSection } from './TokenUsageSection'
 import { useNavigate } from 'react-router-dom'
 
 const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplete }) => {
@@ -594,9 +595,14 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
 
           {/* Status Change History */}
           <div className="mb-8">
-            <StatusChangeHistory 
+            <StatusChangeHistory
               changes={statusChanges || []}
             />
+          </div>
+
+          {/* Token Usage Section */}
+          <div className="mb-8">
+            <TokenUsageSection gameId={game.id} />
           </div>
         </div>
 
