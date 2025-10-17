@@ -45,8 +45,11 @@ export function calculateSelectionOdds(
 ): Map<string, PlayerOdds> {
   const oddsMap = new Map<string, PlayerOdds>();
 
-  // If everyone gets in, everyone is guaranteed
-  if (sortedRegistrations.length <= maxPlayers) {
+  // Check if there's a randomiser (only when registrations exceed max players)
+  const hasRandomiser = sortedRegistrations.length > maxPlayers;
+
+  // Everyone gets in with no threats - early return
+  if (!hasRandomiser && unregisteredTokenHoldersCount === 0 && unregisteredPlayersXP.length === 0) {
     sortedRegistrations.forEach(reg => {
       oddsMap.set(reg.player.id, {
         percentage: 100,
@@ -57,7 +60,7 @@ export function calculateSelectionOdds(
     return oddsMap;
   }
 
-  // Identify guaranteed players (tokens and merit-based)
+  // Calculate odds for all registered players (same logic regardless of randomiser)
   sortedRegistrations.forEach((reg, index) => {
     const playerId = reg.player.id;
     const playerXP = playerStats[playerId]?.xp || 0;
@@ -93,7 +96,7 @@ export function calculateSelectionOdds(
         return;
       }
 
-      // Would be pushed into random zone if risks materialize
+      // Would be pushed into random zone (or out entirely if no randomiser) if risks materialize
       if (wouldBeAtPosition >= effectiveXpSlots) {
         // Calculate probability based on registration likelihood
         // Assume 40% chance each higher-XP player registers
@@ -131,9 +134,37 @@ export function calculateSelectionOdds(
         return;
       }
     }
+
+    // Players outside XP slots (in random zone or beyond)
+    // These players are at risk even when there's no randomiser
+    if (index >= xpSlots) {
+      // If there are threats, they're at high risk of being pushed out
+      if (unregisteredTokenHoldersCount > 0 || higherXPUnregistered > 0) {
+        const riskDescription = [];
+        if (higherXPUnregistered > 0) riskDescription.push(`${higherXPUnregistered} higher-XP player${higherXPUnregistered > 1 ? 's' : ''}`);
+        if (unregisteredTokenHoldersCount > 0) riskDescription.push(`${unregisteredTokenHoldersCount} token holder${unregisteredTokenHoldersCount > 1 ? 's' : ''}`);
+
+        oddsMap.set(playerId, {
+          percentage: 40,
+          status: 'merit',
+          description: `Random Zone - High risk from ${riskDescription.join(' and ')}`
+        });
+      } else {
+        // No threats but still in random zone - will play if no late registrations
+        oddsMap.set(playerId, {
+          percentage: 85,
+          status: 'merit',
+          description: `Random Zone - Will play unless late registrations arrive`
+        });
+      }
+    }
   });
 
-  // Calculate odds for random selection zone
+  // Calculate odds for random selection zone (only when there is a randomiser)
+  if (!hasRandomiser) {
+    return oddsMap;
+  }
+
   const randomZonePlayers = sortedRegistrations.slice(xpSlots);
 
   if (randomZonePlayers.length === 0) {
