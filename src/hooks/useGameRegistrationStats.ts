@@ -36,21 +36,29 @@ interface UseGameRegistrationStatsReturn {
   error: string | null;
   playerStats: Record<string, PlayerStats>;
   stats: Record<string, any>;
+  tokenCooldownPlayerIds: Set<string>;
+  unregisteredTokenHoldersCount: number;
+  unregisteredPlayersXP: number[];
 }
 
 /**
  * Hook to fetch and manage player stats for game registrations
- * Handles fetching player stats, registration streaks, and win rates
+ * Handles fetching player stats, registration streaks, win rates, and token cooldown data
  * @param registrations Array of game registrations
- * @returns Object containing loading state, error state, and player stats
+ * @param gameId Optional game ID for fetching token cooldown data
+ * @returns Object containing loading state, error state, player stats, and token cooldown data
  */
 export const useGameRegistrationStats = (
-  registrations: Registration[]
+  registrations: Registration[],
+  gameId?: string
 ): UseGameRegistrationStatsReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playerStats, setPlayerStats] = useState<Record<string, PlayerStats>>({});
   const [stats, setStats] = useState<Record<string, any>>({});
+  const [tokenCooldownPlayerIds, setTokenCooldownPlayerIds] = useState<Set<string>>(new Set());
+  const [unregisteredTokenHoldersCount, setUnregisteredTokenHoldersCount] = useState<number>(0);
+  const [unregisteredPlayersXP, setUnregisteredPlayersXP] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchPlayerStats = async () => {
@@ -107,6 +115,70 @@ export const useGameRegistrationStats = (
           .in('player_id', playerIds);
 
         if (derivedAttrsError) throw derivedAttrsError;
+
+        // Fetch token cooldown data if gameId is provided
+        if (gameId) {
+          const { data: tokenCooldownData, error: tokenCooldownError } = await supabase.rpc(
+            'check_previous_game_token_usage',
+            { current_game_id: gameId }
+          );
+
+          if (!tokenCooldownError && tokenCooldownData) {
+            const cooldownIds = new Set(tokenCooldownData.map((u: { player_id: string }) => u.player_id));
+            setTokenCooldownPlayerIds(cooldownIds);
+          }
+
+          // Count ELIGIBLE players with available tokens who haven't registered
+          // Tokens can be used for any game while active, but only eligible players count
+          const { data: unregisteredTokenData, error: tokenCountError } = await supabase.rpc(
+            'get_eligible_token_holders_not_in_game',
+            { p_game_id: gameId }
+          );
+
+          if (!tokenCountError && unregisteredTokenData) {
+            setUnregisteredTokenHoldersCount(unregisteredTokenData.length);
+          } else {
+            // Fallback: If RPC doesn't exist, count manually using eligibility check
+            const { data: tokenHolders, error: fallbackError } = await supabase
+              .from('player_tokens')
+              .select('player_id')
+              .is('used_at', null)
+              .not('player_id', 'in', `(${playerIds.join(',')})`);
+
+            if (!fallbackError && tokenHolders) {
+              // Check eligibility for each
+              let eligibleCount = 0;
+              for (const holder of tokenHolders) {
+                const { data: isEligible } = await supabase.rpc(
+                  'check_token_eligibility',
+                  { player_uuid: holder.player_id }
+                );
+                if (isEligible) eligibleCount++;
+              }
+              setUnregisteredTokenHoldersCount(eligibleCount);
+            }
+          }
+
+          // Get XP of all unregistered active players
+          const { data: unregisteredPlayersData, error: unregisteredError } = await supabase
+            .from('players')
+            .select(`
+              id,
+              player_xp!inner (
+                xp
+              )
+            `)
+            .not('id', 'in', `(${playerIds.join(',')})`)
+            .gt('player_xp.xp', 0);
+
+          if (!unregisteredError && unregisteredPlayersData) {
+            const xpValues = unregisteredPlayersData
+              .map(p => p.player_xp?.xp || 0)
+              .filter(xp => xp > 0)
+              .sort((a, b) => b - a); // Sort descending
+            setUnregisteredPlayersXP(xpValues);
+          }
+        }
 
         // Get the last 40 completed games to find the actual cutoff sequence
         const { data: latestGameData, error: latestGameError } = await supabase
@@ -294,7 +366,7 @@ export const useGameRegistrationStats = (
     };
 
     fetchPlayerStats();
-  }, [registrations]);
+  }, [registrations, gameId]);
 
-  return { loading, error, playerStats, stats };
+  return { loading, error, playerStats, stats, tokenCooldownPlayerIds, unregisteredTokenHoldersCount, unregisteredPlayersXP };
 };

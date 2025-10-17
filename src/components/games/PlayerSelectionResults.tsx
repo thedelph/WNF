@@ -101,10 +101,10 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
 
         <div>
           <h4 className="font-bold mb-2">Merit Selection ({meritPlayers.length} players)</h4>
-          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). Players who used a token in the previous game were moved to the bottom of the list. For players with the same token status, the following criteria were used in order:</p>
+          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). Players who used a token in the previous game (⏸️ token cooldown) were moved to the bottom of the list. For players with the same token cooldown status, the following criteria were used in order:</p>
           <ol className="list-decimal pl-4 mb-4">
             <li><strong>Payment status:</strong> Players with unpaid games are moved to the bottom to disincentivise missing payments</li>
-            <li>Token cooldown (players who used a token last game moved to bottom)</li>
+            <li><strong>Token cooldown (⏸️):</strong> Players who used a token in the previous game are deprioritized (moved to bottom of list)</li>
             <li>WhatsApp membership (members won)</li>
             <li>Current streak (highest won)</li>
             <li>Caps (highest won)</li>
@@ -118,14 +118,14 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
               const hasUnpaidGames = (stats?.unpaidGames || 0) > 0;
               return (
                 <li key={player.id} className="mb-2">
-                  <span className="font-semibold">{player.friendly_name}</span>: Selected by merit with 
+                  <span className="font-semibold">{player.friendly_name}</span>: Selected by merit with
                   {' '}{stats?.xp || 0} XP
                   {isWhatsApp && ' (WhatsApp member)'}
                   {hasUnpaidGames && (
                     <span className="text-error"> ({stats?.unpaidGames || 0} unpaid game{(stats?.unpaidGames || 0) !== 1 ? 's' : ''})</span>
                   )}
                   {usedTokenLastGame && (
-                    <span className="text-warning"> (Used token in previous game)</span>
+                    <span className="text-secondary"> (⏸️ Token cooldown - used token last game)</span>
                   )}
                   {player.tiebreaker && (
                     <span className="text-info">

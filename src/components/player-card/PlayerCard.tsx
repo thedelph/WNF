@@ -48,6 +48,7 @@ interface PlayerCardProps {
   frozenStreakValue?: number | null
   recentGames?: number
   gameParticipation?: Array<'selected' | 'reserve' | null>
+  onTokenCooldown?: boolean
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -90,6 +91,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   frozenStreakValue = null,
   recentGames = 0,
   gameParticipation = new Array(40).fill(null),
+  onTokenCooldown = false,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -177,6 +179,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               frozenStreakValue={frozenStreakValue}
               recentGames={recentGames}
               gameParticipation={gameParticipation}
+              onTokenCooldown={onTokenCooldown}
             />
           ) : (
             <PlayerCardBack

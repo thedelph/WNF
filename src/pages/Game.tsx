@@ -530,6 +530,7 @@ const Game = () => {
             registrations={playerData.registrations}
             maxPlayers={upcomingGame.max_players}
             randomSlots={upcomingGame.random_slots || 0}
+            gameId={upcomingGame.id}
           />
           <ShieldTokenPlayers
             shieldTokenUsers={playerData.shieldTokenUsers}

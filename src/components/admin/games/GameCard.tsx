@@ -221,6 +221,13 @@ Reply to this message with names of any reserves outside of this group that want
           const selectedPlayers = game.game_registrations?.filter(reg => reg.status === 'selected');
           const reservePlayers = game.game_registrations?.filter(reg => reg.status === 'reserve');
 
+          // Get token cooldown data - players who used tokens in the previous game
+          const { data: tokenCooldownData } = await supabase.rpc(
+            'check_previous_game_token_usage',
+            { current_game_id: game.id }
+          );
+          const tokenCooldownPlayerIds = new Set(tokenCooldownData?.map((u: { player_id: string }) => u.player_id) || []);
+
           // Get additional data for reasoning
           const tokenPlayers = selectedPlayers?.filter(reg => reg.using_token) || [];
           const meritPlayers = selectedPlayers?.filter(reg => reg.selection_method === 'merit') || [];
@@ -250,6 +257,14 @@ Reply to this message with names of any reserves outside of this group that want
             message += `\n💰 XP penalty due to missing payments`;
           }
 
+          const tokenCooldownCount = [...(selectedPlayers || []), ...(reservePlayers || [])]
+            .filter(reg => tokenCooldownPlayerIds.has(reg.player?.id || ''))
+            .length;
+
+          if (tokenCooldownCount > 0) {
+            message += `\n⏸️ ${tokenCooldownCount} player${tokenCooldownCount > 1 ? 's' : ''} on token cooldown this week`;
+          }
+
           if (shieldUsage && shieldUsage.length > 0) {
             message += `\n🛡️ ${shieldUsage.length} player${shieldUsage.length > 1 ? 's' : ''} using streak protection this week`;
           }
@@ -271,12 +286,14 @@ Reply to this message with names of any reserves outside of this group that want
                 const isToken = reg.using_token;
                 const isRandom = reg.selection_method === 'random';
                 const playerUnpaid = reg.player?.unpaid_games || 0;
-                
+                const isOnCooldown = tokenCooldownPlayerIds.has(reg.player?.id || '');
+
                 let prefix = '';
                 if (isToken) prefix = '🪙';
                 else if (isRandom) prefix = '🎲';
+                if (isOnCooldown) prefix += '⏸️';
                 if (playerUnpaid > 0) prefix += '💰';
-                
+
                 message += `\n${prefix}${reg.player?.friendly_name || 'Unknown'} (${xp} XP)`;
               });
           }
@@ -289,7 +306,12 @@ Reply to this message with names of any reserves outside of this group that want
               .forEach(reg => {
                 const xp = playerXpMap.get(reg.player?.id || '') || 0;
                 const playerUnpaid = reg.player?.unpaid_games || 0;
-                const prefix = playerUnpaid > 0 ? '💰' : '';
+                const isOnCooldown = tokenCooldownPlayerIds.has(reg.player?.id || '');
+
+                let prefix = '';
+                if (isOnCooldown) prefix += '⏸️';
+                if (playerUnpaid > 0) prefix += '💰';
+
                 message += `\n${prefix}${reg.player?.friendly_name || 'Unknown'} (${xp} XP)`;
               });
           }
@@ -866,15 +888,19 @@ Reply to this message with names of any reserves outside of this group that want
                         <th>XP</th>
                         <th>WhatsApp</th>
                         <th>Unpaid</th>
+                        <th>Cooldown</th>
                         <th>Reason</th>
                       </tr>
                     </thead>
                     <tbody>
                       {simulationResult.reservePlayers.map((p, idx) => {
                         let reason = `Reserve position ${idx + 1}`;
-                        
+
                         // Determine why they're in reserves
                         const reasons = [];
+                        if (p.used_token_last_game) {
+                          reasons.push('used token in previous game - deprioritized');
+                        }
                         if ((p.unpaid_games || 0) > 0) {
                           reasons.push(`${p.unpaid_games} unpaid game${p.unpaid_games > 1 ? 's' : ''}`);
                         }
@@ -884,11 +910,11 @@ Reply to this message with names of any reserves outside of this group that want
                         if (p.whatsapp_group_member !== 'Yes' && p.whatsapp_group_member !== 'Proxy') {
                           reasons.push('not WhatsApp member');
                         }
-                        
+
                         if (reasons.length > 0) {
                           reason = reasons.join(', ');
                         }
-                        
+
                         return (
                           <tr key={p.id}>
                             <td>{idx + 1}</td>
@@ -901,6 +927,9 @@ Reply to this message with names of any reserves outside of this group that want
                               ) : (
                                 <span className="text-success">0</span>
                               )}
+                            </td>
+                            <td className="text-center">
+                              {p.used_token_last_game && <span className="text-lg">⏸️</span>}
                             </td>
                             <td className="text-xs text-warning">{reason}</td>
                           </tr>
@@ -928,6 +957,7 @@ Reply to this message with names of any reserves outside of this group that want
                     <p className="mb-2">After token slots were allocated, remaining slots were filled using the following criteria in order:</p>
                     <ol className="list-decimal pl-4 mb-2">
                       <li><strong>Payment status:</strong> Players with unpaid games are moved to the bottom to disincentivise missing payments</li>
+                      <li><strong>Token cooldown (⏸️):</strong> Players who used a token in the previous game are deprioritized (moved to bottom of list)</li>
                       <li><strong>XP:</strong> Highest XP players selected first</li>
                       <li><strong>WhatsApp membership:</strong> Members win tiebreakers</li>
                       <li><strong>Current streak:</strong> Higher streak wins</li>

@@ -32,6 +32,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   frozenStreakValue?: number | null,
   recentGames?: number,
   gameParticipation?: Array<'selected' | 'reserve' | null>, // Array of 40 elements showing participation status in each of the last 40 games
+  onTokenCooldown?: boolean,
 }> = ({
   id,
   friendlyName,
@@ -67,6 +68,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   frozenStreakValue = null,
   recentGames = 0,
   gameParticipation = new Array(40).fill(null),
+  onTokenCooldown = false,
 }) => {
   // Debug logging for playstyle props
   if (friendlyName === 'Chris H' || friendlyName === 'Nathan') {
@@ -223,6 +225,21 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
               animate={{ scale: 1 }}
             >
               <PiCoinDuotone size={24} className="text-yellow-400" />
+            </motion.div>
+          </Tooltip>
+        </div>
+      )}
+
+      {/* Token Cooldown indicator */}
+      {onTokenCooldown && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
+          <Tooltip content="Token Cooldown - used token in previous game (deprioritized this week)">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="text-2xl"
+            >
+              ⏸️
             </motion.div>
           </Tooltip>
         </div>
