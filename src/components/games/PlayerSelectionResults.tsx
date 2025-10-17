@@ -1,5 +1,6 @@
 import React, { useState, useEffect, memo } from 'react';
 import { FaUser, FaUserClock } from 'react-icons/fa';
+import { MdPauseCircle } from 'react-icons/md';
 import { useUser } from '../../hooks/useUser';
 import { handlePlayerSelfDropout } from '../../utils/dropoutHandler';
 import { PlayerSelectionResultsProps } from '../../types/playerSelection';
@@ -101,10 +102,10 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
 
         <div>
           <h4 className="font-bold mb-2">Merit Selection ({meritPlayers.length} players)</h4>
-          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). Players who used a token in the previous game (⏸️ token cooldown) were moved to the bottom of the list. For players with the same token cooldown status, the following criteria were used in order:</p>
+          <p className="mb-2">After token slots were allocated, remaining slots were filled by XP (highest first). Players who used a token in the previous game (<MdPauseCircle size={14} className="text-warning inline" /> token cooldown) were moved to the bottom of the list. For players with the same token cooldown status, the following criteria were used in order:</p>
           <ol className="list-decimal pl-4 mb-4">
             <li><strong>Payment status:</strong> Players with unpaid games are moved to the bottom to disincentivise missing payments</li>
-            <li><strong>Token cooldown (⏸️):</strong> Players who used a token in the previous game are deprioritized (moved to bottom of list)</li>
+            <li><strong>Token cooldown (<MdPauseCircle size={14} className="text-warning inline" />):</strong> Players who used a token in the previous game are deprioritized (moved to bottom of list)</li>
             <li>WhatsApp membership (members won)</li>
             <li>Current streak (highest won)</li>
             <li>Caps (highest won)</li>
@@ -125,7 +126,7 @@ const SelectionReasoning: React.FC<SelectionReasoningProps> = memo(({
                     <span className="text-error"> ({stats?.unpaidGames || 0} unpaid game{(stats?.unpaidGames || 0) !== 1 ? 's' : ''})</span>
                   )}
                   {usedTokenLastGame && (
-                    <span className="text-secondary"> (⏸️ Token cooldown - used token last game)</span>
+                    <span className="text-secondary"> (<MdPauseCircle size={14} className="text-warning inline" /> Token cooldown - used token last game)</span>
                   )}
                   {player.tiebreaker && (
                     <span className="text-info">

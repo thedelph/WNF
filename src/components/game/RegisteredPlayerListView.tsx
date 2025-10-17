@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PiCoinDuotone } from "react-icons/pi";
+import { MdPauseCircle } from "react-icons/md";
 import { Registration } from '../../types/playerSelection';
 import { useUser } from '../../hooks/useUser';
 import { Tooltip } from '../ui/Tooltip';
@@ -98,10 +99,16 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
     return odds && odds.percentage > 0 && odds.percentage < 100 && odds.status === 'merit';
   });
 
-  const randomSelectionPlayers = sortedRegistrations.filter(reg => {
-    const odds = selectionOdds.get(reg.player.id);
-    return odds && odds.status === 'random';
-  });
+  const randomSelectionPlayers = sortedRegistrations
+    .filter(reg => {
+      const odds = selectionOdds.get(reg.player.id);
+      return odds && odds.status === 'random';
+    })
+    .sort((a, b) => {
+      const aOdds = selectionOdds.get(a.player.id)?.percentage || 0;
+      const bOdds = selectionOdds.get(b.player.id)?.percentage || 0;
+      return bOdds - aOdds; // Sort by odds descending (highest first)
+    });
 
   // Helper function to render a player row
   const renderPlayerRow = (registration: Registration, showOdds: boolean = false) => {
@@ -137,7 +144,7 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
               )}
               {tokenCooldownPlayerIds.has(registration.player.id) && (
                 <Tooltip content="Token Cooldown - used token in previous game">
-                  <span className="text-lg">⏸️</span>
+                  <MdPauseCircle size={18} className="text-warning" />
                 </Tooltip>
               )}
             </div>

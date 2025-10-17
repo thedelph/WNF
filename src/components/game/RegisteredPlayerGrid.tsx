@@ -158,10 +158,16 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
     return odds && odds.percentage > 0 && odds.percentage < 100 && odds.status === 'merit';
   });
 
-  const randomSelectionPlayers = sortedRegistrations.filter(reg => {
-    const odds = selectionOdds.get(reg.player.id);
-    return odds && odds.status === 'random';
-  });
+  const randomSelectionPlayers = sortedRegistrations
+    .filter(reg => {
+      const odds = selectionOdds.get(reg.player.id);
+      return odds && odds.status === 'random';
+    })
+    .sort((a, b) => {
+      const aOdds = selectionOdds.get(a.player.id)?.percentage || 0;
+      const bOdds = selectionOdds.get(b.player.id)?.percentage || 0;
+      return bOdds - aOdds; // Sort by odds descending (highest first)
+    });
 
   return (
     <div className="container mx-auto px-4 space-y-8">

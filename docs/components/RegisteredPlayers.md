@@ -79,7 +79,7 @@ When a `gameId` is provided, the hook calls the `check_previous_game_token_usage
    - Win rates and game stats
    - Token cooldown data (if `gameId` provided) via `check_previous_game_token_usage` RPC
 3. Data is passed to `RegisteredPlayerGrid` or `RegisteredPlayerListView`
-4. Components render `PlayerCard` components with appropriate data, including token cooldown indicators (⏸️ emoji)
+4. Components render `PlayerCard` components with appropriate data, including token cooldown indicators (MdPauseCircle icon from react-icons/md)
 
 ## Example Usage
 
@@ -100,15 +100,15 @@ function GamePage() {
 
 ## Token Cooldown Feature
 
-The RegisteredPlayers component displays a visual indicator (⏸️ emoji) for players who are on "token cooldown". This means they used a priority token in the previous game and will be deprioritized during player selection for the current game.
+The RegisteredPlayers component displays a visual indicator (MdPauseCircle icon from react-icons/md) for players who are on "token cooldown". This means they used a priority token in the previous game and will be deprioritized during player selection for the current game.
 
 **How it works:**
 1. When `gameId` is provided, the system calls `check_previous_game_token_usage` database function
 2. The function returns IDs of players who used tokens in the previous sequential game
 3. These player IDs are stored in `tokenCooldownPlayerIds` Set
 4. Visual indicators are displayed in multiple locations:
-   - **Grid View**: ⏸️ emoji appears in top-left corner of player card with tooltip
-   - **List View**: ⏸️ emoji appears next to player name with tooltip
+   - **Grid View**: MdPauseCircle icon (warning color) appears in top-left corner of player card with tooltip
+   - **List View**: MdPauseCircle icon (warning color) appears next to player name with tooltip
 5. Tooltip explains: "Token Cooldown - used token in previous game (deprioritized this week)"
 
 **Related Documentation:**

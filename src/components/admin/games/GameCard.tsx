@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Game, GAME_STATUSES } from '../../../types/game';
 import { format } from 'date-fns';
 import { FaWhatsapp } from 'react-icons/fa';
+import { MdPauseCircle } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { supabase, supabaseAdmin } from '../../../utils/supabase';
 
@@ -929,7 +930,7 @@ Reply to this message with names of any reserves outside of this group that want
                               )}
                             </td>
                             <td className="text-center">
-                              {p.used_token_last_game && <span className="text-lg">⏸️</span>}
+                              {p.used_token_last_game && <MdPauseCircle size={18} className="text-warning inline" />}
                             </td>
                             <td className="text-xs text-warning">{reason}</td>
                           </tr>
@@ -957,7 +958,7 @@ Reply to this message with names of any reserves outside of this group that want
                     <p className="mb-2">After token slots were allocated, remaining slots were filled using the following criteria in order:</p>
                     <ol className="list-decimal pl-4 mb-2">
                       <li><strong>Payment status:</strong> Players with unpaid games are moved to the bottom to disincentivise missing payments</li>
-                      <li><strong>Token cooldown (⏸️):</strong> Players who used a token in the previous game are deprioritized (moved to bottom of list)</li>
+                      <li><strong>Token cooldown (<MdPauseCircle size={14} className="text-warning inline" />):</strong> Players who used a token in the previous game are deprioritized (moved to bottom of list)</li>
                       <li><strong>XP:</strong> Highest XP players selected first</li>
                       <li><strong>WhatsApp membership:</strong> Members win tiebreakers</li>
                       <li><strong>Current streak:</strong> Higher streak wins</li>

@@ -21,6 +21,66 @@ interface PlayerStatsForOdds {
 }
 
 /**
+ * Calculate exact probability of selection using recursive approach
+ * Considers all possible selection sequences for weighted selection without replacement
+ *
+ * @param targetPlayerId - ID of player to calculate probability for
+ * @param playerPoints - Map of player IDs to their selection weights
+ * @param slotsRemaining - Number of slots still to be filled
+ * @returns Probability of selection (0-1)
+ */
+function calculateExactProbability(
+  targetPlayerId: string,
+  playerPoints: Map<string, number>,
+  slotsRemaining: number
+): number {
+  if (slotsRemaining === 0 || playerPoints.size === 0) {
+    return 0;
+  }
+
+  const totalPoints = Array.from(playerPoints.values()).reduce((sum, p) => sum + p, 0);
+  const targetPoints = playerPoints.get(targetPlayerId) || 0;
+
+  if (targetPoints === 0) {
+    return 0;
+  }
+
+  // Probability of being selected in this round
+  const probSelectedNow = targetPoints / totalPoints;
+
+  // If only one slot left or this is the last player, return current probability
+  if (slotsRemaining === 1 || playerPoints.size === 1) {
+    return probSelectedNow;
+  }
+
+  // Probability of NOT being selected in this round, but selected in future rounds
+  // For each other player that could be selected, calculate probability they're selected
+  // and then calculate our probability in the remaining rounds
+  let probSelectedLater = 0;
+
+  playerPoints.forEach((points, playerId) => {
+    if (playerId !== targetPlayerId) {
+      const probThisPlayerSelected = points / totalPoints;
+
+      // Create new map without this player
+      const remainingPlayers = new Map(playerPoints);
+      remainingPlayers.delete(playerId);
+
+      // Recursively calculate probability in remaining rounds
+      const probInFutureRounds = calculateExactProbability(
+        targetPlayerId,
+        remainingPlayers,
+        slotsRemaining - 1
+      );
+
+      probSelectedLater += probThisPlayerSelected * probInFutureRounds;
+    }
+  });
+
+  return probSelectedNow + probSelectedLater;
+}
+
+/**
  * Calculate selection odds for each player in the registration list
  *
  * @param sortedRegistrations - Players sorted by selection priority (tokens first, then XP)
@@ -135,9 +195,9 @@ export function calculateSelectionOdds(
       }
     }
 
-    // Players outside XP slots (in random zone or beyond)
-    // These players are at risk even when there's no randomiser
-    if (index >= xpSlots) {
+    // Players outside XP slots when there's NO randomiser (≤18 players)
+    // These players are at risk even though registrations haven't exceeded max
+    if (index >= xpSlots && !hasRandomiser) {
       // If there are threats, they're at high risk of being pushed out
       if (unregisteredTokenHoldersCount > 0 || higherXPUnregistered > 0) {
         const riskDescription = [];
@@ -171,41 +231,93 @@ export function calculateSelectionOdds(
     return oddsMap;
   }
 
-  // Calculate total points for weighted random selection
-  // Base weight: 1 point + bench_warmer_streak points
-  let totalPoints = 0;
-  const playerPoints = new Map<string, number>();
+  // Separate players by token cooldown status
+  // Token cooldown players are only considered AFTER all other players
+  const tokenCooldownPlayers = randomZonePlayers.filter(reg =>
+    tokenCooldownPlayerIds.has(reg.player.id)
+  );
+  const eligiblePlayers = randomZonePlayers.filter(reg =>
+    !tokenCooldownPlayerIds.has(reg.player.id)
+  );
 
-  randomZonePlayers.forEach(reg => {
-    const benchWarmerStreak = playerStats[reg.player.id]?.benchWarmerStreak || 0;
-    const points = 1 + benchWarmerStreak; // Base 1 + streak bonus
-    playerPoints.set(reg.player.id, points);
-    totalPoints += points;
-  });
+  // Calculate if token cooldown players have any chance
+  // They're only selected if there aren't enough eligible players
+  const hasTokenCooldownChance = eligiblePlayers.length < randomSlots;
 
-  // Calculate probability for each player in random zone
-  // Using approximation: For weighted selection without replacement,
-  // probability ≈ (player_weight / total_weight) × number_of_selections
-  // This is a reasonable approximation for small selection counts
-  randomZonePlayers.forEach(reg => {
-    const playerId = reg.player.id;
-    const points = playerPoints.get(playerId) || 1;
+  // Calculate odds for eligible (non-cooldown) players
+  if (eligiblePlayers.length > 0) {
+    const playerPoints = new Map<string, number>();
+    let totalPoints = 0;
 
-    // Calculate selection probability
-    // Formula: (weight / total_weight) × slots_to_fill
-    // Capped at 100% for cases where calculation might exceed
-    const rawProbability = (points / totalPoints) * randomSlots;
-    const percentage = Math.min(100, Math.round(rawProbability * 100));
-
-    const benchWarmerStreak = playerStats[playerId]?.benchWarmerStreak || 0;
-
-    oddsMap.set(playerId, {
-      percentage,
-      status: 'random',
-      description: benchWarmerStreak > 0
-        ? `Random Selection - ${benchWarmerStreak} game${benchWarmerStreak > 1 ? 's' : ''} as reserve boosts odds`
-        : 'Random Selection - Base odds'
+    eligiblePlayers.forEach(reg => {
+      const benchWarmerStreak = playerStats[reg.player.id]?.benchWarmerStreak || 0;
+      const points = 1 + benchWarmerStreak; // Base 1 + streak bonus
+      playerPoints.set(reg.player.id, points);
+      totalPoints += points;
     });
+
+    // Calculate exact probabilities using recursive approach
+    eligiblePlayers.forEach(reg => {
+      const playerId = reg.player.id;
+
+      // Calculate probability recursively considering all possible selection sequences
+      const probability = calculateExactProbability(
+        playerId,
+        playerPoints,
+        randomSlots
+      );
+
+      const percentage = Math.min(100, Math.round(probability * 100));
+      const benchWarmerStreak = playerStats[playerId]?.benchWarmerStreak || 0;
+
+      oddsMap.set(playerId, {
+        percentage,
+        status: 'random',
+        description: benchWarmerStreak > 0
+          ? `Random Selection - ${benchWarmerStreak} game${benchWarmerStreak > 1 ? 's' : ''} as reserve boosts odds`
+          : 'Random Selection - Base odds'
+      });
+    });
+  }
+
+  // Calculate odds for token cooldown players
+  tokenCooldownPlayers.forEach(reg => {
+    const playerId = reg.player.id;
+
+    if (!hasTokenCooldownChance) {
+      // No chance - there are enough eligible players to fill all slots
+      oddsMap.set(playerId, {
+        percentage: 0,
+        status: 'random',
+        description: 'Token Cooldown - Last priority in random selection'
+      });
+    } else {
+      // Has a chance - calculate based on remaining slots after eligible players
+      const remainingSlots = randomSlots - eligiblePlayers.length;
+      const playerPoints = new Map<string, number>();
+
+      tokenCooldownPlayers.forEach(cooldownReg => {
+        const benchWarmerStreak = playerStats[cooldownReg.player.id]?.benchWarmerStreak || 0;
+        const points = 1 + benchWarmerStreak;
+        playerPoints.set(cooldownReg.player.id, points);
+      });
+
+      // Calculate exact probability using recursive approach
+      const probability = calculateExactProbability(
+        playerId,
+        playerPoints,
+        remainingSlots
+      );
+
+      const percentage = Math.min(100, Math.round(probability * 100));
+      const benchWarmerStreak = playerStats[playerId]?.benchWarmerStreak || 0;
+
+      oddsMap.set(playerId, {
+        percentage,
+        status: 'random',
+        description: `Token Cooldown - Only selected if needed (${benchWarmerStreak} reserve streak${benchWarmerStreak !== 1 ? 's' : ''})`
+      });
+    }
   });
 
   return oddsMap;

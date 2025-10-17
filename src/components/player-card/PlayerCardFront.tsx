@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Medal, Sparkles, Activity } from 'lucide-react'
 import { PiCoinDuotone } from "react-icons/pi"
+import { MdPauseCircle } from "react-icons/md"
 import { PlayerCardProps } from './PlayerCardTypes'
 import { PlayerCardModifiers } from './PlayerCardModifiers'
 import { PlayerCardBadges } from './PlayerCardBadges'
@@ -237,9 +238,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="text-2xl"
             >
-              ⏸️
+              <MdPauseCircle size={24} className="text-warning" />
             </motion.div>
           </Tooltip>
         </div>
