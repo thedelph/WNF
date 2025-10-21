@@ -43,7 +43,8 @@ export interface ExtendedPlayerData {
   rank: number;
   rarity: string;
   reserveXP: number;
-  whatsapp_group_member: boolean;
+  whatsapp_group_member: string | null;  // 'Yes', 'No', 'Proxy', or null
+  whatsapp_mobile_number?: string | null;
   registration_streak?: number;
   gameSequences?: Array<{
     sequence: number;

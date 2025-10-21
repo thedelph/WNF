@@ -4,6 +4,7 @@ import XPBreakdown from './XPBreakdown'
 import TokenStatus from './TokenStatus'
 import ShieldTokenStatus from './ShieldTokenStatus'
 import PaymentHistory from './PaymentHistory'
+import WhatsAppSettings from './WhatsAppSettings'
 // Import types from the root src directory
 import type { ExtendedPlayerData } from 'src/types/profile'
 import type { TokenStatus as TokenStatusType } from 'src/hooks/useTokenStatus'
@@ -14,13 +15,15 @@ interface ProfileContentProps {
   tokenStatus: TokenStatusType | null
   shieldStatus: ShieldStatus | null
   shieldLoading: boolean
+  onProfileUpdate?: () => void
 }
 
 export default function ProfileContent({
   profile,
   tokenStatus,
   shieldStatus,
-  shieldLoading
+  shieldLoading,
+  onProfileUpdate
 }: ProfileContentProps) {
   if (!profile) return null
 
@@ -152,6 +155,22 @@ export default function ProfileContent({
       >
         <h2 className="text-xl sm:text-2xl font-bold mb-4">Payment History</h2>
         <PaymentHistory />
+      </motion.div>
+
+      {/* WhatsApp Settings Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+        className="bg-base-200 rounded-box p-6 shadow-lg"
+      >
+        <h2 className="text-xl sm:text-2xl font-bold mb-4">WhatsApp Bot Integration</h2>
+        <WhatsAppSettings
+          playerId={profile.id}
+          currentNumber={profile.whatsapp_mobile_number}
+          whatsappGroupMember={profile.whatsapp_group_member}
+          onUpdate={onProfileUpdate}
+        />
       </motion.div>
     </>
   )

@@ -171,7 +171,8 @@ LOG_LEVEL=info
 # Webhook Authentication
 WEBHOOK_SECRET=                                 # Generate: openssl rand -hex 32
 
-# Admin Phone Numbers (E.164 format)
+# Admin Phone Numbers (E.164 format) - For DM admin commands
+# Comma-separated list for multiple admins: +447123456789,+447987654321
 ADMIN_PHONE_NUMBERS=+447123456789
 ```
 
@@ -404,6 +405,15 @@ docker logs wnf-whatsapp-bot --tail 50
 1. Send `/help` to the WhatsApp group
 2. Bot should respond with command list
 3. Try `/xp` - should show your XP
+
+### 5.4 Test Admin Commands (if configured)
+
+1. Send a **DM (direct message)** to the bot
+2. Try `/adminhelp` - should show admin commands
+3. Try `/listgames` - should show upcoming games
+4. **Note:** Admin commands only work via DM, not in group chat
+
+See `ADMIN_GUIDE.md` for full admin documentation.
 
 ### 5.4 Monitor Health
 
@@ -701,11 +711,18 @@ Once bot is running:
 
 ## Support
 
-- **Main Documentation:** `/docs/features/WhatsAppBotIntegration.md`
-- **Bot README:** `/bot/README.md`
+- **Main Documentation:** `README.md`
+- **Admin Commands:** `ADMIN_GUIDE.md`
+- **Game Announcements:** `GAME_ANNOUNCEMENT_GUIDE.md`
+- **Quick Fixes:** `QUICK_FIX.md`
 - **Issues:** GitHub Issues
 
 ---
 
-**Last Updated:** 2025-10-10
+**Last Updated:** 2025-10-21
 **Status:** Ready for deployment
+
+**Recent Changes:**
+- Added admin DM commands (`/adminhelp`, `/listgames`, `/announce`)
+- Updated announcement formatting with ordinal dates (22nd, 18th)
+- Fixed time extraction from database timestamp fields

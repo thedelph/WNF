@@ -28,6 +28,8 @@ WhatsApp bot for automating game registration, announcements, and player interac
 - Secondary phone number for WhatsApp
 - Cloudflare account (free tier)
 
+**Important:** This project uses whatsapp-web.js **v1.34.1+**. Earlier versions (v1.26.0 and below) have known issues with the `ready` event not firing. If you encounter authentication issues or the bot doesn't receive messages, ensure you're using the latest version.
+
 ### Local Development
 
 1. **Install dependencies:**
@@ -148,18 +150,28 @@ Exposes your bot's webhook endpoint securely (free, no port forwarding needed).
 bot/
 ├── src/
 │   ├── index.ts                 # Entry point
-│   ├── whatsapp-client.ts       # WhatsApp connection
+│   ├── whatsapp-client.ts       # WhatsApp connection & admin DM routing
 │   ├── supabase-client.ts       # Supabase integration
-│   ├── config.ts                # Configuration
+│   ├── config/
+│   │   ├── index.ts             # Main configuration
+│   │   └── admin.ts             # Admin phone numbers & access control
 │   ├── server.ts                # HTTP server for webhooks
 │   ├── handlers/
 │   │   ├── reaction-handler.ts  # 👍 registration
 │   │   ├── command-handler.ts   # /xp, /stats commands
-│   │   └── message-handler.ts   # General messages
+│   │   ├── message-handler.ts   # General messages
+│   │   ├── admin-command-handler.ts  # Admin DM routing
+│   │   └── admin/
+│   │       ├── help-command.ts       # /adminhelp
+│   │       ├── listgames-command.ts  # /listgames
+│   │       └── announce-command.ts   # /announce
 │   ├── services/
 │   │   ├── registration.service.ts
 │   │   ├── stats.service.ts
+│   │   ├── game-service.ts
 │   │   └── announcement.service.ts
+│   ├── types/
+│   │   └── index.ts             # TypeScript type definitions
 │   └── utils/
 │       ├── logger.ts
 │       ├── message-formatter.ts
@@ -169,6 +181,7 @@ bot/
 ├── package.json
 ├── tsconfig.json
 ├── .env.example
+├── GAME_ANNOUNCEMENT_GUIDE.md
 └── README.md
 ```
 
@@ -190,12 +203,21 @@ bot/
 - 🪙 (with 👍) - Use priority token
 - 🛡️ - Use shield token
 
-### Admin Commands
+### Admin Commands (via DM to Bot)
 
-- `/admin register @player` - Manually register player
-- `/admin unregister @player` - Remove registration
-- `/admin token @player` - Grant priority token
-- `/admin shield @player` - Grant shield token
+**IMPORTANT:** Admin commands must be sent as a **private message (DM)** to the bot, NOT in the group chat.
+
+- `/adminhelp` - List all admin commands
+- `/listgames` - Show upcoming games with position numbers
+- `/announce <position>` - Announce a game to the group (e.g., `/announce 1` for first game)
+
+**How to use:**
+1. Send the bot a direct message on WhatsApp
+2. Use commands to manage games
+3. Use list positions (1, 2, 3...) NOT game sequence numbers
+
+**Configured Admin Numbers:**
+- Admin phone numbers are configured in the `ADMIN_PHONE_NUMBERS` environment variable (E.164 format)
 
 ## Docker Commands
 
@@ -281,13 +303,36 @@ docker logs wnf-whatsapp-bot
 
 **Symptoms:** Messages sent to WhatsApp group don't trigger bot
 
-**Checks:**
-1. Is container running? `docker ps`
-2. Is WhatsApp connected? Check logs
-3. Is group ID correct? Compare with actual group chat ID
+**Common Causes:**
 
-**Get Group ID:**
-Send any message to group, check logs for chat ID.
+1. **Ready Event Not Firing (Library Version Issue)**
+   - **Symptom:** Health check shows `"whatsappReady": false`
+   - **Cause:** whatsapp-web.js v1.26.0 and earlier have known ready event issues
+   - **Solution:** Upgrade to v1.34.1+
+   ```bash
+   # Check current version
+   npm list whatsapp-web.js
+
+   # Update package.json to "^1.34.1"
+   # Rebuild container
+   docker-compose down
+   docker-compose build --no-cache
+   docker-compose up -d
+   ```
+
+2. **Group ID Not Configured**
+   - **Check:** Is `WA_GROUP_ID` set in `.env`?
+   - **Get Group ID:** Use browser inspect element on WhatsApp Web, search for `@g.us` in message IDs
+   - **Format:** Should be like `120363423276603282@g.us`
+
+3. **WhatsApp Not Connected**
+   - **Check logs:** `docker logs wnf-whatsapp-bot`
+   - **Look for:** `✅ WhatsApp client is ready!`
+   - **If missing:** Re-authenticate by scanning QR code
+
+4. **Debug Logging Disabled**
+   - **Set in `.env`:** `LOG_LEVEL=debug`
+   - **Restart container** to see message reception in logs
 
 ### Webhook Not Working
 
@@ -375,6 +420,30 @@ docker run --rm -v bot_whatsapp-sessions:/data -v $(pwd):/backup alpine \
 - **Documentation**: See `/docs/features/WhatsAppBotIntegration.md`
 - **Issues**: Create GitHub issue
 - **Logs**: Always include relevant logs when reporting issues
+
+## Recent Updates
+
+**Version 2.1 - 2025-10-21**
+
+- ✨ **Admin DM Commands:** Manage games via private messages to bot
+  - `/adminhelp` - Show admin commands
+  - `/listgames` - List upcoming games
+  - `/announce <position>` - Send game announcements to group
+- 📅 **Improved Announcement Formatting:**
+  - Dates with ordinal suffixes (22nd October, 18th October)
+  - 12-hour time format (9:00pm - 10:00pm)
+  - Proper deadline formatting
+- 🔧 **Database Schema Updates:**
+  - Fixed time extraction from timestamp fields
+  - Corrected Game type definitions
+- 📚 **Documentation:**
+  - Added `ADMIN_GUIDE.md` with full admin command documentation
+  - Updated `GAME_ANNOUNCEMENT_GUIDE.md` with correct implementation
+  - Enhanced deployment guides
+
+**See:** `ADMIN_GUIDE.md` for admin command usage
+
+---
 
 ## License
 

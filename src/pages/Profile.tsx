@@ -60,6 +60,7 @@ export default function Component() {
               max_streak,
               caps,
               whatsapp_group_member,
+              whatsapp_mobile_number,
               bench_warmer_streak,
               player_xp (
                 xp,
@@ -319,7 +320,8 @@ export default function Component() {
           current_streak: playerData.current_streak || 0,
           max_streak: correctMaxStreak,
           maxStreakDate: maxStreakDate || undefined,
-          whatsapp_group_member: playerData.whatsapp_group_member || false,
+          whatsapp_group_member: playerData.whatsapp_group_member || null,
+          whatsapp_mobile_number: playerData.whatsapp_mobile_number || null,
           win_rate: winRate,
           recent_win_rate: recentWinRate,
           highestXP: highestXPData?.xp,
@@ -565,6 +567,7 @@ export default function Component() {
                 tokenStatus={tokenStatus}
                 shieldStatus={shieldStatus}
                 shieldLoading={shieldLoading}
+                onProfileUpdate={loadProfile}
               />
             </div>
           </>
