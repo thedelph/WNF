@@ -33,6 +33,15 @@ A presentational component that handles the grid layout and rendering of individ
 - XL (≥ 1280px): 4 cards per row
 - 2XL (≥ 1536px): 6 cards per row
 
+**Selection Odds Feature:**
+The grid component groups players into collapsible sections based on their selection status:
+- **Guaranteed Section** - Players with 100% chance of selection (token users or safe merit positions)
+- **At Risk Section** - Players with < 100% chance who could be pushed down by unregistered players
+  - Shows merit zone players at risk of being pushed to random selection
+  - Shows "The Randomiser" section for players in random selection zone with their % odds
+
+The selection odds are calculated using the `calculateSelectionOdds()` function from `src/utils/selectionOdds.ts`.
+
 ### RegisteredPlayerListView
 An alternative list view component for displaying registered players in a compact format.
 
@@ -65,8 +74,12 @@ Custom hook that handles fetching and processing player statistics for game regi
 }
 ```
 
-**Token Cooldown Logic:**
-When a `gameId` is provided, the hook calls the `check_previous_game_token_usage` database function to identify players who used priority tokens in the previous sequential game. These players are deprioritized during player selection (moved to bottom of merit-based selection list).
+**Database Functions Used:**
+When a `gameId` is provided, the hook calls several database functions:
+1. `check_previous_game_token_usage` - Identifies players who used priority tokens in the previous game (for token cooldown)
+2. `get_eligible_token_holders_not_in_game` - Returns eligible players with unused tokens who haven't registered (for selection odds calculation)
+
+These database functions are critical for accurate selection odds calculation and token cooldown features.
 
 **Location:** `src/hooks/useGameRegistrationStats.ts`
 
@@ -78,8 +91,14 @@ When a `gameId` is provided, the hook calls the `check_previous_game_token_usage
    - Registration streak data
    - Win rates and game stats
    - Token cooldown data (if `gameId` provided) via `check_previous_game_token_usage` RPC
-3. Data is passed to `RegisteredPlayerGrid` or `RegisteredPlayerListView`
-4. Components render `PlayerCard` components with appropriate data, including token cooldown indicators (MdPauseCircle icon from react-icons/md)
+   - Unregistered token holders (if `gameId` provided) via `get_eligible_token_holders_not_in_game` RPC
+   - Unregistered players XP values (for selection odds calculation)
+3. Data is passed to `RegisteredPlayerGrid` or `RegisteredPlayerListView` along with:
+   - `unregisteredTokenHoldersCount` - Count of eligible players with unused tokens not registered
+   - `unregisteredPlayersXP` - Array of XP values for all unregistered active players (sorted descending)
+4. `RegisteredPlayerGrid` calculates selection odds for each player using `calculateSelectionOdds()`
+5. Components render `PlayerCard` components grouped by selection status (Guaranteed / At Risk)
+6. Token cooldown indicators (MdPauseCircle icon from react-icons/md) displayed where applicable
 
 ## Example Usage
 
@@ -114,6 +133,45 @@ The RegisteredPlayers component displays a visual indicator (MdPauseCircle icon 
 **Related Documentation:**
 - See [Token System](../TokenSystem.md) for complete priority token mechanics
 - Token cooldown affects merit-based selection (see `playerSelection.ts:106-114`)
+
+## Selection Odds Calculation
+
+The RegisteredPlayerGrid component displays real-time selection odds for each player, helping them understand their likelihood of being selected for the game.
+
+### How It Works
+
+The `calculateSelectionOdds()` function (from `src/utils/selectionOdds.ts`) considers multiple factors:
+
+1. **Token Users** - Always 100% guaranteed (highest priority)
+2. **Merit-Based Selection** - XP-based selection with threat assessment from:
+   - Unregistered players with higher XP
+   - Unregistered players with unused priority tokens
+3. **Random Selection** - Weighted probability based on bench warmer streak
+
+### Classification Logic
+
+Players are classified into one of these statuses:
+
+- **Guaranteed (100%)**: Token users OR players safe in merit zone even if all threats materialize
+- **Merit - At Risk (85% or 60%)**: Players currently in merit zone but could be pushed down by late registrations
+- **Random Selection (variable %)**: Players outside merit slots competing for random slots
+- **Unlikely (0%)**: Token cooldown players with no chance due to enough eligible players
+
+### Key Algorithm Features
+
+- **Worst-case analysis**: Calculates position if ALL unregistered higher-XP players register
+- **Token slot reduction**: Merit slots reduced by count of unregistered token holders
+- **Exact probability**: Uses recursive calculation for weighted random selection (not approximation)
+- **Conservative warnings**: Intentionally shows "At Risk" to encourage early registration
+
+### Database Dependencies
+
+The accuracy of selection odds depends on these RPC functions:
+- `get_eligible_token_holders_not_in_game` - Critical for correct threat assessment
+- `check_previous_game_token_usage` - For token cooldown deprioritization
+
+**Related Fix Documentation:**
+- See [Selection Odds Token Counting Fix](../fixes/SelectionOddsTokenCountingFix.md) for details on the 2025-10-24 bug fix
 
 ## Related Components
 - [PlayerCard](./PlayerCard.md) - Used to display individual player information
