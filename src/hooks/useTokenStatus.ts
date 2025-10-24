@@ -2,13 +2,18 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { executeWithRetry } from '../utils/network';
 
+export interface RecentGame {
+  display: string;
+  status: 'selected' | 'dropped_out';
+}
+
 export interface TokenStatus {
   status: string;
   lastUsedAt: string | null;
   nextTokenAt: string | null;
   createdAt: string;
   isEligible: boolean;
-  recentGames: string[];
+  recentGames: RecentGame[];
   hasPlayedInLastTenGames: boolean;
   hasRecentSelection: boolean;
   hasOutstandingPayments: boolean;
@@ -17,7 +22,10 @@ export interface TokenStatus {
 }
 
 interface GameRecord {
-  sequence_number: number;
+  status: string;
+  games: {
+    sequence_number: number;
+  };
 }
 
 interface TokenStatusRecord {
@@ -126,16 +134,15 @@ export function useTokenStatus(playerId: string) {
         const whatsappGroupMember = playerData?.whatsapp_group_member === 'Yes' || 
                                     playerData?.whatsapp_group_member === 'Proxy';
 
-        // Get recent games where player was selected, using sequence number range
-        const { data: recentGamesData, error: recentGamesError } = await executeWithRetry(
+        // First, get the last 10 completed game IDs
+        const { data: last10Games, error: last10GamesError } = await executeWithRetry(
           async () => {
             const result = await supabase
-              .from('public_player_game_history')
-              .select('sequence_number')
-              .eq('player_id', playerId)
-              .eq('status', 'selected')
-              .gt('sequence_number', latestSequence - 10)  // Get all games in last 10 sequence numbers
-              .order('sequence_number', { ascending: false });
+              .from('games')
+              .select('id, sequence_number')
+              .eq('completed', true)
+              .order('sequence_number', { ascending: false })
+              .limit(10);
             return result;
           },
           {
@@ -143,9 +150,65 @@ export function useTokenStatus(playerId: string) {
           }
         );
 
+        if (last10GamesError) {
+          console.error('Error fetching last 10 games:', last10GamesError);
+        }
+
+        const last10GameIds = last10Games?.map(g => g.id) || [];
+
+        console.log('[useTokenStatus] Fetching registrations for games:', {
+          last10GameIds,
+          playerIdToFetch: playerId
+        });
+
+        // Now get player's registrations for those games where they were selected OR dropped out
+        // We need the status field to differentiate between actual plays and dropouts
+        // Only query if we have game IDs
+        let recentGamesData = null;
+        let recentGamesError = null;
+
+        if (last10GameIds.length > 0) {
+          const result = await executeWithRetry(
+            async () => {
+              const queryResult = await supabase
+                .from('game_registrations')
+                .select('game_id, status')
+                .eq('player_id', playerId)
+                .in('status', ['selected', 'dropped_out'])
+                .in('game_id', last10GameIds);
+              return queryResult;
+            },
+            {
+              shouldToast: false
+            }
+          );
+          recentGamesData = result.data;
+          recentGamesError = result.error;
+        }
+
         if (recentGamesError) {
           console.error('Error fetching recent games:', recentGamesError);
         }
+
+        // Map game_id to sequence_number for easier processing
+        const gameIdToSequence = new Map(last10Games?.map(g => [g.id, g.sequence_number]) || []);
+
+        // Transform the data to match our GameRecord interface
+        const transformedRecentGames = recentGamesData?.map(gr => ({
+          status: gr.status,
+          games: {
+            sequence_number: gameIdToSequence.get(gr.game_id) || 0
+          }
+        })) || [];
+
+        // Debug logging for query results
+        console.log('[useTokenStatus] Query results:', {
+          playerId,
+          latestSequence,
+          last10Games: last10Games?.map(g => g.sequence_number),
+          recentGamesData,
+          transformedRecentGames
+        });
 
         // Check for outstanding payments - query game_registrations directly
         const { data: unpaidRegistrations, error: unpaidRegistrationsError } = await executeWithRetry(
@@ -174,31 +237,37 @@ export function useTokenStatus(playerId: string) {
         const outstandingPaymentsCount = unpaidRegistrations?.length || 0;
         const hasOutstandingPayments = outstandingPaymentsCount > 0;
 
-        // Ensure we have an array of game records even if the query failed
-        const recentGames = (recentGamesData || []) as GameRecord[];
+        // Use the transformed data
+        const recentGames = transformedRecentGames as GameRecord[];
 
         // Debug logging
         console.log('[useTokenStatus] Sequence numbers:', {
           latestSequence,
           lastThreeSequences,
-          playerGames: recentGames.map((g: GameRecord) => g.sequence_number)
+          playerGames: recentGames.map((g: GameRecord) => g.games.sequence_number)
         });
 
-        // Check if player was selected in any of the last 3 games
-        const recentSelections = recentGames.filter((g: GameRecord) => 
-          lastThreeSequences.includes(g.sequence_number)
+        // Check if player was selected OR dropped out in any of the last 3 games
+        // Both statuses disqualify from token eligibility
+        const recentSelections = recentGames.filter((g: GameRecord) =>
+          lastThreeSequences.includes(g.games.sequence_number)
         );
         const hasRecentSelection = recentSelections.length > 0;
 
-        // Check if player has played in last 10 games
-        const hasPlayedInLastTenGames = recentGames.some((g: GameRecord) => 
-          lastTenSequences.includes(g.sequence_number)
+        // Check if player has ACTUALLY PLAYED in last 10 games
+        // Only 'selected' counts as "played", not dropouts
+        const hasPlayedInLastTenGames = recentGames.some((g: GameRecord) =>
+          lastTenSequences.includes(g.games.sequence_number) && g.status === 'selected'
         );
 
         // Format recent games, only including those that make player ineligible
+        // Keep track of the status for each game so we can display contextual messages
         const formattedRecentGames = recentSelections
-          .map((g: GameRecord) => `WNF #${g.sequence_number.toString().padStart(3, '0')}`)
-          .sort((a: string, b: string) => parseInt(b.split('#')[1]) - parseInt(a.split('#')[1]));
+          .map((g: GameRecord) => ({
+            display: `WNF #${g.games.sequence_number.toString().padStart(3, '0')}`,
+            status: g.status as 'selected' | 'dropped_out'
+          }))
+          .sort((a, b) => parseInt(b.display.split('#')[1]) - parseInt(a.display.split('#')[1]));
 
         // Debug logging
         console.log('[useTokenStatus] Raw Data:', {

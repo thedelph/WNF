@@ -5,12 +5,17 @@ import { BsCheckCircle, BsXCircle } from "react-icons/bs";
 import { motion } from 'framer-motion';
 import { Tooltip } from '../ui/Tooltip';
 
+interface RecentGame {
+  display: string;
+  status: 'selected' | 'dropped_out';
+}
+
 interface TokenStatusProps {
   status: string;
   lastUsedAt?: string | null;
   createdAt?: string;
   isEligible?: boolean;
-  recentGames?: string[];
+  recentGames?: RecentGame[];
   hasPlayedInLastTenGames?: boolean;
   hasRecentSelection?: boolean;
   hasOutstandingPayments?: boolean;
@@ -161,7 +166,7 @@ export default function TokenStatus({
             ) : (
               <BsCheckCircle className="text-success" />
             )}
-            <Tooltip content="Must not have been selected in any of the last 3 games">
+            <Tooltip content="Must not have been selected or dropped out in any of the last 3 games">
               <span className={!hasRecentSelection ? "text-success" : "text-error"}>
                 Selection Cooldown
               </span>
@@ -192,9 +197,14 @@ export default function TokenStatus({
 
         {/* Recent Selections */}
         {hasRecentSelection && recentGames && recentGames.length > 0 && (
-          <Tooltip content="You must not have been selected in any of the last 3 games to be eligible">
+          <Tooltip content="You must not have been selected or dropped out in any of the last 3 games to be eligible">
             <div className="text-sm text-error">
-              Selected in: {recentGames.join(', ')}
+              {recentGames.map((game, index) => (
+                <div key={game.display}>
+                  {game.status === 'dropped_out' ? 'Dropped out in' : 'Selected in'}: {game.display}
+                  {index < recentGames.length - 1 && ', '}
+                </div>
+              ))}
             </div>
           </Tooltip>
         )}
@@ -220,7 +230,7 @@ export default function TokenStatus({
                 <li>Play in at least one of the last 10 games</li>
               )}
               {hasRecentSelection && (
-                <li>Not be selected in any of the last 3 games</li>
+                <li>Not be selected or drop out in any of the last 3 games</li>
               )}
               {hasOutstandingPayments && (
                 <li>Pay outstanding balance for {outstandingPaymentsCount} unpaid {outstandingPaymentsCount === 1 ? 'game' : 'games'}</li>
@@ -276,7 +286,7 @@ export default function TokenStatus({
                 <ul className="text-xs opacity-90 list-disc list-inside space-y-1 mt-1">
                   <li>Be a member of the WhatsApp group</li>
                   <li>Played in at least 1 of the last 10 games</li>
-                  <li>Not been selected in any of the last 3 games</li>
+                  <li>Not been selected or dropped out in any of the last 3 games</li>
                   <li>Have no outstanding payments</li>
                 </ul>
               </div>

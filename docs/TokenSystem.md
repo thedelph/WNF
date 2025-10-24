@@ -7,12 +7,14 @@ The token system provides players with a guaranteed slot option for games. Each 
 - Each player can have **exactly one active token** at any time
 - Tokens are issued automatically when a player meets **all** of these criteria:
   1. Has played (been selected) in at least one of the last 10 games
-  2. Has not been selected in any of the 3 most recently completed games
+  2. Has not been selected OR dropped out in any of the 3 most recently completed games
      - For example, if games #32, #31, and #30 are the most recent games:
        - Player must not have been selected in any of these games
+       - Player must not have dropped out of any of these games (after being selected)
        - It doesn't matter if they registered and weren't selected
        - It doesn't matter if they didn't register at all
-       - Being selected in even one of these games makes them ineligible
+       - Being selected OR dropping out in even one of these games makes them ineligible
+     - **Rationale**: Players who are selected but drop out had a guaranteed slot and chose not to use it, so they should wait before receiving priority again
   3. Has no outstanding payments (unpaid games)
      - Players with any unpaid games are ineligible for tokens
      - This encourages timely payment for games
@@ -24,12 +26,20 @@ The token system provides players with a guaranteed slot option for games. Each 
 - System enforces the single-token rule via database triggers
 
 ### Related Database Functions
-- `check_token_eligibility(player_uuid UUID)`: Checks if a player meets both eligibility criteria
+- `check_token_eligibility(player_uuid UUID)`: Checks if a player meets both eligibility criteria (includes dropout check)
 - `issue_priority_tokens()`: Issues tokens to all eligible players who don't have an active token
 - `enforce_single_active_token()`: Trigger function that prevents multiple active tokens per player
 - `handle_game_token(player_id UUID, game_id UUID, action TEXT)`: Handles token consumption and returns
 - `use_player_token(player_id UUID, game_id UUID)`: Marks a token as used for a specific game
 - `get_token_history(player_id UUID, game_id UUID, start_date TIMESTAMP, end_date TIMESTAMP)`: Retrieves token action history
+
+### Dropout Handling (Added 2025-10-24)
+Players who drop out after being selected are treated the same as selected players for token eligibility:
+- If a player is selected for a game but drops out, their registration status changes to `dropped_out`
+- The `check_token_eligibility` function checks for both `status = 'selected'` AND `status = 'dropped_out'`
+- This prevents players from getting priority tokens immediately after dropping out of a game they were selected for
+- **Frontend**: The `useTokenStatus` hook queries for both statuses when determining eligibility
+- **UI**: The TokenStatus component clarifies that "Selection Cooldown" includes dropouts
 
 ## Implementation Details
 
@@ -366,8 +376,8 @@ The token system is designed for casual players who want to join a game every no
 ## Eligibility
 
 Token eligibility is determined by the `check_token_eligibility(player_uuid)` function, which checks:
-1. Player has played in at least 1 of the last 5 games
-2. Player has not been selected in any of the last 3 games
+1. Player has played in at least 1 of the last 10 games
+2. Player has not been selected OR dropped out in any of the last 3 games
 3. Player has no outstanding payments (unpaid games)
 
 ## Token Lifecycle

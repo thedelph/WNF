@@ -93,17 +93,19 @@ const TokenManagement: React.FC = () => {
       const eligibilityMap = new Map();
       players.forEach(player => {
         const playerGames = gameRegistrations?.filter(gr => gr.player_id === player.id) || [];
-        
-        // Get all selected games for this player, sorted by sequence number descending
+
+        // Get all selected OR dropped out games for this player, sorted by sequence number descending
+        // Dropouts count as being selected for token eligibility purposes
         const selectedGames = playerGames
-          .filter(g => g.status === 'selected')
+          .filter(g => g.status === 'selected' || g.status === 'dropped_out')
           .map(g => {
             const game = latestGames?.find(lg => lg.id === g.game_id);
             return {
               id: game?.id,
               date: game?.date,
               sequence_number: game?.sequence_number,
-              display: game?.sequence_number ? `WNF #${game.sequence_number}` : 'Unknown Game'
+              display: game?.sequence_number ? `WNF #${game.sequence_number}` : 'Unknown Game',
+              status: g.status
             };
           })
           .sort((a, b) => (b.sequence_number || 0) - (a.sequence_number || 0));
@@ -112,14 +114,14 @@ const TokenManagement: React.FC = () => {
         const lastThreeGames = latestGames?.slice(0, 3) || [];
         const lastThreeGameIds = new Set(lastThreeGames.map(g => g.id));
 
-        // Find which of the last 3 games the player was selected in
-        const selectedInLastThree = selectedGames.filter(g => 
+        // Find which of the last 3 games the player was selected in OR dropped out of
+        const selectedInLastThree = selectedGames.filter(g =>
           lastThreeGameIds.has(g.id)
         );
 
-        // Check if player has played in at least one of the last 10 games
+        // Check if player has played (been selected, not dropped out) in at least one of the last 10 games
         const lastTenGameIds = new Set(latestGames?.map(g => g.id) || []);
-        const hasRecentActivity = playerGames.some(g => 
+        const hasRecentActivity = playerGames.some(g =>
           lastTenGameIds.has(g.game_id) && g.status === 'selected'
         );
         
@@ -139,13 +141,24 @@ const TokenManagement: React.FC = () => {
           console.log('Selected games:', selectedGames);
         }
         
+        // Create contextual reason message based on game statuses
+        let reason = null;
+        if (!hasRecentActivity) {
+          reason = 'No activity in last 10 games';
+        } else if (selectedInLastThree.length > 0) {
+          // Build contextual message showing selected vs dropped out
+          reason = selectedInLastThree
+            .map(g => `${g.status === 'dropped_out' ? 'Dropped out in' : 'Selected in'} ${g.display}`)
+            .join(', ');
+        } else if (hasOutstandingPayments) {
+          reason = `Has ${unpaidCount} unpaid game(s)`;
+        }
+
         eligibilityMap.set(player.id, {
           is_eligible: hasRecentActivity && selectedInLastThree.length === 0 && !hasOutstandingPayments,
           selected_games: selectedGames,
           unpaid_games: unpaidCount,
-          reason: !hasRecentActivity ? 'No activity in last 10 games' :
-                 selectedInLastThree.length > 0 ? `Selected in ${selectedInLastThree.map(g => g.display).join(', ')}` :
-                 hasOutstandingPayments ? `Has ${unpaidCount} unpaid game(s)` : null
+          reason
         });
       });
 

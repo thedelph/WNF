@@ -124,11 +124,39 @@ These components implement the token system as described in `docs/TokenSystem.md
 - 22-day cooldown only applies after token use in a game
 - Single active token per player enforced
 - Eligibility requires:
-  1. Played in at least 1 of last 5 games
-  2. Not selected in last 3 games
+  1. Played in at least 1 of last 10 games
+  2. Not selected OR dropped out in last 3 games (dropouts count as selections)
   3. No outstanding payments (unpaid games)
 
 ## Implementation Notes
+
+### Dropout Handling (Added 2025-10-24)
+
+The TokenManagement component checks for both `'selected'` and `'dropped_out'` statuses when determining token eligibility:
+
+```typescript
+// Get all selected OR dropped out games for this player
+// Dropouts count as being selected for token eligibility purposes
+const selectedGames = playerGames
+  .filter(g => g.status === 'selected' || g.status === 'dropped_out')
+  .map(g => {
+    const game = latestGames?.find(lg => lg.id === g.game_id);
+    return {
+      id: game?.id,
+      date: game?.date,
+      sequence_number: game?.sequence_number,
+      display: game?.sequence_number ? `WNF #${game.sequence_number}` : 'Unknown Game'
+    };
+  });
+```
+
+**Key Points:**
+- Players who drop out after being selected are treated the same as players who played
+- The reason message displays contextually:
+  - "Selected in WNF #069" for games where player was selected and played
+  - "Dropped out in WNF #069" for games where player was selected but dropped out
+- Only `'selected'` status counts toward the "played in last 10 games" requirement (not dropouts)
+- This prevents unfair token allocation to players who had a guaranteed slot but chose not to use it
 
 ### Unpaid Games Check
 
