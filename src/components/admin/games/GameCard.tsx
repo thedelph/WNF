@@ -184,23 +184,18 @@ Register your interest by reacting with a thumbs up 👍
 Reply to this message with names of any reserves outside of this group that want to play.`;
 
           // Add token information if there are eligible players with active tokens
-          const showTokenSection = true; // Always show even if no eligible players
-
-          if (showTokenSection) {
+          if (eligiblePlayers.length > 0) {
             message += '\n\nThe following players, react with 🪙 if you want to guarantee a spot this week (but you likely won\'t get a spot next week):\n';
 
-            if (eligiblePlayers.length > 0) {
-              // Sort players alphabetically by name
-              [...eligiblePlayers]
-                .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
-                .forEach(player => {
-                  message += `\n🪙 ${player.friendly_name}`;
-                });
-            } else {
-              // If no eligible players found in the database, use placeholder names
-              message += '\n🪙 <eligible player 1>';
-              message += '\n🪙 <eligible player 2>';
-            }
+            // Sort players alphabetically by name
+            [...eligiblePlayers]
+              .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
+              .forEach(player => {
+                message += `\n🪙 ${player.friendly_name}`;
+              });
+          } else {
+            // If no eligible players, show a message explaining why
+            message += '\n\n🪙 No players are eligible for a priority token this week.';
           }
 
           // Add shield token section if there are players using shields
