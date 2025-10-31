@@ -80,7 +80,7 @@ const Header: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="flex-1">
           <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
-            <img src="/assets/wnf.webp" alt="WNF Logo" className="h-8 w-auto" />
+            <img src="/assets/wnf-logo-removed-bg.png" alt="WNF Logo" className="h-12 w-auto" />
           </Link>
         </div>
         <div className="flex-none hidden lg:block">

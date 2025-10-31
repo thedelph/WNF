@@ -195,15 +195,16 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
       </div>
 
       {/* WNF Logo watermark */}
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none flex items-center justify-center"
         style={{ mixBlendMode: 'soft-light' }}
       >
-        <img 
-          src="/assets/wnf.webp" 
-          alt="" 
-          className="w-2/3 h-auto opacity-5"
-          style={{ 
+        <img
+          src="/assets/wnf-logo-removed-bg.png"
+          alt=""
+          className="w-4/5 h-auto"
+          style={{
+            opacity: 0.08,
             filter: 'grayscale(100%) brightness(1.5) contrast(1.2)',
             transform: 'rotate(-20deg)'
           }}
