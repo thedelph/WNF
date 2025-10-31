@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PiCoinDuotone } from "react-icons/pi";
 import { MdPauseCircle } from "react-icons/md";
+import { FaCircle } from "react-icons/fa";
 import { Registration } from '../../types/playerSelection';
 import { useUser } from '../../hooks/useUser';
 import { Tooltip } from '../ui/Tooltip';
@@ -39,6 +40,7 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
   // State for collapsible sections
   const [guaranteedOpen, setGuaranteedOpen] = useState(true);
   const [atRiskOpen, setAtRiskOpen] = useState(true);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   // Sort players to reflect selection order: Token users first, then regular players, then token cooldown players (all by XP)
   const sortedRegistrations = [...registrations].sort((a, b) => {
@@ -113,9 +115,14 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
   // Helper function to render a player row
   const renderPlayerRow = (registration: Registration, showOdds: boolean = false) => {
     const xp = playerStats[registration.player.id]?.xp || 0;
+    const benchWarmerStreak = playerStats[registration.player.id]?.benchWarmerStreak || 0;
 
     // Get odds for this player
     const odds = selectionOdds.get(registration.player.id);
+
+    // Calculate selection points for random zone (1 base + bench warmer streak)
+    const selectionPoints = 1 + benchWarmerStreak;
+    const isInRandomZone = odds?.status === 'random';
 
     return (
       <motion.div
@@ -145,6 +152,26 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
               {tokenCooldownPlayerIds.has(registration.player.id) && (
                 <Tooltip content="Token Cooldown - used token in previous game">
                   <MdPauseCircle size={18} className="text-warning" />
+                </Tooltip>
+              )}
+              {/* Show selection points for players in random zone */}
+              {isInRandomZone && selectionPoints > 0 && (
+                <Tooltip content={`${selectionPoints} selection ${selectionPoints === 1 ? 'point' : 'points'} (1 base${benchWarmerStreak > 0 ? ` + ${benchWarmerStreak} reserve streak` : ''})`}>
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: selectionPoints }).map((_, i) => (
+                      <FaCircle
+                        key={i}
+                        size={8}
+                        className={`${
+                          odds.percentage >= 85
+                            ? 'text-info'
+                            : odds.percentage >= 50
+                            ? 'text-warning'
+                            : 'text-error'
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </Tooltip>
               )}
             </div>
@@ -286,9 +313,33 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
                         THE RANDOMISER
                         <span className="text-3xl">🎲</span>
                       </div>
-                      <div className="text-sm text-base-content mt-2">
-                        {randomSlots} {randomSlots === 1 ? 'player' : 'players'} will be randomly selected from the {randomSelectionPlayers.length} {randomSelectionPlayers.length === 1 ? 'player' : 'players'} below.
-                        <div className="mt-2 italic text-xs opacity-70">Note: Selection odds shown are based on <b>current </b> registrations and will change if more players sign up.</div>
+                      <div className="text-sm text-base-content mt-2 space-y-2">
+                        <div>
+                          {randomSlots} {randomSlots === 1 ? 'player' : 'players'} will be randomly selected from the {randomSelectionPlayers.length} {randomSelectionPlayers.length === 1 ? 'player' : 'players'} below.
+                        </div>
+                        <div className="bg-base-200/50 rounded">
+                          <button
+                            onClick={() => setHowItWorksOpen(!howItWorksOpen)}
+                            className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold hover:bg-base-200/70 transition-colors"
+                          >
+                            <span>How It Works</span>
+                            <svg
+                              className={`w-3 h-3 transition-transform ${howItWorksOpen ? 'rotate-180' : ''}`}
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          {howItWorksOpen && (
+                            <div className="px-3 pb-2 space-y-1">
+                              <div className="text-xs">Each coloured circle (●) represents a selection point. Players get 1 base point + bonus points for recent <b>consecutive</b> games as reserve. More circles = better odds!</div>
+                              <div className="text-xs opacity-70">Example: ● ● ● (3 points) = 1 base + 2 reserve streak</div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="italic text-xs opacity-70">Note: Selection odds shown are based on <b>current</b> registrations and will change if more players sign up.</div>
                       </div>
                     </div>
                   </div>

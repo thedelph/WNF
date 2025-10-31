@@ -1,6 +1,17 @@
 /**
  * Utility functions for calculating player selection odds
  * Based on the player selection process documented in PlayerSelectionExplained.md
+ *
+ * Visual Selection Point Indicators (Added 2025-10-31):
+ * Players in random selection zone display colored circles (●) showing their selection points.
+ * - Selection points = 1 (base) + benchWarmerStreak (bonus for consecutive reserve games)
+ * - Example: Player with 2 consecutive reserve games = 1 + 2 = 3 points = ●●●
+ * - Color coding: Blue (85%+ odds), Yellow (50-84% odds), Red (<50% odds)
+ * - Used in RegisteredPlayerGrid.tsx and RegisteredPlayerListView.tsx
+ *
+ * Related Fix (2025-10-31):
+ * Fixed calculate_bench_warmer_streak() database function that was only returning 1/0
+ * instead of counting consecutive reserve appearances. See BenchWarmerStreakCalculationFix.md.
  */
 
 export interface PlayerOdds {

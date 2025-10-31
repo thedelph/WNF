@@ -164,14 +164,45 @@ Players are classified into one of these statuses:
 - **Exact probability**: Uses recursive calculation for weighted random selection (not approximation)
 - **Conservative warnings**: Intentionally shows "At Risk" to encourage early registration
 
+### Visual Selection Point Indicators (Added 2025-10-31)
+
+Players in the random selection zone display colored circles (●) showing their selection points:
+
+**How Selection Points Work:**
+- Each player gets: **1 base point + bench_warmer_streak bonus points**
+- Example: 2 consecutive reserve games = 1 base + 2 streak = **3 points** = ●●●
+- More points = higher probability of selection in weighted random draw
+
+**Visual Display:**
+- **Card View**: Dots appear to the left of the percentage badge, vertically centered
+- **List View**: Dots appear next to player name with odds badge
+- **Color Coding**:
+  - 🔵 Blue dots = 85%+ odds
+  - 🟡 Yellow dots = 50-84% odds
+  - 🔴 Red dots = <50% odds
+- **Tooltip**: Hover shows "X selection points (1 base + Y reserve streak)"
+
+**"How It Works" Explainer:**
+- Collapsible section in THE RANDOMISER card
+- Explains selection point system
+- Collapsed by default to save space
+- Custom implementation with animated chevron
+
+**Components:**
+- `RegisteredPlayerGrid.tsx` - Card view with dots positioned at `top-2 right-16`
+- `RegisteredPlayerListView.tsx` - List view with inline dots
+- Both use `FaCircle` icons from `react-icons/fa`
+
 ### Database Dependencies
 
 The accuracy of selection odds depends on these RPC functions:
 - `get_eligible_token_holders_not_in_game` - Critical for correct threat assessment
 - `check_previous_game_token_usage` - For token cooldown deprioritization
+- `calculate_bench_warmer_streak` - Correctly counts consecutive reserve appearances (fixed 2025-10-31)
 
 **Related Fix Documentation:**
 - See [Selection Odds Token Counting Fix](../fixes/SelectionOddsTokenCountingFix.md) for details on the 2025-10-24 bug fix
+- See [Bench Warmer Streak Calculation Fix](../fixes/BenchWarmerStreakCalculationFix.md) for details on the 2025-10-31 bug fix
 
 ## Related Components
 - [PlayerCard](./PlayerCard.md) - Used to display individual player information
