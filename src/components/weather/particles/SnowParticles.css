@@ -1,0 +1,154 @@
+/**
+ * SnowParticles CSS
+ *
+ * Styles and animations for snow particle effects.
+ * Features falling, drifting, and rotating animations.
+ */
+
+.snow-particles-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  will-change: transform;
+  contain: layout style paint;
+}
+
+.snowflake-simple {
+  position: absolute;
+  top: -30px;
+  border-radius: 50%;
+  /* White snowflake with dark outline */
+  background: radial-gradient(circle,
+    white 0%,
+    rgba(255, 255, 255, 0.95) 40%,
+    rgba(230, 240, 255, 0.8) 70%,
+    rgba(200, 220, 255, 0.4) 100%
+  );
+  /* Dark outline for contrast */
+  box-shadow:
+    0 0 0 2px rgba(50, 100, 150, 0.6),
+    0 0 12px rgba(255, 255, 255, 0.9),
+    0 0 20px rgba(200, 220, 255, 0.6);
+  animation: snowflake-fall-simple linear infinite;
+  will-change: transform, opacity;
+  z-index: 10;
+}
+
+/* Simplified falling animation with drift */
+@keyframes snowflake-fall-simple {
+  0% {
+    transform: translate3d(0, -30px, 0) translateX(calc(var(--drift-amount, 0px) * -0.3));
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate3d(0, 50vh, 0) translateX(calc(var(--drift-amount, 0px) * 0.3));
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(0, calc(100vh + 30px), 0) translateX(calc(var(--drift-amount, 0px) * -0.2));
+    opacity: 0;
+  }
+}
+
+/* Old falling animation - kept for reference */
+@keyframes snowflake-fall {
+  0% {
+    transform: translateY(-30px) translateX(0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(calc(100vh + 30px)) translateX(0);
+    opacity: 0;
+  }
+}
+
+/* Horizontal drifting animation */
+@keyframes snowflake-drift {
+  0% {
+    transform: translateX(calc(var(--drift-amount, 0px) * -0.5));
+  }
+
+  100% {
+    transform: translateX(calc(var(--drift-amount, 0px) * 0.5));
+  }
+}
+
+/* Rotation animation */
+@keyframes snowflake-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Different rotation speeds for each design variant */
+.snowflake-design-0 {
+  animation-name: snowflake-fall, snowflake-drift, snowflake-rotate;
+  animation-duration: inherit, 3s, var(--rotation-duration, 6s);
+}
+
+.snowflake-design-1 {
+  animation-name: snowflake-fall, snowflake-drift, snowflake-rotate-reverse;
+  animation-duration: inherit, 4s, var(--rotation-duration, 6s);
+}
+
+.snowflake-design-2 {
+  animation-name: snowflake-fall, snowflake-drift, snowflake-rotate;
+  animation-duration: inherit, 3.5s, var(--rotation-duration, 6s);
+}
+
+/* Reverse rotation for variety */
+@keyframes snowflake-rotate-reverse {
+  0% {
+    transform: rotate(360deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Respect user's reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .snow-particles-container {
+    display: none;
+  }
+
+  .snowflake {
+    animation: none;
+  }
+}
+
+/* Adjust for mobile performance */
+@media (max-width: 767px) {
+  .snowflake {
+    /* Remove drop shadow on mobile for better performance */
+    filter: none;
+  }
+}

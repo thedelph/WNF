@@ -1,9 +1,19 @@
 /**
- * Weather Animations CSS
- * 
+ * Weather Animations CSS - Modernized
+ *
  * Provides animated weather effects for the WeatherCard component.
- * Includes animations for rain, snow, clouds, sun, etc.
+ * Optimized with CSS transforms, custom properties, and GPU acceleration.
+ * Note: Rain, snow, lightning, and wind now use dedicated React components.
  */
+
+/* CSS Custom Properties for easy customization */
+:root {
+  --sun-color: #ffdc63;
+  --moon-color: #e0e0e0;
+  --cloud-color-day: #f5f5f5;
+  --cloud-color-night: rgba(245, 245, 245, 0.6);
+  --star-color: white;
+}
 
 /* Base animation container */
 .animation-elements {
@@ -14,10 +24,13 @@
   height: 100%;
   overflow: hidden;
   pointer-events: none;
-  z-index: 0; /* Ensure animations stay behind content */
+  z-index: 0;
+  contain: layout style paint;
 }
 
-/* Clear Day (Sunny) */
+/* ============================================
+   CLEAR DAY (SUNNY)
+   ============================================ */
 .weather-clear-day .animation-elements::before {
   content: '';
   position: absolute;
@@ -25,10 +38,13 @@
   right: 25px;
   width: 60px;
   height: 60px;
-  background: #ffdc63;
+  background: radial-gradient(circle, var(--sun-color) 0%, rgba(255, 220, 99, 0.8) 70%, transparent 100%);
   border-radius: 50%;
-  box-shadow: 0 0 30px 10px rgba(255, 220, 99, 0.8);
-  animation: pulse 3s infinite ease-in-out;
+  box-shadow:
+    0 0 30px 10px rgba(255, 220, 99, 0.6),
+    0 0 50px 20px rgba(255, 220, 99, 0.3);
+  animation: sun-pulse 4s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 .weather-clear-day .animation-elements::after {
@@ -40,24 +56,40 @@
   height: 70px;
   background: transparent;
   border-radius: 50%;
-  border: 4px solid rgba(255, 220, 99, 0.3);
-  animation: sunrays 10s infinite linear;
+  border: 3px solid transparent;
+  border-top-color: rgba(255, 220, 99, 0.4);
+  border-right-color: rgba(255, 220, 99, 0.3);
+  border-bottom-color: rgba(255, 220, 99, 0.2);
+  border-left-color: rgba(255, 220, 99, 0.3);
+  animation: sun-rays-rotate 12s linear infinite;
+  will-change: transform;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.9; }
-  100% { transform: scale(1); opacity: 1; }
+@keyframes sun-pulse {
+  0%, 100% {
+    transform: scale(1) translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08) translate3d(0, 0, 0);
+    opacity: 0.95;
+  }
 }
 
-@keyframes sunrays {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes sun-rays-rotate {
+  0% {
+    transform: rotate(0deg) scale(1.15);
+  }
+  100% {
+    transform: rotate(360deg) scale(1.15);
+  }
 }
 
-/* Clear Night */
+/* ============================================
+   CLEAR NIGHT
+   ============================================ */
 .weather-clear-night {
-  background: linear-gradient(to bottom, #1a237e, #283593) !important;
+  background: linear-gradient(to bottom, #0f1d3d 0%, #1a237e 50%, #283593 100%) !important;
 }
 
 .weather-clear-night .animation-elements::before {
@@ -65,12 +97,16 @@
   position: absolute;
   top: 25px;
   right: 25px;
-  width: 40px;
-  height: 40px;
-  background: #e0e0e0;
+  width: 45px;
+  height: 45px;
+  background: radial-gradient(circle, var(--moon-color) 0%, rgba(224, 224, 224, 0.9) 60%, transparent 100%);
   border-radius: 50%;
-  box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
-  animation: moonGlow 5s infinite alternate ease-in-out;
+  box-shadow:
+    0 0 25px 8px rgba(255, 255, 255, 0.4),
+    0 0 40px 15px rgba(255, 255, 255, 0.2),
+    inset -10px -10px 15px rgba(180, 180, 180, 0.3); /* Crater shadow */
+  animation: moon-glow 6s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 .weather-clear-night .animation-elements::after {
@@ -80,948 +116,462 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: 
-    radial-gradient(2px 2px at 20px 30px, white, transparent), 
-    radial-gradient(1px 1px at 40px 70px, white, transparent),
-    radial-gradient(1.5px 1.5px at 90px 40px, white, transparent),
-    radial-gradient(1px 1px at 120px 50px, white, transparent),
-    radial-gradient(1px 1px at 150px 80px, white, transparent),
-    radial-gradient(1.5px 1.5px at 180px 30px, white, transparent),
-    radial-gradient(2px 2px at 200px 60px, white, transparent),
-    radial-gradient(1px 1px at 220px 90px, white, transparent),
-    radial-gradient(1.5px 1.5px at 240px 110px, white, transparent);
+  background-image:
+    radial-gradient(2px 2px at 15% 20%, var(--star-color), transparent),
+    radial-gradient(1px 1px at 30% 60%, var(--star-color), transparent),
+    radial-gradient(1.5px 1.5px at 45% 25%, var(--star-color), transparent),
+    radial-gradient(1px 1px at 60% 50%, var(--star-color), transparent),
+    radial-gradient(1px 1px at 75% 70%, var(--star-color), transparent),
+    radial-gradient(1.5px 1.5px at 85% 30%, var(--star-color), transparent),
+    radial-gradient(2px 2px at 90% 65%, var(--star-color), transparent),
+    radial-gradient(1px 1px at 95% 85%, var(--star-color), transparent),
+    radial-gradient(1.5px 1.5px at 20% 75%, var(--star-color), transparent),
+    radial-gradient(1px 1px at 10% 45%, var(--star-color), transparent);
   background-repeat: repeat;
-  background-size: 250px 250px;
-  opacity: 0.7;
-  animation: twinkle 5s infinite alternate;
+  background-size: 300px 300px;
+  opacity: 0.8;
+  animation: stars-twinkle 8s ease-in-out infinite;
+  will-change: opacity;
 }
 
-@keyframes moonGlow {
-  0% { box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5); }
-  100% { box-shadow: 0 0 25px 8px rgba(255, 255, 255, 0.6); }
+@keyframes moon-glow {
+  0% {
+    box-shadow:
+      0 0 25px 8px rgba(255, 255, 255, 0.4),
+      0 0 40px 15px rgba(255, 255, 255, 0.2),
+      inset -10px -10px 15px rgba(180, 180, 180, 0.3);
+  }
+  100% {
+    box-shadow:
+      0 0 30px 12px rgba(255, 255, 255, 0.5),
+      0 0 50px 20px rgba(255, 255, 255, 0.25),
+      inset -10px -10px 15px rgba(180, 180, 180, 0.3);
+  }
 }
 
-@keyframes twinkle {
-  0% { opacity: 0.5; }
-  100% { opacity: 0.8; }
+@keyframes stars-twinkle {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.95; }
 }
 
-/* Partly Cloudy Day */
-.weather-partly-cloudy-day .animation-elements::before {
+/* ============================================
+   PARTLY CLOUDY DAY
+   ============================================ */
+.weather-partly-cloudy-day .animation-elements::before,
+.weather-few-clouds-day .animation-elements::before {
   content: '';
   position: absolute;
   top: 20px;
   right: 20px;
   width: 50px;
   height: 50px;
-  background: #ffdc63;
+  background: radial-gradient(circle, var(--sun-color) 0%, rgba(255, 220, 99, 0.8) 70%, transparent 100%);
   border-radius: 50%;
-  box-shadow: 0 0 25px 8px rgba(255, 220, 99, 0.7);
-  animation: pulse 3s infinite ease-in-out;
+  box-shadow: 0 0 25px 8px rgba(255, 220, 99, 0.5);
+  animation: sun-pulse 4s ease-in-out infinite;
+  will-change: transform;
+  z-index: 1;
 }
 
-.weather-partly-cloudy-day .animation-elements::after {
+.weather-partly-cloudy-day .animation-elements::after,
+.weather-few-clouds-day .animation-elements::after {
   content: '';
   position: absolute;
-  top: 30px;
+  top: 35px;
   right: 30px;
-  width: 60px;
-  height: 30px;
-  background: #f5f5f5;
-  border-radius: 30px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.6);
-  animation: float 10s infinite ease-in-out;
+  width: 65px;
+  height: 32px;
+  background: var(--cloud-color-day);
+  border-radius: 50px;
+  box-shadow:
+    20px 8px 0 -5px var(--cloud-color-day),
+    -15px 5px 0 -3px var(--cloud-color-day),
+    0 0 20px 5px rgba(255, 255, 255, 0.4);
+  animation: cloud-float 12s ease-in-out infinite;
+  will-change: transform;
 }
 
-/* Partly Cloudy Night */
-.weather-partly-cloudy-night {
-  background: linear-gradient(to bottom, #1a237e, #283593) !important;
+/* ============================================
+   PARTLY CLOUDY NIGHT
+   ============================================ */
+.weather-partly-cloudy-night,
+.weather-few-clouds-night {
+  background: linear-gradient(to bottom, #0f1d3d 0%, #1a237e 50%, #283593 100%) !important;
 }
 
-.weather-partly-cloudy-night .animation-elements::before {
+.weather-partly-cloudy-night .animation-elements::before,
+.weather-few-clouds-night .animation-elements::before {
   content: '';
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 35px;
-  height: 35px;
-  background: #e0e0e0;
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, var(--moon-color) 0%, rgba(224, 224, 224, 0.9) 60%, transparent 100%);
   border-radius: 50%;
-  box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
-  animation: moonGlow 5s infinite alternate ease-in-out;
+  box-shadow:
+    0 0 20px 6px rgba(255, 255, 255, 0.3),
+    inset -8px -8px 12px rgba(180, 180, 180, 0.3);
+  animation: moon-glow 6s ease-in-out infinite alternate;
+  will-change: transform;
+  z-index: 1;
 }
 
-.weather-partly-cloudy-night .animation-elements::after {
+.weather-partly-cloudy-night .animation-elements::after,
+.weather-few-clouds-night .animation-elements::after {
   content: '';
   position: absolute;
-  top: 35px;
+  top: 40px;
   right: 25px;
-  width: 50px;
-  height: 25px;
-  background: rgba(245, 245, 245, 0.8);
-  border-radius: 25px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.4);
-  animation: float 10s infinite ease-in-out;
+  width: 55px;
+  height: 28px;
+  background: var(--cloud-color-night);
+  border-radius: 45px;
+  box-shadow:
+    18px 6px 0 -4px var(--cloud-color-night),
+    -12px 4px 0 -2px var(--cloud-color-night),
+    0 0 15px 3px rgba(255, 255, 255, 0.2);
+  animation: cloud-float 12s ease-in-out infinite;
+  will-change: transform;
 }
 
-/* Cloudy */
-.weather-cloudy .animation-elements {
-  background: linear-gradient(to bottom, rgba(138, 164, 189, 0.4), rgba(138, 164, 189, 0));
+/* ============================================
+   CLOUDY / OVERCAST
+   ============================================ */
+.weather-cloudy,
+.weather-scattered-clouds-day,
+.weather-scattered-clouds-night {
+  background: linear-gradient(to bottom, rgba(138, 164, 189, 0.5), rgba(138, 164, 189, 0.2));
 }
 
 .weather-cloudy .animation-elements::before,
 .weather-cloudy .animation-elements::after,
-.weather-cloudy .animation-elements .cloud-extra {
+.weather-cloudy .animation-elements .cloud-extra,
+.weather-cloudy .animation-elements .cloud-extra-2 {
   content: '';
   position: absolute;
-  background: #f5f5f5;
-  border-radius: 20px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.5);
-  animation: float 10s infinite ease-in-out;
+  background: var(--cloud-color-day);
+  border-radius: 50px;
+  animation: cloud-float ease-in-out infinite;
+  will-change: transform;
 }
 
 .weather-cloudy .animation-elements::before {
   top: 20px;
-  right: 30px;
-  width: 70px;
-  height: 30px;
+  right: 25%;
+  width: 75px;
+  height: 35px;
+  box-shadow:
+    25px 10px 0 -6px var(--cloud-color-day),
+    -18px 7px 0 -4px var(--cloud-color-day),
+    0 0 20px 6px rgba(255, 255, 255, 0.5);
+  animation-duration: 14s;
   animation-delay: 0s;
 }
 
 .weather-cloudy .animation-elements::after {
-  top: 40px;
-  left: 30px;
-  width: 60px;
-  height: 25px;
-  animation-delay: 2s;
+  top: 50px;
+  left: 20%;
+  width: 65px;
+  height: 30px;
+  box-shadow:
+    20px 8px 0 -5px var(--cloud-color-day),
+    -15px 6px 0 -3px var(--cloud-color-day),
+    0 0 18px 5px rgba(255, 255, 255, 0.4);
+  animation-duration: 16s;
+  animation-delay: 3s;
 }
 
 .weather-cloudy .animation-elements .cloud-extra {
-  top: 60px;
-  right: 80px;
-  width: 50px;
-  height: 20px;
-  animation-delay: 4s;
+  top: 75px;
+  right: 35%;
+  width: 55px;
+  height: 26px;
+  box-shadow:
+    18px 7px 0 -4px var(--cloud-color-day),
+    -12px 5px 0 -2px var(--cloud-color-day),
+    0 0 15px 4px rgba(255, 255, 255, 0.3);
+  animation-duration: 18s;
+  animation-delay: 6s;
 }
 
-@keyframes float {
-  0% { transform: translateX(0px); }
-  50% { transform: translateX(15px); }
-  100% { transform: translateX(0px); }
-}
-
-/* Rain */
-.weather-rain .animation-elements {
-  background: linear-gradient(to bottom, rgba(105, 105, 105, 0.4), rgba(105, 105, 105, 0));
-}
-
-.weather-rain .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.2));
-  animation: rain 1s infinite linear;
-  background-image: 
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 5px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 1px, transparent 5px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.4) 1px, transparent 5px);
-  background-size: 
-    20px 14px,
-    30px 18px,
-    40px 22px;
-}
-
-.weather-rain .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 30px;
-  background: #e0e0e0;
-  border-radius: 30px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.4);
-}
-
-@keyframes rain {
-  0% { background-position: 0 0, 0 0, 0 0; }
-  100% { background-position: -20px 100px, -30px 110px, -40px 120px; }
-}
-
-/* Rain - Heavy */
-.weather-rain-heavy .animation-elements {
-  background: linear-gradient(to bottom, rgba(85, 85, 85, 0.5), rgba(85, 85, 85, 0.1));
-}
-
-.weather-rain-heavy .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
-  animation: rain 0.7s infinite linear;
-  background-image: 
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 1px, transparent 6px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.4) 1px, transparent 6px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 6px);
-  background-size: 
-    18px 16px,
-    28px 20px,
-    38px 24px;
-}
-
-.weather-rain-heavy .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 40px;
-  background: #c0c0c0;
-  border-radius: 30px;
-  box-shadow: 
-    0 0 15px 5px rgba(255, 255, 255, 0.4),
-    20px 20px 30px 10px rgba(100, 100, 100, 0.3),
-    -20px 20px 30px 10px rgba(100, 100, 100, 0.3);
-}
-
-/* Rain - Night */
-.weather-rain-night {
-  background: linear-gradient(to bottom, #1a237e, #283593) !important;
-}
-
-.weather-rain-night .animation-elements {
-  background: linear-gradient(to bottom, rgba(26, 35, 126, 0.4), rgba(26, 35, 126, 0));
-}
-
-.weather-rain-night .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.2));
-  animation: rain 1s infinite linear;
-  background-image: 
-    linear-gradient(to bottom, rgba(200, 200, 255, 0.2) 1px, transparent 5px),
-    linear-gradient(to bottom, rgba(200, 200, 255, 0.3) 1px, transparent 5px),
-    linear-gradient(to bottom, rgba(200, 200, 255, 0.4) 1px, transparent 5px);
-  background-size: 
-    20px 14px,
-    30px 18px,
-    40px 22px;
-}
-
-.weather-rain-night .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 30px;
-  background: #555;
-  border-radius: 30px;
-  box-shadow: 0 0 15px 5px rgba(100, 100, 255, 0.3);
-}
-
-/* Rain - Night Heavy */
-.weather-rain-night-heavy {
-  background: linear-gradient(to bottom, #0d1642, #1a237e) !important;
-}
-
-.weather-rain-night-heavy .animation-elements {
-  background: linear-gradient(to bottom, rgba(13, 22, 66, 0.5), rgba(13, 22, 66, 0.1));
-}
-
-.weather-rain-night-heavy .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
-  animation: rain 0.7s infinite linear;
-  background-image: 
-    linear-gradient(to bottom, rgba(200, 200, 255, 0.3) 1px, transparent 6px),
-    linear-gradient(to bottom, rgba(200, 200, 255, 0.4) 1px, transparent 6px),
-    linear-gradient(to bottom, rgba(200, 200, 255, 0.5) 1px, transparent 6px);
-  background-size: 
-    18px 16px,
-    28px 20px,
-    38px 24px;
-}
-
-.weather-rain-night-heavy .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 40px;
-  background: #444;
-  border-radius: 30px;
-  box-shadow: 
-    0 0 15px 5px rgba(100, 100, 255, 0.3),
-    20px 20px 30px 10px rgba(0, 0, 0, 0.4),
-    -20px 20px 30px 10px rgba(0, 0, 0, 0.4);
-}
-
-/* Drizzle - lighter rain */
-.weather-drizzle .animation-elements {
-  background: linear-gradient(to bottom, rgba(138, 164, 189, 0.4), rgba(138, 164, 189, 0));
-}
-
-.weather-drizzle .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
-  animation: drizzle 2s infinite linear;
-  background-image: 
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 3px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 3px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 3px);
-  background-size: 
-    20px 14px,
-    30px 18px,
-    25px 16px;
-}
-
-.weather-drizzle .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70px;
-  height: 25px;
-  background: #e0e0e0;
-  border-radius: 25px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.4);
-}
-
-@keyframes drizzle {
-  0% { background-position: 0 0, 0 0, 0 0; }
-  100% { background-position: -20px 80px, -30px 90px, -25px 85px; }
-}
-
-/* Snow */
-.weather-snow .animation-elements {
-  background: linear-gradient(to bottom, rgba(225, 245, 254, 0.4), rgba(225, 245, 254, 0));
-}
-
-.weather-snow .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(3px 3px at 40px 60px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 100px 120px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 200px 80px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 150px 40px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 80px 160px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 180px 170px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 220px 110px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 60px 100px, rgba(255, 255, 255, 0.9), transparent);
-  animation: snow 6s infinite linear;
-}
-
-.weather-snow .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70px;
-  height: 25px;
-  background: #e0e0e0;
-  border-radius: 25px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.4);
-}
-
-@keyframes snow {
-  0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
-  100% { background-position: 10px 200px, -10px 150px, 5px 180px, -5px 160px, 8px 210px, -8px 190px, 12px 170px, -12px 220px; }
-}
-
-/* Snow - Heavy */
-.weather-snow-heavy .animation-elements {
-  background: linear-gradient(to bottom, rgba(225, 245, 254, 0.5), rgba(225, 245, 254, 0.1));
-}
-
-.weather-snow-heavy .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(4px 4px at 40px 60px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 100px 120px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 200px 80px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(4px 4px at 150px 40px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 80px 160px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 180px 170px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(4px 4px at 220px 110px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 60px 100px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 120px 140px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(4px 4px at 160px 180px, rgba(255, 255, 255, 0.9), transparent);
-  animation: snow 5s infinite linear;
-}
-
-.weather-snow-heavy .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90px;
-  height: 35px;
-  background: #d0d0d0;
-  border-radius: 25px;
-  box-shadow: 0 0 20px 8px rgba(255, 255, 255, 0.5);
-}
-
-/* Snow - Windy */
-.weather-snow-windy .animation-elements {
-  background: linear-gradient(to bottom, rgba(225, 245, 254, 0.4), rgba(225, 245, 254, 0));
-}
-
-.weather-snow-windy .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(3px 3px at 40px 60px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 100px 120px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 200px 80px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 150px 40px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 80px 160px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 180px 170px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(3px 3px at 220px 110px, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(2px 2px at 60px 100px, rgba(255, 255, 255, 0.9), transparent);
-  animation: snowWind 4s infinite linear;
-}
-
-.weather-snow-windy .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 40%;
-  width: 70px;
-  height: 25px;
-  background: #e0e0e0;
-  border-radius: 25px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.4);
-  animation: windyCloud 8s infinite ease-in-out;
-}
-
-@keyframes snowWind {
-  0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
-  100% { background-position: 30px 200px, 20px 150px, 25px 180px, 15px 160px, 28px 210px, 22px 190px, 32px 170px, 18px 220px; }
-}
-
-@keyframes windyCloud {
-  0% { transform: translateX(-20px) translateY(0); }
-  50% { transform: translateX(40px) translateY(5px); }
-  100% { transform: translateX(-20px) translateY(0); }
-}
-
-/* Thunderstorm */
-.weather-thunderstorm {
-  background: linear-gradient(to bottom, #37474f, #455a64) !important;
-}
-
-.weather-thunderstorm .animation-elements {
-  background: linear-gradient(to bottom, rgba(55, 71, 79, 0.4), rgba(55, 71, 79, 0));
-}
-
-.weather-thunderstorm .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.2));
-  animation: rain 0.8s infinite linear;
-  background-image: 
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 5px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 5px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.25) 1px, transparent 5px);
-  background-size: 
-    20px 14px,
-    30px 18px,
-    40px 22px;
-}
-
-.weather-thunderstorm .animation-elements::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  top: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 20px solid transparent;
-  border-right: 20px solid transparent;
-  border-top: 40px solid rgba(255, 255, 255, 0.8);
-  filter: drop-shadow(0 0 10px rgba(255, 255, 0, 0.7));
-  animation: lightning 5s infinite;
-  opacity: 0;
-}
-
-@keyframes lightning {
-  0%, 95%, 98% { opacity: 0; transform: translateX(-50%) scaleY(1); }
-  96%, 97% { opacity: 1; transform: translateX(-50%) scaleY(1.2); }
-}
-
-/* Thunderstorm - Heavy */
-.weather-thunderstorm-heavy {
-  background: linear-gradient(to bottom, #263238, #37474f) !important;
-}
-
-.weather-thunderstorm-heavy .animation-elements {
-  background: linear-gradient(to bottom, rgba(38, 50, 56, 0.5), rgba(38, 50, 56, 0.1));
-}
-
-.weather-thunderstorm-heavy .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
-  animation: rain 0.6s infinite linear;
-  background-image: 
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 1px, transparent 5px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 1px, transparent 5px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.35) 1px, transparent 5px);
-  background-size: 
-    18px 12px,
-    25px 15px,
-    35px 18px;
-}
-
-.weather-thunderstorm-heavy .animation-elements::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  top: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 25px solid transparent;
-  border-right: 25px solid transparent;
-  border-top: 50px solid rgba(255, 255, 255, 0.9);
-  filter: drop-shadow(0 0 15px rgba(255, 255, 0, 0.9));
-  animation: heavyLightning 4s infinite;
-  opacity: 0;
-}
-
-.weather-thunderstorm-heavy .animation-elements .lightning-extra {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  top: 60px;
+.weather-cloudy .animation-elements .cloud-extra-2 {
+  top: 100px;
   left: 30%;
-  border-left: 15px solid transparent;
-  border-right: 15px solid transparent;
-  border-top: 35px solid rgba(255, 255, 255, 0.8);
-  filter: drop-shadow(0 0 12px rgba(255, 255, 0, 0.8));
-  animation: heavyLightning 4s 2s infinite;
-  opacity: 0;
+  width: 60px;
+  height: 28px;
+  box-shadow:
+    20px 8px 0 -5px var(--cloud-color-day),
+    -14px 6px 0 -3px var(--cloud-color-day),
+    0 0 16px 4px rgba(255, 255, 255, 0.35);
+  animation-duration: 15s;
+  animation-delay: 9s;
 }
 
-@keyframes heavyLightning {
-  0%, 90%, 93%, 96%, 99% { opacity: 0; transform: translateX(-50%) scaleY(1); }
-  91%, 92%, 97%, 98% { opacity: 1; transform: translateX(-50%) scaleY(1.2); }
+@keyframes cloud-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(20px, 5px, 0);
+  }
 }
 
-/* Drizzle - Windy */
-.weather-drizzle-windy .animation-elements {
-  background: linear-gradient(to bottom, rgba(138, 164, 189, 0.4), rgba(138, 164, 189, 0));
-}
-
-.weather-drizzle-windy .animation-elements::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
-  animation: drizzleWind 2s infinite linear;
-  background-image: 
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 3px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 3px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 3px);
-  background-size: 
-    20px 14px,
-    30px 18px,
-    25px 16px;
-}
-
-.weather-drizzle-windy .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 40%;
-  width: 70px;
-  height: 25px;
-  background: #e0e0e0;
-  border-radius: 25px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.4);
-  animation: windyCloud 8s infinite ease-in-out;
-}
-
-@keyframes drizzleWind {
-  0% { background-position: 0 0, 0 0, 0 0; }
-  100% { background-position: -30px 80px, -40px 90px, -35px 85px; }
-}
-
-/* Fog/Mist */
-.weather-fog .animation-elements {
-  background: linear-gradient(to bottom, rgba(207, 216, 220, 0.6), rgba(207, 216, 220, 0.2));
+/* ============================================
+   FOG / MIST
+   ============================================ */
+.weather-fog,
+.weather-fog-windy {
+  background: linear-gradient(to bottom, #5a6b7a 0%, #6a7b8a 50%, #7a8b9a 100%) !important;
 }
 
 .weather-fog .animation-elements::before,
 .weather-fog .animation-elements::after,
-.weather-fog .animation-elements .fog-layer {
-  content: '';
-  position: absolute;
-  width: 120%;
-  height: 25px;
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 20px;
-  filter: blur(8px);
-}
-
-.weather-fog .animation-elements::before {
-  top: 30px;
-  left: -10%;
-  animation: fogMove 15s infinite ease-in-out;
-}
-
-.weather-fog .animation-elements::after {
-  top: 70px;
-  left: -10%;
-  animation: fogMove 15s infinite ease-in-out reverse;
-  animation-delay: 5s;
-}
-
-.weather-fog .animation-elements .fog-layer {
-  top: 110px;
-  left: -10%;
-  animation: fogMove 15s infinite ease-in-out;
-  animation-delay: 10s;
-}
-
-@keyframes fogMove {
-  0% { transform: translateX(-30px); }
-  50% { transform: translateX(30px); }
-  100% { transform: translateX(-30px); }
-}
-
-/* Windy */
-.weather-windy .animation-elements {
-  background: linear-gradient(to bottom, rgba(207, 216, 220, 0.2), rgba(207, 216, 220, 0));
-}
-
-.weather-windy .animation-elements::before,
-.weather-windy .animation-elements::after,
-.weather-windy .animation-elements .wind-line {
-  content: '';
-  position: absolute;
-  background: rgba(255, 255, 255, 0.5);
-  height: 3px;
-  border-radius: 1.5px;
-}
-
-.weather-windy .animation-elements::before {
-  top: 40px;
-  left: 10px;
-  width: 80px;
-  animation: windMove 3s infinite ease-in-out;
-}
-
-.weather-windy .animation-elements::after {
-  top: 60px;
-  left: 30px;
-  width: 60px;
-  animation: windMove 3s 1s infinite ease-in-out;
-}
-
-.weather-windy .animation-elements .wind-line {
-  top: 80px;
-  left: 20px;
-  width: 70px;
-  animation: windMove 3s 2s infinite ease-in-out;
-}
-
-@keyframes windMove {
-  0% { transform: translateX(0) scaleX(0.8); opacity: 0.7; }
-  50% { transform: translateX(50px) scaleX(1.2); opacity: 1; }
-  100% { transform: translateX(100px) scaleX(0.8); opacity: 0.7; }
-}
-
-/* Tornado */
-.weather-tornado {
-  background: linear-gradient(to bottom, #37474f, #455a64) !important;
-}
-
-.weather-tornado .animation-elements {
-  background: linear-gradient(to bottom, rgba(55, 71, 79, 0.4), rgba(55, 71, 79, 0));
-}
-
-.weather-tornado .animation-elements::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 120px;
-  background: linear-gradient(to bottom, 
-    rgba(100, 100, 100, 0.8) 0%, 
-    rgba(150, 150, 150, 0.8) 40%, 
-    rgba(180, 180, 180, 0.8) 100%);
-  border-radius: 50% 50% 20% 20% / 30% 30% 10% 10%;
-  filter: blur(2px);
-  animation: tornado 3s infinite ease-in-out;
-}
-
-.weather-tornado .animation-elements::after {
-  content: '';
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 30px;
-  background: #666;
-  border-radius: 30px;
-  box-shadow: 0 0 15px 5px rgba(100, 100, 100, 0.5);
-}
-
-@keyframes tornado {
-  0% { transform: translateX(-60%) rotate(5deg) scaleY(0.9); }
-  50% { transform: translateX(-40%) rotate(-5deg) scaleY(1.1); }
-  100% { transform: translateX(-60%) rotate(5deg) scaleY(0.9); }
-}
-
-/* Default state */
-.weather-default {
-  background: linear-gradient(to bottom, #2196f3, #42a5f5) !important;
-}
-
-/* Scattered Clouds - Day */
-.weather-scattered-clouds-day .animation-elements::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 50px;
-  height: 50px;
-  background: #ffdc63;
-  border-radius: 50%;
-  box-shadow: 0 0 25px 8px rgba(255, 220, 99, 0.7);
-  animation: pulse 3s infinite ease-in-out;
-}
-
-.weather-scattered-clouds-day .animation-elements::after,
-.weather-scattered-clouds-day .animation-elements .cloud-extra,
-.weather-scattered-clouds-day .animation-elements .cloud-extra-2 {
-  content: '';
-  position: absolute;
-  background: #f5f5f5;
-  border-radius: 20px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.5);
-}
-
-.weather-scattered-clouds-day .animation-elements::after {
-  top: 30px;
-  right: 30px;
-  width: 60px;
-  height: 30px;
-  animation: float 10s infinite ease-in-out;
-}
-
-.weather-scattered-clouds-day .animation-elements .cloud-extra {
-  top: 50px;
-  left: 40px;
-  width: 50px;
-  height: 25px;
-  animation: float 12s 2s infinite ease-in-out;
-}
-
-.weather-scattered-clouds-day .animation-elements .cloud-extra-2 {
-  top: 80px;
-  right: 70px;
-  width: 40px;
-  height: 20px;
-  animation: float 8s 4s infinite ease-in-out;
-}
-
-/* Scattered Clouds - Night */
-.weather-scattered-clouds-night {
-  background: linear-gradient(to bottom, #1a237e, #283593) !important;
-}
-
-.weather-scattered-clouds-night .animation-elements::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 35px;
-  height: 35px;
-  background: #e0e0e0;
-  border-radius: 50%;
-  box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
-  animation: moonGlow 5s infinite alternate ease-in-out;
-}
-
-.weather-scattered-clouds-night .animation-elements::after,
-.weather-scattered-clouds-night .animation-elements .cloud-extra,
-.weather-scattered-clouds-night .animation-elements .cloud-extra-2 {
-  content: '';
-  position: absolute;
-  background: rgba(245, 245, 245, 0.6);
-  border-radius: 20px;
-  box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.3);
-}
-
-.weather-scattered-clouds-night .animation-elements::after {
-  top: 35px;
-  right: 25px;
-  width: 50px;
-  height: 25px;
-  animation: float 10s infinite ease-in-out;
-}
-
-.weather-scattered-clouds-night .animation-elements .cloud-extra {
-  top: 55px;
-  left: 40px;
-  width: 40px;
-  height: 20px;
-  animation: float 12s 2s infinite ease-in-out;
-}
-
-.weather-scattered-clouds-night .animation-elements .cloud-extra-2 {
-  top: 85px;
-  right: 70px;
-  width: 30px;
-  height: 15px;
-  animation: float 8s 4s infinite ease-in-out;
-}
-
-/* Fog - Windy */
-.weather-fog-windy .animation-elements {
-  background: linear-gradient(to bottom, rgba(207, 216, 220, 0.6), rgba(207, 216, 220, 0.2));
-}
-
+.weather-fog .animation-elements .fog-layer,
 .weather-fog-windy .animation-elements::before,
 .weather-fog-windy .animation-elements::after,
 .weather-fog-windy .animation-elements .fog-layer {
   content: '';
   position: absolute;
-  width: 130%;
-  height: 25px;
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 20px;
-  filter: blur(8px);
+  width: 110%;
+  left: -5%;
+  height: 40px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.7) 20%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.7) 80%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  border-radius: 50%;
+  filter: blur(15px);
+  animation: fog-drift ease-in-out infinite alternate;
+  will-change: transform;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
 }
 
+.weather-fog .animation-elements::before,
 .weather-fog-windy .animation-elements::before {
   top: 30px;
-  left: -15%;
-  animation: fogWindMove 10s infinite ease-in-out;
+  animation-duration: 10s;
+  animation-delay: 0s;
 }
 
+.weather-fog .animation-elements::after,
 .weather-fog-windy .animation-elements::after {
-  top: 70px;
-  left: -15%;
-  animation: fogWindMove 10s 2s infinite ease-in-out reverse;
+  top: 65px;
+  animation-duration: 12s;
+  animation-delay: 2s;
 }
 
+.weather-fog .animation-elements .fog-layer,
 .weather-fog-windy .animation-elements .fog-layer {
-  top: 110px;
-  left: -15%;
-  animation: fogWindMove 10s 4s infinite ease-in-out;
+  top: 100px;
+  animation-duration: 11s;
+  animation-delay: 4s;
 }
 
-@keyframes fogWindMove {
-  0% { transform: translateX(-60px) scaleX(0.9); }
-  50% { transform: translateX(60px) scaleX(1.1); }
-  100% { transform: translateX(-60px) scaleX(0.9); }
+/* Windy fog moves faster and further */
+.weather-fog-windy .animation-elements::before,
+.weather-fog-windy .animation-elements::after,
+.weather-fog-windy .animation-elements .fog-layer {
+  animation-name: fog-drift-windy;
+  animation-duration: 6s;
 }
 
-/* Windy Dust */
+@keyframes fog-drift {
+  0% { transform: translate3d(-60px, 0, 0); }
+  100% { transform: translate3d(60px, 0, 0); }
+}
+
+@keyframes fog-drift-windy {
+  0% { transform: translate3d(-100px, -8px, 0) scaleX(0.9); }
+  100% { transform: translate3d(120px, 8px, 0) scaleX(1.1); }
+}
+
+/* ============================================
+   THUNDERSTORM BACKGROUNDS
+   ============================================ */
+.weather-thunderstorm,
+.weather-thunderstorm-heavy,
+.weather-thunderstorm-day,
+.weather-thunderstorm-night {
+  background: linear-gradient(to bottom, #2c3e50 0%, #34495e 50%, #455a64 100%) !important;
+}
+
+/* Lightning bolt component will handle the actual lightning effects */
+
+/* ============================================
+   RAIN / DRIZZLE BACKGROUNDS
+   ============================================ */
+.weather-rain,
+.weather-rain-day,
+.weather-rain-night,
+.weather-rain-heavy,
+.weather-heavy-rain-day,
+.weather-heavy-rain-night,
+.weather-drizzle,
+.weather-drizzle-day,
+.weather-drizzle-night,
+.weather-drizzle-windy,
+.weather-windy-drizzle,
+.weather-windy-rain {
+  /* Rain particle component will handle the rain visuals */
+  /* Just provide appropriate background */
+}
+
+.weather-rain,
+.weather-rain-day,
+.weather-rain-heavy,
+.weather-heavy-rain-day,
+.weather-windy-rain {
+  background: linear-gradient(to bottom, #6a7a8a 0%, #7a8a9a 50%, #8a9aaa 100%) !important;
+}
+
+.weather-rain-night,
+.weather-rain-night-heavy,
+.weather-heavy-rain-night {
+  background: linear-gradient(to bottom, #1a237e, #283593) !important;
+}
+
+.weather-drizzle,
+.weather-drizzle-day,
+.weather-drizzle-windy,
+.weather-windy-drizzle {
+  background: linear-gradient(to bottom, #7a8a9a 0%, #8a9aaa 50%, #9aabb8 100%) !important;
+}
+
+.weather-drizzle-night {
+  background: linear-gradient(to bottom, #1a237e, #283593) !important;
+}
+
+/* ============================================
+   SNOW BACKGROUNDS
+   ============================================ */
+.weather-snow,
+.weather-snow-day,
+.weather-snow-night,
+.weather-snow-heavy,
+.weather-heavy-snow,
+.weather-snow-windy,
+.weather-windy-snow {
+  /* Snow particle component will handle the snow visuals - dark blue background for white snow */
+  background: linear-gradient(to bottom, #4a6b8a 0%, #5a7ba3 50%, #6a8bb5 100%) !important;
+}
+
+/* ============================================
+   WINDY / DUST
+   ============================================ */
+.weather-windy,
+.weather-windy-dust,
+.weather-dust {
+  /* Wind streaks component will handle the wind visuals - darker background for contrast */
+  background: linear-gradient(to bottom, #607d8b 0%, #78909c 50%, #90a4ae 100%) !important;
+}
+
 .weather-windy-dust .animation-elements {
-  background: linear-gradient(to bottom, rgba(189, 189, 189, 0.3), rgba(189, 189, 189, 0.1));
+  background: linear-gradient(to bottom, rgba(189, 189, 189, 0.4), rgba(189, 189, 189, 0.2));
 }
 
-.weather-windy-dust .animation-elements::before {
+/* ============================================
+   TORNADO / EXTREME WEATHER
+   ============================================ */
+.weather-tornado,
+.weather-extreme {
+  background: linear-gradient(to bottom, #263238 0%, #37474f 50%, #455a64 100%) !important;
+}
+
+.weather-tornado .animation-elements::before {
   content: '';
   position: absolute;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(1px 1px at 40px 60px, rgba(222, 184, 135, 0.7), transparent),
-    radial-gradient(1px 1px at 100px 120px, rgba(210, 180, 140, 0.7), transparent),
-    radial-gradient(1.5px 1.5px at 200px 80px, rgba(245, 222, 179, 0.7), transparent),
-    radial-gradient(1px 1px at 150px 40px, rgba(222, 184, 135, 0.7), transparent),
-    radial-gradient(1px 1px at 80px 160px, rgba(210, 180, 140, 0.7), transparent),
-    radial-gradient(1.5px 1.5px at 180px 170px, rgba(245, 222, 179, 0.7), transparent);
-  animation: dustWind 4s infinite linear;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 35px;
+  height: 130px;
+  background: linear-gradient(to bottom,
+    rgba(80, 80, 80, 0.95) 0%,
+    rgba(110, 110, 110, 0.9) 30%,
+    rgba(140, 140, 140, 0.85) 60%,
+    rgba(160, 160, 160, 0.8) 100%);
+  border-radius: 50% 50% 30% 30% / 30% 30% 20% 20%;
+  filter: blur(3px) drop-shadow(0 0 15px rgba(0, 0, 0, 0.8));
+  animation: tornado-spin 1.5s ease-in-out infinite;
+  will-change: transform;
+  /* Add swirling debris effect */
+  box-shadow:
+    inset -5px 0 10px rgba(0, 0, 0, 0.5),
+    inset 5px 0 10px rgba(255, 255, 255, 0.2);
 }
 
-.weather-windy-dust .animation-elements::after,
-.weather-windy-dust .animation-elements .wind-line,
-.weather-windy-dust .animation-elements .wind-line-2 {
+.weather-tornado .animation-elements::after {
   content: '';
   position: absolute;
-  background: rgba(255, 255, 255, 0.5);
-  height: 3px;
-  border-radius: 1.5px;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 45px;
+  background: linear-gradient(to bottom, #444 0%, #555 50%, #666 100%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 30px 10px rgba(100, 100, 100, 0.8),
+    0 15px 40px rgba(0, 0, 0, 0.6),
+    inset 0 -10px 20px rgba(0, 0, 0, 0.4);
+  animation: tornado-cloud 2.5s ease-in-out infinite;
+  will-change: transform;
 }
 
-.weather-windy-dust .animation-elements::after {
-  top: 40px;
-  left: 10px;
-  width: 80px;
-  animation: windMove 2.5s infinite ease-in-out;
+@keyframes tornado-spin {
+  0%, 100% {
+    transform: translateX(-50%) rotate(4deg) scaleY(0.92) scaleX(1);
+  }
+  25% {
+    transform: translateX(-50%) rotate(-2deg) scaleY(1.03) scaleX(0.95);
+  }
+  50% {
+    transform: translateX(-50%) rotate(-4deg) scaleY(1.08) scaleX(1.05);
+  }
+  75% {
+    transform: translateX(-50%) rotate(2deg) scaleY(1.03) scaleX(0.95);
+  }
 }
 
-.weather-windy-dust .animation-elements .wind-line {
-  top: 60px;
-  left: 30px;
-  width: 60px;
-  animation: windMove 2.5s 0.8s infinite ease-in-out;
+@keyframes tornado-cloud {
+  0%, 100% {
+    transform: translateX(-50%) scaleX(1) rotate(0deg);
+  }
+  33% {
+    transform: translateX(-50%) scaleX(1.15) rotate(2deg);
+  }
+  66% {
+    transform: translateX(-50%) scaleX(1.1) rotate(-2deg);
+  }
 }
 
-.weather-windy-dust .animation-elements .wind-line-2 {
-  top: 80px;
-  left: 20px;
-  width: 70px;
-  animation: windMove 2.5s 1.6s infinite ease-in-out;
+/* ============================================
+   DEFAULT / FALLBACK
+   ============================================ */
+.weather-default,
+.weather-default-day {
+  background: linear-gradient(to bottom, #2196f3 0%, #42a5f5 50%, #64b5f6 100%) !important;
 }
 
-@keyframes dustWind {
-  0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
-  100% { background-position: 30px 100px, 20px 80px, 25px 90px, 15px 70px, 28px 110px, 22px 95px; }
+.weather-default-night {
+  background: linear-gradient(to bottom, #0f1d3d 0%, #1a237e 50%, #283593 100%) !important;
 }
 
-/* Enhanced text shadow for better readability without backgrounds */
+/* ============================================
+   TEXT SHADOW FOR READABILITY
+   ============================================ */
 .shadow-text {
-  text-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.9),
+  text-shadow:
     0 2px 4px rgba(0, 0, 0, 0.8),
-    0 3px 5px rgba(0, 0, 0, 0.7);
+    0 3px 6px rgba(0, 0, 0, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* Add stronger text shadow for headings */
 .shadow-text h2,
 .shadow-text h3,
 .shadow-text .text-lg,
@@ -1029,24 +579,27 @@
 .shadow-text .text-2xl,
 .shadow-text .text-3xl,
 .shadow-text .font-bold {
-  text-shadow: 
-    0 2px 4px rgba(0, 0, 0, 1),
-    0 3px 6px rgba(0, 0, 0, 0.9),
-    0 4px 8px rgba(0, 0, 0, 0.7);
+  text-shadow:
+    0 2px 5px rgba(0, 0, 0, 1),
+    0 3px 8px rgba(0, 0, 0, 0.9),
+    0 4px 10px rgba(0, 0, 0, 0.7);
 }
 
-/* Add additional contrast for text over bright backgrounds */
+/* Extra contrast for bright backgrounds */
 .weather-clear-day .shadow-text,
 .weather-few-clouds-day .shadow-text,
+.weather-partly-cloudy-day .shadow-text,
 .weather-scattered-clouds-day .shadow-text {
-  text-shadow: 
-    0 1px 2px rgba(0, 0, 0, 1),
-    0 2px 4px rgba(0, 0, 0, 0.9),
-    0 3px 6px rgba(0, 0, 0, 0.8),
-    0 4px 8px rgba(0, 0, 0, 0.7);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 1),
+    0 2px 6px rgba(0, 0, 0, 0.95),
+    0 3px 9px rgba(0, 0, 0, 0.8),
+    0 4px 12px rgba(0, 0, 0, 0.7);
 }
 
-/* Add cloud-extra, fog-layer, and wind-line elements to DOM */
+/* ============================================
+   DOM ELEMENTS (used in JSX)
+   ============================================ */
 .animation-elements .cloud-extra,
 .animation-elements .cloud-extra-2,
 .animation-elements .fog-layer,
@@ -1054,4 +607,34 @@
 .animation-elements .wind-line-2,
 .animation-elements .lightning-extra {
   position: absolute;
+}
+
+/* ============================================
+   ACCESSIBILITY - REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+@media (max-width: 767px) {
+  /* Simplify shadows and effects on mobile */
+  .animation-elements::before,
+  .animation-elements::after {
+    filter: none !important;
+  }
+
+  .weather-clear-day .animation-elements::before {
+    box-shadow: 0 0 20px 8px rgba(255, 220, 99, 0.5);
+  }
+
+  .weather-clear-night .animation-elements::before {
+    box-shadow: 0 0 20px 6px rgba(255, 255, 255, 0.3);
+  }
 }

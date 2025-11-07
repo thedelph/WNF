@@ -1,0 +1,110 @@
+/**
+ * LightningBolt CSS
+ *
+ * Styles and animations for lightning effects.
+ * Features dramatic flash effects and animated bolts.
+ */
+
+.lightning-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 4; /* Above other weather effects */
+  will-change: transform;
+}
+
+.lightning-bolt {
+  position: absolute;
+  top: -10%;
+  width: 80px;
+  height: 120%;
+  transform: translateX(-50%);
+  animation: lightning-flicker 0.2s ease-in-out;
+  will-change: opacity;
+}
+
+/* Screen flash effect */
+.lightning-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0);
+  pointer-events: none;
+  z-index: 3; /* Below lightning bolts, above other effects */
+  transition: background 0.05s ease-in-out;
+}
+
+.lightning-flash.active {
+  background: rgba(255, 255, 255, 0.4);
+  animation: flash-fade 0.2s ease-out;
+}
+
+/* Lightning appearance animation */
+@keyframes lightning-flicker {
+  0% {
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  20% {
+    opacity: 0.8;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Flash fade animation */
+@keyframes flash-fade {
+  0% {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  50% {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  100% {
+    background: rgba(255, 255, 255, 0);
+  }
+}
+
+/* Respect user's reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .lightning-container {
+    display: none;
+  }
+
+  .lightning-flash {
+    display: none;
+  }
+
+  .lightning-bolt {
+    animation: none;
+  }
+}
+
+/* Reduce intensity on mobile */
+@media (max-width: 767px) {
+  .lightning-flash.active {
+    background: rgba(255, 255, 255, 0.25); /* Less intense flash */
+  }
+
+  .lightning-bolt {
+    width: 60px; /* Smaller bolts */
+  }
+}

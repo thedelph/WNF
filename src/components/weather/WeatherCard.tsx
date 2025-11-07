@@ -10,15 +10,21 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { 
-  geocodeAddress, 
-  getWeatherForecast, 
+import {
+  geocodeAddress,
+  getWeatherForecast,
   getWeatherAnimationClass,
-  type WeatherForecast 
+  type WeatherForecast
 } from '../../services/weatherService';
 import { Tooltip } from '../ui/Tooltip';
 import './WeatherAnimations.css';
 import { utcToUkTime } from '../../utils/dateUtils';
+
+// Import particle components
+import RainParticles from './particles/RainParticles';
+import SnowParticles from './particles/SnowParticles';
+import LightningBolt from './particles/LightningBolt';
+import WindStreaks from './particles/WindStreaks';
 
 interface WeatherCardProps {
   venueAddress: string;
@@ -253,6 +259,95 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
       minute: '2-digit'
     });
   };
+
+  // Determine which weather particles to show based on conditions
+  const getWeatherParticles = useCallback(() => {
+    if (!weather || !weather.weather || !weather.weather[0]) {
+      return { showRain: false, showSnow: false, showLightning: false, showWind: false };
+    }
+
+    const weatherId = weather.weather[0].id;
+    const windSpeed = weather.wind?.speed || 0;
+
+    // Rain conditions (200-531)
+    const isRain = (weatherId >= 200 && weatherId < 300) || (weatherId >= 300 && weatherId < 600);
+    // Snow conditions (600-622)
+    const isSnow = weatherId >= 600 && weatherId < 700;
+    // Thunderstorm (200-232)
+    const isThunderstorm = weatherId >= 200 && weatherId < 300;
+    // Windy (wind speed > 7 m/s or specific weather codes)
+    const isWindy = windSpeed > 7 || (weatherId >= 700 && weatherId < 782) || weatherId === 905 || weatherId === 957;
+
+    return {
+      showRain: isRain,
+      showSnow: isSnow,
+      showLightning: isThunderstorm,
+      showWind: isWindy
+    };
+  }, [weather]);
+
+  // Determine intensity for rain
+  const getRainIntensity = useCallback((): 'light' | 'moderate' | 'heavy' => {
+    if (!weather) return 'moderate';
+
+    const weatherId = weather.weather[0]?.id || 0;
+    const precipitation = weather.precipitation || 0;
+
+    // Drizzle (300-321) is always light
+    if (weatherId >= 300 && weatherId < 400) return 'light';
+
+    // Check precipitation amount
+    let precipAmount = 0;
+    if (weather.rain) {
+      precipAmount = weather.rain['1h'] || (weather.rain['3h'] ? weather.rain['3h'] / 3 : 0);
+    }
+
+    if (precipAmount > 7 || precipitation > 70) return 'heavy';
+    if (precipAmount > 2.5 || precipitation > 40) return 'moderate';
+    return 'light';
+  }, [weather]);
+
+  // Determine intensity for snow
+  const getSnowIntensity = useCallback((): 'light' | 'moderate' | 'heavy' => {
+    if (!weather) return 'moderate';
+
+    const precipitation = weather.precipitation || 0;
+
+    let snowAmount = 0;
+    if (weather.snow) {
+      snowAmount = weather.snow['1h'] || (weather.snow['3h'] ? weather.snow['3h'] / 3 : 0);
+    }
+
+    if (snowAmount > 5 || precipitation > 70) return 'heavy';
+    if (snowAmount > 2 || precipitation > 40) return 'moderate';
+    return 'light';
+  }, [weather]);
+
+  // Determine intensity for lightning
+  const getLightningIntensity = useCallback((): 'moderate' | 'heavy' => {
+    if (!weather) return 'moderate';
+
+    const weatherId = weather.weather[0]?.id || 0;
+    const precipitation = weather.precipitation || 0;
+
+    // Heavy thunderstorm codes: 211, 212, 221
+    if (weatherId === 211 || weatherId === 212 || weatherId === 221 || precipitation > 70) {
+      return 'heavy';
+    }
+
+    return 'moderate';
+  }, [weather]);
+
+  // Determine intensity for wind
+  const getWindIntensity = useCallback((): 'light' | 'moderate' | 'strong' => {
+    if (!weather) return 'moderate';
+
+    const windSpeed = weather.wind?.speed || 0;
+
+    if (windSpeed > 15) return 'strong'; // > 15 m/s
+    if (windSpeed > 10) return 'moderate'; // > 10 m/s
+    return 'light';
+  }, [weather]);
   
   // Variants for motion animations
   const cardVariants = {
@@ -335,6 +430,38 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
               <div className="wind-line-2"></div>
               <div className="lightning-extra"></div>
             </div>
+
+            {/* Particle components - rendered conditionally based on weather */}
+            {weather && (() => {
+              const particles = getWeatherParticles();
+              const isNight = !isDaytime();
+
+              return (
+                <>
+                  {particles.showRain && (
+                    <RainParticles
+                      intensity={getRainIntensity()}
+                      isNight={isNight}
+                    />
+                  )}
+                  {particles.showSnow && (
+                    <SnowParticles
+                      intensity={getSnowIntensity()}
+                    />
+                  )}
+                  {particles.showLightning && (
+                    <LightningBolt
+                      intensity={getLightningIntensity()}
+                    />
+                  )}
+                  {particles.showWind && (
+                    <WindStreaks
+                      intensity={getWindIntensity()}
+                    />
+                  )}
+                </>
+              );
+            })()}
           </div>
           
           {/* Content container */}

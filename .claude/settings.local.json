@@ -41,7 +41,8 @@
       "Read(//c/Users/chris/Documents/GitHub/WNF/src/components/admin/pages/**)",
       "Read(//c/Users/chris/Documents/GitHub/WNF/src/pages/admin/**)",
       "Bash(timeout 3 cmd /c \"echo Waiting for server to start...\")",
-      "Bash(timeout 5 cmd /c \"echo Waiting for dev server...\")"
+      "Bash(timeout 5 cmd /c \"echo Waiting for dev server...\")",
+      "Bash(timeout:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
