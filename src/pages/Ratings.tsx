@@ -8,7 +8,11 @@ import StarRating from '../components/StarRating';
 import { formatStarRating, getRatingButtonText } from '../utils/ratingFormatters';
 import RatingsExplanation from '../components/ratings/RatingsExplanation';
 import PlaystyleSelector from '../components/ratings/PlaystyleSelector';
+import PositionSelector from '../components/ratings/PositionSelector';
 import { AttributeCombination, generatePlaystyleName, generatePlaystyleCompact, generateAttributeAbbreviations } from '../types/playstyle';
+import { Position, PositionConsensus } from '../types/positions';
+import { classifyPositions, formatPositionConsensus, getPositionBadgeColor, hasSufficientPositionData, getInsufficientDataMessage } from '../utils/positionClassifier';
+import { POSITION_THRESHOLDS } from '../constants/positions';
 
 interface Player {
   id: string;
@@ -17,6 +21,8 @@ interface Player {
   whatsapp_group_member: string;
   is_beta_tester?: boolean;
   is_super_admin?: boolean;
+  position_consensus?: PositionConsensus[];
+  my_position_selections?: string[]; // Current user's position selections for this player
   current_rating?: {
     attack_rating: number;
     defense_rating: number;
@@ -61,6 +67,7 @@ export default function Ratings() {
     gk: null,
   });
   const [selectedAttributes, setSelectedAttributes] = useState<AttributeCombination | null>(null);
+  const [selectedPositions, setSelectedPositions] = useState<Position[]>([]);
   const [availablePlaystyles, setAvailablePlaystyles] = useState<Array<{id: string; name: string; pace_weight: number; shooting_weight: number; passing_weight: number; dribbling_weight: number; defending_weight: number; physical_weight: number}>>([]);
 
   const fetchPlaystyles = async () => {
@@ -371,10 +378,27 @@ export default function Ratings() {
 
       if (whatsAppError) throw whatsAppError;
 
-      // Create a map for WhatsApp status
+      // Get current user's position selections for all players (what I rated, not consensus)
+      const { data: myPositionSelections, error: myPositionError } = await supabase
+        .from('player_position_ratings')
+        .select('rated_player_id, position')
+        .eq('rater_id', currentPlayer.id);
+
+      if (myPositionError) {
+        console.error('Error fetching my position selections:', myPositionError);
+      }
+
+      // Create maps for quick lookups
       const whatsAppStatusMap = new Map(
         whatsAppData?.map(player => [player.id, player.whatsapp_group_member])
       );
+
+      // Group my position selections by player
+      const myPositionsMap = new Map<string, string[]>();
+      myPositionSelections?.forEach(selection => {
+        const existing = myPositionsMap.get(selection.rated_player_id) || [];
+        myPositionsMap.set(selection.rated_player_id, [...existing, selection.position]);
+      });
 
       // Combine the data and filter out the current user
       const enhancedPlayers = playersWithGames
@@ -384,7 +408,8 @@ export default function Ratings() {
           whatsapp_group_member: whatsAppStatusMap.get(player.id) || null,
           current_rating: existingRatings?.find(
             (rating) => rating.rated_player_id === player.id
-          )
+          ),
+          my_position_selections: myPositionsMap.get(player.id) || []
         }));
 
       setPlayers(enhancedPlayers);
@@ -453,9 +478,51 @@ export default function Ratings() {
 
       if (error) throw error;
 
+      // Save position ratings
+      if (selectedPositions.length > 0) {
+        // First, delete any existing position ratings from this rater for this player
+        const { error: deleteError } = await supabase
+          .from('player_position_ratings')
+          .delete()
+          .eq('rater_id', currentPlayer.id)
+          .eq('rated_player_id', selectedPlayer.id);
+
+        if (deleteError) {
+          console.error('Error deleting old position ratings:', deleteError);
+        }
+
+        // Then insert the new position ratings
+        const positionInserts = selectedPositions.map(position => ({
+          rater_id: currentPlayer.id,
+          rated_player_id: selectedPlayer.id,
+          position
+        }));
+
+        const { error: positionError } = await supabase
+          .from('player_position_ratings')
+          .insert(positionInserts);
+
+        if (positionError) {
+          console.error('Error saving position ratings:', positionError);
+          toast.error('Position ratings could not be saved, but other ratings were saved successfully');
+        }
+      } else {
+        // If no positions selected, delete any existing position ratings
+        const { error: deleteError } = await supabase
+          .from('player_position_ratings')
+          .delete()
+          .eq('rater_id', currentPlayer.id)
+          .eq('rated_player_id', selectedPlayer.id);
+
+        if (deleteError) {
+          console.error('Error deleting position ratings:', deleteError);
+        }
+      }
+
       toast.success(`Successfully rated ${selectedPlayer.friendly_name}`);
       setSelectedPlayer(null);
       setSelectedAttributes(null); // Reset attribute selection
+      setSelectedPositions([]); // Reset position selection
       fetchPlayers(); // Refresh the list
     } catch (error: any) {
       toast.error(error.message);
@@ -670,6 +737,11 @@ export default function Ratings() {
                 onChange={(value) => setRatings(prev => ({ ...prev, gk: value }))}
                 label="GK Rating"
               />
+              <PositionSelector
+                selectedPositions={selectedPositions}
+                onPositionsChange={setSelectedPositions}
+                disabled={viewAsUser.isViewingAs}
+              />
               <PlaystyleSelector
                 selectedAttributes={selectedAttributes}
                 onAttributesChange={setSelectedAttributes}
@@ -786,13 +858,37 @@ export default function Ratings() {
                           }
                           return null;
                         })()}
+
+                        {/* My Position Selections Display */}
+                        {(() => {
+                          // Show what positions I've rated this player for (not consensus)
+                          if (!player.my_position_selections || player.my_position_selections.length === 0) {
+                            return null;
+                          }
+
+                          return (
+                            <div className="mt-2">
+                              <p className="font-semibold text-xs">You rated as:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {player.my_position_selections.map((position: string) => (
+                                  <span
+                                    key={position}
+                                    className="px-2 py-1 rounded text-xs font-medium bg-primary text-primary-content"
+                                  >
+                                    {position}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2"
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedPlayer(player);
                         setRatings({
                           attack: player.current_rating?.attack_rating ?? null,
@@ -800,6 +896,27 @@ export default function Ratings() {
                           gameIq: player.current_rating?.game_iq_rating ?? null,
                           gk: player.current_rating?.gk_rating ?? null
                         });
+
+                        // Load existing position ratings for this player
+                        try {
+                          const { data: existingPositions, error: positionError } = await supabase
+                            .from('player_position_ratings')
+                            .select('position')
+                            .eq('rater_id', currentPlayer.id)
+                            .eq('rated_player_id', player.id);
+
+                          if (positionError) {
+                            console.error('Error loading position ratings:', positionError);
+                            setSelectedPositions([]);
+                          } else {
+                            const positions = existingPositions?.map(p => p.position as Position) || [];
+                            setSelectedPositions(positions);
+                          }
+                        } catch (error) {
+                          console.error('Error loading position ratings:', error);
+                          setSelectedPositions([]);
+                        }
+
                         // Set selected attributes from current rating
                         const rating = player.current_rating;
                         

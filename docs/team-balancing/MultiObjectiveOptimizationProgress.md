@@ -1,9 +1,9 @@
 # Multi-Objective Team Balancing Optimization - Progress Report
 
 **Date Started:** 2025-01-04
-**Last Updated:** 2025-11-04
-**Status:** Phases 1-3, 5 Complete (✅), Phases 4, 6-8 Pending
-**Context Used:** ~53% (47% remaining)
+**Last Updated:** 2025-11-05
+**Status:** Phases 1-5 Complete (✅), Phases 6-8 Pending
+**Context Used:** ~21% (79% remaining)
 
 ---
 
@@ -323,6 +323,253 @@ Overall Result: ✅ EXCELLENT
 
 ---
 
+### Phase 4: Multi-Swap Combinations
+
+**Objective:** Enable the algorithm to escape local optima by trying pairs of swaps simultaneously, discovering emergent benefits where two individually-neutral or worsening swaps combine to create net improvement.
+
+**Problem:** After Phases 1-3, the algorithm could still get stuck at local optima where NO single swap improves balance. Real-world example (18-player game): balance stuck at 0.884 with critical Game IQ imbalance (0.93) because any single swap worsened things.
+
+**Solution Implemented:**
+
+**1. New SwapPair Interface (lines 135-156):**
+```typescript
+export interface SwapPair {
+  swap1: {
+    tier: number;
+    teamA: 'blue' | 'orange';
+    playerA: PlayerWithRating;
+    teamB: 'blue' | 'orange';
+    playerB: PlayerWithRating;
+  };
+  swap2: {
+    tier: number;
+    teamA: 'blue' | 'orange';
+    playerA: PlayerWithRating;
+    teamB: 'blue' | 'orange';
+    playerB: PlayerWithRating;
+  };
+  combinedImprovement: number;
+  scoreBefore: MultiObjectiveScore;
+  scoreAfter: MultiObjectiveScore;
+  evaluation: SwapEvaluation;
+  priority: number; // Higher is better
+}
+```
+
+**2. New Function: `generateSwapPairs()` (lines 1796-1843, ~48 lines):**
+- Takes array of candidate swaps (top 50: 25 improving + 25 worsening)
+- Generates pairs by combining two non-overlapping swaps
+- Validates that no player appears in both swaps (prevents double-swapping)
+- Returns up to 100 swap pair combinations
+- O(n²) complexity managed through candidate filtering
+
+**3. New Function: `evaluateSwapPair()` (lines 1849-1923, ~75 lines):**
+- Executes both swaps simultaneously in test configuration
+- Calculates before/after scores using multi-objective evaluation
+- Computes combined improvement across all 5 dimensions
+- Assigns priority score based on improvement magnitude
+- Returns detailed SwapPair with full evaluation data
+
+**4. New Function: `executeMultiSwapOptimization()` (lines 1929-2058, ~130 lines):**
+- **Candidate Generation:**
+  - Iterates through all tiers to find potential single swaps
+  - Calculates improvement for each swap
+  - **Critical Fix (2025-11-05):** Includes ALL swaps (improving + worsening) instead of only improving ones
+  - Sorts by absolute improvement magnitude
+  - Takes top 25 improving + top 25 worsening = 50 diverse candidates
+
+- **Pair Evaluation:**
+  - Generates up to 100 pairs from diverse candidates
+  - Evaluates each pair for combined benefit
+  - Filters to only beneficial pairs (improvement > 0)
+  - Sorts by priority score
+
+- **Execution:**
+  - Selects best pair if beneficial
+  - Executes both swaps atomically
+  - Recalculates balance after changes
+  - Returns result with swap details
+
+**5. Integration into `optimizeTeams()` (lines 3701-3764):**
+```typescript
+// PHASE 4: MULTI-SWAP OPTIMIZATION
+// Try pairs of swaps when single swaps fail to improve balance
+if (!madeSwapThisRound && currentBalance > balanceThreshold && optimizationRound < MAX_OPTIMIZATION_ROUNDS) {
+  // Build tier map for multi-swap optimization
+  const tierMap = new Map<number, PlayerWithRating[]>();
+  [...blueTeam, ...orangeTeam].forEach(player => {
+    const tier = player.tier ?? 1;
+    if (!tierMap.has(tier)) tierMap.set(tier, []);
+    tierMap.get(tier)!.push(player);
+  });
+
+  // Try up to 3 multi-swap rounds
+  const MAX_MULTI_SWAP_ROUNDS = 3;
+  let multiSwapRound = 0;
+  let multiSwapMade = true;
+
+  while (multiSwapMade && multiSwapRound < MAX_MULTI_SWAP_ROUNDS && currentBalance > balanceThreshold) {
+    multiSwapRound++;
+
+    const result = executeMultiSwapOptimization(
+      blueTeam,
+      orangeTeam,
+      tierMap,
+      permanentGKSet,
+      currentBalance,
+      balanceThreshold,
+      debugLogArray
+    );
+
+    multiSwapMade = result.swapMade;
+
+    if (result.swapMade) {
+      currentBalance = result.newBalance;
+      swapCount += 2; // Each pair swap counts as 2 swaps
+      wasOptimized = true;
+
+      // Recalculate balance after swap
+      currentBalance = calculateTierBalanceScore(blueTeam, orangeTeam, permanentGKIds);
+    }
+  }
+}
+```
+
+**6. Performance Safeguards:**
+- Maximum 50 candidates (25 improving + 25 worsening)
+- Maximum 100 pair combinations generated
+- Maximum 3 multi-swap optimization rounds
+- Early termination when balance threshold reached
+- Execution time: < 1 second in testing
+
+**Critical Bug Fix (2025-11-05):**
+
+**Problem:** Phase 4 generated 0 candidates when stuck at local optimum because code only included swaps with `improvement > 0`. At local optimum, NO swaps improve individually, causing Phase 4 to fail completely.
+
+**Root Cause (lines 1971-1975):**
+```typescript
+// BROKEN CODE:
+if (improvement > 0) {
+  candidates.push({...});
+}
+```
+
+**Solution:** Include ALL swaps (both improving and worsening) to enable emergent benefits:
+```typescript
+// FIXED CODE:
+// PHASE 4 FIX: Include ALL swaps, not just improving ones
+// Pairs might create emergent benefits even if individual swaps worsen things
+candidates.push({
+  tier: tierNum,
+  bluePlayer: blueP,
+  orangePlayer: orangeP,
+  improvement,
+});
+
+// Sort by absolute improvement magnitude to get diverse candidates
+// Take top 25 best + top 25 worst = 50 total diverse candidates
+candidates.sort((a, b) => Math.abs(b.improvement) - Math.abs(a.improvement));
+
+// Get top improving and top worsening swaps for diversity
+const improvingSwaps = candidates.filter(c => c.improvement > 0).slice(0, 25);
+const worseningSwaps = candidates.filter(c => c.improvement <= 0).slice(0, 25);
+const topCandidates = [...improvingSwaps, ...worseningSwaps];
+```
+
+**Rationale:** Two individually-worsening swaps might combine for net benefit. Example:
+- Swap A: Fixes Game IQ gap but worsens shooting (-0.05 overall)
+- Swap B: Fixes shooting but worsens Game IQ (-0.03 overall)
+- Combined: Both dimensions improve! (+0.12 overall)
+
+**Real-World Results:**
+
+**Test Case (18-player game, 2025-11-05):**
+
+**Initial State (After Phases 1-3):**
+```
+Overall Balance: 0.884 (stuck at local optimum)
+Game IQ Gap: 0.93 (3x worse than expected)
+Shooting Balance: 3.51 (excellent)
+Elite Shooter Gap: 1 (perfect)
+```
+
+**After Phase 4 Execution:**
+```
+Candidates Generated: 15 swaps (0 improving, 15 worsening)
+Pairs Created: 92 combinations
+Beneficial Pairs Found: 2
+Best Pair Selected: Jarman↔Dave + Chris H↔Jack G
+
+Results:
+Overall Balance: 0.884 → 0.386 (56% improvement!) ✅
+Game IQ Gap: 0.93 → 0.41 (56% improvement!) ✅
+Attack Gap: 0.25 → 0.01 (96% improvement!) ✅
+Shooting Balance: 3.51 → 3.52 (maintained) ✅
+Elite Shooter Gap: 1 → 1 (perfect) ✅
+```
+
+**Overall Improvement from Initial Draft:**
+- Draft: 0.638 balance
+- After Phase 4: 0.386 balance
+- **Total: 40% improvement over initial draft**
+
+**Key Benefits:**
+1. **Escapes Local Optima:** Successfully finds improvements when single swaps fail
+2. **Emergent Benefits:** Discovers synergies between swaps (e.g., one fixes Game IQ, other fixes shooting)
+3. **Diverse Candidate Selection:** Including worsening swaps enables exploration of solution space
+4. **Performance Efficient:** Executes in < 1 second despite O(n⁴) theoretical complexity
+5. **Transparent:** Debug log shows all candidates, pairs evaluated, and rejection reasons
+
+**Expected Impact:**
+```
+Before Phase 4 (Stuck at Local Optimum):
+Balance: 0.88
+Game IQ Gap: 0.93
+Status: Algorithm gives up (no single swap helps)
+
+After Phase 4 (Multi-Swap):
+Balance: 0.38
+Game IQ Gap: 0.41
+Status: Successfully escaped local optimum
+Result: 56% improvement in balance
+```
+
+**Files Modified:**
+- `tierBasedSnakeDraft.ts`:
+  - Lines 135-156: New SwapPair interface (~22 lines)
+  - Lines 1796-1843: `generateSwapPairs()` function (~48 lines)
+  - Lines 1849-1923: `evaluateSwapPair()` function (~75 lines)
+  - Lines 1929-2058: `executeMultiSwapOptimization()` function (~130 lines)
+  - Lines 3701-3764: Integration into `optimizeTeams()` (~64 lines)
+
+**Lines of Code:**
+- **Added:** ~340 lines
+- **Modified:** ~10 lines (integration points)
+- **Total Impact:** ~350 lines
+
+**Debug Logging Example:**
+```
+=== PHASE 4: MULTI-SWAP OPTIMIZATION ===
+Single swaps stopped improving balance. Attempting pair swaps to escape local optima...
+
+Tier 1: Found 3 potential swaps
+Tier 2: Found 5 potential swaps
+Tier 3: Found 4 potential swaps
+Tier 4: Found 3 potential swaps
+
+Generated 15 single-swap candidates
+Created 92 potential swap pairs
+Found 2 beneficial swap pairs
+
+Best pair: Jarman↔Dave + Chris H↔Jack G
+  Combined improvement: 0.498 → lower is better
+
+✅ Pair swap executed successfully
+Balance: 0.884 → 0.386 (56% improvement)
+```
+
+---
+
 ### Phase 5: Soft Constraint System
 
 **Objective:** Replace hard constraint blocks with soft penalty scoring, allowing beneficial swaps that were previously rejected while still penalizing severe violations.
@@ -589,8 +836,9 @@ Each swap evaluation now calls `calculateMultiObjectiveScore()` twice (before/af
 |---------|------|---------|
 | 0.1.0 | 2025-01-04 | Phase 1 complete: Bug fixes |
 | 0.2.0 | 2025-01-04 | Phase 2 complete: Multi-objective framework |
-| 0.3.0 | TBD | Phase 3: Shooting-aware draft |
-| 0.4.0 | TBD | Phase 4: Multi-swap combinations |
+| 0.3.0 | 2025-11-04 | Phase 3 complete: Shooting-aware draft |
+| 0.4.0 | 2025-11-05 | Phase 4 complete: Multi-swap combinations + critical bug fix |
+| 0.5.0 | 2025-11-04 | Phase 5 complete: Soft constraint system |
 | 1.0.0 | TBD | All phases complete + testing |
 
 ---

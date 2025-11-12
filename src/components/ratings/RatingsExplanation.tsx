@@ -149,6 +149,64 @@ const RatingsExplanation: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Position Preferences Section */}
+                <div className="collapse collapse-arrow bg-base-100">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-medium text-primary">
+                    🗺️ Position Preferences
+                  </div>
+                  <div className="collapse-content">
+                    <div className="text-sm opacity-70 space-y-4">
+                      <p className="font-medium">What Position Preferences Show:</p>
+                      <p>
+                        Position preferences show <span className="font-medium">WHERE</span> a player excels on the pitch.
+                        This helps create balanced teams by ensuring each team has good coverage across all areas of the field.
+                      </p>
+
+                      <p className="font-medium">The 11 Positions:</p>
+                      <ul className="list-disc list-inside space-y-2 ml-4">
+                        <li><span className="font-medium">🥅 Goalkeeper:</span> GK</li>
+                        <li><span className="font-medium">🛡️ Defense:</span> LB (Left Back), CB (Center Back), RB (Right Back), WB (Wing Back)</li>
+                        <li><span className="font-medium">⚙️ Midfield:</span> LM (Left Mid), CM (Center Mid), RM (Right Mid), CAM (Attacking Mid), CDM (Defensive Mid)</li>
+                        <li><span className="font-medium">⚔️ Attack:</span> ST (Striker)</li>
+                      </ul>
+
+                      <div className="bg-info/20 p-3 rounded-md mt-3">
+                        <p className="text-xs">
+                          <span className="font-medium">How it works:</span> Select all positions where the player can perform well.
+                          Aim for 1-3 positions for best results. The system aggregates ratings from multiple people to show
+                          consensus (e.g., "75% LB" means 75% of raters said this player excels at Left Back).
+                        </p>
+                      </div>
+
+                      <div className="bg-info/20 p-3 rounded-md mt-3">
+                        <p className="text-xs">
+                          <span className="font-medium">Important:</span> Position preferences complement Attack/Defense ratings.
+                          A player can have high Attack rating but prefer playing in midfield rather than as a striker.
+                          Rate where they <span className="font-medium">actually play and excel</span>, not just where they could play.
+                        </p>
+                      </div>
+
+                      <div className="bg-warning/20 p-3 rounded-md mt-3">
+                        <p className="text-xs">
+                          <span className="font-medium">Team Balancing:</span> The algorithm uses position preferences to prevent
+                          imbalanced teams (e.g., one team with 4 strikers and the other with 1). This ensures more tactical
+                          balance in addition to skill balance.
+                        </p>
+                      </div>
+
+                      <div className="bg-success/20 p-3 rounded-md mt-3">
+                        <p className="text-xs font-medium">Consensus Display:</p>
+                        <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
+                          <li><span className="font-medium">Primary (50%+):</span> Strong consensus, shown with solid badge</li>
+                          <li><span className="font-medium">Secondary (25-49%):</span> Moderate consensus, shown with lighter badge</li>
+                          <li><span className="font-medium">Minimum 5 raters required:</span> Position data only shown after 5+ people have rated</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Playstyle Rating Section */}
                 <div className="collapse collapse-arrow bg-base-100">
                   <input type="checkbox" />

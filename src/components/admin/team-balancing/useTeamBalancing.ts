@@ -87,14 +87,21 @@ export const useTeamBalancing = () => {
       let overallGoalDiffMap = new Map<string, number | null>();
       let gamesPlayedMap = new Map<string, number | null>();
       let derivedAttributesMap = new Map<string, any>();
-      
+      let positionConsensusMap = new Map<string, any[]>();
+
       try {
-        // Fetch recent stats (last 10 games) and derived attributes
+        // Fetch recent stats (last 10 games), derived attributes, and position consensus
         console.log('Fetching recent player stats from get_player_recent_win_rates');
-        const [recentWinRates, recentGoalDiffs, derivedAttributes] = await Promise.all([
+        const [recentWinRates, recentGoalDiffs, derivedAttributes, positionConsensus] = await Promise.all([
           supabase.rpc('get_player_recent_win_rates', { games_threshold: 10 }),
           supabase.rpc('get_player_recent_goal_differentials', { games_threshold: 10 }),
-          supabase.from('player_derived_attributes').select('*')
+          supabase.from('player_derived_attributes').select('*'),
+          supabase
+            .from('player_position_consensus')
+            .select('*')
+            .gte('total_raters', 5) // Only use if sufficient data
+            .gte('percentage', 25)  // Only primary and secondary positions
+            .order('percentage', { ascending: false })
         ]);
 
         if (recentWinRates.error) {
@@ -192,6 +199,19 @@ export const useTeamBalancing = () => {
           });
         }
 
+        // Process position consensus
+        if (positionConsensus.data) {
+          positionConsensus.data.forEach((consensus: any) => {
+            const existing = positionConsensusMap.get(consensus.player_id) || [];
+            positionConsensusMap.set(consensus.player_id, [...existing, {
+              position: consensus.position,
+              rating_count: consensus.rating_count,
+              total_raters: consensus.total_raters,
+              percentage: consensus.percentage
+            }]);
+          });
+        }
+
         // Log sample data for debugging
         const samplePlayer = playerIds[0];
         console.log(`Sample player stats for ${samplePlayer}:`, {
@@ -268,7 +288,8 @@ export const useTeamBalancing = () => {
           overall_win_rate: overallWinRate,
           overall_goal_differential: overallGoalDifferential,
           total_games: gamesPlayed,
-          derived_attributes: derivedAttributesMap.get(playerId) || null
+          derived_attributes: derivedAttributesMap.get(playerId) || null,
+          positions: positionConsensusMap.get(playerId) || []
         };
       });
 
@@ -297,6 +318,7 @@ export const useTeamBalancing = () => {
               overall_goal_differential: player.overall_goal_differential,
               total_games: player.total_games,
               derived_attributes: player.derived_attributes,
+              positions: player.positions,
               team: existingAssignment.team as 'blue' | 'orange' | null
             };
           } else {
@@ -314,6 +336,7 @@ export const useTeamBalancing = () => {
               overall_goal_differential: player.overall_goal_differential,
               total_games: player.total_games,
               derived_attributes: player.derived_attributes,
+              positions: player.positions,
               team: null
             };
           }
@@ -344,6 +367,7 @@ export const useTeamBalancing = () => {
             overall_goal_differential: overallGoalDifferential,
             total_games: gamesPlayed,
             derived_attributes: derivedAttributesMap.get(reg.players.id) || null,
+            positions: positionConsensusMap.get(reg.players.id) || [],
             team: isBlue ? 'blue' : 'orange'
           };
         });

@@ -300,6 +300,163 @@ const getAttributeBalanceThreshold = (improvement: number, winRateGapBefore: num
 - **Win Rate Protection**: Prevents creating large competitive gaps between teams
 - **Cascading Improvements**: Multiple optimization rounds can find secondary improvements
 
+### Multi-Objective Optimization (Phases 1-5, Added 2025-01-04 to 2025-11-05)
+
+The team balancing algorithm was enhanced with a comprehensive multi-objective optimization framework that evaluates teams across 5 dimensions instead of a single balance score. This allows intelligent trade-offs between competing objectives.
+
+#### Five Optimization Dimensions
+
+```typescript
+export interface MultiObjectiveScore {
+  skillsBalance: number;      // Max diff in Attack/Defense/Game IQ/GK (weight: 30%)
+  shootingBalance: number;    // Shooting distribution imbalance (weight: 25%)
+  attributeBalance: number;   // Avg diff in 6 derived attributes (weight: 15%)
+  tierFairness: number;       // Distribution variance + quality concentration (weight: 15%)
+  performanceGap: number;     // Win rate + goal differential gap (weight: 15%)
+  overall: number;            // Weighted combination
+}
+```
+
+#### Phase 1: Bug Fixes & Foundation (2025-01-04)
+- Fixed "Unknown reason" rejection bug in debug logs
+- Fixed pre-existing attribute score bug
+- Enhanced rejection reason propagation through all validation functions
+
+#### Phase 2: Multi-Objective Framework (2025-01-04)
+- Created core infrastructure with `MultiObjectiveScore` interface
+- Implemented `calculateMultiObjectiveScore()` for simultaneous 5-dimension evaluation
+- Implemented `evaluateSwap()` with acceptance criteria:
+  - Accept if improves 2+ objectives without worsening any by >20%, OR
+  - Accept if improves overall weighted score by >5%
+- Updated all 3 swap locations (same-tier, cross-tier 1, cross-tier 2) to use multi-objective evaluation
+
+#### Phase 3: Shooting-Aware Snake Draft (2025-11-04)
+- Added real-time tracking of elite shooter distribution during draft
+- Adjusts pick order when elite shooter gap reaches 2
+- Prevents catastrophic 3-0 or 4-1 elite shooter splits before optimization begins
+- Result: Elite shooter gaps reduced from 3 to ≤1, shooting imbalance from 28+ to 12-16
+
+#### Phase 4: Multi-Swap Combinations (2025-11-05)
+
+**Objective**: Enable algorithm to escape local optima by trying pairs of swaps simultaneously.
+
+**Problem**: After Phases 1-3, algorithm could get stuck where NO single swap improves balance. Real example: balance stuck at 0.884 with critical Game IQ gap of 0.93.
+
+**Solution**: Three new functions for pair-wise swap evaluation:
+
+**1. `generateSwapPairs()` (lines 1796-1843, ~48 lines)**:
+- Takes array of 50 diverse candidates (25 improving + 25 worsening)
+- Generates up to 100 non-overlapping pairs
+- Validates no player appears in both swaps
+- O(n²) complexity managed through candidate filtering
+
+**2. `evaluateSwapPair()` (lines 1849-1923, ~75 lines)**:
+- Executes both swaps simultaneously in test configuration
+- Calculates before/after multi-objective scores
+- Computes combined improvement across all 5 dimensions
+- Assigns priority score based on improvement magnitude
+
+**3. `executeMultiSwapOptimization()` (lines 1929-2058, ~130 lines)**:
+- **Candidate Generation**:
+  - Iterates through all tiers to find potential single swaps
+  - **Critical Feature**: Includes ALL swaps (both improving AND worsening)
+  - Sorts by absolute improvement magnitude
+  - Takes top 25 improving + top 25 worsening = 50 diverse candidates
+
+- **Pair Evaluation**:
+  - Generates up to 100 pairs from diverse candidates
+  - Evaluates each pair for combined benefit
+  - Filters to only beneficial pairs (improvement > 0)
+  - Sorts by priority score
+
+- **Execution**:
+  - Selects best pair if beneficial
+  - Executes both swaps atomically
+  - Recalculates balance after changes
+  - Maximum 3 multi-swap rounds
+
+**Integration** (lines 3701-3764):
+```typescript
+// PHASE 4: MULTI-SWAP OPTIMIZATION
+// Try pairs of swaps when single swaps fail to improve balance
+if (!madeSwapThisRound && currentBalance > balanceThreshold) {
+  // Try up to 3 multi-swap rounds
+  const MAX_MULTI_SWAP_ROUNDS = 3;
+  let multiSwapRound = 0;
+  let multiSwapMade = true;
+
+  while (multiSwapMade && multiSwapRound < MAX_MULTI_SWAP_ROUNDS &&
+         currentBalance > balanceThreshold) {
+    multiSwapRound++;
+    const result = executeMultiSwapOptimization(...);
+
+    if (result.swapMade) {
+      currentBalance = result.newBalance;
+      swapCount += 2; // Each pair counts as 2 swaps
+      wasOptimized = true;
+    }
+  }
+}
+```
+
+**Critical Bug Fix (2025-11-05)**:
+- **Problem**: Phase 4 generated 0 candidates at local optimum because code only included swaps with `improvement > 0`
+- **Solution**: Include ALL swaps to enable emergent benefits where two individually-worsening swaps combine for net improvement
+- **Example**: Swap A fixes Game IQ but hurts shooting (-0.05), Swap B fixes shooting but hurts Game IQ (-0.03), Combined: both improve (+0.12)!
+
+**Real-World Results** (18-player game test):
+```
+Before Phase 4 (Stuck at Local Optimum):
+  Overall Balance: 0.884
+  Game IQ Gap: 0.93 (3x worse than expected)
+  Status: NO single swap helps
+
+After Phase 4 (Multi-Swap):
+  Candidates Generated: 15 swaps (0 improving, 15 worsening)
+  Pairs Created: 92 combinations
+  Beneficial Pairs Found: 2
+  Best Pair Executed: Jarman↔Dave + Chris H↔Jack G
+
+  Results:
+    Overall Balance: 0.884 → 0.386 (56% improvement!) ✅
+    Game IQ Gap: 0.93 → 0.41 (56% improvement!) ✅
+    Attack Gap: 0.25 → 0.01 (96% improvement!) ✅
+    Shooting Balance: 3.51 → 3.52 (maintained) ✅
+    Elite Shooter Gap: 1 → 1 (perfect) ✅
+
+  Overall: 40% improvement over initial draft
+  Execution Time: < 1 second
+```
+
+**Key Benefits**:
+1. **Escapes Local Optima**: Finds improvements when single swaps fail completely
+2. **Emergent Benefits**: Discovers synergies between swaps
+3. **Diverse Candidates**: Including worsening swaps enables solution space exploration
+4. **Performance Efficient**: O(n⁴) complexity managed through filtering (50 candidates → 100 pairs max)
+
+#### Phase 5: Soft Constraint System (2025-11-04)
+
+- Replaced hard constraint blocks with graduated penalty scoring
+- Simplified `isSwapAcceptable()` from ~155 lines to 25 lines
+- Only blocks catastrophic violations (elite gap > 4)
+- All other violations get soft penalties weighted at 10% of objective scores
+- Penalty scaling: Elite gap=2 → 1.5, gap=3 → 6.0, gap=4 → 13.5 (quadratic)
+- Updated `evaluateSwap()` to include penalty calculations
+- Result: Unlocks beneficial swaps that were previously blocked by hard constraints
+
+**Combined Impact of All Phases**:
+- Initial draft balance: 0.638
+- After Phases 1-5: 0.386
+- **Total improvement: 40% better balance**
+- Shooting imbalance: 28.38 → 3.52 (88% improvement)
+- Elite shooter distribution: 3-0 → 2-2 (perfect)
+- Game IQ gap: Fixed via Phase 4 multi-swap
+- Execution time: < 2 seconds for all phases
+
+For detailed technical documentation of the multi-objective optimization system, see: `/docs/team-balancing/MultiObjectiveOptimizationProgress.md`
+
+---
+
 ## Key Differences from Original Algorithm
 
 1. **Player Evaluation**: Uses three-layer system with momentum (65/15/20 weights) vs five equal metrics

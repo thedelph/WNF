@@ -1,0 +1,195 @@
+/**
+ * Position Rating System Types
+ *
+ * Defines types and interfaces for the player position preference rating system.
+ * Players can be rated on where they excel on the pitch across 11 standard positions.
+ */
+
+/**
+ * Standard football/soccer positions
+ *
+ * Categories:
+ * - Goalkeeper: GK
+ * - Defense: LB, CB, RB, WB (Wing Back)
+ * - Midfield: LW (Left Winger), CM, RW (Right Winger), CAM (Attacking Mid), CDM (Defensive Mid)
+ * - Attack: ST (Striker)
+ */
+export type Position = 'GK' | 'LB' | 'CB' | 'RB' | 'WB' | 'LW' | 'CM' | 'RW' | 'CAM' | 'CDM' | 'ST';
+
+/**
+ * Position categories for grouping positions
+ */
+export type PositionCategory = 'goalkeeper' | 'defense' | 'midfield' | 'attack';
+
+/**
+ * Configuration for a single position
+ * Used to define display properties and categorization
+ */
+export interface PositionConfig {
+  /** Position code (e.g., 'ST', 'CM') */
+  code: Position;
+
+  /** Full display name (e.g., 'Striker', 'Center Mid') */
+  label: string;
+
+  /** Abbreviated name for compact display (e.g., 'STR', 'CM') */
+  shortLabel?: string;
+
+  /** Category this position belongs to */
+  category: PositionCategory;
+
+  /** Emoji icon for visual display */
+  emoji: string;
+
+  /** Defensive responsibility level (for team balancing) */
+  defensiveWeight: 'high' | 'medium' | 'low';
+}
+
+/**
+ * Individual position rating from a single rater
+ * Represents one rater selecting one position for one player
+ */
+export interface PositionRating {
+  id: string;
+  rater_id: string;
+  rated_player_id: string;
+  position: Position;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Aggregated consensus data for a position
+ * Shows what percentage of raters selected this position for a player
+ */
+export interface PositionConsensus {
+  player_id: string;
+  position: Position;
+  rating_count: number;    // How many raters selected this position
+  total_raters: number;    // Total raters who rated this player
+  percentage: number;      // rating_count / total_raters * 100
+  updated_at: string;
+}
+
+/**
+ * Classified position consensus
+ * Groups positions into primary, secondary, and mentioned tiers
+ */
+export interface ClassifiedPositions {
+  /** Primary positions (50%+ consensus) */
+  primary: PositionConsensus[];
+
+  /** Secondary positions (25-49% consensus) */
+  secondary: PositionConsensus[];
+
+  /** Mentioned positions (<25% consensus, but >0%) */
+  mentioned: PositionConsensus[];
+
+  /** Total number of raters who have rated this player */
+  totalRaters: number;
+
+  /** Whether this player has enough ratings to show position data (5+ raters) */
+  hasSufficientData: boolean;
+}
+
+/**
+ * Position distribution for a team
+ * Used by the team balancing algorithm
+ */
+export interface TeamPositionDistribution {
+  goalkeeper: number;     // Players with GK as primary position
+  defense: number;        // Players with defensive positions (LB, CB, RB, WB) as primary
+  midfield: number;       // Players with midfield positions (LW, CM, RW, CAM, CDM) as primary
+  attack: number;         // Players with attacking positions (ST) as primary
+  versatile: number;      // Players with multiple primary positions
+  unrated: number;        // Players without position consensus
+}
+
+/**
+ * Position balance comparison between two teams
+ * Used to evaluate if a swap would create position imbalance
+ */
+export interface PositionBalanceComparison {
+  goalkeepers: {
+    blue: number;
+    orange: number;
+    gap: number;
+  };
+  defenders: {
+    blue: number;
+    orange: number;
+    gap: number;
+  };
+  midfielders: {
+    blue: number;
+    orange: number;
+    gap: number;
+  };
+  attackers: {
+    blue: number;
+    orange: number;
+    gap: number;
+  };
+  maxGap: number;           // Largest gap across all categories
+  isBalanced: boolean;       // True if maxGap <= 2
+  imbalancedCategories: string[];  // Names of categories with gap > 2
+}
+
+/**
+ * Player with position consensus data attached
+ * Extends the base player type with position information
+ */
+export interface PlayerWithPositions {
+  id: string;
+  friendly_name: string;
+
+  /** Position consensus data for this player */
+  positions?: PositionConsensus[];
+
+  /** Classified positions (primary/secondary/mentioned) */
+  classifiedPositions?: ClassifiedPositions;
+
+  /** Single primary position for team balancing (highest percentage >=50%) */
+  primaryPosition?: Position | null;
+}
+
+/**
+ * Position rating submission data
+ * Used when submitting new position ratings
+ */
+export interface PositionRatingSubmission {
+  rater_id: string;
+  rated_player_id: string;
+  positions: Position[];  // Multiple positions can be selected
+}
+
+/**
+ * Position consensus query result
+ * What the database returns when fetching consensus data
+ */
+export interface PositionConsensusQueryResult {
+  player_id: string;
+  position: Position;
+  rating_count: number;
+  total_raters: number;
+  percentage: number;
+  updated_at: string;
+}
+
+/**
+ * Admin view: Position heatmap data
+ * Shows all players × all positions for admin interface
+ */
+export interface PositionHeatmapData {
+  player_id: string;
+  player_name: string;
+  positions: {
+    [K in Position]?: {
+      percentage: number;
+      ratingCount: number;
+      totalRaters: number;
+    };
+  };
+  totalRaters: number;
+  hasSufficientData: boolean;
+}
