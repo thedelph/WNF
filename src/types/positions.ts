@@ -10,11 +10,11 @@
  *
  * Categories:
  * - Goalkeeper: GK
- * - Defense: LB, CB, RB, WB (Wing Back)
+ * - Defense: LB, CB, RB, LWB (Left Wing Back), RWB (Right Wing Back)
  * - Midfield: LW (Left Winger), CM, RW (Right Winger), CAM (Attacking Mid), CDM (Defensive Mid)
  * - Attack: ST (Striker)
  */
-export type Position = 'GK' | 'LB' | 'CB' | 'RB' | 'WB' | 'LW' | 'CM' | 'RW' | 'CAM' | 'CDM' | 'ST';
+export type Position = 'GK' | 'LB' | 'CB' | 'RB' | 'LWB' | 'RWB' | 'LW' | 'CM' | 'RW' | 'CAM' | 'CDM' | 'ST';
 
 /**
  * Position categories for grouping positions
@@ -47,27 +47,33 @@ export interface PositionConfig {
 
 /**
  * Individual position rating from a single rater
- * Represents one rater selecting one position for one player
+ * Represents one rater ranking one position for one player
+ * Rank: 1 (best/3pts), 2 (secondary/2pts), 3 (tertiary/1pt)
  */
 export interface PositionRating {
   id: string;
   rater_id: string;
   rated_player_id: string;
   position: Position;
+  rank: 1 | 2 | 3;  // Position rank: 1st=3pts, 2nd=2pts, 3rd=1pt
   created_at: string;
   updated_at: string;
 }
 
 /**
  * Aggregated consensus data for a position
- * Shows what percentage of raters selected this position for a player
+ * Shows weighted percentage based on ranked selections (1st=3pts, 2nd=2pts, 3rd=1pt)
  */
 export interface PositionConsensus {
   player_id: string;
   position: Position;
-  rating_count: number;    // How many raters selected this position
+  rating_count: number;    // How many raters selected this position (at any rank)
   total_raters: number;    // Total raters who rated this player
-  percentage: number;      // rating_count / total_raters * 100
+  percentage: number;      // (points / (total_raters * 6)) * 100 (max 6 points per rater)
+  points: number;          // Total weighted points for this position
+  rank_1_count: number;    // Count of 1st choice selections (3 points each)
+  rank_2_count: number;    // Count of 2nd choice selections (2 points each)
+  rank_3_count: number;    // Count of 3rd choice selections (1 point each)
   updated_at: string;
 }
 
@@ -98,7 +104,7 @@ export interface ClassifiedPositions {
  */
 export interface TeamPositionDistribution {
   goalkeeper: number;     // Players with GK as primary position
-  defense: number;        // Players with defensive positions (LB, CB, RB, WB) as primary
+  defense: number;        // Players with defensive positions (LB, CB, RB, LWB, RWB) as primary
   midfield: number;       // Players with midfield positions (LW, CM, RW, CAM, CDM) as primary
   attack: number;         // Players with attacking positions (ST) as primary
   versatile: number;      // Players with multiple primary positions
@@ -155,12 +161,16 @@ export interface PlayerWithPositions {
 
 /**
  * Position rating submission data
- * Used when submitting new position ratings
+ * Used when submitting new ranked position ratings
  */
 export interface PositionRatingSubmission {
   rater_id: string;
   rated_player_id: string;
-  positions: Position[];  // Multiple positions can be selected
+  positions: {
+    first?: Position;    // 1st choice (3 points)
+    second?: Position;   // 2nd choice (2 points)
+    third?: Position;    // 3rd choice (1 point)
+  };
 }
 
 /**
@@ -173,6 +183,10 @@ export interface PositionConsensusQueryResult {
   rating_count: number;
   total_raters: number;
   percentage: number;
+  points: number;
+  rank_1_count: number;
+  rank_2_count: number;
+  rank_3_count: number;
   updated_at: string;
 }
 

@@ -1,87 +1,98 @@
 /**
- * PositionSelector Component
+ * PositionSelector Component - Ranked Position System
  *
- * Allows users to select multiple positions where a player excels.
- * Shows a warning modal if selecting more than 3 positions.
- * Grouped by category (Goalkeeper, Defense, Midfield, Attack).
+ * Allows users to rank up to 3 positions where a player excels most.
+ * 1st choice = 3 points (Gold 🥇)
+ * 2nd choice = 2 points (Silver 🥈)
+ * 3rd choice = 1 point (Bronze 🥉)
+ *
+ * Uses dropdown selectors with visual rank indicators.
  */
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
 import { Position } from '../../types/positions';
-import {
-  POSITIONS_BY_CATEGORY,
-  CATEGORY_CONFIG,
-  POSITION_THRESHOLDS
-} from '../../constants/positions';
-import { validatePositionSelectionCount } from '../../utils/positionClassifier';
+import { POSITION_CONFIGS } from '../../constants/positions';
 
 interface PositionSelectorProps {
-  /** Currently selected position codes */
-  selectedPositions: Position[];
+  /** Currently selected ranked positions */
+  selectedPositions: {
+    first?: Position;
+    second?: Position;
+    third?: Position;
+  };
 
   /** Callback when selection changes */
-  onPositionsChange: (positions: Position[]) => void;
+  onPositionsChange: (positions: { first?: Position; second?: Position; third?: Position }) => void;
 
   /** Whether the selector is disabled (e.g., in ViewAs mode) */
   disabled?: boolean;
 }
+
+/**
+ * Badge styling for each rank
+ * Gold (#FCD34D), Silver (#9CA3AF), Bronze (#EA580C)
+ */
+const RANK_STYLES = {
+  first: {
+    badge: 'bg-[#FCD34D] text-gray-900',
+    label: '1st Choice',
+    emoji: '🥇',
+    points: 3
+  },
+  second: {
+    badge: 'bg-[#9CA3AF] text-white',
+    label: '2nd Choice',
+    emoji: '🥈',
+    points: 2
+  },
+  third: {
+    badge: 'bg-[#EA580C] text-white',
+    label: '3rd Choice',
+    emoji: '🥉',
+    points: 1
+  }
+} as const;
 
 export default function PositionSelector({
   selectedPositions,
   onPositionsChange,
   disabled = false
 }: PositionSelectorProps) {
-  const [showWarningModal, setShowWarningModal] = useState(false);
-  const [pendingPosition, setPendingPosition] = useState<Position | null>(null);
-
   /**
-   * Toggle a position selection
-   * Shows warning modal if selecting > 3 positions
+   * Handle position change for a specific rank
    */
-  const togglePosition = (code: Position) => {
-    if (disabled) return;
+  const handleRankChange = (rank: 'first' | 'second' | 'third', value: string) => {
+    const newPositions = { ...selectedPositions };
 
-    const isSelected = selectedPositions.includes(code);
-
-    if (isSelected) {
-      // Deselecting - always allow
-      const newPositions = selectedPositions.filter(p => p !== code);
-      onPositionsChange(newPositions);
+    if (value === '') {
+      // Clear this rank
+      delete newPositions[rank];
     } else {
-      // Selecting - check if would exceed recommended count
-      const newCount = selectedPositions.length + 1;
-
-      if (newCount > POSITION_THRESHOLDS.MAX_RECOMMENDED_SELECTIONS) {
-        // Show warning modal
-        setPendingPosition(code);
-        setShowWarningModal(true);
-      } else {
-        // Under limit - add directly
-        const newPositions = [...selectedPositions, code];
-        onPositionsChange(newPositions);
-      }
+      // Set new position for this rank
+      newPositions[rank] = value as Position;
     }
+
+    onPositionsChange(newPositions);
   };
 
   /**
-   * Confirm adding position despite warning
+   * Get positions that are already selected in other ranks
+   * Used to disable duplicate selections
    */
-  const confirmAddPosition = () => {
-    if (pendingPosition) {
-      const newPositions = [...selectedPositions, pendingPosition];
-      onPositionsChange(newPositions);
-    }
-    setShowWarningModal(false);
-    setPendingPosition(null);
-  };
+  const getDisabledPositions = (currentRank: 'first' | 'second' | 'third'): Position[] => {
+    const disabled: Position[] = [];
 
-  /**
-   * Cancel adding position
-   */
-  const cancelAddPosition = () => {
-    setShowWarningModal(false);
-    setPendingPosition(null);
+    if (currentRank !== 'first' && selectedPositions.first) {
+      disabled.push(selectedPositions.first);
+    }
+    if (currentRank !== 'second' && selectedPositions.second) {
+      disabled.push(selectedPositions.second);
+    }
+    if (currentRank !== 'third' && selectedPositions.third) {
+      disabled.push(selectedPositions.third);
+    }
+
+    return disabled;
   };
 
   /**
@@ -89,166 +100,180 @@ export default function PositionSelector({
    */
   const clearAll = () => {
     if (disabled) return;
-    onPositionsChange([]);
+    onPositionsChange({});
   };
 
-  // Get ordered categories
-  const orderedCategories = Object.entries(CATEGORY_CONFIG)
-    .sort(([, a], [, b]) => a.order - b.order)
-    .map(([key]) => key as keyof typeof CATEGORY_CONFIG);
+  /**
+   * Get count of selected positions
+   */
+  const selectedCount = [
+    selectedPositions.first,
+    selectedPositions.second,
+    selectedPositions.third
+  ].filter(Boolean).length;
+
+  /**
+   * Render a single rank dropdown
+   */
+  const renderRankDropdown = (rank: 'first' | 'second' | 'third') => {
+    const style = RANK_STYLES[rank];
+    const disabledPositions = getDisabledPositions(rank);
+    const currentValue = selectedPositions[rank] || '';
+
+    return (
+      <div key={rank} className="form-control">
+        {/* Rank label with badge */}
+        <label className="label">
+          <span className="label-text flex items-center gap-2">
+            <span className={`px-2 py-0.5 rounded text-xs font-bold ${style.badge}`}>
+              {style.emoji} {style.label}
+            </span>
+            <span className="text-xs opacity-70">({style.points} points)</span>
+          </span>
+        </label>
+
+        {/* Dropdown selector */}
+        <select
+          className={`select select-bordered w-full ${
+            currentValue ? 'select-primary' : ''
+          }`}
+          value={currentValue}
+          onChange={(e) => handleRankChange(rank, e.target.value)}
+          disabled={disabled}
+        >
+          {/* Empty option */}
+          <option value="">
+            {rank === 'first'
+              ? 'Select their best position...'
+              : 'Select position (optional)...'}
+          </option>
+
+          {/* Position options grouped by category */}
+          <optgroup label="🥅 Goalkeeper">
+            {POSITION_CONFIGS
+              .filter(p => p.category === 'goalkeeper')
+              .map(pos => (
+                <option
+                  key={pos.code}
+                  value={pos.code}
+                  disabled={disabledPositions.includes(pos.code)}
+                >
+                  {pos.label} ({pos.code})
+                  {disabledPositions.includes(pos.code) ? ' - Already selected' : ''}
+                </option>
+              ))}
+          </optgroup>
+
+          <optgroup label="🛡️ Defense">
+            {POSITION_CONFIGS
+              .filter(p => p.category === 'defense')
+              .map(pos => (
+                <option
+                  key={pos.code}
+                  value={pos.code}
+                  disabled={disabledPositions.includes(pos.code)}
+                >
+                  {pos.label} ({pos.code})
+                  {disabledPositions.includes(pos.code) ? ' - Already selected' : ''}
+                </option>
+              ))}
+          </optgroup>
+
+          <optgroup label="⚙️ Midfield">
+            {POSITION_CONFIGS
+              .filter(p => p.category === 'midfield')
+              .map(pos => (
+                <option
+                  key={pos.code}
+                  value={pos.code}
+                  disabled={disabledPositions.includes(pos.code)}
+                >
+                  {pos.label} ({pos.code})
+                  {disabledPositions.includes(pos.code) ? ' - Already selected' : ''}
+                </option>
+              ))}
+          </optgroup>
+
+          <optgroup label="⚔️ Attack">
+            {POSITION_CONFIGS
+              .filter(p => p.category === 'attack')
+              .map(pos => (
+                <option
+                  key={pos.code}
+                  value={pos.code}
+                  disabled={disabledPositions.includes(pos.code)}
+                >
+                  {pos.label} ({pos.code})
+                  {disabledPositions.includes(pos.code) ? ' - Already selected' : ''}
+                </option>
+              ))}
+          </optgroup>
+        </select>
+      </div>
+    );
+  };
 
   return (
     <div className="form-control">
       {/* Header */}
       <label className="label">
-        <span className="label-text font-medium">Positions Where They Excel</span>
-        {selectedPositions.length > 0 && !disabled && (
+        <span className="label-text font-medium">Position Preferences</span>
+        {selectedCount > 0 && !disabled && (
           <button
             type="button"
             onClick={clearAll}
             className="label-text-alt underline hover:text-primary transition-colors"
           >
-            Clear all ({selectedPositions.length})
+            Clear all ({selectedCount})
           </button>
         )}
       </label>
 
       {/* Main selection area */}
-      <div className="p-4 bg-base-200 rounded-lg">
-        <div className="text-sm font-medium mb-3">
-          Select positions this player excels at:
+      <div className="p-4 bg-base-200 rounded-lg space-y-4">
+        {/* Instructions */}
+        <div className="text-sm">
+          <div className="font-medium mb-1">Rank this player's best positions:</div>
+          <div className="text-xs opacity-70">
+            Select 1-3 positions in order of strength. Higher ranks = more weight.
+          </div>
         </div>
 
-        {/* Position groups */}
-        <div className="space-y-4">
-          {orderedCategories.map(categoryKey => {
-            const category = CATEGORY_CONFIG[categoryKey];
-            const positions = POSITIONS_BY_CATEGORY[categoryKey];
-
-            return (
-              <div key={categoryKey} className="space-y-2">
-                {/* Category header */}
-                <div className="text-xs font-bold uppercase opacity-70">
-                  {category.emoji} {category.label}
-                </div>
-
-                {/* Position checkboxes */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {positions.map(pos => {
-                    const isSelected = selectedPositions.includes(pos.code);
-
-                    return (
-                      <label
-                        key={pos.code}
-                        className={`
-                          flex items-center gap-2 p-2 rounded cursor-pointer transition-all
-                          ${isSelected
-                            ? 'bg-primary/10 border border-primary/20 shadow-sm'
-                            : 'hover:bg-base-300 border border-transparent'
-                          }
-                          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        `}
-                      >
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm checkbox-primary"
-                          checked={isSelected}
-                          onChange={() => togglePosition(pos.code)}
-                          disabled={disabled}
-                        />
-                        <span className="text-sm">
-                          {pos.label} ({pos.code})
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+        {/* Three rank dropdowns */}
+        <div className="space-y-3">
+          {renderRankDropdown('first')}
+          {renderRankDropdown('second')}
+          {renderRankDropdown('third')}
         </div>
       </div>
 
       {/* Help text */}
       <div className="text-xs mt-2 p-2 bg-info/10 border border-info/20 rounded">
-        <strong>Tip:</strong> Select all positions where this player can perform well,
-        not just their "main" position. Aim for 1-3 positions for best results.
+        <strong>How it works:</strong> Your 1st choice gets 3 points, 2nd gets 2 points,
+        3rd gets 1 point. Consensus percentages are calculated from all raters' weighted points.
       </div>
 
-      {/* Warning message if too many selected */}
-      {selectedPositions.length > POSITION_THRESHOLDS.MAX_RECOMMENDED_SELECTIONS && (
-        <div className="text-xs mt-2 p-2 bg-warning/10 border border-warning/20 rounded">
-          <strong>Note:</strong> You've selected {selectedPositions.length} positions.
-          Consider keeping only their strongest {POSITION_THRESHOLDS.MAX_RECOMMENDED_SELECTIONS}.
+      {/* Summary of selected positions */}
+      {selectedCount > 0 && (
+        <div className="mt-2 p-2 bg-base-300 rounded flex flex-wrap gap-2 items-center">
+          <span className="text-xs font-medium opacity-70">Selected:</span>
+          {selectedPositions.first && (
+            <span className="px-2 py-1 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+              🥇 {selectedPositions.first}
+            </span>
+          )}
+          {selectedPositions.second && (
+            <span className="px-2 py-1 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+              🥈 {selectedPositions.second}
+            </span>
+          )}
+          {selectedPositions.third && (
+            <span className="px-2 py-1 rounded text-xs font-medium bg-[#EA580C] text-white">
+              🥉 {selectedPositions.third}
+            </span>
+          )}
         </div>
       )}
-
-      {/* Warning Modal */}
-      <AnimatePresence>
-        {showWarningModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]"
-            onClick={cancelAddPosition}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-white rounded-lg p-6 max-w-md w-full space-y-4"
-              onClick={e => e.stopPropagation()}
-            >
-              {/* Warning header */}
-              <div className="flex items-start gap-3">
-                <div className="text-3xl">⚠️</div>
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    Too Many Positions Selected
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    You're about to select {selectedPositions.length + 1} positions.
-                  </p>
-                </div>
-              </div>
-
-              {/* Warning message */}
-              <div className="text-sm space-y-2">
-                <p>
-                  For the most accurate team balancing, please select only the top{' '}
-                  <strong>{POSITION_THRESHOLDS.MAX_RECOMMENDED_SELECTIONS} positions</strong>{' '}
-                  where this player excels most.
-                </p>
-                <p className="text-gray-600">
-                  Selecting too many positions makes the data less meaningful for creating
-                  balanced teams.
-                </p>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex justify-end gap-2 mt-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="btn btn-ghost"
-                  onClick={cancelAddPosition}
-                >
-                  Go Back
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="btn btn-warning"
-                  onClick={confirmAddPosition}
-                >
-                  Select Anyway
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

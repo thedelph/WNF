@@ -48,9 +48,17 @@ export const POSITION_CONFIGS: PositionConfig[] = [
     defensiveWeight: 'high'
   },
   {
-    code: 'WB',
-    label: 'Wing Back',
-    shortLabel: 'WB',
+    code: 'LWB',
+    label: 'Left Wing Back',
+    shortLabel: 'LWB',
+    category: 'defense',
+    emoji: '🛡️',
+    defensiveWeight: 'medium'
+  },
+  {
+    code: 'RWB',
+    label: 'Right Wing Back',
+    shortLabel: 'RWB',
     category: 'defense',
     emoji: '🛡️',
     defensiveWeight: 'medium'

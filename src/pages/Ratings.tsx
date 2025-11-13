@@ -22,7 +22,7 @@ interface Player {
   is_beta_tester?: boolean;
   is_super_admin?: boolean;
   position_consensus?: PositionConsensus[];
-  my_position_selections?: string[]; // Current user's position selections for this player
+  my_position_selections?: { first?: Position; second?: Position; third?: Position }; // Current user's ranked position selections for this player
   current_rating?: {
     attack_rating: number;
     defense_rating: number;
@@ -67,7 +67,7 @@ export default function Ratings() {
     gk: null,
   });
   const [selectedAttributes, setSelectedAttributes] = useState<AttributeCombination | null>(null);
-  const [selectedPositions, setSelectedPositions] = useState<Position[]>([]);
+  const [selectedPositions, setSelectedPositions] = useState<{ first?: Position; second?: Position; third?: Position }>({});
   const [availablePlaystyles, setAvailablePlaystyles] = useState<Array<{id: string; name: string; pace_weight: number; shooting_weight: number; passing_weight: number; dribbling_weight: number; defending_weight: number; physical_weight: number}>>([]);
 
   const fetchPlaystyles = async () => {
@@ -378,10 +378,10 @@ export default function Ratings() {
 
       if (whatsAppError) throw whatsAppError;
 
-      // Get current user's position selections for all players (what I rated, not consensus)
+      // Get current user's ranked position selections for all players (what I rated, not consensus)
       const { data: myPositionSelections, error: myPositionError } = await supabase
         .from('player_position_ratings')
-        .select('rated_player_id, position')
+        .select('rated_player_id, position, rank')
         .eq('rater_id', currentPlayer.id);
 
       if (myPositionError) {
@@ -393,11 +393,14 @@ export default function Ratings() {
         whatsAppData?.map(player => [player.id, player.whatsapp_group_member])
       );
 
-      // Group my position selections by player
-      const myPositionsMap = new Map<string, string[]>();
+      // Group my ranked position selections by player
+      const myPositionsMap = new Map<string, { first?: Position; second?: Position; third?: Position }>();
       myPositionSelections?.forEach(selection => {
-        const existing = myPositionsMap.get(selection.rated_player_id) || [];
-        myPositionsMap.set(selection.rated_player_id, [...existing, selection.position]);
+        const existing = myPositionsMap.get(selection.rated_player_id) || {};
+        if (selection.rank === 1) existing.first = selection.position as Position;
+        if (selection.rank === 2) existing.second = selection.position as Position;
+        if (selection.rank === 3) existing.third = selection.position as Position;
+        myPositionsMap.set(selection.rated_player_id, existing);
       });
 
       // Combine the data and filter out the current user
@@ -409,7 +412,7 @@ export default function Ratings() {
           current_rating: existingRatings?.find(
             (rating) => rating.rated_player_id === player.id
           ),
-          my_position_selections: myPositionsMap.get(player.id) || []
+          my_position_selections: myPositionsMap.get(player.id) || {}
         }));
 
       setPlayers(enhancedPlayers);
@@ -478,8 +481,10 @@ export default function Ratings() {
 
       if (error) throw error;
 
-      // Save position ratings
-      if (selectedPositions.length > 0) {
+      // Save ranked position ratings
+      const hasAnyPosition = selectedPositions.first || selectedPositions.second || selectedPositions.third;
+
+      if (hasAnyPosition) {
         // First, delete any existing position ratings from this rater for this player
         const { error: deleteError } = await supabase
           .from('player_position_ratings')
@@ -491,12 +496,32 @@ export default function Ratings() {
           console.error('Error deleting old position ratings:', deleteError);
         }
 
-        // Then insert the new position ratings
-        const positionInserts = selectedPositions.map(position => ({
-          rater_id: currentPlayer.id,
-          rated_player_id: selectedPlayer.id,
-          position
-        }));
+        // Then insert the new ranked position ratings
+        const positionInserts = [];
+        if (selectedPositions.first) {
+          positionInserts.push({
+            rater_id: currentPlayer.id,
+            rated_player_id: selectedPlayer.id,
+            position: selectedPositions.first,
+            rank: 1
+          });
+        }
+        if (selectedPositions.second) {
+          positionInserts.push({
+            rater_id: currentPlayer.id,
+            rated_player_id: selectedPlayer.id,
+            position: selectedPositions.second,
+            rank: 2
+          });
+        }
+        if (selectedPositions.third) {
+          positionInserts.push({
+            rater_id: currentPlayer.id,
+            rated_player_id: selectedPlayer.id,
+            position: selectedPositions.third,
+            rank: 3
+          });
+        }
 
         const { error: positionError } = await supabase
           .from('player_position_ratings')
@@ -522,7 +547,7 @@ export default function Ratings() {
       toast.success(`Successfully rated ${selectedPlayer.friendly_name}`);
       setSelectedPlayer(null);
       setSelectedAttributes(null); // Reset attribute selection
-      setSelectedPositions([]); // Reset position selection
+      setSelectedPositions({}); // Reset position selection
       fetchPlayers(); // Refresh the list
     } catch (error: any) {
       toast.error(error.message);
@@ -859,10 +884,13 @@ export default function Ratings() {
                           return null;
                         })()}
 
-                        {/* My Position Selections Display */}
+                        {/* My Ranked Position Selections Display */}
                         {(() => {
                           // Show what positions I've rated this player for (not consensus)
-                          if (!player.my_position_selections || player.my_position_selections.length === 0) {
+                          const selections = player.my_position_selections;
+                          const hasAnySelection = selections && (selections.first || selections.second || selections.third);
+
+                          if (!hasAnySelection) {
                             return null;
                           }
 
@@ -870,14 +898,21 @@ export default function Ratings() {
                             <div className="mt-2">
                               <p className="font-semibold text-xs">You rated as:</p>
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {player.my_position_selections.map((position: string) => (
-                                  <span
-                                    key={position}
-                                    className="px-2 py-1 rounded text-xs font-medium bg-primary text-primary-content"
-                                  >
-                                    {position}
+                                {selections.first && (
+                                  <span className="px-2 py-1 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+                                    🥇 {selections.first}
                                   </span>
-                                ))}
+                                )}
+                                {selections.second && (
+                                  <span className="px-2 py-1 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+                                    🥈 {selections.second}
+                                  </span>
+                                )}
+                                {selections.third && (
+                                  <span className="px-2 py-1 rounded text-xs font-medium bg-[#EA580C] text-white">
+                                    🥉 {selections.third}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           );
@@ -897,24 +932,30 @@ export default function Ratings() {
                           gk: player.current_rating?.gk_rating ?? null
                         });
 
-                        // Load existing position ratings for this player
+                        // Load existing ranked position ratings for this player
                         try {
                           const { data: existingPositions, error: positionError } = await supabase
                             .from('player_position_ratings')
-                            .select('position')
+                            .select('position, rank')
                             .eq('rater_id', currentPlayer.id)
                             .eq('rated_player_id', player.id);
 
                           if (positionError) {
                             console.error('Error loading position ratings:', positionError);
-                            setSelectedPositions([]);
+                            setSelectedPositions({});
                           } else {
-                            const positions = existingPositions?.map(p => p.position as Position) || [];
-                            setSelectedPositions(positions);
+                            // Build ranked position object from database results
+                            const rankedPositions: { first?: Position; second?: Position; third?: Position } = {};
+                            existingPositions?.forEach(p => {
+                              if (p.rank === 1) rankedPositions.first = p.position as Position;
+                              if (p.rank === 2) rankedPositions.second = p.position as Position;
+                              if (p.rank === 3) rankedPositions.third = p.position as Position;
+                            });
+                            setSelectedPositions(rankedPositions);
                           }
                         } catch (error) {
                           console.error('Error loading position ratings:', error);
-                          setSelectedPositions([]);
+                          setSelectedPositions({});
                         }
 
                         // Set selected attributes from current rating
