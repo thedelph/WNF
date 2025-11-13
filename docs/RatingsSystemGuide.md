@@ -40,40 +40,55 @@ The WNF Ratings System allows players to confidentially rate other players they 
 ### Position Preferences
 
 **Added:** 2025-11-12
+**Updated to Ranked System:** 2025-11-13
 
 #### What Position Preferences Show
-Position preferences indicate WHERE a player excels on the pitch across 11 standard positions:
+Position preferences indicate WHERE a player excels on the pitch across 12 standard positions:
 - 🥅 **Goalkeeper**: GK
-- 🛡️ **Defense**: LB (Left Back), CB (Center Back), RB (Right Back), WB (Wing Back)
-- ⚙️ **Midfield**: LM (Left Mid), CM (Center Mid), RM (Right Mid), CAM (Attacking Mid), CDM (Defensive Mid)
+- 🛡️ **Defense**: LB (Left Back), CB (Center Back), RB (Right Back), LWB (Left Wing Back), RWB (Right Wing Back)
+- ⚙️ **Midfield**: LW (Left Winger), CM (Center Mid), RW (Right Winger), CAM (Attacking Mid), CDM (Defensive Mid)
 - ⚔️ **Attack**: ST (Striker)
 
-#### How It Works
-- **Multi-Select**: Raters can select 1-3 positions where a player excels (warning if selecting more than 3)
-- **Consensus-Based**: System aggregates selections from multiple raters to show percentage consensus
-- **Display Format**: "LB 75%, CB 60%" (primary positions with 50%+ consensus shown first)
-- **Minimum Threshold**: Position data only displayed after 5+ raters have provided input
+#### Ranked System
+Instead of selecting multiple positions, raters now **rank up to 3 positions** in order of where the player excels most:
+
+**Point System:**
+- 🥇 **1st Choice (Gold)**: 3 points - Best position
+- 🥈 **2nd Choice (Silver)**: 2 points - Secondary position
+- 🥉 **3rd Choice (Bronze)**: 1 point - Tertiary position
+
+**Consensus Calculation:**
+- Percentage = (Total Points / (Total Raters × 6 max points)) × 100
+- Example: 5 raters all pick "ST" as 1st choice = 15 points / 30 possible = 50% consensus
+
+#### Benefits of Ranked System
+- **Forces Critical Thinking**: Must decide the BEST position, not just all possible positions
+- **Natural Limit**: Maximum 3 positions prevents spam ratings
+- **Better Consensus**: Weighted points show strength of position preference, not just occurrence
+- **Minimum Threshold**: Position data only shown after 5+ raters have provided input
 
 #### Consensus Tiers
 - **Primary (50%+)**: Strong consensus, shown with solid primary badge
 - **Secondary (25-49%)**: Moderate consensus, shown with lighter badge
-- **Mentioned (<25%)**: Weak consensus, not displayed
+- **Mentioned (<25%)**: Weak consensus, not displayed in primary views
 
 #### Team Balancing Impact
 Position preferences are used by the team balancing algorithm to prevent tactical imbalances:
 - **Hard Constraint**: Prevents teams from having 3+ more players in any position category
-- **Categories**: Goalkeeper, Defense (LB/CB/RB/WB/CDM), Midfield (LM/CM/RM/CAM), Attack (ST)
+- **Categories**: Goalkeeper, Defense, Midfield, Attack
+- **Primary Position Used**: Only positions with ≥50% consensus are considered
 - **Example**: If one team would get 4 strikers and the other only 1, the algorithm will reject that configuration
 
 #### Use Cases
-- **Prevents clustering**: Addresses situations like Tom K (physical striker) and Stephen (pace striker) both being assigned to the same team despite different physical profiles
-- **Tactical balance**: Ensures teams have appropriate coverage across the pitch
-- **Formation planning**: Helps coaches understand player versatility
+- **Prevents clustering**: Addresses situations like multiple strikers being assigned to the same team
+- **Tactical balance**: Ensures teams have appropriate coverage across all areas of the pitch
+- **Formation planning**: Helps coaches understand player versatility and optimal positioning
 
 #### Database Structure
-- `player_position_ratings`: Individual position selections from each rater
-- `player_position_consensus`: Pre-calculated percentages updated via trigger
-- **Trigger**: Automatically recalculates consensus when ratings change
+- `player_position_ratings`: Individual ranked selections (rank 1/2/3) from each rater
+- `player_position_consensus`: Pre-calculated percentages with rank counts (rank_1_count, rank_2_count, rank_3_count)
+- **Trigger**: Automatically recalculates consensus and weighted points when ratings change
+- **History Table**: `player_ratings_history` tracks position changes with position_1st/2nd/3rd fields
 
 ## Administrative Interface
 
@@ -140,8 +155,118 @@ Position preferences are used by the team balancing algorithm to prevent tactica
 
 #### Filtering
 - Search by player name
-- Filter by rating ranges
-- Filter by date ranges (if implemented)
+- Filter by rating ranges (Attack, Defense, Game IQ, GK)
+- **Filter by Position** (Added 2025-11-13)
+  - Multi-select checkboxes organized by category
+  - Filters players by primary positions (≥50% consensus)
+  - Shows selected count and clear button
+  - Position categories: Goalkeeper, Defense, Midfield, Attack
+
+### Position System Integration (Admin)
+
+**Added:** 2025-11-13
+
+The admin ratings interface now includes comprehensive position data across all three tabs:
+
+#### 1. Ratings Received Tab
+
+**Players Table - Position Consensus Column:**
+- Shows primary positions (≥50% consensus) for each player
+- Format: "LB 75%, CB 60%" with percentage badges
+- Tooltip displays detailed breakdown:
+  - Rating count and total raters
+  - Rank distribution (🥇/🥈/🥉 counts)
+- Status indicators:
+  - "Need X more raters" if <5 raters
+  - "No primary positions" if no position ≥50%
+- Mobile view: Compact display showing top 2 positions
+
+**Ratings Details Table - Positions Column:**
+- Shows ranked positions (🥇1st, 🥈2nd, 🥉3rd) for each rating
+- Color-coded badges:
+  - Gold (#FCD34D) for 1st choice
+  - Silver (#9CA3AF) for 2nd choice
+  - Bronze (#EA580C) for 3rd choice
+- Shows "-" if no positions rated
+- Mobile view: Inline display with position badges
+
+#### 2. Ratings Given Tab
+
+**Raters Table:**
+- Same format as Ratings Received tab
+- Shows position consensus for players being rated
+
+**Ratings Details Table:**
+- Same ranked badge display as Received tab
+- Shows positions selected by the rater for each player
+
+#### 3. Attributes Comparison Tab
+
+**Position Consensus Comparison Table:**
+- Displays when players are selected for comparison (1-4 players)
+- Columns:
+  - Player name
+  - Primary Positions (≥50%) with percentages
+  - Secondary Positions (25-49%) with percentages
+  - Data Status (sufficient/need more/not rated)
+- Color coding:
+  - Primary: Primary blue badges
+  - Secondary: Warning yellow badges
+  - Status: Success/Warning/Ghost badges
+- Tooltips show full rank breakdown
+
+#### Recent Activity Feed
+
+**Position Change Tracking:**
+- Shows position changes alongside rating changes
+- Visual indicators:
+  - Green "+" for positions added
+  - Yellow "⟳" for positions changed
+  - Strikethrough for positions removed
+  - Unchanged positions shown normally
+- Ranked badges with medal emojis
+- Mobile responsive design
+
+#### Position Filter Panel
+
+**Multi-Select Interface:**
+- Organized by 4 categories (Goalkeeper, Defense, Midfield, Attack)
+- Checkboxes for all 12 positions
+- Shows selected count
+- Clear all button
+- Help text: "Filters players by their primary positions (≥50% consensus)"
+
+#### Position Heatmap Visualization
+
+**NEW Component** - Comprehensive league-wide analysis:
+- **Layout**: Rows (players) × Columns (12 positions)
+- **Cell Display**:
+  - Percentage or "-" for no rating
+  - Color gradient based on consensus strength
+  - Opacity varies (0.3 to 1.0) for visual emphasis
+- **Color Coding**:
+  - Success (≥75%): Strong primary position
+  - Primary (50-74%): Primary position
+  - Warning (25-49%): Secondary position
+  - Info (<25%): Mentioned position
+  - Base (0%): Not rated
+- **Tooltips**:
+  - Detailed consensus percentage
+  - Rating count and total raters
+  - Rank distribution (🥇/🥈/🥉 counts)
+- **Status Indicators**:
+  - Shows "need X more" if <5 raters
+  - Grays out insufficient data
+- **Interactivity**:
+  - Click player row to select
+  - Horizontal scroll for large datasets
+- **Legend**: Visual guide for color meanings
+
+**Use Cases:**
+- Quick identification of versatile players
+- League-wide position distribution analysis
+- Spotting position gaps or concentrations
+- Data quality assessment (who needs more ratings)
 
 ## Technical Implementation
 
@@ -166,13 +291,30 @@ Position preferences are used by the team balancing algorithm to prevent tactica
 #### Custom Hooks
 1. `usePlayerRatings`
    - Fetches and manages player ratings data
+   - **Now includes**: Position consensus and individual position ratings
+   - Groups positions by rater_id (first/second/third structure)
+   - Attaches position data to each rating object
    - Handles loading and error states
    - Implements security checks
 
 2. `useRaterStats`
    - Fetches and manages rater statistics
+   - **Now includes**: Position data for ratings given by each rater
+   - Groups positions by rated_player_id
    - Handles loading and error states
    - Implements security checks
+
+3. `useRecentRatings`
+   - Fetches recent rating activity with change tracking
+   - **Now includes**: Current and previous position data
+   - Fetches from `player_ratings_history` for previous values
+   - Supports position change detection and visualization
+
+4. `usePlayerFiltering`
+   - Filters players based on search term and filter config
+   - **Now includes**: Position-based filtering
+   - Filters by primary positions (≥50% consensus)
+   - Empty position filter array = show all players
 
 ### Data Flow
 ```mermaid
@@ -225,8 +367,17 @@ graph TD
 - Integrated Game IQ rating throughout the system
 - Added GK (Goalkeeper) rating feature (October 8, 2025)
 - **Added Position Preferences feature (November 12, 2025)**
-  - 11 standard positions (GK, LB, CB, RB, WB, LM, CM, RM, CAM, CDM, ST)
+  - 12 standard positions (GK, LB, CB, RB, LWB, RWB, LW, CM, RW, CAM, CDM, ST)
+  - Ranked system (1st/2nd/3rd choices with weighted points)
   - Consensus-based aggregation (5 rater minimum, percentage display)
-  - Multi-select UI with 1-3 position recommendation
   - Hard constraint in team balancing (max 2 player gap per category)
   - Addresses tactical clustering issues (e.g., multiple strikers on same team)
+- **Admin Interface Position Integration (November 13, 2025)**
+  - Position consensus columns in Players/Raters tables
+  - Ranked position badges (🥇🥈🥉) in ratings details
+  - Position change tracking in Recent Activity feed
+  - Multi-select position filter panel
+  - Position Heatmap visualization component
+  - Position consensus comparison in Attributes tab
+  - Full mobile responsiveness across all position features
+  - Comprehensive tooltips with rank breakdowns

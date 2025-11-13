@@ -49,6 +49,7 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
               <span className="cursor-pointer">GK</span>
             </th>
             <th className="hidden md:table-cell">Playstyle</th>
+            <th className="hidden lg:table-cell">Positions</th>
             <th className="sm:hidden">Ratings</th>
             <th>Date</th>
           </tr>
@@ -80,6 +81,28 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
                   <span className="text-xs text-base-content/50">-</span>
                 )}
               </td>
+              <td className="hidden lg:table-cell">
+                <div className="flex flex-wrap gap-1">
+                  {rating.position_1st && (
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+                      🥇 {rating.position_1st}
+                    </span>
+                  )}
+                  {rating.position_2nd && (
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+                      🥈 {rating.position_2nd}
+                    </span>
+                  )}
+                  {rating.position_3rd && (
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white">
+                      🥉 {rating.position_3rd}
+                    </span>
+                  )}
+                  {!rating.position_1st && !rating.position_2nd && !rating.position_3rd && (
+                    <span className="text-xs text-base-content/50">-</span>
+                  )}
+                </div>
+              </td>
               <td className="sm:hidden">
                 <div className="flex flex-col gap-1">
                   <span className="badge badge-xs">A: {formatRating(rating.attack_rating)}</span>
@@ -90,6 +113,25 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
                     <span className="text-xs">
                       {rating.playstyle.name}
                     </span>
+                  )}
+                  {(rating.position_1st || rating.position_2nd || rating.position_3rd) && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {rating.position_1st && (
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+                          🥇 {rating.position_1st}
+                        </span>
+                      )}
+                      {rating.position_2nd && (
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+                          🥈 {rating.position_2nd}
+                        </span>
+                      )}
+                      {rating.position_3rd && (
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white">
+                          🥉 {rating.position_3rd}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </td>

@@ -1,7 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FilterConfig } from './types';
+import { FilterConfig } from '../types';
 import { FaTimes } from 'react-icons/fa';
+import { Position } from '../../../../types/positions';
+import { POSITION_CONFIGS } from '../../../../constants/positions';
 
 interface FilterPanelProps {
   filterConfig: FilterConfig;
@@ -98,7 +100,126 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
         </div>
       </div>
-      
+
+      <div className="mt-4">
+        <label className="label">
+          <span className="label-text font-medium">Filter by Position Consensus</span>
+          {filterConfig.selectedPositions.length > 0 && (
+            <button
+              onClick={() => onFilterChange({ ...filterConfig, selectedPositions: [] })}
+              className="label-text-alt underline hover:text-primary"
+            >
+              Clear ({filterConfig.selectedPositions.length})
+            </button>
+          )}
+        </label>
+        <div className="bg-base-100 p-3 rounded-lg space-y-3">
+          {/* Goalkeeper */}
+          <div>
+            <div className="text-xs font-medium mb-1 flex items-center gap-1">
+              🥅 Goalkeeper
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {POSITION_CONFIGS.filter(p => p.category === 'goalkeeper').map(pos => (
+                <label key={pos.code} className="cursor-pointer flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-xs"
+                    checked={filterConfig.selectedPositions.includes(pos.code)}
+                    onChange={(e) => {
+                      const newPositions = e.target.checked
+                        ? [...filterConfig.selectedPositions, pos.code]
+                        : filterConfig.selectedPositions.filter(p => p !== pos.code);
+                      onFilterChange({ ...filterConfig, selectedPositions: newPositions });
+                    }}
+                  />
+                  <span className="text-xs">{pos.code}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Defense */}
+          <div>
+            <div className="text-xs font-medium mb-1 flex items-center gap-1">
+              🛡️ Defense
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {POSITION_CONFIGS.filter(p => p.category === 'defense').map(pos => (
+                <label key={pos.code} className="cursor-pointer flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-xs"
+                    checked={filterConfig.selectedPositions.includes(pos.code)}
+                    onChange={(e) => {
+                      const newPositions = e.target.checked
+                        ? [...filterConfig.selectedPositions, pos.code]
+                        : filterConfig.selectedPositions.filter(p => p !== pos.code);
+                      onFilterChange({ ...filterConfig, selectedPositions: newPositions });
+                    }}
+                  />
+                  <span className="text-xs">{pos.code}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Midfield */}
+          <div>
+            <div className="text-xs font-medium mb-1 flex items-center gap-1">
+              ⚙️ Midfield
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {POSITION_CONFIGS.filter(p => p.category === 'midfield').map(pos => (
+                <label key={pos.code} className="cursor-pointer flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-xs"
+                    checked={filterConfig.selectedPositions.includes(pos.code)}
+                    onChange={(e) => {
+                      const newPositions = e.target.checked
+                        ? [...filterConfig.selectedPositions, pos.code]
+                        : filterConfig.selectedPositions.filter(p => p !== pos.code);
+                      onFilterChange({ ...filterConfig, selectedPositions: newPositions });
+                    }}
+                  />
+                  <span className="text-xs">{pos.code}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Attack */}
+          <div>
+            <div className="text-xs font-medium mb-1 flex items-center gap-1">
+              ⚔️ Attack
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {POSITION_CONFIGS.filter(p => p.category === 'attack').map(pos => (
+                <label key={pos.code} className="cursor-pointer flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-xs"
+                    checked={filterConfig.selectedPositions.includes(pos.code)}
+                    onChange={(e) => {
+                      const newPositions = e.target.checked
+                        ? [...filterConfig.selectedPositions, pos.code]
+                        : filterConfig.selectedPositions.filter(p => p !== pos.code);
+                      onFilterChange({ ...filterConfig, selectedPositions: newPositions });
+                    }}
+                  />
+                  <span className="text-xs">{pos.code}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="text-xs text-base-content/60 mt-2">
+            Filters players by their primary positions (≥50% consensus)
+          </div>
+        </div>
+      </div>
+
       <div className="mt-4">
         <label className="label">Minimum Total Ratings</label>
         <input

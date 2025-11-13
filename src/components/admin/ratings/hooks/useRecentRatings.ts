@@ -75,6 +75,27 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
         return;
       }
 
+      // Fetch current position ratings for all these player ratings
+      const ratingIds = data.map(r => r.id);
+      const { data: currentPositionsData, error: currentPositionsError } = await supabaseAdmin
+        .from('player_position_ratings')
+        .select('rated_player_id, rater_id, position, rank')
+        .in('rater_id', data.map(r => r.rater_id))
+        .in('rated_player_id', data.map(r => r.rated_player_id));
+
+      if (currentPositionsError) throw currentPositionsError;
+
+      // Group current positions by rater-player pair
+      const currentPositionsMap = new Map();
+      currentPositionsData?.forEach(pr => {
+        const key = `${pr.rater_id}-${pr.rated_player_id}`;
+        const existing = currentPositionsMap.get(key) || {};
+        if (pr.rank === 1) existing.first = pr.position;
+        if (pr.rank === 2) existing.second = pr.position;
+        if (pr.rank === 3) existing.third = pr.position;
+        currentPositionsMap.set(key, existing);
+      });
+
       // Fetch player details for all unique player IDs
       const playerIds = [...new Set([
         ...data.map(r => r.rater_id),
@@ -99,7 +120,7 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
           // Get the most recent history entry before the current update
           const { data: historyData } = await supabaseAdmin
             .from('player_ratings_history')
-            .select('attack_rating, defense_rating, game_iq_rating, gk_rating, playstyle_id')
+            .select('attack_rating, defense_rating, game_iq_rating, gk_rating, playstyle_id, position_1st, position_2nd, position_3rd')
             .eq('rating_id', rating.id)
             .lt('changed_at', rating.updated_at || rating.created_at)
             .order('changed_at', { ascending: false })
@@ -113,6 +134,10 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
             previousPlaystyle = playstylesMap.get(previousRating.playstyle_id) || null;
           }
 
+          // Get current positions for this rater-player pair
+          const positionKey = `${rating.rater_id}-${rating.rated_player_id}`;
+          const currentPositions = currentPositionsMap.get(positionKey) || {};
+
           return {
             ...rating,
             previous_attack_rating: previousRating?.attack_rating ?? null,
@@ -120,7 +145,13 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
             previous_game_iq_rating: previousRating?.game_iq_rating ?? null,
             previous_gk_rating: previousRating?.gk_rating ?? null,
             previous_playstyle_id: previousRating?.playstyle_id ?? null,
-            previous_playstyle: previousPlaystyle
+            previous_playstyle: previousPlaystyle,
+            position_1st: currentPositions.first ?? null,
+            position_2nd: currentPositions.second ?? null,
+            position_3rd: currentPositions.third ?? null,
+            previous_position_1st: previousRating?.position_1st ?? null,
+            previous_position_2nd: previousRating?.position_2nd ?? null,
+            previous_position_3rd: previousRating?.position_3rd ?? null
           };
         })
       );

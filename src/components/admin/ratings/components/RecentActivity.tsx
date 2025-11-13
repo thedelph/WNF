@@ -193,6 +193,72 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                       })()}
                     </div>
                   )}
+
+                  {/* Position changes */}
+                  {(() => {
+                    const hasCurrentPositions = rating.position_1st || rating.position_2nd || rating.position_3rd;
+                    const hasPreviousPositions = rating.previous_position_1st || rating.previous_position_2nd || rating.previous_position_3rd;
+
+                    if (!hasCurrentPositions && !hasPreviousPositions) return null;
+
+                    const positionsChanged =
+                      rating.position_1st !== rating.previous_position_1st ||
+                      rating.position_2nd !== rating.previous_position_2nd ||
+                      rating.position_3rd !== rating.previous_position_3rd;
+
+                    const renderPositionBadges = (first?: string | null, second?: string | null, third?: string | null, isNew = false, isOld = false) => (
+                      <div className={`flex flex-wrap gap-1 ${isOld ? 'line-through opacity-60' : ''}`}>
+                        {first && (
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+                            🥇{first}
+                          </span>
+                        )}
+                        {second && (
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+                            🥈{second}
+                          </span>
+                        )}
+                        {third && (
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white">
+                            🥉{third}
+                          </span>
+                        )}
+                        {isNew && <span className="text-success text-xs">+</span>}
+                      </div>
+                    );
+
+                    if (!hasPreviousPositions && hasCurrentPositions) {
+                      // New positions added
+                      return (
+                        <div className="badge badge-sm badge-ghost p-2">
+                          {renderPositionBadges(rating.position_1st, rating.position_2nd, rating.position_3rd, true)}
+                        </div>
+                      );
+                    } else if (hasPreviousPositions && !hasCurrentPositions) {
+                      // Positions removed
+                      return (
+                        <div className="badge badge-sm badge-ghost p-2">
+                          {renderPositionBadges(rating.previous_position_1st, rating.previous_position_2nd, rating.previous_position_3rd, false, true)}
+                        </div>
+                      );
+                    } else if (positionsChanged) {
+                      // Positions changed
+                      return (
+                        <div className="badge badge-sm badge-ghost p-2"
+                             title={`Changed from ${[rating.previous_position_1st, rating.previous_position_2nd, rating.previous_position_3rd].filter(Boolean).join(', ')} to ${[rating.position_1st, rating.position_2nd, rating.position_3rd].filter(Boolean).join(', ')}`}>
+                          <span className="text-warning text-xs mr-1">⟳</span>
+                          {renderPositionBadges(rating.position_1st, rating.position_2nd, rating.position_3rd)}
+                        </div>
+                      );
+                    } else {
+                      // Positions unchanged
+                      return (
+                        <div className="badge badge-sm badge-ghost p-2">
+                          {renderPositionBadges(rating.position_1st, rating.position_2nd, rating.position_3rd)}
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
               </div>
               

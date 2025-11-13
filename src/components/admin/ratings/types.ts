@@ -1,3 +1,5 @@
+import { Position, PositionConsensus } from '../../../types/positions';
+
 export interface Rating {
   id: string;
   attack_rating: number;
@@ -34,6 +36,14 @@ export interface Rating {
     name: string;
     category: 'attacking' | 'midfield' | 'defensive';
   } | null;
+  // Position preferences (ranked system)
+  position_1st?: Position | null;
+  position_2nd?: Position | null;
+  position_3rd?: Position | null;
+  // Previous position values from history
+  previous_position_1st?: Position | null;
+  previous_position_2nd?: Position | null;
+  previous_position_3rd?: Position | null;
 }
 
 export interface Player {
@@ -53,6 +63,8 @@ export interface Player {
     defending: number;
     physical: number;
   };
+  // Position consensus data (aggregated from all raters)
+  position_consensus?: PositionConsensus[];
 }
 
 export interface SortConfig {
@@ -70,4 +82,5 @@ export interface FilterConfig {
   minGk: number;
   maxGk: number;
   minTotalRatings: number;
+  selectedPositions: Position[]; // Filter by primary positions (>=50% consensus)
 }

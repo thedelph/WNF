@@ -34,7 +34,10 @@ const RatingsView: React.FC = () => {
     maxDefense: 10,
     minGameIq: 0,
     maxGameIq: 10,
-    minTotalRatings: 0
+    minGk: 0,
+    maxGk: 10,
+    minTotalRatings: 0,
+    selectedPositions: []
   });
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPlayersForComparison, setSelectedPlayersForComparison] = useState<string[]>([]);
@@ -272,6 +275,88 @@ const RatingsView: React.FC = () => {
             players={players.filter(p => selectedPlayersForComparison.includes(p.id))}
             className=""
           />
+
+          {/* Position Consensus Comparison */}
+          {selectedPlayersForComparison.length > 0 && (
+            <div className="bg-base-200 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-3">Position Consensus Comparison</h3>
+              <div className="overflow-x-auto">
+                <table className="table table-sm w-full">
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th>Primary Positions (≥50%)</th>
+                      <th>Secondary Positions (25-49%)</th>
+                      <th>Data Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {players.filter(p => selectedPlayersForComparison.includes(p.id)).map(player => {
+                      const primaryPositions = player.position_consensus?.filter(pos => pos.percentage >= 50) || [];
+                      const secondaryPositions = player.position_consensus?.filter(pos => pos.percentage >= 25 && pos.percentage < 50) || [];
+                      const totalRaters = player.position_consensus?.[0]?.total_raters || 0;
+                      const hasSufficientData = totalRaters >= 5;
+
+                      return (
+                        <tr key={player.id} className="hover">
+                          <td className="font-medium">{player.friendly_name}</td>
+                          <td>
+                            {primaryPositions.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {primaryPositions.slice(0, 3).map(pos => (
+                                  <span
+                                    key={pos.position}
+                                    className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary"
+                                    title={`${pos.percentage.toFixed(0)}% consensus (${pos.rating_count}/${pos.total_raters} raters)\n🥇 ${pos.rank_1_count} | 🥈 ${pos.rank_2_count} | 🥉 ${pos.rank_3_count}`}
+                                  >
+                                    {pos.position} {pos.percentage.toFixed(0)}%
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-base-content/50">None</span>
+                            )}
+                          </td>
+                          <td>
+                            {secondaryPositions.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {secondaryPositions.slice(0, 3).map(pos => (
+                                  <span
+                                    key={pos.position}
+                                    className="px-2 py-0.5 rounded text-xs font-medium bg-warning/20 text-warning"
+                                    title={`${pos.percentage.toFixed(0)}% consensus (${pos.rating_count}/${pos.total_raters} raters)\n🥇 ${pos.rank_1_count} | 🥈 ${pos.rank_2_count} | 🥉 ${pos.rank_3_count}`}
+                                  >
+                                    {pos.position} {pos.percentage.toFixed(0)}%
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-base-content/50">None</span>
+                            )}
+                          </td>
+                          <td>
+                            {hasSufficientData ? (
+                              <span className="badge badge-success badge-xs">
+                                {totalRaters} raters
+                              </span>
+                            ) : totalRaters > 0 ? (
+                              <span className="badge badge-warning badge-xs">
+                                Need {5 - totalRaters} more
+                              </span>
+                            ) : (
+                              <span className="badge badge-ghost badge-xs">
+                                Not rated
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">

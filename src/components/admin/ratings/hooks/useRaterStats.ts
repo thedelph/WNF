@@ -98,8 +98,30 @@ export const useRaterStats = (isSuperAdmin: boolean) => {
 
           if (ratingsError) throw ratingsError;
 
+          // Fetch position ratings given by this rater
+          const { data: positionRatingsData, error: positionRatingsError } = await supabaseAdmin
+            .from('player_position_ratings')
+            .select('rated_player_id, position, rank, created_at, updated_at')
+            .eq('rater_id', player.id)
+            .order('rated_player_id', { ascending: false })
+            .order('rank', { ascending: true });
+
+          if (positionRatingsError) throw positionRatingsError;
+
+          // Group position ratings by rated_player_id
+          const positionsByRatedPlayer = new Map();
+          positionRatingsData?.forEach(pr => {
+            const existing = positionsByRatedPlayer.get(pr.rated_player_id) || {};
+            if (pr.rank === 1) existing.first = pr.position;
+            if (pr.rank === 2) existing.second = pr.position;
+            if (pr.rank === 3) existing.third = pr.position;
+            positionsByRatedPlayer.set(pr.rated_player_id, existing);
+          });
+
           // Map the playstyle data correctly
           const mappedRatings = (ratingsData || []).map(rating => {
+            // Get position data for this rated player
+            const positions = positionsByRatedPlayer.get(rating.rated_player.id) || {};
             let playstyle = null;
 
             // If there's a playstyle_id, use the predefined playstyle
@@ -144,7 +166,10 @@ export const useRaterStats = (isSuperAdmin: boolean) => {
                 id: player.id,
                 friendly_name: player.friendly_name,
                 is_admin: false // This would need to be fetched if needed
-              }
+              },
+              position_1st: positions.first || null,
+              position_2nd: positions.second || null,
+              position_3rd: positions.third || null
             };
           });
 

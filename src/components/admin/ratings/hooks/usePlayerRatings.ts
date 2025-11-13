@@ -35,7 +35,7 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
       if (playersError) throw playersError;
 
       // Fetch derived attributes for all players
-      const { data: derivedAttributesData, error: derivedError } = await supabaseAdmin
+      const { data: derivedAttributesData, error: derivedError} = await supabaseAdmin
         .from('player_derived_attributes')
         .select('*');
 
@@ -52,6 +52,31 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
           defending: attr.defending_rating,
           physical: attr.physical_rating
         });
+      });
+
+      // Fetch position consensus for all players
+      const { data: positionConsensusData, error: consensusError } = await supabaseAdmin
+        .from('player_position_consensus')
+        .select('*')
+        .gte('total_raters', 5)  // Only show if sufficient data
+        .order('percentage', { ascending: false });
+
+      if (consensusError) throw consensusError;
+
+      // Create a map of position consensus by player_id
+      const positionConsensusMap = new Map();
+      positionConsensusData?.forEach(consensus => {
+        const existing = positionConsensusMap.get(consensus.player_id) || [];
+        positionConsensusMap.set(consensus.player_id, [...existing, {
+          position: consensus.position,
+          percentage: consensus.percentage,
+          rating_count: consensus.rating_count,
+          total_raters: consensus.total_raters,
+          points: consensus.points,
+          rank_1_count: consensus.rank_1_count,
+          rank_2_count: consensus.rank_2_count,
+          rank_3_count: consensus.rank_3_count
+        }]);
       });
 
       // Fetch all playstyles separately to avoid join issues
@@ -78,6 +103,7 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
             .from('player_ratings')
             .select(`
               id,
+              rater_id,
               attack_rating,
               defense_rating,
               game_iq_rating,
@@ -102,17 +128,43 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
 
           if (ratingsError) throw ratingsError;
 
+          // Fetch position ratings for each rater of this player
+          const { data: positionRatingsData, error: positionRatingsError } = await supabaseAdmin
+            .from('player_position_ratings')
+            .select('rater_id, position, rank, created_at, updated_at')
+            .eq('rated_player_id', player.id)
+            .order('rater_id', { ascending: false })
+            .order('rank', { ascending: true });
+
+          if (positionRatingsError) throw positionRatingsError;
+
+          // Group position ratings by rater_id
+          const positionsByRater = new Map();
+          positionRatingsData?.forEach(pr => {
+            const existing = positionsByRater.get(pr.rater_id) || {};
+            if (pr.rank === 1) existing.first = pr.position;
+            if (pr.rank === 2) existing.second = pr.position;
+            if (pr.rank === 3) existing.third = pr.position;
+            positionsByRater.set(pr.rater_id, existing);
+          });
+
           // Import functions from playstyle utils
           const { generatePlaystyleName } = await import('../../../../types/playstyle');
 
           // Map the playstyle data correctly for each rating
           const mappedRatings = (ratingsData || []).map(rating => {
+            // Get position data for this rater
+            const positions = positionsByRater.get(rating.rater_id) || {};
+
             // If there's a playstyle_id, use the predefined playstyle
             if (rating.playstyle_id) {
               return {
                 ...rating,
                 rater: rating.rater,
-                playstyle: playstylesMap.get(rating.playstyle_id)
+                playstyle: playstylesMap.get(rating.playstyle_id),
+                position_1st: positions.first || null,
+                position_2nd: positions.second || null,
+                position_3rd: positions.third || null
               };
             }
 
@@ -146,7 +198,10 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
                   id: 'generated',
                   name: generatedName,
                   category: category
-                }
+                },
+                position_1st: positions.first || null,
+                position_2nd: positions.second || null,
+                position_3rd: positions.third || null
               };
             }
 
@@ -154,14 +209,18 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
             return {
               ...rating,
               rater: rating.rater,
-              playstyle: null
+              playstyle: null,
+              position_1st: positions.first || null,
+              position_2nd: positions.second || null,
+              position_3rd: positions.third || null
             };
           });
 
           return {
             ...player,
             ratings: mappedRatings,
-            derived_attributes: derivedAttributesMap.get(player.id)
+            derived_attributes: derivedAttributesMap.get(player.id),
+            position_consensus: positionConsensusMap.get(player.id) || []
           };
         })
       );

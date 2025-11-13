@@ -76,6 +76,9 @@ export const PlayersTable: React.FC<PlayersTableProps> = ({
                 {getSortIcon('average_gk_rating')}
               </span>
             </th>
+            <th className="hidden xl:table-cell">
+              Position Consensus
+            </th>
             <th onClick={() => onSort('total_ratings')} className="cursor-pointer">
               <span className="flex items-center gap-1">
                 <span className="hidden sm:inline">Total</span>
@@ -102,6 +105,33 @@ export const PlayersTable: React.FC<PlayersTableProps> = ({
               <td className="hidden sm:table-cell">{formatRating(player.defense_rating)}</td>
               <td className="hidden md:table-cell">{formatRating(player.game_iq)}</td>
               <td className="hidden lg:table-cell">{formatRating(player.average_gk_rating)}</td>
+              <td className="hidden xl:table-cell">
+                {player.position_consensus && player.position_consensus.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {player.position_consensus
+                      .filter(pos => pos.percentage >= 50)
+                      .slice(0, 3)
+                      .map((pos, idx) => (
+                        <span
+                          key={pos.position}
+                          className="px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary"
+                          title={`${pos.percentage.toFixed(0)}% consensus (${pos.rating_count}/${pos.total_raters} raters)`}
+                        >
+                          {pos.position} {pos.percentage.toFixed(0)}%
+                        </span>
+                      ))}
+                    {player.position_consensus.filter(pos => pos.percentage >= 50).length === 0 && (
+                      <span className="text-xs text-base-content/50">
+                        {player.position_consensus[0].total_raters < 5
+                          ? `Need ${5 - player.position_consensus[0].total_raters} more raters`
+                          : 'No primary positions'}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-base-content/50">Not rated</span>
+                )}
+              </td>
               <td>{player.ratings?.length || 0}</td>
               <td className="sm:hidden">
                 <div className="flex flex-col gap-1">
@@ -109,6 +139,21 @@ export const PlayersTable: React.FC<PlayersTableProps> = ({
                   <span className="badge badge-xs">D: {formatRating(player.defense_rating)}</span>
                   <span className="badge badge-xs">IQ: {formatRating(player.game_iq)}</span>
                   <span className="badge badge-xs">GK: {formatRating(player.average_gk_rating)}</span>
+                  {player.position_consensus && player.position_consensus.filter(pos => pos.percentage >= 50).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {player.position_consensus
+                        .filter(pos => pos.percentage >= 50)
+                        .slice(0, 2)
+                        .map(pos => (
+                          <span
+                            key={pos.position}
+                            className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary"
+                          >
+                            {pos.position}
+                          </span>
+                        ))}
+                    </div>
+                  )}
                 </div>
               </td>
             </motion.tr>
