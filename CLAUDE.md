@@ -2,73 +2,289 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Memories
-- Run date via bash before adding/editing any documentation to ensure you've got the correct date.
-- GK Rating Feature added (2025-10-08): Fourth rating metric for goalkeeper ability. Measures shot-stopping, positioning, distribution, command of area, and 1v1 ability on 0-10 scale (displayed as 0-5 stars). Database columns: `gk_rating` in player_ratings table, `gk` and `average_gk_rating` in players table. Trigger function `update_player_average_ratings()` updated to calculate GK averages. UI components updated: Ratings.tsx (rating modal + display), RatingsExplanation.tsx (🥅 GK section), PlayerRatingsTable.tsx, admin hooks (usePlayerRatings, useRaterStats), PlayerProfile.tsx, EditPlayer.tsx. GK rating follows same null-safe pattern as other ratings using formatRating() utility. Initially intended for formation suggestions only, integrated into team balancing as fourth core skill metric (see GK Team Balancing Integration 2025-10-13).
-- GK Team Balancing Integration (2025-10-13, Fixed 2025-10-15): Integrated GK rating as fourth core skill metric in tier-based snake draft algorithm. Weight restructuring: 60% core skills (15% each: Attack, Defense, Game IQ, GK), 40% performance (20% each: Win Rate, Goal Differential). Changed from 3 to 4 core skills to account for rotating goalkeeper scenarios in 9v9 games. Also implemented **Permanent Goalkeeper Feature** allowing admins to designate injured players as permanent GKs who stay in net full game. Permanent GK rating formula: 70% GK ability, 20% Game IQ (positioning/awareness), 10% Performance (win rate/goal diff). **Phase 0 Assignment**: Pre-balancing phase distributes permanent GKs evenly before standard team balancing (highest rated GK alternates to Blue, next to Orange, etc.). Permanent GKs marked with `isPermanentGK` flag and excluded from optimization swaps via constraints in 3 locations (same-tier and cross-tier swap functions). UI components updated: TeamBalancingOverview.tsx (collapsible permanent GK selection with checkbox grid), TeamStats.tsx (GK metrics display and 6-metric breakdown), TeamList.tsx (GK rating + permanent GK badge 🥅), TierBasedTeamGenerator.tsx (accepts permanentGKIds prop), FinalTeamComposition.tsx (GK rating in player cards). Debug log shows Phase 0 section with permanent GK distribution details. Files: `tierBasedSnakeDraft.ts` (Phase 0 logic + `calculatePermanentGKRating()` function), `teamBalanceCalcs.ts` (GK metrics), `useTeamBalancing.ts` (fetch GK data), `types.ts` (TeamAssignment interface + isPermanentGK flag). **Database:** `permanent_goalkeepers` table stores selections per game with RLS policies allowing authenticated users (page already admin-protected). **Fixes (2025-10-15):** Fixed team stats calculation - when team has permanent GK, GK rating uses that player's rating (not average), Attack/Defense exclude permanent GK from calculations, Game IQ includes permanent GK. Added auto-save with toast notifications (300ms debounce). Fixed WhatsApp export to show 🧤 emoji next to permanent GK names and use correct stats. Selections persist across page refreshes. Updated `calculateTeamStats()`, `calculateTeamComparison()`, `calculateMetricImpact()` to accept `permanentGKIds` parameter.
-- Academy tier added (2025-06-18): Players with 0 caps and 0 XP are now "Academy" (deep teal gradient), while players with >0 caps and 0 XP remain "Retired" (black). This distinction helps differentiate new players from inactive ones.
-- When the user wants to commit changes to GitHub, ask if they'd like to use the Git MCP server commands instead of bash git commands.
-- Team Announcement Phase enhanced (2025-06-18): Now supports two-stage pasting - first paste player registration message, then team announcement message with 🟠 Orange Team and 🔵 Blue Team sections. Attack/Defense ratings removed from game creation form. Default pitch cost updated to £54.
-- Game IQ Rating added (2025-06-26): Third rating metric alongside Attack and Defense. Measures tactical awareness, positioning, and decision-making (0-10 scale, displayed as 0-5 stars). Team balancing now uses 5 metrics with 20% weighting each: Attack, Defense, Game IQ, Win Rate, Goal Differential. Database columns: `game_iq_rating` in player_ratings, `game_iq` and `average_game_iq_rating` in players table.
-- Game IQ Implementation Details (2025-06-26): When working with player ratings, always handle null values using nullish coalescing (`??`) or optional chaining (`?.`). The admin ratings page uses OR logic for filtering (shows players with at least one non-zero rating). Rating interfaces must include `gameIq` in addition to `attack` and `defense`. All player rating displays should show Game IQ alongside Attack and Defense ratings.
-- Game IQ Display Improvements (2025-06-26): Unrated values show as "unrated" instead of "0" or "NaN". Created `formatRating()` and `formatStarRating()` helper functions in `/src/utils/ratingFormatters.ts`. Rating buttons show contextual text: "ADD GAME IQ RATING" when only Game IQ is missing, "COMPLETE RATING" when multiple ratings are missing, "UPDATE RATING" when all ratings exist.
-- Changelog Management: Version 1.2.0 added for Game IQ feature. When documenting team balancing changes in user-facing content, keep algorithm details vague to prevent gaming the system. Players can rate other players (not just teammates) after playing 5+ games together.
-- Ratings Explanation Component (2025-06-26): Added expandable/collapsible explanation section to ratings page using Framer Motion. Component path: `/src/components/ratings/RatingsExplanation.tsx`. Explains that ratings should consider both skill AND position tendency (e.g., a skilled defender who rarely plays defense should have a lower defense rating). Emphasizes confidentiality and importance of honest ratings. Keep algorithm details vague - only mention it "considers multiple factors beyond just ratings" without specifics.
-- Admin Ratings Page Fix (2025-06-26): Fixed Game IQ ratings not displaying in admin panel. Issue was in `useRaterStats` hook missing `game_iq_rating` in select query. Also added `updated_at` column to `player_ratings` table with auto-update trigger, so admin can see when ratings were last modified instead of just creation date.
-- Changelog Deep Linking (2025-06-26): Added URL fragment support to link directly to specific changelog versions. Access via `http://localhost:5173/changelog#1.2.0` format. The linked version auto-expands with all sections (Added/Changed/Fixed) visible. Implementation uses refs to control DaisyUI collapse component state. Existing "Expand All"/"Collapse All" functionality remains intact.
-- Rating History System (2025-06-27): Implemented player_ratings_history table to track all rating changes. Database trigger automatically logs INSERT and UPDATE operations. Recent Activity now shows rating changes with visual indicators: 🟢↑ for increases, 🔴↓ for decreases. Changes display the amount (e.g., "+2", "-1"). History table has RLS policies: INSERT allowed for trigger operations, SELECT limited to admins only. Fixed RLS policy error by adding "Allow trigger to insert history" policy. User-specific activity filtering available when selecting a rater. Recent Activity section on admin ratings page shows most recent changes at top with mobile-responsive design.
-- Admin Players Page Mobile Improvements (2025-06-26): Made admin players management page mobile-friendly. Key changes: responsive header controls with stacked layout, mobile-optimized search bar (full width), abbreviated button labels on mobile, hidden table columns (Caps/XP) with inline badges, mobile-specific "Select All" button, improved touch targets with appropriate sizing (btn-sm/btn-xs), reduced container padding. Pattern can be applied to other admin pages for consistency.
-- Role-Based Access Control (RBAC) System (2025-06-26): Implemented granular permissions for admins. Database: `roles` table for named roles, `role_permissions` for role-permission mappings, `role_id` added to `admin_roles`. Created 5 default roles: Super Admin (all permissions), Full Admin (all except admin/ratings management), Treasurer (payments only), Team Manager (games/teams), Player Manager (players/tokens). 10 permissions available: manage_games, manage_players, manage_teams, manage_payments, manage_history, manage_tokens, manage_accounts, manage_slots, manage_admins (super only), manage_ratings (super only). Backward compatible with existing `is_admin` and `is_super_admin` flags.
-- RBAC UI Implementation (2025-06-26): Role management at `/admin/roles` for super admins only. Admin management page redesigned with stats header, role assignment, search functionality, and improved layout. Uses custom expandable sections instead of DaisyUI collapse for View Permissions due to rendering issues with dynamic content. Admin cards show role badges: red for Super Admin, blue for Full Admin, purple for role-based with role name. Grid layout: 1 col mobile, 2 col medium, 3 col large, 4 col extra-large screens.
-- RBAC Permission Checking (2025-06-26): Updated `useAdmin` hook to include `hasPermission(permission)` and `permissions[]`. Admin portal shows only permitted sections. Payment dashboard example: checks `PERMISSIONS.MANAGE_PAYMENTS` before allowing access. Permission constants in `/src/types/permissions.ts`. Admin fetching uses two queries (players + admin_roles) combined in memory to handle all admin types correctly.
-- View As Feature (2025-06-26): Super admins can emulate other admin users' permissions via "View As" button in admin management. Implementation: ViewAsContext (`/src/context/ViewAsContext.tsx`) manages emulated state, useAdmin hook checks for overrides, ViewAsIndicator shows warning banner. Access via Admin Portal → Admin Management → View As button. Exit via banner button returns to normal permissions.
-- Player Rating Decimal Precision Fix (2025-06-27): Fixed issue where average ratings were stored as integers after Game IQ implementation. Root cause: bulk update rounded averages (e.g., 4.0 instead of 3.29). Solution: Applied migration to recalculate all averages from individual ratings. The trigger function `update_player_average_ratings()` was already correct and maintains decimal precision for all future updates. Documentation: `/docs/fixes/RatingDecimalPrecisionFix.md`.
-- Game IQ Team Balancing Fix (2025-06-30): Fixed Game IQ not being fetched or displayed in team balancing. Issues: `useTeamBalancing` hook wasn't querying `game_iq` from database, OptimalTeamGenerator and SwapSuggestion components didn't show Game IQ, values were defaulting to 5. Fixed by: adding `game_iq` and `average_game_iq_rating` to database query, updating all components to display Game IQ with null-safe operators (`??`), adding Game IQ to team stats calculations with proper weighting. All rating interfaces updated to handle null values, using `formatRating()` utility to display "unrated" for null values.
-- Unknown Player Distribution in Team Balancing (2025-06-30): Enhanced team generation algorithm to distribute players with unknown stats (< 10 games) evenly across teams. Previously, unknowns could cluster on one team, disabling win rate/goal differential metrics. New two-phase approach: Phase 1 distributes unknowns evenly, Phase 2 optimizes experienced players. Added UI indicators: "NEW" badges for < 10 game players, team headers show new player count, confidence score (high/medium/low) based on unknown percentage. Helper function `isUnknownPlayer()` in teamBalanceUtils.ts identifies players with insufficient data.
-- Deterministic Unknown Distribution (2025-06-30): Fixed non-deterministic team generation. Previous implementation used random shuffling for unknowns. New approach: Phase 1 finds OPTIMAL distribution of unknowns by trying all combinations and selecting best Attack/Defense/Game IQ balance. Uses `generateCombinationsOfSize()` to generate all possible splits, `calculatePartialBalanceScore()` to evaluate based on 3 known metrics only, `findOptimalUnknownDistribution()` to select best split. Result: same optimal configuration every time, unknowns distributed based on their actual stats, truly deterministic algorithm.
-- All Ratings Average Calculation Fix (2025-07-08): Fixed issue where Attack, Defense, and Game IQ ratings were storing individual values instead of averages. Examples: Zhao's Game IQ showed 2 instead of 4 (avg of 2,3,5,6), Mike M's Attack showed 0 instead of 5.29. Root cause: incorrect data values, not the trigger function. Solution: Applied migration to recalculate all rating averages using AVG() function. Trigger verified working correctly for future updates. Documentation: `/docs/fixes/GameIQAverageCalculationFix.md`.
-- Rating Average Overwrite Issue (2025-07-10): Discovered and fixed critical bug where player rating averages were being overwritten with individual rating values. When Daniel submitted ratings, stored averages became his exact ratings (e.g., Nathan: 5/3/4 instead of 6.33/6.0/5.8). Root cause still under investigation but likely related to trigger execution or race conditions. Fix: Created audit logging system (`player_rating_audit` table), enhanced trigger function with debugging, recalculated all averages. Monitoring in place to identify exact cause if issue recurs. Documentation: `/docs/fixes/RatingAverageOverwriteIssue.md`.
-- Team Balancing Tier Visualization Enhancement (2025-07-17): Improved tier pyramid visualization in team balancing. Player names now appear directly under each specific tier when clicked (previously appeared at bottom of all tiers). Multiple tiers can be expanded simultaneously for comparison. Added "Expand All" and "Collapse All" buttons. Fixed animation issues by creating isolated TierItem components with React.memo() to prevent re-renders. Each tier maintains its own state with smooth Framer Motion animations. Located in `/src/components/admin/team-balancing/visualizations/TierDistributionVisual.tsx`.
-- True Snake Draft Implementation (2025-07-17): Fixed tier-based team balancing to use proper snake draft pattern. Previously Blue always picked first in Tier 1 and alternation only occurred with odd player counts. Now: randomly selects which team picks first initially (different each time), then alternates which team picks first in each subsequent tier regardless of player count. This ensures fair distribution - the highest-rated player won't always go to the same team. Debug log shows which team was randomly selected. Updated `applySnakeDraft()` in `tierBasedSnakeDraft.ts`.
-- Snake Draft Team Balance Fix (2025-07-17): Fixed issue where true snake draft could create imbalanced teams (e.g., 10v8 instead of 9v9). Algorithm now: pre-calculates if standard snake draft would create imbalance, adjusts pick order in final tiers if teams are getting too uneven, ensures no team exceeds target size (total players / 2), shows warnings and adjustments in debug log. Maintains snake draft fairness while guaranteeing balanced team sizes.
-- Tier Distribution Awareness (2025-07-23): Enhanced tier-based snake draft to prevent extreme quality concentrations within tiers. Problem: One team could get all worst players in a tier (e.g., Blue gets both James H and Mike M in Tier 5). Solution: Added quality concentration detection for tiers with 3+ players and rating spread > 1.2. New functions: `validateTierDistribution()` checks both count and quality issues, `getTierDistributionIssues()` provides specific problem details, `isSwapAcceptable()` allows swaps that don't worsen existing concentrations. Changed balance threshold from 0.5 to 0.3. Algorithm now prevents teams from getting all bottom players in any tier while still allowing beneficial optimization. Debug log shows detailed tier distribution status and rejection reasons.
-- Game IQ Column Naming Fix (2025-08-27): Fixed EditPlayer.tsx incorrectly using `game_iq_rating` when updating the players table, causing 400 error "Could not find the 'game_iq_rating' column of 'players' in the schema cache". The correct column name in the players table is `game_iq` for the default/manual rating value (with `average_game_iq_rating` for the calculated average). Note: The player_ratings table correctly uses `game_iq_rating` for individual rating submissions. Updated EditPlayer.tsx to use `game_iq` for both the type definition and database update operations.
-- Game Creation Form Improvements (2025-08-27): Enhanced WhatsApp game import parsing: 1) Fixed player count issue where "Anyone needs to drop out" text was counted as a player - parser now stops at empty lines. 2) Added player name validation to reject non-player text (phrases like "drop out", "let me know", etc.). 3) Updated default pitch cost to £56.70 (£3.15 per player for 18 players). 4) Added database matching validation showing matched vs unmatched players with warning when players can't be found (e.g., "Tom" needs to be manually selected as "Tom K"). 5) Added player counts to multi-select labels in PlayerSelectionDetails (e.g., "Selected Players (18)"). Parser properly handles 🔄 replacement symbol within player lists.
-- Beta Tester Feature (2025-09-05): Implemented beta tester functionality for controlled rollout of new features. Allows admins to grant early access to selected users via Account Management page. Full documentation: `/docs/features/BetaTesterFeature.md`
-- Playstyle Rating System (2025-09-05, Live 2025-09-17): Implemented comprehensive playstyle system with 24 playstyles (8 attacking, 9 midfield, 7 defensive) that derive 6 attributes (Pace, Shooting, Passing, Dribbling, Defending, Physical). Each playstyle has weights totaling 2.0 for perfect balance. Default attribute value is 0 (changed from 0.35). Playstyles complement Attack/Defense/Game IQ ratings by showing HOW players use their skills. Initially beta-restricted, now available to all users (2025-09-17). Database: `playstyles` table with definitions, `player_derived_attributes` table with averaged values, trigger function auto-calculates attributes. UI: PlaystyleSelector component shows percentage distribution totaling 100%, attribute-based filtering to find matching playstyles, display format uses colon (e.g., "Speedster: Pace + Dribbling"). Mobile responsive with compact abbreviations. Team balancing: 60% core ratings, 20% derived attributes, 20% performance (updated 2025-09-08). Includes 3 new playstyles: Speedster (Pace + Dribbling), Locomotive (Pace + Physical), Enforcer (Dribbling + Physical). Full documentation: `/docs/features/PlaystyleRatingSystem.md`
-- Team Balancing Algorithm Calibration Fix (2025-09-08): Fixed critical issue where all players received positive attribute adjustments instead of relative mix of positive/negative like before playstyles. Root cause: attributes provided pure positive adjustments (0-1 scale) rather than league-relative adjustments. Solution: Implemented statistical z-score scaling using league standard deviations to create meaningful relative adjustments ranging ±0.05 to ±0.3 (50-75x more impactful than previous ±0.001 to ±0.004). Weight rebalancing: reduced attributes from 30% to 20%, increased performance from 10% to 20% to ensure catastrophic performers (<30% win rate) still get meaningful penalties. Enhanced with exponential performance penalties, dynamic balance thresholds, and relaxed tier concentration rules (1.2 → 1.5). Located in `tierBasedSnakeDraft.ts` with new `calculateLeagueAttributeStats()` function.
-- Team Balancing Algorithm Improvements (2025-09-10): Enhanced fairness and transparency of team balancing. Key improvements: 1) **Performance Adjustment Caps**: Limited rating adjustments to ±15% of base rating to prevent excessive penalties (e.g., Nathan and James H previously lost 22% of rating). 2) **Attribute Balance Constraints**: Added ATTRIBUTE_BALANCE_THRESHOLD (0.5) to prevent teams with drastically different playstyles. Swaps creating attribute imbalance > 0.5 are rejected unless improvement > 0.2. Increased attribute weight from 20% to 30% in balance calculations. 3) **Detailed Debug Logging**: Shows specific metric changes (e.g., "Atk:0.30→0.03, Def:0.27→0.19") instead of generic messages. Rejection reasons now explicit (e.g., "attribute imbalance 2.24 > 0.5"). KEY DECISIONS section enhanced with actual before/after values. Located in `tierBasedSnakeDraft.ts` with new `generateImprovementDetails()` function.
-- Payment Dashboard Query Limit Fix (2025-09-11): Fixed issue where games with many registrations (especially game #63) showed incorrect cost per player and 0 players. Root cause: Supabase IN query hitting 1000 record limit when fetching 63+ games. Solution: Batch fetch registrations in groups of 10 games, limit dashboard to 30 most recent games. Also fixed CORS by setting Vite server port to 5175. Files: PaymentDashboard.tsx, GamePaymentStats.tsx, vite.config.ts. Documentation: `/docs/fixes/PaymentSplittingQueryLimitFix.md`.
-- Player Card Recent Games Query Limit Fix (2025-10-09): Fixed "Last 40 Games" statistic showing incorrect counts due to Supabase's 1000 row limit. Player cards were displaying 8-10 fewer games than reality (e.g., Chris H: 28 shown vs 36 actual, Daniel: 27 vs 37). Root cause: Query fetched ALL game registrations (1,175+ rows) then filtered in JavaScript, but Supabase truncated to 1,000 rows. Solution: Restructured to sequential queries - first fetch last 40 game IDs, then fetch only registrations for those games (~718 rows). Applied to both usePlayerGrid.ts and useGameRegistrationStats.ts. Simplified calculation logic since data is pre-filtered. Documentation: `/docs/fixes/RecentGamesQueryLimitFix.md`, `/docs/components/PlayerCard.md`.
-- Reserve Status Visualization (2025-10-09, Extended 2025-10-11): Enhanced "Last 40 Games" statistic to show not just games played, but also reserve appearances (registered but not selected). Data structure: `gameParticipation` changed from boolean[] to `Array<'selected' | 'reserve' | null>` tracking status for each of 40 games. Visual: GameParticipationWheel component with 40 SVG segments - colored (rarity-based) for selected, white for reserve, dim for didn't register. Display adapts conditionally: shows "37/5" format when reserves exist (37 played, 5 reserve), just "37" when no reserves. Label shows "Last 40 Games Played" or "Last 40 Games Played/Reserve" based on reserve presence. Query optimization: sequential fetch (40 game IDs, then registrations for those games) fetches both 'selected' and 'reserve' statuses in single query. **Index order critical**: All implementations MUST use index 0 = oldest game, index 39 = most recent (use `participation[39 - index]` when building arrays). Fixed (2025-10-11): Extended to PlayerSelectionResults and TeamSelectionResults components with correct index order to ensure wheel segments display chronologically. Component: `src/components/player-card/GameParticipationWheel.tsx` with rarity-based coloring from `src/utils/rarityColors.ts`. Benefits: visualizes player commitment patterns, shows when registered but not picked, provides activity timeline. Documentation: `/docs/features/ReserveStatusVisualization.md`, `/docs/fixes/RecentGamesQueryLimitFix.md`.
-- Feature Flag Management System (2025-09-12): Implemented comprehensive feature flag system for controlled rollouts. Database: `feature_flags` table with name, display_name, description, enabled_for (production/beta/admin/super_admin), enabled_user_ids, rollout_percentage. `feature_flag_audit` table tracks all changes. RLS policies restrict management to super admins only. UI: Feature Flag Management page at `/admin/feature-flags` with create/edit/delete, toggle active/inactive, percentage rollout slider, user targeting, audit history. Enhanced BetaFeature component accepts `featureFlag` prop for new system while maintaining backward compatibility with `is_beta_tester`. New `useFeatureFlag` hook checks multiple conditions: active status, user groups, specific users, rollout percentage. Migrated playstyle feature to use `playstyle_ratings` flag. Benefits: granular control per feature (not all-or-nothing), gradual rollouts, emergency kill switches, no code changes needed for enable/disable. Located in: `/src/hooks/useFeatureFlag.tsx`, `/src/pages/admin/FeatureFlagManagement.tsx`.
-- Team Balancing Algorithm Refinements (2025-01-17): Enhanced tier-based snake draft algorithm for better team balance.
-- Position Preferences Rating System - **RANKED SYSTEM** (2025-11-12, Upgraded 2025-11-13): Comprehensive position preference ratings with 12 standard positions: **GK, LB, CB, RB, LWB (Left Wing Back), RWB (Right Wing Back), LW (Left Winger), CM, RW (Right Winger), CAM, CDM, ST**. Changed from LM/RM to LW/RW and split WB into LWB/RWB for better side-specific tactical accuracy in 9v9 games. **RANKED POINTS SYSTEM**: Players rank up to 3 positions in order of excellence: 1st choice (🥇 Gold) = 3 points, 2nd choice (🥈 Silver) = 2 points, 3rd choice (🥉 Bronze) = 1 point. Max points per rater = 6 (3+2+1 if all ranks filled). Percentage calculation: (total points / (total_raters × 6)) × 100. Benefits: Forces critical thinking about best positions, naturally limits to 3 positions (prevents spam), weighted consensus shows strength of preference. **Database**: `player_position_ratings` table has `rank INTEGER CHECK (rank IN (1, 2, 3))` column, unique constraint on `(rater_id, rated_player_id, rank)`. `player_position_consensus` table has `points INTEGER`, `rank_1_count`, `rank_2_count`, `rank_3_count` columns. Trigger `update_position_consensus()` calculates weighted points and percentages. Migrations: `20251112_add_position_ratings.sql` (initial schema), `20251112_change_positions_lm_rm_to_lw_rw_v3.sql` (LM/RM → LW/RW), `20251112_split_wb_into_lwb_rwb.sql` (WB → LWB/RWB), `20251112_ranked_position_system.sql` (ranked system upgrade - cleared all existing data). **UI Components**: PositionSelector (`src/components/ratings/PositionSelector.tsx`) has three dropdown selectors with gold/silver/bronze badge styling, duplicate prevention, grouped by category (Goalkeeper/Defense/Midfield/Attack). **User-Facing Display (Ratings.tsx)**: Shows "You rated as:" with gold/silver/bronze badges for 1st/2nd/3rd choices. Badge colors: Gold (#FCD34D), Silver (#9CA3AF), Bronze (#EA580C). **Admin Display**: Shows consensus-based aggregation with 5-rater minimum threshold. RatingsExplanation includes detailed explanation of ranked system with points weighting. **Team Balancing**: HARD CONSTRAINT prevents 3+ player gap in any category (Goalkeeper, Defense, Midfield, Attack) via `evaluateSwapPositionImpact()` in `isSwapAcceptable()` function. Integration: `tierBasedSnakeDraft.ts`, `useTeamBalancing.ts` (fetches with rank field), `src/utils/positionBalancing.ts`, `src/utils/positionClassifier.ts`, `src/types/positions.ts`, `src/constants/positions.ts`. Full rollout (no beta testing). Documentation: `/docs/PositionBalancingIntegration.md`.
-- Formation Suggester Overhaul (2025-09-17): Integrated playstyle attributes into formation suggestion system. Major improvements: 1) **6-Attribute Position Scoring**: Uses Pace, Shooting, Passing, Dribbling, Defending, Physical for position suitability. 2) **Natural Position Detection**: Maps 24 playstyles to ideal tactical positions (e.g., "Finisher" → ST, "Engine" → CM/W/CAM). 3) **Relative Requirements**: All position requirements calculated using standard deviation and percentiles from player pool, no hardcoded thresholds. 4) **Three-Phase Assignment**: Natural fits (Phase 1), best available (Phase 2), forced assignments (Phase 3). 5) **Critical Mismatch Handling**: Players with position scores < 2.0 get priority swaps, hierarchy rules bypassed for critical fixes. 6) **Database Trigger Fix**: Fixed `update_player_derived_attributes()` to include custom attribute ratings alongside predefined playstyles. 7) **Individual Benefit Enforcement**: Both players must improve in swaps. 8) **Consolidated Debug Logging**: Single debug log shows league averages, formation selection, player assignments with scores, and optimization notes. Formations: 3-2W-2-1, 3-4-1, 3-1-3-1, 3-1-2-2 selected based on team composition. Located in `formationSuggester.ts`. Documentation: `/docs/features/FormationSuggester.md`.
-- Team Balancing Optimization Breakthrough (2025-09-22): Major improvements to tier-based snake draft algorithm achieving 80% better balance (0.216 vs 1.061). Key changes: 1) **Attribute Balance Calculation**: Switched from MAX to weighted average with penalty multipliers (25% for >3.0, 50% for >4.0), preventing single large differences from blocking all swaps. 2) **Dynamic Threshold System**: Multi-factor adjustments based on improvement magnitude (0.05→1.0, 0.1→1.5, 0.2→2.0, 0.3→2.5), current balance score (+30% per unit >1.0), and failed attempts (progressive: 5→+25%, 10→+50%, 20→+100%). 3) **Multi-Pass Strategy**: Three optimization passes with different attribute multipliers - Pass 1: Skills Focus (2x threshold), Pass 2: Balanced (1x), Pass 3: Fine-tuning (0.8x). 4) **Swap Priority System**: Added `calculateSwapPriority()` function weighting skill improvement (40%), individual skills (30%), win rate (20%), attribute penalty (-10%). 5) **Fallback Strategies**: Activates when no swaps made and balance >1.5x threshold, uses extreme relaxation (30 failed attempts parameter). 6) **Enhanced Debug Logging**: Shows weighted decision scores, specific rejection reasons (attribute/tier/minimal), and transparent constraint identification. Result: Algorithm now successfully makes 3-5 beneficial swaps instead of 0, creating genuinely competitive teams. Trade-off: Accepts some tier concentration for significantly better overall balance. Located in `tierBasedSnakeDraft.ts`.
-- Registration Close Player Selection Fix (2025-10-11): Fixed critical bug where player selection wasn't running when registration closed. Three root causes identified and resolved: 1) **Incomplete Database Function**: Shield token migration (20251002) left `process_registration_close` with placeholder comments instead of actual selection logic. Solution: Restored TypeScript-based selection in `useRegistrationClose.ts` calling `handlePlayerSelection()` directly. 2) **Permission Blocking**: `update_game_registration` RPC required admin permissions, blocking automated process running in non-admin user context. Solution: Added `p_bypass_permission: true` parameter to RPC calls in `playerSelection.ts` for trusted system processes. 3) **Race Condition**: Status updated to `players_announced` BEFORE selection completed, leaving games stuck if selection failed. Solution: Reordered operations - selection runs first, status updates only after success, shield protection runs last. Added debug logging throughout. Files modified: `src/hooks/useRegistrationClose.ts`, `src/utils/playerSelection.ts`, migration `20251011_fix_process_registration_close.sql`. Result: Automated player selection now works reliably with proper error handling and logging. Documentation: `/docs/fixes/RegistrationClosePlayerSelectionFix.md`.
-- Priority Token Dropout Eligibility Fix (2025-10-24): Fixed token eligibility to treat dropouts the same as selections for the "Selection Cooldown" criteria. **Problem**: Players who were selected but dropped out were still eligible for priority tokens, which was unfair since they had a guaranteed slot but chose not to use it. **Solution**: Updated `check_token_eligibility()` database function to check for BOTH `status = 'selected'` AND `status = 'dropped_out'` when determining recent selections. Updated `useTokenStatus.ts` hook to query `game_registrations` table with `.in('status', ['selected', 'dropped_out'])` instead of just 'selected'. Updated `TokenStatus.tsx` component to clarify in tooltips and messaging that "Selection Cooldown" includes dropouts (e.g., "Must not have been selected or dropped out in any of the last 3 games"). Migration: `20251024_fix_token_eligibility_include_dropouts.sql`. Documentation updated in `/docs/TokenSystem.md` with new "Dropout Handling" section explaining rationale and implementation. Example case: Simon was selected for game #69, dropped out, and would have been eligible for a token the next week under old logic—now correctly marked ineligible.
-- Admin Ratings Page Position Integration (2025-11-13): Comprehensive integration of ranked position system into admin ratings interface at `/admin/ratings`. **Phase 1 - Data Layer**: Updated `usePlayerRatings.ts` to fetch position consensus (`player_position_consensus`) and individual position ratings (`player_position_ratings`), groups positions by rater_id into first/second/third structure, attaches position_1st/2nd/3rd to each rating object, also fetches aggregate consensus data with rank counts. Updated `useRaterStats.ts` with same pattern for ratings given. Updated `useRecentRatings.ts` to fetch current AND previous position data from `player_ratings_history` for change detection. Updated TypeScript interfaces in `types.ts` to include `position_1st/2nd/3rd`, `previous_position_1st/2nd/3rd` in Rating interface, and `position_consensus?: PositionConsensus[]` in Player interface. Fixed initial filterConfig to include `selectedPositions: []`. **Phase 2 - Display Components**: PlayerRatingsTable.tsx now has "Positions" column (hidden on <lg screens) showing ranked badges (🥇🥈🥉) with color-coded backgrounds (Gold #FCD34D, Silver #9CA3AF, Bronze #EA580C), mobile view shows inline badges. PlayersTable.tsx has "Position Consensus" column (hidden on <xl screens) showing primary positions (≥50%) with percentages and detailed tooltips (rating count, total raters, rank distribution), mobile view shows top 2 positions compactly. **Phase 3 - Activity Tracking**: RecentActivity.tsx now shows position changes with visual indicators: green "+" for new positions, yellow "⟳" for changed positions, strikethrough for removed, ranked badges with medal emojis. **Phase 4 - Filtering**: FilterPanel.tsx has multi-select position filter organized by 4 categories (Goalkeeper/Defense/Midfield/Attack), checkboxes for all 12 positions, clear button with selected count, help text explains "≥50% consensus" filtering. Updated `usePlayerFiltering.ts` to filter players by primary positions using `player.position_consensus?.some(pos => pos.percentage >= 50 && selectedPositions.includes(pos.position))`. **Phase 5 - Visualization**: NEW PositionHeatmap.tsx component (`src/components/admin/ratings/components/PositionHeatmap.tsx`) - comprehensive league-wide heatmap with rows (players) × columns (12 positions), color gradient based on consensus (Success ≥75%, Primary 50-74%, Warning 25-49%, Info <25%, Base 0%), opacity varies 0.3-1.0, detailed tooltips with rank breakdowns, horizontal scroll for large datasets, visual legend, click row to select player. Use cases: identify versatile players, spot position gaps, assess data quality. **Phase 6 - Comparison**: AttributesTab in ratings.tsx now has Position Consensus Comparison Table showing primary (≥50%) and secondary (25-49%) positions for up to 4 selected players, color-coded badges (primary blue, secondary yellow), data status indicators (sufficient/need more/not rated), tooltips with rank breakdowns. **Files Modified**: `usePlayerRatings.ts` (lines 57-80, 131-149, 219-224), `useRaterStats.ts` (lines 101-119, 141-155), `useRecentRatings.ts` (lines 78-97, 117-157), `types.ts` (lines 1, 39-46, 66-67, 75-86), `usePlayerFiltering.ts` (lines 9-32), `PlayerRatingsTable.tsx` (lines 52, 84-105, 117-135), `PlayersTable.tsx` (lines 79-81, 108-134, 142-157), `RecentActivity.tsx` (lines 197-261), `FilterPanel.tsx` (lines 1, 3-6, 104-233), `ratings.tsx` (lines 30-40, 279-359), NEW `PositionHeatmap.tsx` (comprehensive heatmap component). **Documentation**: Updated `/docs/RatingsSystemGuide.md` with ranked system details, admin interface position integration section, component documentation. Created `/docs/components/PositionHeatmap.md` with comprehensive component guide including visual structure, color coding, props interface, use cases. Full mobile responsiveness across all features. All position features integrated into existing three tabs (Received, Given, Attributes) with comprehensive filtering, visualization, and comparison capabilities.
-- Selection Odds Token Counting Fix (2025-10-24): Fixed incorrect "At Risk" classification for players who should be "Guaranteed" selection. **Problem**: Registered players page showed players as "At Risk" when mathematical calculation proved they should be "Guaranteed". Example: Dom (position 10, 392 XP) showed as "At Risk" despite worst-case position (12) being safely within merit slots (15). **Root Cause**: Missing RPC function `get_eligible_token_holders_not_in_game` caused selection odds calculator to receive incorrect `unregisteredTokenHoldersCount` (defaulting to 0 instead of actual value). **Solution**: Created `get_eligible_token_holders_not_in_game` RPC function that efficiently returns eligible players with unused tokens who aren't registered for a game. Function uses `check_token_eligibility()` to verify eligibility and returns structured data (player_id, friendly_name, xp, token_id). Migration: `20251024_create_get_eligible_token_holders_rpc.sql`. **Impact**: Selection odds now accurately reflect threats from unregistered token holders, preventing false "At Risk" warnings and unnecessary token usage. Hook `useGameRegistrationStats.ts` already had correct call structure - just needed function to exist. No frontend logic changes required. Documentation: `/docs/fixes/SelectionOddsTokenCountingFix.md`, updated `/docs/components/RegisteredPlayers.md` with selection odds calculation details.
-- Bench Warmer Streak Calculation Fix & Visual Selection Point Indicators (2025-10-31): Fixed critical bug in `calculate_bench_warmer_streak()` database function that only returned 1 or 0 instead of counting consecutive reserve appearances. **Problem**: Jimmy had been reserve for 2 consecutive games but function returned 1, causing incorrect selection odds (77% instead of 85%). **Root Cause**: Function only checked if player was reserve in most recent game (binary true/false) rather than counting consecutive games. **Solution**: Rewrote function to use recursive logic matching the trigger's approach - counts all reserve appearances from most recent game backward until hitting a non-reserve game. Migration: `20251031_fix_bench_warmer_streak_calculation.sql`. **Impact**: Corrected odds for all players with multi-game reserve streaks. Example: Jimmy's streak fixed 1→2, odds updated 77%→85%. **Visual Feature Added**: Implemented colored circle indicators (●) showing selection points for random zone players. Each circle = 1 selection point (1 base + bench_warmer_streak bonus). Color-coded by odds: 🔵 Blue (85%+), 🟡 Yellow (50-84%), 🔴 Red (<50%). **Components**: `RegisteredPlayerGrid.tsx` (card view, dots at top-2 right-16), `RegisteredPlayerListView.tsx` (list view, inline dots), both use `FaCircle` from react-icons/fa. **"How It Works" Explainer**: Added collapsible section in THE RANDOMISER card explaining selection point system. Collapsed by default, custom implementation with animated chevron (not DaisyUI collapse), minimal vertical space (py-1.5). Tooltip shows breakdown: "X selection points (1 base + Y reserve streak)". Documentation: `/docs/fixes/BenchWarmerStreakCalculationFix.md`, updated `/docs/components/RegisteredPlayers.md` with visual indicator details.
+---
 
-## Core Development Commands
+## 📚 Documentation Index
 
-### Local Development
+**For comprehensive documentation, see [Documentation Index](/docs/INDEX.md)**
+
+This CLAUDE.md contains only critical patterns and quick references. Detailed information is available in supplementary documentation files.
+
+---
+
+## ⚡ Quick Start
+
+### Development Commands
+
 ```bash
 npm install    # Install dependencies
 npm run dev    # Start development server on http://localhost:5173
+npm run build  # TypeScript check + production build
+npm run lint   # ESLint checks (max warnings: 0)
 ```
 
-### Build & Production
+### Important Reminder
+
+**Always run `date` command before adding/editing documentation** to ensure accurate timestamps.
+
+---
+
+## 🔧 Critical Coding Patterns
+
+### Rating System - Null Safety
+
+**ALWAYS** use null-safe operators when working with ratings:
+
+```typescript
+// ✅ CORRECT
+const attack = player.attack ?? 0;
+const gameIq = player.game_iq ?? 0;
+const avgGK = player.average_gk_rating ?? 0;
+
+// Use formatRating() utility
+import { formatRating } from '@/utils/ratingFormatters';
+const displayValue = formatRating(player.attack); // "7.5" or "unrated"
+
+// ❌ WRONG - Will fail on null
+const attack = player.attack;
+```
+
+**All rating interfaces must include all four core metrics:** Attack, Defense, Game IQ, GK
+
+### Database Column Naming - Critical Difference!
+
+**`players` table:**
+```typescript
+game_iq              // NOT game_iq_rating!
+attack, defense, gk  // NOT attack_rating, etc.
+```
+
+**`player_ratings` table:**
+```typescript
+game_iq_rating  // NOT game_iq!
+attack_rating, defense_rating, gk_rating
+```
+
+**Wrong column names cause "column not found" errors!**
+
+### Position System
+
+Use centralized constants:
+
+```typescript
+import { POSITIONS, POSITION_CATEGORIES } from '@/constants/positions';
+
+// 12 positions: GK, LB, CB, RB, LWB, RWB, LW, CM, RW, CAM, CDM, ST
+// Ranked system: 🥇 Gold (3pts), 🥈 Silver (2pts), 🥉 Bronze (1pt)
+```
+
+### RLS Bypass Pattern
+
+Use `p_bypass_permission: true` **ONLY** in trusted system processes:
+
+```typescript
+// ✅ CORRECT - Automated system process
+await supabase.rpc('update_game_registration', {
+  p_registration_id: id,
+  p_updates: { status: 'selected' },
+  p_bypass_permission: true  // Only for automated processes!
+});
+
+// ❌ WRONG - User-initiated action
+// Never use bypass for user actions!
+```
+
+### Game Participation Index Order
+
+**Critical:** Index 0 = oldest game, Index 39 = most recent
+
+```typescript
+// ✅ CORRECT
+participation[39 - index] = status;
+
+// ❌ WRONG
+participation[index] = status;  // Reversed!
+```
+
+---
+
+## 📖 Feature Quick Reference
+
+### Core Systems
+- **[Token System](/docs/TokenSystem.md)** - Priority tokens, shield tokens, eligibility
+- **[Ratings System](/docs/RatingsSystemGuide.md)** - Attack, Defense, Game IQ, GK, Playstyles, Positions
+- **[Team Balancing](/docs/features/TeamBalancing.md)** - Tier-based snake draft algorithm
+- **[XP System](/docs/XPSystemExplained.md)** - Experience points and progression
+
+### Recent Major Features (2025)
+- **[GK Rating](/docs/features/GKRating.md)** (Oct 2025) - Fourth core metric + permanent GK feature
+- **[Position Preferences](/docs/features/PositionPreferences.md)** (Nov 2025) - Ranked position system (Gold/Silver/Bronze)
+- **[Playstyle System](/docs/features/PlaystyleRatingSystem.md)** (Sep 2025) - 24 playstyles with 6 derived attributes
+- **[Formation Suggester](/docs/features/FormationSuggester.md)** (Sep 2025) - AI-powered tactical recommendations
+
+### Admin Systems
+- **[RBAC](/docs/systems/AdminSystems.md#rbac)** - Role-based access control
+- **[View As](/docs/systems/AdminSystems.md#view-as)** - Permission emulation for testing
+- **[Feature Flags](/docs/systems/AdminSystems.md#feature-flags)** - Controlled rollouts and kill switches
+
+---
+
+## 🛠️ Technical Guides
+
+### Development Patterns
+- **[Core Development Patterns](/docs/systems/CoreDevelopmentPatterns.md)** - Essential coding conventions ⭐
+- **[Database Patterns](/docs/systems/DatabasePatterns.md)** - RLS, triggers, migrations ⭐
+- **[Team Balancing Algorithm Evolution](/docs/algorithms/TeamBalancingEvolution.md)** - Complete algorithm history
+
+### Component Documentation
+See [Documentation Index - Components Section](/docs/INDEX.md#components) for all UI component docs.
+
+---
+
+## 🐛 Common Issues & Fixes
+
+**Query Limits:**
+- Supabase has 1000 row limit
+- Use batch fetching or pre-filtering
+- See [Database Patterns - Query Optimization](/docs/systems/DatabasePatterns.md#query-optimization-patterns)
+
+**Rating Averages:**
+- Always exclude NULL from averages
+- Use AVG() function, not manual calculation
+- See [Core Patterns - Rating System](/docs/systems/CoreDevelopmentPatterns.md#rating-system-patterns)
+
+**Mobile Responsiveness:**
+- Hide columns on small screens: `className="hidden lg:table-cell"`
+- Abbreviated labels: `<span className="sm:hidden">All</span>`
+- See [Core Patterns - UI/UX](/docs/systems/CoreDevelopmentPatterns.md#uiux-patterns)
+
+---
+
+## 🎯 Algorithm Details (User-Facing Content)
+
+**Important:** When documenting team balancing in user-facing content, keep algorithm details **vague** to prevent gaming the system.
+
+✅ **Good (vague):** "The algorithm considers multiple factors beyond just ratings"
+
+❌ **Too specific:** "Uses 60% core skills, 20% attributes, 20% performance"
+
+---
+
+## 🔄 Git Workflow
+
+### Committing Changes
+
+When user asks to create a commit:
+
+1. Run `git status` and `git diff` in parallel
+2. Analyze changes and draft commit message
+3. Add files and create commit with standard footer:
+
 ```bash
-npm run build   # TypeScript check + production build
-npm run preview # Preview production build locally
+git commit -m "$(cat <<'EOF'
+[Commit message here]
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
 ```
 
-### Code Quality
+4. **Do NOT push** unless explicitly requested
+5. **Ask if user wants to use Git MCP server** instead of bash commands
+
+### Creating Pull Requests
+
+1. Check current branch status and commit history
+2. Draft PR summary analyzing ALL commits (not just latest!)
+3. Push to remote if needed
+4. Create PR using:
+
 ```bash
-npm run lint    # ESLint checks (max warnings: 0)
+gh pr create --title "..." --body "$(cat <<'EOF'
+## Summary
+- [Bullet points]
+
+## Test plan
+- [Checklist]
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
 ```
 
-[... rest of the existing content remains unchanged ...]
+---
+
+## 📋 Pre-Commit Checklist
+
+Before committing rating-related changes:
+- [ ] Used null-safe operators (`??`, `?.`)
+- [ ] Correct column names (game_iq vs game_iq_rating)
+- [ ] Used `formatRating()` utility
+- [ ] All four metrics included (Attack/Defense/Game IQ/GK)
+
+Before committing database changes:
+- [ ] Migration file properly named (YYYYMMDD_description.sql)
+- [ ] Used IF NOT EXISTS / IF EXISTS
+- [ ] RLS policies updated
+- [ ] Tested with sample data
+
+Before committing UI changes:
+- [ ] Mobile responsive (test on small screens)
+- [ ] Null-safe rendering
+- [ ] Loading states handled
+
+---
+
+## 🗺️ Codebase Structure
+
+```
+src/
+├── components/          # UI components
+│   ├── admin/          # Admin-specific components
+│   ├── ratings/        # Rating system components
+│   └── player-card/    # Player display components
+├── hooks/              # React hooks
+├── pages/              # Page components
+│   ├── admin/          # Admin portal pages
+│   └── ...
+├── utils/              # Utility functions
+├── constants/          # Constants and enums
+└── types/              # TypeScript type definitions
+
+docs/
+├── INDEX.md            # Master documentation index ⭐
+├── systems/            # Technical system guides
+├── features/           # Feature documentation
+├── algorithms/         # Algorithm documentation
+├── components/         # Component-specific docs
+└── fixes/              # Bug fix documentation
+```
+
+---
+
+## 🎓 Learning Resources
+
+**New to the codebase?** Start here:
+1. Read [Core Development Patterns](/docs/systems/CoreDevelopmentPatterns.md)
+2. Review [Database Patterns](/docs/systems/DatabasePatterns.md)
+3. Browse [Documentation Index](/docs/INDEX.md) for specific topics
+4. Check [Team Balancing Algorithm Evolution](/docs/algorithms/TeamBalancingEvolution.md) for algorithm context
+
+**Working on a specific feature?** Find detailed docs in [Documentation Index](/docs/INDEX.md).
+
+---
+
+## 💡 Tips for Claude Code
+
+- **Always use Task tool** for complex multi-round searches/explorations
+- **Read relevant documentation** before making changes
+- **Check existing patterns** in similar components
+- **Test edge cases** (null values, mobile screens, empty states)
+- **Update documentation** when adding new features or patterns
+- **Keep user-facing content vague** about algorithm specifics
+
+---
+
+**For detailed documentation on any topic, see: [Documentation Index](/docs/INDEX.md)**
