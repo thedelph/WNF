@@ -43,7 +43,10 @@
       "Bash(timeout 3 cmd /c \"echo Waiting for server to start...\")",
       "Bash(timeout 5 cmd /c \"echo Waiting for dev server...\")",
       "Bash(timeout:*)",
-      "mcp__supabase__get_advisors"
+      "mcp__supabase__get_advisors",
+      "Bash(git stash show:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
