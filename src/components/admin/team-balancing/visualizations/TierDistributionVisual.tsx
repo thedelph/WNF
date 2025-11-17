@@ -14,6 +14,8 @@ import {
   Legend
 } from 'recharts';
 import { ParsedDebugData } from '../../../../utils/teamBalancing/debugLogParser';
+import { POSITION_MAP } from '../../../../constants/positions';
+import { Position } from '../../../../types/positions';
 
 interface TierDistributionVisualProps {
   data: ParsedDebugData;
@@ -92,15 +94,36 @@ const TierItem: React.FC<{
           >
             <div className="p-4 bg-base-200 rounded-lg">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {tier.players.map((player: any) => (
-                  <div
-                    key={player.name}
-                    className="bg-base-100 p-2 rounded text-sm"
-                  >
-                    <div className="font-medium">{player.name}</div>
-                    <div className="text-xs text-gray-500">Rating: {player.rating.toFixed(2)}</div>
-                  </div>
-                ))}
+                {tier.players.map((player: any) => {
+                  const playerWithPos = player as any;
+                  const posConfig = playerWithPos.primaryPosition
+                    ? POSITION_MAP[playerWithPos.primaryPosition as Position]
+                    : null;
+
+                  const categoryColors = {
+                    goalkeeper: 'badge-warning',
+                    defense: 'badge-info',
+                    midfield: 'badge-secondary',
+                    attack: 'badge-error'
+                  };
+
+                  return (
+                    <div
+                      key={player.name}
+                      className="bg-base-100 p-2 rounded text-sm"
+                    >
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <span className="font-medium">{player.name}</span>
+                        {posConfig && (
+                          <span className={`badge badge-xs ${categoryColors[posConfig.category]}`}>
+                            {posConfig.emoji} {posConfig.code}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">Rating: {player.rating.toFixed(2)}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </motion.div>

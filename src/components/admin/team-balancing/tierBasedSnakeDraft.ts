@@ -5191,6 +5191,17 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
   // Attach primary positions for position balancing
   const playersWithPositions = attachPrimaryPositions(playersWithRatings);
   const withPositions = playersWithPositions.filter(p => p.primaryPosition);
+
+  // Log adaptive threshold being used
+  const maxRaters = Math.max(...playersWithRatings
+    .filter(p => p.positions && p.positions.length > 0)
+    .map(p => p.positions![0]?.total_raters || 0), 0);
+
+  if (maxRaters > 0) {
+    const adaptiveThreshold = maxRaters <= 3 ? 25 : maxRaters <= 5 ? 33 : maxRaters <= 8 ? 40 : 50;
+    debugLog += `Position Classification: Using adaptive ${adaptiveThreshold}% threshold (${maxRaters} max raters)\n`;
+  }
+
   debugLog += `Position Data: ${withPositions.length}/${playersWithPositions.length} players have position ratings\n`;
 
   if (withPositions.length > 0) {

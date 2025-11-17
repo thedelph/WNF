@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ParsedDebugData } from '../../../../utils/teamBalancing/debugLogParser';
 import { formatRating } from '../../../../utils/ratingFormatters';
+import { POSITION_MAP } from '../../../../constants/positions';
+import { Position } from '../../../../types/positions';
 
 interface SnakeDraftSimulatorProps {
   data: ParsedDebugData;
@@ -227,6 +229,16 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
             <div className="text-sm text-gray-500 mt-2">
               Tier {pick.tier} • Rating: {pick.rating?.toFixed(2) || 'N/A'}
               {playerData?.gk_rating && ` • GK: ${formatRating(playerData.gk_rating)}`}
+              {(() => {
+                const playerWithPos = playerData as any;
+                if (playerWithPos?.primaryPosition) {
+                  const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+                  if (posConfig) {
+                    return ` • ${posConfig.emoji} ${posConfig.code}`;
+                  }
+                }
+                return '';
+              })()}
             </div>
           </motion.div>
         );
@@ -253,11 +265,31 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                     className="bg-white p-2 rounded"
                   >
                     <div className="flex justify-between items-center">
-                      <div>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{pick.player}</span>
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-gray-500">
                           Tier {pick.tier}
                         </span>
+                        {(() => {
+                          const playerWithPos = playerData as any;
+                          if (playerWithPos?.primaryPosition) {
+                            const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+                            if (posConfig) {
+                              const categoryColors = {
+                                goalkeeper: 'badge-warning',
+                                defense: 'badge-info',
+                                midfield: 'badge-secondary',
+                                attack: 'badge-error'
+                              };
+                              return (
+                                <span className={`badge badge-xs ${categoryColors[posConfig.category]}`}>
+                                  {posConfig.emoji} {posConfig.code}
+                                </span>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
                       </div>
                       <div className="text-sm">
                         Pick #{pick.pickNumber}
@@ -294,11 +326,31 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                     className="bg-white p-2 rounded"
                   >
                     <div className="flex justify-between items-center">
-                      <div>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{pick.player}</span>
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-gray-500">
                           Tier {pick.tier}
                         </span>
+                        {(() => {
+                          const playerWithPos = playerData as any;
+                          if (playerWithPos?.primaryPosition) {
+                            const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+                            if (posConfig) {
+                              const categoryColors = {
+                                goalkeeper: 'badge-warning',
+                                defense: 'badge-info',
+                                midfield: 'badge-secondary',
+                                attack: 'badge-error'
+                              };
+                              return (
+                                <span className={`badge badge-xs ${categoryColors[posConfig.category]}`}>
+                                  {posConfig.emoji} {posConfig.code}
+                                </span>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
                       </div>
                       <div className="text-sm">
                         Pick #{pick.pickNumber}

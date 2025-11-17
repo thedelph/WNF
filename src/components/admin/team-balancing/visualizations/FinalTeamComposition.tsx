@@ -7,13 +7,15 @@ import { FormationView } from '../FormationView';
 import { suggestFormations } from '../../../../utils/teamBalancing/formationSuggester';
 import { TeamAssignment } from '../types';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend } from 'recharts';
+import { POSITION_MAP, POSITION_THRESHOLDS } from '../../../../constants/positions';
+import { Position } from '../../../../types/positions';
 
 interface FinalTeamCompositionProps {
   data: ParsedDebugData;
 }
 
 export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data }) => {
-  const [viewMode, setViewMode] = useState<'cards' | 'stats' | 'tier' | 'formation' | 'playstyles'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'stats' | 'tier' | 'formation' | 'playstyles' | 'positions'>('cards');
 
   const blueTeam = data.blueTeam || [];
   const orangeTeam = data.orangeTeam || [];
@@ -35,7 +37,9 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
         overall_win_rate: p.overall_win_rate,
         overall_goal_differential: p.overall_goal_differential,
         total_games: p.total_games,
-        derived_attributes: p.derived_attributes  // Now includes playstyle attributes!
+        derived_attributes: p.derived_attributes,  // Playstyle attributes
+        ...(p as any).primaryPosition && { primaryPosition: (p as any).primaryPosition },  // Position consensus
+        ...(p as any).positions && { positions: (p as any).positions }  // Position ratings array
       }));
     };
     
@@ -223,6 +227,12 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
             onClick={() => setViewMode('playstyles')}
           >
             Playstyles
+          </button>
+          <button
+            className={`btn btn-sm ${viewMode === 'positions' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setViewMode('positions')}
+          >
+            Positions
           </button>
         </div>
       </div>
@@ -753,6 +763,278 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
             </div>
             <div className="mt-2 text-xs text-gray-500">
               Radar chart shows averaged team attributes with dynamic scaling
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'positions' && (
+        <div className="space-y-6">
+          {/* Position Category Distribution */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Blue Team Positions */}
+            <div>
+              <h3 className="font-bold text-blue-600 mb-4">
+                Blue Team Position Distribution
+              </h3>
+              <div className="space-y-2">
+                {(() => {
+                  const categoryCount = { goalkeepers: 0, defenders: 0, midfielders: 0, attackers: 0 };
+                  const categoryPlayers: Record<string, string[]> = { goalkeepers: [], defenders: [], midfielders: [], attackers: [] };
+
+                  blueTeam.forEach(player => {
+                    const playerWithPos = player as any;
+                    if (!playerWithPos.primaryPosition) return;
+
+                    const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+                    if (!posConfig) return;
+
+                    switch (posConfig.category) {
+                      case 'goalkeeper':
+                        categoryCount.goalkeepers++;
+                        categoryPlayers.goalkeepers.push(player.friendly_name);
+                        break;
+                      case 'defense':
+                        categoryCount.defenders++;
+                        categoryPlayers.defenders.push(player.friendly_name);
+                        break;
+                      case 'midfield':
+                        categoryCount.midfielders++;
+                        categoryPlayers.midfielders.push(player.friendly_name);
+                        break;
+                      case 'attack':
+                        categoryCount.attackers++;
+                        categoryPlayers.attackers.push(player.friendly_name);
+                        break;
+                    }
+                  });
+
+                  return (
+                    <>
+                      {categoryCount.goalkeepers > 0 && (
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">🥅 Goalkeepers</span>
+                              <span className="ml-2 badge badge-sm badge-warning">{categoryCount.goalkeepers}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {categoryPlayers.goalkeepers.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                      {categoryCount.defenders > 0 && (
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">🛡️ Defenders</span>
+                              <span className="ml-2 badge badge-sm badge-info">{categoryCount.defenders}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {categoryPlayers.defenders.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                      {categoryCount.midfielders > 0 && (
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">⚙️ Midfielders</span>
+                              <span className="ml-2 badge badge-sm badge-secondary">{categoryCount.midfielders}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {categoryPlayers.midfielders.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                      {categoryCount.attackers > 0 && (
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">⚔️ Attackers</span>
+                              <span className="ml-2 badge badge-sm badge-error">{categoryCount.attackers}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {categoryPlayers.attackers.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Orange Team Positions */}
+            <div>
+              <h3 className="font-bold text-orange-600 mb-4">
+                Orange Team Position Distribution
+              </h3>
+              <div className="space-y-2">
+                {(() => {
+                  const categoryCount = { goalkeepers: 0, defenders: 0, midfielders: 0, attackers: 0 };
+                  const categoryPlayers: Record<string, string[]> = { goalkeepers: [], defenders: [], midfielders: [], attackers: [] };
+
+                  orangeTeam.forEach(player => {
+                    const playerWithPos = player as any;
+                    if (!playerWithPos.primaryPosition) return;
+
+                    const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+                    if (!posConfig) return;
+
+                    switch (posConfig.category) {
+                      case 'goalkeeper':
+                        categoryCount.goalkeepers++;
+                        categoryPlayers.goalkeepers.push(player.friendly_name);
+                        break;
+                      case 'defense':
+                        categoryCount.defenders++;
+                        categoryPlayers.defenders.push(player.friendly_name);
+                        break;
+                      case 'midfield':
+                        categoryCount.midfielders++;
+                        categoryPlayers.midfielders.push(player.friendly_name);
+                        break;
+                      case 'attack':
+                        categoryCount.attackers++;
+                        categoryPlayers.attackers.push(player.friendly_name);
+                        break;
+                    }
+                  });
+
+                  return (
+                    <>
+                      {categoryCount.goalkeepers > 0 && (
+                        <div className="bg-orange-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">🥅 Goalkeepers</span>
+                              <span className="ml-2 badge badge-sm badge-warning">{categoryCount.goalkeepers}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {categoryPlayers.goalkeepers.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                      {categoryCount.defenders > 0 && (
+                        <div className="bg-orange-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">🛡️ Defenders</span>
+                              <span className="ml-2 badge badge-sm badge-info">{categoryCount.defenders}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {categoryPlayers.defenders.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                      {categoryCount.midfielders > 0 && (
+                        <div className="bg-orange-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">⚙️ Midfielders</span>
+                              <span className="ml-2 badge badge-sm badge-secondary">{categoryCount.midfielders}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {categoryPlayers.midfielders.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                      {categoryCount.attackers > 0 && (
+                        <div className="bg-orange-50 p-3 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium">⚔️ Attackers</span>
+                              <span className="ml-2 badge badge-sm badge-error">{categoryCount.attackers}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            {categoryPlayers.attackers.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* Individual Position Breakdown */}
+          <div className="bg-base-200 rounded-lg p-4">
+            <h4 className="font-semibold mb-4">Individual Position Breakdown</h4>
+            <div className="overflow-x-auto">
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th>Position</th>
+                    <th className="text-blue-600">Blue Team</th>
+                    <th className="text-orange-600">Orange Team</th>
+                    <th>Gap</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const bluePositions: Record<string, number> = {};
+                    const orangePositions: Record<string, number> = {};
+
+                    blueTeam.forEach(player => {
+                      const playerWithPos = player as any;
+                      if (playerWithPos.primaryPosition) {
+                        bluePositions[playerWithPos.primaryPosition] = (bluePositions[playerWithPos.primaryPosition] || 0) + 1;
+                      }
+                    });
+
+                    orangeTeam.forEach(player => {
+                      const playerWithPos = player as any;
+                      if (playerWithPos.primaryPosition) {
+                        orangePositions[playerWithPos.primaryPosition] = (orangePositions[playerWithPos.primaryPosition] || 0) + 1;
+                      }
+                    });
+
+                    const allPositions = new Set([
+                      ...Object.keys(bluePositions),
+                      ...Object.keys(orangePositions)
+                    ]);
+
+                    return Array.from(allPositions).sort().map(position => {
+                      const blueCount = bluePositions[position] || 0;
+                      const orangeCount = orangePositions[position] || 0;
+                      const gap = Math.abs(blueCount - orangeCount);
+                      const posConfig = POSITION_MAP[position as Position];
+
+                      return (
+                        <tr key={position}>
+                          <td className="font-medium">
+                            {posConfig?.emoji || ''} {position}
+                          </td>
+                          <td>{blueCount}</td>
+                          <td>{orangeCount}</td>
+                          <td>{gap}</td>
+                          <td>
+                            {gap <= POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP ? (
+                              <span className="badge badge-success badge-xs">✅</span>
+                            ) : (
+                              <span className="badge badge-error badge-xs">❌</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              * Maximum acceptable gap per position: {POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP} players
             </div>
           </div>
         </div>

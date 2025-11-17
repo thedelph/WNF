@@ -92,6 +92,22 @@ export const useTeamBalancing = () => {
       try {
         // Fetch recent stats (last 10 games), derived attributes, and position consensus
         console.log('Fetching recent player stats from get_player_recent_win_rates');
+
+        // Step 1: Determine adaptive threshold for position data quality
+        const { data: maxRatersData } = await supabase
+          .from('player_position_consensus')
+          .select('total_raters')
+          .order('total_raters', { ascending: false })
+          .limit(1);
+
+        const maxTotalRaters = maxRatersData?.[0]?.total_raters || 1;
+
+        // Use 40% of max raters, but never require more than 5 (caps at scale)
+        // This allows early adoption while maintaining quality standards
+        const minRaters = Math.min(5, Math.max(1, Math.floor(maxTotalRaters * 0.4)));
+
+        console.log(`Position data threshold: ${minRaters}+ raters (based on max=${maxTotalRaters})`);
+
         const [recentWinRates, recentGoalDiffs, derivedAttributes, positionConsensus] = await Promise.all([
           supabase.rpc('get_player_recent_win_rates', { games_threshold: 10 }),
           supabase.rpc('get_player_recent_goal_differentials', { games_threshold: 10 }),
@@ -99,7 +115,7 @@ export const useTeamBalancing = () => {
           supabase
             .from('player_position_consensus')
             .select('*')
-            .gte('total_raters', 5) // Only use if sufficient data
+            .gte('total_raters', minRaters) // Adaptive threshold based on participation
             .gte('percentage', 25)  // Only primary and secondary positions
             .order('percentage', { ascending: false })
         ]);
@@ -210,6 +226,10 @@ export const useTeamBalancing = () => {
               percentage: consensus.percentage
             }]);
           });
+
+          console.log(`Loaded ${positionConsensus.data.length} position ratings for ${positionConsensusMap.size} unique players`);
+        } else {
+          console.log('No position consensus data loaded');
         }
 
         // Log sample data for debugging

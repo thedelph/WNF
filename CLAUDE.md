@@ -78,6 +78,36 @@ import { POSITIONS, POSITION_CATEGORIES } from '@/constants/positions';
 // Ranked system: 🥇 Gold (3pts), 🥈 Silver (2pts), 🥉 Bronze (1pt)
 ```
 
+### Formation Suggester - Position Priority (Added Nov 2025)
+
+**ALWAYS** use position consensus as primary source for position assignment:
+
+```typescript
+// ✅ CORRECT - Check consensus first (priority: consensus → playstyle → ratings)
+import { getIdealPositionsForPlayer } from '@/utils/teamBalancing/formationSuggester';
+const positions = getIdealPositionsForPlayer(player, requirements);
+// Returns positions based on consensus if available, falls back to playstyle/ratings
+
+// Position mapping: 12 specific → 8 formation positions
+// LB/CB/RB → DEF, LWB/RWB → WB, LW/RW → W
+// CDM → CDM, CM → CM, CAM → CAM, ST → ST, GK → null (outfield only)
+
+// ❌ WRONG - Ignoring consensus
+const positions = detectPlaystyleForPlayer(player, requirements);
+// Bypasses peer-validated position data!
+```
+
+**Outfield-only formations:**
+- All formations have `GK: 0` for rotating goalkeeper system
+- Player counts: 7-11 outfield (not 8-12 total)
+- Real format: 10v10 with 1 non-rotating keeper, all players need outfield positions
+
+**Scoring weights:**
+- With consensus (94% of players): Consensus 40% + Attributes 40% + Ratings 20%
+- Without consensus: Attributes 60% + Ratings 40%
+- Primary position match (≥50% consensus): 7.0-10.0 points (scales with %)
+- Secondary position match (25-49%): 5.0-7.0 points
+
 ### RLS Bypass Pattern
 
 Use `p_bypass_permission: true` **ONLY** in trusted system processes:
@@ -160,7 +190,7 @@ await supabaseAdmin.auth.resetPasswordForEmail(email)
 - **[GK Rating](/docs/features/GKRating.md)** (Oct 2025) - Fourth core metric + permanent GK feature
 - **[Position Preferences](/docs/features/PositionPreferences.md)** (Nov 2025) - Ranked position system (Gold/Silver/Bronze)
 - **[Playstyle System](/docs/features/PlaystyleRatingSystem.md)** (Sep 2025) - 24 playstyles with 6 derived attributes
-- **[Formation Suggester](/docs/features/FormationSuggester.md)** (Sep 2025) - AI-powered tactical recommendations
+- **[Formation Suggester](/docs/features/FormationSuggester.md)** (Sep/Nov 2025) - Position consensus + playstyle tactical assignments
 
 ### Admin Systems
 - **[RBAC](/docs/systems/AdminSystems.md#rbac)** - Role-based access control

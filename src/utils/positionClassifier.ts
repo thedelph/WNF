@@ -16,11 +16,17 @@ import {
 import {
   POSITION_THRESHOLDS,
   POSITIONS_BY_CATEGORY,
-  getPositionConfig
+  getPositionConfig,
+  getAdaptivePrimaryThreshold
 } from '../constants/positions';
 
 /**
  * Classify position consensus data into primary, secondary, and mentioned tiers
+ *
+ * Uses adaptive thresholds based on total rater participation:
+ * - 1-3 raters: 33% primary threshold
+ * - 4-7 raters: 40% primary threshold
+ * - 8+ raters: 50% primary threshold
  *
  * @param consensusData - Array of position consensus data for a player
  * @returns Classified positions with tier assignments
@@ -38,19 +44,22 @@ export function classifyPositions(consensusData: PositionConsensus[]): Classifie
   const totalRaters = consensusData[0]?.total_raters || 0;
   const hasSufficientData = totalRaters >= POSITION_THRESHOLDS.MIN_RATERS;
 
+  // Calculate adaptive primary threshold based on participation level
+  const adaptivePrimaryThreshold = getAdaptivePrimaryThreshold(totalRaters);
+
   // Filter out positions with 0% rating
   const ratedPositions = consensusData.filter(p => p.percentage > 0);
 
   return {
     primary: ratedPositions
-      .filter(p => p.percentage >= POSITION_THRESHOLDS.PRIMARY_THRESHOLD)
+      .filter(p => p.percentage >= adaptivePrimaryThreshold)
       .sort((a, b) => b.percentage - a.percentage),
 
     secondary: ratedPositions
       .filter(
         p =>
           p.percentage >= POSITION_THRESHOLDS.SECONDARY_THRESHOLD &&
-          p.percentage < POSITION_THRESHOLDS.PRIMARY_THRESHOLD
+          p.percentage < adaptivePrimaryThreshold
       )
       .sort((a, b) => b.percentage - a.percentage),
 

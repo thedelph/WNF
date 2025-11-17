@@ -166,6 +166,60 @@ const actualScore = calculateEnhancedPositionScore(assignment.player, position, 
 - Critical mismatches get priority fixes
 - Intelligent swaps respecting player types
 
+## Subsequent Enhancement: Position Consensus Integration (Nov 17, 2025)
+
+Two months after this overhaul, the Formation Suggester received a major enhancement: **Position Consensus Integration**.
+
+### What Changed
+
+1. **Position Consensus as Primary Source**
+   - Peer ratings from position consensus system integrated
+   - Consensus data contributes **40% of position score**
+   - Currently 94% of players (17/18) have consensus data
+   - Real-world peer knowledge prioritized over algorithmic detection
+
+2. **Outfield-Only Formations**
+   - All formations converted to GK: 0 (no goalkeeper positions)
+   - Supports rotating goalkeeper system
+   - All players need tactical outfield positions
+
+3. **Position Mapping System**
+   - Created mapping from 12 specific positions to 8 formation positions
+   - LB/CB/RB → DEF, LWB/RWB → WB, LW/RW → W, etc.
+   - Seamless translation preserving consensus accuracy
+
+4. **Enhanced Scoring Algorithm**
+   - **With consensus**: Consensus 40% + Attributes 40% + Ratings 20%
+   - **Fallback**: Attributes 60% + Ratings 40% (when no consensus)
+   - Primary position match: 7.0-10.0 points (scales with consensus %)
+
+5. **UI Position Badges**
+   - Visual indicators showing data source (👥 consensus, ⚽ playstyle, 📊 ratings)
+   - Consensus position displayed under player name
+   - Enhanced tooltips with position source explanation
+
+### Why This Built on the September Overhaul
+
+The September overhaul created the foundation by:
+- Establishing **relative requirements system** that consensus scoring leverages
+- Implementing **intelligent swap optimization** that works with consensus data
+- Creating **position hierarchy protection** that prevents inappropriate moves
+- Building **comprehensive debug logging** that tracks position sources
+
+The November enhancement leveraged this foundation to integrate real-world peer knowledge while maintaining all the intelligent fallback logic and optimization strategies.
+
+### Impact
+
+**Score Improvements**: ~29% average improvement
+- Blue Team: 3.70 → 4.77 (+29%)
+- Orange Team: 3.87 → 5.39 (+39%)
+
+**Coverage**: 17/18 players (94%) using peer-validated positions
+
+### Documentation
+
+See: `/docs/fixes/FormationSuggesterPositionConsensusIntegration.md` for complete technical details.
+
 ## Example Success: Tom K Fix
 ```
 Before: Tom K at CM with 0.99 score (terrible!)
@@ -187,7 +241,8 @@ After: Tom K swapped to ST (CRITICAL FIX)
 5. ✅ Position hierarchy respected except for critical fixes
 
 ## Future Considerations
-1. Consider position-specific playstyle recommendations
+1. ~~Consider position-specific playstyle recommendations~~ ✅ **DONE** (Nov 2025 - Position consensus integration)
 2. Add formation flexibility based on opponent analysis
 3. Implement tactical style preferences (possession, counter-attack)
 4. Track position assignment success rates over time
+5. Refine consensus weighting based on assignment success data (post-Nov 2025)

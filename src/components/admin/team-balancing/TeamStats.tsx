@@ -1,7 +1,12 @@
 import React from 'react';
 import { StarRating } from './StarRating';
+import { TeamAssignment } from './types';
+import { POSITION_MAP, POSITION_THRESHOLDS } from '../../../constants/positions';
+import { Position } from '../../../types/positions';
 
 export interface TeamStatsProps {
+  blueTeam?: TeamAssignment[];
+  orangeTeam?: TeamAssignment[];
   stats: {
     blue: {
       attack: number;
@@ -104,7 +109,61 @@ export interface TeamStatsProps {
  * TeamStats component displays the statistical information for both teams
  * Shows attack/defense ratings, win rates, and differences between teams
  */
-export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, previewSwapStats }) => {
+export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stats, comparisonStats, previewSwapStats }) => {
+  // Calculate position category distribution
+  const getPositionDistribution = (team: TeamAssignment[] | undefined) => {
+    if (!team) return { goalkeepers: 0, defenders: 0, midfielders: 0, attackers: 0 };
+
+    const counts = { goalkeepers: 0, defenders: 0, midfielders: 0, attackers: 0 };
+
+    team.forEach(player => {
+      const playerWithPos = player as any;
+      if (!playerWithPos.primaryPosition) return;
+
+      const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+      if (!posConfig) return;
+
+      switch (posConfig.category) {
+        case 'goalkeeper':
+          counts.goalkeepers++;
+          break;
+        case 'defense':
+          counts.defenders++;
+          break;
+        case 'midfield':
+          counts.midfielders++;
+          break;
+        case 'attack':
+          counts.attackers++;
+          break;
+      }
+    });
+
+    return counts;
+  };
+
+  const bluePositions = getPositionDistribution(blueTeam);
+  const orangePositions = getPositionDistribution(orangeTeam);
+
+  // Calculate position gaps
+  const positionGaps = {
+    goalkeepers: Math.abs(bluePositions.goalkeepers - orangePositions.goalkeepers),
+    defenders: Math.abs(bluePositions.defenders - orangePositions.defenders),
+    midfielders: Math.abs(bluePositions.midfielders - orangePositions.midfielders),
+    attackers: Math.abs(bluePositions.attackers - orangePositions.attackers)
+  };
+
+  const maxPositionGap = Math.max(
+    positionGaps.goalkeepers,
+    positionGaps.defenders,
+    positionGaps.midfielders,
+    positionGaps.attackers
+  );
+
+  const hasPositionData = blueTeam && orangeTeam &&
+    (bluePositions.goalkeepers + bluePositions.defenders + bluePositions.midfielders + bluePositions.attackers > 0 ||
+     orangePositions.goalkeepers + orangePositions.defenders + orangePositions.midfielders + orangePositions.attackers > 0);
+
   // Format statistics for display with proper handling of null/undefined values
   const formatStat = (value: number | undefined | null) => {
     if (value === undefined || value === null || isNaN(value)) return '0.0';
@@ -190,6 +249,43 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
               {comparisonStats && <td>{formatStat(comparisonStats.gkDiff)}</td>}
               {previewSwapStats && <td>{formatStat(previewSwapStats.gkDiff)}</td>}
             </tr>
+
+            {/* Position Distribution Row */}
+            {hasPositionData && (
+              <tr className="bg-base-200">
+                <td className="font-medium">Position Balance</td>
+                <td>
+                  <div className="text-xs">
+                    {bluePositions.goalkeepers > 0 && <div>🥅 GK: {bluePositions.goalkeepers}</div>}
+                    {bluePositions.defenders > 0 && <div>🛡️ DEF: {bluePositions.defenders}</div>}
+                    {bluePositions.midfielders > 0 && <div>⚙️ MID: {bluePositions.midfielders}</div>}
+                    {bluePositions.attackers > 0 && <div>⚔️ ATK: {bluePositions.attackers}</div>}
+                  </div>
+                </td>
+                <td>
+                  <div className="text-xs">
+                    {orangePositions.goalkeepers > 0 && <div>🥅 GK: {orangePositions.goalkeepers}</div>}
+                    {orangePositions.defenders > 0 && <div>🛡️ DEF: {orangePositions.defenders}</div>}
+                    {orangePositions.midfielders > 0 && <div>⚙️ MID: {orangePositions.midfielders}</div>}
+                    {orangePositions.attackers > 0 && <div>⚔️ ATK: {orangePositions.attackers}</div>}
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs">
+                      Max gap: {maxPositionGap}
+                    </span>
+                    {maxPositionGap <= POSITION_THRESHOLDS.MAX_POSITION_GAP ? (
+                      <span className="badge badge-success badge-xs">✅ Balanced</span>
+                    ) : (
+                      <span className="badge badge-error badge-xs">❌ Imbalanced</span>
+                    )}
+                  </div>
+                </td>
+                {comparisonStats && <td></td>}
+                {previewSwapStats && <td></td>}
+              </tr>
+            )}
 
             {/* Win Rate Row */}
             <tr>
@@ -337,6 +433,15 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
             <p className="text-sm">Game IQ: {formatStat(stats.blue.gameIq)}</p>
             <p className="text-sm">GK: {formatStat(stats.blue.gk)}</p>
             <p className="text-sm">Win Rate: {formatStat(stats.blue.winRate)}%</p>
+            {hasPositionData && (
+              <div className="text-xs mt-2 pt-2 border-t border-blue-200">
+                <div className="font-medium">Positions:</div>
+                {bluePositions.goalkeepers > 0 && <div>🥅 GK: {bluePositions.goalkeepers}</div>}
+                {bluePositions.defenders > 0 && <div>🛡️ DEF: {bluePositions.defenders}</div>}
+                {bluePositions.midfielders > 0 && <div>⚙️ MID: {bluePositions.midfielders}</div>}
+                {bluePositions.attackers > 0 && <div>⚔️ ATK: {bluePositions.attackers}</div>}
+              </div>
+            )}
           </div>
 
           <div className="bg-orange-50 p-3 rounded">
@@ -346,6 +451,15 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
             <p className="text-sm">Game IQ: {formatStat(stats.orange.gameIq)}</p>
             <p className="text-sm">GK: {formatStat(stats.orange.gk)}</p>
             <p className="text-sm">Win Rate: {formatStat(stats.orange.winRate)}%</p>
+            {hasPositionData && (
+              <div className="text-xs mt-2 pt-2 border-t border-orange-200">
+                <div className="font-medium">Positions:</div>
+                {orangePositions.goalkeepers > 0 && <div>🥅 GK: {orangePositions.goalkeepers}</div>}
+                {orangePositions.defenders > 0 && <div>🛡️ DEF: {orangePositions.defenders}</div>}
+                {orangePositions.midfielders > 0 && <div>⚙️ MID: {orangePositions.midfielders}</div>}
+                {orangePositions.attackers > 0 && <div>⚔️ ATK: {orangePositions.attackers}</div>}
+              </div>
+            )}
           </div>
         </div>
         
@@ -357,6 +471,19 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ stats, comparisonStats, pr
           <p className="text-sm">GK: {formatStat(stats.blue.gk)} | {formatStat(stats.orange.gk)} | Diff: {formatStat(stats.gkDiff)}</p>
           <p className="text-sm">Win Rate: {formatPercentage(stats.blue.winRate)} | {formatPercentage(stats.orange.winRate)} | Diff: {formatPercentage(stats.winRateDiff)}</p>
           <p className="text-sm">Goal Diff: {formatGoalDiff(stats.blue.goalDifferential)} | {formatGoalDiff(stats.orange.goalDifferential)} | Diff: {formatGoalDiff(stats.goalDifferentialDiff)}</p>
+          {hasPositionData && (
+            <div className="mt-2 pt-2 border-t">
+              <p className="font-medium text-sm">Position Balance:</p>
+              <div className="flex items-center justify-between text-xs mt-1">
+                <span>Max gap: {maxPositionGap}</span>
+                {maxPositionGap <= POSITION_THRESHOLDS.MAX_POSITION_GAP ? (
+                  <span className="badge badge-success badge-xs">✅ Balanced</span>
+                ) : (
+                  <span className="badge badge-error badge-xs">❌ Imbalanced</span>
+                )}
+              </div>
+            </div>
+          )}
           <div className="mt-2 pt-2 border-t">
             <div className="flex justify-between items-center">
               <p className="font-medium">Balance Score:</p>

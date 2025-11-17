@@ -38,7 +38,24 @@ export const FormationView: React.FC<FormationViewProps> = ({
 
   const renderPlayerCard = (assignment: PlayerPositionAssignment, compact = false) => {
     const isSelected = selectedPlayer === assignment.player.player_id;
-    
+
+    // Check if player has position consensus data
+    const playerWithPos = assignment.player as any;
+    const hasConsensus = playerWithPos.primaryPosition || (playerWithPos.positions && playerWithPos.positions.length > 0);
+    const positionSource = playerWithPos.__positionSource;
+
+    // Check if assigned position matches their consensus
+    let consensusMatch = false;
+    let consensusLabel = '';
+    if (hasConsensus && playerWithPos.primaryPosition) {
+      // Map their consensus position to formation position
+      const consensusFormationPos = playerWithPos.primaryPosition;
+      // Simple check - would need full mapping logic for perfect accuracy
+      consensusMatch = assignment.position === consensusFormationPos ||
+                      (playerWithPos.positions || []).some((p: any) => p.position === assignment.position);
+      consensusLabel = playerWithPos.primaryPosition;
+    }
+
     return (
       <motion.div
         key={assignment.player.player_id}
@@ -52,17 +69,36 @@ export const FormationView: React.FC<FormationViewProps> = ({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.98 }}
       >
+        {/* Specialist badge */}
         {assignment.isSpecialist && (
           <span className="absolute -top-2 -right-2 text-xs bg-yellow-400 text-yellow-900 px-1 rounded">
             ⭐
           </span>
         )}
-        
+
+        {/* Position consensus badge */}
+        {hasConsensus && !compact && (
+          <span className={`absolute -top-2 -left-2 text-xs px-1 rounded ${
+            positionSource === 'consensus' ? 'bg-green-500 text-white' :
+            positionSource === 'playstyle' ? 'bg-blue-500 text-white' :
+            'bg-gray-400 text-white'
+          }`} title={`Position source: ${positionSource || 'unknown'}`}>
+            {positionSource === 'consensus' ? '👥' : positionSource === 'playstyle' ? '⚽' : '📊'}
+          </span>
+        )}
+
         <div className="text-center">
           <div className="font-semibold text-sm truncate">
             {assignment.player.friendly_name}
           </div>
-          
+
+          {/* Show consensus position if different from assignment */}
+          {!compact && hasConsensus && consensusLabel && (
+            <div className="text-xs text-gray-600 mt-0.5">
+              Consensus: {consensusLabel}
+            </div>
+          )}
+
           {!compact && (
             <div className="text-xs mt-1 space-y-0.5">
               <div className="flex justify-center gap-2">
@@ -94,6 +130,16 @@ export const FormationView: React.FC<FormationViewProps> = ({
                   </div>
                 ))}
               </div>
+              {hasConsensus && (
+                <div className="mt-2 pt-2 border-t text-xs text-gray-600">
+                  <div className="font-medium">Position Data Source:</div>
+                  <div>
+                    {positionSource === 'consensus' && '👥 Peer ratings (position consensus)'}
+                    {positionSource === 'playstyle' && '⚽ Playstyle attributes'}
+                    {positionSource === 'ratings' && '📊 Core ratings only'}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

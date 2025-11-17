@@ -472,8 +472,10 @@ const TeamBalancingOverview = () => {
 
       {/* Team statistics section */}
       <div className="mb-8">
-        <TeamStats 
-          stats={teamStats} 
+        <TeamStats
+          blueTeam={teams.blueTeam}
+          orangeTeam={teams.orangeTeam}
+          stats={teamStats}
           previewSwapStats={previewState.active ? calculateSwapStats({
             bluePlayer: assignments.find(p => p.player_id === previewState.player1) as TeamAssignment,
             orangePlayer: assignments.find(p => p.player_id === previewState.player2) as TeamAssignment

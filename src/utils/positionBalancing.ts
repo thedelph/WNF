@@ -11,7 +11,7 @@ import {
   getPrimaryPosition,
   comparePositionBalance
 } from './positionClassifier';
-import { POSITION_THRESHOLDS } from '../constants/positions';
+import { POSITION_THRESHOLDS, getAdaptiveMinRaters } from '../constants/positions';
 
 /**
  * Player type with position consensus data
@@ -80,8 +80,70 @@ export function checkPositionBalanceConstraint(
 }
 
 /**
+ * Check individual position balance (specific positions like RWB, CM, ST)
+ * Ensures no single position has more than MAX_INDIVIDUAL_POSITION_GAP difference between teams
+ *
+ * @param blueTeam - Blue team players
+ * @param orangeTeam - Orange team players
+ * @returns Object with isBalanced flag, max gap, and list of imbalanced positions
+ */
+export function checkIndividualPositionBalance(
+  blueTeam: PlayerWithPositions[],
+  orangeTeam: PlayerWithPositions[]
+): { isBalanced: boolean; maxGap: number; imbalancedPositions: string[] } {
+  // Count each specific position for both teams
+  const bluePositions: Record<string, number> = {};
+  const orangePositions: Record<string, number> = {};
+
+  blueTeam.forEach(player => {
+    if (player.primaryPosition) {
+      bluePositions[player.primaryPosition] = (bluePositions[player.primaryPosition] || 0) + 1;
+    }
+  });
+
+  orangeTeam.forEach(player => {
+    if (player.primaryPosition) {
+      orangePositions[player.primaryPosition] = (orangePositions[player.primaryPosition] || 0) + 1;
+    }
+  });
+
+  // Get all unique positions across both teams
+  const allPositions = new Set([
+    ...Object.keys(bluePositions),
+    ...Object.keys(orangePositions)
+  ]);
+
+  let maxGap = 0;
+  const imbalancedPositions: string[] = [];
+
+  // Check gap for each position
+  allPositions.forEach(position => {
+    const blueCount = bluePositions[position] || 0;
+    const orangeCount = orangePositions[position] || 0;
+    const gap = Math.abs(blueCount - orangeCount);
+
+    if (gap > maxGap) {
+      maxGap = gap;
+    }
+
+    if (gap > POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP) {
+      imbalancedPositions.push(`${position} (${blueCount} vs ${orangeCount})`);
+    }
+  });
+
+  return {
+    isBalanced: imbalancedPositions.length === 0,
+    maxGap,
+    imbalancedPositions
+  };
+}
+
+/**
  * Evaluate if a swap would violate position balance
  * Used in swap acceptability checking
+ *
+ * Checks both category-level balance (Defenders/Midfielders/Attackers)
+ * and individual position balance (RWB, CM, ST, etc.)
  *
  * @param blueTeamBefore - Blue team before swap
  * @param orangeTeamBefore - Orange team before swap
@@ -95,10 +157,11 @@ export function evaluateSwapPositionImpact(
   blueTeamAfter: PlayerWithPositions[],
   orangeTeamAfter: PlayerWithPositions[]
 ): { acceptable: boolean; rejectReason?: string } {
+  // Check category-level balance (Defenders/Midfielders/Attackers)
   const comparisonBefore = comparePositionBalance(blueTeamBefore, orangeTeamBefore);
   const comparisonAfter = comparePositionBalance(blueTeamAfter, orangeTeamAfter);
 
-  // HARD CONSTRAINT: Block if swap creates or worsens position imbalance
+  // HARD CONSTRAINT: Block if swap creates or worsens category position imbalance
   if (!comparisonAfter.isBalanced) {
     // If position was already imbalanced, allow swap if it improves the situation
     if (!comparisonBefore.isBalanced && comparisonAfter.maxGap < comparisonBefore.maxGap) {
@@ -107,7 +170,24 @@ export function evaluateSwapPositionImpact(
 
     return {
       acceptable: false,
-      rejectReason: `Position imbalance: ${comparisonAfter.imbalancedCategories.join(', ')} (max gap: ${comparisonAfter.maxGap})`
+      rejectReason: `Position category imbalance: ${comparisonAfter.imbalancedCategories.join(', ')} (max gap: ${comparisonAfter.maxGap})`
+    };
+  }
+
+  // Check individual position balance (RWB, CM, ST, etc.)
+  const individualBefore = checkIndividualPositionBalance(blueTeamBefore, orangeTeamBefore);
+  const individualAfter = checkIndividualPositionBalance(blueTeamAfter, orangeTeamAfter);
+
+  // HARD CONSTRAINT: Block if swap creates or worsens individual position imbalance
+  if (!individualAfter.isBalanced) {
+    // If already imbalanced, allow swap if it improves the situation
+    if (!individualBefore.isBalanced && individualAfter.maxGap < individualBefore.maxGap) {
+      return { acceptable: true };
+    }
+
+    return {
+      acceptable: false,
+      rejectReason: `Individual position imbalance: ${individualAfter.imbalancedPositions.join(', ')} (max gap: ${individualAfter.maxGap})`
     };
   }
 
@@ -150,12 +230,22 @@ export function getPositionDistributionSummary(
  * Check if team has sufficient position data for balancing
  * Requires at least 50% of team to have position ratings
  *
+ * Uses adaptive minimum raters threshold based on current participation level
+ *
  * @param team - Team to check
  * @returns True if sufficient data exists
  */
 export function hasSufficientPositionData(team: PlayerWithPositions[]): boolean {
+  // Calculate max total raters across all players to determine adaptive threshold
+  const maxTotalRaters = Math.max(
+    ...team.map(p => p.positions?.[0]?.total_raters || 0),
+    1 // Ensure at least 1
+  );
+
+  const adaptiveMinRaters = getAdaptiveMinRaters(maxTotalRaters);
+
   const withPositions = team.filter(p => p.positions && p.positions.length > 0 &&
-    (p.positions[0]?.total_raters || 0) >= POSITION_THRESHOLDS.MIN_RATERS);
+    (p.positions[0]?.total_raters || 0) >= adaptiveMinRaters);
 
   return withPositions.length >= team.length * 0.5;
 }
@@ -190,11 +280,59 @@ export function logPositionBalanceStatus(
   debugLog.value += `${getPositionDistributionSummary(blueTeam, 'Blue Team')}\n`;
   debugLog.value += `${getPositionDistributionSummary(orangeTeam, 'Orange Team')}\n`;
 
+  // Category-level balance check
   const comparison = comparePositionBalance(blueTeam, orangeTeam);
-  debugLog.value += `\nBalance Check:\n`;
+  debugLog.value += `\nCategory Balance Check:\n`;
   debugLog.value += `  Goalkeepers: ${comparison.goalkeepers.gap} gap ${comparison.goalkeepers.gap <= POSITION_THRESHOLDS.MAX_POSITION_GAP ? '✅' : '❌'}\n`;
   debugLog.value += `  Defenders: ${comparison.defenders.gap} gap ${comparison.defenders.gap <= POSITION_THRESHOLDS.MAX_POSITION_GAP ? '✅' : '❌'}\n`;
   debugLog.value += `  Midfielders: ${comparison.midfielders.gap} gap ${comparison.midfielders.gap <= POSITION_THRESHOLDS.MAX_POSITION_GAP ? '✅' : '❌'}\n`;
   debugLog.value += `  Attackers: ${comparison.attackers.gap} gap ${comparison.attackers.gap <= POSITION_THRESHOLDS.MAX_POSITION_GAP ? '✅' : '❌'}\n`;
-  debugLog.value += `\nOverall: ${comparison.isBalanced ? '✅ BALANCED' : `❌ IMBALANCED (${comparison.imbalancedCategories.join(', ')})`}\n`;
+
+  // Individual position balance check - show all positions with their gaps
+  const individualBalance = checkIndividualPositionBalance(blueTeam, orangeTeam);
+
+  // Build detailed position gap breakdown
+  const bluePositions: Record<string, number> = {};
+  const orangePositions: Record<string, number> = {};
+
+  blueTeam.forEach(player => {
+    if (player.primaryPosition) {
+      bluePositions[player.primaryPosition] = (bluePositions[player.primaryPosition] || 0) + 1;
+    }
+  });
+
+  orangeTeam.forEach(player => {
+    if (player.primaryPosition) {
+      orangePositions[player.primaryPosition] = (orangePositions[player.primaryPosition] || 0) + 1;
+    }
+  });
+
+  const allPositions = new Set([
+    ...Object.keys(bluePositions),
+    ...Object.keys(orangePositions)
+  ]);
+
+  if (allPositions.size > 0) {
+    debugLog.value += `\nIndividual Position Gaps:\n`;
+
+    // Sort positions for consistent display
+    const sortedPositions = Array.from(allPositions).sort();
+
+    sortedPositions.forEach(position => {
+      const blueCount = bluePositions[position] || 0;
+      const orangeCount = orangePositions[position] || 0;
+      const gap = Math.abs(blueCount - orangeCount);
+      const status = gap <= POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP ? '✅' : '❌';
+
+      debugLog.value += `  ${position}: Blue ${blueCount} vs Orange ${orangeCount} (gap: ${gap}) ${status}\n`;
+    });
+  }
+
+  debugLog.value += `\nOverall: ${comparison.isBalanced && individualBalance.isBalanced ? '✅ BALANCED' : `❌ IMBALANCED`}\n`;
+  if (!comparison.isBalanced) {
+    debugLog.value += `  Category issues: ${comparison.imbalancedCategories.join(', ')}\n`;
+  }
+  if (!individualBalance.isBalanced) {
+    debugLog.value += `  Position issues: ${individualBalance.imbalancedPositions.join(', ')}\n`;
+  }
 }

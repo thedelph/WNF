@@ -243,8 +243,15 @@ This makes it easier to find the right playstyle based on your assessment of the
 
 ## Formation Integration
 
-### How Playstyles Map to Tactical Positions
-The 6 derived attributes are now the primary input for the Formation Suggester system, which automatically assigns players to optimal tactical positions based on their playstyle characteristics.
+### How Playstyles Map to Tactical Positions (Updated Nov 17, 2025)
+The 6 derived attributes are the **secondary input** (after position consensus) for the Formation Suggester system, which automatically assigns players to optimal tactical positions.
+
+**Position Detection Priority:**
+1. **Position Consensus** (peer ratings) - 40% of score - Primary source when available
+2. **Playstyle Attributes** - 40% of score - Documented here, fallback when no consensus
+3. **Core Ratings** - 20% of score - Final fallback
+
+Currently 94% of players (17/18) have position consensus data. When consensus is unavailable, the system uses playstyle characteristics as described below.
 
 #### Natural Position Detection
 Each playstyle maps to one or more natural positions:
@@ -257,8 +264,9 @@ Each playstyle maps to one or more natural positions:
 | **Defensive Mid** | Powerhouse, Locomotive | CDM, CM | Defending, Physical, Passing |
 | **Defensive** | Sentinel, Anchor, Shadow | DEF, CDM | Defending, Physical, Pace |
 
-#### Position Suitability Calculation
-Each position has weighted attribute requirements:
+#### Position Suitability Calculation (Updated Nov 17, 2025)
+
+When position consensus is unavailable, each position has weighted attribute requirements:
 
 ```typescript
 // Example: Striker position weights
@@ -272,15 +280,26 @@ ST: {
 }
 ```
 
+**NOTE:** If player has position consensus data (94% of players do), the consensus score contributes 40% and attribute compatibility contributes 40% of the total position score.
+
 #### Formation Selection Based on Team Composition
 The system analyzes the collective playstyles to choose formations:
 - **Many attacking playstyles** → 3-1-3-1 or 3-1-2-2 (attack-heavy)
 - **Many defensive playstyles** → 3-2W-2-1 with CDM emphasis
 - **Balanced mix** → 3-4-1 or 3-2W-2-1
 
-#### Dynamic Assignment Algorithm
-1. **Phase 1**: Players with natural positions are assigned first (e.g., "Finisher" → ST)
-2. **Phase 2**: Remaining players assigned based on attribute compatibility
+#### Dynamic Assignment Algorithm (Updated Nov 17, 2025)
+
+**Priority-Based Position Detection:**
+- **Consensus First**: Check position consensus data (if available)
+- **Playstyle Fallback**: Use playstyle attributes (if no consensus)
+- **Rating Fallback**: Use core ratings (final fallback)
+
+**Assignment Phases:**
+1. **Phase 1**: Players with natural positions assigned first using priority-based detection
+   - Example (with consensus): "Dom (RW 75%)" → W position
+   - Example (no consensus): "Finisher playstyle" → ST position
+2. **Phase 2**: Remaining players assigned based on combined scoring (consensus 40% + attributes 40% + ratings 20%)
 3. **Phase 3**: Optimization through intelligent position swapping
 4. **Critical Fixes**: Players terribly misplaced (score < 2.0) get priority swaps
 

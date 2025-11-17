@@ -191,18 +191,87 @@ export const POSITION_THRESHOLDS = {
   /** Minimum number of raters required before showing position data */
   MIN_RATERS: 5,
 
-  /** Percentage threshold for primary positions (50%+) */
+  /** Percentage threshold for primary positions (50%+) - STATIC fallback */
   PRIMARY_THRESHOLD: 50,
 
   /** Percentage threshold for secondary positions (25-49%) */
   SECONDARY_THRESHOLD: 25,
 
-  /** Maximum acceptable gap between teams in any position category (team balancing) */
+  /** Maximum acceptable gap between teams in any position category (Defenders/Midfielders/Attackers) */
   MAX_POSITION_GAP: 2,
+
+  /** Maximum acceptable gap between teams in any individual position (RWB, CM, ST, etc.) */
+  MAX_INDIVIDUAL_POSITION_GAP: 2,
 
   /** Warning threshold - show warning if selecting more than this many positions */
   MAX_RECOMMENDED_SELECTIONS: 3
 } as const;
+
+/**
+ * Calculate adaptive minimum raters required based on total participation
+ *
+ * Scales the minimum rater requirement based on participation level:
+ *
+ * - 1-3 raters: Require 1+ rater (early adoption)
+ * - 4-5 raters: Require 2+ raters (small group quality)
+ * - 6-8 raters: Require 3+ raters (medium group quality)
+ * - 9+ raters: Require 5+ raters (mature system quality)
+ *
+ * @param maxTotalRaters - The maximum number of raters in the system
+ * @returns Adaptive minimum raters required (1-5)
+ *
+ * @example
+ * getAdaptiveMinRaters(3)  // Returns 1
+ * getAdaptiveMinRaters(5)  // Returns 2
+ * getAdaptiveMinRaters(7)  // Returns 3
+ * getAdaptiveMinRaters(10) // Returns 5
+ */
+export function getAdaptiveMinRaters(maxTotalRaters: number): number {
+  if (maxTotalRaters <= 3) {
+    return 1; // Early adoption: accept any position data
+  } else if (maxTotalRaters <= 5) {
+    return 2; // Small group: require modest agreement
+  } else if (maxTotalRaters <= 8) {
+    return 3; // Medium group: require solid data
+  } else {
+    return 5; // Mature phase: standard quality threshold
+  }
+}
+
+/**
+ * Calculate adaptive PRIMARY_THRESHOLD based on total rater participation
+ *
+ * Uses a progressive threshold that starts lenient for early adoption
+ * and becomes stricter as participation grows:
+ *
+ * - 1-3 raters: 25% threshold (handles vote splitting with few raters)
+ * - 4-5 raters: 33% threshold (small group consensus)
+ * - 6-8 raters: 40% threshold (medium group consensus)
+ * - 9+ raters: 50% threshold (standard majority)
+ *
+ * This ensures position data is usable during early adoption while
+ * maintaining quality standards as the system matures.
+ *
+ * @param maxTotalRaters - The maximum number of raters for any position
+ * @returns Adaptive threshold percentage (25-50)
+ *
+ * @example
+ * getAdaptivePrimaryThreshold(3)  // Returns 25
+ * getAdaptivePrimaryThreshold(5)  // Returns 33
+ * getAdaptivePrimaryThreshold(7)  // Returns 40
+ * getAdaptivePrimaryThreshold(10) // Returns 50
+ */
+export function getAdaptivePrimaryThreshold(maxTotalRaters: number): number {
+  if (maxTotalRaters <= 3) {
+    return 25; // Early adoption: handles vote splitting with few raters
+  } else if (maxTotalRaters <= 5) {
+    return 33; // Small group consensus: need 2+ people agreeing
+  } else if (maxTotalRaters <= 8) {
+    return 40; // Medium group: solid consensus without being too strict
+  } else {
+    return 50; // Mature phase: standard majority
+  }
+}
 
 /**
  * Badge colors for position consensus display

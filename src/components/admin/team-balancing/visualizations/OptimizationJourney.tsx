@@ -1,12 +1,34 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ParsedDebugData } from '../../../../utils/teamBalancing/debugLogParser';
+import { POSITION_MAP } from '../../../../constants/positions';
+import { Position } from '../../../../types/positions';
 
 interface OptimizationJourneyProps {
   data: ParsedDebugData;
 }
 
 export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }) => {
+  // Helper to get player position data
+  const getPlayerPosition = (playerName: string) => {
+    // Search both teams since players may have been swapped
+    const allPlayers = [...(data.blueTeam || []), ...(data.orangeTeam || [])];
+    const player = allPlayers.find(p => p.friendly_name === playerName);
+    const playerWithPos = player as any;
+
+    if (playerWithPos?.primaryPosition) {
+      const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+      if (posConfig) {
+        return {
+          code: posConfig.code,
+          emoji: posConfig.emoji,
+          category: posConfig.category
+        };
+      }
+    }
+    return null;
+  };
+
   if (data.optimizationSwaps.length === 0) {
     return (
       <motion.div
@@ -54,12 +76,50 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
             <div className="ml-16 flex-1">
               <div className="bg-base-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span className="badge badge-sm">Tier {swap.tier}</span>
-                    <div className="flex items-center gap-2 text-lg font-medium">
-                      <span className="text-blue-600">{swap.bluePlayer}</span>
+                    <div className="flex items-center gap-2 text-lg font-medium flex-wrap">
+                      <div className="flex items-center gap-1">
+                        <span className="text-blue-600">{swap.bluePlayer}</span>
+                        {(() => {
+                          const bluePos = getPlayerPosition(swap.bluePlayer);
+                          if (bluePos) {
+                            const categoryColors = {
+                              goalkeeper: 'badge-warning',
+                              defense: 'badge-info',
+                              midfield: 'badge-secondary',
+                              attack: 'badge-error'
+                            };
+                            return (
+                              <span className={`badge badge-xs ${categoryColors[bluePos.category]}`}>
+                                {bluePos.emoji} {bluePos.code}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
                       <span>↔</span>
-                      <span className="text-orange-600">{swap.orangePlayer}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-orange-600">{swap.orangePlayer}</span>
+                        {(() => {
+                          const orangePos = getPlayerPosition(swap.orangePlayer);
+                          if (orangePos) {
+                            const categoryColors = {
+                              goalkeeper: 'badge-warning',
+                              defense: 'badge-info',
+                              midfield: 'badge-secondary',
+                              attack: 'badge-error'
+                            };
+                            return (
+                              <span className={`badge badge-xs ${categoryColors[orangePos.category]}`}>
+                                {orangePos.emoji} {orangePos.code}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">

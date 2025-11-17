@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { TeamAssignment } from './types';
 import { formatRating } from '../../../utils/ratingFormatters';
+import { POSITION_MAP, CATEGORY_CONFIG } from '../../../constants/positions';
+import { Position, PositionCategory } from '../../../types/positions';
 
 // Made win_rate required to match the data we have
 
@@ -36,8 +38,8 @@ interface PlayerCardProps {
   showSwapButton: boolean;
 }
 
-const PlayerCard = ({ 
-  player, 
+const PlayerCard = ({
+  player,
   isSelected,
   isTempSelected,
   swapRank,
@@ -60,6 +62,40 @@ const PlayerCard = ({
     return 'bg-base-100';
   };
 
+  // Get position badge info
+  const getPositionBadge = () => {
+    const playerWithPos = player as any; // Type assertion for position fields
+    if (!playerWithPos.primaryPosition) return null;
+
+    const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+    if (!posConfig) return null;
+
+    // Get category color
+    const categoryColors = {
+      goalkeeper: 'badge-warning',
+      defense: 'badge-info',
+      midfield: 'badge-secondary',
+      attack: 'badge-error'
+    };
+
+    const badgeColor = categoryColors[posConfig.category];
+
+    // Get position consensus percentage if available
+    const positionConsensus = playerWithPos.positions?.[0];
+    const percentage = positionConsensus?.percentage
+      ? ` ${Math.round(positionConsensus.percentage)}%`
+      : '';
+
+    return {
+      emoji: posConfig.emoji,
+      code: posConfig.code,
+      percentage,
+      badgeColor
+    };
+  };
+
+  const positionBadge = getPositionBadge();
+
   return (
     <motion.div 
       key={player.player_id}
@@ -78,10 +114,15 @@ const PlayerCard = ({
       <div className="card-body p-4">
         <div className="flex justify-between items-center">
           <div className="flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-lg font-semibold">{player.friendly_name}</h3>
               {player.isPermanentGK && (
                 <span className="badge badge-sm badge-warning">🥅 Permanent GK</span>
+              )}
+              {positionBadge && (
+                <span className={`badge badge-sm ${positionBadge.badgeColor}`}>
+                  {positionBadge.emoji} {positionBadge.code}{positionBadge.percentage}
+                </span>
               )}
             </div>
 

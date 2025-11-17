@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlgorithmTimeline } from '../../components/admin/team-balancing/visualizations/AlgorithmTimeline';
@@ -13,6 +13,8 @@ import { ParsedDebugData, parseDebugLog } from '../../utils/teamBalancing/debugL
 import { PlayerWithRating } from '../../components/admin/team-balancing/tierBasedSnakeDraft';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../utils/supabase';
+import { POSITION_MAP, POSITION_THRESHOLDS } from '../../constants/positions';
+import { Position } from '../../types/positions';
 
 interface LocationState {
   debugLog: string;
@@ -83,6 +85,68 @@ export default function TeamBalancingVisualization() {
     };
     refs[phase].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  // Calculate position balance summary
+  const positionBalanceSummary = useMemo(() => {
+    if (!parsedData?.blueTeam || !parsedData?.orangeTeam) {
+      return null;
+    }
+
+    const getPositionDistribution = (team: PlayerWithRating[]) => {
+      const counts = { goalkeepers: 0, defenders: 0, midfielders: 0, attackers: 0 };
+      team.forEach(player => {
+        const playerWithPos = player as any;
+        if (!playerWithPos.primaryPosition) return;
+
+        const posConfig = POSITION_MAP[playerWithPos.primaryPosition as Position];
+        if (!posConfig) return;
+
+        switch (posConfig.category) {
+          case 'goalkeeper':
+            counts.goalkeepers++;
+            break;
+          case 'defense':
+            counts.defenders++;
+            break;
+          case 'midfield':
+            counts.midfielders++;
+            break;
+          case 'attack':
+            counts.attackers++;
+            break;
+        }
+      });
+      return counts;
+    };
+
+    const bluePositions = getPositionDistribution(parsedData.blueTeam);
+    const orangePositions = getPositionDistribution(parsedData.orangeTeam);
+
+    const maxGap = Math.max(
+      Math.abs(bluePositions.goalkeepers - orangePositions.goalkeepers),
+      Math.abs(bluePositions.defenders - orangePositions.defenders),
+      Math.abs(bluePositions.midfielders - orangePositions.midfielders),
+      Math.abs(bluePositions.attackers - orangePositions.attackers)
+    );
+
+    const isBalanced = maxGap <= POSITION_THRESHOLDS.MAX_POSITION_GAP;
+
+    const totalBlue = bluePositions.goalkeepers + bluePositions.defenders + bluePositions.midfielders + bluePositions.attackers;
+    const totalOrange = orangePositions.goalkeepers + orangePositions.defenders + orangePositions.midfielders + orangePositions.attackers;
+
+    if (totalBlue === 0 && totalOrange === 0) {
+      return null; // No position data
+    }
+
+    return {
+      isBalanced,
+      maxGap,
+      bluePositions,
+      orangePositions,
+      totalBlue,
+      totalOrange
+    };
+  }, [parsedData]);
 
   if (isLoading || !parsedData) {
     return (
@@ -164,6 +228,39 @@ export default function TeamBalancingVisualization() {
             <div className="text-sm font-medium">Team Advantage</div>
             <div className="text-lg">{parsedData.executiveSummary.advantage}</div>
           </div>
+          {positionBalanceSummary && (
+            <div className="mt-4 p-3 bg-base-200 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-medium">Position Balance</div>
+                {positionBalanceSummary.isBalanced ? (
+                  <span className="badge badge-success">✅ Well-balanced</span>
+                ) : (
+                  <span className="badge badge-warning">⚠️ Minor imbalance</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <div>
+                  <span className="text-xs text-gray-500">GK:</span>
+                  <span className="ml-1">{positionBalanceSummary.bluePositions.goalkeepers} vs {positionBalanceSummary.orangePositions.goalkeepers}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">DEF:</span>
+                  <span className="ml-1">{positionBalanceSummary.bluePositions.defenders} vs {positionBalanceSummary.orangePositions.defenders}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">MID:</span>
+                  <span className="ml-1">{positionBalanceSummary.bluePositions.midfielders} vs {positionBalanceSummary.orangePositions.midfielders}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">ATK:</span>
+                  <span className="ml-1">{positionBalanceSummary.bluePositions.attackers} vs {positionBalanceSummary.orangePositions.attackers}</span>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Max gap: {positionBalanceSummary.maxGap} • {positionBalanceSummary.totalBlue + positionBalanceSummary.totalOrange}/{parsedData.executiveSummary.totalPlayers} players with position data
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Player Transformation Section */}

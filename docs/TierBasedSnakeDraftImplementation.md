@@ -685,7 +685,7 @@ For detailed documentation, see: `/docs/features/TeamBalancingVisualization.md`
 ## Formation Suggestions
 
 ### Overview
-After teams are selected through the tier-based snake draft, the Formation Suggester system automatically analyzes each team's composition and assigns players to optimal tactical positions based on their playstyle attributes.
+After teams are selected through the tier-based snake draft, the Formation Suggester system automatically analyzes each team's composition and assigns players to optimal tactical positions. The system prioritizes position consensus data (peer ratings) when available, with automatic fallback to playstyle attributes and core ratings. All formations are outfield-only (GK: 0) to support the rotating goalkeeper system.
 
 ### Integration with Team Balancing
 
@@ -698,15 +698,22 @@ The formation system operates as the final phase of team generation:
 5. **Optimization**: Intelligent swaps to improve tactical fit
 6. **Visual Output**: Formation displayed in pitch view with player positions
 
-### How Formations Are Selected
+### How Formations Are Selected (Updated Nov 17, 2025)
 
-The system analyzes the collective playstyles of each team:
+The system analyzes team composition using position consensus data when available, otherwise playstyle attributes:
 
-- **Attacking Heavy** (many Hunters, Finishers, Marksmen):
+**Position-Based Analysis (Primary - when consensus available):**
+- Counts players with primary positions in each category:
+  - **Attackers**: ST consensus ≥50%
+  - **Defenders**: LB/CB/RB/LWB/RWB consensus ≥50%
+  - **Midfielders**: LW/CM/RW/CAM/CDM consensus ≥50%
+
+**Playstyle-Based Analysis (Fallback):**
+- **Attacking Heavy** (many Hunters, Finishers, Marksmen OR ST/W/CAM consensus):
   - Selects 3-1-3-1 or 3-1-2-2 formations
   - Emphasizes ST and CAM positions
 
-- **Defensive Heavy** (many Sentinels, Anchors, Shadows):
+- **Defensive Heavy** (many Sentinels, Anchors, Shadows OR DEF/CDM consensus):
   - Selects 3-2W-2-1 with CDM emphasis
   - Prioritizes DEF and CDM positions
 
@@ -714,17 +721,33 @@ The system analyzes the collective playstyles of each team:
   - Selects 3-4-1 or standard 3-2W-2-1
   - Even distribution across positions
 
-### Position Assignment Algorithm
+**NOTE:** All formations are outfield-only (GK: 0) for rotating goalkeeper system. Player counts: 7-11 outfield positions.
 
-#### Three-Phase Process
-1. **Natural Fits**: Players with natural positions assigned first (e.g., "Finisher" → ST)
-2. **Best Available**: Remaining players matched by attribute compatibility
+### Position Assignment Algorithm (Updated Nov 17, 2025)
+
+#### Priority-Based Position Detection
+The system uses a three-tier priority for determining ideal positions:
+1. **Position Consensus** (if available): Primary/secondary consensus positions from peer ratings
+2. **Playstyle Detection** (fallback): Attribute-based position mapping (e.g., "Finisher" → ST)
+3. **Rating-based Detection** (final fallback): Attack/Defense/IQ analysis
+
+Currently 94% of players (17/18) have position consensus data.
+
+#### Three-Phase Assignment Process
+1. **Natural Fits**: Players assigned to their detected natural positions using priority-based detection
+   - Specialist players (high consensus OR playstyle match) get first priority
+   - Example: "Dom (RW 75% consensus)" → W position with 8.75 score
+2. **Best Available**: Remaining players matched by combined scoring:
+   - With consensus: Consensus 40% + Attributes 40% + Ratings 20%
+   - Without consensus: Attributes 60% + Ratings 40%
 3. **Forced Assignments**: Any leftovers placed in least-bad positions
+   - Still benefits from consensus data to find best fallback option
 
 #### Critical Mismatch Handling
 - Identifies terribly misplaced players (score < 2.0)
 - Prioritizes fixing these through intelligent swaps
 - Example: Tom K (Finisher) misplaced at CM gets swapped to ST
+- Position consensus data helps prevent mismatches in the first place
 
 ### Debug Integration
 

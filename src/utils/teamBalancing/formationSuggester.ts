@@ -8,6 +8,82 @@ import {
   FormationResult
 } from '../../components/admin/team-balancing/types';
 import { findBestMatchingPlaystyle, PlaystyleWeights, PLAYSTYLE_DEFINITIONS } from './playstyleDefinitions';
+import { Position } from '../../types/positions';
+
+/**
+ * Position Consensus to Formation Position Mapping
+ * Maps specific positions from the position consensus system (12 positions)
+ * to generic formation positions used in the formation suggester (8 positions)
+ *
+ * Note: GK is excluded as we're suggesting outfield-only formations
+ * (10v10 with rotating goalkeeper system)
+ */
+const POSITION_CONSENSUS_TO_FORMATION_MAP: Record<Position, PositionType | null> = {
+  // Goalkeeper - excluded for outfield formations
+  GK: null,
+
+  // Defense positions → DEF
+  LB: 'DEF',
+  CB: 'DEF',
+  RB: 'DEF',
+
+  // Wing back positions → WB
+  LWB: 'WB',
+  RWB: 'WB',
+
+  // Wing positions → W
+  LW: 'W',
+  RW: 'W',
+
+  // Midfield positions (direct mapping)
+  CDM: 'CDM',
+  CM: 'CM',
+  CAM: 'CAM',
+
+  // Attack positions (direct mapping)
+  ST: 'ST'
+};
+
+/**
+ * Get formation position from a position consensus position
+ * Returns null if the position is GK (outfield only)
+ */
+function getFormationPositionFromConsensus(consensusPosition: Position): PositionType | null {
+  return POSITION_CONSENSUS_TO_FORMATION_MAP[consensusPosition] || null;
+}
+
+/**
+ * Get all formation positions that match a player's position consensus data
+ * Returns array of formation positions sorted by preference (primary first, then secondary)
+ */
+function getFormationPositionsFromPlayer(player: any): PositionType[] {
+  const formationPositions: PositionType[] = [];
+  const seen = new Set<PositionType>();
+
+  // Check if player has position consensus data
+  if (player.primaryPosition) {
+    const formationPos = getFormationPositionFromConsensus(player.primaryPosition as Position);
+    if (formationPos && !seen.has(formationPos)) {
+      formationPositions.push(formationPos);
+      seen.add(formationPos);
+    }
+  }
+
+  // Add secondary positions if available
+  if (player.positions && Array.isArray(player.positions)) {
+    player.positions.forEach((posData: any) => {
+      if (posData.position && posData.position !== player.primaryPosition) {
+        const formationPos = getFormationPositionFromConsensus(posData.position as Position);
+        if (formationPos && !seen.has(formationPos)) {
+          formationPositions.push(formationPos);
+          seen.add(formationPos);
+        }
+      }
+    });
+  }
+
+  return formationPositions;
+}
 
 /**
  * Enhanced position weight configurations using all 6 attributes
@@ -552,8 +628,60 @@ function getRatingBasedIdealPositions(player: TeamAssignment): PositionType[] {
 }
 
 /**
+ * Get ideal positions for a player - PRIORITIZES POSITION CONSENSUS
+ *
+ * Order of priority:
+ * 1. Position Consensus (peer ratings) - if available
+ * 2. Playstyle Detection (attribute-based) - fallback
+ * 3. Rating-based Detection - final fallback
+ *
+ * @returns Array of formation positions ordered by preference
+ */
+function getIdealPositionsForPlayer(
+  player: TeamAssignment,
+  requirements: RelativeRequirements
+): PositionType[] {
+  const playerWithPos = player as any;
+
+  // 1. PRIORITY: Check Position Consensus Data
+  if (playerWithPos.primaryPosition || (playerWithPos.positions && playerWithPos.positions.length > 0)) {
+    const consensusPositions = getFormationPositionsFromPlayer(playerWithPos);
+
+    if (consensusPositions.length > 0) {
+      // Store that this came from consensus for debugging
+      (player as any).__positionSource = 'consensus';
+      return consensusPositions;
+    }
+  }
+
+  // 2. FALLBACK: Use Playstyle Detection
+  const playstyle = detectPlaystyleForPlayer(player, requirements);
+  if (playstyle) {
+    const playstylePositions = PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [];
+    if (playstylePositions.length > 0) {
+      (player as any).__positionSource = 'playstyle';
+      return playstylePositions;
+    }
+  }
+
+  // 3. FINAL FALLBACK: Use Rating-based Detection
+  const ratingPositions = getRatingBasedIdealPositions(player);
+  if (ratingPositions.length > 0) {
+    (player as any).__positionSource = 'ratings';
+    return ratingPositions;
+  }
+
+  // No ideal positions found - return empty array
+  (player as any).__positionSource = 'none';
+  return [];
+}
+
+/**
  * Detect playstyle for a player using similarity-based matching
  * This finds the best match among all 65 predefined playstyles based on actual averaged attributes
+ *
+ * NOTE: For position assignment, prefer using getIdealPositionsForPlayer() which prioritizes
+ * position consensus over playstyle detection
  */
 function detectPlaystyleForPlayer(
   player: TeamAssignment,
@@ -1105,189 +1233,201 @@ function selectBestFormation(
 }
 
 /**
- * Formation templates
+ * Formation templates - OUTFIELD ONLY
+ * All formations assume rotating goalkeeper system (10v10 with 1 non-player keeper)
+ * Everyone needs an outfield position for when they're not in goal
  */
 const FORMATION_TEMPLATES: FormationTemplate[] = [
-  // 7 player formations
+  // 7 outfield players
   {
     name: '3-3-1',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 7,
+    maxPlayers: 7
   },
   {
     name: '2-2WB-2-1',
-    positions: { GK: 1, DEF: 2, WB: 2, W: 0, CDM: 1, CM: 1, CAM: 0, ST: 1 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 0, DEF: 2, WB: 2, W: 0, CDM: 1, CM: 1, CAM: 0, ST: 1 },
+    minPlayers: 7,
+    maxPlayers: 7
   },
   {
     name: '2-2W-2-1',
-    positions: { GK: 1, DEF: 2, WB: 0, W: 2, CDM: 1, CM: 1, CAM: 0, ST: 1 },
-    minPlayers: 8,
-    maxPlayers: 8
+    positions: { GK: 0, DEF: 2, WB: 0, W: 2, CDM: 1, CM: 1, CAM: 0, ST: 1 },
+    minPlayers: 7,
+    maxPlayers: 7
   },
   {
     name: '3-2-1-1',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 2, CAM: 1, ST: 1 },
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 2, CAM: 1, ST: 1 },
+    minPlayers: 7,
+    maxPlayers: 7
+  },
+
+  // 8 outfield players
+  {
+    name: '4-3-1',
+    positions: { GK: 0, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 8,
+    maxPlayers: 8
+  },
+  {
+    name: '3-4-1',
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
+    minPlayers: 8,
+    maxPlayers: 8
+  },
+  {
+    name: '3-2WB-2-1',
+    positions: { GK: 0, DEF: 3, WB: 2, W: 0, CDM: 0, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 8,
+    maxPlayers: 8
+  },
+  {
+    name: '3-2W-2-1',
+    positions: { GK: 0, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 1, CAM: 0, ST: 1 },
+    minPlayers: 8,
+    maxPlayers: 8
+  },
+  {
+    name: '3-3-2',
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 2 },
+    minPlayers: 8,
+    maxPlayers: 8
+  },
+  {
+    name: '3-2-1-2',
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 2, CAM: 1, ST: 2 },
     minPlayers: 8,
     maxPlayers: 8
   },
 
-  // 8 player formations
-  {
-    name: '4-3-1',
-    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  {
-    name: '3-4-1',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  {
-    name: '3-2WB-2-1',
-    positions: { GK: 1, DEF: 3, WB: 2, W: 0, CDM: 0, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  {
-    name: '3-2W-2-1',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 1, CAM: 0, ST: 1 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  {
-    name: '3-3-2',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-  {
-    name: '3-2-1-2',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 2, CAM: 1, ST: 2 },
-    minPlayers: 9,
-    maxPlayers: 9
-  },
-
-  // 9 player formations (standard for rotating keeper)
+  // 9 outfield players (standard for rotating keeper)
   {
     name: '4-4-1',
-    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-2WB-3-1',
-    positions: { GK: 1, DEF: 3, WB: 2, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 3, WB: 2, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '5-3-1',
-    positions: { GK: 1, DEF: 5, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 1 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 5, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-5-1',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-2W-3-1',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '4-3-2',
-    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 2 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 2, CAM: 0, ST: 2 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-3-3',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 3 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 0, CM: 3, CAM: 0, ST: 3 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-2-2-2',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 2, CM: 2, CAM: 0, ST: 2 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 2, CM: 2, CAM: 0, ST: 2 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '3-1-3-2',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 10,
-    maxPlayers: 10
+    positions: { GK: 0, DEF: 3, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
+    minPlayers: 9,
+    maxPlayers: 9
   },
   {
     name: '2-2WB-2-1-2',
-    positions: { GK: 1, DEF: 2, WB: 2, W: 0, CDM: 2, CM: 1, CAM: 0, ST: 2 },
+    positions: { GK: 0, DEF: 2, WB: 2, W: 0, CDM: 2, CM: 1, CAM: 0, ST: 2 },
+    minPlayers: 9,
+    maxPlayers: 9
+  },
+
+  // 10 outfield players
+  {
+    name: '4-5-1',
+    positions: { GK: 0, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
     minPlayers: 10,
     maxPlayers: 10
   },
-  // 10 player formations (not used in 9v9)
-  {
-    name: '4-5-1',
-    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 4, CAM: 0, ST: 1 },
-    minPlayers: 11,
-    maxPlayers: 11
-  },
   {
     name: '3-2WB-4-1',
-    positions: { GK: 1, DEF: 3, WB: 2, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
-    minPlayers: 11,
-    maxPlayers: 11
+    positions: { GK: 0, DEF: 3, WB: 2, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 1 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '4-2W-3-1',
-    positions: { GK: 1, DEF: 4, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 1 },
-    minPlayers: 11,
-    maxPlayers: 11
+    positions: { GK: 0, DEF: 4, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 1 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '4-4-2',
-    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 11,
-    maxPlayers: 11
+    positions: { GK: 0, DEF: 4, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
+    minPlayers: 10,
+    maxPlayers: 10
   },
   {
     name: '3-2W-3-2',
-    positions: { GK: 1, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 2 },
+    positions: { GK: 0, DEF: 3, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 0, ST: 2 },
+    minPlayers: 10,
+    maxPlayers: 10
+  },
+
+  // 11 outfield players
+  {
+    name: '4-5-2',
+    positions: { GK: 0, DEF: 4, WB: 0, W: 0, CDM: 2, CM: 3, CAM: 0, ST: 2 },
     minPlayers: 11,
     maxPlayers: 11
   },
-
-  // 11 outfield (12 total with keeper)
-  {
-    name: '4-5-2',
-    positions: { GK: 1, DEF: 4, WB: 0, W: 0, CDM: 2, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 12,
-    maxPlayers: 12
-  },
   {
     name: '4-2W-3-1-1',
-    positions: { GK: 1, DEF: 4, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 1, ST: 1 },
-    minPlayers: 12,
-    maxPlayers: 12
+    positions: { GK: 0, DEF: 4, WB: 0, W: 2, CDM: 1, CM: 2, CAM: 1, ST: 1 },
+    minPlayers: 11,
+    maxPlayers: 11
   },
   {
     name: '5-4-2',
-    positions: { GK: 1, DEF: 5, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
-    minPlayers: 12,
-    maxPlayers: 12
+    positions: { GK: 0, DEF: 5, WB: 0, W: 0, CDM: 1, CM: 3, CAM: 0, ST: 2 },
+    minPlayers: 11,
+    maxPlayers: 11
   }
 ];
 
 /**
- * Calculate position score with penalties
+ * Calculate position score with position consensus, attributes, and ratings
+ *
+ * New weighting (with position consensus):
+ * - Position Consensus: 40% - Peer ratings of where player should play
+ * - Derived Attributes: 40% - Playstyle-derived attributes (pace, shooting, etc.)
+ * - Core Ratings: 20% - Attack, Defense, Game IQ ratings
+ *
+ * Fallback (no position consensus):
+ * - Derived Attributes: 60%
+ * - Core Ratings: 40%
  */
 function calculateEnhancedPositionScore(
   player: TeamAssignment,
@@ -1296,9 +1436,52 @@ function calculateEnhancedPositionScore(
 ): number {
   const weights = ENHANCED_POSITION_WEIGHTS[position];
   let score = 0;
+  let fromPositionConsensus = 0;
   let fromAttributes = 0;
   let fromRatings = 0;
+  let hasPositionConsensus = false;
 
+  // 1. Calculate Position Consensus Score (0-10 scale)
+  const playerWithPos = player as any;
+  if (playerWithPos.primaryPosition || (playerWithPos.positions && playerWithPos.positions.length > 0)) {
+    hasPositionConsensus = true;
+
+    // Check if this formation position matches player's consensus position(s)
+    const playerFormationPositions = getFormationPositionsFromPlayer(playerWithPos);
+
+    if (playerFormationPositions.includes(position)) {
+      // Player has consensus for this position
+      const primaryMatches = playerWithPos.primaryPosition &&
+        getFormationPositionFromConsensus(playerWithPos.primaryPosition as Position) === position;
+
+      if (primaryMatches) {
+        // Primary position match - maximum score
+        // Get consensus percentage if available
+        const primaryPosData = playerWithPos.positions?.find(
+          (p: any) => p.position === playerWithPos.primaryPosition
+        );
+        const consensusPercentage = primaryPosData?.percentage || 50;
+
+        // Score scales with consensus strength: 50% = 7.5, 75% = 8.75, 100% = 10
+        fromPositionConsensus = 7.0 + (consensusPercentage / 100) * 3.0;
+      } else {
+        // Secondary position match - good but not perfect
+        // Find the position data for this secondary position
+        const secondaryPosData = playerWithPos.positions?.find((p: any) => {
+          return getFormationPositionFromConsensus(p.position as Position) === position;
+        });
+        const consensusPercentage = secondaryPosData?.percentage || 25;
+
+        // Secondary positions score 5-7 based on consensus strength
+        fromPositionConsensus = 5.0 + (consensusPercentage / 100) * 2.0;
+      }
+    } else {
+      // No consensus for this position - low score but not zero
+      fromPositionConsensus = 3.0;
+    }
+  }
+
+  // 2. Calculate Attributes Score (0-10 scale)
   if (player.derived_attributes) {
     const attrs = player.derived_attributes;
     fromAttributes = (
@@ -1318,6 +1501,7 @@ function calculateEnhancedPositionScore(
     }
   }
 
+  // 3. Calculate Core Ratings Score (0-10 scale)
   const attack = player.attack_rating ?? 5;
   const defense = player.defense_rating ?? 5;
   const gameIq = player.game_iq_rating ?? 5;
@@ -1328,9 +1512,20 @@ function calculateEnhancedPositionScore(
     gameIq * weights.gameIq
   );
 
+  // 4. Combine scores with appropriate weighting
+  if (hasPositionConsensus && player.derived_attributes) {
+    // Full scoring: Position Consensus (40%) + Attributes (40%) + Ratings (20%)
+    score = fromPositionConsensus * 0.4 + fromAttributes * 0.4 + fromRatings * 0.2;
+  } else if (player.derived_attributes) {
+    // No position consensus - use attributes (60%) + ratings (40%)
+    score = fromAttributes * 0.6 + fromRatings * 0.4;
+  } else {
+    // Only ratings available
+    score = fromRatings;
+  }
+
+  // 5. Apply attribute utilization penalty (only if we have attributes)
   if (player.derived_attributes) {
-    score = fromAttributes * 0.7 + fromRatings * 0.3;
-    // Apply attribute utilization penalty
     const utilization = calculateAttributeUtilization(player, position);
     if (utilization < 0.6) {
       // Heavy penalty for poor attribute utilization
@@ -1340,8 +1535,6 @@ function calculateEnhancedPositionScore(
       score *= (0.8 + utilization * 0.25); // Softer penalty for 60-80% utilization
     }
     // No penalty for 80%+ utilization
-  } else {
-    score = fromRatings;
   }
 
   return score;
@@ -2076,21 +2269,22 @@ function assignPlayersToPositions(
   }> = [];
 
   outfieldPlayers.forEach(player => {
-    const playstyle = detectPlaystyleForPlayer(player, requirements);
-    const playstyleIdealPositions = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
-    const ratingBasedPositions = getRatingBasedIdealPositions(player);
+    // Get ideal positions using priority: Consensus > Playstyle > Ratings
+    let idealPositions = getIdealPositionsForPlayer(player, requirements);
 
-    // Combine both approaches - union of playstyle and rating-based positions
-    let idealPositions = [...new Set([...playstyleIdealPositions, ...ratingBasedPositions])];
+    // Store original source for debugging
+    const positionSource = (player as any).__positionSource || 'unknown';
 
-    // Override playstyle positions for special cases
+    // Apply special case overrides (these apply regardless of source)
+    const attrs = player.derived_attributes;
+
     // Versatile players should NOT be at DEF
     if (isVersatilePlayer(player)) {
       idealPositions = idealPositions.filter(p => p !== 'DEF');
       if (!idealPositions.includes('CM')) idealPositions.push('CM');
     }
+
     // Very fast players should NOT be at DEF
-    const attrs = player.derived_attributes;
     if (attrs?.pace && attrs.pace >= 0.8) {
       idealPositions = idealPositions.filter(p => p !== 'DEF');
       if (player.defense_rating > player.attack_rating && !idealPositions.includes('WB')) {
@@ -2099,6 +2293,7 @@ function assignPlayersToPositions(
         idealPositions.push('W');
       }
     }
+
     // CDM requires actual defensive capability
     if (idealPositions.includes("CDM")) {
       if (!attrs || (attrs.defending < 0.5 && attrs.physical < 0.4)) {
@@ -2108,7 +2303,6 @@ function assignPlayersToPositions(
 
     // CAM fallback: If player only has CAM but formation lacks it, add fallback positions
     if (idealPositions.includes('CAM') && formation.positions.CAM === 0) {
-      const attrs = player.derived_attributes;
       // Remove CAM from ideal positions since it's not available
       idealPositions = idealPositions.filter(p => p !== 'CAM');
 
@@ -2120,12 +2314,6 @@ function assignPlayersToPositions(
         idealPositions.push('ST');  // Good shooters/attackers can play ST
       }
       if (attrs?.pace > 0.6 && attrs?.dribbling > 0.5 && !idealPositions.includes('W')) {
-    // CDM requires actual defensive capability
-    if (idealPositions.includes("CDM")) {
-      if (!attrs || (attrs.defending < 0.5 && attrs.physical < 0.4)) {
-        idealPositions = idealPositions.filter(p => p !== "CDM");
-      }
-    }
         idealPositions.push('W');  // Pacey dribblers can play W
       }
       // If still no positions, default to CM
@@ -2134,14 +2322,22 @@ function assignPlayersToPositions(
       }
     }
 
-    // Log mismatches for debugging
-    const hasConflict = ratingBasedPositions.length > 0 &&
-                       playstyleIdealPositions.length > 0 &&
-                       !ratingBasedPositions.some(p => playstyleIdealPositions.includes(p));
+    // Detect playstyle for debug logging (still useful for analysis)
+    const playstyle = detectPlaystyleForPlayer(player, requirements);
 
-    if (hasConflict) {
+    // Log position source for debugging
+    if (positionSource === 'consensus') {
+      const playerWithPos = player as any;
       debugLog.optimizationNotes.push(
-        `${player.friendly_name}: Rating-playstyle conflict - ${playstyle} suggests ${playstyleIdealPositions.join('/')} but ratings suggest ${ratingBasedPositions.join('/')}`
+        `${player.friendly_name}: Using position consensus (${playerWithPos.primaryPosition || 'multiple positions'}) → ${idealPositions.join('/')}`
+      );
+    } else if (positionSource === 'playstyle') {
+      debugLog.optimizationNotes.push(
+        `${player.friendly_name}: No consensus, using playstyle (${playstyle}) → ${idealPositions.join('/')}`
+      );
+    } else if (positionSource === 'ratings') {
+      debugLog.optimizationNotes.push(
+        `${player.friendly_name}: No consensus/playstyle, using ratings → ${idealPositions.join('/')}`
       );
     }
 

@@ -24,7 +24,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Team Balancing](features/TeamBalancing.md)** - Tier-based snake draft overview
 - **[Team Balancing Algorithm Evolution](algorithms/TeamBalancingEvolution.md)** - Complete algorithm history
 - **[Tier-Based Snake Draft](TierBasedSnakeDraftImplementation.md)** - Detailed implementation guide
-- **[Formation Suggester](features/FormationSuggester.md)** - AI-powered formation recommendations
+- **[Formation Suggester](features/FormationSuggester.md)** - Position consensus + playstyle formation assignments
 
 ---
 
@@ -111,7 +111,8 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 
 ### Team Balancing Fixes
 - **[Team Balancing Inconsistency Fix](fixes/TeamBalancingInconsistencyFix.md)** - Consistency improvements
-- **[Formation Suggester Overhaul](fixes/FormationSuggesterOverhaul.md)** - Playstyle integration
+- **[Formation Suggester Overhaul](fixes/FormationSuggesterOverhaul.md)** - Playstyle integration (Sep 2025)
+- **[Formation Suggester Position Consensus Integration](fixes/FormationSuggesterPositionConsensusIntegration.md)** - Position consensus priority, outfield-only formations (Nov 2025)
 
 ### Token System Fixes
 - **[Priority Token Consumption Fix](fixes/PriorityTokenConsumptionFix.md)** - Token usage bugs
