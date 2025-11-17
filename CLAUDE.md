@@ -106,6 +106,46 @@ participation[39 - index] = status;
 participation[index] = status;  // Reversed!
 ```
 
+### Admin Operations & Service Role Key ⚠️ **CRITICAL**
+
+**NEVER use `supabaseAdmin` client for admin operations in the browser** - it will use the logged-in user's JWT instead of the service role key!
+
+```typescript
+// ❌ WRONG - Uses user JWT, causes 403 errors
+const { error } = await supabaseAdmin.auth.admin.signOut(userId, 'global')
+
+// ✅ CORRECT - Use direct fetch with explicit service role key
+const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${serviceRoleKey}`,
+    'apikey': serviceRoleKey,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({...})
+})
+```
+
+**Why:** Supabase client detects user session in browser and uses user's JWT instead of service role key, even if client was initialized correctly.
+
+**See:** [Recurring Login Issues Fix](/docs/fixes/RecurringLoginIssuesFix.md#service-role-key-vs-user-jwt-issue-november-17-2025)
+
+### SMTP & Email Recovery ⚠️
+
+**Current Status (Nov 2025):** SMTP authentication is BROKEN (error: `535 5.7.8`)
+
+```typescript
+// ❌ BROKEN - Don't use until SMTP is configured
+await supabaseAdmin.auth.signInWithOtp({ email })
+await supabaseAdmin.auth.resetPasswordForEmail(email)
+
+// ✅ WORKAROUND - Use "Set Temp Password" in Session Diagnostics
+// Admin Portal → Session Diagnostics → Set Temp Password
+```
+
+**Fix:** Configure custom SMTP in Supabase Dashboard → Authentication → Email Templates
+
 ---
 
 ## 📖 Feature Quick Reference

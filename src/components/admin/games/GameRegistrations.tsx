@@ -303,12 +303,18 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
       const newPlayerIds = selectedPlayerIds.filter(id => !existingPlayerIds.includes(id));
 
       if (newPlayerIds.length === 0) {
-        toast.warning('Selected players are already registered');
+        toast('Selected players are already registered', {
+          icon: '⚠️',
+          duration: 4000
+        });
         return;
       }
 
       if (existingPlayerIds.length > 0) {
-        toast.warning(`${existingPlayerIds.length} player(s) are already registered for the game.`);
+        toast(`${existingPlayerIds.length} player(s) are already registered for the game.`, {
+          icon: '⚠️',
+          duration: 4000
+        });
         return;
       }
 

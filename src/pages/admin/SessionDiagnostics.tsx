@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { supabaseAdmin } from '../../utils/supabase'
+import { supabase, supabaseAdmin } from '../../utils/supabase'
 import { useAdmin } from '../../hooks/useAdmin'
 import { AlertTriangle, CheckCircle, XCircle, RefreshCw, User, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -19,13 +19,26 @@ const SessionDiagnostics: React.FC = () => {
   const [userInfo, setUserInfo] = useState<UserSessionInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [sendingMagicLink, setSendingMagicLink] = useState(false)
+  const [serviceRoleKeyMissing, setServiceRoleKeyMissing] = useState(false)
   const { isSuperAdmin } = useAdmin()
 
   // List of known problematic users (you can update this)
   const problemUsers = [
-    'toffeetower@hotmail.com',
-    // Add more problematic user emails here as needed
+    'toffeetower@hotmail.com', // Dom
+    // Add Anthony B's email here when identified
   ]
+
+  // Check if service role key is configured
+  React.useEffect(() => {
+    const checkServiceRoleKey = () => {
+      const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+      if (!serviceRoleKey || serviceRoleKey === import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        setServiceRoleKeyMissing(true)
+        console.warn('⚠️ VITE_SUPABASE_SERVICE_ROLE_KEY is not configured or is same as anon key. Some admin features will not work.')
+      }
+    }
+    checkServiceRoleKey()
+  }, [])
 
   const searchUser = async () => {
     if (!searchEmail) {
@@ -40,26 +53,50 @@ const SessionDiagnostics: React.FC = () => {
       let player = null
 
       if (isSuperAdmin) {
-        // Search in auth.users directly using SQL for better control
-        const { data: authData, error: authError } = await supabaseAdmin
-          .from('auth.users')
-          .select('*')
-          .eq('email', searchEmail.toLowerCase())
-          .single()
+        // Use Admin API to search for user by email
+        console.log('🔍 Searching for user via Admin API:', searchEmail.toLowerCase())
 
-        if (!authError && authData) {
-          authUser = authData
+        const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+
+        if (authError) {
+          console.error('❌ Admin API error:', authError)
+          throw authError
+        }
+
+        // Find user by email
+        const foundUser = users.find(u => u.email?.toLowerCase() === searchEmail.toLowerCase())
+
+        if (foundUser) {
+          console.log('✅ Found auth user:', {
+            id: foundUser.id,
+            email: foundUser.email,
+            last_sign_in: foundUser.last_sign_in_at
+          })
+
+          authUser = foundUser
 
           // Now try to find the player record using the auth user's ID
           const { data: playerData, error: playerError } = await supabaseAdmin
             .from('players')
             .select('*')
-            .eq('user_id', authData.id)
-            .single()
+            .eq('user_id', foundUser.id)
+            .maybeSingle() // Use maybeSingle instead of single to avoid error on no rows
 
-          if (!playerError && playerData) {
+          if (playerData) {
             player = playerData
+            console.log('✅ Found player record:', {
+              friendly_name: playerData.friendly_name,
+              user_id: playerData.user_id,
+              whatsapp_member: playerData.whatsapp_group_member
+            })
+          } else {
+            console.warn('⚠️ No player record found for user_id:', foundUser.id)
+            if (playerError) {
+              console.error('Player query error:', playerError)
+            }
           }
+        } else {
+          console.warn('⚠️ No auth user found with email:', searchEmail)
         }
       } else {
         // Non-super admins: try a different approach
@@ -85,7 +122,10 @@ const SessionDiagnostics: React.FC = () => {
 
       // If we found auth user but no player record
       if (authUser && !player) {
-        toast.warning('User found in auth system but not in players table. This may indicate an incomplete registration.')
+        toast('User found in auth system but not in players table. This may indicate an incomplete registration.', {
+          icon: '⚠️',
+          duration: 5000
+        })
         setUserInfo({
           id: authUser.id,
           email: authUser.email || '',
@@ -130,7 +170,10 @@ const SessionDiagnostics: React.FC = () => {
               const authUser = users.find(u => u.email?.toLowerCase() === searchEmail.toLowerCase())
               if (authUser) {
                 // Found user in auth but not in players table
-                toast.warning('User found in auth system but not in players table. This may indicate an incomplete registration.')
+                toast('User found in auth system but not in players table. This may indicate an incomplete registration.', {
+                  icon: '⚠️',
+                  duration: 5000
+                })
 
                 setUserInfo({
                   id: authUser.id,
@@ -235,7 +278,38 @@ const SessionDiagnostics: React.FC = () => {
         toast.success(`Magic link sent to ${userInfo.email}`)
       }
     } catch (error: any) {
-      toast.error('Failed to send magic link: ' + error.message)
+      console.error('Magic link error:', error)
+      console.error('Full error object:', JSON.stringify(error, null, 2))
+      console.error('Error message:', error.message)
+      console.error('Error status:', error.status)
+
+      // Provide helpful error messages
+      if (error.message?.includes('500') || error.message?.includes('Error sending')) {
+        toast.error(
+          <div>
+            <p className="font-bold">Failed to send magic link: Email delivery error</p>
+            <p className="text-sm mt-1">This may be due to:</p>
+            <ul className="text-xs mt-1 list-disc list-inside">
+              <li>SMTP rate limit exceeded (30/hour default)</li>
+              <li>Custom SMTP not configured</li>
+              <li>Email provider blocking delivery</li>
+            </ul>
+            <p className="text-sm mt-2">Try: Reset password instead or configure custom SMTP</p>
+          </div>,
+          { duration: 10000 }
+        )
+      } else if (error.message?.includes('service_role') || error.message?.includes('403')) {
+        toast.error(
+          <div>
+            <p className="font-bold">Failed to send magic link</p>
+            <p className="text-sm mt-1">Service role key may be missing or invalid</p>
+            <p className="text-sm">Check VITE_SUPABASE_SERVICE_ROLE_KEY in .env</p>
+          </div>,
+          { duration: 8000 }
+        )
+      } else {
+        toast.error('Failed to send magic link: ' + error.message)
+      }
     } finally {
       setSendingMagicLink(false)
     }
@@ -260,7 +334,171 @@ const SessionDiagnostics: React.FC = () => {
 
       toast.success(`Password reset email sent to ${userInfo.email}`)
     } catch (error: any) {
-      toast.error('Failed to send password reset: ' + error.message)
+      console.error('Password reset error:', error)
+      console.error('Full error object:', JSON.stringify(error, null, 2))
+      console.error('Error message:', error.message)
+      console.error('Error status:', error.status)
+
+      // Provide helpful error messages
+      if (error.message?.includes('500') || error.message?.includes('Error sending')) {
+        toast.error(
+          <div>
+            <p className="font-bold">Failed to send password reset: Email delivery error</p>
+            <p className="text-sm mt-1">This may be due to:</p>
+            <ul className="text-xs mt-1 list-disc list-inside">
+              <li>SMTP rate limit exceeded (30/hour default)</li>
+              <li>Custom SMTP not configured</li>
+              <li>Email provider blocking delivery</li>
+            </ul>
+            <p className="text-sm mt-2">Try: Send magic link instead or configure custom SMTP</p>
+          </div>,
+          { duration: 10000 }
+        )
+      } else if (error.message?.includes('service_role') || error.message?.includes('403')) {
+        toast.error(
+          <div>
+            <p className="font-bold">Failed to send password reset</p>
+            <p className="text-sm mt-1">Service role key may be missing or invalid</p>
+            <p className="text-sm">Check VITE_SUPABASE_SERVICE_ROLE_KEY in .env</p>
+          </div>,
+          { duration: 8000 }
+        )
+      } else {
+        toast.error('Failed to send password reset: ' + error.message)
+      }
+    }
+  }
+
+  const setTemporaryPassword = async () => {
+    if (!userInfo?.email || !userInfo?.id) {
+      toast.error('No user selected')
+      return
+    }
+
+    // Generate a random temporary password
+    const tempPassword = 'WNF' + Math.random().toString(36).slice(-8) + '!'
+
+    const userConfirmed = confirm(
+      `Set temporary password for ${userInfo.email}?\n\n` +
+      `Temporary Password: ${tempPassword}\n\n` +
+      `IMPORTANT: Copy this password and send it to the user via WhatsApp or text. ` +
+      `They should change it immediately after logging in.\n\n` +
+      `Click OK to proceed.`
+    )
+
+    if (!userConfirmed) return
+
+    try {
+      const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+
+      if (!serviceRoleKey) {
+        toast.error('Service role key not configured')
+        return
+      }
+
+      // Use direct fetch with service role key to update password
+      console.log('🔒 Setting temporary password for user:', userInfo.id)
+      const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userInfo.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'apikey': serviceRoleKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          password: tempPassword,
+          email_confirm: true  // Skip email verification
+        })
+      })
+
+      console.log('Update password response status:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Update password failed:', errorData)
+        throw new Error(`Failed to update password: ${response.status} ${response.statusText}`)
+      }
+
+      // Copy password to clipboard
+      try {
+        await navigator.clipboard.writeText(tempPassword)
+        console.log('✅ Password copied to clipboard:', tempPassword)
+
+        // Show persistent alert with the password
+        alert(
+          `✅ TEMPORARY PASSWORD SET AND COPIED!\n\n` +
+          `Password: ${tempPassword}\n\n` +
+          `The password is now in your clipboard (Ctrl+V to paste).\n\n` +
+          `Send this to ${userInfo.email} via WhatsApp or text.\n` +
+          `They should change it immediately after logging in.`
+        )
+
+        toast.success(
+          <div>
+            <p className="font-bold">✅ Password copied to clipboard!</p>
+            <p className="text-sm mt-1">Paste it with Ctrl+V</p>
+          </div>,
+          { duration: 10000 }
+        )
+      } catch (clipboardError) {
+        console.error('Clipboard failed, showing alert:', clipboardError)
+
+        // Fallback: show alert that can be manually copied
+        alert(
+          `✅ TEMPORARY PASSWORD SET!\n\n` +
+          `Password: ${tempPassword}\n\n` +
+          `(Auto-copy failed - please copy the password above)\n\n` +
+          `Send this to ${userInfo.email} via WhatsApp or text.\n` +
+          `They should change it immediately after logging in.`
+        )
+
+        toast.success(
+          <div>
+            <p className="font-bold">✅ Temporary password set!</p>
+            <p className="text-sm mt-1 font-mono bg-gray-100 p-1 rounded select-all">{tempPassword}</p>
+            <p className="text-sm mt-2">Click to select and copy</p>
+          </div>,
+          { duration: 20000 }
+        )
+      }
+    } catch (error: any) {
+      console.error('Set temporary password error:', error)
+      toast.error('Failed to set temporary password: ' + error.message)
+    }
+  }
+
+  const createMissingPlayerRecord = async () => {
+    if (!userInfo?.email || !userInfo?.id) {
+      toast.error('No user selected')
+      return
+    }
+
+    if (!confirm(`Create a player record for ${userInfo.email}?\n\nThis will allow them to fully use the app.`)) {
+      return
+    }
+
+    try {
+      // Create player record with basic info
+      const { error } = await supabaseAdmin
+        .from('players')
+        .insert({
+          user_id: userInfo.id,
+          friendly_name: userInfo.friendly_name !== 'Not set' ? userInfo.friendly_name : userInfo.email.split('@')[0],
+          email: userInfo.email,
+          whatsapp_group_member: 'No',
+          // other fields will use defaults
+        })
+
+      if (error) throw error
+
+      toast.success(`Player record created for ${userInfo.email}! Ask them to complete their profile.`)
+
+      // Refresh user info
+      searchUser()
+    } catch (error: any) {
+      console.error('Create player record error:', error)
+      toast.error(`Failed to create player record: ${error.message}`)
     }
   }
 
@@ -274,14 +512,125 @@ const SessionDiagnostics: React.FC = () => {
       return
     }
 
+    // Debug: Check if service role key is loaded
+    const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+    console.log('🔑 Environment check:')
+    console.log('Service role key exists:', !!serviceRoleKey)
+    console.log('Service role key length:', serviceRoleKey?.length || 0)
+    console.log('Anon key length:', anonKey?.length || 0)
+    console.log('Keys are different:', serviceRoleKey !== anonKey)
+
+    // Check what token the current supabase client is using
+    const currentSession = await supabase.auth.getSession()
+    console.log('🔓 Current user session:', {
+      hasSession: !!currentSession.data.session,
+      userJWT: currentSession.data.session?.access_token ?
+        currentSession.data.session.access_token.substring(0, 30) + '...' : 'none'
+    })
+
+    if (!serviceRoleKey || serviceRoleKey === anonKey) {
+      toast.error(
+        <div>
+          <p className="font-bold">Service Role Key Not Configured</p>
+          <p className="text-sm mt-1">Environment variable check failed:</p>
+          <ul className="text-xs mt-1 list-disc list-inside">
+            <li>Service key exists: {serviceRoleKey ? 'Yes' : 'No'}</li>
+            <li>Service key length: {serviceRoleKey?.length || 0}</li>
+            <li>Using anon key instead: {serviceRoleKey === anonKey ? 'Yes' : 'No'}</li>
+          </ul>
+          <p className="text-sm mt-2">The dev server needs to be fully restarted after adding the key to .env</p>
+        </div>,
+        { duration: 10000 }
+      )
+      return
+    }
+
     try {
-      const { error } = await supabaseAdmin.auth.admin.signOut(userInfo.id, 'global')
+      // Use direct fetch with service role key to bypass any session interference
+      console.log('🔒 Attempting to clear sessions for user:', userInfo.id)
+      console.log('Using direct fetch with service role key (bypassing Supabase client)')
 
-      if (error) throw error
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 
-      toast.success(`All sessions cleared for ${userInfo.email}`)
+      // Use the correct Admin API endpoint for signing out users
+      const signOutResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userInfo.id}/factors`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'apikey': serviceRoleKey,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      console.log('Get factors response status:', signOutResponse.status)
+
+      if (signOutResponse.ok) {
+        const factors = await signOutResponse.json()
+        console.log('User factors:', factors)
+
+        // Now delete each factor
+        if (factors && factors.length > 0) {
+          for (const factor of factors) {
+            const deleteResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userInfo.id}/factors/${factor.id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${serviceRoleKey}`,
+                'apikey': serviceRoleKey,
+                'Content-Type': 'application/json'
+              }
+            })
+            console.log(`Deleted factor ${factor.id}:`, deleteResponse.status)
+          }
+        }
+
+        toast.success(`All sessions cleared for ${userInfo.email}`)
+      } else if (signOutResponse.status === 404) {
+        // No factors found, user might not have any sessions
+        toast.success(`No active sessions found for ${userInfo.email}`)
+      } else {
+        const errorData = await signOutResponse.json().catch(() => ({}))
+        console.error('Get factors failed:', errorData)
+
+        if (signOutResponse.status === 403) {
+          toast.error(
+            <div>
+              <p className="font-bold">Failed to clear sessions: Permission Denied</p>
+              <p className="text-sm mt-1">The service role key may be invalid or not properly configured.</p>
+            </div>,
+            { duration: 8000 }
+          )
+          return
+        }
+
+        throw new Error(`Failed to get user factors: ${signOutResponse.status} ${signOutResponse.statusText}`)
+      }
     } catch (error: any) {
-      toast.error('Failed to clear sessions: ' + error.message)
+      console.error('Session clearing error:', error)
+
+      // Provide helpful error messages based on error type
+      if (error.message?.includes('invalid JWT') || error.message?.includes('malformed')) {
+        toast.error(
+          <div>
+            <p className="font-bold">Failed to clear sessions: Invalid JWT</p>
+            <p className="text-sm mt-1">The user's session token is corrupted.</p>
+            <p className="text-sm">Try: Send magic link or reset password instead.</p>
+          </div>,
+          { duration: 8000 }
+        )
+      } else if (error.message?.includes('service_role')) {
+        toast.error(
+          <div>
+            <p className="font-bold">Failed to clear sessions</p>
+            <p className="text-sm mt-1">Service role key may be missing or invalid</p>
+            <p className="text-sm">Check VITE_SUPABASE_SERVICE_ROLE_KEY in .env</p>
+          </div>,
+          { duration: 8000 }
+        )
+      } else {
+        toast.error('Failed to clear sessions: ' + error.message)
+      }
     }
   }
 
@@ -312,6 +661,18 @@ const SessionDiagnostics: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Session Diagnostics</h1>
+
+      {/* Service Role Key Warning */}
+      {serviceRoleKeyMissing && (
+        <div className="alert alert-warning mb-6">
+          <AlertTriangle className="w-5 h-5" />
+          <div>
+            <p className="font-bold">Service Role Key Not Configured</p>
+            <p className="text-sm">VITE_SUPABASE_SERVICE_ROLE_KEY is missing or invalid. Admin features like clearing sessions may not work correctly.</p>
+            <p className="text-sm mt-1">Add the service role key to your .env file (find it in Supabase Dashboard → Settings → API)</p>
+          </div>
+        </div>
+      )}
 
       {/* Search Section */}
       <div className="card bg-base-100 shadow-xl mb-6">
@@ -416,7 +777,18 @@ const SessionDiagnostics: React.FC = () => {
             )}
 
             {/* Action Buttons */}
-            <div className="card-actions justify-end mt-6">
+            <div className="card-actions justify-end mt-6 flex-wrap">
+              {/* Show create player button if user is in auth but not players */}
+              {userInfo.friendly_name === 'Not set' && isSuperAdmin && (
+                <button
+                  className="btn btn-sm btn-success"
+                  onClick={createMissingPlayerRecord}
+                >
+                  <User className="w-4 h-4" />
+                  Create Player Record
+                </button>
+              )}
+
               <button
                 className="btn btn-sm btn-info"
                 onClick={sendMagicLink}
@@ -442,6 +814,16 @@ const SessionDiagnostics: React.FC = () => {
 
               {isSuperAdmin && (
                 <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={setTemporaryPassword}
+                >
+                  <User className="w-4 h-4" />
+                  Set Temp Password
+                </button>
+              )}
+
+              {isSuperAdmin && (
+                <button
                   className="btn btn-sm btn-error"
                   onClick={clearUserSessions}
                 >
@@ -457,11 +839,15 @@ const SessionDiagnostics: React.FC = () => {
               <div className="text-xs">
                 <p className="font-semibold">Troubleshooting Tips:</p>
                 <ul className="list-disc list-inside mt-1">
-                  <li>Magic links bypass password issues and create fresh sessions</li>
-                  <li>Password resets clear any corrupted authentication data</li>
-                  <li>Clearing sessions forces re-authentication on all devices</li>
-                  <li>If issues persist after deployment, use magic link as temporary workaround</li>
-                  <li>Users showing "Unknown User" may still receive magic links if they have auth accounts</li>
+                  {userInfo.friendly_name === 'Not set' && (
+                    <li className="text-warning font-bold">⚠️ This user has auth but no player record - create one using the green button above</li>
+                  )}
+                  <li className="font-bold text-primary">✨ NEW: If email fails, use "Set Temp Password" to bypass SMTP entirely</li>
+                  <li>Magic links bypass password issues and create fresh sessions (requires working SMTP)</li>
+                  <li>Password resets clear any corrupted authentication data (requires working SMTP)</li>
+                  <li>Clearing sessions requires VITE_SUPABASE_SERVICE_ROLE_KEY to be configured</li>
+                  <li className="text-error">⚠️ SMTP authentication is currently failing - use Set Temp Password instead</li>
+                  <li>Configure custom SMTP in Supabase Dashboard → Authentication → Email Templates</li>
                 </ul>
               </div>
             </div>

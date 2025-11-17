@@ -142,7 +142,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Orphaned Game Registrations Fix](fixes/OrphanedGameRegistrationsFix.md)** - Data cleanup
 - **[Merge Players Attendance Column Fix](fixes/MergePlayersAttendanceColumnFix.md)** - Column migration
 - **[Stats Page Database Fix](fixes/StatsPageDatabaseFix.md)** - Stats query optimization
-- **[Recurring Login Issues Fix](fixes/RecurringLoginIssuesFix.md)** - Authentication stability
+- **[Recurring Login Issues Fix](fixes/RecurringLoginIssuesFix.md)** ⚠️ **UPDATED Nov 17, 2025** - Auth stability, service role key fixes, SMTP issues, Set Temp Password feature
 - **[Specialist Detection Fix](fixes/SpecialistDetectionFix.md)** - Playstyle specialist logic
 - **[Similarity-Based Specialist Detection](fixes/SimilarityBasedSpecialistDetection.md)** - Improved detection
 - **[Streak Reset on Game Completion Fix](fixes/StreakResetOnGameCompletionFix.md)** - Streak calculation

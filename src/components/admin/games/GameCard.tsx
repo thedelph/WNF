@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Game, GAME_STATUSES } from '../../../types/game';

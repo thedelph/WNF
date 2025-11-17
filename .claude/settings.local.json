@@ -46,7 +46,9 @@
       "mcp__supabase__get_advisors",
       "Bash(git stash show:*)",
       "Bash(git checkout:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(dir \"C:\\Users\\ChrisHide\\Documents\\github\\wnf\\WNF\\supabase\" /B)",
+      "Bash(tasklist:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
