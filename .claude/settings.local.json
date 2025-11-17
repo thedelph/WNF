@@ -33,9 +33,6 @@
       "Bash(cmd //c:*)",
       "Bash(PORT=5175 npm run dev)",
       "mcp__supabase__generate_typescript_types",
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
       "Bash(python:*)",
       "Bash(git add:*)",
       "Bash(awk:*)",
@@ -46,15 +43,8 @@
       "Bash(timeout 3 cmd /c \"echo Waiting for server to start...\")",
       "Bash(timeout 5 cmd /c \"echo Waiting for dev server...\")",
       "Bash(timeout:*)"
-=======
       "mcp__supabase__get_advisors"
->>>>>>> Stashed changes
-=======
-      "mcp__supabase__get_advisors"
->>>>>>> Stashed changes
-=======
-      "mcp__supabase__get_advisors"
->>>>>>> Stashed changes
+
     ]
   },
   "enableAllProjectMcpServers": true,
