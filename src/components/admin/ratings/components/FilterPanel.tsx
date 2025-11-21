@@ -114,31 +114,6 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           )}
         </label>
         <div className="bg-base-100 p-3 rounded-lg space-y-3">
-          {/* Goalkeeper */}
-          <div>
-            <div className="text-xs font-medium mb-1 flex items-center gap-1">
-              🥅 Goalkeeper
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {POSITION_CONFIGS.filter(p => p.category === 'goalkeeper').map(pos => (
-                <label key={pos.code} className="cursor-pointer flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-xs"
-                    checked={filterConfig.selectedPositions.includes(pos.code)}
-                    onChange={(e) => {
-                      const newPositions = e.target.checked
-                        ? [...filterConfig.selectedPositions, pos.code]
-                        : filterConfig.selectedPositions.filter(p => p !== pos.code);
-                      onFilterChange({ ...filterConfig, selectedPositions: newPositions });
-                    }}
-                  />
-                  <span className="text-xs">{pos.code}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
           {/* Defense */}
           <div>
             <div className="text-xs font-medium mb-1 flex items-center gap-1">

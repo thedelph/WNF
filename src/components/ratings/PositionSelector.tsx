@@ -149,21 +149,6 @@ export default function PositionSelector({
           </option>
 
           {/* Position options grouped by category */}
-          <optgroup label="🥅 Goalkeeper">
-            {POSITION_CONFIGS
-              .filter(p => p.category === 'goalkeeper')
-              .map(pos => (
-                <option
-                  key={pos.code}
-                  value={pos.code}
-                  disabled={disabledPositions.includes(pos.code)}
-                >
-                  {pos.label} ({pos.code})
-                  {disabledPositions.includes(pos.code) ? ' - Already selected' : ''}
-                </option>
-              ))}
-          </optgroup>
-
           <optgroup label="🛡️ Defense">
             {POSITION_CONFIGS
               .filter(p => p.category === 'defense')

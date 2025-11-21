@@ -2,24 +2,26 @@
  * Position Rating System Types
  *
  * Defines types and interfaces for the player position preference rating system.
- * Players can be rated on where they excel on the pitch across 11 standard positions.
+ * Players can be rated on where they excel on the pitch across 11 standard outfield positions.
+ *
+ * Note: GK is not included as a position preference due to the rotating goalkeeper system.
+ * GK ratings (0-10) remain as one of the four core skill metrics.
  */
 
 /**
- * Standard football/soccer positions
+ * Standard football/soccer outfield positions
  *
  * Categories:
- * - Goalkeeper: GK
  * - Defense: LB, CB, RB, LWB (Left Wing Back), RWB (Right Wing Back)
  * - Midfield: LW (Left Winger), CM, RW (Right Winger), CAM (Attacking Mid), CDM (Defensive Mid)
  * - Attack: ST (Striker)
  */
-export type Position = 'GK' | 'LB' | 'CB' | 'RB' | 'LWB' | 'RWB' | 'LW' | 'CM' | 'RW' | 'CAM' | 'CDM' | 'ST';
+export type Position = 'LB' | 'CB' | 'RB' | 'LWB' | 'RWB' | 'LW' | 'CM' | 'RW' | 'CAM' | 'CDM' | 'ST';
 
 /**
  * Position categories for grouping positions
  */
-export type PositionCategory = 'goalkeeper' | 'defense' | 'midfield' | 'attack';
+export type PositionCategory = 'defense' | 'midfield' | 'attack';
 
 /**
  * Configuration for a single position
@@ -101,9 +103,12 @@ export interface ClassifiedPositions {
 /**
  * Position distribution for a team
  * Used by the team balancing algorithm
+ *
+ * Note: 'goalkeeper' field tracks GK rating metric for team balance,
+ * not GK position preference (which doesn't exist due to rotating keeper system)
  */
 export interface TeamPositionDistribution {
-  goalkeeper: number;     // Players with GK as primary position
+  goalkeeper: number;     // Players with high GK ratings (for GK rating balance only)
   defense: number;        // Players with defensive positions (LB, CB, RB, LWB, RWB) as primary
   midfield: number;       // Players with midfield positions (LW, CM, RW, CAM, CDM) as primary
   attack: number;         // Players with attacking positions (ST) as primary

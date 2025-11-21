@@ -19,9 +19,6 @@ import { Position } from '../../types/positions';
  * (10v10 with rotating goalkeeper system)
  */
 const POSITION_CONSENSUS_TO_FORMATION_MAP: Record<Position, PositionType | null> = {
-  // Goalkeeper - excluded for outfield formations
-  GK: null,
-
   // Defense positions → DEF
   LB: 'DEF',
   CB: 'DEF',

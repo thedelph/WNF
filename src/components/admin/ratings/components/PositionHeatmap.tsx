@@ -6,10 +6,12 @@
  *
  * Features:
  * - Rows: Players (sorted by name)
- * - Columns: All 12 positions grouped by category
+ * - Columns: All 11 outfield positions grouped by category (Defense/Midfield/Attack)
  * - Cell colors: Gradient based on consensus percentage (0-100%)
  * - Tooltips: Show detailed breakdown (rating count, total raters, rank counts)
  * - Responsive design with horizontal scroll for large datasets
+ *
+ * Note: GK is not included due to rotating goalkeeper system.
  */
 
 import React, { useMemo } from 'react';
@@ -41,7 +43,6 @@ export const PositionHeatmap: React.FC<PositionHeatmapProps> = ({
 
   // Get category display info
   const categoryInfo = {
-    goalkeeper: { emoji: '🥅', label: 'GK' },
     defense: { emoji: '🛡️', label: 'Defense' },
     midfield: { emoji: '⚙️', label: 'Midfield' },
     attack: { emoji: '⚔️', label: 'Attack' }

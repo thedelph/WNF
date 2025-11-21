@@ -230,16 +230,17 @@ The admin ratings interface now includes comprehensive position data across all 
 #### Position Filter Panel
 
 **Multi-Select Interface:**
-- Organized by 4 categories (Goalkeeper, Defense, Midfield, Attack)
-- Checkboxes for all 12 positions
+- Organized by 3 categories (Defense, Midfield, Attack)
+- Checkboxes for all 11 outfield positions
 - Shows selected count
 - Clear all button
 - Help text: "Filters players by their primary positions (≥50% consensus)"
+- Note: GK not included due to rotating goalkeeper system
 
 #### Position Heatmap Visualization
 
 **NEW Component** - Comprehensive league-wide analysis:
-- **Layout**: Rows (players) × Columns (12 positions)
+- **Layout**: Rows (players) × Columns (11 outfield positions)
 - **Cell Display**:
   - Percentage or "-" for no rating
   - Color gradient based on consensus strength

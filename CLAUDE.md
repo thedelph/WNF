@@ -74,8 +74,10 @@ Use centralized constants:
 ```typescript
 import { POSITIONS, POSITION_CATEGORIES } from '@/constants/positions';
 
-// 12 positions: GK, LB, CB, RB, LWB, RWB, LW, CM, RW, CAM, CDM, ST
+// 11 outfield positions: LB, CB, RB, LWB, RWB, LW, CM, RW, CAM, CDM, ST
 // Ranked system: 🥇 Gold (3pts), 🥈 Silver (2pts), 🥉 Bronze (1pt)
+// NOTE: GK NOT included in position preferences (rotating keeper system)
+// GK rating (0-10) remains as a core skill metric
 ```
 
 ### Formation Suggester - Position Priority (Added Nov 2025)

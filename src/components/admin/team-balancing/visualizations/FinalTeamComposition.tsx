@@ -790,10 +790,6 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                     if (!posConfig) return;
 
                     switch (posConfig.category) {
-                      case 'goalkeeper':
-                        categoryCount.goalkeepers++;
-                        categoryPlayers.goalkeepers.push(player.friendly_name);
-                        break;
                       case 'defense':
                         categoryCount.defenders++;
                         categoryPlayers.defenders.push(player.friendly_name);
@@ -887,10 +883,6 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                     if (!posConfig) return;
 
                     switch (posConfig.category) {
-                      case 'goalkeeper':
-                        categoryCount.goalkeepers++;
-                        categoryPlayers.goalkeepers.push(player.friendly_name);
-                        break;
                       case 'defense':
                         categoryCount.defenders++;
                         categoryPlayers.defenders.push(player.friendly_name);

@@ -124,9 +124,6 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
       if (!posConfig) return;
 
       switch (posConfig.category) {
-        case 'goalkeeper':
-          counts.goalkeepers++;
-          break;
         case 'defense':
           counts.defenders++;
           break;

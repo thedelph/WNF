@@ -102,9 +102,6 @@ export default function TeamBalancingVisualization() {
         if (!posConfig) return;
 
         switch (posConfig.category) {
-          case 'goalkeeper':
-            counts.goalkeepers++;
-            break;
           case 'defense':
             counts.defenders++;
             break;

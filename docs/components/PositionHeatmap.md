@@ -2,29 +2,31 @@
 
 **Component Path:** `src/components/admin/ratings/components/PositionHeatmap.tsx`
 **Created:** 2025-11-13
+**GK Removed:** 2025-11-21
 **Purpose:** League-wide position consensus visualization for admin ratings page
 
 ## Overview
 
-The Position Heatmap provides a comprehensive matrix view showing position consensus data for all players across all 12 positions. This visualization helps administrators quickly identify position strengths, versatility, and data quality across the entire player base.
+The Position Heatmap provides a comprehensive matrix view showing position consensus data for all players across all 11 outfield positions. This visualization helps administrators quickly identify position strengths, versatility, and data quality across the entire player base.
+
+**Note:** GK is not included due to the rotating goalkeeper system. GK ratings (0-10) remain as a core skill metric but are not part of position preferences.
 
 ## Visual Structure
 
 ### Layout
 - **Rows**: Players (sorted alphabetically)
-- **Columns**: 12 positions grouped by category
-  - Goalkeeper: GK
+- **Columns**: 11 outfield positions grouped by category
   - Defense: LB, CB, RB, LWB, RWB
   - Midfield: LW, CM, RW, CAM, CDM
   - Attack: ST
 
 ### Header Structure
 ```
-┌─────────┬────────────────────────────────────────────────────────┐
-│ Player  │ 🥅 GK │ 🛡️ Defense (5 cols) │ ⚙️ Midfield (5 cols) │ ⚔️ Attack │
-├─────────┼───────┼──────────────────────┼────────────────────┼──────────┤
-│         │  GK   │ LB  CB  RB  LWB  RWB │ LW  CM  RW  CAM CDM│    ST    │
-└─────────┴───────┴──────────────────────┴────────────────────┴──────────┘
+┌─────────┬──────────────────────────────────────────────────────┐
+│ Player  │ 🛡️ Defense (5 cols) │ ⚙️ Midfield (5 cols) │ ⚔️ Attack │
+├─────────┼──────────────────────┼────────────────────┼──────────┤
+│         │ LB  CB  RB  LWB  RWB │ LW  CM  RW  CAM CDM│    ST    │
+└─────────┴──────────────────────┴────────────────────┴──────────┘
 ```
 
 ## Color Coding

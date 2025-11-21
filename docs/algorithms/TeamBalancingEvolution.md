@@ -728,6 +728,41 @@ Prevents swaps that create 3+ player gaps in any position category.
 
 ---
 
+#### v9.1 - GK Removed from Position Preferences (2025-11-21)
+
+**Change:** Removed GK as a selectable position preference while keeping GK rating metric
+
+**Rationale:**
+- Rotating goalkeeper system means everyone takes turns in goal
+- GK position preference no longer relevant for team balancing
+- GK rating (0-10) remains as a core skill metric for individual assessment
+
+**Updated Position System:**
+- 11 outfield positions: LB, CB, RB, LWB, RWB, LW, CM, RW, CAM, CDM, ST
+- GK removed from position preferences (Gold/Silver/Bronze rankings)
+
+**Position Categories (Updated):**
+```typescript
+export const POSITION_CATEGORIES = {
+  DEFENSE: ['LB', 'CB', 'RB', 'LWB', 'RWB'],
+  MIDFIELD: ['CM', 'CAM', 'CDM'],
+  ATTACK: ['LW', 'RW', 'ST']
+};
+```
+
+**Migration Details:**
+- 6 GK position ratings removed
+- 4 GK consensus entries removed
+- Ranks promoted where necessary (e.g., GK 1st + CM 2nd → CM 1st)
+- CHECK constraints updated to exclude 'GK' from valid positions
+
+**Team Balancing Impact:**
+- GK rating still used in core skills calculations (15% weight)
+- Position balance constraints now apply to 3 categories (Defense/Midfield/Attack)
+- No change to overall balancing algorithm logic
+
+---
+
 ## 📈 Performance Metrics
 
 ### Balance Score Improvements

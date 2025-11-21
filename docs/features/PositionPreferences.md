@@ -2,11 +2,14 @@
 
 **Implemented:** 2025-11-12
 **Upgraded to Ranked System:** 2025-11-13
-**Last Updated:** 2025-11-17
+**GK Removed:** 2025-11-21
+**Last Updated:** 2025-11-21
 
 ## Overview
 
-The Position Preferences system allows players to rate each other's best positions using a **ranked points system**. Players rank their top 3 positions for each teammate (🥇 Gold, 🥈 Silver, 🥉 Bronze), creating a weighted consensus of where players excel.
+The Position Preferences system allows players to rate each other's best **outfield** positions using a **ranked points system**. Players rank their top 3 positions for each teammate (🥇 Gold, 🥈 Silver, 🥉 Bronze), creating a weighted consensus of where players excel.
+
+**Note:** GK is not included as a position preference due to the rotating goalkeeper system. Everyone takes turns in goal regardless of preference or ability. However, GK ratings (0-10) remain as one of the four core skill metrics (Attack/Defense/Game IQ/GK).
 
 ---
 
@@ -44,14 +47,11 @@ const percentage = (totalPoints / (totalRaters × 6)) × 100;
 
 ---
 
-## 📐 12 Standard Positions
+## 📐 11 Outfield Positions
 
 ### Position List
 
 Changed from old LM/RM/WB to more tactically accurate positions:
-
-**Goalkeeper:**
-- GK - Goalkeeper
 
 **Defense:**
 - LB - Left Back
@@ -74,7 +74,6 @@ Changed from old LM/RM/WB to more tactically accurate positions:
 
 ```typescript
 export const POSITION_CATEGORIES = {
-  GOALKEEPER: ['GK'],
   DEFENSE: ['LB', 'CB', 'RB', 'LWB', 'RWB'],
   MIDFIELD: ['CM', 'CAM', 'CDM'],
   ATTACK: ['LW', 'RW', 'ST']
@@ -84,6 +83,7 @@ export const POSITION_CATEGORIES = {
 **Rationale for Changes:**
 - **LM/RM → LW/RW:** Better reflects wide attacking roles in 9v9
 - **WB → LWB/RWB:** Side-specific tactical accuracy matters
+- **GK removed:** Rotating goalkeeper system means everyone plays in goal
 
 ---
 
@@ -380,6 +380,13 @@ function isSwapAcceptable(swap: Swap): boolean {
    - Upgraded to ranked system (Gold/Silver/Bronze)
    - **Cleared all existing position data** (fresh start)
 
+5. **`20251121_remove_gk_from_position_preferences.sql`**
+   - Removed GK from position preferences system
+   - Deleted 6 GK rating entries and 4 GK consensus entries
+   - Promoted ranks where needed (e.g., GK 1st + CM 2nd → CM 1st)
+   - Updated CHECK constraints to exclude GK from valid positions
+   - **GK rating metric (0-10) remains unchanged**
+
 ---
 
 ## 📊 Consensus Thresholds
@@ -423,8 +430,10 @@ When working with position ratings:
 - [ ] Used centralized position constants (`POSITIONS`, `POSITION_CATEGORIES`)
 - [ ] Implemented ranked system (Gold/Silver/Bronze badges)
 - [ ] Duplicate prevention (can't select same position twice)
-- [ ] Grouped selectors by category for better UX
+- [ ] Grouped selectors by category for better UX (Defense/Midfield/Attack)
 - [ ] Consensus requires ≥5 raters
 - [ ] Position balance constraints enforced in team balancing
 - [ ] Proper badge colors (Gold #FCD34D, Silver #9CA3AF, Bronze #EA580C)
 - [ ] Tooltips show rank breakdown (e.g., "3× 🥇, 2× 🥈, 1× 🥉")
+- [ ] GK NOT included in position preferences (rotating keeper system)
+- [ ] GK rating metric (0-10) still included in core skills

@@ -153,9 +153,6 @@ export function calculateTeamPositionDistribution(
     }
 
     switch (config.category) {
-      case 'goalkeeper':
-        distribution.goalkeeper++;
-        break;
       case 'defense':
         distribution.defense++;
         break;
@@ -357,7 +354,7 @@ export function validatePositionSelectionCount(selectedCount: number): string | 
  * getPositionCodesForCategory('defense') // Returns: ['LB', 'CB', 'RB', 'WB']
  */
 export function getPositionCodesForCategory(
-  category: 'goalkeeper' | 'defense' | 'midfield' | 'attack'
+  category: 'defense' | 'midfield' | 'attack'
 ): Position[] {
   return POSITIONS_BY_CATEGORY[category].map(c => c.code);
 }

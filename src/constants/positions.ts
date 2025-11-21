@@ -8,20 +8,13 @@
 import { Position, PositionConfig, PositionCategory } from '../types/positions';
 
 /**
- * Complete configuration for all 11 standard positions
+ * Complete configuration for all 11 standard outfield positions
  * Ordered by category and logical progression on the pitch
+ *
+ * Note: GK is not included due to rotating goalkeeper system.
+ * GK ratings remain as a core skill metric, but not a position preference.
  */
 export const POSITION_CONFIGS: PositionConfig[] = [
-  // Goalkeeper
-  {
-    code: 'GK',
-    label: 'Goalkeeper',
-    shortLabel: 'GK',
-    category: 'goalkeeper',
-    emoji: '🥅',
-    defensiveWeight: 'high'
-  },
-
   // Defense
   {
     code: 'LB',
@@ -136,7 +129,6 @@ export const ALL_POSITIONS: Position[] = POSITION_CONFIGS.map(c => c.code);
  * Positions grouped by category
  */
 export const POSITIONS_BY_CATEGORY: Record<PositionCategory, PositionConfig[]> = {
-  goalkeeper: POSITION_CONFIGS.filter(c => c.category === 'goalkeeper'),
   defense: POSITION_CONFIGS.filter(c => c.category === 'defense'),
   midfield: POSITION_CONFIGS.filter(c => c.category === 'midfield'),
   attack: POSITION_CONFIGS.filter(c => c.category === 'attack')
@@ -146,25 +138,20 @@ export const POSITIONS_BY_CATEGORY: Record<PositionCategory, PositionConfig[]> =
  * Category display configuration
  */
 export const CATEGORY_CONFIG: Record<PositionCategory, { label: string; emoji: string; order: number }> = {
-  goalkeeper: {
-    label: 'Goalkeeper',
-    emoji: '🥅',
-    order: 1
-  },
   defense: {
     label: 'Defense',
     emoji: '🛡️',
-    order: 2
+    order: 1
   },
   midfield: {
     label: 'Midfield',
     emoji: '⚙️',
-    order: 3
+    order: 2
   },
   attack: {
     label: 'Attack',
     emoji: '⚔️',
-    order: 4
+    order: 3
   }
 };
 
