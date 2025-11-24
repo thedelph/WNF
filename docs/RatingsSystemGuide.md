@@ -37,14 +37,59 @@ The WNF Ratings System allows players to confidentially rate other players they 
 2. Ratings are stored securely in the database
 3. Multiple ratings from the same player are tracked historically
 
+### Rating Modal & Entry Points
+
+**Added:** November 21, 2025
+
+The rating modal provides a comprehensive interface for rating players, including all four core metrics (Attack, Defense, Game IQ, GK), position preferences, and playstyle attributes. This modal is available in two places:
+
+#### 1. Ratings Page (`/ratings`)
+- **Primary Rating Interface**: Dedicated page for rating all eligible players
+- **Player List View**: Shows all players you can rate with filtering/sorting
+- **Bulk Rating Workflow**: Designed for rating multiple players in sequence
+- **Path**: `src/pages/Ratings.tsx`
+
+#### 2. Player Profile Page (`/player/:id`)
+- **Individual Player Context**: Rate a specific player while viewing their profile
+- **Quick Access**: Direct rating without navigating to main ratings page
+- **Same Functionality**: Identical modal with all features (GK rating, position preferences, playstyle)
+- **Path**: `src/pages/PlayerProfile.tsx`
+
+#### Shared Modal Component
+
+Both pages use the same `RatingModal` component (`src/components/profile/RatingModal.tsx`) ensuring consistency:
+
+**Features:**
+- **Four Core Ratings**: Attack (0-10), Defense (0-10), Game IQ (0-10), GK (0-10)
+- **Position Selector**: Ranked selection (Gold/Silver/Bronze) for up to 3 positions
+- **Playstyle Selector**: 6 derived attributes (Pace, Shooting, Passing, Dribbling, Defending, Physical)
+- **ViewAs Mode**: Shows warning when admin is testing with permission emulation
+- **Data Persistence**: Saves to `player_ratings` and `player_position_ratings` tables
+
+**Type Structure:**
+```typescript
+my_rating?: {
+  attack_rating: number;
+  defense_rating: number;
+  game_iq_rating: number;
+  gk_rating: number;
+} | null;
+```
+
+**Rating Lifecycle:**
+1. **Load**: Existing ratings/positions fetched from database on modal open
+2. **Edit**: User modifies ratings, positions, and playstyle attributes
+3. **Save**: Data persisted to database via upsert (ratings) and delete+insert (positions)
+4. **Refresh**: Player profile data updates to reflect new ratings
+
 ### Position Preferences
 
 **Added:** 2025-11-12
 **Updated to Ranked System:** 2025-11-13
+**GK Removed:** 2025-11-21
 
 #### What Position Preferences Show
-Position preferences indicate WHERE a player excels on the pitch across 12 standard positions:
-- 🥅 **Goalkeeper**: GK
+Position preferences indicate WHERE a player excels on the pitch across 11 outfield positions (GK removed due to rotating goalkeeper system):
 - 🛡️ **Defense**: LB (Left Back), CB (Center Back), RB (Right Back), LWB (Left Wing Back), RWB (Right Wing Back)
 - ⚙️ **Midfield**: LW (Left Winger), CM (Center Mid), RW (Right Winger), CAM (Attacking Mid), CDM (Defensive Mid)
 - ⚔️ **Attack**: ST (Striker)
@@ -156,11 +201,11 @@ Position preferences are used by the team balancing algorithm to prevent tactica
 #### Filtering
 - Search by player name
 - Filter by rating ranges (Attack, Defense, Game IQ, GK)
-- **Filter by Position** (Added 2025-11-13)
+- **Filter by Position** (Added 2025-11-13, Updated 2025-11-21)
   - Multi-select checkboxes organized by category
   - Filters players by primary positions (≥50% consensus)
   - Shows selected count and clear button
-  - Position categories: Goalkeeper, Defense, Midfield, Attack
+  - Position categories: Defense, Midfield, Attack (Goalkeeper removed due to rotating GK system)
 
 ### Position System Integration (Admin)
 
@@ -229,18 +274,18 @@ The admin ratings interface now includes comprehensive position data across all 
 
 #### Position Filter Panel
 
-**Multi-Select Interface:**
+**Multi-Select Interface (Updated: 2025-11-21):**
 - Organized by 3 categories (Defense, Midfield, Attack)
-- Checkboxes for all 11 outfield positions
+- Checkboxes for all 11 outfield positions (GK removed from position preferences system)
 - Shows selected count
 - Clear all button
 - Help text: "Filters players by their primary positions (≥50% consensus)"
-- Note: GK not included due to rotating goalkeeper system
+- Note: Goalkeeper position removed from preferences due to rotating GK system (GK still exists as a rating metric)
 
 #### Position Heatmap Visualization
 
-**NEW Component** - Comprehensive league-wide analysis:
-- **Layout**: Rows (players) × Columns (11 outfield positions)
+**NEW Component (Updated: 2025-11-21)** - Comprehensive league-wide analysis:
+- **Layout**: Rows (players) × Columns (11 outfield positions - GK removed from position preferences)
 - **Cell Display**:
   - Percentage or "-" for no rating
   - Color gradient based on consensus strength
@@ -382,3 +427,15 @@ graph TD
   - Position consensus comparison in Attributes tab
   - Full mobile responsiveness across all position features
   - Comprehensive tooltips with rank breakdowns
+- **Rating Modal Feature Parity (November 21, 2025)**
+  - PlayerProfile.tsx now includes comprehensive rating modal (previously only on Ratings.tsx)
+  - Both pages provide identical functionality: GK rating + Position preferences + Playstyle selection
+  - Shared RatingModal component ensures consistency across rating entry points
+  - Position preferences load/save correctly in both Ratings and PlayerProfile contexts
+  - Type definitions updated: `my_rating` includes `gk_rating` field
+- **GK Removed from Position Preferences (November 21, 2025)**
+  - Goalkeeper position removed from position preferences system (rotating GK system)
+  - 11 outfield positions remain (LB, CB, RB, LWB, RWB, LW, CM, RW, CAM, CDM, ST)
+  - GK still exists as a core rating metric (0-10 scale)
+  - Filter panels updated to reflect 3 categories: Defense, Midfield, Attack
+  - Database migration removed existing GK position ratings with rank promotion

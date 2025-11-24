@@ -3,7 +3,8 @@
 **Implemented:** 2025-10-08
 **Team Balancing Integration:** 2025-10-13
 **Fixes Applied:** 2025-10-15
-**Last Updated:** 2025-11-17
+**RatingModal Integration:** 2025-11-21
+**Last Updated:** 2025-11-21
 
 ## Overview
 
@@ -283,6 +284,53 @@ USING (
 ---
 
 ## 🎨 UI Components
+
+### RatingModal.tsx (Updated: November 21, 2025)
+
+**Component Path:** `src/components/profile/RatingModal.tsx`
+
+The RatingModal component includes GK rating alongside the three other core metrics:
+
+**Used In:**
+- `src/pages/Ratings.tsx` - Primary rating interface for bulk rating workflow
+- `src/pages/PlayerProfile.tsx` - Individual player context (Added: November 21, 2025)
+
+Both pages provide identical GK rating functionality through the shared RatingModal component.
+
+**Rating Fields:**
+```typescript
+interface RatingModalProps {
+  ratings: {
+    attack: number;
+    defense: number;
+    gameIq: number;
+    gk: number;  // GK rating field (0-10 scale)
+  };
+  // ... other props
+}
+```
+
+**StarRating Component:**
+- GK rating displayed as 0-5 stars (internally 0-10 for half-stars)
+- Label: "GK Rating"
+- Saves to `player_ratings.gk_rating` column
+
+**Type Definition (Updated: November 21, 2025):**
+```typescript
+// src/types/player.ts & src/types/playerSelection.ts
+my_rating?: {
+  attack_rating: number;
+  defense_rating: number;
+  game_iq_rating: number;
+  gk_rating: number;  // Added to type definition
+} | null;
+```
+
+**Data Flow:**
+1. **Load**: Existing GK rating fetched from database when modal opens
+2. **Edit**: User adjusts GK rating using star component
+3. **Save**: Rating persisted to `player_ratings` table
+4. **Refresh**: Player profile updates with new `average_gk_rating`
 
 ### TeamBalancingOverview.tsx
 

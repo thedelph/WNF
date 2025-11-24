@@ -56,6 +56,7 @@ export interface PlayerStats {
     attack_rating: number;
     defense_rating: number;
     game_iq_rating: number;
+    gk_rating: number;
   } | null;
   reserveXP?: number;
   reserveCount?: number;

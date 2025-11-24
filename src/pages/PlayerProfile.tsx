@@ -26,6 +26,7 @@ import { useTokenStatus } from '../hooks/useTokenStatus';
 import { useShieldStatus } from '../hooks/useShieldStatus';
 import WinRateGraph from '../components/profile/WinRateGraph';
 import { AttributeCombination } from '../types/playstyle';
+import { Position } from '../types/positions';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -46,12 +47,14 @@ export default function PlayerProfileNew() {
   const [latestSequence, setLatestSequence] = useState<number>(0);
   const { user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const [ratings, setRatings] = useState<{ attack: number; defense: number; gameIq: number }>({
+  const [ratings, setRatings] = useState<{ attack: number; defense: number; gameIq: number; gk: number }>({
     attack: 0,
     defense: 0,
     gameIq: 0,
+    gk: 0,
   });
   const [selectedAttributes, setSelectedAttributes] = useState<AttributeCombination | null>(null);
+  const [selectedPositions, setSelectedPositions] = useState<{ first?: Position; second?: Position; third?: Position }>({});
   const [availablePlaystyles, setAvailablePlaystyles] = useState<Array<{
     id: string;
     name: string;
@@ -627,9 +630,73 @@ export default function PlayerProfileNew() {
 
       if (error) throw error;
 
+      // Save ranked position ratings
+      const hasAnyPosition = selectedPositions.first || selectedPositions.second || selectedPositions.third;
+
+      if (hasAnyPosition) {
+        // First, delete any existing position ratings from this rater for this player
+        const { error: deleteError } = await supabase
+          .from('player_position_ratings')
+          .delete()
+          .eq('rater_id', currentPlayer.id)
+          .eq('rated_player_id', player.id);
+
+        if (deleteError) {
+          console.error('Error deleting old position ratings:', deleteError);
+        }
+
+        // Then insert the new ranked position ratings
+        const positionInserts = [];
+        if (selectedPositions.first) {
+          positionInserts.push({
+            rater_id: currentPlayer.id,
+            rated_player_id: player.id,
+            position: selectedPositions.first,
+            rank: 1
+          });
+        }
+        if (selectedPositions.second) {
+          positionInserts.push({
+            rater_id: currentPlayer.id,
+            rated_player_id: player.id,
+            position: selectedPositions.second,
+            rank: 2
+          });
+        }
+        if (selectedPositions.third) {
+          positionInserts.push({
+            rater_id: currentPlayer.id,
+            rated_player_id: player.id,
+            position: selectedPositions.third,
+            rank: 3
+          });
+        }
+
+        const { error: positionError } = await supabase
+          .from('player_position_ratings')
+          .insert(positionInserts);
+
+        if (positionError) {
+          console.error('Error saving position ratings:', positionError);
+          toast.error('Position ratings could not be saved, but other ratings were saved successfully');
+        }
+      } else {
+        // If no positions selected, delete any existing position ratings
+        const { error: deleteError } = await supabase
+          .from('player_position_ratings')
+          .delete()
+          .eq('rater_id', currentPlayer.id)
+          .eq('rated_player_id', player.id);
+
+        if (deleteError) {
+          console.error('Error deleting position ratings:', deleteError);
+        }
+      }
+
       toast.success(`Successfully rated ${player.friendly_name}`);
       setShowRatingModal(false);
       setSelectedAttributes(null);
+      setSelectedPositions({});
       
       // Refresh player data to update ratings
       const { data: myRating, error: ratingError } = await supabase
@@ -644,10 +711,11 @@ export default function PlayerProfileNew() {
       } else if (player) {
         setPlayer({
           ...player,
-          my_rating: myRating ? { 
-            attack_rating: myRating.attack_rating, 
+          my_rating: myRating ? {
+            attack_rating: myRating.attack_rating,
             defense_rating: myRating.defense_rating,
-            game_iq_rating: myRating.game_iq_rating || 0
+            game_iq_rating: myRating.game_iq_rating || 0,
+            gk_rating: myRating.gk_rating || 0
           } : null
         });
       }
@@ -822,10 +890,11 @@ export default function PlayerProfileNew() {
               setRatings({
                 attack: player.my_rating?.attack_rating || 0,
                 defense: player.my_rating?.defense_rating || 0,
-                gameIq: player.my_rating?.game_iq_rating || 0
+                gameIq: player.my_rating?.game_iq_rating || 0,
+                gk: player.my_rating?.gk_rating || 0
               });
 
-              // Load existing playstyle attributes if available
+              // Load existing playstyle attributes and position preferences if available
               if (user) {
                 const { data: currentPlayer } = await supabase
                   .from('players')
@@ -834,6 +903,7 @@ export default function PlayerProfileNew() {
                   .single();
 
                 if (currentPlayer) {
+                  // Load playstyle attributes
                   const { data: existingRating } = await supabase
                     .from('player_ratings')
                     .select('has_pace, has_shooting, has_passing, has_dribbling, has_defending, has_physical')
@@ -856,6 +926,27 @@ export default function PlayerProfileNew() {
                     if (hasAnyAttribute) {
                       setSelectedAttributes(attributes);
                     }
+                  }
+
+                  // Load position preferences
+                  const { data: existingPositions, error: positionError } = await supabase
+                    .from('player_position_ratings')
+                    .select('position, rank')
+                    .eq('rater_id', currentPlayer.id)
+                    .eq('rated_player_id', player.id);
+
+                  if (positionError) {
+                    console.error('Error loading position ratings:', positionError);
+                    setSelectedPositions({});
+                  } else {
+                    // Build ranked position object from database results
+                    const rankedPositions: { first?: Position; second?: Position; third?: Position } = {};
+                    existingPositions?.forEach(p => {
+                      if (p.rank === 1) rankedPositions.first = p.position as Position;
+                      if (p.rank === 2) rankedPositions.second = p.position as Position;
+                      if (p.rank === 3) rankedPositions.third = p.position as Position;
+                    });
+                    setSelectedPositions(rankedPositions);
                   }
                 }
               }
@@ -909,11 +1000,16 @@ export default function PlayerProfileNew() {
           setRatings={setRatings}
           selectedAttributes={selectedAttributes}
           onAttributesChange={setSelectedAttributes}
+          selectedPositions={selectedPositions}
+          onPositionsChange={setSelectedPositions}
           onClose={() => {
             setShowRatingModal(false);
             setSelectedAttributes(null);
+            setSelectedPositions({});
           }}
           onSubmit={handleRatingSubmit}
+          isViewingAs={false}
+          viewingAsName={undefined}
         />
       )}
     </motion.div>

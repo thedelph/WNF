@@ -205,11 +205,17 @@ EXECUTE FUNCTION update_position_consensus();
 
 ### PositionSelector.tsx (`src/components/ratings/PositionSelector.tsx`)
 
+**Used In:**
+- `src/pages/Ratings.tsx` - Primary rating interface for bulk rating workflow
+- `src/pages/PlayerProfile.tsx` - Individual player context via RatingModal (Added: November 21, 2025)
+
+Both pages provide identical position preference functionality through the shared RatingModal component.
+
 **Features:**
 - Three dropdown selectors (1st/2nd/3rd choice)
 - Gold/Silver/Bronze badge styling
 - Duplicate prevention (can't select same position twice)
-- Grouped by category (Goalkeeper/Defense/Midfield/Attack)
+- Grouped by category (Defense/Midfield/Attack - Goalkeeper removed Nov 21, 2025)
 - Clear all button
 
 ```typescript
@@ -222,14 +228,23 @@ EXECUTE FUNCTION update_position_consensus();
     <span className="badge badge-warning">🥇 Gold (3pts)</span>
     <select value={position1st} onChange={(e) => setPosition1st(e.target.value)}>
       <option value="">Select 1st choice...</option>
-      <optgroup label="Goalkeeper">
-        <option value="GK">GK - Goalkeeper</option>
-      </optgroup>
       <optgroup label="Defense">
         <option value="LB">LB - Left Back</option>
-        {/* ... */}
+        <option value="CB">CB - Center Back</option>
+        <option value="RB">RB - Right Back</option>
+        <option value="LWB">LWB - Left Wing Back</option>
+        <option value="RWB">RWB - Right Wing Back</option>
       </optgroup>
-      {/* ... */}
+      <optgroup label="Midfield">
+        <option value="LW">LW - Left Winger</option>
+        <option value="CM">CM - Central Midfielder</option>
+        <option value="RW">RW - Right Winger</option>
+        <option value="CAM">CAM - Attacking Midfielder</option>
+        <option value="CDM">CDM - Defensive Midfielder</option>
+      </optgroup>
+      <optgroup label="Attack">
+        <option value="ST">ST - Striker</option>
+      </optgroup>
     </select>
   </div>
 
@@ -237,7 +252,7 @@ EXECUTE FUNCTION update_position_consensus();
   <div className="rank-selector">
     <span className="badge badge-neutral">🥈 Silver (2pts)</span>
     <select value={position2nd} onChange={(e) => setPosition2nd(e.target.value)}>
-      {/* ... */}
+      {/* Same options as 1st choice */}
     </select>
   </div>
 
@@ -245,7 +260,7 @@ EXECUTE FUNCTION update_position_consensus();
   <div className="rank-selector">
     <span className="badge badge-error">🥉 Bronze (1pt)</span>
     <select value={position3rd} onChange={(e) => setPosition3rd(e.target.value)}>
-      {/* ... */}
+      {/* Same options as 1st choice */}
     </select>
   </div>
 
@@ -258,7 +273,33 @@ EXECUTE FUNCTION update_position_consensus();
 - Silver: `#9CA3AF` (gray)
 - Bronze: `#EA580C` (orange/copper)
 
-### User-Facing Display (Ratings.tsx)
+### Position Preference Lifecycle (Both Pages)
+
+**Added:** November 21, 2025
+
+Position preferences work identically in both Ratings.tsx and PlayerProfile.tsx:
+
+**1. Load Phase:**
+- When rating modal opens, existing position preferences are fetched from `player_position_ratings` table
+- Query filters by `rater_id` (current user) and `rated_player_id` (player being rated)
+- Positions are loaded into state based on their rank (1st/2nd/3rd)
+
+**2. Edit Phase:**
+- User interacts with PositionSelector dropdowns to change rankings
+- Duplicate prevention ensures same position can't be selected twice
+- Can clear selections or leave some ranks empty
+
+**3. Save Phase:**
+- Existing position ratings are deleted: `DELETE FROM player_position_ratings WHERE rater_id = X AND rated_player_id = Y`
+- New rankings are inserted with rank values (1, 2, 3)
+- Trigger automatically recalculates consensus percentages in `player_position_consensus`
+- If no positions selected, old ratings are simply deleted
+
+**4. Refresh Phase:**
+- Player profile data updates to reflect new consensus
+- Position badges update across all views
+
+### User-Facing Display (Ratings.tsx & PlayerProfile.tsx)
 
 Shows "You rated as:" with ranked badges:
 
