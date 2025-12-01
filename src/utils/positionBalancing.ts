@@ -126,7 +126,14 @@ export function checkIndividualPositionBalance(
       maxGap = gap;
     }
 
-    if (gap > POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP) {
+    // Special case for Striker (ST): each team needs at least one if there are 2+ strikers total
+    // This ensures no team goes without a striker when strikers are available
+    if (position === 'ST') {
+      const totalStrikers = blueCount + orangeCount;
+      if (totalStrikers >= 2 && (blueCount === 0 || orangeCount === 0)) {
+        imbalancedPositions.push(`${position} (${blueCount} vs ${orangeCount}) - each team needs a striker`);
+      }
+    } else if (gap > POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP) {
       imbalancedPositions.push(`${position} (${blueCount} vs ${orangeCount})`);
     }
   });
@@ -322,7 +329,16 @@ export function logPositionBalanceStatus(
       const blueCount = bluePositions[position] || 0;
       const orangeCount = orangePositions[position] || 0;
       const gap = Math.abs(blueCount - orangeCount);
-      const status = gap <= POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP ? '✅' : '❌';
+
+      // Special status check for Striker - each team needs at least one if 2+ total
+      let status: string;
+      if (position === 'ST') {
+        const totalStrikers = blueCount + orangeCount;
+        const strikerBalanced = totalStrikers < 2 || (blueCount > 0 && orangeCount > 0);
+        status = strikerBalanced ? '✅' : '❌ (each team needs ST)';
+      } else {
+        status = gap <= POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP ? '✅' : '❌';
+      }
 
       debugLog.value += `  ${position}: Blue ${blueCount} vs Orange ${orangeCount} (gap: ${gap}) ${status}\n`;
     });

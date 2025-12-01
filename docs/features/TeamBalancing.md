@@ -223,8 +223,41 @@ findOptimalTeamBalance(players: TeamAssignment[]): TeamBalance
    - Use sparingly to maintain algorithm integrity
    - Document reasons for manual changes
 
+## Position Balancing (Added November 2025)
+
+### Overview
+The algorithm now enforces position balance constraints to prevent tactical imbalances:
+
+### Position Categories
+- **Defense**: LB, CB, RB, LWB, RWB
+- **Midfield**: CM, CAM, CDM
+- **Attack**: LW, RW, ST
+
+### Hard Constraints
+1. **Category Gap Limit**: No team can have 3+ more players in any position category
+2. **Striker Balance**: When 2+ strikers are available, each team must have at least one
+
+### Implementation
+- Position balance checked during SA optimization
+- Pipeline steps prevent swaps that create striker imbalances
+- Debug logging shows position distribution and any constraint violations
+
+### Example
+```
+Position Balance Status:
+Blue Team: 2×CB, 1×CM, 1×ST
+Orange Team: 1×CB, 1×CDM, 1×CM, 1×ST
+
+Category Balance Check:
+  Defenders: 2 gap ✅
+  Midfielders: 0 gap ✅
+  Attackers: 0 gap ✅
+
+Individual Position Gaps:
+  ST: Blue 1 vs Orange 1 (gap: 0) ✅
+```
+
 ## Future Enhancements
-- Position-based balancing
 - Player chemistry considerations
 - Historical performance trends
 - Machine learning optimization

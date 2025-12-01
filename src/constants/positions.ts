@@ -188,7 +188,7 @@ export const POSITION_THRESHOLDS = {
   MAX_POSITION_GAP: 2,
 
   /** Maximum acceptable gap between teams in any individual position (RWB, CM, ST, etc.) */
-  MAX_INDIVIDUAL_POSITION_GAP: 2,
+  MAX_INDIVIDUAL_POSITION_GAP: 2, // Allows 2-0 gaps but blocks 3-0 scenarios; balance between flexibility and fairness
 
   /** Warning threshold - show warning if selecting more than this many positions */
   MAX_RECOMMENDED_SELECTIONS: 3

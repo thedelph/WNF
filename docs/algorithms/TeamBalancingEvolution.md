@@ -1,12 +1,12 @@
 # Team Balancing Algorithm Evolution
 
-**Last Updated:** 2025-11-17
+**Last Updated:** 2025-11-26
 
 This document tracks the complete chronological history of team balancing algorithm improvements, from initial implementation through all major optimizations.
 
 ---
 
-## 📊 Current Algorithm (v9.0 - 2025-11-17)
+## 📊 Current Algorithm (v10.0 - 2025-11-26)
 
 ### Weighting Formula
 
@@ -763,6 +763,82 @@ export const POSITION_CATEGORIES = {
 
 ---
 
+### Phase 6: Pipeline Striker Balance Fix (2025-11-26)
+
+#### v10.0 - Pipeline Striker Protection (2025-11-26)
+
+**Problem:** Post-optimization pipeline could create striker imbalances AFTER initial balancing succeeded.
+
+**Scenario:**
+- SA optimization achieved perfect 1-1 striker split (e.g., Stephen on Blue, Tom K on Orange)
+- Step 4 (`checkAndFixSystematicBias`) then swapped `Darren W ↔ Tom K` to fix attribute bias
+- Result: Both strikers (Tom K and Stephen) ended up on Blue team (2-0 imbalance)
+
+**Root Cause:** Pipeline steps had no awareness of striker balance constraints.
+
+**Solution - Three-Part Fix:**
+
+**Part 1: Progressive Relaxation in `attemptStrikerBalanceSwap()`**
+```typescript
+function attemptStrikerBalanceSwap(
+  blueTeam: PlayerWithRating[],
+  orangeTeam: PlayerWithRating[],
+  maxRatingDiff: number = 1.5,
+  maxBalanceDegradation: number = 0.10, // Now a parameter
+  debugLog?: { value: string }
+): boolean {
+  // Use parameter instead of fixed constant
+}
+```
+
+**Part 2: Progressive Relaxation Levels**
+```typescript
+// Progressive relaxation for BOTH rating diff AND balance degradation
+const relaxationLevels = [
+  { rating: 1.5, balance: 0.10 },
+  { rating: 2.0, balance: 0.15 },
+  { rating: 2.5, balance: 0.20 },
+  { rating: 3.0, balance: 0.25 },
+  { rating: 4.0, balance: 0.35 },  // Most relaxed - striker balance is critical
+];
+
+for (const level of relaxationLevels) {
+  const fixed = attemptStrikerBalanceSwap(blueTeam, orangeTeam, level.rating, level.balance, debugLog);
+  if (fixed) break;
+}
+```
+
+**Part 3: THE KEY FIX - Striker Balance Check in `checkAndFixSystematicBias()`**
+```typescript
+// Phase 3: Position balance check - prevent creating striker imbalance
+const blueStrikersAfter = blueTeam.filter(p => p.primaryPosition === 'ST').length;
+const orangeStrikersAfter = orangeTeam.filter(p => p.primaryPosition === 'ST').length;
+const totalStrikersAfter = blueStrikersAfter + orangeStrikersAfter;
+
+if (totalStrikersAfter >= 2 && (blueStrikersAfter === 0 || orangeStrikersAfter === 0)) {
+  // Revert the swap - it creates a striker imbalance
+  [blueTeam[blueIdx], orangeTeam[orangeIdx]] = [orangeTeam[orangeIdx], blueTeam[blueIdx]];
+  if (debugLog) {
+    debugLog.value += `   ⚠️ Rejected ${attr} swap (would create striker imbalance)\n`;
+  }
+  continue; // Try next attribute
+}
+```
+
+**Results:**
+- Step 4 now correctly rejects swaps that would create striker imbalance
+- Debug log shows: `⚠️ Rejected defending swap (would create striker imbalance: Blue 2 ST, Orange 0 ST)`
+- Striker balance maintained: 1-1 split preserved
+- Balance score: 0.242 (excellent)
+
+**Files Modified:**
+- `src/components/admin/team-balancing/tierBasedSnakeDraft.ts`
+  - Lines 3297-3303: Added `maxBalanceDegradation` parameter
+  - Lines 3411-3429: Progressive relaxation array
+  - Lines 4058-4071: **KEY FIX** - Striker balance check in `checkAndFixSystematicBias()`
+
+---
+
 ## 📈 Performance Metrics
 
 ### Balance Score Improvements
@@ -774,6 +850,7 @@ export const POSITION_CATEGORIES = {
 | v7.0 | 0.2-0.4 | 3-5 | **Breakthrough** - Dynamic thresholds |
 | v8.0 | 0.2-0.4 | 3-5 | GK integration maintained performance |
 | v9.0 | 0.2-0.4 | 3-5 | Position balance as hard constraint |
+| v10.0 | 0.2-0.4 | 3-5 | Pipeline striker protection |
 
 **80% improvement** from v6.0 to v7.0!
 
