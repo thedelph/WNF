@@ -262,17 +262,19 @@ export interface MultiObjectiveScore {
   performanceGap: number;     // Combined win rate + goal differential gap (lower is better)
   systematicBias: number;     // Cross-category dominance penalty (lower is better)
   positionBalance: number;    // Position distribution balance (lower is better) - prevents striker imbalance
+  avgRatingBalance: number;   // Average three-layer rating difference (lower is better) - NEW
   overall: number;            // Weighted combination of all objectives (lower is better)
 }
 
 export interface OptimizationWeights {
-  skillsBalance: number;      // Default: 0.30
-  shootingBalance: number;    // Default: 0.12
-  attributeBalance: number;   // Default: 0.15
+  skillsBalance: number;      // Default: 0.25
+  shootingBalance: number;    // Default: 0.10
+  attributeBalance: number;   // Default: 0.13
   tierFairness: number;       // Default: 0.05
-  performanceGap: number;     // Default: 0.10
-  systematicBias: number;     // Default: 0.13
-  positionBalance: number;    // Default: 0.15 - NEW: Position distribution balance
+  performanceGap: number;     // Default: 0.08
+  systematicBias: number;     // Default: 0.20
+  positionBalance: number;    // Default: 0.12
+  avgRatingBalance: number;   // Default: 0.10 - NEW: Average rating balance
 }
 
 export interface SwapEvaluation {
@@ -285,16 +287,17 @@ export interface SwapEvaluation {
 }
 
 // Default weights for multi-objective optimization
-// Priority: Core Skills > Position Balance > Attributes > Top/Bottom Tier Split (middle tiers don't matter)
-// Phase 2 Update: Added positionBalance to SA scoring, redistributed weights
+// Priority: Systematic Bias > Core Skills > Position Balance > Avg Rating > Attributes
+// Phase 3 Update: Increased systematicBias to prevent one team dominating core skills, added avgRatingBalance
 const DEFAULT_WEIGHTS: OptimizationWeights = {
-  skillsBalance: 0.30,      // Primary goal - Attack/Defense/Game IQ balance (reduced from 0.35)
-  shootingBalance: 0.12,    // Shooting distribution (reduced from 0.15)
-  attributeBalance: 0.15,   // Secondary goal - pace, passing, etc. (reduced from 0.20)
-  tierFairness: 0.05,       // Only care about top 4 / bottom 4 split, middle is free
-  performanceGap: 0.10,     // Win rate gap matters for fair games
-  systematicBias: 0.13,     // Penalize one team dominating all metrics (reduced from 0.15)
-  positionBalance: 0.15,    // NEW: Position balance to prevent striker imbalance during SA
+  skillsBalance: 0.25,      // Attack/Defense/Game IQ balance (reduced to make room for avgRating)
+  shootingBalance: 0.10,    // Shooting distribution
+  attributeBalance: 0.13,   // Pace, passing, etc.
+  tierFairness: 0.05,       // Only care about top 4 / bottom 4 split
+  performanceGap: 0.08,     // Win rate gap
+  systematicBias: 0.20,     // INCREASED: Penalize one team dominating all core skills
+  positionBalance: 0.12,    // Position balance to prevent striker imbalance
+  avgRatingBalance: 0.10,   // NEW: Average three-layer rating difference (max 0.25 gap target)
 };
 
 // Phase 4: Multi-Swap Combinations Interface
@@ -2107,7 +2110,7 @@ function calculatePositionBalanceScore(
 
 /**
  * Calculate multi-objective score for team composition
- * Returns scores for all 7 objectives plus weighted overall score
+ * Returns scores for all 8 objectives plus weighted overall score
  */
 function calculateMultiObjectiveScore(
   blueTeam: PlayerWithRating[],
@@ -2139,7 +2142,12 @@ function calculateMultiObjectiveScore(
   // 7. Position Balance (Phase 2: prevents striker imbalance during SA)
   const positionBalance = calculatePositionBalanceScore(blueTeam, orangeTeam);
 
-  // Calculate weighted overall score (now 7 objectives)
+  // 8. Average Rating Balance (Phase 3: ensures similar team quality)
+  const blueAvgRating = blueTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / blueTeam.length;
+  const orangeAvgRating = orangeTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / orangeTeam.length;
+  const avgRatingBalance = Math.abs(blueAvgRating - orangeAvgRating);
+
+  // Calculate weighted overall score (now 8 objectives)
   const overall =
     (skillsBalance * weights.skillsBalance) +
     (shootingBalance * weights.shootingBalance) +
@@ -2147,7 +2155,8 @@ function calculateMultiObjectiveScore(
     (tierFairness * weights.tierFairness) +
     (performanceGap * weights.performanceGap) +
     (systematicBias * weights.systematicBias) +
-    (positionBalance * weights.positionBalance);
+    (positionBalance * weights.positionBalance) +
+    (avgRatingBalance * weights.avgRatingBalance);
 
   return {
     skillsBalance,
@@ -2157,6 +2166,7 @@ function calculateMultiObjectiveScore(
     performanceGap,
     systematicBias,
     positionBalance,
+    avgRatingBalance,
     overall,
   };
 }
@@ -2181,7 +2191,8 @@ function evaluateSwap(
     'tierFairness',
     'performanceGap',
     'systematicBias',
-    'positionBalance'  // Phase 2: track position balance changes
+    'positionBalance',
+    'avgRatingBalance'  // Phase 3: track average rating balance
   ] as const;
 
   const improvedObjectives: string[] = [];
@@ -3556,18 +3567,20 @@ function calculateCoreSkillDominance(
     details.push({ skill: 'gameIq', blueAvg: blueGameIq, orangeAvg: orangeGameIq, winner: 'tie' });
   }
 
-  // Core skill dominated = one team wins all 3 core skills (GK excluded)
-  // Target is 2-1 or 1-2 split
-  const isCoreSkillDominated = blueWins === 3 || orangeWins === 3;
+  // Core skill dominated = one team wins 0 of 3 core skills (GK excluded)
+  // Each team must win at least 1 core skill - minimum 1-2 or 2-1 split
+  // Catches: 3-0, 2-0 (with tie), 1-0 (with 2 ties)
+  const isCoreSkillDominated = blueWins === 0 || orangeWins === 0;
 
   return { blueWins, orangeWins, isCoreSkillDominated, details };
 }
 
 /**
- * EMERGENCY Core Skill Fix: When one team wins all 3 core skills (3-0)
+ * EMERGENCY Core Skill Fix: When one team wins 0 core skills
  * This is a last-resort fix that accepts swaps with relaxed constraints
- * to ensure no team completely dominates Attack/Defense/Game IQ
+ * to ensure each team wins at least 1 of Attack/Defense/Game IQ
  *
+ * Triggers for: 3-0, 2-0 (with tie), 1-0 (with 2 ties)
  * Only considers outfield players (excludes permanent GKs from calculations)
  */
 function emergencyCoreSkillFix(
@@ -3580,7 +3593,7 @@ function emergencyCoreSkillFix(
 
   const coreStatus = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
 
-  // Only trigger for 3-0 dominance
+  // Only trigger when one team wins 0 core skills
   if (!coreStatus.isCoreSkillDominated) {
     return false;
   }
@@ -3635,7 +3648,7 @@ function emergencyCoreSkillFix(
         // Check if core skill balance improved
         const afterStatus = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
 
-        // Accept if we broke the 3-0 dominance (now 2-1 or better)
+        // Accept if we broke the dominance (each team now wins at least 1 skill)
         if (!afterStatus.isCoreSkillDominated) {
           if (debugLog) {
             debugLog.value += `   ✓ EMERGENCY FIX SUCCESS: ${playerFromDominant.friendly_name} ↔ ${playerFromWeaker.friendly_name}\n`;
@@ -3652,10 +3665,79 @@ function emergencyCoreSkillFix(
   }
 
   if (debugLog) {
-    debugLog.value += `   ✗ EMERGENCY FIX FAILED: Could not break 3-0 core skill dominance\n`;
+    debugLog.value += `   ✗ EMERGENCY FIX FAILED: Could not ensure each team wins at least 1 core skill\n`;
   }
 
   return false;
+}
+
+/**
+ * Validation grade for tiered quality assessment
+ * Used in debug logs to provide nuanced feedback on team balance quality
+ */
+type ValidationGrade = 'EXCELLENT' | 'GOOD' | 'ACCEPTABLE' | 'POOR' | 'FAIL';
+
+/**
+ * Get validation grade for core skill distribution
+ * @param blueWins - Number of core skills (ATK/DEF/IQ) Blue team wins
+ * @param orangeWins - Number of core skills Orange team wins
+ */
+function getCoreSkillGrade(blueWins: number, orangeWins: number): ValidationGrade {
+  const minWins = Math.min(blueWins, orangeWins);
+  const maxWins = Math.max(blueWins, orangeWins);
+
+  // Each team must win at least 1 skill
+  if (minWins === 0) {
+    return maxWins === 3 ? 'FAIL' : 'POOR';  // 3-0 is FAIL, 2-0 or 1-0 is POOR
+  }
+
+  // 2-1 split is ideal
+  if (maxWins === 2 && minWins === 1) return 'EXCELLENT';
+
+  // 1-1 with tie is good
+  if (maxWins === 1 && minWins === 1) return 'GOOD';
+
+  return 'ACCEPTABLE';
+}
+
+/**
+ * Get validation grade for average rating difference
+ * @param difference - Absolute difference in average three-layer ratings
+ */
+function getAvgRatingGrade(difference: number): ValidationGrade {
+  if (difference <= 0.15) return 'EXCELLENT';
+  if (difference <= 0.25) return 'GOOD';
+  if (difference <= 0.35) return 'ACCEPTABLE';
+  if (difference <= 0.50) return 'POOR';
+  return 'FAIL';
+}
+
+/**
+ * Calculate overall validation grade from component grades
+ */
+function calculateOverallGrade(
+  coreGrade: ValidationGrade,
+  avgRatingGrade: ValidationGrade,
+  attributeGrade: ValidationGrade,
+  positionValid: boolean
+): { grade: ValidationGrade; score: number } {
+  if (!positionValid) return { grade: 'FAIL', score: 0 };
+
+  const gradePoints: Record<ValidationGrade, number> = {
+    'EXCELLENT': 100, 'GOOD': 80, 'ACCEPTABLE': 60, 'POOR': 40, 'FAIL': 0
+  };
+
+  // Weights: core skills 40%, avg rating 30%, attributes 30%
+  const score =
+    gradePoints[coreGrade] * 0.40 +
+    gradePoints[avgRatingGrade] * 0.30 +
+    gradePoints[attributeGrade] * 0.30;
+
+  if (score >= 85) return { grade: 'EXCELLENT', score };
+  if (score >= 70) return { grade: 'GOOD', score };
+  if (score >= 50) return { grade: 'ACCEPTABLE', score };
+  if (score >= 30) return { grade: 'POOR', score };
+  return { grade: 'FAIL', score };
 }
 
 /**
@@ -3665,9 +3747,12 @@ function emergencyCoreSkillFix(
 interface ValidationResult {
   valid: boolean;
   issues: string[];
+  grade: ValidationGrade;
+  score: number;
   positionBalance: { valid: boolean; blueStrikers: number; orangeStrikers: number };
-  coreSkillBalance: { valid: boolean; blueWins: number; orangeWins: number };
-  attributeGaps: { valid: boolean; extremeGaps: { attr: string; gap: number }[] };
+  coreSkillBalance: { valid: boolean; blueWins: number; orangeWins: number; grade: ValidationGrade };
+  attributeGaps: { valid: boolean; extremeGaps: { attr: string; gap: number }[]; grade: ValidationGrade };
+  avgRating: { blueAvg: number; orangeAvg: number; difference: number; grade: ValidationGrade };
   gkBalance: { blueGk: number; orangeGk: number };
 }
 
@@ -3690,11 +3775,13 @@ function finalValidation(
   }
 
   // 2. Check core skill balance (Attack, Defense, Game IQ - NOT GK)
+  // Each team must win at least 1 core skill
   const coreStatus = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
   const coreSkillValid = !coreStatus.isCoreSkillDominated;
+  const coreSkillGrade = getCoreSkillGrade(coreStatus.blueWins, coreStatus.orangeWins);
 
   if (!coreSkillValid) {
-    issues.push(`Core Skills: ${coreStatus.blueWins}-${coreStatus.orangeWins} dominance (target: 2-1 or 1-2)`);
+    issues.push(`Core Skills: ${coreStatus.blueWins}-${coreStatus.orangeWins} - one team wins 0 core skills (need at least 1-2 split)`);
   }
 
   // 3. Check extreme attribute gaps (>2.5 is critical)
@@ -3717,11 +3804,30 @@ function finalValidation(
   }
 
   const attributeValid = extremeGaps.length === 0;
+  // Grade attributes based on largest gap (or EXCELLENT if no extreme gaps)
+  const maxGap = extremeGaps.length > 0 ? Math.max(...extremeGaps.map(g => g.gap)) : 0;
+  let attributeGrade: ValidationGrade = 'EXCELLENT';
+  if (maxGap > 4.0) attributeGrade = 'FAIL';
+  else if (maxGap > 3.5) attributeGrade = 'POOR';
+  else if (maxGap > 3.0) attributeGrade = 'ACCEPTABLE';
+  else if (maxGap > 2.5) attributeGrade = 'GOOD';
+
   if (!attributeValid) {
     issues.push(`Attributes: ${extremeGaps.map(g => `${g.attr}(${g.gap.toFixed(1)})`).join(', ')} exceed threshold`);
   }
 
-  // 4. GK balance (informational - less critical due to rotating keeper)
+  // 4. Check average rating balance (NEW)
+  const blueAvgRating = blueTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / blueTeam.length;
+  const orangeAvgRating = orangeTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / orangeTeam.length;
+  const avgRatingDiff = Math.abs(blueAvgRating - orangeAvgRating);
+  const avgRatingGrade = getAvgRatingGrade(avgRatingDiff);
+
+  // Warn if average rating gap exceeds 0.25 (but don't fail validation for this alone)
+  if (avgRatingDiff > 0.25) {
+    issues.push(`Average Rating: ${avgRatingDiff.toFixed(2)} gap exceeds 0.25 threshold`);
+  }
+
+  // 5. GK balance (informational - less critical due to rotating keeper)
   const blueGk = blueTeam
     .filter(p => !gkIdSet.has(p.player_id)) // Exclude permanent GKs
     .reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / Math.max(1, blueTeam.filter(p => !gkIdSet.has(p.player_id)).length);
@@ -3729,12 +3835,18 @@ function finalValidation(
     .filter(p => !gkIdSet.has(p.player_id))
     .reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / Math.max(1, orangeTeam.filter(p => !gkIdSet.has(p.player_id)).length);
 
+  // Calculate overall grade
+  const overallGrade = calculateOverallGrade(coreSkillGrade, avgRatingGrade, attributeGrade, positionValid);
+
   return {
     valid: issues.length === 0,
     issues,
+    grade: overallGrade.grade,
+    score: overallGrade.score,
     positionBalance: { valid: positionValid, blueStrikers, orangeStrikers },
-    coreSkillBalance: { valid: coreSkillValid, blueWins: coreStatus.blueWins, orangeWins: coreStatus.orangeWins },
-    attributeGaps: { valid: attributeValid, extremeGaps },
+    coreSkillBalance: { valid: coreSkillValid, blueWins: coreStatus.blueWins, orangeWins: coreStatus.orangeWins, grade: coreSkillGrade },
+    attributeGaps: { valid: attributeValid, extremeGaps, grade: attributeGrade },
+    avgRating: { blueAvg: blueAvgRating, orangeAvg: orangeAvgRating, difference: avgRatingDiff, grade: avgRatingGrade },
     gkBalance: { blueGk, orangeGk }
   };
 }
@@ -3922,26 +4034,79 @@ function runPostOptimizationPipeline(
   const balance = calculateTierBalanceScore(blueTeam, orangeTeam, Array.from(permanentGKIds));
 
   if (debugLog) {
+    // Helper function for grade emoji
+    const gradeEmoji = (g: ValidationGrade) => {
+      switch(g) {
+        case 'EXCELLENT': return '🟢';
+        case 'GOOD': return '🟢';
+        case 'ACCEPTABLE': return '🟡';
+        case 'POOR': return '🟠';
+        case 'FAIL': return '🔴';
+      }
+    };
+
     debugLog.value += '\n';
     debugLog.value += '═══════════════════════════════════════════════════════════════\n';
-    debugLog.value += '                    FINAL VALIDATION                            \n';
+    debugLog.value += '                    VALIDATION SUMMARY                          \n';
     debugLog.value += '═══════════════════════════════════════════════════════════════\n';
-    debugLog.value += `Position Balance:    ${validation.positionBalance.valid ? '✓ PASS' : '✗ FAIL'} (Blue ${validation.positionBalance.blueStrikers} ST, Orange ${validation.positionBalance.orangeStrikers} ST)\n`;
-    debugLog.value += `Core Skill Balance:  ${validation.coreSkillBalance.valid ? '✓ PASS' : '✗ FAIL'} (Blue ${validation.coreSkillBalance.blueWins}/3, Orange ${validation.coreSkillBalance.orangeWins}/3)\n`;
-    debugLog.value += `Attribute Gaps:      ${validation.attributeGaps.valid ? '✓ PASS' : '✗ FAIL'}`;
+
+    // Core Skills with grade
+    debugLog.value += `Core Skills (ATK/DEF/IQ):  Blue ${validation.coreSkillBalance.blueWins}/3, Orange ${validation.coreSkillBalance.orangeWins}/3  `;
+    debugLog.value += `[${gradeEmoji(validation.coreSkillBalance.grade)} ${validation.coreSkillBalance.grade}]\n`;
+
+    // Average Rating (NEW)
+    debugLog.value += `Average Rating:            Blue ${validation.avgRating.blueAvg.toFixed(2)}, Orange ${validation.avgRating.orangeAvg.toFixed(2)} `;
+    debugLog.value += `(gap: ${validation.avgRating.difference.toFixed(2)}) [${gradeEmoji(validation.avgRating.grade)} ${validation.avgRating.grade}]\n`;
+
+    // GK Balance
+    debugLog.value += `GK Balance:                Blue ${validation.gkBalance.blueGk.toFixed(2)}, Orange ${validation.gkBalance.orangeGk.toFixed(2)} `;
+    debugLog.value += `(gap: ${Math.abs(validation.gkBalance.blueGk - validation.gkBalance.orangeGk).toFixed(2)}) [ℹ️ INFO - rotating]\n`;
+
+    // Position Balance
+    debugLog.value += `Position Balance:          ${validation.positionBalance.valid ? '✓ PASS' : '✗ FAIL'} `;
+    debugLog.value += `(Blue ${validation.positionBalance.blueStrikers} ST, Orange ${validation.positionBalance.orangeStrikers} ST)\n`;
+
+    // Attribute Balance with grade
+    debugLog.value += `Attribute Gaps:            ${validation.attributeGaps.valid ? '✓ PASS' : '⚠️ WARN'} `;
+    debugLog.value += `[${gradeEmoji(validation.attributeGaps.grade)} ${validation.attributeGaps.grade}]`;
     if (!validation.attributeGaps.valid) {
       debugLog.value += ` (${validation.attributeGaps.extremeGaps.map(g => `${g.attr}: ${g.gap.toFixed(1)}`).join(', ')})`;
     }
     debugLog.value += '\n';
-    debugLog.value += `GK Balance:          ℹ️ INFO (Blue ${validation.gkBalance.blueGk.toFixed(2)}, Orange ${validation.gkBalance.orangeGk.toFixed(2)}) - rotating keeper\n`;
-    debugLog.value += `Top 4/Bottom 4:      ${extremeSplitResult.valid ? '✓ PASS' : '✗ FAIL'} (${extremeSplitResult.valid ? '2-2 split enforced' : 'imbalanced'})\n`;
+
+    // Top 4/Bottom 4 split
+    debugLog.value += `Top 4/Bottom 4:            ${extremeSplitResult.valid ? '✓ PASS' : '✗ FAIL'} `;
+    debugLog.value += `(${extremeSplitResult.valid ? '2-2 split enforced' : 'imbalanced'})\n`;
+
+    // Core skill margin analysis (for potential flip targeting)
+    const coreDetails = calculateCoreSkillDominance(blueTeam, orangeTeam, permanentGKIds);
     debugLog.value += '\n';
-    debugLog.value += `Overall:             ${validation.valid && extremeSplitResult.valid ? '✓ BALANCED' : '⚠️ HAS ISSUES'}\n`;
-    if (!validation.valid) {
-      debugLog.value += `Issues: ${validation.issues.join('; ')}\n`;
+    debugLog.value += 'CORE SKILL MARGINS (for potential flip targeting):\n';
+    coreDetails.details.forEach(d => {
+      const margin = Math.abs(d.blueAvg - d.orangeAvg);
+      const winner = d.winner === 'tie' ? 'Tie' : d.winner === 'blue' ? 'Blue' : 'Orange';
+      debugLog.value += `  ${d.skill.padEnd(8)}: Blue ${d.blueAvg.toFixed(2)} vs Orange ${d.orangeAvg.toFixed(2)} (gap: ${margin.toFixed(2)}) → ${winner} wins\n`;
+    });
+    const sortedByMargin = [...coreDetails.details]
+      .filter(d => d.winner !== 'tie')
+      .sort((a, b) => Math.abs(a.blueAvg - a.orangeAvg) - Math.abs(b.blueAvg - b.orangeAvg));
+    if (sortedByMargin.length > 0) {
+      debugLog.value += `\n  Easiest to flip: ${sortedByMargin[0].skill} (${Math.abs(sortedByMargin[0].blueAvg - sortedByMargin[0].orangeAvg).toFixed(2)} margin)\n`;
     }
-    debugLog.value += `Pipeline swaps:      ${swapCount}\n`;
-    debugLog.value += `Final balance score: ${balance.toFixed(3)}\n`;
+
+    debugLog.value += '\n';
+    debugLog.value += `Overall Grade:             ${gradeEmoji(validation.grade)} ${validation.grade} (Score: ${validation.score.toFixed(0)}/100)\n`;
+
+    if (validation.issues.length > 0) {
+      debugLog.value += `\n⚠️ Issues:\n`;
+      validation.issues.forEach(issue => {
+        debugLog.value += `  - ${issue}\n`;
+      });
+    }
+
+    debugLog.value += '\n';
+    debugLog.value += `Pipeline swaps:            ${swapCount}\n`;
+    debugLog.value += `Final balance score:       ${balance.toFixed(3)}\n`;
     debugLog.value += '═══════════════════════════════════════════════════════════════\n';
   }
 
