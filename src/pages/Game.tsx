@@ -50,8 +50,8 @@ interface PlayerDataState {
   shieldTokenUsers: Array<{
     player: Player;
     used_at: string;
-    frozen_streak_value: number;
-    frozen_streak_modifier: number;
+    protected_streak_value: number;
+    protected_streak_base: number;
   }>;
 }
 
@@ -251,8 +251,8 @@ const Game = () => {
           .from('shield_token_usage')
           .select(`
             used_at,
-            frozen_streak_value,
-            frozen_streak_modifier,
+            protected_streak_value,
+            protected_streak_base,
             player:players!shield_token_usage_player_id_fkey (
               id,
               friendly_name,
@@ -266,8 +266,8 @@ const Game = () => {
               unpaid_games,
               unpaid_games_modifier,
               shield_active,
-              frozen_streak_value,
-              frozen_streak_modifier
+              protected_streak_value,
+              protected_streak_base
             )
           `)
           .eq('game_id', game.id)
@@ -281,8 +281,8 @@ const Game = () => {
               .map(su => ({
                 player: su.player!,
                 used_at: su.used_at || new Date().toISOString(),
-                frozen_streak_value: su.frozen_streak_value,
-                frozen_streak_modifier: su.frozen_streak_modifier
+                protected_streak_value: su.protected_streak_value,
+                protected_streak_base: su.protected_streak_base
               }))
           }));
         }

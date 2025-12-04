@@ -11,8 +11,8 @@ interface ShieldPlayerData {
   shield_tokens_available: number;
   games_played_since_shield_launch: number;
   shield_active: boolean;
-  frozen_streak_value: number | null;
-  frozen_streak_modifier: number | null;
+  protected_streak_value: number | null;
+  protected_streak_base: number | null;
   current_streak: number;
   games_toward_next_token: number;
   games_until_next_token: number;
@@ -41,8 +41,8 @@ const ShieldTokenManagement: React.FC = () => {
           shield_tokens_available,
           games_played_since_shield_launch,
           shield_active,
-          frozen_streak_value,
-          frozen_streak_modifier,
+          protected_streak_value,
+          protected_streak_base,
           current_streak
         `)
         .order('friendly_name');
@@ -348,7 +348,7 @@ const ShieldTokenManagement: React.FC = () => {
                           <span>Active</span>
                         </div>
                         <div className="text-xs text-base-content/70">
-                          {player.frozen_streak_value} games frozen
+                          {player.protected_streak_value} games protected
                         </div>
                       </div>
                     ) : (
@@ -501,8 +501,8 @@ const ShieldTokenManagement: React.FC = () => {
           <h3 className="font-bold">Shield Token System</h3>
           <div className="text-sm">
             Players earn 1 shield token per 10 games played (max 4). Shields protect streaks when
-            players can't play. Active shields maintain frozen XP modifiers until the player
-            naturally reaches that streak level again.
+            players can't play. Active shields use gradual decay: the protected bonus decreases
+            as the player rebuilds their natural streak, converging at the midpoint.
           </div>
         </div>
       </div>

@@ -28,7 +28,7 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
   permanentGKIds
 }) => {
   const [includeFormation, setIncludeFormation] = useState(false);
-  const [shieldPlayers, setShieldPlayers] = useState<Array<{ friendly_name: string; frozen_streak_value: number }>>([]);
+  const [shieldPlayers, setShieldPlayers] = useState<Array<{ friendly_name: string; protected_streak_value: number }>>([]);
 
   // Fetch shield token users if gameId is provided
   useEffect(() => {
@@ -40,7 +40,7 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
         .select(`
           players!shield_token_usage_player_id_fkey(
             friendly_name,
-            frozen_streak_value
+            protected_streak_value
           )
         `)
         .eq('game_id', gameId);
@@ -54,7 +54,7 @@ export const WhatsAppExport: React.FC<WhatsAppExportProps> = ({
         const shieldData = data
           .map((item: any) => ({
             friendly_name: item.players?.friendly_name || '',
-            frozen_streak_value: item.players?.frozen_streak_value || 0
+            protected_streak_value: item.players?.protected_streak_value || 0
           }))
           .filter(p => p.friendly_name);
         setShieldPlayers(shieldData);
@@ -163,7 +163,7 @@ ${blueTeamText}`;
       shieldPlayers
         .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
         .forEach(player => {
-          message += `🛡️ ${player.friendly_name} (${player.frozen_streak_value} game streak frozen at +${player.frozen_streak_value * 10}% XP)\n`;
+          message += `🛡️ ${player.friendly_name} (${player.protected_streak_value} game streak protected)\n`;
         });
     }
 

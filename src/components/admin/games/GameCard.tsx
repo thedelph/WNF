@@ -87,7 +87,7 @@ export const GameCard: React.FC<Props> = ({
           player_id,
           players!shield_token_usage_player_id_fkey(
             friendly_name,
-            frozen_streak_value
+            protected_streak_value
           )
         `)
         .eq('game_id', game.id);
@@ -204,8 +204,8 @@ Reply to this message with names of any reserves outside of this group that want
             [...shieldUsage]
               .sort((a: any, b: any) => (a.players?.friendly_name || '').localeCompare(b.players?.friendly_name || ''))
               .forEach((usage: any) => {
-                const frozenStreak = usage.players?.frozen_streak_value || 0;
-                message += `\n🛡️ ${usage.players?.friendly_name} (protecting ${frozenStreak} game streak)`;
+                const protectedStreak = usage.players?.protected_streak_value || 0;
+                message += `\n🛡️ ${usage.players?.friendly_name} (protecting ${protectedStreak} game streak)`;
               });
           }
 
@@ -330,8 +330,8 @@ Reply to this message with names of any reserves outside of this group that want
             [...shieldUsage]
               .sort((a: any, b: any) => (a.players?.friendly_name || '').localeCompare(b.players?.friendly_name || ''))
               .forEach((usage: any) => {
-                const frozenStreak = usage.players?.frozen_streak_value || 0;
-                message += `\n🛡️ ${usage.players?.friendly_name} (${frozenStreak} game streak frozen at +${frozenStreak * 10}% XP)`;
+                const protectedStreak = usage.players?.protected_streak_value || 0;
+                message += `\n🛡️ ${usage.players?.friendly_name} (${protectedStreak} game streak protected)`;
               });
           }
 

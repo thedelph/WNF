@@ -22,8 +22,8 @@ type Player = {
   shield_tokens_available?: number
   games_played_since_shield_launch?: number
   shield_active?: boolean
-  frozen_streak_value?: number
-  frozen_streak_modifier?: number
+  protected_streak_value?: number
+  protected_streak_base?: number
 }
 
 const EditPlayer: React.FC = () => {
@@ -343,7 +343,7 @@ const EditPlayer: React.FC = () => {
             <div>
               <h3 className="font-bold">Active Shield Protection</h3>
               <div className="text-sm">
-                Frozen Streak: {player.frozen_streak_value} games (+{(player.frozen_streak_modifier || 0) * 100}% XP)
+                Protected Streak: {player.protected_streak_value} games (gradual decay active)
               </div>
             </div>
           </div>
