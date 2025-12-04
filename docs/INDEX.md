@@ -10,7 +10,9 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 
 ### Player Management
 - **[Token System](TokenSystem.md)** - Priority token mechanics, eligibility, and shield tokens
-- **[XP System](XPSystemExplained.md)** - Experience points, tiers, and progression
+- **[XP System v1](XPSystemExplained.md)** - Current XP calculation (production)
+- **[XP System v2](features/XPSystemv2.md)** - Diminishing streak returns (planned Jan 2026)
+- **[XP Migration Guide](migrations/XPv1ToV2Migration.md)** - Technical runbook for v1 to v2 migration
 - **[Rarity Tier System](RarityTierSystem.md)** - Player classification and badges
 
 ### Ratings & Performance

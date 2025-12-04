@@ -9,8 +9,11 @@ import { useGameRegistrationStats } from '../../hooks/useGameRegistrationStats';
 interface ShieldTokenUser {
   player: Player;
   used_at: string;
-  frozen_streak_value: number;
-  frozen_streak_modifier: number;
+  protected_streak_value: number;
+  protected_streak_base: number;
+  // Legacy aliases for backwards compatibility
+  frozen_streak_value?: number;
+  frozen_streak_modifier?: number;
 }
 
 interface ShieldTokenPlayersProps {
@@ -126,7 +129,7 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
                     unpaidGamesModifier={unpaidGamesModifier}
                     whatsapp_group_member={shieldUser.player.whatsapp_group_member}
                     shieldActive={true}
-                    frozenStreakValue={shieldUser.frozen_streak_value}
+                    protectedStreakValue={shieldUser.protected_streak_value ?? shieldUser.frozen_streak_value}
                     averagedPlaystyle={playerStats[shieldUser.player.id]?.averagedPlaystyle}
                     playstyleMatchDistance={playerStats[shieldUser.player.id]?.playstyleMatchDistance}
                     playstyleCategory={playerStats[shieldUser.player.id]?.playstyleCategory}
@@ -146,40 +149,53 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
             <thead>
               <tr>
                 <th>Player</th>
-                <th>Protected Streak</th>
-                <th>XP Modifier</th>
+                <th>Current Streak</th>
+                <th>Protected Value</th>
+                <th>Effective Bonus</th>
                 <th>Used At</th>
               </tr>
             </thead>
             <tbody>
-              {shieldTokenUsers.map((shieldUser) => (
-                <tr key={shieldUser.player.id}>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">🛡️</span>
-                      <span className="font-semibold">{shieldUser.player.friendly_name}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="badge badge-success">
-                      {shieldUser.frozen_streak_value} games
-                    </span>
-                  </td>
-                  <td>
-                    <span className="text-success font-semibold">
-                      +{(shieldUser.frozen_streak_modifier * 100).toFixed(0)}%
-                    </span>
-                  </td>
-                  <td className="text-sm text-base-content/60">
-                    {new Date(shieldUser.used_at).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </td>
-                </tr>
-              ))}
+              {shieldTokenUsers.map((shieldUser) => {
+                const protectedValue = shieldUser.protected_streak_value ?? shieldUser.frozen_streak_value ?? 0;
+                const currentStreak = playerStats[shieldUser.player.id]?.currentStreak || 0;
+                const decayingBonus = Math.max(0, protectedValue - currentStreak);
+                const effectiveStreak = Math.max(currentStreak, decayingBonus);
+
+                return (
+                  <tr key={shieldUser.player.id}>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🛡️</span>
+                        <span className="font-semibold">{shieldUser.player.friendly_name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="badge badge-ghost">
+                        {currentStreak} {currentStreak === 1 ? 'game' : 'games'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="badge badge-success">
+                        +{decayingBonus * 10}%
+                      </span>
+                    </td>
+                    <td>
+                      <span className="text-success font-semibold">
+                        +{effectiveStreak * 10}%
+                      </span>
+                    </td>
+                    <td className="text-sm text-base-content/60">
+                      {new Date(shieldUser.used_at).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

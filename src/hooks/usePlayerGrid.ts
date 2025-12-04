@@ -51,7 +51,7 @@ export const usePlayerGrid = () => {
               current_streak,
               bench_warmer_streak,
               shield_active,
-              frozen_streak_value,
+              protected_streak_value,
               player_xp (
                 xp,
                 rank,
@@ -293,7 +293,9 @@ export const usePlayerGrid = () => {
             playstyleCategory: playstyleMatch?.category,
             playstyleRatingsCount: playerAttributes?.total_ratings_count || 0,
             shieldActive: player.shield_active || false,
-            frozenStreakValue: player.frozen_streak_value || null,
+            protectedStreakValue: player.protected_streak_value || null,
+            // Legacy alias for backwards compatibility
+            frozenStreakValue: player.protected_streak_value || null,
             recentGames: recentGamesMap[player.id] || 0,
             gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(null)
           };

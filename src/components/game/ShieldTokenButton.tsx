@@ -197,22 +197,39 @@ export const ShieldTokenButton: React.FC<ShieldTokenButtonProps> = ({
                 <h3 className="card-title text-lg">What happens when you use a shield:</h3>
                 <ul className="list-disc list-inside space-y-2">
                   <li>
-                    Your current <strong>{currentStreak}-game streak</strong> will be{' '}
-                    <strong className="text-success">frozen</strong>
+                    Your <strong>{currentStreak}-game streak</strong> will be{' '}
+                    <strong className="text-purple-500">protected with gradual decay</strong>
                   </li>
                   <li>
-                    Your <strong>+{xpModifier}% XP modifier</strong> will remain active
+                    Your <strong>+{xpModifier}% XP bonus</strong> will decrease as you rebuild
                   </li>
                   <li>You will <strong>not be registered</strong> for this game</li>
                   <li>
-                    The frozen streak stays active until you naturally reach{' '}
-                    <strong>{currentStreak} consecutive games</strong> again
+                    You'll break even after <strong>{Math.ceil(currentStreak / 2)} games</strong> (halfway point)
                   </li>
                   <li>
                     You will have <strong>{tokensAvailable - 1}</strong> shield
                     {tokensAvailable - 1 !== 1 ? 's' : ''} remaining
                   </li>
                 </ul>
+              </div>
+            </div>
+
+            {/* Gradual Decay Example */}
+            <div className="card bg-base-200">
+              <div className="card-body p-4">
+                <h4 className="font-bold mb-2">How gradual decay works:</h4>
+                <div className="bg-base-300 p-3 rounded text-sm font-mono space-y-1">
+                  <p className="text-xs opacity-75 mb-2">Your {currentStreak}-game streak protected:</p>
+                  <p>Game 1: Natural 1, Protected {currentStreak - 1} → +{(currentStreak - 1) * 10}%</p>
+                  {currentStreak >= 4 && (
+                    <p>Game 2: Natural 2, Protected {currentStreak - 2} → +{(currentStreak - 2) * 10}%</p>
+                  )}
+                  <p className="text-success font-bold">
+                    Game {Math.ceil(currentStreak / 2)}: Converged! → +{Math.ceil(currentStreak / 2) * 10}%
+                  </p>
+                  <p className="opacity-75">Then continues building normally...</p>
+                </div>
               </div>
             </div>
 
@@ -243,22 +260,25 @@ export const ShieldTokenButton: React.FC<ShieldTokenButtonProps> = ({
               <div className="card-body p-4">
                 <h4 className="font-bold text-warning">⚠️ Important:</h4>
                 <p>
-                  If you miss another game <strong>without using a shield</strong> before
-                  reaching your frozen streak naturally, your shield protection will be{' '}
-                  <strong>removed</strong> and your streak will <strong>reset to 0</strong>.
+                  If you miss a game during the decay period <strong>without using another shield</strong>,
+                  your protection will be <strong>removed</strong> and your streak will{' '}
+                  <strong>reset to 0</strong>.
                 </p>
               </div>
             </div>
 
-            {/* How to Regain Streak */}
+            {/* How Shield Protection Works */}
             <div className="card bg-base-200">
               <div className="card-body p-4">
-                <h4 className="font-bold">How to regain your natural streak:</h4>
-                <p>
-                  Play <strong>{currentStreak} consecutive games</strong> without missing any
-                  (or use more shields when you need to miss). Once you reach {currentStreak}{' '}
-                  games naturally, the shield will be removed and you'll continue building
-                  your streak normally.
+                <h4 className="font-bold">How the protection works:</h4>
+                <p className="mb-2">
+                  Play <strong>{Math.ceil(currentStreak / 2)} games</strong> to reach the convergence
+                  point where your natural streak equals the decaying protected bonus. After that,
+                  the shield is removed and you continue building normally.
+                </p>
+                <p className="text-sm opacity-75">
+                  For multi-week absences: each week needs its own shield. Decay only starts
+                  when you return and play your first game back.
                 </p>
               </div>
             </div>

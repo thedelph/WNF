@@ -43,8 +43,10 @@ import FeatureFlagManagement from './pages/admin/FeatureFlagManagement'
 import TeamBalancingVisualization from './pages/admin/TeamBalancingVisualization'
 import SessionDiagnostics from './pages/admin/SessionDiagnostics'
 import ShieldTokenManagement from './pages/admin/ShieldTokenManagement'
+import XPComparison from './pages/admin/XPComparison'
 import WhatsAppBotHelp from './pages/WhatsAppBotHelp'
 import WeatherDemo from './pages/WeatherDemo'
+import DesignPreview from './pages/DesignPreview'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -117,10 +119,12 @@ const App: React.FC = () => {
                 <Route path="/admin/shields" element={<ShieldTokenManagement />} />
                 <Route path="/admin/account-management" element={<AccountManagement />} />
                 <Route path="/admin/session-diagnostics" element={<SessionDiagnostics />} />
+                <Route path="/admin/xp-comparison" element={<XPComparison />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/changelog" element={<Changelog />} />
                 <Route path="/help/whatsapp-bot" element={<WhatsAppBotHelp />} />
                 <Route path="/weather-demo" element={<WeatherDemo />} />
+                <Route path="/design-preview" element={<DesignPreview />} />
               </Route>
             </Routes>
             <Toaster />

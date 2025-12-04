@@ -26,10 +26,22 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   registrationStreakBonusApplies = false,
   status,
   shieldActive = false,
-  frozenStreakValue = null,
+  protectedStreakValue = null,
+  frozenStreakValue = null, // Legacy prop
 }) => {
   const { player } = useUser()
   const [showShieldTooltip, setShowShieldTooltip] = useState(false)
+
+  // Use protectedStreakValue, fall back to legacy frozenStreakValue
+  const protectedValue = protectedStreakValue ?? frozenStreakValue ?? null
+
+  // Calculate gradual decay values
+  const decayingProtectedBonus = shieldActive && protectedValue != null
+    ? Math.max(0, protectedValue - currentStreak)
+    : null
+  const effectiveStreak = shieldActive && protectedValue != null
+    ? Math.max(currentStreak, protectedValue - currentStreak)
+    : currentStreak
 
   // Calculate registration streak bonus modifier (2.5% per streak level)
   const registrationStreakModifier = registrationStreakBonus * 0.025
@@ -68,10 +80,10 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
           </motion.div>
         </Tooltip>
       )}
-      {currentStreak > 0 && (
+      {(currentStreak > 0 || shieldActive) && (
         <>
-          {shieldActive ? (
-            <Tooltip content={`🛡️ Streak Protection Active: ${possessivePronoun} ${frozenStreakValue}-game streak is frozen at +${(frozenStreakValue * 10).toFixed(0)}% XP for this week`}>
+          {shieldActive && protectedValue != null ? (
+            <Tooltip content={`🛡️ Streak Protection: ${possessivePronoun} streak ${currentStreak} | Protected ${decayingProtectedBonus} → +${effectiveStreak * 10}% XP`}>
               <motion.div
                 className="flex justify-between items-center rounded-lg p-2 relative overflow-hidden bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-900/40 backdrop-blur-sm border-2 border-purple-400/60 shadow-lg shadow-purple-500/20 cursor-pointer select-none"
                 initial={{ x: -20, opacity: 0 }}
@@ -90,14 +102,16 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
 
                 <div className="flex items-center gap-2 relative z-10 text-purple-100">
                   <Shield className="w-4 h-4" fill="currentColor" />
-                  <span className="text-sm font-semibold">Streak Frozen</span>
+                  <span className="text-sm font-semibold">
+                    Streak: {currentStreak} | Protected: {decayingProtectedBonus}
+                  </span>
                 </div>
                 <span className="text-sm font-bold relative z-10 text-purple-100">
-                  +{frozenStreakValue ? (frozenStreakValue * 10).toFixed(0) : (streakModifier * 100).toFixed(0)}%
+                  +{effectiveStreak * 10}%
                 </span>
               </motion.div>
             </Tooltip>
-          ) : (
+          ) : currentStreak > 0 ? (
             <motion.div
               className="flex justify-between items-center rounded-lg p-2 bg-green-500/20"
               initial={{ x: -20, opacity: 0 }}
@@ -122,7 +136,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
               className="sm:hidden"
             >
               <div className="bg-purple-900/60 border-2 border-purple-400/40 rounded-lg p-2 text-xs text-purple-100">
-                <span className="font-semibold">🛡️ Streak Protection Active:</span> {possessivePronoun} {frozenStreakValue}-game streak is frozen at +{(frozenStreakValue * 10).toFixed(0)}% XP for this week
+                <span className="font-semibold">🛡️ Streak Protection Active:</span> {possessivePronoun} streak {currentStreak} with protected bonus of {decayingProtectedBonus} → +{effectiveStreak * 10}% XP
               </div>
             </motion.div>
           )}

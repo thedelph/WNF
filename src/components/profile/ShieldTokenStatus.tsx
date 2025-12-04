@@ -8,9 +8,12 @@ interface ShieldTokenStatusProps {
   gamesTowardNextToken: number;
   gamesUntilNextToken: number;
   shieldActive: boolean;
-  frozenStreakValue: number | null;
+  protectedStreakValue: number | null;  // Original streak value when shield was activated
+  currentStreak?: number;                // Current natural streak (for decay display)
   isLoading?: boolean;
   playerName?: string;
+  /** @deprecated Use protectedStreakValue instead */
+  frozenStreakValue?: number | null;
 }
 
 // Component to display shield token status with progress tracker and explanation
@@ -19,11 +22,27 @@ export default function ShieldTokenStatus({
   gamesTowardNextToken,
   gamesUntilNextToken,
   shieldActive,
-  frozenStreakValue,
+  protectedStreakValue,
+  currentStreak = 0,
   isLoading = false,
   playerName,
+  frozenStreakValue,  // Legacy prop
 }: ShieldTokenStatusProps) {
   const [explanationOpen, setExplanationOpen] = useState(false);
+
+  // Use protectedStreakValue, fall back to legacy frozenStreakValue
+  const protectedValue = protectedStreakValue ?? frozenStreakValue ?? null;
+
+  // Calculate gradual decay values
+  const decayingProtectedBonus = shieldActive && protectedValue != null
+    ? Math.max(0, protectedValue - currentStreak)
+    : null;
+  const effectiveStreak = shieldActive && protectedValue != null
+    ? Math.max(currentStreak, protectedValue - currentStreak)
+    : currentStreak;
+  const convergencePoint = shieldActive && protectedValue != null
+    ? Math.ceil(protectedValue / 2)
+    : null;
 
   if (isLoading) {
     return (
@@ -75,16 +94,39 @@ export default function ShieldTokenStatus({
           </div>
         </Tooltip>
 
-        {/* Active Shield Indicator */}
-        {shieldActive && (
-          <Tooltip content={`Shield protecting ${frozenStreakValue || 0} game streak`}>
-            <div className="badge badge-success gap-2 w-full justify-center py-3">
-              <Shield size={14} />
-              <span className="font-medium">
-                SHIELD ACTIVE - Protecting {frozenStreakValue || 0} game streak
-              </span>
+        {/* Active Shield Indicator with Gradual Decay Info */}
+        {shieldActive && protectedValue != null && (
+          <div className="space-y-2">
+            <Tooltip content={`Shield protecting ${protectedValue} game streak with gradual decay`}>
+              <div className="badge badge-success gap-2 w-full justify-center py-3">
+                <Shield size={14} />
+                <span className="font-medium">
+                  SHIELD ACTIVE - Protected: {protectedValue} games
+                </span>
+              </div>
+            </Tooltip>
+
+            {/* Gradual Decay Progress */}
+            <div className="bg-base-300 rounded-lg p-3 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="opacity-75">Natural Streak:</span>
+                <span className="font-medium">{currentStreak} games</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="opacity-75">Protected Bonus:</span>
+                <span className="font-medium text-purple-400">+{decayingProtectedBonus}0%</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="opacity-75">Effective Bonus:</span>
+                <span className="font-bold text-success">+{effectiveStreak}0%</span>
+              </div>
+              {convergencePoint != null && currentStreak < convergencePoint && (
+                <div className="text-xs opacity-75 text-center mt-2">
+                  {convergencePoint - currentStreak} more {convergencePoint - currentStreak === 1 ? 'game' : 'games'} until shield is removed
+                </div>
+              )}
             </div>
-          </Tooltip>
+          </div>
         )}
 
         {/* Progress Toward Next Token */}
@@ -158,10 +200,25 @@ export default function ShieldTokenStatus({
                   What are Shield Tokens?
                 </h4>
                 <p className="text-xs opacity-90">
-                  Shield tokens protect your game streak when you're not selected to play.
-                  When you use a shield, your streak is "frozen" at its current value, so missing
-                  a game won't reset it to zero.
+                  Shield tokens protect your game streak when you need to miss a game.
+                  When you use a shield, your streak bonus is <strong>gradually protected</strong> &mdash;
+                  it decays as you rebuild, meeting your natural streak in the middle.
                 </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold mb-1">How Gradual Decay Works</h4>
+                <p className="text-xs opacity-90 mb-2">
+                  Instead of losing your streak entirely, the protected bonus decreases by 1 for each game
+                  you play, while your natural streak increases. They converge at the halfway point.
+                </p>
+                <div className="bg-base-200 p-2 rounded text-xs font-mono">
+                  <p className="opacity-75 mb-1">Example: 10-game streak protected</p>
+                  <p>Game 1: Natural 1, Protected 9 → +90%</p>
+                  <p>Game 3: Natural 3, Protected 7 → +70%</p>
+                  <p>Game 5: Natural 5, Protected 5 → +50% (converged!)</p>
+                  <p>Game 6: Natural 6 → +60% (continues normally)</p>
+                </div>
               </div>
 
               <div>
@@ -179,8 +236,7 @@ export default function ShieldTokenStatus({
                 </p>
                 <p className="text-xs opacity-90">
                   To use a shield, respond to the WhatsApp game announcement with a 🛡️ emoji, or activate it
-                  from the game page before registration closes. Your shield will automatically protect
-                  your streak when the game completes.
+                  from the game page before registration closes.
                 </p>
               </div>
 
@@ -188,23 +244,21 @@ export default function ShieldTokenStatus({
                 <h4 className="font-bold mb-1">Important Notes</h4>
                 <ul className="text-xs opacity-90 list-disc list-inside space-y-1">
                   <li>You must decide: register for the game OR use a shield - not both</li>
-                  <li>Once registration closes, all actions are final - no changes allowed</li>
-                  <li>If you forget to react/register/use shield before registration closes, you cannot add it after</li>
+                  <li>Once registration closes, all actions are final</li>
                   <li>You can cancel your shield only before registration closes</li>
-                  <li>Shields only work when you're <strong>not selected</strong> to play</li>
                   <li>You can only use 1 shield per game</li>
-                  <li>Frozen streaks preserve your XP bonus (10% per streak level)</li>
+                  <li>Missing a game during protection (without another shield) resets everything to 0</li>
+                  <li>Shield protection is automatically removed once your streaks converge</li>
                 </ul>
               </div>
 
               <div>
                 <h4 className="font-bold mb-1">💡 Strategy Tip</h4>
                 <p className="text-xs opacity-90">
-                  If you're away for <strong>multiple weeks</strong> but don't have enough shields to cover all weeks,
-                  consider <strong>not</strong> using any. For example, if you have a 2-week holiday but only 1 shield,
-                  using it on week 1 would protect your streak temporarily, but it would break on week 2 anyway.
-                  Save your shields for when you can maintain attendance afterward, or save up enough shields to cover
-                  your entire absence (e.g., 2 shields for a 2-week holiday).
+                  For <strong>multi-week absences</strong>, you need a shield for each week you'll miss.
+                  Decay only starts when you return and play. For example, with a 10-game streak and
+                  2 shields for a 2-week holiday: your streak stays at 10 for both weeks, then
+                  decays when you return (needing 5 games to fully recover).
                 </p>
               </div>
             </motion.div>

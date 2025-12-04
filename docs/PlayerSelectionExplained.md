@@ -55,18 +55,26 @@ The player selection process is automatically triggered when a game's registrati
      - No retroactive usage allowed
      - **Cancellable**: Players can cancel shield usage and get their token back during registration window (similar to unregister/register pattern)
      - Once registration closes, shield usage becomes final and cannot be cancelled
-   - **Streak Protection Mechanics**:
-     - When a shield is used, the player's `current_streak` and XP modifier are frozen
-     - `frozen_streak_value` and `frozen_streak_modifier` maintain the protected values
+   - **Streak Protection with Gradual Decay**:
+     - When a shield is used, the player's streak is protected with gradual decay
+     - `protected_streak_value` stores the original streak when shield was activated
      - `shield_active` flag indicates the player has active protection
-     - The frozen streak remains locked until the player naturally reaches that level again through consecutive games
-     - XP calculations use `frozen_streak_value` instead of `current_streak` when shield is active
+     - **Gradual Decay Formula**:
+       - Protected bonus = `protected_streak_value - current_streak`
+       - Effective streak = `MAX(current_streak, protected_bonus)`
+       - Both values converge at the midpoint: `CEIL(protected_streak_value / 2)` games
+     - Example: A 10-game streak protected means:
+       - Game 1: Natural 1, Protected 9 → +90% XP
+       - Game 5: Natural 5, Protected 5 → +50% XP (converged!)
+       - Shield automatically removed at convergence; player continues building normally
+     - **Multi-shield behavior**: Decay is PAUSED while using shields (decay only starts when player returns and plays)
    - **Losing Protection**:
-     - If a player misses another game without using another shield, protection is removed
-     - Streak resets to 0 if protection is lost
-     - Once a player plays enough consecutive games to reach their frozen streak level, the shield protection ends naturally
+     - If a player misses another game without using another shield, protection is immediately removed
+     - Streak resets to 0 if protection is lost during decay period
+     - Shield protection ends naturally at convergence point (half the original streak)
    - **Visual Indicators**:
      - 🛡️ emoji shows in player cards, WhatsApp messages, and UI when shield is active
+     - Player cards display both natural streak AND protected bonus: "Streak: X | Protected: Y"
      - Protected players shown in separate section during team announcements
      - Admin interface allows manual token issuance and shield removal for edge cases
 
@@ -83,7 +91,7 @@ The player selection process is automatically triggered when a game's registrati
      - Tiebreakers (WhatsApp, Streak, Caps, Registration Time) only apply when XP values are exactly equal
      - A lower XP player can never be selected over a higher XP player in merit selection
    - Non-token users are displayed after token users, sorted by XP
-   - **Note**: Players with active shield protection maintain their frozen streak XP modifier during selection calculations
+   - **Note**: Players with active shield protection use the gradual decay formula for XP calculations: `effective_streak = MAX(current_streak, protected_streak_value - current_streak)`
 
 6. **WhatsApp Status Equivalence**
    - "Proxy" status is treated exactly the same as "Yes" for all purposes

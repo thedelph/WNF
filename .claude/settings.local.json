@@ -48,7 +48,13 @@
       "Bash(git checkout:*)",
       "Bash(git stash:*)",
       "Bash(dir \"C:\\Users\\ChrisHide\\Documents\\github\\wnf\\WNF\\supabase\" /B)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Skill(example-skills:frontend-design)",
+      "Bash(curl:*)",
+      "Skill(example-skills:webapp-testing)",
+      "Bash(\"/c/Users/ChrisHide/AppData/Local/Programs/Python/Launcher/py.exe\" --version)",
+      "Bash(\"/c/WINDOWS/system32/config/systemprofile/AppData/Local/Programs/Python/Python313/python.exe\" --version)",
+      "Bash(dir \"C:\\Users\\ChrisHide\\Documents\\github\\wnf\\WNF\\supabase\\migrations\" /B)"
     ]
   },
   "enableAllProjectMcpServers": true,

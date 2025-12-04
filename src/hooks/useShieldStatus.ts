@@ -7,15 +7,20 @@ export interface ShieldStatus {
   tokensAvailable: number;
   gamesPlayedSinceLaunch: number;
   shieldActive: boolean;
-  frozenStreakValue: number | null;
-  frozenStreakModifier: number | null;
+  // Protected streak value (the original streak when shield was activated)
+  protectedStreakValue: number | null;
+  protectedStreakBase: number | null;
   currentStreak: number;
+  // Gradual decay calculations
+  decayingProtectedBonus: number | null;  // protected_streak_value - current_streak
+  effectiveStreak: number;                 // MAX(current_streak, decaying_protected_bonus)
+  convergencePoint: number | null;         // ceil(protected_streak_value / 2)
   gamesTowardNextToken: number;
   gamesUntilNextToken: number;
   activeShields: Array<{
     game_id: string;
     used_at: string;
-    frozen_streak: number;
+    protected_streak: number;
   }> | null;
   recentHistory: Array<{
     action: string;
@@ -23,6 +28,11 @@ export interface ShieldStatus {
     created_at: string;
     notes: string | null;
   }> | null;
+  // Legacy aliases for backwards compatibility during transition
+  /** @deprecated Use protectedStreakValue instead */
+  frozenStreakValue: number | null;
+  /** @deprecated Use protectedStreakBase instead */
+  frozenStreakModifier: number | null;
 }
 
 interface ShieldStatusRecord {
@@ -31,9 +41,13 @@ interface ShieldStatusRecord {
   shield_tokens_available: number;
   games_played_since_shield_launch: number;
   shield_active: boolean;
-  frozen_streak_value: number | null;
-  frozen_streak_modifier: number | null;
+  protected_streak_value: number | null;
+  protected_streak_base: number | null;
   current_streak: number;
+  // Gradual decay fields from materialized view
+  decaying_protected_bonus: number | null;
+  effective_streak: number;
+  convergence_point: number | null;
   games_toward_next_token: number;
   games_until_next_token: number;
   active_shields: any[] | null;
@@ -93,8 +107,8 @@ export function useShieldStatus(playerId: string | undefined) {
                 shield_tokens_available,
                 games_played_since_shield_launch,
                 shield_active,
-                frozen_streak_value,
-                frozen_streak_modifier,
+                protected_streak_value,
+                protected_streak_base,
                 current_streak
               `)
               .eq('id', playerId)
@@ -111,19 +125,40 @@ export function useShieldStatus(playerId: string | undefined) {
           throw playerError;
         }
 
-        // Calculate progress manually
+        // Calculate progress and gradual decay values manually
         const gamesPlayed = playerData?.games_played_since_shield_launch || 0;
+        const currentStreak = playerData?.current_streak || 0;
+        const protectedValue = playerData?.protected_streak_value;
+        const shieldActive = playerData?.shield_active || false;
+
+        // Calculate gradual decay values
+        const decayingProtected = shieldActive && protectedValue != null
+          ? protectedValue - currentStreak
+          : null;
+        const effectiveStreak = shieldActive && protectedValue != null
+          ? Math.max(currentStreak, protectedValue - currentStreak)
+          : currentStreak;
+        const convergencePoint = shieldActive && protectedValue != null
+          ? Math.ceil(protectedValue / 2)
+          : null;
+
         const status: ShieldStatus = {
           tokensAvailable: playerData?.shield_tokens_available || 0,
           gamesPlayedSinceLaunch: gamesPlayed,
-          shieldActive: playerData?.shield_active || false,
-          frozenStreakValue: playerData?.frozen_streak_value || null,
-          frozenStreakModifier: playerData?.frozen_streak_modifier || null,
-          currentStreak: playerData?.current_streak || 0,
+          shieldActive,
+          protectedStreakValue: protectedValue ?? null,
+          protectedStreakBase: playerData?.protected_streak_base ?? null,
+          currentStreak,
+          decayingProtectedBonus: decayingProtected,
+          effectiveStreak,
+          convergencePoint,
           gamesTowardNextToken: gamesPlayed % 10,
           gamesUntilNextToken: 10 - (gamesPlayed % 10),
           activeShields: null,
-          recentHistory: null
+          recentHistory: null,
+          // Legacy aliases
+          frozenStreakValue: protectedValue ?? null,
+          frozenStreakModifier: playerData?.protected_streak_base ?? null
         };
 
         setShieldStatus(status);
@@ -137,20 +172,31 @@ export function useShieldStatus(playerId: string | undefined) {
         tokensAvailable: record.shield_tokens_available,
         gamesPlayedSinceLaunch: record.games_played_since_shield_launch,
         shieldActive: record.shield_active,
-        frozenStreakValue: record.frozen_streak_value,
-        frozenStreakModifier: record.frozen_streak_modifier,
+        protectedStreakValue: record.protected_streak_value,
+        protectedStreakBase: record.protected_streak_base,
         currentStreak: record.current_streak,
+        // Gradual decay fields
+        decayingProtectedBonus: record.decaying_protected_bonus,
+        effectiveStreak: record.effective_streak ?? record.current_streak,
+        convergencePoint: record.convergence_point,
         gamesTowardNextToken: record.games_toward_next_token,
         gamesUntilNextToken: record.games_until_next_token,
         activeShields: record.active_shields,
-        recentHistory: record.recent_history
+        recentHistory: record.recent_history,
+        // Legacy aliases for backwards compatibility
+        frozenStreakValue: record.protected_streak_value,
+        frozenStreakModifier: record.protected_streak_base
       };
 
       console.log('[useShieldStatus] Processed Data:', {
         playerId,
         tokensAvailable: status.tokensAvailable,
         shieldActive: status.shieldActive,
-        frozenStreak: status.frozenStreakValue,
+        protectedStreak: status.protectedStreakValue,
+        currentStreak: status.currentStreak,
+        decayingBonus: status.decayingProtectedBonus,
+        effectiveStreak: status.effectiveStreak,
+        convergencePoint: status.convergencePoint,
         progress: `${status.gamesTowardNextToken}/10 games`
       });
 

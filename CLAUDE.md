@@ -186,7 +186,8 @@ await supabaseAdmin.auth.resetPasswordForEmail(email)
 - **[Token System](/docs/TokenSystem.md)** - Priority tokens, shield tokens, eligibility
 - **[Ratings System](/docs/RatingsSystemGuide.md)** - Attack, Defense, Game IQ, GK, Playstyles, Positions
 - **[Team Balancing](/docs/features/TeamBalancing.md)** - Tier-based snake draft algorithm
-- **[XP System](/docs/XPSystemExplained.md)** - Experience points and progression
+- **[XP System v1](/docs/XPSystemExplained.md)** - Current XP calculation (production)
+- **[XP System v2](/docs/features/XPSystemv2.md)** - Diminishing streak returns (planned Jan 2026)
 
 ### Recent Major Features (2025)
 - **[GK Rating](/docs/features/GKRating.md)** (Oct 2025) - Fourth core metric + permanent GK feature

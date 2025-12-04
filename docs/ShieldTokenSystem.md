@@ -24,13 +24,25 @@ The Shield Token system provides streak protection for players who need to miss 
   - Can toggle between using/cancelling during the registration window
   - Once registration closes, shield usage is final
 
-### Frozen Streak Mechanics
+### Protected Streak with Gradual Decay
 When a shield token is used:
-1. Current streak value is **frozen** (e.g., 10-game streak)
-2. XP modifier is **frozen** at current percentage (e.g., +100%)
-3. Frozen streak remains active until **naturally reached again**
-4. Player must play consecutive games to rebuild their natural streak
-5. Once natural streak reaches frozen value, shield is automatically removed
+1. Current streak value is **protected** (e.g., 10-game streak)
+2. When player returns and plays, the protected bonus **gradually decays**:
+   - Protected bonus = `protected_streak_value - current_streak`
+   - Effective XP bonus = `MAX(current_streak, protected_bonus) * 10%`
+3. The two values **converge at the midpoint** (e.g., 5 games for a 10-game streak)
+4. Once converged, shield is automatically removed and natural streak continues
+5. This means players recover their streak in **half the games** compared to a full reset
+
+**Example: 10-game streak protected**
+```
+Game 1: Natural 1, Protected 9  → Effective +90% XP
+Game 2: Natural 2, Protected 8  → Effective +80% XP
+Game 3: Natural 3, Protected 7  → Effective +70% XP
+Game 4: Natural 4, Protected 6  → Effective +60% XP
+Game 5: Natural 5, Protected 5  → Effective +50% XP (converged!)
+Game 6: Natural 6              → +60% XP (continues normally)
+```
 
 ## Usage Examples
 
@@ -42,14 +54,16 @@ Starting State:
 
 Action: Going on holiday for 1 week
 - Week 1: Use 1 shield token
-  → Streak frozen at 8 games (+80%)
+  → Streak protected at 8 games
   → 1 shield token remaining
 
-After Holiday:
-- Play 8 consecutive games
-- Natural streak reaches 8 games
-- Shield removed automatically
-- Continue building streak normally (9, 10, 11...)
+After Holiday (gradual decay):
+- Game 1: Natural 1, Protected 7 → +70% XP
+- Game 2: Natural 2, Protected 6 → +60% XP
+- Game 3: Natural 3, Protected 5 → +50% XP
+- Game 4: Natural 4, Protected 4 → +40% XP (converged!)
+- Shield removed automatically after 4 games (half of original streak)
+- Game 5: Natural 5 → +50% XP (continues normally)
 ```
 
 ### Example 2: Four-Week Holiday with Tokens
@@ -59,12 +73,20 @@ Starting State:
 - 4 shield tokens available
 
 Action: Going on 4-week holiday
-- Week 1: Use shield → 3 tokens left, streak frozen at 15
-- Week 2: Use shield → 2 tokens left, streak still frozen at 15
-- Week 3: Use shield → 1 token left, streak still frozen at 15
-- Week 4: Use shield → 0 tokens left, streak still frozen at 15
+- Week 1: Use shield → 3 tokens left, streak protected at 15
+- Week 2: Use shield → 2 tokens left, streak still protected at 15
+- Week 3: Use shield → 1 token left, streak still protected at 15
+- Week 4: Use shield → 0 tokens left, streak still protected at 15
 
-Result: All 4 weeks protected, return with 15-game streak still frozen
+Return (decay only starts when you play):
+- Game 1: Natural 1, Protected 14 → +140% XP
+- Game 2: Natural 2, Protected 13 → +130% XP
+- ...
+- Game 8 (midpoint): Natural 8, Protected 7 → +80% XP (converged!)
+- Shield removed after 8 games (half of 15)
+- Game 9: Natural 9 → +90% XP (continues normally)
+
+Key: Decay is PAUSED while using shields. Each shield keeps streak frozen until you return and play.
 ```
 
 ### Example 3: Running Out of Tokens
@@ -74,23 +96,25 @@ Starting State:
 - 2 shield tokens available
 
 Action: Going on 4-week holiday
-- Week 1: Use shield → 1 token left, streak frozen at 12
-- Week 2: Use shield → 0 tokens left, streak still frozen at 12
+- Week 1: Use shield → 1 token left, streak protected at 12
+- Week 2: Use shield → 0 tokens left, streak still protected at 12
 - Week 3: No shield, don't play
   → Shield protection removed
   → Streak resets to 0
   → XP modifier drops to +0%
 - Week 4: Still no streak
 
-Result: Lost streak after tokens ran out
+Result: Lost streak after tokens ran out. You need enough shields to cover your ENTIRE absence.
 ```
 
-### Example 4: Missing Game with Active Shield
+### Example 4: Missing Game During Decay Period
 ```
 Starting State:
-- 10-game streak frozen (+100%)
-- Currently at 7 natural games played
-- Shield active protecting the frozen streak
+- 10-game streak protected (original value)
+- Currently at natural streak 3 (in decay period)
+- Protected bonus = 10 - 3 = 7
+- Effective XP = +70%
+- Shield active, protecting the streak
 
 Action: Miss another game WITHOUT using a shield
 Result:
@@ -99,7 +123,7 @@ Result:
 - XP modifier drops to +0%
 - Lost all progress
 
-Lesson: If you have an active shield, you MUST use another shield token if you need to miss another game before reaching your frozen streak naturally.
+Lesson: If you have an active shield in decay, you MUST use another shield token if you need to miss another game before convergence.
 ```
 
 ### Example 5: Cancelling Shield Usage
@@ -114,7 +138,7 @@ Action: Change of plans during registration window
 2. Wednesday: Plans change, can't play anymore
    → Click "Unregister Interest"
    → Click "Use Shield Token"
-   → Streak frozen at 8 games, 1 token remaining
+   → Streak protected at 8 games, 1 token remaining
 3. Friday: Plans change again, can play!
    → Click "Cancel Shield"
    → Token returned, 2 tokens available again
@@ -128,13 +152,13 @@ Result: Full flexibility during registration window - can toggle between playing
 
 ### Database Schema
 
-#### Players Table (New Columns)
+#### Players Table (Shield Columns)
 ```sql
-shield_tokens_available     INTEGER (0-4)
+shield_tokens_available        INTEGER (0-4)
 games_played_since_shield_launch  INTEGER
-shield_active              BOOLEAN
-frozen_streak_value        INTEGER (nullable)
-frozen_streak_modifier     DECIMAL(5,2) (nullable)
+shield_active                  BOOLEAN
+protected_streak_value         INTEGER (nullable) -- Original streak when shield activated
+protected_streak_base          INTEGER (nullable) -- Same as protected_streak_value (for reference)
 ```
 
 #### Shield Token Usage Table
@@ -146,8 +170,8 @@ CREATE TABLE shield_token_usage (
     game_id UUID REFERENCES games(id),
     used_at TIMESTAMP,
     is_active BOOLEAN,
-    frozen_streak_value INTEGER,
-    frozen_streak_modifier DECIMAL(5,2),
+    protected_streak_value INTEGER,    -- Original streak value when activated
+    protected_streak_base INTEGER,     -- Same value, stored for reference
     removed_at TIMESTAMP,
     removal_reason VARCHAR(100)
 );
@@ -163,8 +187,8 @@ CREATE TABLE shield_token_history (
     game_id UUID REFERENCES games(id),
     tokens_before INTEGER,
     tokens_after INTEGER,
-    frozen_streak_value INTEGER,
-    frozen_streak_modifier DECIMAL(5,2),
+    protected_streak_value INTEGER,    -- Original streak value at time of action
+    protected_streak_base INTEGER,     -- Same value, stored for reference
     notes TEXT,
     initiated_by VARCHAR(100), -- 'system', 'player', or admin user_id
     created_at TIMESTAMP
@@ -185,7 +209,8 @@ Activates shield protection:
 - Checks for and deletes any inactive shield_token_usage records for this player/game (prevents duplicate key constraint)
 - Decrements `shield_tokens_available`
 - Sets `shield_active = true`
-- Stores `frozen_streak_value` and `frozen_streak_modifier`
+- Stores `protected_streak_value` (the current streak to protect)
+- Stores `protected_streak_base` (same value, for reference)
 - Cancels registration if player was registered
 - Creates new usage record in `shield_token_usage` with `is_active = true`
 - Logs action in `shield_token_history`
@@ -201,10 +226,10 @@ Issues a new shield token:
 
 #### 4. `remove_shield_protection(player_id, reason, admin_id)`
 Removes active shield:
-- Clears `shield_active`, `frozen_streak_value`, `frozen_streak_modifier`
+- Clears `shield_active`, `protected_streak_value`, `protected_streak_base`
 - Marks all active usages as inactive
 - Logs removal in history
-- Reasons: "Natural streak reached", "Missed game without shield", "Admin override"
+- Reasons: "Streak converged", "Missed game without shield", "Admin override"
 - Returns: `{success: boolean, message: text}`
 
 #### 5. `return_shield_token(player_id, game_id, reason)`
@@ -221,12 +246,12 @@ Returns a used shield token:
 
 #### 6. `process_shield_streak_protection(game_id)`
 Core processing function called after player selection:
-- **For players with active shields:**
-  - Checks if natural streak >= frozen streak
-  - If yes: removes shield protection (goal achieved!)
-  - If no: maintains frozen streak
+- **For players with active shields who played:**
+  - Calculates convergence: `current_streak >= CEIL(protected_streak_value / 2)`
+  - If converged: removes shield protection (natural streak now equals or exceeds decaying protected bonus)
+  - If not converged: maintains protection (decay continues next game)
 - **For players who missed game without shield:**
-  - If had active shield: removes protection, resets streak
+  - If had active shield: removes protection, resets streak to 0
   - If no shield: normal streak decay
 - Returns: Array of `{player_id, action_taken, details}`
 
@@ -479,10 +504,12 @@ The shield system integrates with existing player selection:
      - Removes shield protection if they had one
      - Resets streak to 0
 
-4. **XP Calculation** (integrated v1.0.4):
+4. **XP Calculation** (updated v1.1.0 - Gradual Decay):
    - If player has `shield_active = true`:
-     - Use `frozen_streak_modifier` instead of `current_streak * 0.1`
-     - Ensures consistent XP even when not playing
+     - Calculate `effective_streak = MAX(current_streak, protected_streak_value - current_streak)`
+     - Use `effective_streak * 0.1` as streak modifier
+     - This creates gradual decay: protected bonus decreases as natural streak increases
+     - Converges at `CEIL(protected_streak_value / 2)` games
      - Implemented in `calculate_player_xp()` function
 
 ### RLS Policies
@@ -611,8 +638,8 @@ Admins can manage shields:
 - No token issued, no error thrown
 - Player must use some tokens before earning more
 
-### 6. Streak Frozen, Miss Game Without Shield
-**Scenario**: Player has 10-game streak frozen, plays 5 games, then misses week 6 without using shield.
+### 6. Miss Game During Decay Period Without Shield
+**Scenario**: Player has 10-game streak protected, plays 3 games (now at natural 3, protected 7), then misses week 4 without using shield.
 
 **Behavior**:
 - `process_shield_streak_protection` detects:
@@ -622,21 +649,23 @@ Admins can manage shields:
 - Action: `remove_shield_protection` called
 - Result:
   - `shield_active = false`
-  - `frozen_streak_value = NULL`
-  - `frozen_streak_modifier = NULL`
+  - `protected_streak_value = NULL`
+  - `protected_streak_base = NULL`
   - Normal streak decay applies (resets to 0)
 
-### 7. Natural Streak Reaches Frozen Value
-**Scenario**: Player has 10-game streak frozen, plays 10 consecutive games without missing.
+### 7. Natural Streak Converges with Protected Value
+**Scenario**: Player has 10-game streak protected, plays games until convergence.
 
 **Behavior**:
-- After 10th game selection, `process_shield_streak_protection` runs
-- Detects: `current_streak (10) >= frozen_streak_value (10)`
-- Action: `remove_shield_protection` called with reason "Natural streak reached"
+- Convergence point = CEIL(10 / 2) = 5 games
+- After 5th game selection, `process_shield_streak_protection` runs
+- Detects: `current_streak (5) >= CEIL(protected_streak_value / 2)`
+- At this point: Natural 5, Protected 5 → both equal
+- Action: `remove_shield_protection` called with reason "Streak converged"
 - Result:
   - Shield removed
-  - Player now has natural 10-game streak
-  - Can continue building (11, 12, 13...)
+  - Player now has natural 5-game streak
+  - Can continue building (6, 7, 8...)
   - Shield token(s) remain available for future use
 
 ## Admin Override Capabilities
@@ -861,6 +890,32 @@ For issues or questions:
 4. Contact admin team for manual intervention if needed
 
 ## Changelog
+
+**v1.1.0** - Gradual Decay System (2025-12-04)
+- **Major Architecture Change: Gradual Decay Instead of Full Freeze**
+  - Shield protection now uses gradual decay instead of full freeze
+  - Protected bonus = `protected_streak_value - current_streak`
+  - Effective streak = `MAX(current_streak, protected_bonus)`
+  - Convergence point at `CEIL(protected_streak_value / 2)` games (half the original)
+  - Example: 10-game streak now recovers in 5 games instead of 10
+- **Database Column Renames**:
+  - `frozen_streak_value` → `protected_streak_value`
+  - `frozen_streak_modifier` → `protected_streak_base`
+  - Updated in: `players`, `shield_token_usage`, `shield_token_history` tables
+- **Updated Database Functions**:
+  - `calculate_player_xp()` - Now uses gradual decay formula for XP calculation
+  - `use_shield_token()` - Stores `protected_streak_value` and `protected_streak_base`
+  - `process_shield_streak_protection()` - Checks convergence at midpoint instead of full streak
+  - `remove_shield_protection()` - Uses new column names
+- **Frontend Updates**:
+  - All components now display both natural streak AND protected bonus
+  - Player cards show: "Streak: X | Protected: Y → +Z%"
+  - Updated hooks with backwards compatibility for legacy column names
+  - Updated explainer text throughout to describe gradual decay
+  - Updated confirmation modals with convergence point information
+- **Multi-Shield Behavior**: Decay is PAUSED while using shields (decay only starts when player returns and plays)
+- **Terminology Change**: "Frozen" → "Protected" throughout codebase and documentation
+- Migration: `20251204_shield_token_gradual_decay.sql`
 
 **v1.0.6** - Admin Token Removal & Progress Reset (2025-10-09)
 - **New Admin Functions**:

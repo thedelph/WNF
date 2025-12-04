@@ -1,4 +1,12 @@
-# XP System Documentation
+# XP System Documentation (v1)
+
+> **Note**: This documents the **current production system (v1)**. A new version (v2) with diminishing streak returns and linear XP decay is planned for January 2026.
+>
+> - [View XP System v2 Documentation](./features/XPSystemv2.md)
+> - [View Migration Runbook](./migrations/XPv1ToV2Migration.md)
+> - Admin comparison tool: `/admin/xp-comparison`
+
+---
 
 ## Overview
 The XP (Experience Points) system is designed to reward player participation and consistency in games. It uses a sophisticated weighted calculation that emphasizes recent game participation while maintaining a historical record of player engagement.

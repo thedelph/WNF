@@ -17,6 +17,7 @@ import AccountManagementCard from '../../components/admin/cards/AccountManagemen
 import RoleManagementCard from '../../components/admin/cards/RoleManagementCard'
 import FeatureFlagManagementCard from '../../components/admin/cards/FeatureFlagManagementCard'
 import SessionDiagnosticsCard from '../../components/admin/cards/SessionDiagnosticsCard'
+import { XPComparisonCard } from '../../components/admin/cards/XPComparisonCard'
 import { PERMISSIONS } from '../../types/permissions'
 import ViewAsUserSelector from '../../components/admin/ViewAsUserSelector'
 
@@ -100,6 +101,7 @@ const AdminPortal: React.FC = () => {
           hasPermission(PERMISSIONS.MANAGE_RATINGS) && <RatingsCard key="ratings" />,
           isSuperAdmin && <RoleManagementCard key="roles" />,
           isSuperAdmin && <FeatureFlagManagementCard key="feature-flags" />,
+          isSuperAdmin && <XPComparisonCard key="xp-comparison" />,
           (isSuperAdmin || hasPermission(PERMISSIONS.MANAGE_ACCOUNTS)) && <SessionDiagnosticsCard key="session-diagnostics" />
         ].filter(Boolean).map((card, index) => (
           <motion.div

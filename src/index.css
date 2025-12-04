@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* FIFA Theme Styles */
+@import './styles/fifa-theme.css';
+
 /* Custom styles */
 body {
   @apply bg-gray-50;

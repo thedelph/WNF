@@ -42,6 +42,37 @@ const POSITION_CONSENSUS_TO_FORMATION_MAP: Record<Position, PositionType | null>
 };
 
 /**
+ * Position Distance Map for Adjacency Scoring
+ * Used to calculate how "close" a player's consensus position is to their assigned position
+ * Distance 0 = exact match, 1 = adjacent, 2 = one step away, etc.
+ *
+ * Adjacent positions:
+ * - DEF ↔ WB ↔ CDM (defensive line)
+ * - WB ↔ W (same flank, different role)
+ * - CDM ↔ CM ↔ CAM (central spine)
+ * - W ↔ CM ↔ CAM (attacking midfield)
+ * - CAM ↔ ST ↔ W (attacking line)
+ */
+const POSITION_DISTANCE_MAP: Record<PositionType, Record<PositionType, number>> = {
+  GK:  { GK: 0, DEF: 1, WB: 2, CDM: 2, CM: 3, W: 3, CAM: 4, ST: 5 },
+  DEF: { GK: 5, DEF: 0, WB: 1, CDM: 1, CM: 2, W: 2, CAM: 3, ST: 4 },
+  WB:  { GK: 5, DEF: 1, WB: 0, CDM: 1, CM: 2, W: 1, CAM: 2, ST: 3 },
+  W:   { GK: 5, DEF: 3, WB: 1, CDM: 2, CM: 1, W: 0, CAM: 1, ST: 2 },
+  CDM: { GK: 5, DEF: 1, WB: 1, CDM: 0, CM: 1, W: 2, CAM: 2, ST: 3 },
+  CM:  { GK: 5, DEF: 2, WB: 2, CDM: 1, CM: 0, W: 1, CAM: 1, ST: 2 },
+  CAM: { GK: 5, DEF: 3, WB: 2, CDM: 2, CM: 1, W: 1, CAM: 0, ST: 1 },
+  ST:  { GK: 5, DEF: 4, WB: 2, CDM: 3, CM: 2, W: 1, CAM: 1, ST: 0 }
+};
+
+/**
+ * Get the distance between two formation positions
+ * Lower distance = more compatible positions
+ */
+function getPositionDistance(fromPosition: PositionType, toPosition: PositionType): number {
+  return POSITION_DISTANCE_MAP[fromPosition]?.[toPosition] ?? 4; // Max distance if unknown
+}
+
+/**
  * Get formation position from a position consensus position
  * Returns null if the position is GK (outfield only)
  */
@@ -1080,8 +1111,15 @@ function selectBestFormation(
     };
   }
 
-  // Count WB candidates
-  const wbCandidates = team.filter(player => {
+  // Count WB candidates using HYBRID approach (consensus + attributes)
+  // 1. Consensus-based: Players with WB in their position consensus
+  const consensusWbCandidates = team.filter(player => {
+    const consensusPositions = getFormationPositionsFromPlayer(player);
+    return consensusPositions.includes('WB');
+  }).length;
+
+  // 2. Attribute-based: Players with WB-compatible attributes
+  const attributeWbCandidates = team.filter(player => {
     const ratingBasedPos = getRatingBasedIdealPositions(player);
     const playstyle = detectPlaystyleForPlayer(player, requirements);
     const playstylePos = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
@@ -1106,8 +1144,18 @@ function selectBestFormation(
     return false;
   }).length;
 
-  // Count W candidates (attacking wingers)
-  const wCandidates = team.filter(player => {
+  // HYBRID: Use maximum of consensus and attribute counts
+  const wbCandidates = Math.max(consensusWbCandidates, attributeWbCandidates);
+
+  // Count W candidates using HYBRID approach (consensus + attributes)
+  // 1. Consensus-based: Players with W in their position consensus
+  const consensusWCandidates = team.filter(player => {
+    const consensusPositions = getFormationPositionsFromPlayer(player);
+    return consensusPositions.includes('W');
+  }).length;
+
+  // 2. Attribute-based: Players with W-compatible attributes
+  const attributeWCandidates = team.filter(player => {
     const ratingBasedPos = getRatingBasedIdealPositions(player);
     const playstyle = detectPlaystyleForPlayer(player, requirements);
     const playstylePos = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
@@ -1127,6 +1175,26 @@ function selectBestFormation(
     }
     return false;
   }).length;
+
+  // HYBRID: Use maximum of consensus and attribute counts
+  const wCandidates = Math.max(consensusWCandidates, attributeWCandidates);
+
+  // Count CAM candidates using HYBRID approach (NEW - was missing!)
+  // 1. Consensus-based: Players with CAM in their position consensus
+  const consensusCamCandidates = team.filter(player => {
+    const consensusPositions = getFormationPositionsFromPlayer(player);
+    return consensusPositions.includes('CAM');
+  }).length;
+
+  // 2. Attribute-based: Players with CAM playstyle
+  const attributeCamCandidates = team.filter(player => {
+    const playstyle = detectPlaystyleForPlayer(player, requirements);
+    const playstylePos = playstyle ? PLAYSTYLE_IDEAL_POSITIONS[playstyle] || [] : [];
+    return playstylePos.includes('CAM');
+  }).length;
+
+  // HYBRID: Use maximum of consensus and attribute counts
+  const camCandidates = Math.max(consensusCamCandidates, attributeCamCandidates);
   // Count high Game IQ players (8.0+) who would excel in central positions
   const highIqCandidates = team.filter(player => {
     const gameIq = player.game_iq_rating ?? 5;
@@ -1175,6 +1243,13 @@ function selectBestFormation(
       if (b.positions.W === 2 && a.positions.W !== 2) return 1;
       return b.positions.W - a.positions.W;
     });
+  } else if (camCandidates >= 2) {
+    // Prefer CAM formations if we have enough CAM candidates
+    formationsToScore = [...validFormations].sort((a, b) => {
+      if (a.positions.CAM >= 1 && b.positions.CAM === 0) return -1;
+      if (b.positions.CAM >= 1 && a.positions.CAM === 0) return 1;
+      return b.positions.CAM - a.positions.CAM;
+    });
   }
 
   // Score each formation
@@ -1185,12 +1260,16 @@ function selectBestFormation(
   for (const formation of formationsToScore) {
     const { score, naturalFits, details } = scoreFormationFit(team, formation, requirements);
 
-    // Bonus for matching WB/W positions to candidates
+    // Bonus for matching WB/W/CAM positions to candidates
     let bonusScore = score;
     if (wbCandidates >= 2 && formation.positions.WB === 2) {
       bonusScore *= 1.15; // 15% bonus for matching WB formation
     } else if (wCandidates >= 2 && formation.positions.W === 2) {
       bonusScore *= 1.1; // 10% bonus for matching W formation
+    }
+    // NEW: Bonus for CAM formations when CAM candidates exist
+    if (camCandidates >= 1 && formation.positions.CAM >= 1) {
+      bonusScore *= 1.08; // 8% bonus for having CAM slots
     }
     // PENALTY for formations requiring more wide players than available
     if (formation.positions.WB > wbCandidates) {
@@ -1473,8 +1552,21 @@ function calculateEnhancedPositionScore(
         fromPositionConsensus = 5.0 + (consensusPercentage / 100) * 2.0;
       }
     } else {
-      // No consensus for this position - low score but not zero
-      fromPositionConsensus = 3.0;
+      // No direct consensus match - use DISTANCE-BASED ADJACENCY scoring
+      // Adjacent positions (dist=1) get better scores than distant positions (dist=4)
+      if (playerFormationPositions.length > 0) {
+        // Find the closest consensus position to the assigned position
+        const minDistance = Math.min(
+          ...playerFormationPositions.map(cp => getPositionDistance(cp, position))
+        );
+        // Score: 7.0 for adjacent (dist=1), down to 2.0 for distant (dist=4)
+        // Formula: 7.0 - (distance * 1.25)
+        // Results: dist=1 → 5.75, dist=2 → 4.5, dist=3 → 3.25, dist=4 → 2.0
+        fromPositionConsensus = Math.max(2.0, 7.0 - (minDistance * 1.25));
+      } else {
+        // No consensus positions at all - use fallback
+        fromPositionConsensus = 3.0;
+      }
     }
   }
 
@@ -1509,29 +1601,29 @@ function calculateEnhancedPositionScore(
     gameIq * weights.gameIq
   );
 
-  // 4. Combine scores with appropriate weighting
+  // 4. Apply utilization penalty to ATTRIBUTE SCORE only (not final score)
+  // This is a softer approach that prevents catastrophic score tanking
+  let adjustedAttributeScore = fromAttributes;
+  if (player.derived_attributes) {
+    const utilization = calculateAttributeUtilization(player, position);
+    // Apply penalty to attribute score only, with a floor of 60%
+    const utilizationFactor = Math.max(0.6, utilization);
+    if (utilization < 0.8) {
+      adjustedAttributeScore = fromAttributes * utilizationFactor;
+    }
+    // No penalty for 80%+ utilization
+  }
+
+  // 5. Combine scores with appropriate weighting
   if (hasPositionConsensus && player.derived_attributes) {
-    // Full scoring: Position Consensus (40%) + Attributes (40%) + Ratings (20%)
-    score = fromPositionConsensus * 0.4 + fromAttributes * 0.4 + fromRatings * 0.2;
+    // Full scoring: Position Consensus (40%) + Adjusted Attributes (40%) + Ratings (20%)
+    score = fromPositionConsensus * 0.4 + adjustedAttributeScore * 0.4 + fromRatings * 0.2;
   } else if (player.derived_attributes) {
-    // No position consensus - use attributes (60%) + ratings (40%)
-    score = fromAttributes * 0.6 + fromRatings * 0.4;
+    // No position consensus - use adjusted attributes (60%) + ratings (40%)
+    score = adjustedAttributeScore * 0.6 + fromRatings * 0.4;
   } else {
     // Only ratings available
     score = fromRatings;
-  }
-
-  // 5. Apply attribute utilization penalty (only if we have attributes)
-  if (player.derived_attributes) {
-    const utilization = calculateAttributeUtilization(player, position);
-    if (utilization < 0.6) {
-      // Heavy penalty for poor attribute utilization
-      score *= utilization; // Direct multiplication - 40% utilization = 40% score
-    } else if (utilization < 0.8) {
-      // Moderate penalty for suboptimal utilization
-      score *= (0.8 + utilization * 0.25); // Softer penalty for 60-80% utilization
-    }
-    // No penalty for 80%+ utilization
   }
 
   return score;
@@ -1942,16 +2034,22 @@ function optimizeAssignments(
                                   problemPlayerImprovement > 1.0 &&
                                   candidateNewScore > problemCurrentScore;
 
-        // Both benefit
-        const bothBenefit = problemPlayerImprovement > 0.5 && candidateImprovement > -0.5;
+        // Both benefit - TIGHTENED: Candidate can only lose up to 0.2 (was 0.5)
+        const bothBenefit = problemPlayerImprovement > 0.5 && candidateImprovement > -0.2;
 
         // Net positive with acceptable trade-off
         const acceptableTradeoff = totalImprovement > 2.0 && candidateNewScore > 3.0;
 
         const swapAllowed = isCriticalFix || isCrossPositionFix || bothBenefit || acceptableTradeoff;
 
-        // For critical mismatches, be very lenient
-        if (isCriticalFix && totalImprovement > 0 && candidateNewScore > 3.0) {
+        // For critical mismatches - BALANCED APPROACH:
+        // Allow some loss for the candidate, but require significant gain for problem player
+        // and limit how much the candidate can be hurt
+        if (isCriticalFix &&
+            totalImprovement > 0 &&
+            candidateNewScore > 3.0 &&
+            problemPlayerImprovement >= 1.5 &&  // Problem player must gain significantly
+            candidateImprovement >= -0.2) {      // Candidate can only lose a little
           if (totalImprovement > bestImprovement) {
             bestImprovement = totalImprovement;
             bestSwap = {

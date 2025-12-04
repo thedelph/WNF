@@ -1,0 +1,392 @@
+/* FIFA/EA Sports Theme - Custom Keyframes and Styles */
+
+/* ========================================
+   CSS VARIABLES
+   ======================================== */
+:root {
+  --fifa-bg: #0a0a0f;
+  --fifa-surface: #12121a;
+  --fifa-card: #1a1a25;
+  --fifa-electric: #00d4ff;
+  --fifa-gold: #ffd700;
+  --fifa-pink: #ff2d92;
+  --fifa-green: #00ff88;
+  --fifa-purple: #9d4edd;
+  --fifa-orange: #ff6b35;
+}
+
+/* ========================================
+   KEYFRAME ANIMATIONS
+   ======================================== */
+
+/* Card shine sweep effect */
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Glow pulse for borders and badges */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px currentColor;
+    opacity: 0.8;
+  }
+  50% {
+    box-shadow: 0 0 40px currentColor, 0 0 60px currentColor;
+    opacity: 1;
+  }
+}
+
+/* Floating animation for particles */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+}
+
+/* Particle float upward */
+@keyframes particle-float {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(var(--x-drift, 50px), -100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Slide up entrance */
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in entrance */
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Text glow pulse */
+@keyframes text-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 10px var(--fifa-electric),
+      0 0 20px var(--fifa-electric);
+  }
+  50% {
+    text-shadow:
+      0 0 20px var(--fifa-electric),
+      0 0 40px var(--fifa-electric),
+      0 0 60px var(--fifa-electric);
+  }
+}
+
+/* Border glow for cards */
+@keyframes border-glow {
+  0%, 100% {
+    border-color: rgba(0, 212, 255, 0.3);
+  }
+  50% {
+    border-color: rgba(0, 212, 255, 0.8);
+  }
+}
+
+/* Hexagon chart fill */
+@keyframes hexagon-fill {
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* Number counter animation */
+@keyframes count-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+
+/* FIFA page container - uses !important to override Layout wrapper */
+.fifa-page {
+  background-color: var(--fifa-bg) !important;
+  background: linear-gradient(180deg, #0a0a0f 0%, #12121a 50%, #0a0a0f 100%) !important;
+  min-height: 100vh;
+  color: white;
+  position: relative;
+  overflow-x: hidden;
+  margin: -2rem -1rem -2rem -1rem; /* Compensate for Layout padding */
+  padding: 2rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .fifa-page {
+    margin: -2rem;
+    padding: 2rem;
+  }
+}
+
+/* Card base with dark theme */
+.fifa-card {
+  background: linear-gradient(145deg, var(--fifa-card) 0%, var(--fifa-surface) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.fifa-card:hover {
+  border-color: rgba(0, 212, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Shine effect overlay */
+.fifa-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 75%
+  );
+  transition: left 0.5s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.fifa-card:hover::before {
+  left: 100%;
+}
+
+/* ========================================
+   RARITY EFFECTS
+   ======================================== */
+
+.rarity-bronze {
+  box-shadow:
+    0 0 15px rgba(205, 127, 50, 0.3),
+    inset 0 0 20px rgba(205, 127, 50, 0.1);
+  border-color: rgba(205, 127, 50, 0.4);
+}
+
+.rarity-silver {
+  box-shadow:
+    0 0 15px rgba(192, 192, 192, 0.3),
+    inset 0 0 20px rgba(192, 192, 192, 0.1);
+  border-color: rgba(192, 192, 192, 0.4);
+}
+
+.rarity-gold {
+  box-shadow:
+    0 0 20px rgba(255, 215, 0, 0.4),
+    inset 0 0 25px rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+.rarity-totw {
+  box-shadow:
+    0 0 25px rgba(30, 144, 255, 0.5),
+    inset 0 0 30px rgba(30, 144, 255, 0.1);
+  border-color: rgba(30, 144, 255, 0.6);
+}
+
+.rarity-icon {
+  box-shadow:
+    0 0 30px rgba(255, 107, 53, 0.5),
+    inset 0 0 40px rgba(255, 107, 53, 0.15);
+  border-color: rgba(255, 107, 53, 0.6);
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* ========================================
+   TEXT EFFECTS
+   ======================================== */
+
+.text-glow {
+  text-shadow:
+    0 0 10px currentColor,
+    0 0 20px currentColor;
+}
+
+.text-glow-strong {
+  text-shadow:
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 40px currentColor;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4a 50%, #ffd700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-electric {
+  background: linear-gradient(135deg, #00d4ff 0%, #00ffff 50%, #00d4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========================================
+   GLASS EFFECT
+   ======================================== */
+
+.glass-dark {
+  background: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================
+   PARTICLES
+   ======================================== */
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle-float 15s linear infinite;
+}
+
+.particle-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* ========================================
+   TAB NAVIGATION
+   ======================================== */
+
+.fifa-tab {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+.fifa-tab:hover {
+  background: rgba(0, 212, 255, 0.1);
+  color: white;
+}
+
+.fifa-tab.active {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.1) 100%);
+  border-color: var(--fifa-electric);
+  color: var(--fifa-electric);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+/* ========================================
+   LEADERBOARD ROWS
+   ======================================== */
+
+.fifa-row {
+  background: rgba(26, 26, 37, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.fifa-row:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+/* Medal styles */
+.medal-gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.medal-silver {
+  background: linear-gradient(135deg, #e0e0e0 0%, #9e9e9e 100%);
+  box-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+}
+
+.medal-bronze {
+  background: linear-gradient(135deg, #cd7f32 0%, #a0522d 100%);
+  box-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
+}
+
+/* ========================================
+   RESPONSIVE / REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .fifa-card::before,
+  .particle,
+  [class*="animate-"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Reduce effects on mobile for performance */
+@media (max-width: 640px) {
+  .particle-container .particle:nth-child(n+10) {
+    display: none;
+  }
+
+  .fifa-card::before {
+    display: none;
+  }
+}

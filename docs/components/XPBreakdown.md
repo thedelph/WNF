@@ -1,5 +1,13 @@
 # XPBreakdown Component
 
+> **Note**: The calculation examples below reflect the **current v1 XP system**. The planned v2 system (January 2026) will change:
+> - Base XP: Linear decay (20 -> 1 over 38 games) instead of step function
+> - Streak bonus: Diminishing returns (10%, 9%, 8%...) instead of linear 10%
+>
+> See [XP System v2 Documentation](/docs/features/XPSystemv2.md) for details.
+
+---
+
 ## Overview
 The XPBreakdown component displays a detailed breakdown of a player's XP (Experience Points) from various sources, including game participation, streaks, and reserve status. The streak calculation is based solely on past games and is not affected by future game registrations or team selections.
 

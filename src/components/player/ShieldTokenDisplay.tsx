@@ -6,6 +6,9 @@ interface ShieldTokenDisplayProps {
   gamesTowardNextToken: number;
   gamesUntilNextToken: number;
   shieldActive: boolean;
+  protectedStreakValue?: number | null; // Original streak value when shield was activated
+  currentStreak?: number; // Current natural streak (for gradual decay display)
+  /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null;
   size?: 'sm' | 'md' | 'lg';
   showProgress?: boolean;
@@ -16,12 +19,13 @@ interface ShieldTokenDisplayProps {
  * ShieldTokenDisplay component
  * Visual display of shield tokens (0-4 shield emojis)
  * Shows progress bar to next token
- * Shows active shield indicator with frozen streak info
+ * Shows active shield indicator with gradual decay info
  * @param tokensAvailable - Number of shield tokens available (0-4)
  * @param gamesTowardNextToken - Number of games played toward next token (0-9)
  * @param gamesUntilNextToken - Number of games until next token (1-10)
  * @param shieldActive - Whether shield is currently active
- * @param frozenStreakValue - The streak value frozen by active shield
+ * @param protectedStreakValue - The original streak value when shield was activated
+ * @param currentStreak - Current natural streak for gradual decay display
  * @param size - Display size (sm, md, lg)
  * @param showProgress - Whether to show progress bar
  * @param showTooltip - Whether to show tooltip on hover
@@ -31,12 +35,25 @@ export const ShieldTokenDisplay: React.FC<ShieldTokenDisplayProps> = ({
   gamesTowardNextToken,
   gamesUntilNextToken,
   shieldActive,
-  frozenStreakValue,
+  protectedStreakValue,
+  currentStreak = 0,
+  frozenStreakValue, // Legacy prop
   size = 'md',
   showProgress = true,
   showTooltip = true
 }) => {
   const maxTokens = 4;
+
+  // Use protectedStreakValue, fall back to legacy frozenStreakValue
+  const protectedValue = protectedStreakValue ?? frozenStreakValue ?? null;
+
+  // Calculate gradual decay values
+  const decayingProtectedBonus = shieldActive && protectedValue != null
+    ? Math.max(0, protectedValue - currentStreak)
+    : null;
+  const effectiveStreak = shieldActive && protectedValue != null
+    ? Math.max(currentStreak, protectedValue - currentStreak)
+    : currentStreak;
 
   // Size-based styling
   const sizeClasses = {
@@ -63,8 +80,8 @@ export const ShieldTokenDisplay: React.FC<ShieldTokenDisplayProps> = ({
   const styles = sizeClasses[size];
 
   // Tooltip content
-  const tooltipContent = shieldActive && frozenStreakValue
-    ? `Shield Active: ${frozenStreakValue}-game streak protected (+${frozenStreakValue * 10}% XP frozen)`
+  const tooltipContent = shieldActive && protectedValue
+    ? `Shield Active: Streak ${currentStreak} | Protected ${decayingProtectedBonus} → +${effectiveStreak * 10}% XP`
     : tokensAvailable > 0
     ? `${tokensAvailable} Shield Token${tokensAvailable !== 1 ? 's' : ''} Available • Earn 1 per 10 games played`
     : `No Shield Tokens • ${gamesUntilNextToken} game${gamesUntilNextToken !== 1 ? 's' : ''} until next token`;
@@ -115,16 +132,21 @@ export const ShieldTokenDisplay: React.FC<ShieldTokenDisplayProps> = ({
         )}
       </div>
 
-      {/* Active Shield Badge */}
-      {shieldActive && frozenStreakValue && (
+      {/* Active Shield Badge - Shows both natural and protected values */}
+      {shieldActive && protectedValue != null && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="badge badge-success badge-sm gap-1"
+          className="flex flex-col items-center gap-1"
         >
-          <span>🛡️</span>
-          <span className={styles.text}>
-            {frozenStreakValue}-game streak protected
+          <div className="badge badge-success badge-sm gap-1">
+            <span>🛡️</span>
+            <span className={styles.text}>
+              Streak: {currentStreak} | Protected: {decayingProtectedBonus}
+            </span>
+          </div>
+          <span className={`${styles.text} text-success font-semibold`}>
+            +{effectiveStreak * 10}% XP
           </span>
         </motion.div>
       )}

@@ -36,7 +36,9 @@ export interface PlayerCardProps {
   playstyleCategory?: 'attacking' | 'midfield' | 'defensive' // Playstyle category
   playstyleRatingsCount?: number // Number of playstyle ratings contributing to the average
   shieldActive?: boolean // Whether player has active shield protection
-  frozenStreakValue?: number | null // The streak value frozen by the shield
+  protectedStreakValue?: number | null // The original streak value when shield was activated (for gradual decay)
+  /** @deprecated Use protectedStreakValue instead */
+  frozenStreakValue?: number | null // Legacy alias for protectedStreakValue
   recentGames?: number // Number of games played in last 40 completed games (XP-relevant window)
   gameParticipation?: Array<'selected' | 'reserve' | null> // Array of 40 elements showing participation status in each of the last 40 games (index 0 = oldest, 39 = most recent)
 }
@@ -62,6 +64,8 @@ export interface PlayerCardModifiersProps {
   registrationStreakBonusApplies?: boolean
   status?: string
   shieldActive?: boolean
+  protectedStreakValue?: number | null // Original streak value for gradual decay
+  /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null
 }
 
@@ -72,6 +76,8 @@ export interface PlayerCardStatsProps {
   losses: number
   totalGames: number
   shieldActive?: boolean
+  protectedStreakValue?: number | null // Original streak value for gradual decay
+  /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null
 }
 

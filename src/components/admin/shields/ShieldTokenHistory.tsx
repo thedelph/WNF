@@ -13,8 +13,11 @@ interface ShieldHistoryRecord {
   game_sequence?: number | null;
   tokens_before: number;
   tokens_after: number;
-  frozen_streak_value: number | null;
-  frozen_streak_modifier: number | null;
+  protected_streak_value: number | null;
+  protected_streak_base: number | null;
+  // Legacy aliases
+  frozen_streak_value?: number | null;
+  frozen_streak_modifier?: number | null;
   notes: string | null;
   initiated_by: string;
   created_at: string;
@@ -77,7 +80,7 @@ export const ShieldTokenHistory: React.FC<ShieldTokenHistoryProps> = ({
 
       if (error) throw error;
 
-      // Transform data
+      // Transform data (support both new and legacy column names)
       const transformedData: ShieldHistoryRecord[] = (data || []).map((record: any) => ({
         id: record.id,
         player_id: record.player_id,
@@ -87,8 +90,8 @@ export const ShieldTokenHistory: React.FC<ShieldTokenHistoryProps> = ({
         game_sequence: record.games?.sequence_number,
         tokens_before: record.tokens_before,
         tokens_after: record.tokens_after,
-        frozen_streak_value: record.frozen_streak_value,
-        frozen_streak_modifier: record.frozen_streak_modifier,
+        protected_streak_value: record.protected_streak_value ?? record.frozen_streak_value,
+        protected_streak_base: record.protected_streak_base ?? record.frozen_streak_modifier,
         notes: record.notes,
         initiated_by: record.initiated_by,
         created_at: record.created_at
@@ -196,7 +199,7 @@ export const ShieldTokenHistory: React.FC<ShieldTokenHistoryProps> = ({
               <th>Action</th>
               <th>Game</th>
               <th>Token Change</th>
-              <th>Frozen Streak</th>
+              <th>Protected Streak</th>
               <th>Notes</th>
               <th>Initiated By</th>
               <th>Date</th>
@@ -232,15 +235,15 @@ export const ShieldTokenHistory: React.FC<ShieldTokenHistoryProps> = ({
                 {/* Token Change */}
                 <td>{getTokenChange(record.tokens_before, record.tokens_after)}</td>
 
-                {/* Frozen Streak */}
+                {/* Protected Streak */}
                 <td>
-                  {record.frozen_streak_value ? (
+                  {record.protected_streak_value ? (
                     <div className="flex flex-col">
                       <span className="text-sm">
-                        {record.frozen_streak_value} games
+                        {record.protected_streak_value} games
                       </span>
                       <span className="text-xs text-success">
-                        +{(record.frozen_streak_modifier || 0) * 100}% XP
+                        +{(record.protected_streak_value || 0) * 10}% base
                       </span>
                     </div>
                   ) : (
