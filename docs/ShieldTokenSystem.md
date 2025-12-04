@@ -148,6 +148,34 @@ Action: Change of plans during registration window
 Result: Full flexibility during registration window - can toggle between playing/protected as plans change
 ```
 
+### Example 6: Intermittent Absences (Miss, Play, Miss)
+```
+Starting State:
+- 10-game streak (+100% XP)
+- 3 shield tokens available
+
+Action: Miss Week 1, play 2 weeks, miss Week 4
+- Week 1: Use shield → 2 tokens left, streak protected at 10
+- Week 2: Play → Natural 1, Protected 9 → +90% XP (decay started)
+- Week 3: Play → Natural 2, Protected 8 → +80% XP (decay continues)
+- Week 4: Need to miss again
+  → Use shield during active decay
+  → System preserves EFFECTIVE streak (8), not natural streak (2)
+  → 1 token left, streak now protected at 8
+
+After Week 4 (decay continues from 8):
+- Game 1: Natural 1, Protected 7 → +70% XP
+- Game 2: Natural 2, Protected 6 → +60% XP
+- Game 3: Natural 3, Protected 5 → +50% XP
+- Game 4: Natural 4, Protected 4 → +40% XP (converged!)
+- Shield removed after 4 games (half of 8)
+
+Key: When using a shield DURING decay, the system preserves your
+effective streak (higher of natural vs protected bonus), not your
+much lower natural streak. This prevents losing progress when you
+need to miss another game mid-recovery.
+```
+
 ## Technical Implementation
 
 ### Database Schema
@@ -667,6 +695,25 @@ Admins can manage shields:
   - Player now has natural 5-game streak
   - Can continue building (6, 7, 8...)
   - Shield token(s) remain available for future use
+
+### 8. Using Shield During Active Decay (Intermittent Absences)
+**Scenario**: Player has 10-game protected, played 2 games (natural=2, protected bonus=8), needs to miss again.
+
+**Behavior**:
+- `use_shield_token` detects existing `shield_active = true`
+- Calculates effective streak: `MAX(2, 10-2) = 8`
+- Stores `protected_streak_value = 8` (not 2!)
+- Player now protected at 8 instead of losing progress
+
+**Why This Matters**:
+- Without this behavior, using shield during decay would reset protection to natural streak (2)
+- This would effectively waste all recovery progress made so far
+- The system preserves the effective streak, giving fair treatment to intermittent absences
+- Players can confidently use shields whether missing consecutively or with gaps
+
+**Key Difference from Consecutive Absences**:
+- **Consecutive**: Miss → Miss → Miss → Play (shields pause time, decay starts on return)
+- **Intermittent**: Miss → Play → Play → Miss (decay already started, shield preserves effective value)
 
 ## Admin Override Capabilities
 

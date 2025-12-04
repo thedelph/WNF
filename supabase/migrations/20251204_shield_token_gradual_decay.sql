@@ -209,6 +209,9 @@ DECLARE
     v_is_eligible BOOLEAN;
     v_eligibility_reason TEXT;
     v_was_registered BOOLEAN;
+    v_shield_already_active BOOLEAN;
+    v_existing_protected_value INTEGER;
+    v_new_protected_value INTEGER;
 BEGIN
     -- Check eligibility
     SELECT eligible, reason INTO v_is_eligible, v_eligibility_reason
@@ -223,11 +226,25 @@ BEGIN
     DELETE FROM shield_token_usage
     WHERE player_id = p_player_id AND game_id = p_game_id AND is_active = false;
 
-    -- Get player's current data
-    SELECT shield_tokens_available, current_streak
-    INTO v_tokens_before, v_current_streak
+    -- Get player's current data including existing shield state
+    SELECT shield_tokens_available, current_streak, shield_active, protected_streak_value
+    INTO v_tokens_before, v_current_streak, v_shield_already_active, v_existing_protected_value
     FROM players
     WHERE id = p_player_id;
+
+    -- Calculate new protected value
+    -- If shield is already active with decay in progress, preserve the effective streak
+    -- Effective streak = MAX(natural, protected - natural)
+    IF v_shield_already_active AND v_existing_protected_value IS NOT NULL THEN
+        -- Preserve effective streak during active decay
+        v_new_protected_value := GREATEST(
+            v_current_streak,
+            v_existing_protected_value - v_current_streak
+        );
+    ELSE
+        -- Fresh shield - use current natural streak
+        v_new_protected_value := v_current_streak;
+    END IF;
 
     -- If player was registered, remove their registration
     SELECT EXISTS(
@@ -241,14 +258,14 @@ BEGIN
     END IF;
 
     -- Update player's shield status
-    -- Store protected_streak_value as the original streak (used for gradual decay calculation)
+    -- Store protected_streak_value as the effective streak (used for gradual decay calculation)
     -- protected_streak_base stores the same value for reference
     UPDATE players
     SET
         shield_tokens_available = shield_tokens_available - 1,
         shield_active = true,
-        protected_streak_value = v_current_streak,
-        protected_streak_base = v_current_streak
+        protected_streak_value = v_new_protected_value,
+        protected_streak_base = v_new_protected_value
     WHERE id = p_player_id
     RETURNING shield_tokens_available INTO v_tokens_after;
 
@@ -261,8 +278,8 @@ BEGIN
     ) VALUES (
         p_player_id,
         p_game_id,
-        v_current_streak,
-        v_current_streak
+        v_new_protected_value,
+        v_new_protected_value
     );
 
     -- Log in history
@@ -282,9 +299,16 @@ BEGIN
         p_game_id,
         v_tokens_before,
         v_tokens_after,
-        v_current_streak,
-        v_current_streak,
-        CASE WHEN v_was_registered THEN 'Registration cancelled, shield used' ELSE 'Shield used' END,
+        v_new_protected_value,
+        v_new_protected_value,
+        CASE
+            WHEN v_shield_already_active THEN
+                format('Shield used during decay (preserved effective streak %s from natural %s)', v_new_protected_value, v_current_streak)
+            WHEN v_was_registered THEN
+                'Registration cancelled, shield used'
+            ELSE
+                'Shield used'
+        END,
         COALESCE(p_user_id, 'player')
     );
 
@@ -292,7 +316,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION use_shield_token IS 'Uses a shield token for a specific game, activating gradual decay protection for the player''s current streak';
+COMMENT ON FUNCTION use_shield_token IS 'Uses a shield token for a specific game. If shield is already active (intermittent absences), preserves effective streak = MAX(natural, protected - natural). Otherwise uses current natural streak.';
 
 -- =====================================================
 -- 6. Update remove_shield_protection function
@@ -645,3 +669,7 @@ COMMENT ON MATERIALIZED VIEW player_shield_status IS 'Aggregated view of player 
 --    (when current_streak >= ceil(protected_streak_value / 2))
 -- 4. Updated return_shield_token to clear shield protection when no active shields
 -- 5. Updated materialized view with new decay calculations
+-- 6. Fixed use_shield_token to handle intermittent absences:
+--    - If shield already active during decay, preserves effective streak
+--    - Prevents losing decay benefit when using shield mid-recovery
+--    - Example: protected=10, natural=2 -> new shield protects 8 (not 2!)
