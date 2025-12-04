@@ -125,7 +125,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
                 +{(streakModifier * 100).toFixed(0)}%
               </span>
             </motion.div>
-          )}
+          ) : null}
 
           {/* Mobile-only expanded tooltip - positioned below the streak bonus */}
           {showShieldTooltip && shieldActive && (
