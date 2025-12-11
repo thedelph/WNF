@@ -2,8 +2,8 @@ import React from 'react';
 import { getRarityColor, getRarityColorInactive, type Rarity } from '../../utils/rarityColors';
 
 interface GameParticipationWheelProps {
-  /** Array of 40 elements showing participation status: 'selected' | 'reserve' | null */
-  participation: Array<'selected' | 'reserve' | null>;
+  /** Array of 40 elements showing participation status: 'selected' | 'reserve' | 'dropped_out' | null */
+  participation: Array<'selected' | 'reserve' | 'dropped_out' | null>;
   /** Player's rarity tier for color theming */
   rarity?: Rarity;
   /** Size of the wheel in pixels */
@@ -111,6 +111,8 @@ export const GameParticipationWheel: React.FC<GameParticipationWheelProps> = ({
           fillColor = finalActiveColor;
         } else if (status === 'reserve') {
           fillColor = 'rgba(255, 255, 255, 1)'; // White
+        } else if (status === 'dropped_out') {
+          fillColor = 'rgba(0, 0, 0, 0.5)'; // Black (dropout)
         } else {
           fillColor = finalInactiveColor;
         }

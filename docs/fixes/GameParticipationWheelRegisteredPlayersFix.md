@@ -24,7 +24,7 @@ The `useGameRegistrationStats` hook was missing the complete implementation for 
 
 3. **Game Index Mapping**: No mapping of game IDs to their position (0-39) in the 40-game window
 
-4. **Participation Array**: Not building the `Array<'selected' | 'reserve' | null>` that tracks status for each of 40 games
+4. **Participation Array**: Not building the `Array<'selected' | 'reserve' | 'dropped_out' | null>` that tracks status for each of 40 games
 
 5. **Data Return**: Not including `gameParticipation` in returned stats object
 
@@ -36,16 +36,16 @@ The `RegisteredPlayerGrid` component wasn't passing `gameParticipation` to `Play
 
 ### 1. Updated useGameRegistrationStats.ts
 
-**a) Query both status types (line 147)**
+**a) Query all relevant status types (line 147)**
 ```typescript
-.in('status', ['selected', 'reserve'])  // Added 'reserve'
+.in('status', ['selected', 'reserve', 'dropped_out'])  // All participation statuses
 ```
 
 **b) Added gameParticipation to interface (line 31)**
 ```typescript
 interface PlayerStats {
   // ... existing fields
-  gameParticipation?: Array<'selected' | 'reserve' | null>;
+  gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>;
 }
 ```
 
@@ -68,11 +68,11 @@ const recentGamesParticipationMap = gameRegistrationsData?.reduce((acc: any, reg
   }
 
   if (gameIndex !== undefined) {
-    acc[playerId][gameIndex] = registration.status; // 'selected' or 'reserve'
+    acc[playerId][gameIndex] = registration.status; // 'selected', 'reserve', or 'dropped_out'
   }
 
   return acc;
-}, {} as Record<string, Array<'selected' | 'reserve' | null>>) || {};
+}, {} as Record<string, Array<'selected' | 'reserve' | 'dropped_out' | null>>) || {};
 ```
 
 **e) Maintained backward compatibility (lines 193-196)**
@@ -118,7 +118,7 @@ gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(
 The Reserve Status Visualization feature documentation (2025-10-09) listed both hooks as implementation files, but only `usePlayerGrid` received the complete implementation. The `useGameRegistrationStats` hook retained the old logic that:
 - Only fetched 'selected' statuses
 - Calculated `recentGames` count but not the participation array
-- Didn't include the 3-state tracking (`'selected' | 'reserve' | null`)
+- Didn't include the 4-state tracking (`'selected' | 'reserve' | 'dropped_out' | null`)
 
 ### Consistency with usePlayerGrid
 
@@ -133,6 +133,7 @@ This fix brings `useGameRegistrationStats` into full parity with `usePlayerGrid.
 After implementation:
 - RegisteredPlayers page now shows colored wheel segments for played games
 - White segments appear for reserve registrations
+- Black segments appear for dropout games (added 2025-12-11)
 - Dim segments show games where player didn't register
 - Display matches PlayerList page behavior exactly
 

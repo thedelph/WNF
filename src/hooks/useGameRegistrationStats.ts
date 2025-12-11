@@ -216,7 +216,7 @@ export const useGameRegistrationStats = (
           `)
           .in('player_id', playerIds)
           .in('game_id', last40GameIds)
-          .in('status', ['selected', 'reserve']);
+          .in('status', ['selected', 'reserve', 'dropped_out']);
 
         if (gameRegsError) throw gameRegsError;
 
@@ -245,7 +245,7 @@ export const useGameRegistrationStats = (
 
         // Calculate recent games (last 40 completed games)
         // For each player, create an array showing participation status in each of the 40 games
-        // Values: 'selected' | 'reserve' | null
+        // Values: 'selected' | 'reserve' | 'dropped_out' | null
         const recentGamesParticipationMap = gameRegistrationsData?.reduce((acc: any, registration: any) => {
           const playerId = registration.player_id;
           const gameIndex = gameIdToIndexMap[registration.game_id];
@@ -255,11 +255,11 @@ export const useGameRegistrationStats = (
           }
 
           if (gameIndex !== undefined) {
-            acc[playerId][gameIndex] = registration.status; // 'selected' or 'reserve'
+            acc[playerId][gameIndex] = registration.status; // 'selected', 'reserve', or 'dropped_out'
           }
 
           return acc;
-        }, {} as Record<string, Array<'selected' | 'reserve' | null>>) || {};
+        }, {} as Record<string, Array<'selected' | 'reserve' | 'dropped_out' | null>>) || {};
 
         // Count total games for backwards compatibility (only count 'selected')
         const recentGamesMap = Object.entries(recentGamesParticipationMap).reduce((acc: any, [playerId, participation]) => {

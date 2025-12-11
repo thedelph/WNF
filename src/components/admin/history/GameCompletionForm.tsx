@@ -433,7 +433,10 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!scoreBlue || !scoreOrange || !outcome || !paymentLink) {
+    // Fix: Allow 0-0 draws by checking for undefined/null instead of falsy
+    if (scoreBlue === undefined || scoreBlue === null ||
+        scoreOrange === undefined || scoreOrange === null ||
+        !outcome || !paymentLink) {
       toast.error('Please fill in all required fields')
       return
     }
@@ -445,41 +448,25 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
 
     setLoading(true)
     try {
-      // Update game details
-      const { error: gameError } = await supabaseAdmin
-        .from('games')
-        .update({
-          score_blue: scoreBlue,
-          score_orange: scoreOrange,
-          outcome,
-          payment_link: paymentLink,
-          status: 'completed',
-          completed: true,
-          is_historical: true
-        })
-        .eq('id', game.id)
+      // Prepare player updates for the RPC function
+      const playerUpdates = players.map(player => ({
+        player_id: player.id,
+        team: player.team,
+        status: player.status,
+        payment_status: player.payment_status
+      }))
 
-      if (gameError) throw gameError
+      // Use RPC function to complete game (bypasses RLS issues)
+      const { data, error } = await supabaseAdmin.rpc('complete_game', {
+        p_game_id: game.id,
+        p_score_blue: scoreBlue,
+        p_score_orange: scoreOrange,
+        p_outcome: outcome,
+        p_payment_link: paymentLink,
+        p_player_updates: playerUpdates
+      })
 
-      // Update player registrations one at a time
-      for (const player of players) {
-        const registration = {
-          team: player.team,
-          status: player.status === 'reserve_declined' ? 'reserve' : player.status,
-          payment_status: player.payment_status
-        }
-
-        const { error: registrationError } = await supabaseAdmin
-          .from('game_registrations')
-          .update(registration)
-          .eq('game_id', game.id)
-          .eq('player_id', player.id)
-
-        if (registrationError) {
-          console.error('Error updating registration for player:', player.id, registrationError)
-          throw registrationError
-        }
-      }
+      if (error) throw error
 
       toast.success('Game completed successfully')
       navigate('/admin/games')

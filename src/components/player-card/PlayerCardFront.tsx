@@ -32,7 +32,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   shieldActive?: boolean,
   frozenStreakValue?: number | null,
   recentGames?: number,
-  gameParticipation?: Array<'selected' | 'reserve' | null>, // Array of 40 elements showing participation status in each of the last 40 games
+  gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>, // Array of 40 elements showing participation status in each of the last 40 games
   onTokenCooldown?: boolean,
 }> = ({
   id,

@@ -1,6 +1,6 @@
 # Reserve Status Visualization Feature
 
-**Date**: 2025-10-09 (Updated 2025-10-11)
+**Date**: 2025-10-09 (Updated 2025-12-11)
 **Status**: Implemented (Extended to all player card views)
 
 ## Overview
@@ -23,6 +23,7 @@ A circular wheel with 40 segments surrounds the games count, with each segment r
   - Academy: Teal (#0d9488)
   - Retired: Gray (#6b7280)
 - **Reserve**: White at 100% opacity (`rgba(255, 255, 255, 1)`)
+- **Dropped Out**: Black at 50% opacity (`rgba(0, 0, 0, 0.5)`)
 - **Didn't Register**: Dim white at 10% opacity (`rgba(255, 255, 255, 0.1)`)
 
 ### Number Display
@@ -64,12 +65,13 @@ The label uses a two-line stacked layout with center alignment.
 ### Type Definition
 
 ```typescript
-gameParticipation?: Array<'selected' | 'reserve' | null>
+gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>
 ```
 
 An array of exactly 40 elements where:
 - `'selected'` = player was selected and played
 - `'reserve'` = player registered but wasn't selected
+- `'dropped_out'` = player registered but dropped out before the game
 - `null` = player didn't register
 
 Array indices map to game sequence (0 = oldest of last 40, 39 = most recent).
@@ -88,7 +90,7 @@ const { data: latestGameData } = await supabase
 
 const last40GameIds = (latestGameData || []).map(g => g.id);
 
-// Fetch both 'selected' and 'reserve' statuses
+// Fetch 'selected', 'reserve', and 'dropped_out' statuses
 const { data: gameRegistrationsData } = await supabase
   .from('game_registrations')
   .select(`
@@ -102,7 +104,7 @@ const { data: gameRegistrationsData } = await supabase
     )
   `)
   .in('game_id', last40GameIds)
-  .in('status', ['selected', 'reserve']);
+  .in('status', ['selected', 'reserve', 'dropped_out']);
 ```
 
 ## Components
@@ -114,7 +116,7 @@ const { data: gameRegistrationsData } = await supabase
 **Props:**
 ```typescript
 interface GameParticipationWheelProps {
-  participation: Array<'selected' | 'reserve' | null>;
+  participation: Array<'selected' | 'reserve' | 'dropped_out' | null>;
   rarity?: Rarity;
   size?: number;
   activeColor?: string;
@@ -141,8 +143,8 @@ interface GameParticipationWheelProps {
 
 ## Implementation Files
 
-### Data Layer (Initial Implementation 2025-10-09)
-- `src/hooks/usePlayerGrid.ts` - Fetches participation data with 3 states
+### Data Layer (Initial Implementation 2025-10-09, Updated 2025-12-11)
+- `src/hooks/usePlayerGrid.ts` - Fetches participation data with 4 states (selected, reserve, dropped_out, null)
 - `src/hooks/useGameRegistrationStats.ts` - Canonical implementation with proper index order
 
 ### Components (All Views)
@@ -183,15 +185,17 @@ The canonical implementation is in `useGameRegistrationStats.ts` (lines 126-130)
 
 1. **Commitment Visibility**: Quickly see when players registered but weren't selected
 2. **Availability Patterns**: Identify players who frequently register but miss out
-3. **Selection History**: Visual timeline of participation over last 40 games
-4. **Rarity Integration**: Colors automatically match card rarity tier
-5. **Space Efficient**: Communicates complex data without cluttering the card
+3. **Dropout Tracking**: Black segments highlight games where players dropped out
+4. **Selection History**: Visual timeline of participation over last 40 games
+5. **Rarity Integration**: Colors automatically match card rarity tier
+6. **Space Efficient**: Communicates complex data without cluttering the card
 
 ## User Experience
 
-The reserve visualization makes it immediately clear:
+The participation visualization makes it immediately clear:
 - How often a player participates (colored + white segments)
 - Whether they typically get selected (more colored vs white)
+- Dropout history (black segments indicate games where player dropped out)
 - Their recent activity pattern (visual sequence around wheel)
 - Exact counts (number display: "37/5" = 37 played, 5 reserve)
 

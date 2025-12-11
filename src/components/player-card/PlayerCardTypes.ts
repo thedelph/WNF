@@ -40,7 +40,7 @@ export interface PlayerCardProps {
   /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null // Legacy alias for protectedStreakValue
   recentGames?: number // Number of games played in last 40 completed games (XP-relevant window)
-  gameParticipation?: Array<'selected' | 'reserve' | null> // Array of 40 elements showing participation status in each of the last 40 games (index 0 = oldest, 39 = most recent)
+  gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null> // Array of 40 elements showing participation status in each of the last 40 games (index 0 = oldest, 39 = most recent)
 }
 
 // Type alias for Player used in grid components

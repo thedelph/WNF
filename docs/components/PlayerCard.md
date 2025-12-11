@@ -100,7 +100,7 @@ The "Last 40 Games" statistic displays how many of the last 40 completed games a
      .from('game_registrations')
      .select('player_id, game_id, status')
      .in('game_id', last40GameIds)
-     .in('status', ['selected', 'reserve']);
+     .in('status', ['selected', 'reserve', 'dropped_out']);
 
    // Step 3: Build participation arrays with CORRECT INDEX ORDER
    // CRITICAL: Index 0 = oldest game, Index 39 = most recent game
