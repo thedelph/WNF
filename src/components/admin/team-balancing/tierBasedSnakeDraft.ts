@@ -38,6 +38,163 @@ const SOFT_PENALTY_CONFIG = {
   SEVERE_PENALTY: 0.30,    // Large penalty, need excellent improvement
 };
 
+// Complementary skill pairing configuration
+// Enforces that Attack and Defense advantages are on opposite teams
+const PAIRING_CONFIG = {
+  TIE_THRESHOLD: 0.10,          // Skills within 0.1 = tie (no winner)
+  GAME_IQ_SOFT_THRESHOLD: 0.30, // Soft preference - flag in debug if exceeded
+  GAME_IQ_PERFECT_GAP: 0.20,    // Gap for "perfect" pairing status
+  // Note: Game IQ is NOT a hard constraint, only ATK↔DEF pairing is enforced
+};
+
+/**
+ * Result of complementary skill pairing check
+ * Used to ensure Attack and Defense advantages are on opposite teams
+ */
+interface ComplementaryPairingResult {
+  isPaired: boolean;
+  attackWinner: 'blue' | 'orange' | 'tie';
+  defenseWinner: 'blue' | 'orange' | 'tie';
+  gameIqWinner: 'blue' | 'orange' | 'tie';
+  gameIqGap: number;
+  isGameIqAcceptable: boolean;
+  pairingStatus: 'perfect' | 'acceptable' | 'violated';
+  reason: string;
+  blueAttack: number;
+  orangeAttack: number;
+  blueDefense: number;
+  orangeDefense: number;
+  blueGameIq: number;
+  orangeGameIq: number;
+}
+
+/**
+ * Check if Attack and Defense skills are complementary (won by opposite teams)
+ * This ensures tactical balance: if one team can score better, the other should defend better
+ *
+ * Pairing rules:
+ * - 'perfect': ATK↔DEF properly paired (opposite teams) AND Game IQ gap ≤ 0.2
+ * - 'acceptable': ATK↔DEF properly paired OR either is a tie
+ * - 'violated': Same team wins BOTH ATK and DEF (neither is a tie)
+ *
+ * Note: Game IQ is a soft preference only - flagged but not enforced
+ */
+function checkComplementarySkillPairing(
+  blueTeam: PlayerWithRating[],
+  orangeTeam: PlayerWithRating[],
+  permanentGKIds: Set<string> = new Set()
+): ComplementaryPairingResult {
+  // Filter out permanent GKs for Attack/Defense calculation (they don't play outfield)
+  const blueOutfield = blueTeam.filter(p => !permanentGKIds.has(p.player_id));
+  const orangeOutfield = orangeTeam.filter(p => !permanentGKIds.has(p.player_id));
+
+  // Handle empty teams
+  if (blueOutfield.length === 0 || orangeOutfield.length === 0) {
+    return {
+      isPaired: true,
+      attackWinner: 'tie',
+      defenseWinner: 'tie',
+      gameIqWinner: 'tie',
+      gameIqGap: 0,
+      isGameIqAcceptable: true,
+      pairingStatus: 'acceptable',
+      reason: 'Empty team - cannot evaluate pairing',
+      blueAttack: 0,
+      orangeAttack: 0,
+      blueDefense: 0,
+      orangeDefense: 0,
+      blueGameIq: 0,
+      orangeGameIq: 0,
+    };
+  }
+
+  // Calculate average Attack (outfield only)
+  const blueAttack = blueOutfield.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / blueOutfield.length;
+  const orangeAttack = orangeOutfield.reduce((sum, p) => sum + (p.attack_rating ?? 5), 0) / orangeOutfield.length;
+
+  // Calculate average Defense (outfield only)
+  const blueDefense = blueOutfield.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / blueOutfield.length;
+  const orangeDefense = orangeOutfield.reduce((sum, p) => sum + (p.defense_rating ?? 5), 0) / orangeOutfield.length;
+
+  // Calculate average Game IQ (include all players - IQ matters for everyone)
+  const blueGameIq = blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / blueTeam.length;
+  const orangeGameIq = orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 5), 0) / orangeTeam.length;
+
+  // Determine winners using tie threshold
+  const attackDiff = blueAttack - orangeAttack;
+  const defenseDiff = blueDefense - orangeDefense;
+  const gameIqDiff = blueGameIq - orangeGameIq;
+  const gameIqGap = Math.abs(gameIqDiff);
+
+  const attackWinner: 'blue' | 'orange' | 'tie' =
+    attackDiff > PAIRING_CONFIG.TIE_THRESHOLD ? 'blue' :
+    attackDiff < -PAIRING_CONFIG.TIE_THRESHOLD ? 'orange' : 'tie';
+
+  const defenseWinner: 'blue' | 'orange' | 'tie' =
+    defenseDiff > PAIRING_CONFIG.TIE_THRESHOLD ? 'blue' :
+    defenseDiff < -PAIRING_CONFIG.TIE_THRESHOLD ? 'orange' : 'tie';
+
+  const gameIqWinner: 'blue' | 'orange' | 'tie' =
+    gameIqDiff > PAIRING_CONFIG.TIE_THRESHOLD ? 'blue' :
+    gameIqDiff < -PAIRING_CONFIG.TIE_THRESHOLD ? 'orange' : 'tie';
+
+  // Check if ATK↔DEF are properly paired (opposite teams or either is a tie)
+  const isPaired =
+    (attackWinner === 'blue' && defenseWinner === 'orange') ||
+    (attackWinner === 'orange' && defenseWinner === 'blue') ||
+    (attackWinner === 'tie' || defenseWinner === 'tie');
+
+  // Game IQ is soft preference only
+  const isGameIqAcceptable = gameIqGap <= PAIRING_CONFIG.GAME_IQ_SOFT_THRESHOLD;
+
+  // Determine pairing status
+  let pairingStatus: 'perfect' | 'acceptable' | 'violated';
+  let reason: string;
+
+  if (!isPaired) {
+    // Same team wins both ATK and DEF (neither is a tie) - VIOLATED
+    pairingStatus = 'violated';
+    const dominantTeam = attackWinner; // Same as defenseWinner since both must match
+    reason = `${dominantTeam === 'blue' ? 'Blue' : 'Orange'} wins BOTH Attack (${attackDiff > 0 ? '+' : ''}${attackDiff.toFixed(2)}) and Defense (${defenseDiff > 0 ? '+' : ''}${defenseDiff.toFixed(2)}) - not tactically balanced`;
+  } else if (gameIqGap <= PAIRING_CONFIG.GAME_IQ_PERFECT_GAP) {
+    // Properly paired AND Game IQ is very close
+    pairingStatus = 'perfect';
+    reason = `ATK↔DEF properly paired, Game IQ gap ${gameIqGap.toFixed(2)} ≤ ${PAIRING_CONFIG.GAME_IQ_PERFECT_GAP}`;
+  } else {
+    // Properly paired but Game IQ gap is larger (still acceptable)
+    pairingStatus = 'acceptable';
+    if (attackWinner === 'tie' && defenseWinner === 'tie') {
+      reason = `Both ATK and DEF are tied (within ${PAIRING_CONFIG.TIE_THRESHOLD})`;
+    } else if (attackWinner === 'tie') {
+      reason = `ATK is tied, ${defenseWinner === 'blue' ? 'Blue' : 'Orange'} wins DEF`;
+    } else if (defenseWinner === 'tie') {
+      reason = `${attackWinner === 'blue' ? 'Blue' : 'Orange'} wins ATK, DEF is tied`;
+    } else {
+      reason = `${attackWinner === 'blue' ? 'Blue' : 'Orange'} wins ATK, ${defenseWinner === 'blue' ? 'Blue' : 'Orange'} wins DEF - properly paired`;
+    }
+    if (gameIqGap > PAIRING_CONFIG.GAME_IQ_SOFT_THRESHOLD) {
+      reason += ` (Game IQ gap ${gameIqGap.toFixed(2)} exceeds soft threshold)`;
+    }
+  }
+
+  return {
+    isPaired,
+    attackWinner,
+    defenseWinner,
+    gameIqWinner,
+    gameIqGap,
+    isGameIqAcceptable,
+    pairingStatus,
+    reason,
+    blueAttack,
+    orangeAttack,
+    blueDefense,
+    orangeDefense,
+    blueGameIq,
+    orangeGameIq,
+  };
+}
+
 /**
  * Calculate soft penalty for attribute threshold violations
  * Instead of hard rejection, returns a penalty value to add to swap score
@@ -3243,11 +3400,17 @@ function validateAndFixCatastrophicGaps(
         // Phase 2: Balance guard - capture balance before swap
         const balanceBefore = calculateTierBalanceScore(blueTeam, orangeTeam, gkIdArray);
 
+        // Phase 3: Skill dominance guard - capture skill status before swap
+        const skillStatusBefore = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
+
         // Execute swap
         [blueTeam[blueIdx], orangeTeam[orangeIdx]] = [orangeTeam[orangeIdx], blueTeam[blueIdx]];
 
         // Phase 2: Check balance after swap
         const balanceAfter = calculateTierBalanceScore(blueTeam, orangeTeam, gkIdArray);
+
+        // Phase 3: Check skill dominance after swap
+        const skillStatusAfter = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
 
         // Reject swap if balance degradation exceeds threshold
         if (balanceAfter - balanceBefore > MAX_BALANCE_DEGRADATION) {
@@ -3255,6 +3418,21 @@ function validateAndFixCatastrophicGaps(
           [blueTeam[blueIdx], orangeTeam[orangeIdx]] = [orangeTeam[orangeIdx], blueTeam[blueIdx]];
           if (debugLog) {
             debugLog.value += `   ⚠️ Rejected ${attr} swap: balance degradation too high (${balanceBefore.toFixed(3)} → ${balanceAfter.toFixed(3)}, max: ${MAX_BALANCE_DEGRADATION})\n`;
+          }
+          continue; // Try next gap
+        }
+
+        // Phase 3: Reject swap if it creates or worsens skill dominance
+        // Only reject if: (a) creates new dominance, OR (b) makes existing dominance worse
+        const createsNewDominance = !skillStatusBefore.isCoreSkillDominated && skillStatusAfter.isCoreSkillDominated;
+        const worsensDominance = skillStatusBefore.isCoreSkillDominated && skillStatusAfter.isCoreSkillDominated &&
+          Math.abs(skillStatusAfter.blueWins - skillStatusAfter.orangeWins) > Math.abs(skillStatusBefore.blueWins - skillStatusBefore.orangeWins);
+
+        if (createsNewDominance || worsensDominance) {
+          // Revert the swap
+          [blueTeam[blueIdx], orangeTeam[orangeIdx]] = [orangeTeam[orangeIdx], blueTeam[blueIdx]];
+          if (debugLog) {
+            debugLog.value += `   ⚠️ Rejected ${attr} swap: would ${createsNewDominance ? 'create' : 'worsen'} skill dominance (${skillStatusBefore.blueWins}-${skillStatusBefore.orangeWins} → ${skillStatusAfter.blueWins}-${skillStatusAfter.orangeWins})\n`;
           }
           continue; // Try next gap
         }
@@ -3507,7 +3685,15 @@ function calculateCoreSkillDominance(
   blueTeam: PlayerWithRating[],
   orangeTeam: PlayerWithRating[],
   permanentGKIds?: Set<string> | string[]
-): { blueWins: number; orangeWins: number; isCoreSkillDominated: boolean; details: { skill: string; blueAvg: number; orangeAvg: number; winner: 'blue' | 'orange' | 'tie' }[] } {
+): {
+  blueWins: number;
+  orangeWins: number;
+  isCoreSkillDominated: boolean;
+  details: { skill: string; blueAvg: number; orangeAvg: number; winner: 'blue' | 'orange' | 'tie' }[];
+  pairing: ComplementaryPairingResult;
+  existingDominance: boolean;
+  pairingViolated: boolean;
+} {
   // Convert to Set for consistent checking
   const gkIdSet = permanentGKIds instanceof Set ? permanentGKIds : new Set(permanentGKIds || []);
 
@@ -3567,12 +3753,21 @@ function calculateCoreSkillDominance(
     details.push({ skill: 'gameIq', blueAvg: blueGameIq, orangeAvg: orangeGameIq, winner: 'tie' });
   }
 
-  // Core skill dominated = one team wins 0 of 3 core skills (GK excluded)
+  // EXISTING CHECK: One team wins 0 of 3 core skills (GK excluded)
   // Each team must win at least 1 core skill - minimum 1-2 or 2-1 split
   // Catches: 3-0, 2-0 (with tie), 1-0 (with 2 ties)
-  const isCoreSkillDominated = blueWins === 0 || orangeWins === 0;
+  const existingDominance = blueWins === 0 || orangeWins === 0;
 
-  return { blueWins, orangeWins, isCoreSkillDominated, details };
+  // NEW CHECK: Complementary ATK↔DEF pairing
+  // Ensures Attack and Defense advantages are on opposite teams
+  // This creates tactical balance: "you can score but I can stop you"
+  const pairing = checkComplementarySkillPairing(blueTeam, orangeTeam, gkIdSet);
+  const pairingViolated = pairing.pairingStatus === 'violated';
+
+  // COMBINED: Both checks must pass for teams to be balanced
+  const isCoreSkillDominated = existingDominance || pairingViolated;
+
+  return { blueWins, orangeWins, isCoreSkillDominated, details, pairing, existingDominance, pairingViolated };
 }
 
 /**
@@ -3925,9 +4120,24 @@ function runPostOptimizationPipeline(
   if (debugLog) {
     debugLog.value += `   Current: Blue ${coreStatusBefore.blueWins}/3, Orange ${coreStatusBefore.orangeWins}/3`;
     if (coreStatusBefore.isCoreSkillDominated) {
-      debugLog.value += ` ⚠️ DOMINATED\n`;
+      debugLog.value += ` ⚠️ DOMINATED`;
+      if (coreStatusBefore.pairingViolated) {
+        debugLog.value += ` (ATK↔DEF pairing violated)`;
+      }
+      if (coreStatusBefore.existingDominance) {
+        debugLog.value += ` (one team wins 0/3)`;
+      }
+      debugLog.value += `\n`;
     } else {
       debugLog.value += ` ✓ OK\n`;
+    }
+    // Show pairing details
+    const p = coreStatusBefore.pairing;
+    debugLog.value += `   ATK↔DEF Pairing: ${p.attackWinner === 'tie' ? 'Tied' : (p.attackWinner === 'blue' ? 'Blue' : 'Orange') + ' ATK'}, `;
+    debugLog.value += `${p.defenseWinner === 'tie' ? 'Tied' : (p.defenseWinner === 'blue' ? 'Blue' : 'Orange') + ' DEF'} → `;
+    debugLog.value += `${p.pairingStatus === 'perfect' ? '✓ Perfect' : p.pairingStatus === 'acceptable' ? '✓ OK' : '✗ Violated'}\n`;
+    if (p.gameIqGap > PAIRING_CONFIG.GAME_IQ_SOFT_THRESHOLD) {
+      debugLog.value += `   ℹ️ Game IQ gap ${p.gameIqGap.toFixed(2)} exceeds soft threshold ${PAIRING_CONFIG.GAME_IQ_SOFT_THRESHOLD}\n`;
     }
   }
 
@@ -4054,6 +4264,19 @@ function runPostOptimizationPipeline(
     debugLog.value += `Core Skills (ATK/DEF/IQ):  Blue ${validation.coreSkillBalance.blueWins}/3, Orange ${validation.coreSkillBalance.orangeWins}/3  `;
     debugLog.value += `[${gradeEmoji(validation.coreSkillBalance.grade)} ${validation.coreSkillBalance.grade}]\n`;
 
+    // ATK↔DEF Pairing Status (NEW)
+    const pairingStatus = checkComplementarySkillPairing(blueTeam, orangeTeam, permanentGKIds);
+    const pairingGrade = pairingStatus.pairingStatus === 'perfect' ? '🟢 PERFECT' :
+                         pairingStatus.pairingStatus === 'acceptable' ? '🟢 OK' : '🔴 VIOLATED';
+    const atkWinnerStr = pairingStatus.attackWinner === 'tie' ? 'Tied' :
+                         pairingStatus.attackWinner === 'blue' ? 'Blue' : 'Orange';
+    const defWinnerStr = pairingStatus.defenseWinner === 'tie' ? 'Tied' :
+                         pairingStatus.defenseWinner === 'blue' ? 'Blue' : 'Orange';
+    debugLog.value += `ATK↔DEF Pairing:           ${atkWinnerStr} ATK, ${defWinnerStr} DEF  [${pairingGrade}]\n`;
+    if (pairingStatus.gameIqGap > PAIRING_CONFIG.GAME_IQ_SOFT_THRESHOLD) {
+      debugLog.value += `Game IQ Gap:               ${pairingStatus.gameIqGap.toFixed(2)} (>${PAIRING_CONFIG.GAME_IQ_SOFT_THRESHOLD} soft threshold)  [🟡 NOTE]\n`;
+    }
+
     // Average Rating (NEW)
     debugLog.value += `Average Rating:            Blue ${validation.avgRating.blueAvg.toFixed(2)}, Orange ${validation.avgRating.orangeAvg.toFixed(2)} `;
     debugLog.value += `(gap: ${validation.avgRating.difference.toFixed(2)}) [${gradeEmoji(validation.avgRating.grade)} ${validation.avgRating.grade}]\n`;
@@ -4093,6 +4316,20 @@ function runPostOptimizationPipeline(
     if (sortedByMargin.length > 0) {
       debugLog.value += `\n  Easiest to flip: ${sortedByMargin[0].skill} (${Math.abs(sortedByMargin[0].blueAvg - sortedByMargin[0].orangeAvg).toFixed(2)} margin)\n`;
     }
+
+    // ATK↔DEF Pairing Analysis
+    debugLog.value += '\n';
+    debugLog.value += 'ATK↔DEF PAIRING ANALYSIS:\n';
+    const pairing = coreDetails.pairing;
+    debugLog.value += `  Attack:   Blue ${pairing.blueAttack.toFixed(2)} vs Orange ${pairing.orangeAttack.toFixed(2)} → `;
+    debugLog.value += `${pairing.attackWinner === 'tie' ? 'Tie (within 0.1)' : (pairing.attackWinner === 'blue' ? 'Blue' : 'Orange') + ' wins'}\n`;
+    debugLog.value += `  Defense:  Blue ${pairing.blueDefense.toFixed(2)} vs Orange ${pairing.orangeDefense.toFixed(2)} → `;
+    debugLog.value += `${pairing.defenseWinner === 'tie' ? 'Tie (within 0.1)' : (pairing.defenseWinner === 'blue' ? 'Blue' : 'Orange') + ' wins'}\n`;
+    debugLog.value += `  Game IQ:  Blue ${pairing.blueGameIq.toFixed(2)} vs Orange ${pairing.orangeGameIq.toFixed(2)} → `;
+    debugLog.value += `${pairing.gameIqWinner === 'tie' ? 'Tie' : (pairing.gameIqWinner === 'blue' ? 'Blue' : 'Orange') + ' wins'} (gap: ${pairing.gameIqGap.toFixed(2)})\n`;
+    debugLog.value += '\n';
+    debugLog.value += `  Pairing Status: ${pairing.pairingStatus === 'perfect' ? '✓ PERFECT' : pairing.pairingStatus === 'acceptable' ? '✓ ACCEPTABLE' : '✗ VIOLATED'}\n`;
+    debugLog.value += `  Reason: ${pairing.reason}\n`;
 
     debugLog.value += '\n';
     debugLog.value += `Overall Grade:             ${gradeEmoji(validation.grade)} ${validation.grade} (Score: ${validation.score.toFixed(0)}/100)\n`;
@@ -4202,20 +4439,36 @@ function checkAndFixSystematicBias(
         const orangeIdx = orangeTeam.findIndex(p => p.player_id === swap.orangePlayer.player_id);
 
         if (blueIdx !== -1 && orangeIdx !== -1) {
-          // SKILL DOMINANCE CHECK: Simulate the swap and check if it creates skill dominance
-          const beforeSkills = calculateSkillDominance(blueTeam, orangeTeam);
+          // SKILL DOMINANCE CHECK (Phase 3): Check CORE skills (Attack/Defense/Game IQ, excludes GK)
+          // Must use calculateCoreSkillDominance for consistency with STEP 2, 3, and 5
+          const skillStatusBefore = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
 
           // Temporarily execute the swap
           [blueTeam[blueIdx], orangeTeam[orangeIdx]] = [orangeTeam[orangeIdx], blueTeam[blueIdx]];
 
-          const afterSkills = calculateSkillDominance(blueTeam, orangeTeam);
+          const skillStatusAfter = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
 
-          // Reject swap if it creates or worsens skill dominance
-          if (afterSkills.isSkillDominated && !beforeSkills.isSkillDominated) {
-            // Revert the swap - it made skill balance worse
+          // Check if swap creates NEW dominance or WORSENS existing dominance
+          const createsNewDominance = !skillStatusBefore.isCoreSkillDominated && skillStatusAfter.isCoreSkillDominated;
+          const worsensDominance = skillStatusBefore.isCoreSkillDominated && skillStatusAfter.isCoreSkillDominated &&
+            Math.abs(skillStatusAfter.blueWins - skillStatusAfter.orangeWins) > Math.abs(skillStatusBefore.blueWins - skillStatusBefore.orangeWins);
+
+          if (createsNewDominance || worsensDominance) {
+            // Revert the swap - it would create or worsen skill dominance
             [blueTeam[blueIdx], orangeTeam[orangeIdx]] = [orangeTeam[orangeIdx], blueTeam[blueIdx]];
             if (debugLog) {
-              debugLog.value += `   ⚠️ Rejected ${attr} swap (would create skill dominance: ${afterSkills.blueWins}-${afterSkills.orangeWins})\n`;
+              // Determine specific reason for rejection
+              let reason = '';
+              if (skillStatusAfter.pairingViolated && !skillStatusBefore.pairingViolated) {
+                reason = 'break ATK↔DEF pairing';
+              } else if (skillStatusAfter.existingDominance && !skillStatusBefore.existingDominance) {
+                reason = 'create skill dominance';
+              } else if (worsensDominance) {
+                reason = 'worsen skill dominance';
+              } else {
+                reason = createsNewDominance ? 'create dominance issue' : 'worsen dominance issue';
+              }
+              debugLog.value += `   ⚠️ Rejected ${attr} swap: would ${reason} (${skillStatusBefore.blueWins}-${skillStatusBefore.orangeWins} → ${skillStatusAfter.blueWins}-${skillStatusAfter.orangeWins})\n`;
             }
             continue; // Try next attribute
           }
@@ -4260,7 +4513,7 @@ function checkAndFixSystematicBias(
           if (debugLog) {
             debugLog.value += `   ✓ Reduced ${attr} gap for bias correction: ${gap.toFixed(2)} → ${swap.newGap.toFixed(2)}\n`;
             debugLog.value += `     Swap: ${swap.bluePlayer.friendly_name} ↔ ${swap.orangePlayer.friendly_name}\n`;
-            debugLog.value += `     Skill balance: ${beforeSkills.blueWins}-${beforeSkills.orangeWins} → ${afterSkills.blueWins}-${afterSkills.orangeWins}\n`;
+            debugLog.value += `     Skill balance: ${skillStatusBefore.blueWins}-${skillStatusBefore.orangeWins} → ${skillStatusAfter.blueWins}-${skillStatusAfter.orangeWins}\n`;
             debugLog.value += `     Overall balance: ${balanceBeforeSwap.toFixed(3)} → ${balanceBefore.toFixed(3)}\n`;
           }
 
@@ -4689,6 +4942,9 @@ function fixExtremeSplit(
         // Phase 2: Capture balance before swap
         const balanceBeforeSwap = calculateTierBalanceScore(blueTeam, orangeTeam, gkIdArray);
 
+        // Phase 3: Capture skill dominance before swap
+        const skillStatusBefore = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
+
         // Execute swap
         [dominantTeamArray[dominantIdx], otherTeam[otherIdx]] = [otherTeam[otherIdx], dominantTeamArray[dominantIdx]];
 
@@ -4696,7 +4952,15 @@ function fixExtremeSplit(
         const balanceAfterSwap = calculateTierBalanceScore(blueTeam, orangeTeam, gkIdArray);
         const balanceDegradation = balanceAfterSwap - balanceBeforeSwap;
 
-        if (balanceDegradation <= MAX_BALANCE_DEGRADATION) {
+        // Phase 3: Check skill dominance after swap
+        const skillStatusAfter = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
+
+        // Phase 3: Check for skill dominance creation/worsening
+        const createsNewDominance = !skillStatusBefore.isCoreSkillDominated && skillStatusAfter.isCoreSkillDominated;
+        const worsensDominance = skillStatusBefore.isCoreSkillDominated && skillStatusAfter.isCoreSkillDominated &&
+          Math.abs(skillStatusAfter.blueWins - skillStatusAfter.orangeWins) > Math.abs(skillStatusBefore.blueWins - skillStatusBefore.orangeWins);
+
+        if (balanceDegradation <= MAX_BALANCE_DEGRADATION && !createsNewDominance && !worsensDominance) {
           if (debugLog) {
             debugLog.value += `   ✓ Fixed ${label} split: ${playerToSwapOut.friendly_name} (${label}) ↔ ${playerToSwapIn.friendly_name} (middle)\n`;
             debugLog.value += `     Balance: ${balanceBeforeSwap.toFixed(3)} → ${balanceAfterSwap.toFixed(3)}\n`;
@@ -4708,7 +4972,11 @@ function fixExtremeSplit(
         [dominantTeamArray[dominantIdx], otherTeam[otherIdx]] = [otherTeam[otherIdx], dominantTeamArray[dominantIdx]];
 
         if (debugLog) {
-          debugLog.value += `   ⚠️ Rejected swap with ${playerToSwapIn.friendly_name}: balance degradation too high (${balanceBeforeSwap.toFixed(3)} → ${balanceAfterSwap.toFixed(3)})\n`;
+          if (createsNewDominance || worsensDominance) {
+            debugLog.value += `   ⚠️ Rejected swap with ${playerToSwapIn.friendly_name}: would ${createsNewDominance ? 'create' : 'worsen'} skill dominance (${skillStatusBefore.blueWins}-${skillStatusBefore.orangeWins} → ${skillStatusAfter.blueWins}-${skillStatusAfter.orangeWins})\n`;
+          } else {
+            debugLog.value += `   ⚠️ Rejected swap with ${playerToSwapIn.friendly_name}: balance degradation too high (${balanceBeforeSwap.toFixed(3)} → ${balanceAfterSwap.toFixed(3)})\n`;
+          }
         }
       }
     }
@@ -6445,19 +6713,40 @@ function optimizeTeams(
     debugLog.value += 'Starting from lowest tier upwards (Tier 5 → Tier 1)\n\n';
   }
   
-  // Only optimize if balance exceeds threshold
-  if (currentBalance <= balanceThreshold) {
+  // Check for core skill dominance (one team winning 0 of 3 core skills)
+  // This must be checked BEFORE early return to ensure post-optimization pipeline runs
+  const coreSkillStatus = calculateCoreSkillDominance(blueTeam, orangeTeam, permanentGKIds);
+  const hasSkillDominance = coreSkillStatus.isCoreSkillDominated;
+
+  // Only skip optimization if balance is good AND no skill dominance exists
+  // If skill dominance exists (3-0 split), we MUST run the post-optimization pipeline
+  if (currentBalance <= balanceThreshold && !hasSkillDominance) {
     if (debugLog) {
-      debugLog.value += 'No optimization needed - balance is within threshold\n\n';
+      debugLog.value += 'No optimization needed - balance is within threshold and skills are balanced\n';
+      debugLog.value += `  Core skills: Blue ${coreSkillStatus.blueWins}/3, Orange ${coreSkillStatus.orangeWins}/3 ✓\n\n`;
     }
+
+    // Still run post-optimization pipeline for other checks (position balance, etc.)
+    const permanentGKIdSet = new Set(permanentGKIds);
+    const pipelineResult = runPostOptimizationPipeline(blueTeam, orangeTeam, permanentGKIdSet, debugLog);
+
     return {
-      blueTeam,
-      orangeTeam,
-      finalScore: currentBalance,
-      wasOptimized: false,
-      swapCount: 0,
+      blueTeam: pipelineResult.blueTeam,
+      orangeTeam: pipelineResult.orangeTeam,
+      finalScore: pipelineResult.balance,
+      wasOptimized: pipelineResult.swapCount > 0,
+      swapCount: pipelineResult.swapCount,
       swapDetails: []
     };
+  }
+
+  // Log if we're continuing due to skill dominance
+  if (currentBalance <= balanceThreshold && hasSkillDominance) {
+    if (debugLog) {
+      debugLog.value += `⚠️ Balance within threshold (${currentBalance.toFixed(3)}) but SKILL DOMINANCE detected\n`;
+      debugLog.value += `  Core skills: Blue ${coreSkillStatus.blueWins}/3, Orange ${coreSkillStatus.orangeWins}/3 - needs fix\n`;
+      debugLog.value += `  Continuing to optimization to attempt skill balance correction...\n\n`;
+    }
   }
   
   // Group players by tier
