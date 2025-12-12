@@ -19,6 +19,14 @@ interface GameRegistrationsProps {
   onClose: () => void;
 }
 
+interface ShieldUser {
+  id: string;
+  player_id: string;
+  friendly_name: string;
+  protected_streak_value: number | null;
+  used_at: string;
+}
+
 export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
   gameId,
   onClose,
@@ -31,10 +39,11 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
   const [selectedPlayerIds, setSelectedPlayerIds] = React.useState<string[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isSelectAll, setIsSelectAll] = React.useState(false);
-  const [filteredPlayers, setFilteredPlayers] = React.useState<Array<{ id: string; friendly_name: string }>>([]);
+  const [filteredPlayers, setFilteredPlayers] = React.useState<Array<{ id: string; friendly_name: string; shield_tokens_available: number }>>([]);
   const [isOpen, setIsOpen] = React.useState(true);
-  const [players, setPlayers] = React.useState<Array<{ id: string; friendly_name: string }>>([]);
+  const [players, setPlayers] = React.useState<Array<{ id: string; friendly_name: string; shield_tokens_available: number }>>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [shieldUsers, setShieldUsers] = React.useState<ShieldUser[]>([]);
 
   // Function to fetch registrations
   const fetchRegistrations = async () => {
@@ -111,6 +120,33 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
       }));
 
       setRegistrations(transformedRegistrations || []);
+
+      // Fetch players using shields for this game
+      const { data: activeShields, error: shieldsError } = await supabase
+        .from('shield_token_usage')
+        .select(`
+          id,
+          player_id,
+          protected_streak_value,
+          used_at,
+          players!shield_token_usage_player_id_fkey(
+            friendly_name
+          )
+        `)
+        .eq('game_id', gameId)
+        .eq('is_active', true);
+
+      if (shieldsError) {
+        console.error('Error fetching shield users:', shieldsError);
+      } else {
+        setShieldUsers(activeShields?.map(s => ({
+          id: s.id,
+          player_id: s.player_id,
+          friendly_name: (s.players as any)?.friendly_name || 'Unknown',
+          protected_streak_value: s.protected_streak_value,
+          used_at: s.used_at
+        })) || []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while fetching registrations');
     } finally {
@@ -213,6 +249,88 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
     }
   };
 
+  // Function to activate a shield token for a player
+  const handleActivateShield = async (playerId: string) => {
+    try {
+      if (!session || !isAdmin) {
+        toast.error('You must be an admin to activate shields');
+        return;
+      }
+
+      // Check eligibility (includes token availability check)
+      const { data: eligibility, error: eligibilityError } = await supabase
+        .rpc('check_shield_eligibility', {
+          p_player_id: playerId,
+          p_game_id: gameId
+        });
+
+      if (eligibilityError) {
+        toast.error(`Failed to check eligibility: ${eligibilityError.message}`);
+        return;
+      }
+
+      if (!eligibility?.[0]?.eligible) {
+        toast.error(`Cannot use shield: ${eligibility?.[0]?.reason || 'Not eligible'}`);
+        return;
+      }
+
+      // Use the shield token
+      const { data: result, error: useError } = await supabase
+        .rpc('use_shield_token', {
+          p_player_id: playerId,
+          p_game_id: gameId,
+          p_user_id: session.user?.id
+        });
+
+      if (useError) {
+        toast.error(`Failed to activate shield: ${useError.message}`);
+        return;
+      }
+
+      if (!result?.[0]?.success) {
+        toast.error(result?.[0]?.message || 'Failed to activate shield');
+        return;
+      }
+
+      toast.success('Shield token activated');
+      fetchRegistrations();
+    } catch (error: any) {
+      toast.error(`Failed to activate shield: ${error.message}`);
+    }
+  };
+
+  // Function to remove a shield token from a player
+  const handleRemoveShield = async (playerId: string) => {
+    try {
+      if (!session || !isAdmin) {
+        toast.error('You must be an admin to remove shields');
+        return;
+      }
+
+      const { data: result, error } = await supabase
+        .rpc('return_shield_token', {
+          p_player_id: playerId,
+          p_game_id: gameId,
+          p_reason: 'Removed by admin'
+        });
+
+      if (error) {
+        toast.error(`Failed to remove shield: ${error.message}`);
+        return;
+      }
+
+      if (!result?.[0]?.success) {
+        toast.error(result?.[0]?.message || 'Failed to remove shield');
+        return;
+      }
+
+      toast.success('Shield token removed');
+      fetchRegistrations();
+    } catch (error: any) {
+      toast.error(`Failed to remove shield: ${error.message}`);
+    }
+  };
+
   React.useEffect(() => {
     if (gameId) {
       fetchRegistrations();
@@ -228,7 +346,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
         setIsLoading(true);
         const { data, error } = await supabase
           .from('players')
-          .select('id, friendly_name')
+          .select('id, friendly_name, shield_tokens_available')
           .order('friendly_name');
 
         if (error) throw error;
@@ -242,11 +360,13 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
   }, []);
 
   React.useEffect(() => {
-    // Filter available players whenever registrations or players change
-    // Filter out already registered players by their IDs
+    // Filter available players whenever registrations, shield users, or players change
+    // Filter out already registered players and shield users by their IDs
     const registeredPlayerIds = registrations.map(reg => reg.playerId);
+    const shieldPlayerIds = shieldUsers.map(s => s.player_id);
     const availablePlayers = players.filter(player =>
-      !registeredPlayerIds.includes(player.id)
+      !registeredPlayerIds.includes(player.id) &&
+      !shieldPlayerIds.includes(player.id)
     );
 
     // Apply search filter if there's a search term
@@ -257,7 +377,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
       : availablePlayers;
 
     setFilteredPlayers(searchFiltered);
-  }, [players, registrations, searchTerm]);
+  }, [players, registrations, shieldUsers, searchTerm]);
 
   const handlePlayerSelect = (id: string) => {
     setSelectedPlayerIds(prev =>
@@ -436,6 +556,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
               players={filteredPlayers}
               selectedPlayerIds={selectedPlayerIds}
               onPlayerSelect={handlePlayerSelect}
+              onShieldClick={handleActivateShield}
               className="h-[40vh] sm:h-[50vh] lg:h-80"
             />
             <div>
@@ -503,6 +624,42 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
             >
               Register Selected ({selectedPlayerIds.length})
             </motion.button>
+          </div>
+
+          {/* Shield Token Users Section */}
+          <div className="mt-6">
+            <h3 className="font-bold mb-3 text-base sm:text-lg flex items-center gap-2">
+              <span>🛡️</span> Players Using Shield Tokens ({shieldUsers.length})
+            </h3>
+
+            {shieldUsers.length === 0 ? (
+              <p className="text-sm opacity-60 bg-base-200 p-3 rounded-lg">No players using shields for this game</p>
+            ) : (
+              <div className="space-y-2">
+                {shieldUsers.map(shield => (
+                  <div key={shield.id} className="flex items-center justify-between bg-base-200 p-3 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🛡️</span>
+                      <div>
+                        <span className="font-medium">{shield.friendly_name}</span>
+                        {shield.protected_streak_value && (
+                          <span className="text-sm opacity-60 ml-2">
+                            (protecting {shield.protected_streak_value} game streak)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveShield(shield.player_id)}
+                      className="btn btn-sm btn-error btn-outline"
+                      title="Remove shield and return token"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-8">

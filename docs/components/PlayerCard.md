@@ -50,6 +50,33 @@ Each modifier is displayed in a colored badge with its corresponding percentage:
 - Red badges for negative modifiers (dropout penalty, active penalties, unpaid games)
 - Blue badge for registration streak bonus
 - Yellow badge for bench warmer streak
+- Purple/indigo gradient for shield token protection (see below)
+
+### Shield Token Protection Display (v1.1.1)
+
+When a player has an active shield token protecting their streak, the streak row transforms into a visual protection indicator:
+
+**Three Visual States:**
+1. **Pending State** (shield applied but game not yet missed):
+   - Yellow pulsing dot with "Protection ready"
+   - Purple/indigo gradient background
+   - Shows protected streak value (e.g., "14-game streak")
+   - Tooltip: "Protection ready! If you miss this game, your X-game streak bonus will gradually decay instead of resetting to 0."
+
+2. **Recovering State** (game was missed, protection is decaying):
+   - Progress bar showing convergence progress (X/Y games)
+   - Labels showing "X/Y games" and "Z to go"
+   - Purple gradient progress bar
+   - Tooltip: "Recovering X-game streak. Y more games to full recovery."
+
+3. **Recovered State** (natural streak has caught up):
+   - Green progress bar at 100%
+   - Labels: "✓ Recovered" and "Complete!"
+   - Tooltip: "Fully recovered! Natural streak has caught up."
+
+**Convergence Point:** `CEIL(protected_streak_value / 2)` games (e.g., 10-game streak converges at 5 games)
+
+See [Shield Token System](../ShieldTokenSystem.md) for complete documentation.
 
 ## Rarity Tiers
 

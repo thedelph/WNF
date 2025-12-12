@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2025-11-17
+**Last Updated:** 2025-12-12
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 

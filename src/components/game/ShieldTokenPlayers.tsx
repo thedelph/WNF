@@ -149,9 +149,9 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
             <thead>
               <tr>
                 <th>Player</th>
-                <th>Current Streak</th>
-                <th>Protected Value</th>
-                <th>Effective Bonus</th>
+                <th>Natural Streak</th>
+                <th>Protected Streak</th>
+                <th>Total XP Bonus</th>
                 <th>Used At</th>
               </tr>
             </thead>
@@ -176,8 +176,8 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
                       </span>
                     </td>
                     <td>
-                      <span className="badge badge-success">
-                        +{decayingBonus * 10}%
+                      <span className="badge badge-warning">
+                        {protectedValue} {protectedValue === 1 ? 'game' : 'games'}
                       </span>
                     </td>
                     <td>

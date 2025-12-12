@@ -485,19 +485,30 @@ Enhanced registration flow with mutual exclusivity:
 Player cards now show shield protection visually:
 
 **PlayerCardModifiers Component** (Streak row):
-- **Dynamic Label**: "Streak Bonus" normally, changes to "Streak Frozen" when shield is active
 - **Shield Icon**: Displays Shield icon (🛡️) instead of Flame icon when shield is active
-- **Frozen Effect**: Purple/indigo gradient background with animated shimmer orbs on the streak row
-- **Frozen Percentage**: Shows frozen streak value (e.g., +100% for 10-game frozen streak)
-- **Desktop Tooltip**: Hover shows contextual message:
-  - "Your X-game streak is frozen at +Y% XP for this week" (if it's your card)
-  - "Their X-game streak is frozen at +Y% XP for this week" (if it's someone else's card)
-- **Mobile Tap**: Tapping the streak row on mobile shows expandable tooltip below with same message
+- **Protected Streak Display**: Shows "{protectedValue}-game streak" with XP bonus percentage
+- **Three Visual States** (v1.1.1):
+  1. **Pending State** (natural streak >= protected value - game not yet missed):
+     - Yellow pulsing dot indicator
+     - Text: "Protection ready"
+     - Tooltip: "Protection ready! If you miss this game, your X-game streak bonus will gradually decay instead of resetting to 0."
+  2. **Recovering State** (natural streak < convergence point):
+     - Progress bar showing convergence progress
+     - Labels: "X/Y games" on left, "Z to go" on right
+     - Purple gradient progress bar with smooth animation
+     - Tooltip: "Recovering X-game streak. Y more games to full recovery."
+  3. **Recovered State** (natural streak >= convergence point):
+     - Green progress bar at 100%
+     - Labels: "✓ Recovered" on left, "Complete!" on right
+     - Tooltip: "Fully recovered! Natural streak (X) has caught up."
+- **Convergence Point**: `CEIL(protected_streak_value / 2)` games
+- **Mobile Tap**: Tapping the streak row on mobile shows expandable tooltip below with state-specific message
 - **Visual Styling**:
   - Background: `bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-900/40`
   - Border: `border-2 border-purple-400/60`
   - Shadow: `shadow-lg shadow-purple-500/20`
-  - Text color: Purple-tinted for better contrast
+  - Animated shimmer/glow effects
+  - Progress bar: Purple gradient (recovering) or green (recovered)
 
 **PlayerCardFront Component**:
 - Passes `shieldActive` and `frozenStreakValue` props to `PlayerCardModifiers`
@@ -620,6 +631,21 @@ Admins can manage shields:
   - All actions require confirmation dialog
   - All actions logged in `shield_token_history` with admin ID
   - Accessible to admins with `MANAGE_PLAYERS` permission
+
+- **Game Registrations Modal** (v1.1.1): Available via "View Registrations" on GameCard
+  - **Apply shields on behalf of players**:
+    - Shield button (🛡️) appears next to available players who have tokens
+    - Validates eligibility via `check_shield_eligibility` RPC
+    - Uses `use_shield_token` RPC to activate shield
+    - Player automatically moved from "Available" to "Using Shield" section
+  - **Remove shields from players**:
+    - "Remove" button appears next to each shield user
+    - Uses `return_shield_token` RPC to return token
+    - Player moves back to "Available Players" list
+  - **Separate "Players Using Shield Tokens" section**:
+    - Shows player name and protected streak value
+    - Maintains mutual exclusivity (shield users not in registered list)
+    - Filter excludes shield users from available players
 
 ## Edge Cases and Rules
 
@@ -938,6 +964,39 @@ For issues or questions:
 
 ## Changelog
 
+**v1.1.1** - Admin Shield Management & Visual Convergence Display (2025-12-12)
+- **Admin Shield Token Management in Game Registrations Modal**:
+  - Admins can now apply/remove shield tokens on behalf of players via "View Registrations" modal
+  - New "Players Using Shield Tokens" section in GameRegistrations.tsx
+  - Shield button (🛡️) appears next to available players who have tokens
+  - Remove button for existing shield users
+  - Maintains mutual exclusivity (shield users not in registered list)
+  - Uses existing RPC functions: `check_shield_eligibility`, `use_shield_token`, `return_shield_token`
+- **Fixed `return_shield_token` Database Function**:
+  - Fixed incorrect column names (`frozen_streak_value` → `protected_streak_value`, `frozen_streak_modifier` → `protected_streak_base`)
+  - Migration: `fix_return_shield_token_column_names`
+- **Fixed RPC Function Array Access**:
+  - TABLE-returning functions now correctly accessed via `result[0]` instead of `result`
+  - Affected: `check_shield_eligibility`, `use_shield_token`, `return_shield_token`
+- **Visual Shield Status with Three States**:
+  - **Pending State**: Yellow pulsing dot with "Protection ready" when shield applied but game not yet missed
+    - Tooltip: "Protection ready! If you miss this game, your X-game streak bonus will gradually decay instead of resetting to 0."
+  - **Recovering State**: Progress bar showing convergence progress (X/Y games, Z to go)
+    - Purple gradient progress bar
+    - Shows natural streak progress toward convergence point
+  - **Recovered State**: Green progress bar with "✓ Recovered | Complete!"
+    - Tooltip: "Fully recovered! Natural streak has caught up."
+  - Convergence point = `CEIL(protected_streak_value / 2)` games
+- **Updated ShieldTokenPlayers List View**:
+  - Renamed columns for clarity:
+    - "Current Streak" → "Natural Streak"
+    - "Protected Value" → "Protected Streak" (now shows X games, not +X%)
+    - "Effective Bonus" → "Total XP Bonus"
+- **Updated PlayerCardModifiers Component**:
+  - Shows "{protectedValue}-game streak" with XP bonus
+  - Conditional display based on shield state (pending/recovering/recovered)
+  - Mobile-friendly tap interaction for detailed shield info
+
 **v1.1.0** - Gradual Decay System (2025-12-04)
 - **Major Architecture Change: Gradual Decay Instead of Full Freeze**
   - Shield protection now uses gradual decay instead of full freeze
@@ -1062,9 +1121,14 @@ For issues or questions:
 - **Shield Token Players Display**:
   - Added `ShieldTokenPlayers` component showing all players using shields for a game
   - Displays in both grid (player cards with shield indicator) and list views
-  - Shows frozen streak value, XP modifier, and time of shield usage
+  - Shows protected streak value, XP modifier, and time of shield usage
   - Appears below registered players during registration window
   - Provides visibility into who is protecting their streak each week
+  - **List view columns** (updated v1.1.1):
+    - Natural Streak: Player's current actual streak
+    - Protected Streak: The streak being protected (X games)
+    - Total XP Bonus: Effective XP bonus percentage
+    - Used At: Timestamp of shield activation
 
 **v1.0.1** - Cancellation Feature (2025-10-02)
 - Added ability to cancel shield usage during registration window

@@ -97,6 +97,19 @@ export const GameCard: React.FC<Props> = ({
       }
       console.log(`Fetched ${shieldUsage?.length || 0} shield token users`);
 
+      // Fetch players with shield tokens available
+      const { data: playersWithShields, error: playersWithShieldsError } = await supabase
+        .from('players')
+        .select('id, friendly_name')
+        .in('whatsapp_group_member', ['Yes', 'Proxy'])
+        .gt('shield_tokens_available', 0)
+        .order('friendly_name');
+
+      if (playersWithShieldsError) {
+        console.error('Error fetching players with shields:', playersWithShieldsError);
+      }
+      console.log(`Fetched ${playersWithShields?.length || 0} players with shield tokens available`);
+
       // Query the public_player_token_status view which contains eligibility data
       // This view handles all the complex eligibility logic including:
       // - Recent game participation
@@ -179,34 +192,31 @@ export const GameCard: React.FC<Props> = ({
         case GAME_STATUSES.UPCOMING:
         case GAME_STATUSES.OPEN:
           message += `\n\n🎮 Registration is OPEN!
-Register your interest by reacting with a thumbs up 👍
 
-Reply to this message with names of any reserves outside of this group that want to play.`;
+Reply to this message with names of any reserves outside of this group that want to play.
 
-          // Add token information if there are eligible players with active tokens
+React with ONE option only:
+👍 Register interest to play
+🪙 Use priority token (guaranteed spot this week, likely no spot next week)
+🛡️ Use shield token (protect your streak if you can't play)`;
+
+          // Priority token eligible players (comma list)
           if (eligiblePlayers.length > 0) {
-            message += '\n\nThe following players, react with 🪙 if you want to guarantee a spot this week (but you likely won\'t get a spot next week):\n';
-
-            // Sort players alphabetically by name
-            [...eligiblePlayers]
-              .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name))
-              .forEach(player => {
-                message += `\n🪙 ${player.friendly_name}`;
-              });
+            const tokenNames = eligiblePlayers
+              .map(p => p.friendly_name)
+              .sort((a, b) => a.localeCompare(b))
+              .join(', ');
+            message += `\n\n🪙 Priority tokens: ${tokenNames}`;
           } else {
-            // If no eligible players, show a message explaining why
             message += '\n\n🪙 No players are eligible for a priority token this week.';
           }
 
-          // Add shield token section if there are players using shields
-          if (shieldUsage && shieldUsage.length > 0) {
-            message += '\n\n🛡️ Players using streak protection this week:\n';
-            [...shieldUsage]
-              .sort((a: any, b: any) => (a.players?.friendly_name || '').localeCompare(b.players?.friendly_name || ''))
-              .forEach((usage: any) => {
-                const protectedStreak = usage.players?.protected_streak_value || 0;
-                message += `\n🛡️ ${usage.players?.friendly_name} (protecting ${protectedStreak} game streak)`;
-              });
+          // Shield token available players (comma list)
+          if (playersWithShields && playersWithShields.length > 0) {
+            const shieldNames = playersWithShields
+              .map(p => p.friendly_name)
+              .join(', ');
+            message += `\n\n🛡️ Shield tokens: ${shieldNames}`;
           }
 
           message += `\n\nRegistration closes ${regEndDate} at ${regEndTime}`;

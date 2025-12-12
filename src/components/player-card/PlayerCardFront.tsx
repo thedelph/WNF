@@ -71,15 +71,6 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   gameParticipation = new Array(40).fill(null),
   onTokenCooldown = false,
 }) => {
-  // Debug logging for playstyle props
-  if (friendlyName === 'Chris H' || friendlyName === 'Nathan') {
-    console.log(`🎨 PlayerCardFront - ${friendlyName} props:`, {
-      averagedPlaystyle,
-      playstyleMatchDistance,
-      playstyleCategory
-    });
-  }
-
   const { dropoutPenalties } = usePlayerPenalties(id)
   const { player } = useUser()
   const [showPlaystyleDetails, setShowPlaystyleDetails] = useState(false)

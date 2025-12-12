@@ -43,6 +43,23 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
     ? Math.max(currentStreak, protectedValue - currentStreak)
     : currentStreak
 
+  // Calculate convergence progress (converge when natural streak = half protected value)
+  const convergencePoint = protectedValue != null ? Math.ceil(protectedValue / 2) : 0
+  const gamesToConvergence = shieldActive && protectedValue != null
+    ? Math.max(0, convergencePoint - currentStreak)
+    : 0
+  const convergenceProgress = shieldActive && protectedValue != null && convergencePoint > 0
+    ? Math.min(100, (currentStreak / convergencePoint) * 100)
+    : 0
+
+  // Shield states:
+  // - Pending: natural streak >= protected value (game hasn't been missed yet)
+  // - Active/Recovering: natural streak < protected value (protection is decaying)
+  // - Recovered: natural streak >= convergence point AND was previously recovering
+  const isShieldPending = currentStreak >= (protectedValue ?? 0)
+  const isRecovering = !isShieldPending && currentStreak < convergencePoint
+  const isConverged = !isShieldPending && currentStreak >= convergencePoint
+
   // Calculate registration streak bonus modifier (2.5% per streak level)
   const registrationStreakModifier = registrationStreakBonus * 0.025
 
@@ -83,9 +100,15 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
       {(currentStreak > 0 || shieldActive) && (
         <>
           {shieldActive && protectedValue != null ? (
-            <Tooltip content={`🛡️ Streak Protection: ${possessivePronoun} streak ${currentStreak} | Protected ${decayingProtectedBonus} → +${effectiveStreak * 10}% XP`}>
+            <Tooltip content={
+              isShieldPending
+                ? `🛡️ Protection ready! If you miss this game, your ${protectedValue}-game streak bonus will gradually decay instead of resetting to 0.`
+                : isConverged
+                  ? `🛡️ Fully recovered! Natural streak (${currentStreak}) has caught up. Shield protection complete.`
+                  : `🛡️ Recovering ${protectedValue}-game streak. ${gamesToConvergence} more ${gamesToConvergence === 1 ? 'game' : 'games'} to full recovery.`
+            }>
               <motion.div
-                className="flex justify-between items-center rounded-lg p-2 relative overflow-hidden bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-900/40 backdrop-blur-sm border-2 border-purple-400/60 shadow-lg shadow-purple-500/20 cursor-pointer select-none"
+                className="rounded-lg p-2 relative overflow-hidden bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-900/40 backdrop-blur-sm border-2 border-purple-400/60 shadow-lg shadow-purple-500/20 cursor-pointer select-none"
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 onClick={handleShieldClick}
@@ -100,15 +123,45 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
                   </div>
                 </>
 
-                <div className="flex items-center gap-2 relative z-10 text-purple-100">
-                  <Shield className="w-4 h-4" fill="currentColor" />
-                  <span className="text-sm font-semibold">
-                    Streak: {currentStreak} | Protected: {decayingProtectedBonus}
+                {/* Top row: Shield info and XP bonus */}
+                <div className="flex justify-between items-center relative z-10 text-purple-100">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" fill="currentColor" />
+                    <span className="text-sm font-semibold">
+                      {protectedValue}-game streak
+                    </span>
+                  </div>
+                  <span className="text-sm font-bold">
+                    +{effectiveStreak * 10}%
                   </span>
                 </div>
-                <span className="text-sm font-bold relative z-10 text-purple-100">
-                  +{effectiveStreak * 10}%
-                </span>
+
+                {/* Status indicator */}
+                <div className="mt-2 relative z-10">
+                  {isShieldPending ? (
+                    // Pending state - shield ready but game hasn't been missed yet
+                    <div className="flex items-center justify-center gap-2 text-xs text-purple-200/80 py-1">
+                      <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                      <span>Protection ready</span>
+                    </div>
+                  ) : (
+                    // Recovering or Recovered state - show progress bar
+                    <>
+                      <div className="flex justify-between text-xs text-purple-200/80 mb-1">
+                        <span>{isConverged ? '✓ Recovered' : `${currentStreak}/${convergencePoint} games`}</span>
+                        <span>{isConverged ? 'Complete!' : `${gamesToConvergence} to go`}</span>
+                      </div>
+                      <div className="h-1.5 bg-purple-900/50 rounded-full overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${isConverged ? 'bg-green-400' : 'bg-gradient-to-r from-purple-400 to-indigo-400'}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${convergenceProgress}%` }}
+                          transition={{ duration: 0.5, ease: "easeOut" }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </motion.div>
             </Tooltip>
           ) : currentStreak > 0 ? (
@@ -136,7 +189,13 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
               className="sm:hidden"
             >
               <div className="bg-purple-900/60 border-2 border-purple-400/40 rounded-lg p-2 text-xs text-purple-100">
-                <span className="font-semibold">🛡️ Streak Protection Active:</span> {possessivePronoun} streak {currentStreak} with protected bonus of {decayingProtectedBonus} → +{effectiveStreak * 10}% XP
+                {isShieldPending ? (
+                  <span>🛡️ <span className="font-semibold">Protection ready!</span> If you miss this game, your {protectedValue}-game streak bonus will gradually decay instead of resetting to 0.</span>
+                ) : isConverged ? (
+                  <span>🛡️ <span className="font-semibold">Fully recovered!</span> Natural streak ({currentStreak}) has caught up.</span>
+                ) : (
+                  <span>🛡️ <span className="font-semibold">Recovering {protectedValue}-game streak.</span> {gamesToConvergence} more {gamesToConvergence === 1 ? 'game' : 'games'} to full recovery. Current bonus: +{effectiveStreak * 10}%</span>
+                )}
               </div>
             </motion.div>
           )}

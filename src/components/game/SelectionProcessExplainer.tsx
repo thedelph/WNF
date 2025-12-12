@@ -161,6 +161,47 @@ export const SelectionProcessExplainer: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Shield vs Register Decision */}
+                <div className="collapse collapse-arrow bg-base-200">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-medium text-info">
+                    Can I register first and then use a shield if I don't get picked?
+                  </div>
+                  <div className="collapse-content">
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <h4 className="font-semibold mb-2">⚠️ No - you must choose before registration closes</h4>
+                        <p className="opacity-80 mb-2">
+                          You cannot register and use a shield for the same game. Once registration closes,
+                          your choice is final - you can't switch from registered to shielded if you end up as a reserve.
+                        </p>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold mb-1">📊 What happens with each choice:</h4>
+                        <ul className="list-disc list-inside ml-4 opacity-80">
+                          <li><strong>Register and get selected:</strong> You play, streak continues</li>
+                          <li><strong>Register and become reserve:</strong> Your attendance streak resets (but you earn reserve XP and Bench Warmer bonus)</li>
+                          <li><strong>Use a shield:</strong> Your streak is protected with gradual decay</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold mb-1">💡 Making your decision:</h4>
+                        <p className="opacity-80">
+                          If you think your selection chances are low and you have a streak you want to protect,
+                          using a shield is a valid choice - they're a resource you've earned.
+                          When more than 18 players register, you'll see your odds in "The Randomiser" section.
+                        </p>
+                        <p className="opacity-80 mt-2">
+                          <strong>Remember:</strong> Using a shield means you won't play that week, even if you would have been selected.
+                          You're trading the chance to play for guaranteed streak protection.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Shield Tokens */}
                 <div className="collapse collapse-arrow bg-base-200">
                   <input type="checkbox" />
@@ -172,36 +213,38 @@ export const SelectionProcessExplainer: React.FC = () => {
                       <div>
                         <h4 className="font-semibold mb-2">🛡️ What are Shield Tokens?</h4>
                         <p className="opacity-80 mb-2">
-                          Shield tokens let you protect your XP streak when you can't play (holidays, illness, injury).
-                          Instead of registering for a game, use a shield token to freeze your streak.
+                          Shield tokens protect your XP streak when you can't play (holidays, illness, injury).
+                          Use a shield token INSTEAD of registering to protect your streak.
                         </p>
                         <ul className="list-disc list-inside ml-4 opacity-80">
-                          <li>Use shields INSTEAD of registering (mutually exclusive)</li>
-                          <li>Your current streak and XP bonus are frozen</li>
+                          <li>Use shields INSTEAD of registering (can't do both)</li>
+                          <li>Your streak is protected with gradual decay when you return</li>
                           <li>Earn 1 shield token per 10 games played (max 4 tokens)</li>
                           <li>Can be cancelled before registration closes</li>
                         </ul>
                       </div>
 
                       <div>
-                        <h4 className="font-semibold mb-1">⚙️ How Shield Protection Works</h4>
+                        <h4 className="font-semibold mb-1">⚙️ Gradual Decay System</h4>
                         <div className="opacity-80 space-y-2">
                           <p><strong>When you use a shield:</strong></p>
                           <ul className="list-disc list-inside ml-4">
-                            <li>Your current streak value is saved (e.g., 8-game streak)</li>
-                            <li>Your XP bonus percentage is locked in (e.g., +80% XP)</li>
-                            <li>You keep this bonus even while not playing</li>
+                            <li>Your current streak value is protected (e.g., 10-game streak)</li>
+                            <li>When you return, the protected bonus gradually decreases as your natural streak builds</li>
                           </ul>
-                          <p className="mt-2"><strong>To remove the shield:</strong></p>
+                          <p className="mt-2"><strong>Example (10-game streak protected):</strong></p>
                           <ul className="list-disc list-inside ml-4">
-                            <li>Play consecutive games until your natural streak catches up to the frozen value</li>
-                            <li>Example: 8-game frozen streak → play 8 consecutive games → shield automatically removed</li>
-                            <li>Then continue building your streak normally (9, 10, 11...)</li>
+                            <li>Game 1: Natural 1, Protected 9 → +90% XP</li>
+                            <li>Game 2: Natural 2, Protected 8 → +80% XP</li>
+                            <li>Game 3: Natural 3, Protected 7 → +70% XP</li>
+                            <li>Game 4: Natural 4, Protected 6 → +60% XP</li>
+                            <li>Game 5: Natural 5, Protected 5 → +50% XP (converged!)</li>
+                            <li>Game 6: Natural 6 → +60% XP (continues normally)</li>
                           </ul>
                           <p className="mt-2"><strong>The benefit:</strong></p>
                           <ul className="list-disc list-inside ml-4">
-                            <li>Without shield: miss 1 game → lose entire streak → start from 0</li>
-                            <li>With shield: miss 1 game → keep streak frozen → rebuild from where you left off</li>
+                            <li>Without shield: miss 1 game → streak resets to 0</li>
+                            <li>With shield: recover in <strong>half the games</strong> (10-game streak → 5 games to recover)</li>
                           </ul>
                         </div>
                       </div>
