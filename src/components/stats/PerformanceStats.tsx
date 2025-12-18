@@ -266,12 +266,22 @@ export const PerformanceStats = ({ stats, selectedYear }: PerformanceStatsProps)
         winners={stats.bestChemistry.map((pair: ChemistryPairStats) => ({
           id: `${pair.player1Id}-${pair.player2Id}`,
           name: `${pair.player1Name} & ${pair.player2Name}`,
-          value: `${pair.winsTogether}W ${pair.drawsTogether}D ${pair.lossesTogether}L (${pair.gamesTogether}) | ${pair.performanceRate.toFixed(1)}% | ${pair.chemistryScore.toFixed(1)}`,
+          value: (
+            <div className="flex flex-col items-end text-right">
+              {/* Main stat - Chemistry Score */}
+              <span className="font-bold">{pair.chemistryScore.toFixed(1)}</span>
+              {/* Secondary row - record and games */}
+              <div className="text-xs opacity-80">
+                <span className="hidden sm:inline">{pair.winsTogether}W {pair.drawsTogether}D {pair.lossesTogether}L · </span>
+                <span>{pair.gamesTogether} games · {pair.performanceRate.toFixed(0)}%</span>
+              </div>
+            </div>
+          ),
           rawValue: pair.chemistryScore
         }))}
         icon={<Beaker className="w-6 h-6" />}
         color="green"
-        valueHeader="Record | Perf | Score"
+        valueHeader="Score"
         description="Score factors in win rate and sample size (min 10 games). Larger samples carry more weight."
       />
     </motion.div>
