@@ -447,14 +447,14 @@ export interface SwapEvaluation {
 // Priority: Systematic Bias > Core Skills > Position Balance > Avg Rating > Attributes
 // Phase 3 Update: Increased systematicBias to prevent one team dominating core skills, added avgRatingBalance
 const DEFAULT_WEIGHTS: OptimizationWeights = {
-  skillsBalance: 0.25,      // Attack/Defense/Game IQ balance (reduced to make room for avgRating)
+  skillsBalance: 0.22,      // Attack/Defense/Game IQ balance (reduced for systematicBias increase)
   shootingBalance: 0.10,    // Shooting distribution
   attributeBalance: 0.13,   // Pace, passing, etc.
   tierFairness: 0.05,       // Only care about top 4 / bottom 4 split
   performanceGap: 0.08,     // Win rate gap
-  systematicBias: 0.20,     // INCREASED: Penalize one team dominating all core skills
-  positionBalance: 0.12,    // Position balance to prevent striker imbalance
-  avgRatingBalance: 0.10,   // NEW: Average three-layer rating difference (max 0.25 gap target)
+  systematicBias: 0.25,     // INCREASED: Heavily penalize one team dominating all categories
+  positionBalance: 0.10,    // Position balance to prevent striker imbalance (reduced slightly)
+  avgRatingBalance: 0.10,   // Average three-layer rating difference (max 0.25 gap target)
 };
 
 // Phase 4: Multi-Swap Combinations Interface
@@ -1076,11 +1076,18 @@ function calculateAttributeBalanceScore(blueTeam: PlayerWithRating[], orangeTeam
     penaltyMultiplier = 1.05; // 5% soft penalty for moderate differences (catches Pace 0.98, Defending 1.01)
   }
 
-  // Apply dominance penalty similar to skill balance
-  // If dominance = 0 (3-3 split): use 80% of avg diff (reward complementary attributes moderately)
-  // If dominance = 1 (6-0 split): use 100% of avg diff (penalize one-sided dominance)
-  // Changed from 0.7-0.3 to 0.8-0.2 (attributes are less critical than core skills)
-  const dominancePenalty = 0.8 + (attributeDominance * 0.2);
+  // Apply stepped dominance penalty to heavily penalize attribute sweeps
+  // 6-0/0-6 sweeps should be severely penalized as they indicate systematic bias
+  let dominancePenalty: number;
+  if (blueWins === 6 || blueWins === 0) {
+    dominancePenalty = 2.5;  // 6-0 sweep: severe penalty
+  } else if (blueWins >= 5 || blueWins <= 1) {
+    dominancePenalty = 1.8;  // 5-1 split: high penalty
+  } else if (blueWins >= 4 || blueWins <= 2) {
+    dominancePenalty = 1.3;  // 4-2 split: moderate penalty
+  } else {
+    dominancePenalty = 1.0;  // 3-3 split: no penalty (ideal balance)
+  }
 
   // Return weighted score that considers both average, extreme values, and dominance
   // This allows some variation while preventing severe imbalances and one-sided teams
@@ -1889,7 +1896,11 @@ function calculateDetailedBalanceScore(blueTeam: PlayerWithRating[], orangeTeam:
   const shootingImbalance = calculateShootingImbalance(blueTeam, orangeTeam, shootingDistribution);
 
   // Weight skills at 85% and attributes at 15% to match updated rating calculation
-  const skillBalance = Math.max(attackDiff, defenseDiff, gameIqDiff, gkDiff);
+  // Use cumulative+max hybrid: 60% worst imbalance + 40% average across all skills
+  // This captures both the worst individual imbalance AND cumulative drift
+  const maxSkillDiff = Math.max(attackDiff, defenseDiff, gameIqDiff, gkDiff);
+  const avgSkillDiff = (attackDiff + defenseDiff + gameIqDiff + gkDiff) / 4;
+  const skillBalance = (maxSkillDiff * 0.6) + (avgSkillDiff * 0.4);
 
   // Include shooting imbalance as a factor (normalized to same scale as skills)
   // Normalize shooting imbalance to 0-10 scale (typical range is 0-10)
@@ -4031,7 +4042,36 @@ function finalValidation(
     .reduce((sum, p) => sum + (p.gk_rating ?? 5), 0) / Math.max(1, orangeTeam.filter(p => !gkIdSet.has(p.player_id)).length);
 
   // Calculate overall grade
-  const overallGrade = calculateOverallGrade(coreSkillGrade, avgRatingGrade, attributeGrade, positionValid);
+  let overallGrade = calculateOverallGrade(coreSkillGrade, avgRatingGrade, attributeGrade, positionValid);
+
+  // NEW: Apply systematic bias grade cap based on attribute dominance
+  // Count how many attributes each team wins (6 total attributes)
+  let attributeWins = 0;
+  if (blueAttrs.hasAttributes && orangeAttrs.hasAttributes) {
+    if (blueAttrs.pace > orangeAttrs.pace) attributeWins++;
+    if (blueAttrs.shooting > orangeAttrs.shooting) attributeWins++;
+    if (blueAttrs.passing > orangeAttrs.passing) attributeWins++;
+    if (blueAttrs.dribbling > orangeAttrs.dribbling) attributeWins++;
+    if (blueAttrs.defending > orangeAttrs.defending) attributeWins++;
+    if (blueAttrs.physical > orangeAttrs.physical) attributeWins++;
+  }
+  const orangeAttributeWins = 6 - attributeWins;
+
+  // Cap grade based on attribute dominance (one team winning most/all attributes)
+  const maxAttributeWins = Math.max(attributeWins, orangeAttributeWins);
+  if (maxAttributeWins === 6) {
+    // 6-0 sweep: cap at C+ (60/100)
+    if (overallGrade.score > 60) {
+      overallGrade = { grade: 'ACCEPTABLE', score: 60 };
+      issues.push(`Systematic Bias: ${maxAttributeWins}-${6-maxAttributeWins} attribute sweep (grade capped at ACCEPTABLE)`);
+    }
+  } else if (maxAttributeWins === 5) {
+    // 5-1 split: cap at B (75/100)
+    if (overallGrade.score > 75) {
+      overallGrade = { grade: 'GOOD', score: 75 };
+      issues.push(`Systematic Bias: ${maxAttributeWins}-${6-maxAttributeWins} attribute split (grade capped at GOOD)`);
+    }
+  }
 
   return {
     valid: issues.length === 0,
@@ -6778,12 +6818,19 @@ function optimizeTeams(
   // ============================================================================
   // SIMULATED ANNEALING PARAMETERS
   // ============================================================================
-  let temperature = 1.0;              // Initial temperature (high = more exploration)
+  let temperature = 0;                // Deterministic mode: only accept improvements (no random worse-swap acceptance)
   const MIN_TEMPERATURE = 0.01;       // Minimum temperature before stopping
-  const COOLING_RATE = 0.90;          // Cool by 10% each round (0.90 = keep 90%)
+  const COOLING_RATE = 0.80;          // Cool by 20% each round (0.80 = faster convergence, less oscillation)
   const REHEAT_TEMP = 0.4;            // Reheat to this when stuck
   let consecutiveNoImprovement = 0;   // Track rounds without improvement
   const REHEAT_THRESHOLD = 3;         // Reheat after 3 rounds without improvement
+
+  // Convergence detection parameters
+  const CONVERGENCE_THRESHOLD = 0.001; // Score change below this is considered stable
+  const MIN_ITERATIONS_BEFORE_CONVERGE = 20; // Minimum iterations before early exit allowed
+  const STABLE_ROUNDS_TO_CONVERGE = 5;  // Consecutive stable rounds to trigger convergence
+  let stableRoundCount = 0;             // Track consecutive stable rounds
+  let previousRoundBalance = currentBalance; // Track previous balance for stability check
 
   // Best state tracking (to prevent losing good solutions)
   let bestBlueTeam = [...blueTeam];
@@ -7321,6 +7368,24 @@ function optimizeTeams(
       debugLog.value += ` (${consecutiveNoImprovement} rounds without improvement)`;
     }
     debugLog.value += `\n`;
+  }
+
+  // Convergence detection: check if score has stabilized
+  const scoreChange = Math.abs(currentBalance - previousRoundBalance);
+  if (scoreChange < CONVERGENCE_THRESHOLD) {
+    stableRoundCount++;
+  } else {
+    stableRoundCount = 0;
+  }
+  previousRoundBalance = currentBalance;
+
+  // Early exit if converged (stable for enough rounds after minimum iterations)
+  if (stableRoundCount >= STABLE_ROUNDS_TO_CONVERGE && totalIterations >= MIN_ITERATIONS_BEFORE_CONVERGE) {
+    if (debugLog) {
+      debugLog.value += `\n🎯 CONVERGED: Score stable (< ${CONVERGENCE_THRESHOLD} change) for ${stableRoundCount} rounds\n`;
+      debugLog.value += `   Exiting early after ${totalIterations} iterations (min: ${MIN_ITERATIONS_BEFORE_CONVERGE})\n`;
+    }
+    break;
   }
 
   // If temperature drops too low, stop optimizing
