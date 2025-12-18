@@ -18,6 +18,39 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.3.2',
+    date: '18/12/2025',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Player Chemistry System',
+            details: "New chemistry stats show which player pairs perform best when on the same team. Chemistry score factors in both win rate and sample size (minimum 10 games together), so larger samples carry more weight. View your chemistry with any player on their profile, see top chemistry partners, and check the Best Chemistry leaderboard on the Stats page."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Stats Page Reorganization',
+            details: "Best Chemistry card moved to the Performance tab alongside other win/loss related statistics."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.3.1',
     date: '26/09/2025',
     sections: [
