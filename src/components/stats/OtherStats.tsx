@@ -11,13 +11,13 @@ interface OtherStatsProps {
 
 /**
  * OtherStats component - Displays miscellaneous statistics
- * 
+ *
  * Includes:
  * - Lucky Bib Colour
- * - Best Buddies
+ * - Best Buddies (most games together)
  * - Blue Team Specialists
  * - Orange Team Specialists
- * 
+ *
  * @param stats - The stats object from useStats hook
  */
 export const OtherStats = ({ stats }: OtherStatsProps) => {

@@ -27,6 +27,8 @@ import { useShieldStatus } from '../hooks/useShieldStatus';
 import WinRateGraph from '../components/profile/WinRateGraph';
 import { AttributeCombination } from '../types/playstyle';
 import { Position } from '../types/positions';
+import { usePlayerChemistry } from '../hooks/usePlayerChemistry';
+import { PairChemistryCard, TopChemistryPartners } from '../components/profile/PlayerChemistry';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -78,6 +80,19 @@ export default function PlayerProfileNew() {
 
   const { tokenStatus, loading: tokenLoading } = useTokenStatus(player?.id || '');
   const { shieldStatus, loading: shieldLoading } = useShieldStatus(player?.id);
+  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
+
+  // Fetch chemistry data for the viewed player
+  const {
+    topPartners,
+    pairChemistry,
+    loading: chemistryLoading,
+    gamesUntilChemistry
+  } = usePlayerChemistry({
+    playerId: player?.id || '',
+    currentPlayerId,
+    limit: 3
+  });
 
   const fetchPlaystyles = async () => {
     try {
@@ -370,6 +385,8 @@ export default function PlayerProfileNew() {
             return;
           }
           currentPlayerId = currentPlayer?.id;
+          // Set state for chemistry hook
+          setCurrentPlayerId(currentPlayer?.id || null);
         }
 
         // Get games played together and rating if logged in
@@ -788,6 +805,27 @@ export default function PlayerProfileNew() {
           }} />
         </div>
 
+        {/* Top Chemistry Partners - Right below stats */}
+        <div className="w-full">
+          <TopChemistryPartners
+            partners={topPartners}
+            loading={chemistryLoading}
+            title={`${player.friendly_name}'s Top Chemistry Partners`}
+          />
+        </div>
+
+        {/* Your Chemistry with this Player - Right below Top Chemistry Partners */}
+        {user && user.id !== player.user_id && (
+          <div className="w-full">
+            <PairChemistryCard
+              chemistry={pairChemistry}
+              playerName={player.friendly_name}
+              gamesUntilChemistry={gamesUntilChemistry}
+              loading={chemistryLoading}
+            />
+          </div>
+        )}
+
         {/* XP Breakdown - Full Width */}
         {player && (
           <div className="w-full">
@@ -878,6 +916,7 @@ export default function PlayerProfileNew() {
             )}
           </div>
         )}
+
       </motion.div>
 
       {/* Only show PlayerRating if not viewing own profile */}

@@ -16,6 +16,7 @@ interface AwardCardProps {
   className?: string;
   icon?: React.ReactNode;
   color?: 'blue' | 'orange' | 'purple' | 'green' | 'pink' | 'indigo' | 'teal' | 'red' | 'rose' | 'amber' | 'yellow';
+  valueHeader?: string; // Optional header label for the value column
 }
 
 // Emoji medals for top three positions
@@ -49,7 +50,7 @@ const shadowColors = {
   yellow: 'shadow-amber-700/50'
 };
 
-export const AwardCard = ({ title, winners, description, className, icon, color = 'blue' }: AwardCardProps) => {
+export const AwardCard = ({ title, winners, description, className, icon, color = 'blue', valueHeader }: AwardCardProps) => {
   // Determine medal positions considering ties
   const getMedalPosition = (currentIndex: number, winners: Winner[]) => {
     const currentWinner = winners[currentIndex];
@@ -100,6 +101,13 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
           <div>{icon || <Trophy className="w-6 h-6" />}</div>
         </div>
         <div className="space-y-1 mb-4">
+          {/* Optional column header */}
+          {valueHeader && (
+            <div className="flex justify-between items-center gap-2 text-xs opacity-70 border-b border-white/20 pb-1 mb-1">
+              <span className="pl-7">Player</span>
+              <span>{valueHeader}</span>
+            </div>
+          )}
           {winners.map((winner, index) => {
             const medalIndex = getMedalPosition(index, winners);
             return (

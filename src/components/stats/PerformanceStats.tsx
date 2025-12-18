@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { Award, Percent, TrendingUp, Shield, TrendingDown, XCircle } from 'lucide-react';
+import { Award, Percent, TrendingUp, Shield, TrendingDown, XCircle, Beaker } from 'lucide-react';
 import { AwardCard } from './AwardCard';
 import { StatsCard } from './StatsCard';
 import { GoalDifferentialsCard } from './GoalDifferentialsCard';
-import { Stats, PlayerStats } from '../../hooks/useStats';
+import { Stats, PlayerStats, ChemistryPairStats } from '../../hooks/useStats';
 
 // Props interface for the PerformanceStats component
 interface PerformanceStatsProps {
@@ -13,7 +13,7 @@ interface PerformanceStatsProps {
 
 /**
  * PerformanceStats component - Displays performance-related statistics
- * 
+ *
  * Includes:
  * - Team Goal Differentials
  * - Longest Win Streaks
@@ -21,7 +21,8 @@ interface PerformanceStatsProps {
  * - Longest Unbeaten Streaks
  * - Current Unbeaten Streaks
  * - Best Win Rates
- * 
+ * - Best Chemistry (player pairs with highest win rate together)
+ *
  * @param stats - The stats object from useStats hook
  * @param selectedYear - The currently selected year filter
  */
@@ -257,6 +258,21 @@ export const PerformanceStats = ({ stats, selectedYear }: PerformanceStatsProps)
         icon={<Percent className="w-6 h-6" />}
         description="Stats based on games with known outcomes and even teams only"
         color="teal"
+      />
+
+      {/* Best Chemistry */}
+      <AwardCard
+        title="Best Chemistry"
+        winners={stats.bestChemistry.map((pair: ChemistryPairStats) => ({
+          id: `${pair.player1Id}-${pair.player2Id}`,
+          name: `${pair.player1Name} & ${pair.player2Name}`,
+          value: `${pair.winsTogether}W ${pair.drawsTogether}D ${pair.lossesTogether}L (${pair.gamesTogether}) | ${pair.performanceRate.toFixed(1)}% | ${pair.chemistryScore.toFixed(1)}`,
+          rawValue: pair.chemistryScore
+        }))}
+        icon={<Beaker className="w-6 h-6" />}
+        color="green"
+        valueHeader="Record | Perf | Score"
+        description="Score factors in win rate and sample size (min 10 games). Larger samples carry more weight."
       />
     </motion.div>
   );

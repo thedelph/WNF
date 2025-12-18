@@ -31,7 +31,7 @@ export interface PlayerStats {
 };
 
 // Define team color stats type
-type TeamColorStats = {
+export type TeamColorStats = {
   id: string;
   friendlyName: string;
   team: string;
@@ -47,6 +47,23 @@ type BuddyStats = {
   buddyFriendlyName: string;
   gamesTogether: number;
 };
+
+// Define chemistry pair stats type
+export type ChemistryPairStats = {
+  player1Id: string;
+  player1Name: string;
+  player2Id: string;
+  player2Name: string;
+  gamesTogether: number;
+  winsTogether: number;
+  drawsTogether: number;
+  lossesTogether: number;
+  performanceRate: number;
+  chemistryScore: number;
+};
+
+// Re-export for external use
+export type { BuddyStats as BestBuddies };
 
 // Define player goal stats type
 type GoalDifferentialStats = {
@@ -93,6 +110,7 @@ export interface Stats {
     orange: TeamColorStats[];
   };
   bestBuddies: BuddyStats[];
+  bestChemistry: ChemistryPairStats[];
   topWinStreaks: PlayerStats[];
   currentWinStreaks: PlayerStats[];
   topUnbeatenStreaks: PlayerStats[];
@@ -124,6 +142,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
       orange: []
     },
     bestBuddies: [],
+    bestChemistry: [],
     topWinStreaks: [],
     currentWinStreaks: [],
     topUnbeatenStreaks: [],
@@ -437,6 +456,31 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           gamesTogether: Number(buddy.games_together)
         })) || [];
 
+        // Fetch best chemistry pairs
+        const { data: chemistryData, error: chemistryError } = await supabase
+          .rpc('get_player_chemistry', {
+            target_player_id: null,
+            target_year: year || null
+          });
+
+        if (chemistryError) {
+          console.error('Error fetching chemistry data:', chemistryError);
+          // Don't throw - chemistry is optional, continue with empty array
+        }
+
+        const transformedChemistry: ChemistryPairStats[] = (chemistryData || []).slice(0, 10).map((pair: any) => ({
+          player1Id: pair.player1_id,
+          player1Name: pair.player1_name,
+          player2Id: pair.player2_id,
+          player2Name: pair.player2_name,
+          gamesTogether: Number(pair.games_together),
+          winsTogether: Number(pair.wins_together),
+          drawsTogether: Number(pair.draws_together),
+          lossesTogether: Number(pair.losses_together),
+          performanceRate: Number(pair.performance_rate),
+          chemistryScore: Number(pair.chemistry_score)
+        }));
+
         // Process and set stats
         setStats({
           luckyBibColor: {
@@ -484,6 +528,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
             orange: transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'orange').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency).filter((p: TeamColorStats) => p.teamFrequency >= (transformedTeamColorStats.filter((p: TeamColorStats) => p.team === 'orange').sort((a: TeamColorStats, b: TeamColorStats) => b.teamFrequency - a.teamFrequency)[2]?.teamFrequency || 0))
           },
           bestBuddies: transformedBuddies.sort((a: BuddyStats, b: BuddyStats) => b.gamesTogether - a.gamesTogether),
+          bestChemistry: transformedChemistry,
           // Transform goal differential data
           goalDifferentials: goalDifferentials?.map((player: any) => ({
             id: player.id,
