@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Users, Trophy, TrendingUp } from 'lucide-react';
@@ -6,6 +6,116 @@ import { ChemistryStats, ChemistryPartner, CHEMISTRY_MIN_GAMES } from '../../typ
 import { toUrlFriendly } from '../../utils/urlHelpers';
 import { Tooltip } from '../ui/Tooltip';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+
+// Chemistry messages organized by performance tier (adjusted for realistic WNF data)
+// Distribution: 80%+ (0.6%), 70-80% (6%), 60-70% (17%), 50-60% (28%), 40-50% (30%), 30-40% (14%), <30% (4%)
+const chemistryMessages = {
+  legendary: [ // 80%+ (only 1 pair ever achieved this!)
+    "Xavi & Iniesta vibes! You two are basically telepathic.",
+    "The stuff of legend! Someone call Sky Sports.",
+    "Better chemistry than Messi & Suarez. Don't @ us.",
+    "When you two play together, the opposition just vibes.",
+    "Scientists are studying your connection as we speak.",
+    "You could win the World Cup together. Probably.",
+    "This is the best partnership in WNF history. Literally.",
+  ],
+  elite: [ // 70-80% (top ~7% of pairs)
+    "Rio & Vidic energy - an absolute brick wall together!",
+    "Peak Drogba & Lampard partnership vibes.",
+    "Like Salah & TAA - the connection is unreal.",
+    "Manager's dream duo. The scouting team is watching.",
+    "You two move like you share a brain cell. In a good way.",
+    "Opposition managers are drawing up plans just for you two.",
+    "You two link up like prime Thierry & Bergkamp!",
+    "Proper Keane & Scholes midfield dominance.",
+  ],
+  excellent: [ // 60-70% (top ~23% of pairs)
+    "The Terry & Lampard special - leaders on the pitch.",
+    "Winning is just what you do together. Simple as.",
+    "Like a fine wine, this partnership just works.",
+    "You'd walk into most Sunday league teams. Together.",
+    "A partnership that just clicks. Keep it going!",
+    "The manager puts you two together for a reason.",
+  ],
+  good: [ // 50-60% (middle of the pack)
+    "Solid partnership - like Carrick & Fletcher. Underrated but effective.",
+    "A dependable duo. Like Henderson & Milner, gets the job done.",
+    "Not flashy, but you're quietly racking up the wins.",
+    "The manager knows they can count on you two.",
+    "Consistent partnership. Contract extension incoming.",
+    "You won't make the highlight reel, but you'll make the points.",
+    "A bread and butter partnership. Nothing wrong with that.",
+  ],
+  average: [ // 40-50% (most common tier)
+    "Work in progress... even Gerrard & Lampard needed time.",
+    "Some teething problems but the potential is there.",
+    "Like England at tournaments - promising but needs work.",
+    "The chemistry lab is still cooking. Give it time.",
+    "Not quite clicking yet, but Rome wasn't built in a day.",
+    "Early days. Even the Class of 92 had to start somewhere.",
+    "Perfectly balanced, as all things should be. Literally 50/50.",
+    "The definition of 'could go either way'.",
+  ],
+  belowAverage: [ // 30-40%
+    "Drawing specialists! At least you're not losing... much.",
+    "Specialists in the art of the stalemate.",
+    "You've mastered the 'take a point and move on' strategy.",
+    "Greece Euro 2004 vibes - ugly but sometimes effective?",
+    "The beautiful game? More like the beige game.",
+    "Mourinho would be proud of these defensive results.",
+    "Results not great, but you're still in the game!",
+  ],
+  poor: [ // 20-30%
+    "Giving Mustafi & Luiz a run for their money here.",
+    "Like Balotelli at Liverpool - it's just not happening.",
+    "The vibes are off. Very off.",
+    "Have you tried communicating? Maybe in any language?",
+    "This partnership is giving 'last minute January loan' energy.",
+    "Even Ted Lasso couldn't fix this chemistry.",
+    "Maybe stick to playing on opposite teams?",
+  ],
+  terrible: [ // <20% (only 3 pairs this bad!)
+    "Like oil and water. Definitely try opposite teams.",
+    "Plot twist: you're secretly working for the other team.",
+    "Genuinely impressive how bad this is. A reverse masterclass.",
+    "The opposition sends thank you cards when you two play together.",
+    "This partnership is sponsored by the other team's goal difference.",
+    "Historic levels of incompatibility. Scientists are baffled.",
+  ],
+};
+
+// Get color class based on performance rate
+const getColorClass = (rate: number): string => {
+  if (rate >= 60) return 'text-success';
+  if (rate >= 40) return 'text-info';
+  if (rate >= 30) return 'text-warning';
+  return 'text-error';
+};
+
+// Get tier based on performance rate (adjusted for realistic WNF data)
+const getTier = (rate: number): keyof typeof chemistryMessages => {
+  if (rate >= 80) return 'legendary';
+  if (rate >= 70) return 'elite';
+  if (rate >= 60) return 'excellent';
+  if (rate >= 50) return 'good';
+  if (rate >= 40) return 'average';
+  if (rate >= 30) return 'belowAverage';
+  if (rate >= 20) return 'poor';
+  return 'terrible';
+};
+
+// Component to display chemistry message
+const ChemistryMessage: React.FC<{ performanceRate: number }> = ({ performanceRate }) => {
+  const message = useMemo(() => {
+    const tier = getTier(performanceRate);
+    const messages = chemistryMessages[tier];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }, [performanceRate]);
+
+  const colorClass = getColorClass(performanceRate);
+
+  return <span className={colorClass}>{message}</span>;
+};
 
 interface PairChemistryCardProps {
   /** Chemistry stats between two players */
@@ -123,13 +233,7 @@ export const PairChemistryCard: React.FC<PairChemistryCardProps> = ({
 
         {/* Performance message */}
         <div className="mt-4 text-center text-sm">
-          {performanceRate >= 66.7 ? (
-            <span className="text-success">You perform exceptionally well together!</span>
-          ) : performanceRate >= 50 ? (
-            <span className="text-info">You perform well together!</span>
-          ) : (
-            <span className="text-base-content/70">Keep playing to improve your chemistry!</span>
-          )}
+          <ChemistryMessage performanceRate={performanceRate} />
         </div>
       </div>
     </motion.div>
