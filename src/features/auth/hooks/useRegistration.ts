@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../../utils/supabase'
 import { toast } from 'react-hot-toast'
 import { AUTH_CONFIG } from '../constants'
+import { logAuthError } from '../utils/authErrorLogger'
 
 interface RegistrationForm {
   email: string
@@ -116,6 +117,16 @@ export const useRegistration = () => {
       }
     } catch (error: any) {
       console.error('Registration error:', error)
+
+      // Log error to database for troubleshooting
+      await logAuthError({
+        error_type: 'signup',
+        error_code: error.code ?? error.status?.toString(),
+        error_message: error.message || 'Unknown registration error',
+        user_email: email,
+        metadata: { friendlyName }
+      })
+
       if (error.message?.toLowerCase().includes('security purposes')) {
         toast.error('Please wait a moment before trying again')
       } else if (error.message?.toLowerCase().includes('jwt expired')) {

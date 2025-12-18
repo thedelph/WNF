@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../utils/supabase';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { sessionRecovery } from '../utils/sessionRecovery';
+import { logAuthError } from '../features/auth/utils/authErrorLogger';
 
 interface AuthState {
   user: User | null;
@@ -240,7 +241,15 @@ export const useAuth = () => {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
+      // Log login error to database for troubleshooting
+      await logAuthError({
+        error_type: 'login',
+        error_code: error.code ?? error.status?.toString(),
+        error_message: error.message || 'Unknown login error',
+        user_email: email
+      });
+
       setAuthState(prev => ({
         ...prev,
         error: error as Error,
@@ -290,8 +299,16 @@ export const useAuth = () => {
       localStorage.removeItem('supabase.auth.token');
       recoveryAttempted.current = false;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during sign out:', error);
+
+      // Log logout error to database for troubleshooting
+      await logAuthError({
+        error_type: 'logout',
+        error_code: error.code ?? error.status?.toString(),
+        error_message: error.message || 'Unknown logout error'
+      });
+
       setAuthState(prev => ({ ...prev, error: error as Error }));
 
       // Even if there's an error, still reset the local state

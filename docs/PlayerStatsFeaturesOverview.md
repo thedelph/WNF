@@ -33,7 +33,17 @@ Tracking of consecutive wins and unbeaten streaks. See [WinningStreaksFeature.md
 ### 5. Goal Differential
 Tracking of goals scored vs. conceded while a player is on the pitch. See [GoalDifferentialFeature.md](./GoalDifferentialFeature.md) for more information.
 
-### 6. XP System
+### 6. Player Chemistry
+A chemistry system showing how well player pairs perform together when on the same team. See [PlayerChemistry.md](./features/PlayerChemistry.md) for details.
+
+Key features:
+- Chemistry score factors in win rate AND sample size (larger samples carry more weight)
+- Minimum 10 games threshold for reliable statistics
+- Top chemistry partners displayed on player profiles
+- Best Chemistry leaderboard on Stats page
+- Humorous tier-based messages comparing partnerships to famous football duos
+
+### 7. XP System
 A tiered XP system that rewards player participation, win rates, and other factors. See [XPSystemExplained.md](./XPSystemExplained.md) and [TieredXPSystemDesign.md](./TieredXPSystemDesign.md) for details.
 
 ## Stats Display Components
