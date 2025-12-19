@@ -1,12 +1,12 @@
 # Team Balancing Algorithm Evolution
 
-**Last Updated:** 2025-11-26
+**Last Updated:** 2025-12-19
 
 This document tracks the complete chronological history of team balancing algorithm improvements, from initial implementation through all major optimizations.
 
 ---
 
-## 📊 Current Algorithm (v10.0 - 2025-11-26)
+## 📊 Current Algorithm (v11.0 - 2025-12-19)
 
 ### Weighting Formula
 
@@ -839,6 +839,174 @@ if (totalStrikersAfter >= 2 && (blueStrikersAfter === 0 || orangeStrikersAfter =
 
 ---
 
+### Phase 7: Player Chemistry (2025-12-19)
+
+#### v11.0 - Player Chemistry Integration (2025-12-19)
+
+**Change:** 9th multi-objective optimization target - balance team chemistry
+
+**Motivation:** Players with strong chemistry (high win rate when playing together) should be distributed fairly between teams, not all concentrated on one side.
+
+**Chemistry System Integration:**
+- Uses existing chemistry scores from `get_batch_player_chemistry()` RPC
+- Chemistry score formula: `performance_rate × confidence_factor`
+- Minimum 10 games required for pair to have chemistry data
+
+**New Objective - chemistryBalance:**
+```typescript
+interface MultiObjectiveScore {
+  // ... 8 existing objectives ...
+  chemistryBalance: number;   // Team chemistry balance (lower is better)
+  overall: number;
+}
+```
+
+**Team Chemistry Calculation:**
+```typescript
+function calculateTeamChemistry(
+  team: PlayerWithRating[],
+  chemistryLookup?: Map<string, number>
+): { total: number; pairCount: number; highChemistryPairs: number } {
+  let total = 0;
+  let pairCount = 0;
+  let highChemistryPairs = 0;
+
+  // Sum chemistry for all pairs within team
+  for (let i = 0; i < team.length; i++) {
+    for (let j = i + 1; j < team.length; j++) {
+      const key = getChemistryPairKey(team[i].player_id, team[j].player_id);
+      const chemistry = chemistryLookup?.get(key) ?? DEFAULT_SCORE; // 35
+
+      total += chemistry;
+      pairCount++;
+
+      if (chemistry >= HIGH_CHEMISTRY_THRESHOLD) { // 50+
+        highChemistryPairs++;
+      }
+    }
+  }
+
+  return { total, pairCount, highChemistryPairs };
+}
+```
+
+**Chemistry Balance Scoring:**
+```typescript
+function calculateChemistryBalance(
+  blueTeam: PlayerWithRating[],
+  orangeTeam: PlayerWithRating[],
+  chemistryLookup?: Map<string, number>
+): number {
+  const blueChemistry = calculateTeamChemistry(blueTeam, chemistryLookup);
+  const orangeChemistry = calculateTeamChemistry(orangeTeam, chemistryLookup);
+
+  const difference = Math.abs(blueChemistry.total - orangeChemistry.total);
+
+  // Normalize by max possible chemistry per pair (83)
+  const avgPairCount = (blueChemistry.pairCount + orangeChemistry.pairCount) / 2;
+  const normalizedDiff = avgPairCount > 0
+    ? difference / (avgPairCount * MAX_PAIR_CHEMISTRY)
+    : 0;
+
+  return normalizedDiff;
+}
+```
+
+**Updated Weight Distribution:**
+```typescript
+const DEFAULT_WEIGHTS: OptimizationWeights = {
+  skillsBalance: 0.20,      // was 0.22
+  shootingBalance: 0.08,    // was 0.10
+  attributeBalance: 0.11,   // was 0.13
+  tierFairness: 0.05,       // unchanged
+  performanceGap: 0.08,     // unchanged
+  systematicBias: 0.22,     // was 0.25
+  positionBalance: 0.09,    // was 0.10
+  avgRatingBalance: 0.07,   // was 0.10
+  chemistryBalance: 0.10,   // NEW
+};
+// Total: 1.00
+```
+
+**Chemistry Break Penalty in Swap Evaluation:**
+```typescript
+interface SwapPenalties {
+  // ... existing penalties ...
+  chemistryBreakPenalty: number;  // Penalty for breaking high-chemistry pairs
+}
+
+// During swap evaluation:
+const currentHighPairs = countHighChemistryPairs(blueTeam, orangeTeam, chemistryLookup);
+const newHighPairs = countHighChemistryPairs(newBlue, newOrange, chemistryLookup);
+
+if (newHighPairs < currentHighPairs) {
+  penalties.chemistryBreakPenalty = (currentHighPairs - newHighPairs) * 2.0;
+}
+```
+
+**API Integration:**
+```typescript
+export interface TierBasedOptions {
+  permanentGKIds?: string[];
+  chemistryLookup?: Map<string, number>;  // NEW
+}
+
+export function findTierBasedTeamBalance(
+  players: TeamAssignment[],
+  options: TierBasedOptions = {}
+): TierBasedResult
+```
+
+**UI Integration in TierBasedTeamGenerator:**
+```typescript
+const { fetchChemistryForPlayers } = useTeamBalancingChemistry();
+
+const generateTierBasedTeams = async () => {
+  // Fetch chemistry before balancing
+  const playerIds = allPlayers.map(p => p.player_id);
+  const chemistryLookup = await fetchChemistryForPlayers(playerIds);
+
+  const result = findTierBasedTeamBalance(allPlayers, {
+    permanentGKIds,
+    chemistryLookup: chemistryLookup.pairs,
+  });
+};
+```
+
+**Configuration Constants:**
+```typescript
+const CHEMISTRY_CONFIG = {
+  DEFAULT_SCORE: 35,           // Score for pairs with no history (<10 games)
+  HIGH_CHEMISTRY_THRESHOLD: 50, // Pairs above this trigger break penalty
+  MAX_PAIR_CHEMISTRY: 83,       // Theoretical max chemistry score
+  SIGNIFICANT_DIFFERENCE: 500,  // Used for normalization
+};
+```
+
+**Debug Log Output:**
+```
+=== Chemistry Balance ===
+Blue Team Chemistry: 1247 (45 pairs, 8 high-chemistry)
+Orange Team Chemistry: 1189 (45 pairs, 6 high-chemistry)
+Chemistry Difference: 58 (normalized: 0.015)
+```
+
+**Graceful Degradation:**
+- If chemistry data fetch fails: Algorithm proceeds without chemistry (returns 0 score)
+- Pairs with <10 games: Use neutral default score of 35
+- No chemistry lookup provided: All pairs get default score
+
+**Files Created:**
+- `supabase/migrations/20251218_add_batch_player_chemistry.sql`
+- `src/hooks/useTeamBalancingChemistry.ts`
+
+**Files Modified:**
+- `src/types/chemistry.ts` - Added ChemistryLookup type
+- `src/components/admin/team-balancing/tierBasedSnakeDraft.ts` - Chemistry objective
+- `src/components/admin/team-balancing/TierBasedTeamGenerator.tsx` - Chemistry fetching
+
+---
+
 ## 📈 Performance Metrics
 
 ### Balance Score Improvements
@@ -851,6 +1019,7 @@ if (totalStrikersAfter >= 2 && (blueStrikersAfter === 0 || orangeStrikersAfter =
 | v8.0 | 0.2-0.4 | 3-5 | GK integration maintained performance |
 | v9.0 | 0.2-0.4 | 3-5 | Position balance as hard constraint |
 | v10.0 | 0.2-0.4 | 3-5 | Pipeline striker protection |
+| v11.0 | 0.2-0.4 | 3-5 | Player chemistry integration |
 
 **80% improvement** from v6.0 to v7.0!
 
@@ -872,6 +1041,7 @@ if (totalStrikersAfter >= 2 && (blueStrikersAfter === 0 || orangeStrikersAfter =
 
 - [Tier-Based Snake Draft Implementation](../TierBasedSnakeDraftImplementation.md) - Detailed current implementation
 - [Team Balancing](../features/TeamBalancing.md) - User-facing feature overview
+- [Player Chemistry](../features/PlayerChemistry.md) - Chemistry system and team balancing integration
 - [Multi-Objective Optimization Roadmap](../team-balancing/MultiObjectiveOptimizationRoadmap.md) - Future plans
 - [Core Development Patterns](../systems/CoreDevelopmentPatterns.md) - Coding patterns
 

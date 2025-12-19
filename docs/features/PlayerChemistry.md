@@ -88,6 +88,38 @@ Performance-based messages with football humour (random selection per tier):
 | Poor | 20-30% | "Giving Mustafi & Luiz a run for their money" |
 | Terrible | <20% | "The opposition sends thank you cards" |
 
+## Chemistry in Team Balancing
+
+**Added:** December 2025 (v11.0)
+
+The team balancing algorithm now considers player chemistry when generating balanced teams.
+
+### How It Works
+
+1. **Data Fetching**: Before team generation, all pairwise chemistry scores are fetched for players in the pool using the batch RPC
+2. **Team Chemistry Calculation**: Total intra-team chemistry is calculated (sum of all pair chemistry scores within each team)
+3. **Balance Objective**: The algorithm minimizes the difference between team chemistry totals (10% weight)
+4. **Partnership Protection**: Swaps that break high-chemistry pairs (score > 50) incur a penalty of 2.0
+
+### Configuration
+
+| Setting | Value |
+|---------|-------|
+| Default score (unknown pairs) | 35 |
+| High chemistry threshold | 50+ |
+| Minimum games required | 10 |
+| Objective weight | 10% |
+| Break penalty | 2.0 per pair |
+
+### Graceful Degradation
+
+- Pairs with no history (< 10 games together): Use neutral score of 35
+- If chemistry data fails to load: Algorithm proceeds without chemistry consideration
+
+**See also:** [Team Balancing](TeamBalancing.md), [Algorithm Evolution](../algorithms/TeamBalancingEvolution.md)
+
+---
+
 ## Database
 
 ### RPC Functions
@@ -101,20 +133,29 @@ Returns chemistry stats between two specific players.
 **`get_player_top_chemistry_partners(target_player_id, limit_count, target_year)`**
 Returns top N chemistry partners for a given player.
 
+**`get_batch_player_chemistry(player_ids)`** *(Added Dec 2025)*
+Returns chemistry stats for all pairs within a given player list. Optimized for team balancing - fetches all pairwise chemistry in a single query instead of N*(N-1)/2 individual calls.
+
 ## Files
 
 ### Created
 - `supabase/migrations/20251218_add_player_chemistry.sql` - Database functions
-- `src/types/chemistry.ts` - TypeScript types
+- `supabase/migrations/20251218_add_batch_player_chemistry.sql` - Batch RPC for team balancing
+- `src/types/chemistry.ts` - TypeScript types (includes ChemistryLookup for team balancing)
 - `src/hooks/usePlayerChemistry.ts` - React hook for fetching chemistry data
+- `src/hooks/useTeamBalancingChemistry.ts` - Hook for batch chemistry fetching in team balancing
 - `src/components/profile/PlayerChemistry.tsx` - UI components
 
 ### Modified
 - `src/hooks/useStats.ts` - Added chemistry stats to Stats interface
 - `src/components/stats/PerformanceStats.tsx` - Added Best Chemistry card
 - `src/pages/PlayerProfile.tsx` - Added chemistry sections
+- `src/components/admin/team-balancing/tierBasedSnakeDraft.ts` - Added chemistry objective
+- `src/components/admin/team-balancing/TierBasedTeamGenerator.tsx` - Chemistry fetching integration
 
 ## Related Documentation
 - [Player Stats Overview](../PlayerStatsFeaturesOverview.md)
 - [Win Rate Explainer](../WinRateExplainer.md)
 - [Performance Stats Component](../components/PerformanceStats.md)
+- [Team Balancing](TeamBalancing.md)
+- [Team Balancing Algorithm Evolution](../algorithms/TeamBalancingEvolution.md)

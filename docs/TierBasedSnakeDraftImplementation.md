@@ -302,17 +302,21 @@ const getAttributeBalanceThreshold = (improvement: number, winRateGapBefore: num
 
 ### Multi-Objective Optimization (Phases 1-5, Added 2025-01-04 to 2025-11-05)
 
-The team balancing algorithm was enhanced with a comprehensive multi-objective optimization framework that evaluates teams across 5 dimensions instead of a single balance score. This allows intelligent trade-offs between competing objectives.
+The team balancing algorithm was enhanced with a comprehensive multi-objective optimization framework that evaluates teams across multiple dimensions instead of a single balance score. This allows intelligent trade-offs between competing objectives.
 
-#### Five Optimization Dimensions
+#### Nine Optimization Dimensions (Updated December 2025)
 
 ```typescript
 export interface MultiObjectiveScore {
-  skillsBalance: number;      // Max diff in Attack/Defense/Game IQ/GK (weight: 30%)
-  shootingBalance: number;    // Shooting distribution imbalance (weight: 25%)
-  attributeBalance: number;   // Avg diff in 6 derived attributes (weight: 15%)
-  tierFairness: number;       // Distribution variance + quality concentration (weight: 15%)
-  performanceGap: number;     // Win rate + goal differential gap (weight: 15%)
+  skillsBalance: number;      // Max diff in Attack/Defense/Game IQ/GK (weight: 20%)
+  shootingBalance: number;    // Shooting distribution imbalance (weight: 8%)
+  attributeBalance: number;   // Avg diff in 6 derived attributes (weight: 11%)
+  tierFairness: number;       // Distribution variance + quality concentration (weight: 5%)
+  performanceGap: number;     // Win rate + goal differential gap (weight: 8%)
+  systematicBias: number;     // Prevents consistent team advantages (weight: 22%)
+  positionBalance: number;    // Position category distribution (weight: 9%)
+  avgRatingBalance: number;   // Overall rating balance (weight: 7%)
+  chemistryBalance: number;   // Team chemistry balance (weight: 10%) - Dec 2025
   overall: number;            // Weighted combination
 }
 ```
@@ -645,15 +649,61 @@ Defense:     6.61    6.24    Blue ↑
 - **New**: Shows specific metric changes for each attempted swap
 - **New**: Provides clear rejection reasons with attribute imbalance values
 
+## Player Chemistry Integration (Added December 2025)
+
+### Overview
+Player chemistry is now the 9th optimization objective, accounting for 10% of the multi-objective score. The system balances total intra-team chemistry between both teams.
+
+### How It Works
+
+1. **Data Fetching**: Before team generation, chemistry data for all player pairs is fetched via `get_batch_player_chemistry()` RPC
+2. **Team Chemistry Calculation**: Sum of all pairwise chemistry scores within each team
+3. **Balance Scoring**: Minimizes difference between team chemistry totals
+4. **Partnership Protection**: Swaps breaking high-chemistry pairs (score > 50) incur a penalty of 2.0
+
+### Configuration
+```typescript
+const CHEMISTRY_CONFIG = {
+  DEFAULT_SCORE: 35,           // Pairs with no history (<10 games)
+  HIGH_CHEMISTRY_THRESHOLD: 50, // Triggers break penalty
+  MAX_PAIR_CHEMISTRY: 83,       // Theoretical maximum
+};
+```
+
+### API Usage
+```typescript
+export interface TierBasedOptions {
+  permanentGKIds?: string[];
+  chemistryLookup?: Map<string, number>;  // Chemistry data
+}
+
+const result = findTierBasedTeamBalance(players, {
+  permanentGKIds,
+  chemistryLookup: chemistryData.pairs,
+});
+```
+
+### Debug Log Output
+```
+=== Chemistry Balance ===
+Blue Team Chemistry: 1247 (45 pairs, 8 high-chemistry)
+Orange Team Chemistry: 1189 (45 pairs, 6 high-chemistry)
+Chemistry Difference: 58 (normalized: 0.015)
+```
+
+### Graceful Degradation
+- If chemistry fetch fails: Algorithm proceeds with default scores
+- Pairs with <10 games: Use neutral default score of 35
+
+For full chemistry documentation, see: `/docs/features/PlayerChemistry.md`
+
 ## Future Improvements
 
 1. Add decay function for older stats
-2. Consider player positions
-3. Add chemistry factors
-4. Allow custom weight configuration
-5. Implement dynamic goal differential normalization based on actual data ranges
-6. Add seasonal momentum (comparing this season to previous seasons)
-7. Consider team context in individual performance metrics
+2. Allow custom weight configuration
+3. Implement dynamic goal differential normalization based on actual data ranges
+4. Add seasonal momentum (comparing this season to previous seasons)
+5. Consider team context in individual performance metrics
 
 ## Interactive Visualization
 

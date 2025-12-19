@@ -3,9 +3,9 @@
 ## Overview
 The team balancing system ensures fair and competitive matches by automatically distributing players across two teams (Blue and Orange) based on multiple performance metrics.
 
-## Balancing Metrics (Updated September 8, 2025)
+## Balancing Metrics (Updated December 2025)
 
-The system now considers **5 core metrics** plus **derived attributes** from playstyles:
+The system now considers **5 core metrics** plus **derived attributes** and **player chemistry**:
 
 1. **Attack Rating** (0-10 scale)
    - Measures offensive capabilities
@@ -36,6 +36,12 @@ The system now considers **5 core metrics** plus **derived attributes** from pla
    - **Physical**: Strength and stamina
    - Automatically calculated from player playstyle ratings
    - Unrated players default to 0
+
+7. **Player Chemistry** *(Added December 2025)*
+   - Measures historical win rate when players are on the same team
+   - Requires 10+ games together for reliable data
+   - Algorithm balances total team chemistry between both teams
+   - See [Player Chemistry](PlayerChemistry.md) for details
 
 ## Algorithm (Updated September 8, 2025)
 
@@ -188,6 +194,7 @@ For detailed implementation, see: [Tier-Based Snake Draft Implementation](/docs/
 - `/src/components/admin/team-balancing/OptimalTeamGenerator.tsx` - UI for team generation
 - `/src/components/admin/team-balancing/tierBasedSnakeDraft.ts` - Tier-based snake draft algorithm
 - `/src/hooks/useTeamBalancing.ts` - React hook for team management
+- `/src/hooks/useTeamBalancingChemistry.ts` - Hook for fetching chemistry data
 
 ### Key Functions
 ```typescript
@@ -257,7 +264,31 @@ Individual Position Gaps:
   ST: Blue 1 vs Orange 1 (gap: 0) ✅
 ```
 
+## Chemistry Balance (Added December 2025)
+
+### Overview
+The algorithm now considers player chemistry to ensure teams have similar levels of teammate familiarity and synergy.
+
+### How It Works
+1. **Data Fetching**: Chemistry data for all player pairs is fetched before balancing
+2. **Team Chemistry Score**: Sum of all pairwise chemistry scores within each team
+3. **Balance Objective**: Minimizes the difference between team chemistry totals (10% weight)
+4. **Partnership Protection**: Swaps that break high-chemistry pairs (score > 50) incur a penalty
+
+### Configuration
+| Setting | Value |
+|---------|-------|
+| Default score (no history) | 35 |
+| High chemistry threshold | 50+ |
+| Minimum games | 10 |
+| Objective weight | 10% |
+
+### Graceful Degradation
+- Pairs with <10 games: Use neutral default score
+- Chemistry fetch fails: Algorithm proceeds without chemistry consideration
+
+**See:** [Player Chemistry](PlayerChemistry.md) for full chemistry system documentation.
+
 ## Future Enhancements
-- Player chemistry considerations
 - Historical performance trends
 - Machine learning optimization

@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2025-12-18
+**Last Updated:** 2025-12-19
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -57,7 +57,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Win Rate Explainer](WinRateExplainer.md)** - Win rate calculation methodology
 - **[Goal Differential Feature](GoalDifferentialFeature.md)** - Goal diff tracking and display
 - **[Streaks Features](WinningStreaksFeature.md)** - Winning and unbeaten streaks
-- **[Player Chemistry](features/PlayerChemistry.md)** - Chemistry scores between player pairs
+- **[Player Chemistry](features/PlayerChemistry.md)** - Chemistry scores between player pairs + team balancing integration
 - **[Player Stats Overview](PlayerStatsFeaturesOverview.md)** - Comprehensive stats features
 
 ### Admin Features

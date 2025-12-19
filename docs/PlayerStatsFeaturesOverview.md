@@ -42,6 +42,7 @@ Key features:
 - Top chemistry partners displayed on player profiles
 - Best Chemistry leaderboard on Stats page
 - Humorous tier-based messages comparing partnerships to famous football duos
+- **Team Balancing Integration (Dec 2025)**: Chemistry is now the 9th objective in team balancing (10% weight), ensuring teams have similar levels of teammate synergy
 
 ### 7. XP System
 A tiered XP system that rewards player participation, win rates, and other factors. See [XPSystemExplained.md](./XPSystemExplained.md) and [TieredXPSystemDesign.md](./TieredXPSystemDesign.md) for details.
@@ -75,7 +76,9 @@ Planned improvements include:
 - More visual representations of player statistics
 - Advanced filtering and comparison tools
 - Export functionality for statistics
-- Integration with team balancing algorithms
+
+**Completed (Dec 2025):**
+- ✅ Integration with team balancing algorithms (Player Chemistry now factors into team generation)
 
 ## Related Documentation
 - [TeamBalancingAlgorithm.md](./TeamBalancingAlgorithm.md)

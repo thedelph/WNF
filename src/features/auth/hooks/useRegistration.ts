@@ -88,33 +88,41 @@ export const useRegistration = () => {
 
       if (authError) throw authError
 
-      if (authData.user) {
-        // Create player profile
-        const { error: profileError } = await supabase
-          .from('players')
-          .insert({
-            user_id: authData.user.id,
-            friendly_name: friendlyName,
-            caps: 0,
-            active_bonuses: 0,
-            active_penalties: 0,
-            whatsapp_group_member: isWhatsAppMember ? 'Yes' : null,
-            whatsapp_mobile_number: isWhatsAppMember ? whatsAppNumber : null
-          })
-
-        if (profileError) {
-          console.error('Profile Error:', profileError)
-          if (profileError.code === '23505') {
-            toast.error('This friendly name is already taken. Please choose another one.')
-          } else {
-            throw profileError
-          }
-          return
-        }
-
-        toast.success('Registration successful! Please check your email to verify your account.')
-        navigate('/login')
+      // Handle case where signup succeeded but user object is missing
+      if (!authData.user) {
+        console.error('Signup succeeded but no user returned:', authData)
+        toast.error('Registration issue - please try logging in or contact support.')
+        return
       }
+
+      // Create player profile
+      const { error: profileError } = await supabase
+        .from('players')
+        .insert({
+          user_id: authData.user.id,
+          friendly_name: friendlyName,
+          caps: 0,
+          active_bonuses: 0,
+          active_penalties: 0,
+          whatsapp_group_member: isWhatsAppMember ? 'Yes' : null,
+          whatsapp_mobile_number: isWhatsAppMember ? whatsAppNumber : null
+        })
+
+      if (profileError) {
+        console.error('Profile Error:', profileError)
+        if (profileError.code === '23505') {
+          toast.error('This friendly name is already taken. Please choose another one.')
+        } else {
+          throw profileError
+        }
+        return
+      }
+
+      toast.success('Registration successful! Please check your email to verify your account.', {
+        duration: 5000
+      })
+      // Small delay to ensure toast is visible before navigation
+      setTimeout(() => navigate('/login'), 1500)
     } catch (error: any) {
       console.error('Registration error:', error)
 

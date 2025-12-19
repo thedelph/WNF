@@ -190,6 +190,7 @@ await supabaseAdmin.auth.resetPasswordForEmail(email)
 - **[XP System v2](/docs/features/XPSystemv2.md)** - Diminishing streak returns (planned Jan 2026)
 
 ### Recent Major Features (2025)
+- **[Player Chemistry](/docs/features/PlayerChemistry.md)** (Dec 2025) - Chemistry leaderboards + team balancing integration
 - **[GK Rating](/docs/features/GKRating.md)** (Oct 2025) - Fourth core metric + permanent GK feature
 - **[Position Preferences](/docs/features/PositionPreferences.md)** (Nov 2025) - Ranked position system (Gold/Silver/Bronze)
 - **[Playstyle System](/docs/features/PlaystyleRatingSystem.md)** (Sep 2025) - 24 playstyles with 6 derived attributes

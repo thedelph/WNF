@@ -419,19 +419,21 @@ export interface MultiObjectiveScore {
   performanceGap: number;     // Combined win rate + goal differential gap (lower is better)
   systematicBias: number;     // Cross-category dominance penalty (lower is better)
   positionBalance: number;    // Position distribution balance (lower is better) - prevents striker imbalance
-  avgRatingBalance: number;   // Average three-layer rating difference (lower is better) - NEW
+  avgRatingBalance: number;   // Average three-layer rating difference (lower is better)
+  chemistryBalance: number;   // Team chemistry balance (lower is better) - Dec 2025
   overall: number;            // Weighted combination of all objectives (lower is better)
 }
 
 export interface OptimizationWeights {
-  skillsBalance: number;      // Default: 0.25
-  shootingBalance: number;    // Default: 0.10
-  attributeBalance: number;   // Default: 0.13
+  skillsBalance: number;      // Default: 0.20
+  shootingBalance: number;    // Default: 0.08
+  attributeBalance: number;   // Default: 0.11
   tierFairness: number;       // Default: 0.05
   performanceGap: number;     // Default: 0.08
-  systematicBias: number;     // Default: 0.20
-  positionBalance: number;    // Default: 0.12
-  avgRatingBalance: number;   // Default: 0.10 - NEW: Average rating balance
+  systematicBias: number;     // Default: 0.22
+  positionBalance: number;    // Default: 0.09
+  avgRatingBalance: number;   // Default: 0.07
+  chemistryBalance: number;   // Default: 0.10 - Dec 2025: Balance team chemistry
 }
 
 export interface SwapEvaluation {
@@ -444,17 +446,18 @@ export interface SwapEvaluation {
 }
 
 // Default weights for multi-objective optimization
-// Priority: Systematic Bias > Core Skills > Position Balance > Avg Rating > Attributes
-// Phase 3 Update: Increased systematicBias to prevent one team dominating core skills, added avgRatingBalance
+// Priority: Systematic Bias > Core Skills > Chemistry > Position Balance > Attributes > Avg Rating
+// Dec 2025 Update: Added chemistryBalance (10%) to balance intra-team chemistry scores
 const DEFAULT_WEIGHTS: OptimizationWeights = {
-  skillsBalance: 0.22,      // Attack/Defense/Game IQ balance (reduced for systematicBias increase)
-  shootingBalance: 0.10,    // Shooting distribution
-  attributeBalance: 0.13,   // Pace, passing, etc.
+  skillsBalance: 0.20,      // Attack/Defense/Game IQ balance
+  shootingBalance: 0.08,    // Shooting distribution
+  attributeBalance: 0.11,   // Pace, passing, etc.
   tierFairness: 0.05,       // Only care about top 4 / bottom 4 split
   performanceGap: 0.08,     // Win rate gap
-  systematicBias: 0.25,     // INCREASED: Heavily penalize one team dominating all categories
-  positionBalance: 0.10,    // Position balance to prevent striker imbalance (reduced slightly)
-  avgRatingBalance: 0.10,   // Average three-layer rating difference (max 0.25 gap target)
+  systematicBias: 0.22,     // Heavily penalize one team dominating all categories
+  positionBalance: 0.09,    // Position balance to prevent striker imbalance
+  avgRatingBalance: 0.07,   // Average three-layer rating difference
+  chemistryBalance: 0.10,   // Intra-team chemistry balance (player partnership scores)
 };
 
 // Phase 4: Multi-Swap Combinations Interface
@@ -2276,15 +2279,126 @@ function calculatePositionBalanceScore(
   return categoryPenalty + individualPenalty + strikerPenalty;
 }
 
+// ============================================================================
+// CHEMISTRY BALANCE CALCULATION (Objective #9) - Added Dec 2025
+// ============================================================================
+
+/**
+ * Chemistry balance configuration
+ */
+const CHEMISTRY_CONFIG = {
+  /** Default chemistry score for pairs with no history (neutral value) */
+  DEFAULT_SCORE: 35,
+  /** High chemistry threshold - pairs above this are considered "established" */
+  HIGH_CHEMISTRY_THRESHOLD: 50,
+  /** Maximum theoretical chemistry score per pair (for normalization) */
+  MAX_PAIR_CHEMISTRY: 83,
+  /** Difference in total chemistry that is considered "significant" */
+  SIGNIFICANT_DIFFERENCE: 500,
+};
+
+/**
+ * Team chemistry calculation result
+ */
+interface TeamChemistryResult {
+  /** Total chemistry score (sum of all pair chemistry scores) */
+  total: number;
+  /** Number of pairs calculated */
+  pairCount: number;
+  /** Average chemistry per pair */
+  avgPerPair: number;
+  /** Number of high-chemistry pairs (above threshold) */
+  highChemistryPairs: number;
+}
+
+/**
+ * Calculate total intra-team chemistry score
+ * Sums chemistry scores for all N*(N-1)/2 pairs within a team
+ *
+ * @param team - Array of players on the team
+ * @param chemistryLookup - Map of pair keys to chemistry scores (optional)
+ * @returns Total chemistry score and related statistics
+ */
+function calculateTeamChemistry(
+  team: PlayerWithRating[],
+  chemistryLookup?: Map<string, number>
+): TeamChemistryResult {
+  if (team.length < 2) {
+    return { total: 0, pairCount: 0, avgPerPair: 0, highChemistryPairs: 0 };
+  }
+
+  let total = 0;
+  let pairCount = 0;
+  let highChemistryPairs = 0;
+
+  // Calculate chemistry for all pairs within the team
+  for (let i = 0; i < team.length; i++) {
+    for (let j = i + 1; j < team.length; j++) {
+      // Generate consistent key (smaller ID first)
+      const id1 = team[i].player_id;
+      const id2 = team[j].player_id;
+      const key = id1 < id2 ? `${id1}-${id2}` : `${id2}-${id1}`;
+
+      // Get chemistry score from lookup or use default
+      const chemScore = chemistryLookup?.get(key) ?? CHEMISTRY_CONFIG.DEFAULT_SCORE;
+      total += chemScore;
+      pairCount++;
+
+      if (chemScore >= CHEMISTRY_CONFIG.HIGH_CHEMISTRY_THRESHOLD) {
+        highChemistryPairs++;
+      }
+    }
+  }
+
+  return {
+    total,
+    pairCount,
+    avgPerPair: pairCount > 0 ? total / pairCount : 0,
+    highChemistryPairs,
+  };
+}
+
+/**
+ * Calculate chemistry balance score for multi-objective optimization
+ * Returns normalized difference between team chemistry totals (0-1 scale)
+ * Lower is better (0 = perfectly balanced)
+ *
+ * @param blueTeam - Blue team players
+ * @param orangeTeam - Orange team players
+ * @param chemistryLookup - Map of pair keys to chemistry scores (optional)
+ * @returns Normalized chemistry imbalance score (0-1)
+ */
+function calculateChemistryBalance(
+  blueTeam: PlayerWithRating[],
+  orangeTeam: PlayerWithRating[],
+  chemistryLookup?: Map<string, number>
+): number {
+  // If no chemistry data provided, return 0 (neutral - no penalty or bonus)
+  if (!chemistryLookup || chemistryLookup.size === 0) {
+    return 0;
+  }
+
+  const blueChemistry = calculateTeamChemistry(blueTeam, chemistryLookup);
+  const orangeChemistry = calculateTeamChemistry(orangeTeam, chemistryLookup);
+
+  // Calculate raw difference in total team chemistry
+  const rawDiff = Math.abs(blueChemistry.total - orangeChemistry.total);
+
+  // Normalize to 0-1 scale
+  // A difference of SIGNIFICANT_DIFFERENCE (500) is considered maximum imbalance
+  return Math.min(rawDiff / CHEMISTRY_CONFIG.SIGNIFICANT_DIFFERENCE, 1.0);
+}
+
 /**
  * Calculate multi-objective score for team composition
- * Returns scores for all 8 objectives plus weighted overall score
+ * Returns scores for all 9 objectives plus weighted overall score
  */
 function calculateMultiObjectiveScore(
   blueTeam: PlayerWithRating[],
   orangeTeam: PlayerWithRating[],
   permanentGKIds?: string[],
-  weights: OptimizationWeights = DEFAULT_WEIGHTS
+  weights: OptimizationWeights = DEFAULT_WEIGHTS,
+  chemistryLookup?: Map<string, number>
 ): MultiObjectiveScore {
   // 1. Skills Balance (max difference across Attack/Defense/Game IQ/GK)
   const detailedScore = calculateDetailedBalanceScore(blueTeam, orangeTeam, permanentGKIds);
@@ -2315,7 +2429,10 @@ function calculateMultiObjectiveScore(
   const orangeAvgRating = orangeTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / orangeTeam.length;
   const avgRatingBalance = Math.abs(blueAvgRating - orangeAvgRating);
 
-  // Calculate weighted overall score (now 8 objectives)
+  // 9. Chemistry Balance (Dec 2025: balance intra-team chemistry)
+  const chemistryBalance = calculateChemistryBalance(blueTeam, orangeTeam, chemistryLookup);
+
+  // Calculate weighted overall score (now 9 objectives)
   const overall =
     (skillsBalance * weights.skillsBalance) +
     (shootingBalance * weights.shootingBalance) +
@@ -2324,7 +2441,8 @@ function calculateMultiObjectiveScore(
     (performanceGap * weights.performanceGap) +
     (systematicBias * weights.systematicBias) +
     (positionBalance * weights.positionBalance) +
-    (avgRatingBalance * weights.avgRatingBalance);
+    (avgRatingBalance * weights.avgRatingBalance) +
+    (chemistryBalance * weights.chemistryBalance);
 
   return {
     skillsBalance,
@@ -2335,6 +2453,7 @@ function calculateMultiObjectiveScore(
     systematicBias,
     positionBalance,
     avgRatingBalance,
+    chemistryBalance,
     overall,
   };
 }
@@ -2360,7 +2479,8 @@ function evaluateSwap(
     'performanceGap',
     'systematicBias',
     'positionBalance',
-    'avgRatingBalance'  // Phase 3: track average rating balance
+    'avgRatingBalance',
+    'chemistryBalance'  // Dec 2025: track chemistry balance
   ] as const;
 
   const improvedObjectives: string[] = [];
@@ -5586,6 +5706,7 @@ interface SwapPenalties {
   shootingMeanPenalty: number;      // Penalty for shooting mean gap
   shooterRatioPenalty: number;      // Penalty for insufficient shooters above median
   tierDistributionPenalty: number;  // Penalty for tier concentration
+  chemistryBreakPenalty: number;    // Penalty for breaking high-chemistry pairs (Dec 2025)
   totalPenalty: number;             // Sum of all penalties
   details: string[];                // Explanation of each penalty
 }
@@ -5598,13 +5719,15 @@ function calculateSwapPenalties(
   beforeBlueTeam: PlayerWithRating[],
   beforeOrangeTeam: PlayerWithRating[],
   afterBlueTeam: PlayerWithRating[],
-  afterOrangeTeam: PlayerWithRating[]
+  afterOrangeTeam: PlayerWithRating[],
+  chemistryLookup?: Map<string, number>
 ): SwapPenalties {
   const penalties: SwapPenalties = {
     eliteShooterPenalty: 0,
     shootingMeanPenalty: 0,
     shooterRatioPenalty: 0,
     tierDistributionPenalty: 0,
+    chemistryBreakPenalty: 0,
     totalPenalty: 0,
     details: []
   };
@@ -5733,12 +5856,33 @@ function calculateSwapPenalties(
     penalties.details.push(`Changes tier issue: ${afterIssues} (penalty: ${penalties.tierDistributionPenalty.toFixed(2)})`);
   }
 
+  // 5. Chemistry Break Penalty (Dec 2025)
+  // Penalize swaps that break high-chemistry partnerships
+  if (chemistryLookup && chemistryLookup.size > 0) {
+    const beforeBlueChemistry = calculateTeamChemistry(beforeBlueTeam, chemistryLookup);
+    const beforeOrangeChemistry = calculateTeamChemistry(beforeOrangeTeam, chemistryLookup);
+    const afterBlueChemistry = calculateTeamChemistry(afterBlueTeam, chemistryLookup);
+    const afterOrangeChemistry = calculateTeamChemistry(afterOrangeTeam, chemistryLookup);
+
+    // Count high-chemistry pairs broken by this swap
+    const beforeHighPairs = beforeBlueChemistry.highChemistryPairs + beforeOrangeChemistry.highChemistryPairs;
+    const afterHighPairs = afterBlueChemistry.highChemistryPairs + afterOrangeChemistry.highChemistryPairs;
+
+    if (afterHighPairs < beforeHighPairs) {
+      const pairsBroken = beforeHighPairs - afterHighPairs;
+      // Weight penalty by number of pairs broken (2.0 per pair)
+      penalties.chemistryBreakPenalty = pairsBroken * 2.0;
+      penalties.details.push(`Breaks ${pairsBroken} high-chemistry pair(s) (penalty: ${penalties.chemistryBreakPenalty.toFixed(2)})`);
+    }
+  }
+
   // Calculate total penalty
   penalties.totalPenalty =
     penalties.eliteShooterPenalty +
     penalties.shootingMeanPenalty +
     penalties.shooterRatioPenalty +
-    penalties.tierDistributionPenalty;
+    penalties.tierDistributionPenalty +
+    penalties.chemistryBreakPenalty;
 
   return penalties;
 }
@@ -7585,9 +7729,23 @@ function formatPerformanceDescription(winRate: number, goalDiff: number, isOvera
 }
 
 /**
+ * Options for tier-based team balance algorithm
+ */
+export interface TierBasedOptions {
+  /** IDs of players designated as permanent goalkeepers */
+  permanentGKIds?: string[];
+  /** Pre-fetched chemistry lookup data for balancing intra-team chemistry */
+  chemistryLookup?: Map<string, number>;
+}
+
+/**
  * Main function: Find optimal team balance using tier-based snake draft
  */
-export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKIds: string[] = []): TierBasedResult {
+export function findTierBasedTeamBalance(
+  players: TeamAssignment[],
+  options: TierBasedOptions = {}
+): TierBasedResult {
+  const { permanentGKIds = [], chemistryLookup } = options;
   const startTime = Date.now();
   let debugLog = '═══════════════════════════════════════════════════════════════════════════════\n';
   debugLog += '                    TIER-BASED SNAKE DRAFT DEBUG LOG\n';
@@ -7623,6 +7781,16 @@ export function findTierBasedTeamBalance(players: TeamAssignment[], permanentGKI
   debugLog += `  • Moderate violation (1.5-2.0x): ${(SOFT_PENALTY_CONFIG.MODERATE_PENALTY * 100).toFixed(0)}% penalty\n`;
   debugLog += `  • Severe violation (2.0-2.5x): ${(SOFT_PENALTY_CONFIG.SEVERE_PENALTY * 100).toFixed(0)}% penalty\n`;
   debugLog += `  • Catastrophic (>2.5x): HARD REJECT\n\n`;
+
+  debugLog += '🤝 CHEMISTRY BALANCE (Dec 2025):\n';
+  debugLog += `  • Weight: ${(DEFAULT_WEIGHTS.chemistryBalance * 100).toFixed(0)}% of overall score\n`;
+  debugLog += `  • Chemistry pairs loaded: ${chemistryLookup?.size ?? 0}\n`;
+  debugLog += `  • Default score for unknown pairs: ${CHEMISTRY_CONFIG.DEFAULT_SCORE}\n`;
+  debugLog += `  • High chemistry threshold: ${CHEMISTRY_CONFIG.HIGH_CHEMISTRY_THRESHOLD}\n`;
+  if (!chemistryLookup || chemistryLookup.size === 0) {
+    debugLog += '  • Status: No chemistry data - chemistry balance will be neutral\n';
+  }
+  debugLog += '\n';
 
   debugLog += '─────────────────────────────────────────────────────────────────────────────\n\n';
 

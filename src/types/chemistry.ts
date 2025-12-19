@@ -151,3 +151,70 @@ export const CHEMISTRY_MIN_GAMES = 10;
  * K value for confidence factor calculation
  */
 export const CHEMISTRY_K_VALUE = 10;
+
+// ============================================================================
+// Team Balancing Chemistry Types
+// ============================================================================
+
+/**
+ * Raw database response from get_batch_player_chemistry RPC
+ * Used for team balancing algorithm
+ */
+export interface BatchChemistryResponse {
+  player1_id: string;
+  player2_id: string;
+  games_together: number;
+  wins_together: number;
+  draws_together: number;
+  losses_together: number;
+  performance_rate: string | number;
+  chemistry_score: string | number;
+}
+
+/**
+ * Chemistry lookup structure optimized for team balancing
+ * Uses Map for O(1) lookups during optimization phase
+ */
+export interface ChemistryLookup {
+  /** Map of pair keys to chemistry scores. Key format: "playerId1-playerId2" (sorted) */
+  pairs: Map<string, number>;
+  /** Total number of pairs with chemistry data */
+  pairCount: number;
+  /** Whether data was successfully loaded */
+  isLoaded: boolean;
+}
+
+/**
+ * Generate consistent pair key for chemistry lookup
+ * Always puts smaller ID first for consistent keying regardless of order
+ *
+ * @param playerId1 - First player's ID
+ * @param playerId2 - Second player's ID
+ * @returns Consistent key in format "smallerId-largerId"
+ */
+export function getChemistryPairKey(playerId1: string, playerId2: string): string {
+  return playerId1 < playerId2
+    ? `${playerId1}-${playerId2}`
+    : `${playerId2}-${playerId1}`;
+}
+
+/**
+ * Build a ChemistryLookup from batch response data
+ *
+ * @param data - Array of batch chemistry responses from RPC
+ * @returns ChemistryLookup with Map for O(1) access
+ */
+export function buildChemistryLookup(data: BatchChemistryResponse[]): ChemistryLookup {
+  const pairs = new Map<string, number>();
+
+  for (const row of data) {
+    const key = getChemistryPairKey(row.player1_id, row.player2_id);
+    pairs.set(key, Number(row.chemistry_score));
+  }
+
+  return {
+    pairs,
+    pairCount: pairs.size,
+    isLoaded: true,
+  };
+}

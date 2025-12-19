@@ -6,6 +6,7 @@ import { Tooltip } from '../../ui/Tooltip';
 import { toast } from 'react-hot-toast';
 import { formatRating } from '../../../utils/ratingFormatters';
 import { useNavigate } from 'react-router-dom';
+import { useTeamBalancingChemistry } from '../../../hooks/useTeamBalancingChemistry';
 
 interface TierBasedTeamGeneratorProps {
   allPlayers: TeamAssignment[];
@@ -28,18 +29,33 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
   const [showDetails, setShowDetails] = useState(false);
   const [debugLog, setDebugLog] = useState<string>('');
   const [viewMode, setViewMode] = useState<'summary' | 'visual' | 'debug'>('summary');
+  const [isGenerating, setIsGenerating] = useState(false);
   const navigate = useNavigate();
-  
-  const generateTierBasedTeams = () => {
+
+  // Chemistry hook for team balancing
+  const { fetchChemistryForPlayers } = useTeamBalancingChemistry();
+
+  const generateTierBasedTeams = async () => {
     if (allPlayers.length < 2) {
       toast.error('Need at least 2 players to generate teams');
       return;
     }
 
+    setIsGenerating(true);
+
     try {
+      // Fetch chemistry data for all players
+      toast.loading('Loading chemistry data...');
+      const playerIds = allPlayers.map(p => p.player_id);
+      const chemistryLookup = await fetchChemistryForPlayers(playerIds);
+
+      toast.dismiss();
       toast.loading('Generating tier-based teams...');
 
-      const result = findTierBasedTeamBalance(allPlayers, permanentGKIds);
+      const result = findTierBasedTeamBalance(allPlayers, {
+        permanentGKIds,
+        chemistryLookup: chemistryLookup.pairs,
+      });
 
       setTierBasedResult(result);
       if (result.debugLog) {
@@ -50,11 +66,16 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
       }
 
       toast.dismiss();
-      toast.success('Generated tier-based team configuration!');
+      const chemistryInfo = chemistryLookup.pairCount > 0
+        ? ` (${chemistryLookup.pairCount} chemistry pairs loaded)`
+        : '';
+      toast.success(`Generated tier-based team configuration!${chemistryInfo}`);
     } catch (error) {
       toast.dismiss();
       toast.error('Error generating tier-based teams');
       console.error('Error generating tier-based teams:', error);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -94,13 +115,20 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
       </p>
       
       <div className="flex gap-2 mb-4">
-        <Tooltip content="Generate teams using tier-based snake draft algorithm">
-          <button 
+        <Tooltip content="Generate teams using tier-based snake draft algorithm with chemistry balancing">
+          <button
             className="btn btn-secondary btn-sm"
             onClick={generateTierBasedTeams}
-            disabled={allPlayers.length < 2}
+            disabled={allPlayers.length < 2 || isGenerating}
           >
-            Generate Tier-Based Teams
+            {isGenerating ? (
+              <>
+                <span className="loading loading-spinner loading-xs mr-2"></span>
+                Generating...
+              </>
+            ) : (
+              'Generate Tier-Based Teams'
+            )}
           </button>
         </Tooltip>
       </div>
