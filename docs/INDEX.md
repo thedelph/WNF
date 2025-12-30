@@ -40,6 +40,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 ### Admin & Configuration
 - **[Admin Systems](systems/AdminSystems.md)** - RBAC, View As, Feature Flags
 - **[Feature Flag Management](features/BetaTesterFeature.md)** - Beta testing and controlled rollouts
+- **[Auth Error Logging](features/AuthErrorLogging.md)** - Database logging for auth troubleshooting
 
 ---
 

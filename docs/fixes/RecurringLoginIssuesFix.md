@@ -1,6 +1,6 @@
 # Recurring Login Issues Fix
 
-**Last Updated:** November 17, 2025
+**Last Updated:** December 19, 2025
 
 ## Problem
 Multiple users (Dom, Anthony B) repeatedly experience login failures with errors including:
@@ -25,14 +25,15 @@ Multiple users (Dom, Anthony B) repeatedly experience login failures with errors
    - This caused 403 "malformed JWT" errors when trying to clear sessions
    - **Solution:** Bypass Supabase client entirely and use direct fetch calls with explicit Authorization headers
 
-3. **SMTP Authentication Failure** (November 17, 2025 Discovery) ⚠️ **CRITICAL**
-   - Supabase's default SMTP service returns error: `535 5.7.8 Error: authentication failed`
-   - This breaks ALL email-based recovery methods:
-     - ❌ Magic links (500 Internal Server Error)
-     - ❌ Password reset emails (500 Internal Server Error)
-     - ❌ Any email verification
-   - **Root Cause:** Default Supabase SMTP credentials are invalid/expired
-   - **Solution:** Configure custom SMTP OR use the new "Set Temp Password" feature
+3. **SMTP Authentication Failure** (November 17, 2025 Discovery → **RESOLVED December 19, 2025**)
+   - ~~Supabase's default SMTP service returns error: `535 5.7.8 Error: authentication failed`~~
+   - **FIXED:** Configured Resend as custom SMTP provider
+   - All email-based recovery methods now work:
+     - ✅ Magic links
+     - ✅ Password reset emails
+     - ✅ Email verification
+   - **Root Cause:** Gandi mailbox (noreply@wnf.app) expired October 2025
+   - **Solution:** Switched to Resend (`smtp.resend.com`) - see December 19, 2025 update below
 
 ## Solution Implemented
 
@@ -176,7 +177,7 @@ toast('Warning message here', {
 
 ### For Administrators
 
-**⚠️ IMPORTANT (November 17, 2025):** SMTP is currently failing. Use "Set Temp Password" instead of email-based methods.
+**✅ UPDATE (December 19, 2025):** SMTP now working via Resend. All email-based methods are functional.
 
 1. **Access Session Diagnostics**:
    - Go to Admin Portal → Session Diagnostics
@@ -190,15 +191,15 @@ toast('Warning message here', {
    - User should change password immediately after login (Profile → Change Password)
    - **Bypasses email entirely - works even when SMTP is broken**
 
-3. **Send Magic Link** (requires working SMTP):
+3. **Send Magic Link** ✅:
    - Click "Send Magic Link" button
    - User receives email with one-click login
-   - ⚠️ Currently failing due to SMTP authentication error (535 5.7.8)
+   - ✅ Working (December 2025 - Resend SMTP configured)
 
-4. **Force Password Reset** (requires working SMTP):
+4. **Force Password Reset** ✅:
    - Click "Reset Password" button
    - User receives password reset email
-   - ⚠️ Currently failing due to SMTP authentication error (535 5.7.8)
+   - ✅ Working (December 2025 - Resend SMTP configured)
 
 5. **Clear All Sessions** (super admin only):
    - Available to super admins only
@@ -380,19 +381,48 @@ If the solution causes issues:
 7. **Service Role Key Monitoring**: Automated checks to ensure service role key is properly configured
 8. **SMTP Health Checks**: Regular monitoring of SMTP authentication status
 
-## Known Issues (November 17, 2025)
+## Known Issues
 
-### Critical
-- ❌ **SMTP Authentication Failure**: Default Supabase SMTP is broken (error: `535 5.7.8`)
-  - **Impact**: Magic links and password reset emails don't work
-  - **Workaround**: Use "Set Temp Password" feature
-  - **Fix**: Configure custom SMTP in Supabase Dashboard
+### All Critical Issues Resolved ✅
 
-### Resolved
+### Resolved (December 19, 2025)
+- ✅ **SMTP Authentication Failure**: Fixed by switching to Resend SMTP
+  - Magic links and password reset emails now work
+  - Provider: Resend (`smtp.resend.com`)
+  - Root cause: Gandi mailbox (noreply@wnf.app) expired October 2025
+
+### Resolved (November 17, 2025)
 - ✅ **Service Role Key JWT Interference**: Fixed by using direct fetch calls
 - ✅ **Toast Library Compatibility**: Fixed by using correct toast API
 - ✅ **Session Clearing 403 Errors**: Fixed by bypassing Supabase client
 - ✅ **Merge Conflict in GameCard.tsx**: Fixed
+
+## Summary of December 19, 2025 Session
+
+**Issue:** User registration failing with "Error sending confirmation email"
+
+**Root Cause:** Gandi mailbox (noreply@wnf.app) expired October 2025, causing SMTP authentication to fail
+
+**Solution Implemented:**
+1. Switched from Gandi SMTP to Resend (`smtp.resend.com`)
+2. Added DNS records (DKIM, SPF, MX) for wnf.app domain
+3. Configured Supabase SMTP settings with Resend credentials
+4. Added `auth_error_logs` table for future troubleshooting
+5. Added auth error logging to signup/login/logout flows
+
+**Current Status (All Working):**
+- ✅ User registration with email confirmation
+- ✅ Magic links
+- ✅ Password reset emails
+- ✅ Session clearing
+- ✅ Set temp password (backup method)
+
+**New Features Added:**
+- `auth_error_logs` table in Supabase for tracking auth failures
+- `logAuthError()` utility in `src/features/auth/utils/authErrorLogger.ts`
+- Error logging integrated into `useRegistration.ts` and `useAuth.ts`
+
+---
 
 ## Summary of November 17, 2025 Session
 
@@ -407,16 +437,5 @@ If the solution causes issues:
 
 **Root Causes Identified:**
 1. Supabase client using user JWT instead of service role key
-2. SMTP authentication completely broken (535 5.7.8 error)
+2. SMTP authentication broken (535 5.7.8 error) - **FIXED December 19, 2025**
 3. Wrong toast library method being used
-
-**Current Status:**
-- ✅ Session clearing: **WORKING**
-- ✅ Set temp password: **WORKING**
-- ❌ Magic links: **BROKEN** (SMTP issue)
-- ❌ Password reset emails: **BROKEN** (SMTP issue)
-
-**Next Steps:**
-1. Configure custom SMTP to restore email functionality
-2. Send Dom his temporary password via WhatsApp
-3. Monitor for similar issues with Anthony B

@@ -163,20 +163,26 @@ const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
 
 **See:** [Recurring Login Issues Fix](/docs/fixes/RecurringLoginIssuesFix.md#service-role-key-vs-user-jwt-issue-november-17-2025)
 
-### SMTP & Email Recovery ⚠️
+### SMTP & Email ✅
 
-**Current Status (Nov 2025):** SMTP authentication is BROKEN (error: `535 5.7.8`)
+**Current Status (Dec 2025):** SMTP working via Resend
+
+| Feature | Status |
+|---------|--------|
+| Email confirmation | ✅ Working |
+| Password reset | ✅ Working |
+| Magic links | ✅ Working |
+
+**Provider:** Resend (`smtp.resend.com`)
+**Config:** Supabase Dashboard → Authentication → SMTP Settings
 
 ```typescript
-// ❌ BROKEN - Don't use until SMTP is configured
-await supabaseAdmin.auth.signInWithOtp({ email })
-await supabaseAdmin.auth.resetPasswordForEmail(email)
-
-// ✅ WORKAROUND - Use "Set Temp Password" in Session Diagnostics
-// Admin Portal → Session Diagnostics → Set Temp Password
+// ✅ All email methods now work
+await supabase.auth.signUp({ email, password })  // Sends confirmation email
+await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 ```
 
-**Fix:** Configure custom SMTP in Supabase Dashboard → Authentication → Email Templates
+**See:** [Auth Error Logging](/docs/features/AuthErrorLogging.md) for troubleshooting failed auth attempts
 
 ---
 
