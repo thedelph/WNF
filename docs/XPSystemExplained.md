@@ -1,10 +1,11 @@
-# XP System Documentation (v1)
+# XP System Documentation (v1 - Legacy)
 
-> **Note**: This documents the **current production system (v1)**. A new version (v2) with diminishing streak returns and linear XP decay is planned for January 2026.
+> **Status**: This documents the **legacy v1 system** used until January 2026. The current production system is **XP v2**.
 >
-> - [View XP System v2 Documentation](./features/XPSystemv2.md)
+> - [View XP System v2 Documentation (Current)](./features/XPSystemv2.md)
 > - [View Migration Runbook](./migrations/XPv1ToV2Migration.md)
-> - Admin comparison tool: `/admin/xp-comparison`
+>
+> This document is preserved for historical reference.
 
 ---
 

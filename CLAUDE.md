@@ -192,8 +192,8 @@ await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 - **[Token System](/docs/TokenSystem.md)** - Priority tokens, shield tokens, eligibility
 - **[Ratings System](/docs/RatingsSystemGuide.md)** - Attack, Defense, Game IQ, GK, Playstyles, Positions
 - **[Team Balancing](/docs/features/TeamBalancing.md)** - Tier-based snake draft algorithm
-- **[XP System v1](/docs/XPSystemExplained.md)** - Current XP calculation (production)
-- **[XP System v2](/docs/features/XPSystemv2.md)** - Diminishing streak returns (planned Jan 2026)
+- **[XP System v2](/docs/features/XPSystemv2.md)** - Current XP calculation (production)
+- **[XP System v1](/docs/XPSystemExplained.md)** - Legacy system (pre-Jan 2026)
 
 ### Recent Major Features (2025)
 - **[Player Chemistry](/docs/features/PlayerChemistry.md)** (Dec 2025) - Chemistry leaderboards + team balancing integration
