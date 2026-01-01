@@ -73,9 +73,18 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
     unregisteredPlayersXP
   );
 
+  // v2 diminishing returns formula for streak bonus
+  const calculateStreakBonus = (streak: number): number => {
+    if (streak <= 0) return 0;
+    if (streak <= 10) {
+      return (streak * 11 - (streak * (streak + 1)) / 2) / 100;
+    }
+    return (55 + (streak - 10)) / 100;
+  };
+
   // Render a player card (helper function to reduce duplication)
   const renderPlayerCard = (registration: Registration, index: number, showOdds: boolean = false) => {
-    const streakModifier = stats[registration.player.id].currentStreak * 0.1;
+    const streakModifier = calculateStreakBonus(stats[registration.player.id].currentStreak);
     const bonusModifier = stats[registration.player.id].activeBonuses * 0.1;
     const penaltyModifier = stats[registration.player.id].activePenalties * -0.1;
     const registrationModifier = stats[registration.player.id].registrationStreakApplies ? stats[registration.player.id].registrationStreak * 0.025 : 0;

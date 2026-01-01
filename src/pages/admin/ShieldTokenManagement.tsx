@@ -18,6 +18,15 @@ interface ShieldPlayerData {
   games_until_next_token: number;
 }
 
+// v2 diminishing returns formula for streak bonus
+const calculateStreakBonus = (streak: number): number => {
+  if (streak <= 0) return 0;
+  if (streak <= 10) {
+    return (streak * 11 - (streak * (streak + 1)) / 2) / 100;
+  }
+  return (55 + (streak - 10)) / 100;
+};
+
 const ShieldTokenManagement: React.FC = () => {
   const { isAdmin } = useAdmin();
   const [playerData, setPlayerData] = useState<ShieldPlayerData[]>([]);
@@ -390,7 +399,7 @@ const ShieldTokenManagement: React.FC = () => {
                       {player.current_streak} games
                       {player.current_streak > 0 && (
                         <div className="text-xs text-success">
-                          +{player.current_streak * 10}% XP
+                          +{Math.round(calculateStreakBonus(player.current_streak) * 100)}% XP
                         </div>
                       )}
                     </div>

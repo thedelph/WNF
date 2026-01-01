@@ -16,6 +16,15 @@ interface ShieldTokenUser {
   frozen_streak_modifier?: number;
 }
 
+// v2 diminishing returns formula for streak bonus
+const calculateStreakBonus = (streak: number): number => {
+  if (streak <= 0) return 0;
+  if (streak <= 10) {
+    return (streak * 11 - (streak * (streak + 1)) / 2) / 100;
+  }
+  return (55 + (streak - 10)) / 100;
+};
+
 interface ShieldTokenPlayersProps {
   shieldTokenUsers: ShieldTokenUser[];
 }
@@ -94,7 +103,7 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 justify-items-center place-items-center">
             {shieldTokenUsers.map((shieldUser) => {
-              const streakModifier = stats[shieldUser.player.id].currentStreak * 0.1;
+              const streakModifier = calculateStreakBonus(stats[shieldUser.player.id].currentStreak);
               const bonusModifier = stats[shieldUser.player.id].activeBonuses * 0.1;
               const penaltyModifier = stats[shieldUser.player.id].activePenalties * -0.1;
               const unpaidGamesModifier = stats[shieldUser.player.id].unpaidGamesModifier;

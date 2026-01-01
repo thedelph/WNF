@@ -92,6 +92,30 @@ export const useGameRegistrationStats = (
 
         if (playerError) throw playerError;
 
+        // Fallback: If nested select didn't return player_xp for any players, fetch directly
+        const playersWithoutXP = playerData?.filter(p => !p.player_xp) || [];
+        if (playersWithoutXP.length > 0) {
+          const { data: xpData, error: xpError } = await supabase
+            .from('player_xp')
+            .select('player_id, xp, rank, rarity')
+            .in('player_id', playersWithoutXP.map(p => p.id));
+
+          if (!xpError && xpData) {
+            // Create lookup map
+            const xpMap = xpData.reduce((acc, x) => {
+              acc[x.player_id] = { xp: x.xp, rank: x.rank, rarity: x.rarity };
+              return acc;
+            }, {} as Record<string, { xp: number; rank: number; rarity: string }>);
+
+            // Merge into playerData
+            playerData?.forEach(p => {
+              if (!p.player_xp && xpMap[p.id]) {
+                p.player_xp = xpMap[p.id];
+              }
+            });
+          }
+        }
+
         // Get registration streak data
         const { data: regStreakData, error: regStreakError } = await supabase
           .from('player_current_registration_streak_bonus')

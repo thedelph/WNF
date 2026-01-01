@@ -125,7 +125,6 @@ export default function PlayerProfileNew() {
         );
 
         const latestSequence = latestSequenceData?.sequence_number || 0;
-        console.log('[PlayerProfile] Latest sequence:', latestSequence);
 
         // Fetch player data
         const playerQuery = supabase
@@ -201,6 +200,21 @@ export default function PlayerProfileNew() {
           toast.error('Player not found');
           setLoading(false);
           return;
+        }
+
+        // Fallback: If nested select didn't return player_xp, fetch it directly
+        if (!playerData.player_xp) {
+          const { data: xpData, error: xpError } = await executeWithRetry(
+            () => supabase
+              .from('player_xp')
+              .select('xp, rank, rarity')
+              .eq('player_id', playerData.id)
+              .single()
+          );
+
+          if (!xpError && xpData) {
+            playerData.player_xp = xpData;
+          }
         }
 
         // Get max streak date from the winning streaks function

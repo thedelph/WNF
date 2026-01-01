@@ -23,6 +23,15 @@ interface ShieldHistoryRecord {
   created_at: string;
 }
 
+// v2 diminishing returns formula for streak bonus
+const calculateStreakBonus = (streak: number): number => {
+  if (streak <= 0) return 0;
+  if (streak <= 10) {
+    return (streak * 11 - (streak * (streak + 1)) / 2) / 100;
+  }
+  return (55 + (streak - 10)) / 100;
+};
+
 interface ShieldTokenHistoryProps {
   playerId?: string;
   gameId?: string;
@@ -243,7 +252,7 @@ export const ShieldTokenHistory: React.FC<ShieldTokenHistoryProps> = ({
                         {record.protected_streak_value} games
                       </span>
                       <span className="text-xs text-success">
-                        +{(record.protected_streak_value || 0) * 10}% base
+                        +{Math.round(calculateStreakBonus(record.protected_streak_value || 0) * 100)}% base
                       </span>
                     </div>
                   ) : (

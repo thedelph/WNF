@@ -6,6 +6,10 @@ import ReserveXPSection from './xp/ReserveXPSection';
 import StreakSection from './xp/StreakSection';
 import TotalXPSection from './xp/TotalXPSection';
 
+// Debug flag - set to true to enable verbose logging
+const DEBUG_XP_BREAKDOWN = false;
+const debugLog = (...args: unknown[]) => DEBUG_XP_BREAKDOWN && debugLog(...args);
+
 interface GameHistory {
   sequence: number;
   status: string;
@@ -36,54 +40,48 @@ interface XPBreakdownProps {
 const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  console.log('[XPBreakdown] Initial stats:', stats);
+  debugLog('[XPBreakdown] Initial stats:', stats);
 
   // Ensure we have arrays of numbers and use the passed in latestSequence
   const gameHistory = stats.gameHistory || [];
   const latestSequence = stats.latestSequence || 0;
 
-  console.log('[XPBreakdown] Game history:', { 
+  debugLog('[XPBreakdown] Game history:', { 
     gameHistory,
     latestSequence,
     totalGames: gameHistory.length
   });
 
   // Calculate base XP from game history without multipliers
-  const baseXP = stats.gameHistory.reduce((total, game) => {
+  const baseXP = gameHistory.reduce((total, game) => {
     // Skip future games and games where player dropped out
     if (game.sequence > latestSequence || game.status === 'dropped_out') {
-      console.log(`[XPBreakdown] Skipping game ${game.sequence} - ${game.status === 'dropped_out' ? 'dropped out' : 'future game'}`);
+      debugLog(`[XPBreakdown] Skipping game ${game.sequence} - ${game.status === 'dropped_out' ? 'dropped out' : 'future game'}`);
       return total;
     }
     
     // Skip reserve games as they're handled separately
     if (game.status === 'reserve') {
-      console.log(`[XPBreakdown] Skipping game ${game.sequence} - reserve game`);
+      debugLog(`[XPBreakdown] Skipping game ${game.sequence} - reserve game`);
       return total;
     }
     
     // Calculate how many games ago this game was
     const gamesAgo = latestSequence - game.sequence;
+
+    // Calculate XP based on how many games ago (v2: linear decay with floor of 1)
+    // Formula: max(1, 20 - (gamesAgo * 0.5))
+    let xp = Math.max(1, 20 - (gamesAgo * 0.5));
     
-    // Calculate XP based on how many games ago
-    let xp = 0;
-    if (gamesAgo === 0) xp = 20;
-    else if (gamesAgo <= 2) xp = 18;
-    else if (gamesAgo <= 4) xp = 16;
-    else if (gamesAgo <= 9) xp = 14;
-    else if (gamesAgo <= 19) xp = 12;
-    else if (gamesAgo <= 29) xp = 10;
-    else if (gamesAgo <= 39) xp = 5;
-    
-    console.log(`[XPBreakdown] Game ${game.sequence} (${gamesAgo} games ago) - Adding ${xp} XP`);
+    debugLog(`[XPBreakdown] Game ${game.sequence} (${gamesAgo} games ago) - Adding ${xp} XP`);
     return total + xp;
   }, 0);
 
-  console.log('[XPBreakdown] Base XP calculation:', { baseXP });
+  debugLog('[XPBreakdown] Base XP calculation:', { baseXP });
 
   // Add reserve XP to base XP
   const totalBaseXP = baseXP + (stats.reserveXP || 0);
-  console.log('[XPBreakdown] Total Base XP:', { 
+  debugLog('[XPBreakdown] Total Base XP:', { 
     baseXP, 
     reserveXP: stats.reserveXP, 
     totalBaseXP,
@@ -91,12 +89,26 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
     fullStats: stats
   });
 
-  // Calculate streak modifier (+10% per streak level)
+  // Calculate streak modifier (v2: diminishing returns)
   // Use frozen streak value if shield is active, otherwise use current streak
   const effectiveStreak = stats.shieldActive && stats.frozenStreakValue !== null && stats.frozenStreakValue !== undefined
     ? stats.frozenStreakValue
     : stats.currentStreak;
-  const streakModifier = effectiveStreak * 0.1;
+
+  // v2 diminishing returns formula:
+  // First 10 games: 10%, 9%, 8%, 7%, 6%, 5%, 4%, 3%, 2%, 1% (total 55%)
+  // After 10 games: +1% per additional game
+  const calculateStreakBonus = (streak: number): number => {
+    if (streak <= 0) return 0;
+    if (streak <= 10) {
+      // Sum formula: 10 + 9 + 8 + ... + (11 - streak)
+      return (streak * 11 - (streak * (streak + 1)) / 2) / 100;
+    }
+    // 55% + 1% for each game beyond 10
+    return (55 + (streak - 10)) / 100;
+  };
+  const streakModifier = calculateStreakBonus(effectiveStreak);
+  const streakPercentage = Math.round(streakModifier * 100);
 
   // Calculate reserve modifier (+5% only if reserve in most recent game)
   const reserveModifier = stats.benchWarmerStreak ? stats.benchWarmerStreak * 0.05 : 0;
@@ -114,7 +126,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   // Calculate final XP (ensuring it's never negative)
   const finalXP = Math.max(0, Math.round(totalBaseXP * totalModifier));
 
-  console.log('[XPBreakdown] Registration streak details:', {
+  debugLog('[XPBreakdown] Registration streak details:', {
     registrationStreak: stats.registrationStreak,
     registrationStreakApplies: stats.registrationStreakApplies,
     registrationModifier,
@@ -156,17 +168,15 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         {/* Base Game Points */}
                         <div>
                           <h4 className="font-medium mb-2">Base Game Points</h4>
-                          <p>You earn XP based on when games were played. The points decrease based on how many games have happened since:</p>
+                          <p>You earn XP based on when games were played. Points decay gradually - you lose 0.5 XP for each game that passes:</p>
                           <ul className="list-disc list-inside space-y-1 mt-2 ml-4">
                             <li>Most Recent Game: 20 XP</li>
-                            <li>2-3 Games Back: 18 XP</li>
-                            <li>4-5 Games Back: 16 XP</li>
-                            <li>6-10 Games Back: 14 XP</li>
-                            <li>11-20 Games Back: 12 XP</li>
-                            <li>21-30 Games Back: 10 XP</li>
-                            <li>31-40 Games Back: 5 XP</li>
-                            <li>Over 40 Games Back: 0 XP</li>
+                            <li>10 Games Back: 15 XP</li>
+                            <li>20 Games Back: 10 XP</li>
+                            <li>30 Games Back: 5 XP</li>
+                            <li>38+ Games Back: 1 XP (minimum)</li>
                           </ul>
+                          <p className="mt-2 text-xs opacity-60">Your long-term commitment matters - games never drop to 0 XP.</p>
                         </div>
 
                         {/* Reserve Points */}
@@ -185,7 +195,7 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                           <h4 className="font-medium mb-2">Temporary Bonuses</h4>
                           <p className="mb-2">Your XP can be temporarily boosted by maintaining different types of streaks:</p>
                           <ul className="list-disc list-inside space-y-1 mt-2 ml-4">
-                            <li><span className="font-medium">Attendance Streak:</span> +10% XP per consecutive game played. Resets if you don't play a game.</li>
+                            <li><span className="font-medium">Attendance Streak:</span> Diminishing returns - +10% for 1st game, +9% for 2nd, +8% for 3rd... down to +1% per game after 10. Maximum bonus around 72%. Resets if you don't play.</li>
                             <li><span className="font-medium">Bench Warmer Streak:</span> +5% XP per consecutive reserve appearance without getting to play. Also increases your chances in random selection. Resets if you play or miss a game.</li>
                             <li><span className="font-medium">Registration Streak:</span> +2.5% XP per consecutive game you register for. Builds regardless of whether you get selected to play or not, but only applies when you don't get selected to play. Resets if you don't register for a game.</li>
                           </ul>
@@ -207,18 +217,18 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                   reserveXP={stats.reserveXP || 0}
                   reserveCount={stats.reserveCount || 0}
                 />
-                {console.log('[XPBreakdown] ReserveXPSection props:', { reserveXP: stats.reserveXP, reserveCount: stats.reserveCount })}
+                {debugLog('[XPBreakdown] ReserveXPSection props:', { reserveXP: stats.reserveXP, reserveCount: stats.reserveCount })}
 
                 {/* Attendance Streak Section */}
                 {effectiveStreak > 0 && (
                   <StreakSection
                     title={stats.shieldActive && stats.frozenStreakValue ? "🛡️ Protected Streak" : "Attendance Streak"}
                     streakCount={effectiveStreak}
-                    bonusPerStreak={10}
+                    bonusPerStreak={streakPercentage / effectiveStreak} // Pass calculated rate for display
                     description={
                       stats.shieldActive && stats.frozenStreakValue
-                        ? `${effectiveStreak} game streak frozen by shield (+${(effectiveStreak * 10)}% XP protected)`
-                        : `${effectiveStreak} game streak (+${(effectiveStreak * 10)}% XP)`
+                        ? `${effectiveStreak} game streak frozen by shield (+${streakPercentage}% XP protected)`
+                        : `${effectiveStreak} game streak (+${streakPercentage}% XP)`
                     }
                   />
                 )}

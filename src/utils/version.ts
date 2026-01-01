@@ -18,6 +18,51 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.4.0',
+    date: '31/12/2025',
+    sections: [
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'XP System v2 - Streak Bonus Rebalance',
+            details: "The streak bonus was originally designed as a catch-up mechanic to help consistent players climb the rankings. However, it ended up creating runaway leaders with astronomically high XP values - when really all that matters is being ahead of the player behind you. Streak bonuses now use diminishing returns: +10%, +9%, +8%... down to +1% per game after the 10th. Remember: Shield Tokens (earned every 10 games) exist specifically to protect your streak during planned absences like holidays, injuries, or other commitments."
+          },
+          {
+            title: 'XP System v2 - Long-Term Loyalty Rewarded',
+            details: "Based on player feedback, games older than 40 now contribute 1 XP each instead of 0. Previously, the system completely forgot your long-term commitment once games aged out. Now your dedication builds up over time - loyal players will have a higher base XP even without streaks. Your history matters."
+          },
+          {
+            title: 'XP System v2 - Smoother Decay Curve',
+            details: "Base XP from games now decays gradually (20→19.5→19→18.5...) instead of in arbitrary batches (20→18→16→14...). This is simply more accurate and fair - no more sudden cliff drops when a game crosses into the next bracket."
+          },
+          {
+            title: 'What This Means For You',
+            details: "Your XP number will look lower than before, but your ranking should remain almost the same. The order of players stays consistent - it's only the raw numbers that have changed."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          }
+        ]
+      },
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'N/A',
+            details: "No new features in this release."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.3.2',
     date: '18/12/2025',
     sections: [

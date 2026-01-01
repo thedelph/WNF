@@ -10,14 +10,18 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip as RechartsTooltip, 
+import {
+  Line, XAxis, YAxis, CartesianGrid,
+  Tooltip as RechartsTooltip,
   Legend, ResponsiveContainer,
   Scatter, ComposedChart
 } from 'recharts';
 // Import the shared PlayerGameHistory interface that handles all data structures
 import { PlayerGameHistory } from '../../hooks/useGameHistory';
+
+// Debug flag - set to true to enable verbose logging
+const DEBUG_WIN_RATE = false;
+const debugLog = (...args: unknown[]) => DEBUG_WIN_RATE && debugLog(...args);
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -100,14 +104,14 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
     // Check if the game has team size information directly
     if (game.games?.blue_team_size !== undefined && game.games?.orange_team_size !== undefined) {
       const isEven = game.games.blue_team_size === game.games.orange_team_size;
-      console.log(`Game ${game.games?.sequence_number || '?'} team size check: Blue=${game.games.blue_team_size}, Orange=${game.games.orange_team_size}, Even=${isEven}`);
+      debugLog(`Game ${game.games?.sequence_number || '?'} team size check: Blue=${game.games.blue_team_size}, Orange=${game.games.orange_team_size}, Even=${isEven}`);
       return isEven;
     }
     
     // Try alternate data structure
     if (game.blue_team_size !== undefined && game.orange_team_size !== undefined) {
       const isEven = game.blue_team_size === game.orange_team_size;
-      console.log(`Game ${game.games?.sequence_number || game.game?.sequence_number || '?'} team size check (alt): Blue=${game.blue_team_size}, Orange=${game.orange_team_size}, Even=${isEven}`);
+      debugLog(`Game ${game.games?.sequence_number || game.game?.sequence_number || '?'} team size check (alt): Blue=${game.blue_team_size}, Orange=${game.orange_team_size}, Even=${isEven}`);
       return isEven;
     }
     
@@ -117,7 +121,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
     
     // Game #5 is the one with uneven teams (ID: 3808f43c-6b2e-4c6c-bb1f-71702e119cff)
     if (gameId === '3808f43c-6b2e-4c6c-bb1f-71702e119cff' || sequenceNumber === 5) {
-      console.log(`Game #5 (${gameId}) - known uneven teams`);
+      debugLog(`Game #5 (${gameId}) - known uneven teams`);
       return false;
     }
     
@@ -129,12 +133,12 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
        game.game?.score_orange !== null && game.game?.score_orange !== undefined);
        
     if (hasScores) {
-      console.log(`Game ${sequenceNumber || '?'} has scores, assuming even teams`);
+      debugLog(`Game ${sequenceNumber || '?'} has scores, assuming even teams`);
       return true;
     }
     
     // Default to true for other games
-    console.log(`Game ${sequenceNumber || '?'} no team size info, defaulting to even teams`);
+    debugLog(`Game ${sequenceNumber || '?'} no team size info, defaulting to even teams`);
     return true;
   };
 
@@ -142,7 +146,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
   const processGameData = (games: GameHistory[]): GraphDataPoint[] => {
     if (!games || games.length === 0) return [];
 
-    console.log(`Processing ${games.length} games for win rate graph`);
+    debugLog(`Processing ${games.length} games for win rate graph`);
     
     // Sort games by date (oldest first)
     const sortedGames = [...games].sort((a, b) => {
@@ -184,7 +188,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       
       // Process game outcome
       // CRUCIAL FIX: For the first game (and subsequent games), properly track the outcome
-      console.log(`Processing game ${index + 1}, Status: ${game.status}, Team: ${game.team}, Outcome: ${outcome}`);
+      debugLog(`Processing game ${index + 1}, Status: ${game.status}, Team: ${game.team}, Outcome: ${outcome}`);
       
       // Count all games for total games counter
       totalGames++;
@@ -210,22 +214,22 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         // These numbers are used in the win rate calculation
         if (outcome === 'Won') {
           wins++;
-          console.log(`  → Adding Win (now ${wins} wins)`);
+          debugLog(`  → Adding Win (now ${wins} wins)`);
         } else if (outcome === 'Lost') {
           losses++;
-          console.log(`  → Adding Loss (now ${losses} losses)`);
+          debugLog(`  → Adding Loss (now ${losses} losses)`);
         } else if (outcome === 'Draw') {
           draws++;
-          console.log(`  → Adding Draw (now ${draws} draws)`);
+          debugLog(`  → Adding Draw (now ${draws} draws)`);
         } else {
-          console.log(`  → Unknown outcome - not counting in win/loss/draw totals`);
+          debugLog(`  → Unknown outcome - not counting in win/loss/draw totals`);
         }
       } else {
         // Log why we're not counting this game
         if (!teamsWereEven) {
-          console.log(`  → Not counting: Teams were not even`);
+          debugLog(`  → Not counting: Teams were not even`);
         } else if (!hasKnownOutcome && !isCompletedWithUnknownOutcome) {
-          console.log(`  → Not counting: No known outcome and not completed`);
+          debugLog(`  → Not counting: No known outcome and not completed`);
         }
       }
 
@@ -254,17 +258,17 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       let denominator = wins + losses + draws;
       
       // For thorough debugging to diagnose the issue
-      console.log(`Game ${index + 1} (Seq #${game.games?.sequence_number || game.game?.sequence_number || '?'}) - Stats After Game:`);
-      console.log(`  W: ${wins}, L: ${losses}, D: ${draws}, Even Teams: ${teamsWereEven}, Denom: ${denominator}`);
+      debugLog(`Game ${index + 1} (Seq #${game.games?.sequence_number || game.game?.sequence_number || '?'}) - Stats After Game:`);
+      debugLog(`  W: ${wins}, L: ${losses}, D: ${draws}, Even Teams: ${teamsWereEven}, Denom: ${denominator}`);
       
       // Calculate the win rate based on the denominator
       // Default to 0 if there are no games with outcomes
       let currentWinRate = 0;
       if (denominator > 0) {
         currentWinRate = (wins / denominator) * 100;
-        console.log(`  Win Rate Formula: (${wins} / ${denominator}) * 100 = ${currentWinRate.toFixed(1)}%`);
+        debugLog(`  Win Rate Formula: (${wins} / ${denominator}) * 100 = ${currentWinRate.toFixed(1)}%`);
       } else {
-        console.log(`  Win Rate: 0% (no valid games with outcomes yet)`);
+        debugLog(`  Win Rate: 0% (no valid games with outcomes yet)`);
       }
       
       // For the final data point, ensure we're showing the correct win rate
@@ -291,7 +295,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         });
         
         // Double-check our math for debugging
-        console.log('Game stats check:', {
+        debugLog('Game stats check:', {
           totalGames,
           includedGames,
           excludedGames,
@@ -301,7 +305,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         });
         
         // Log the final stats to help diagnose the issue
-        console.log('Final stats:', {
+        debugLog('Final stats:', {
           totalGames,
           includedGames,
           excludedGames,
@@ -327,20 +331,20 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         
         if (validCalculatedRate && invalidBackendRate) {
           // Keep our calculated win rate - it's more reliable
-          console.log(`⚠️ NOT using invalid backend win rate (${officialWinRate}) - keeping calculated ${currentWinRate.toFixed(1)}%`);
+          debugLog(`⚠️ NOT using invalid backend win rate (${officialWinRate}) - keeping calculated ${currentWinRate.toFixed(1)}%`);
         } else if (officialWinRate !== undefined && officialWinRate !== null) {
           // Only use backend rate if it's actually a valid number
-          console.log(`Using official win rate from backend: ${officialWinRate}%`);
+          debugLog(`Using official win rate from backend: ${officialWinRate}%`);
           currentWinRate = officialWinRate;
         } else {
-          console.log(`Backend rate is ${officialWinRate}, keeping calculated rate: ${currentWinRate.toFixed(1)}%`);
+          debugLog(`Backend rate is ${officialWinRate}, keeping calculated rate: ${currentWinRate.toFixed(1)}%`);
         }
         
         // Final validation - never allow 0% if we have wins
         if (currentWinRate === 0 && wins > 0) {
-          console.log(`⚠️ Win rate incorrectly dropped to 0% at the last game despite ${wins} wins - fixing!`);
+          debugLog(`⚠️ Win rate incorrectly dropped to 0% at the last game despite ${wins} wins - fixing!`);
           currentWinRate = (wins / (wins + losses + draws)) * 100;
-          console.log(`Fixed final win rate: ${currentWinRate.toFixed(1)}%`);
+          debugLog(`Fixed final win rate: ${currentWinRate.toFixed(1)}%`);
         }
       }
       
@@ -374,7 +378,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       // Include draws in the denominator to match the database calculation formula
       if (recentGamesCount === 10) {
         movingAverage = (recentWins / (recentWins + recentLosses + recentDraws)) * 100;
-        console.log(`  Moving Avg Formula: (${recentWins} / (${recentWins} + ${recentLosses} + ${recentDraws})) * 100 = ${movingAverage.toFixed(1)}%`);
+        debugLog(`  Moving Avg Formula: (${recentWins} / (${recentWins} + ${recentLosses} + ${recentDraws})) * 100 = ${movingAverage.toFixed(1)}%`);
       } else {
         movingAverage = null; // No moving average until we have 10 valid games
       }

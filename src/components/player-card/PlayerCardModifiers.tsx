@@ -35,6 +35,15 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   // Use protectedStreakValue, fall back to legacy frozenStreakValue
   const protectedValue = protectedStreakValue ?? frozenStreakValue ?? null
 
+  // v2 diminishing returns formula for streak bonus
+  const calculateStreakBonus = (streak: number): number => {
+    if (streak <= 0) return 0;
+    if (streak <= 10) {
+      return (streak * 11 - (streak * (streak + 1)) / 2) / 100;
+    }
+    return (55 + (streak - 10)) / 100;
+  };
+
   // Calculate gradual decay values
   const decayingProtectedBonus = shieldActive && protectedValue != null
     ? Math.max(0, protectedValue - currentStreak)
@@ -42,6 +51,9 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   const effectiveStreak = shieldActive && protectedValue != null
     ? Math.max(currentStreak, protectedValue - currentStreak)
     : currentStreak
+
+  // Calculate the effective streak bonus percentage using v2 formula
+  const effectiveStreakBonus = Math.round(calculateStreakBonus(effectiveStreak) * 100)
 
   // Calculate convergence progress (converge when natural streak = half protected value)
   const convergencePoint = protectedValue != null ? Math.ceil(protectedValue / 2) : 0
@@ -132,7 +144,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
                     </span>
                   </div>
                   <span className="text-sm font-bold">
-                    +{effectiveStreak * 10}%
+                    +{effectiveStreakBonus}%
                   </span>
                 </div>
 
@@ -194,7 +206,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
                 ) : isConverged ? (
                   <span>🛡️ <span className="font-semibold">Fully recovered!</span> Natural streak ({currentStreak}) has caught up.</span>
                 ) : (
-                  <span>🛡️ <span className="font-semibold">Recovering {protectedValue}-game streak.</span> {gamesToConvergence} more {gamesToConvergence === 1 ? 'game' : 'games'} to full recovery. Current bonus: +{effectiveStreak * 10}%</span>
+                  <span>🛡️ <span className="font-semibold">Recovering {protectedValue}-game streak.</span> {gamesToConvergence} more {gamesToConvergence === 1 ? 'game' : 'games'} to full recovery. Current bonus: +{effectiveStreakBonus}%</span>
                 )}
               </div>
             </motion.div>

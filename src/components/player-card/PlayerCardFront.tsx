@@ -75,7 +75,17 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   const { player } = useUser()
   const [showPlaystyleDetails, setShowPlaystyleDetails] = useState(false)
 
-  const streakModifier = currentStreak * 0.1
+  // v2 diminishing returns formula for streak bonus
+  const calculateStreakBonus = (streak: number): number => {
+    if (streak <= 0) return 0;
+    if (streak <= 10) {
+      // Sum formula: 10 + 9 + 8 + ... + (11 - streak)
+      return (streak * 11 - (streak * (streak + 1)) / 2) / 100;
+    }
+    // 55% + 1% for each game beyond 10
+    return (55 + (streak - 10)) / 100;
+  };
+  const streakModifier = calculateStreakBonus(currentStreak)
   const bonusModifier = activeBonuses * 0.1
   const penaltyModifier = activePenalties * -0.1
   const dropoutModifier = dropoutPenalties * -0.5
