@@ -38,7 +38,7 @@ export const changelogData: ChangelogEntry[] = [
           },
           {
             title: 'What This Means For You',
-            details: "Your XP number will look lower than before, but your ranking should remain almost the same. The order of players stays consistent - it's only the raw numbers that have changed."
+            details: "Your XP number will look lower than before, but your ranking should remain almost the same - it's only the raw numbers that have changed."
           }
         ]
       },
