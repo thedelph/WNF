@@ -14,6 +14,7 @@ The StatsGrid component displays various player statistics in a grid layout. It 
 - Shows the player's highest ever XP value and the date it was achieved
 - When the current XP equals the highest XP, displays "New Personal Best! 🎉" instead of showing the highest XP underneath
 - Shows "No highest XP data" when no highest XP data is available
+- **v2 Normalization**: For v1-era high scores (pre-2026), displays the v2 equivalent as primary with the v1 value in brackets (e.g., "Highest: 743 (v1: 1,630)"). For v2-era scores, only shows the v2 value.
 
 ### Streak Display
 - Shows the player's current streak
@@ -52,7 +53,9 @@ const { data: highestXPData, error: highestXPError } = await executeWithRetry(
   xp: profile.xp,
   // Other stats...
   highest_xp: profile.highestXP,
-  highest_xp_date: profile.highestXPSnapshotDate ? new Date(profile.highestXPSnapshotDate).toLocaleDateString('en-GB') : undefined
+  highest_xp_v2: profile.highestXPv2,                    // v2 equivalent XP
+  highest_xp_date: profile.highestXPSnapshotDate,
+  is_highest_xp_v1_era: profile.isHighestXPV1Era         // true if from v1 era
 }} />
 ```
 
@@ -95,10 +98,10 @@ const { data: playerData, error: playerError } = await executeWithRetry(
 ```
 
 ### Display Logic
-The StatsGrid component uses conditional rendering to display the highest XP information:
+The StatsGrid component uses conditional rendering to display the highest XP information, with v1/v2 era awareness:
 
 ```typescript
-// Example of highest XP display logic
+// Example of highest XP display logic with v2 normalization
 {stats.highest_xp ? (
   <>
     {stats.xp === stats.highest_xp ? (
@@ -107,7 +110,15 @@ The StatsGrid component uses conditional rendering to display the highest XP inf
       </div>
     ) : (
       <div className="text-sm opacity-80">
-        Highest: {stats.highest_xp} XP
+        {/* For v1-era scores, show v2 as primary with v1 in brackets */}
+        {stats.is_highest_xp_v1_era && stats.highest_xp_v2 ? (
+          <>
+            Highest: {stats.highest_xp_v2.toLocaleString()}
+            <span className="text-xs opacity-70"> (v1: {stats.highest_xp.toLocaleString()})</span>
+          </>
+        ) : (
+          <>Highest: {(stats.highest_xp_v2 ?? stats.highest_xp).toLocaleString()}</>
+        )}
         {stats.highest_xp_date && (
           <span className="block text-xs opacity-70">
             {stats.highest_xp_date}

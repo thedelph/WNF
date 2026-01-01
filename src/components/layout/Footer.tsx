@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="footer footer-center p-4 bg-base-300 text-base-content">
       <div className="flex flex-col items-center gap-1">
-        <p>Copyright  2025 - Wednesday Night Football</p>
+        <p>Copyright  {new Date().getFullYear()} - Wednesday Night Football</p>
         <VersionLink />
       </div>
     </footer>

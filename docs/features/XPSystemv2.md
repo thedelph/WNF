@@ -1,7 +1,7 @@
 # XP System v2
 
-> **Status**: Available for comparison at `/admin/xp-comparison`
-> **Production Date**: Planned for January 2026
+> **Status**: Live as of January 2026
+> **Comparison Tool**: `/admin/xp-comparison`
 
 ## Overview
 
@@ -178,11 +178,8 @@ A: Yes! All historical games still count. Only the calculation formula changes.
 **Q: What about shield tokens?**
 A: Shield tokens work exactly the same - they still protect your streak from resetting.
 
-**Q: When does this go live?**
-A: January 2026. The comparison tool is available now for preview.
-
-**Q: Can I see both values now?**
-A: Yes! Visit `/admin/xp-comparison` (admin only) to see current vs v2 XP side-by-side.
+**Q: Can I see both values?**
+A: Yes! Visit `/admin/xp-comparison` (admin only) to see v1 vs v2 XP side-by-side.
 
 ---
 
@@ -200,6 +197,42 @@ A: Yes! Visit `/admin/xp-comparison` (admin only) to see current vs v2 XP side-b
 
 ### Triggers
 - `trigger_xp_v2_on_game_complete` - Auto-recalculate when games complete
+
+---
+
+## High Score Normalization
+
+Historical XP snapshots from the v1 era (pre-2026) have been normalized to show equivalent v2 values. This ensures players can compare achievements fairly across eras.
+
+### Why Normalize?
+
+Under v2's diminishing streak returns, the maximum achievable XP is significantly lower than v1. A player with a 27-game streak who achieved 1,630 XP under v1 would only get ~743 XP under v2. Without normalization, v1-era high scores would be permanently unbeatable.
+
+### How It Works
+
+Each historical snapshot's v2 equivalent was calculated by:
+1. Reconstructing the game state at the snapshot's date
+2. Applying v2 linear decay formula to base XP
+3. Calculating the player's streak at that date
+4. Applying v2 diminishing streak bonus formula
+
+### Display Logic
+
+| Context | Display |
+|---------|---------|
+| 2024/2025 leaderboards | Sort by v1, show v2 in brackets |
+| All Time / 2026+ leaderboards | Sort and show v2 only |
+| Profile (v1-era high score) | v2 as primary, v1 in brackets |
+| Profile (v2-era high score) | v2 only |
+
+### Database Objects for Normalization
+
+| Object | Description |
+|--------|-------------|
+| `player_xp_snapshots.xp_v2` | Pre-computed v2 equivalent XP |
+| `calculate_historical_xp_v2(uuid, timestamptz)` | Calculate v2 XP at historical date |
+| `highest_xp_records_view.xp_v2` | v2 equivalent of highest XP |
+| `highest_xp_records_view.is_v1_era` | Whether snapshot is from v1 era |
 
 ---
 

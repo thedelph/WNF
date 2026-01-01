@@ -37,7 +37,9 @@ export interface PlayerStats {
   max_streak_date?: string;
   xp: number;
   highest_xp?: number;
+  highest_xp_v2?: number;
   highest_xp_date?: string;
+  is_highest_xp_v1_era?: boolean;
   wins?: number;
   totalGames?: number;
   win_rate?: number;

@@ -363,7 +363,7 @@ export default function PlayerProfileNew() {
         const { data: highestXPData, error: highestXPError } = await executeWithRetry(
           () => supabase
             .from('highest_xp_records_view')
-            .select('xp, snapshot_date')
+            .select('xp, xp_v2, snapshot_date, is_v1_era')
             .eq('player_id', playerData.id)
             // Don't use single() to avoid 406 errors when no data exists
         );
@@ -566,7 +566,9 @@ export default function PlayerProfileNew() {
             }))
             .filter((game: any) => game.sequence !== undefined) || [],
           highest_xp: highestXPRecord?.xp || 0,
-          highest_xp_date: highestXPDate
+          highest_xp_v2: highestXPRecord?.xp_v2,
+          highest_xp_date: highestXPDate,
+          is_highest_xp_v1_era: highestXPRecord?.is_v1_era
         };
 
         console.log('[PlayerProfile] Setting player stats:', { 
@@ -806,7 +808,9 @@ export default function PlayerProfileNew() {
             friendly_name: player.friendly_name,
             xp: player.xp,
             highest_xp: player.highest_xp,
+            highest_xp_v2: player.highest_xp_v2,
             highest_xp_date: player.highest_xp_date,
+            is_highest_xp_v1_era: player.is_highest_xp_v1_era,
             current_streak: player.current_streak,
             max_streak: player.max_streak,
             max_streak_date: player.max_streak_date,

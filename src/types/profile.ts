@@ -54,7 +54,9 @@ export interface ExtendedPlayerData {
   win_rate?: number;
   recent_win_rate?: number;
   highestXP?: number;
+  highestXPv2?: number;
   highestXPSnapshotDate?: string;
+  isHighestXPV1Era?: boolean;
   maxStreakDate?: string;
   caps?: number;
   reserve_games?: number;

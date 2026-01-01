@@ -180,7 +180,7 @@ export default function Component() {
           const highestXPResult = await executeWithRetry(
             () => supabase
               .from('highest_xp_records_view')
-              .select('xp, snapshot_date')
+              .select('xp, xp_v2, snapshot_date, is_v1_era')
               .eq('player_id', playerData.id)
               .single()
           );
@@ -325,7 +325,9 @@ export default function Component() {
           win_rate: winRate,
           recent_win_rate: recentWinRate,
           highestXP: highestXPData?.xp,
+          highestXPv2: highestXPData?.xp_v2,
           highestXPSnapshotDate: highestXPData?.snapshot_date ? formatDate(highestXPData.snapshot_date) : undefined,
+          isHighestXPV1Era: highestXPData?.is_v1_era,
           caps: playerData.caps || 0,
           bench_warmer_streak: playerData.bench_warmer_streak || 0,
           registrationStreak: registrationStreakData?.current_streak_length || 0,

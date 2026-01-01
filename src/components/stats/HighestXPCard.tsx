@@ -8,9 +8,11 @@ interface HighestXPRecord {
   player_id: string;
   friendly_name: string;
   xp: number;
+  xp_v2: number | null;
   snapshot_date: string;
   rank: number;
   rarity: string;
+  is_v1_era: boolean;
   formatted_date: string; // This will be added after fetching
 }
 
@@ -33,7 +35,10 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
   const [highestXP, setHighestXP] = useState<HighestXPRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
+  // Determine if we're viewing a v1-era year (2024/2025) - for 'all' or 2026+ we use v2 values
+  const isV1EraYear = selectedYear === 2024 || selectedYear === 2025;
+
   // Using a custom red gradient that's not used elsewhere
   const customGradient = 'from-red-300 via-red-500 to-red-700';
   const customShadow = 'shadow-red-500/50';
@@ -46,8 +51,8 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
         // Query to get highest XP for each player
         let query = supabase
           .from('highest_xp_records_view')
-          .select('player_id, friendly_name, xp, snapshot_date, rank, rarity')
-          .order('xp', { ascending: false })
+          .select('player_id, friendly_name, xp, xp_v2, snapshot_date, rank, rarity, is_v1_era')
+          .order(isV1EraYear ? 'xp' : 'xp_v2', { ascending: false, nullsFirst: false })
           .limit(10);
         
         // Filter by year if selected
@@ -149,7 +154,19 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
                 </div>
                 {/* XP and date - right side, stacked on mobile, side-by-side on larger screens */}
                 <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 flex-shrink-0 justify-end">
-                  <span className="font-bold whitespace-nowrap text-right w-20">{record.xp} XP</span>
+                  <span className="font-bold whitespace-nowrap text-right">
+                    {isV1EraYear ? (
+                      <>
+                        {record.xp.toLocaleString()} XP
+                        {record.xp_v2 && (
+                          <span className="text-xs font-normal opacity-70 ml-1">(v2: {record.xp_v2.toLocaleString()})</span>
+                        )}
+                      </>
+                    ) : (
+                      // For 'all' or 2026+, show v2 XP only
+                      <>{(record.xp_v2 ?? record.xp).toLocaleString()} XP</>
+                    )}
+                  </span>
                   <span className="text-xs opacity-80 whitespace-nowrap text-right w-24">{record.formatted_date}</span>
                 </div>
               </div>

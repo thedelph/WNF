@@ -147,6 +147,7 @@ CREATE TABLE player_xp_snapshots (
     id BIGSERIAL PRIMARY KEY,
     player_id UUID NOT NULL,
     xp INTEGER NOT NULL,
+    xp_v2 INTEGER,           -- v2 equivalent XP (for historical normalization)
     rank INTEGER,
     rarity TEXT,
     snapshot_date TIMESTAMPTZ NOT NULL,
@@ -157,6 +158,32 @@ CREATE TABLE player_xp_snapshots (
 **Security:**
 - Uses SECURITY DEFINER to ensure proper permissions
 - Granted to authenticated and service_role roles
+
+### calculate_historical_xp_v2
+```sql
+calculate_historical_xp_v2(p_player_id UUID, p_as_of_date TIMESTAMPTZ) RETURNS INTEGER
+```
+Calculates what a player's XP would have been under v2 rules at a historical date. Used to normalize v1-era high scores for fair comparison.
+
+**Parameters:**
+- `p_player_id`: UUID of the player
+- `p_as_of_date`: The date to calculate XP as of
+
+**Behavior:**
+1. Gets all games completed up to the `as_of_date`
+2. Calculates base XP using v2 linear decay: `MAX(1, 20 - (games_ago * 0.5))`
+3. Reconstructs the player's attendance streak at that date
+4. Applies v2 diminishing streak bonus formula
+5. Returns the v2 equivalent XP value
+
+**Usage Example:**
+```sql
+-- Calculate what a player's XP would have been under v2 on a specific date
+SELECT calculate_historical_xp_v2(
+    'player_uuid',
+    '2025-06-15 20:00:00+00'
+);
+```
 
 ## Player Statistics Functions
 
@@ -203,32 +230,39 @@ The function uses 'selected' as the player status value to identify games where 
 
 ### highest_xp_records_view
 
-**Purpose:**  
-Provides a view of the highest XP achieved by each player across all snapshots taken.
+**Purpose:**
+Provides a view of the highest XP achieved by each player across all snapshots taken, including v2 equivalent values for historical normalization.
 
 **Behavior:**
 - Uses window functions to rank each player's snapshots by XP (highest first)
 - Selects only the top XP record for each player
 - Joins with the players table to get friendly names
 - Orders results by XP in descending order
+- Includes v2 equivalent XP and era indicator for normalization
 
 **Columns:**
 - player_id (UUID): Unique identifier for the player
 - friendly_name (TEXT): Player's friendly name from the players table
-- xp (INTEGER): The highest XP value achieved by the player
+- xp (INTEGER): The highest XP value achieved by the player (v1 value)
+- xp_v2 (INTEGER): The v2 equivalent XP value for fair comparison
 - rank (INTEGER): The player's rank at the time of the snapshot
 - rarity (TEXT): The player's rarity at the time of the snapshot
 - snapshot_date (TIMESTAMPTZ): When the XP value was recorded
+- is_v1_era (BOOLEAN): True if snapshot is from before January 2026
 
 **Usage Example:**
 ```sql
--- Get the top 10 highest XP records
+-- Get the top 10 highest XP records (sorted by v1 XP)
 SELECT * FROM highest_xp_records_view LIMIT 10;
 
 -- Get highest XP records for a specific year
-SELECT * FROM highest_xp_records_view 
+SELECT * FROM highest_xp_records_view
 WHERE EXTRACT(YEAR FROM snapshot_date) = 2025
 ORDER BY xp DESC LIMIT 10;
+
+-- Get all-time highest by v2 equivalent (for fair cross-era comparison)
+SELECT * FROM highest_xp_records_view
+ORDER BY xp_v2 DESC LIMIT 10;
 ```
 
 ## Token History

@@ -34,10 +34,12 @@ interface StatsGridProps {
     xp?: number;
     total_xp?: number;
     highest_xp?: number;
+    highest_xp_v2?: number;
     highest_xp_date?: string;
+    is_highest_xp_v1_era?: boolean;
     current_streak?: number;
     max_streak?: number; // NOTE: This value may be inconsistent with player_streak_stats view
-    max_streak_date?: string; 
+    max_streak_date?: string;
     rarity?: string;
     win_rate?: number;
     recent_win_rate?: number;
@@ -133,7 +135,13 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
                 </div>
               ) : (
                 <div className="text-sm text-gray-600 font-medium">
-                  Highest: {stats.highest_xp.toLocaleString()}
+                  {stats.is_highest_xp_v1_era && stats.highest_xp_v2 ? (
+                    // v1-era high score: Show v2 as primary, v1 in brackets
+                    <>Highest: {stats.highest_xp_v2.toLocaleString()} <span className="text-xs opacity-70">(v1: {stats.highest_xp.toLocaleString()})</span></>
+                  ) : (
+                    // v2-era or no v2 data: Show original value
+                    <>Highest: {(stats.highest_xp_v2 ?? stats.highest_xp).toLocaleString()}</>
+                  )}
                 </div>
               )}
               {stats.highest_xp_date && stats.xp !== stats.highest_xp && (
@@ -150,7 +158,7 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
         </div>
       ),
       tooltip: stats.highest_xp
-        ? `Current XP: ${((stats.xp ?? stats.total_xp) || 0).toLocaleString()}\nHighest XP: ${stats.highest_xp.toLocaleString()}${stats.highest_xp_date ? ` (${formatDate(stats.highest_xp_date)})` : ''}`
+        ? `Current XP: ${((stats.xp ?? stats.total_xp) || 0).toLocaleString()}\nHighest XP: ${(stats.highest_xp_v2 ?? stats.highest_xp).toLocaleString()}${stats.is_highest_xp_v1_era && stats.highest_xp_v2 ? ` (v1: ${stats.highest_xp.toLocaleString()})` : ''}${stats.highest_xp_date ? ` - ${formatDate(stats.highest_xp_date)}` : ''}`
         : undefined
     },
     { 
