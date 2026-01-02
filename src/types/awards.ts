@@ -7,7 +7,7 @@ export type MedalType = 'gold' | 'silver' | 'bronze';
 export type AwardCategory =
   | 'xp_champion'
   | 'win_rate_leader'
-  | 'goal_machine'
+  | 'net_positive'
   | 'iron_man'
   | 'hot_streak'
   | 'the_wall'
@@ -15,7 +15,7 @@ export type AwardCategory =
   | 'dream_team'
   | 'best_buddies'
   | 'blue_blood'
-  | 'orange_crush'
+  | 'dutch_master'
   | 'super_sub';
 
 /**

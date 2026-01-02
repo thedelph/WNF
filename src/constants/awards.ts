@@ -40,7 +40,7 @@ export const shadowColors: Record<GradientColor, string> = {
 export const categoryGradients: Record<AwardCategory, GradientColor> = {
   xp_champion: 'amber',
   win_rate_leader: 'green',
-  goal_machine: 'orange',
+  net_positive: 'orange',
   iron_man: 'blue',
   hot_streak: 'rose',
   the_wall: 'indigo',
@@ -48,7 +48,7 @@ export const categoryGradients: Record<AwardCategory, GradientColor> = {
   dream_team: 'pink',
   best_buddies: 'teal',
   blue_blood: 'blue',
-  orange_crush: 'orange',
+  dutch_master: 'orange',
   super_sub: 'green',
 };
 
@@ -74,10 +74,10 @@ export const AWARD_CATEGORIES: Record<AwardCategory, AwardCategoryConfig> = {
     valueFormatter: (value) => `${value.toFixed(1)}%`,
     isPairAward: false,
   },
-  goal_machine: {
-    id: 'goal_machine',
-    title: 'Goal Machine',
-    description: 'Best goal differential',
+  net_positive: {
+    id: 'net_positive',
+    title: 'Net Positive',
+    description: 'Best team goal differential',
     icon: 'Zap',
     color: 'orange',
     valueFormatter: (value) => `+${Math.round(value)}`,
@@ -146,9 +146,9 @@ export const AWARD_CATEGORIES: Record<AwardCategory, AwardCategoryConfig> = {
     valueFormatter: (value) => `${value.toFixed(1)}%`,
     isPairAward: false,
   },
-  orange_crush: {
-    id: 'orange_crush',
-    title: 'Orange Crush',
+  dutch_master: {
+    id: 'dutch_master',
+    title: 'Dutch Master',
     description: 'Highest % on orange team',
     icon: 'Droplet',
     color: 'orange',
@@ -199,7 +199,7 @@ export const MEDAL_COLORS = {
 export const AWARD_CATEGORY_ORDER: AwardCategory[] = [
   'xp_champion',
   'win_rate_leader',
-  'goal_machine',
+  'net_positive',
   'iron_man',
   'hot_streak',
   'the_wall',
@@ -207,7 +207,7 @@ export const AWARD_CATEGORY_ORDER: AwardCategory[] = [
   'dream_team',
   'best_buddies',
   'blue_blood',
-  'orange_crush',
+  'dutch_master',
   'super_sub',
 ];
 
