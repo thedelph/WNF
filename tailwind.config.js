@@ -27,6 +27,17 @@ export default {
         'rarity-gold': '#ffd700',
         'rarity-totw': '#1e90ff',
         'rarity-icon': '#ff6b35',
+        // Trophy/Medal colors
+        'medal-gold': '#ffd700',
+        'medal-gold-dark': '#b8860b',
+        'medal-silver': '#c0c0c0',
+        'medal-silver-dark': '#a0a0a0',
+        'medal-bronze': '#cd7f32',
+        'medal-bronze-dark': '#8b4513',
+        // Trophy cabinet theme
+        'trophy-bg': '#0d0d12',
+        'trophy-surface': '#15151f',
+        'trophy-elevated': '#1e1e2a',
       },
       fontFamily: {
         'fifa-display': ['Oswald', 'sans-serif'],
@@ -43,6 +54,11 @@ export default {
         'slide-up': 'slide-up 0.5s ease-out',
         'scale-in': 'scale-in 0.4s ease-out',
         'text-glow': 'text-glow 2s ease-in-out infinite',
+        // Trophy animations
+        'medal-shine': 'medal-shine 2.5s ease-in-out infinite',
+        'trophy-wobble': 'trophy-wobble 4s ease-in-out infinite',
+        'podium-rise': 'podium-rise 0.6s ease-out forwards',
+        'trophy-pulse': 'trophy-pulse 3s ease-in-out infinite',
       },
       keyframes: {
         flip: {
@@ -90,16 +106,45 @@ export default {
           '0%, 100%': { textShadow: '0 0 10px var(--tw-shadow-color), 0 0 20px var(--tw-shadow-color)' },
           '50%': { textShadow: '0 0 20px var(--tw-shadow-color), 0 0 40px var(--tw-shadow-color), 0 0 60px var(--tw-shadow-color)' },
         },
+        // Trophy keyframes
+        'medal-shine': {
+          '0%': { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
+        },
+        'trophy-wobble': {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '25%': { transform: 'rotate(5deg)' },
+          '75%': { transform: 'rotate(-5deg)' },
+        },
+        'podium-rise': {
+          '0%': { opacity: '0', transform: 'translateY(30px) scale(0.9)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'trophy-pulse': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(255, 215, 0, 0)' },
+          '50%': { boxShadow: '0 0 20px 5px rgba(255, 215, 0, 0.3)' },
+        },
       },
       boxShadow: {
         'fifa-glow': '0 0 20px rgba(0, 212, 255, 0.5)',
         'fifa-glow-strong': '0 0 30px rgba(0, 212, 255, 0.7), 0 0 60px rgba(0, 212, 255, 0.4)',
         'gold-glow': '0 0 30px rgba(255, 215, 0, 0.6)',
         'pink-glow': '0 0 25px rgba(255, 45, 146, 0.5)',
+        // Medal glows
+        'medal-gold': '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)',
+        'medal-silver': '0 0 20px rgba(192, 192, 192, 0.5), 0 0 40px rgba(192, 192, 192, 0.3)',
+        'medal-bronze': '0 0 20px rgba(205, 127, 50, 0.5), 0 0 40px rgba(205, 127, 50, 0.3)',
+        'trophy-glow': '0 4px 20px rgba(255, 215, 0, 0.4), 0 0 60px rgba(255, 215, 0, 0.2)',
       },
       backgroundImage: {
         'fifa-gradient': 'linear-gradient(135deg, #0a0a0f 0%, #1a1a25 50%, #0a0a0f 100%)',
         'card-shine': 'linear-gradient(110deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%)',
+        // Medal gradients
+        'medal-gold-gradient': 'linear-gradient(135deg, #ffd700 0%, #ffec8b 30%, #ffd700 50%, #daa520 100%)',
+        'medal-silver-gradient': 'linear-gradient(135deg, #e8e8e8 0%, #ffffff 30%, #c0c0c0 50%, #a8a8a8 100%)',
+        'medal-bronze-gradient': 'linear-gradient(135deg, #cd7f32 0%, #daa06d 30%, #cd7f32 50%, #8b4513 100%)',
+        'medal-shine': 'linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.4) 50%, transparent 80%)',
+        'trophy-cabinet': 'linear-gradient(180deg, #0d0d12 0%, #15151f 50%, #0d0d12 100%)',
       },
     },
   },

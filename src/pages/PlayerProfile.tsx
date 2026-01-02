@@ -29,6 +29,7 @@ import { AttributeCombination } from '../types/playstyle';
 import { Position } from '../types/positions';
 import { usePlayerChemistry } from '../hooks/usePlayerChemistry';
 import { PairChemistryCard, TopChemistryPartners } from '../components/profile/PlayerChemistry';
+import TrophyCabinet from '../components/profile/TrophyCabinet';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -822,6 +823,16 @@ export default function PlayerProfileNew() {
             caps: player.caps
           }} />
         </div>
+
+        {/* Trophy Cabinet - Right below Stats */}
+        {player && (
+          <div className="w-full">
+            <TrophyCabinet
+              playerId={player.id}
+              playerName={player.friendly_name}
+            />
+          </div>
+        )}
 
         {/* Top Chemistry Partners - Right below stats */}
         <div className="w-full">

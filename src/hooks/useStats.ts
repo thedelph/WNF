@@ -18,6 +18,7 @@ export interface PlayerStats {
   currentWinlessStreak: number;
   maxWinlessStreak: number;
   maxAttendanceStreakDate?: string;
+  maxStreakDate?: string;  // Win streak date
   maxUnbeatenStreakDate?: string;
   maxLossStreakDate?: string;
   maxWinlessStreakDate?: string;
@@ -448,13 +449,14 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           throw bestBuddiesError;
         }
 
+        // Deduplicate buddy pairs by only keeping pairs where player1 id < player2 id
         const transformedBuddies = bestBuddies?.map((buddy) => ({
           id: buddy.id,
           friendlyName: buddy.friendly_name,
           buddyId: buddy.buddy_id,
           buddyFriendlyName: buddy.buddy_friendly_name,
           gamesTogether: Number(buddy.games_together)
-        })) || [];
+        })).filter((buddy) => buddy.id < buddy.buddyId) || [];
 
         // Fetch best chemistry pairs
         const { data: chemistryData, error: chemistryError } = await supabase
@@ -468,18 +470,22 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           // Don't throw - chemistry is optional, continue with empty array
         }
 
-        const transformedChemistry: ChemistryPairStats[] = (chemistryData || []).slice(0, 10).map((pair: any) => ({
-          player1Id: pair.player1_id,
-          player1Name: pair.player1_name,
-          player2Id: pair.player2_id,
-          player2Name: pair.player2_name,
-          gamesTogether: Number(pair.games_together),
-          winsTogether: Number(pair.wins_together),
-          drawsTogether: Number(pair.draws_together),
-          lossesTogether: Number(pair.losses_together),
-          performanceRate: Number(pair.performance_rate),
-          chemistryScore: Number(pair.chemistry_score)
-        }));
+        // Deduplicate chemistry pairs by only keeping pairs where player1 id < player2 id
+        const transformedChemistry: ChemistryPairStats[] = (chemistryData || [])
+          .filter((pair: any) => pair.player1_id < pair.player2_id)
+          .slice(0, 10)
+          .map((pair: any) => ({
+            player1Id: pair.player1_id,
+            player1Name: pair.player1_name,
+            player2Id: pair.player2_id,
+            player2Name: pair.player2_name,
+            gamesTogether: Number(pair.games_together),
+            winsTogether: Number(pair.wins_together),
+            drawsTogether: Number(pair.draws_together),
+            lossesTogether: Number(pair.losses_together),
+            performanceRate: Number(pair.performance_rate),
+            chemistryScore: Number(pair.chemistry_score)
+          }));
 
         // Process and set stats
         setStats({

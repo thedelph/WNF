@@ -55,7 +55,10 @@
       "Bash(\"/c/Users/ChrisHide/AppData/Local/Programs/Python/Launcher/py.exe\" --version)",
       "Bash(\"/c/WINDOWS/system32/config/systemprofile/AppData/Local/Programs/Python/Python313/python.exe\" --version)",
       "Bash(dir \"C:\\Users\\ChrisHide\\Documents\\github\\wnf\\WNF\\supabase\\migrations\" /B)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(wc:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

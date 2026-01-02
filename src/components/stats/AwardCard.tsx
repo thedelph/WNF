@@ -51,41 +51,44 @@ const shadowColors = {
 };
 
 export const AwardCard = ({ title, winners, description, className, icon, color = 'blue', valueHeader }: AwardCardProps) => {
-  // Determine medal positions considering ties
+  // Determine medal positions using Olympic-style ranking with ties
+  // e.g., if two players tie for gold, next player gets bronze (skips silver)
   const getMedalPosition = (currentIndex: number, winners: Winner[]) => {
     const currentWinner = winners[currentIndex];
-    
+
     // Use rawValue if available, otherwise fall back to value
-    const currentValue = currentWinner.rawValue !== undefined 
-      ? currentWinner.rawValue 
+    const currentValue = currentWinner.rawValue !== undefined
+      ? currentWinner.rawValue
       : currentWinner.value;
-    
+
     // For ReactNode values without rawValue, we need to use a different approach
     if (typeof currentValue !== 'string' && typeof currentValue !== 'number') {
       // For React elements, we can't compare values directly, so use index-based logic
       return currentIndex < 3 ? currentIndex : null;
     }
-    
-    // Count how many distinct values are higher than the current one
-    let position = 0;
-    const seenValues = new Set<string | number>();
-    
+
+    // Olympic-style ranking: count how many players are ahead of this one
+    // (i.e., how many players have a HIGHER value than the current player)
+    let playersAhead = 0;
+
     for (let i = 0; i < winners.length; i++) {
+      if (i === currentIndex) continue; // Skip self
+
       const winner = winners[i];
       const value = winner.rawValue !== undefined ? winner.rawValue : winner.value;
-      
+
       // Skip ReactNode values in comparison
       if (typeof value !== 'string' && typeof value !== 'number') continue;
-      
-      // If we haven't seen this value before and it's higher than current
-      if (!seenValues.has(value) && value > currentValue) {
-        seenValues.add(value);
-        position++;
+
+      // Count players with higher values
+      if (value > currentValue) {
+        playersAhead++;
       }
     }
-    
+
     // Return medal position (0, 1, 2) or null if beyond medals
-    return position < 3 ? position : null;
+    // Position is based on how many players are ahead
+    return playersAhead < 3 ? playersAhead : null;
   };
 
   return (

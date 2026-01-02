@@ -243,8 +243,8 @@ export default function WhatsAppBotHelp() {
               <Link to="/profile" className="btn">
                 Go to Profile
               </Link>
-              <Link to="/stats" className="btn btn-ghost">
-                View Stats
+              <Link to="/leaderboards" className="btn btn-ghost">
+                View Leaderboards
               </Link>
             </div>
           </div>

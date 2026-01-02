@@ -34,6 +34,8 @@ import { SlotOffersPage } from './pages/admin/SlotOffersPage'
 import EmailVerification from './pages/EmailVerification'
 import Changelog from './pages/Changelog'
 import Stats from './pages/Stats'
+import Awards from './pages/Awards'
+import Leaderboards from './pages/Leaderboards'
 import StandaloneStats from './pages/StandaloneStats'
 import { ScrollToTop } from './components/ui/ScrollToTop'
 import TokenManagement from './pages/admin/TokenManagement'
@@ -68,8 +70,8 @@ const App: React.FC = () => {
           <ErrorBoundary>
             <ScrollToTop />
             <Routes>
-            {/* Redirect root to stats */}
-            <Route path="/" element={<Navigate to="/stats" replace />} />
+            {/* Redirect root to leaderboards */}
+            <Route path="/" element={<Navigate to="/leaderboards" replace />} />
             
             {/* Standalone Stats Route */}
               <Route 
@@ -87,7 +89,9 @@ const App: React.FC = () => {
                   <Outlet />
                 </Layout>
               }>
-                <Route path="/stats" element={<Stats />} />
+                <Route path="/leaderboards" element={<Leaderboards />} />
+                <Route path="/stats" element={<Navigate to="/leaderboards" replace />} />
+                <Route path="/awards" element={<Navigate to="/leaderboards" replace />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />

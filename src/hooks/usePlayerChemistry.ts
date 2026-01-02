@@ -159,21 +159,25 @@ export function useChemistryLeaderboard(year?: number | null) {
 
         // Transform the data - for leaderboard we need ChemistryPair format
         // but present it as top pairs
-        const transformedPairs = (data || []).slice(0, 10).map((raw: any) => ({
-          partnerId: raw.player2_id,
-          partnerName: `${raw.player1_name} & ${raw.player2_name}`,
-          gamesTogether: Number(raw.games_together),
-          winsTogether: Number(raw.wins_together),
-          drawsTogether: Number(raw.draws_together),
-          lossesTogether: Number(raw.losses_together),
-          performanceRate: Number(raw.performance_rate),
-          chemistryScore: Number(raw.chemistry_score),
-          // Include both player IDs for linking
-          player1Id: raw.player1_id,
-          player1Name: raw.player1_name,
-          player2Id: raw.player2_id,
-          player2Name: raw.player2_name,
-        }));
+        // Deduplicate by only keeping pairs where player1 id < player2 id
+        const transformedPairs = (data || [])
+          .filter((raw: any) => raw.player1_id < raw.player2_id)
+          .slice(0, 10)
+          .map((raw: any) => ({
+            partnerId: raw.player2_id,
+            partnerName: `${raw.player1_name} & ${raw.player2_name}`,
+            gamesTogether: Number(raw.games_together),
+            winsTogether: Number(raw.wins_together),
+            drawsTogether: Number(raw.draws_together),
+            lossesTogether: Number(raw.losses_together),
+            performanceRate: Number(raw.performance_rate),
+            chemistryScore: Number(raw.chemistry_score),
+            // Include both player IDs for linking
+            player1Id: raw.player1_id,
+            player1Name: raw.player1_name,
+            player2Id: raw.player2_id,
+            player2Name: raw.player2_name,
+          }));
 
         setPairs(transformedPairs);
       } catch (err: any) {
