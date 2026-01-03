@@ -1779,9 +1779,9 @@ function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: Pla
   // Calculate attribute balance score
   const attributeBalance = calculateAttributeBalanceScore(blueTeam, orangeTeam);
 
-  // Weight skills at 85% and attributes at 15% to reduce attribute blocking
-  // This makes core skills more important while still considering playstyles
-  const combinedBalance = (skillBalance * 0.85) + (attributeBalance * 0.15);
+  // Weight skills at 60% and attributes at 40% to properly balance gameplay impact
+  // Attributes (shooting, defending, pace) represent real in-game capabilities
+  const combinedBalance = (skillBalance * 0.60) + (attributeBalance * 0.40);
 
   return combinedBalance;
 }
@@ -4059,6 +4059,27 @@ function calculateOverallGrade(
     gradePoints[avgRatingGrade] * 0.30 +
     gradePoints[attributeGrade] * 0.30;
 
+  // Cap grade if any component is ACCEPTABLE or worse (prevents EXCELLENT with flawed balance)
+  const hasAcceptableComponent =
+    attributeGrade === 'ACCEPTABLE' ||
+    coreGrade === 'ACCEPTABLE' ||
+    avgRatingGrade === 'ACCEPTABLE';
+
+  const hasPoorComponent =
+    attributeGrade === 'POOR' ||
+    coreGrade === 'POOR' ||
+    avgRatingGrade === 'POOR';
+
+  // Severe gameplay imbalances should prevent EXCELLENT grades
+  if (hasAcceptableComponent && score >= 70) {
+    return { grade: 'GOOD', score: Math.min(score, 79) };
+  }
+
+  // Critical gameplay imbalances should cap at ACCEPTABLE
+  if (hasPoorComponent && score >= 50) {
+    return { grade: 'ACCEPTABLE', score: Math.min(score, 69) };
+  }
+
   if (score >= 85) return { grade: 'EXCELLENT', score };
   if (score >= 70) return { grade: 'GOOD', score };
   if (score >= 50) return { grade: 'ACCEPTABLE', score };
@@ -4133,10 +4154,10 @@ function finalValidation(
   // Grade attributes based on largest gap (or EXCELLENT if no extreme gaps)
   const maxGap = extremeGaps.length > 0 ? Math.max(...extremeGaps.map(g => g.gap)) : 0;
   let attributeGrade: ValidationGrade = 'EXCELLENT';
-  if (maxGap > 4.0) attributeGrade = 'FAIL';
-  else if (maxGap > 3.5) attributeGrade = 'POOR';
-  else if (maxGap > 3.0) attributeGrade = 'ACCEPTABLE';
-  else if (maxGap > 2.5) attributeGrade = 'GOOD';
+  if (maxGap > 3.5) attributeGrade = 'FAIL';       // Catastrophic gap (35% imbalance)
+  else if (maxGap > 2.5) attributeGrade = 'POOR';  // Severe gap (25% imbalance, e.g., 7 vs 2 shooters)
+  else if (maxGap > 2.0) attributeGrade = 'ACCEPTABLE';  // Noticeable gap (20% imbalance)
+  else if (maxGap > 1.5) attributeGrade = 'GOOD';  // Minor gap (15% imbalance)
 
   if (!attributeValid) {
     issues.push(`Attributes: ${extremeGaps.map(g => `${g.attr}(${g.gap.toFixed(1)})`).join(', ')} exceed threshold`);
@@ -6962,7 +6983,7 @@ function optimizeTeams(
   // ============================================================================
   // SIMULATED ANNEALING PARAMETERS
   // ============================================================================
-  let temperature = 0;                // Deterministic mode: only accept improvements (no random worse-swap acceptance)
+  let temperature = 1.0;              // Start with high exploration for probabilistic annealing
   const MIN_TEMPERATURE = 0.01;       // Minimum temperature before stopping
   const COOLING_RATE = 0.80;          // Cool by 20% each round (0.80 = faster convergence, less oscillation)
   const REHEAT_TEMP = 0.4;            // Reheat to this when stuck
