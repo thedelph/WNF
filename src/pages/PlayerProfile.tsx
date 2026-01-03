@@ -182,7 +182,6 @@ export default function PlayerProfileNew() {
               } else {
                 // Multiple matches found - take the first one but show a notification
                 playerData = partialResult.data[0];
-                console.log(`Found ${partialResult.data.length} players matching this name. Using first match.`);
                 toast.info(`Multiple players found with similar names. Showing first match.`);
               }
             }
@@ -259,20 +258,10 @@ export default function PlayerProfileNew() {
               console.error('Error fetching XP breakdown:', result.error);
               // Don't show toast error since we're handling it gracefully
             }
-          } else {
-            console.log('Skipping XP breakdown query for Johnny (known to have no XP data)');
           }
-        } catch (error) {
-          console.error('Unexpected error fetching XP breakdown:', error);
+        } catch {
           // Still continue with default values
         }
-
-        console.log('[PlayerProfile] Player data:', { 
-          id: playerData?.id,
-          friendly_name: playerData?.friendly_name,
-          xp_breakdown: xpBreakdownData,
-          params: { id: params.id, friendlyName: params.friendlyName }
-        });
 
         // Get count of unpaid games using the player_unpaid_games_view
         const { data: unpaidGamesData, error: unpaidError } = await executeWithRetry(
@@ -301,13 +290,7 @@ export default function PlayerProfileNew() {
               .eq('friendly_name', playerData.friendly_name)
               .maybeSingle()
           );
-          
-          console.log('[PlayerProfile] Registration streak query result:', {
-            friendly_name: playerData.friendly_name,
-            data: streakData,
-            error: streakError
-          });
-          
+
           if (!streakError && streakData) {
             registrationStreakData = streakData;
           } else if (streakError) {
@@ -354,11 +337,6 @@ export default function PlayerProfileNew() {
         
         // Use the max streak from player_streak_stats if available
         const correctMaxStreak = streakStatsData?.longest_streak || playerData.max_streak || 0;
-        console.log('Max streak comparison:', {
-          from_players_table: playerData.max_streak,
-          from_streak_stats: streakStatsData?.longest_streak,
-          using: correctMaxStreak
-        });
 
         // Get highest XP record for the player
         const { data: highestXPData, error: highestXPError } = await executeWithRetry(
@@ -572,13 +550,6 @@ export default function PlayerProfileNew() {
           is_highest_xp_v1_era: highestXPRecord?.is_v1_era
         };
 
-        console.log('[PlayerProfile] Setting player stats:', { 
-          playerStats: {
-            ...playerStats,
-            gameHistory: playerStats.gameHistory.length + ' games'
-          }
-        });
-
         setPlayer(playerStats);
         setLatestSequence(latestSequence);
       } catch (error: any) {
@@ -788,22 +759,6 @@ export default function PlayerProfileNew() {
       >
         {/* Stats Grid - Full Width */}
         <div className="w-full">
-          {console.log('Player data being passed to StatsGrid:', {
-            id: player.id,
-            friendly_name: player.friendly_name,
-            xp: player.xp,
-            highest_xp: player.highest_xp,
-            highest_xp_date: player.highest_xp_date,
-            current_streak: player.current_streak,
-            max_streak: player.max_streak,
-            max_streak_date: player.max_streak_date,
-            active_bonuses: player.active_bonuses,
-            active_penalties: player.active_penalties,
-            rarity: player.rarity,
-            win_rate: player.win_rate,
-            recent_win_rate: player.recent_win_rate,
-            caps: player.caps
-          })}
           <StatsGrid stats={{
             id: player.id,
             friendly_name: player.friendly_name,

@@ -21,7 +21,7 @@ import { PlayerGameHistory } from '../../hooks/useGameHistory';
 
 // Debug flag - set to true to enable verbose logging
 const DEBUG_WIN_RATE = false;
-const debugLog = (...args: unknown[]) => DEBUG_WIN_RATE && debugLog(...args);
+const debugLog = (...args: unknown[]) => DEBUG_WIN_RATE && console.log('[WinRateGraph]', ...args);
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -100,45 +100,17 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
   });
 
   // Helper function to determine if a game has even teams
+  // NOTE: Team size data from PlayerProfile is unreliable due to Supabase row limits.
+  // We hardcode known games with uneven teams based on database records.
   const hasEvenTeams = (game: GameHistory): boolean => {
-    // Check if the game has team size information directly
-    if (game.games?.blue_team_size !== undefined && game.games?.orange_team_size !== undefined) {
-      const isEven = game.games.blue_team_size === game.games.orange_team_size;
-      debugLog(`Game ${game.games?.sequence_number || '?'} team size check: Blue=${game.games.blue_team_size}, Orange=${game.games.orange_team_size}, Even=${isEven}`);
-      return isEven;
-    }
-    
-    // Try alternate data structure
-    if (game.blue_team_size !== undefined && game.orange_team_size !== undefined) {
-      const isEven = game.blue_team_size === game.orange_team_size;
-      debugLog(`Game ${game.games?.sequence_number || game.game?.sequence_number || '?'} team size check (alt): Blue=${game.blue_team_size}, Orange=${game.orange_team_size}, Even=${isEven}`);
-      return isEven;
-    }
-    
-    // For the one game with known uneven teams - game #5 in the sequence
-    const gameId = game.game?.id || game.games?.id || '';
     const sequenceNumber = game.games?.sequence_number || game.game?.sequence_number;
-    
-    // Game #5 is the one with uneven teams (ID: 3808f43c-6b2e-4c6c-bb1f-71702e119cff)
-    if (gameId === '3808f43c-6b2e-4c6c-bb1f-71702e119cff' || sequenceNumber === 5) {
-      debugLog(`Game #5 (${gameId}) - known uneven teams`);
+
+    // Game 27 has uneven teams (8 blue vs 9 orange) - confirmed from database
+    if (sequenceNumber === 27) {
       return false;
     }
-    
-    // For games with known scores, we can reasonably assume teams were even
-    const hasScores = 
-      (game.games?.score_blue !== null && game.games?.score_blue !== undefined && 
-       game.games?.score_orange !== null && game.games?.score_orange !== undefined) ||
-      (game.game?.score_blue !== null && game.game?.score_blue !== undefined && 
-       game.game?.score_orange !== null && game.game?.score_orange !== undefined);
-       
-    if (hasScores) {
-      debugLog(`Game ${sequenceNumber || '?'} has scores, assuming even teams`);
-      return true;
-    }
-    
-    // Default to true for other games
-    debugLog(`Game ${sequenceNumber || '?'} no team size info, defaulting to even teams`);
+
+    // All other games have even teams based on historical data
     return true;
   };
 
@@ -176,12 +148,23 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       const initialGameOutcome = getGameOutcome(game);
       
       // Handle both standard outcomes and team-specific outcomes (Blue Won, Orange Won)
-      if (initialGameOutcome === 'Won' || initialGameOutcome === 'Blue Won' || initialGameOutcome === 'Orange Won') {
+      if (initialGameOutcome === 'Won') {
         outcome = 'Won';
       } else if (initialGameOutcome === 'Lost') {
         outcome = 'Lost';
       } else if (initialGameOutcome === 'Draw') {
         outcome = 'Draw';
+      } else if (initialGameOutcome === 'Blue Won' || initialGameOutcome === 'Orange Won') {
+        // These indicate the winning team, not the player's outcome
+        // We need the player's team to determine if they won or lost
+        const playerTeam = game.team?.toLowerCase();
+        if (playerTeam) {
+          const playerWon = (playerTeam === 'blue' && initialGameOutcome === 'Blue Won') ||
+                           (playerTeam === 'orange' && initialGameOutcome === 'Orange Won');
+          outcome = playerWon ? 'Won' : 'Lost';
+        } else {
+          outcome = 'Unknown'; // Can't determine without player's team
+        }
       } else {
         outcome = 'Unknown'; // Ensure we have a valid enum value
       }
@@ -253,20 +236,23 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         gamesWithUnevenTeams++;
       }
 
-      // Calculate win rate using the standard formula
-      // win rate = (wins / (wins + losses + draws)) * 100
-      let denominator = wins + losses + draws;
-      
+      // Calculate win rate using the points formula (matches backend get_player_win_rates)
+      // Points system: Win = 3pts, Draw = 1pt, Loss = 0pts
+      // win rate = (wins * 3 + draws * 1) / (totalGames * 3) * 100
+      const totalDecidedGames = wins + losses + draws;
+
       // For thorough debugging to diagnose the issue
       debugLog(`Game ${index + 1} (Seq #${game.games?.sequence_number || game.game?.sequence_number || '?'}) - Stats After Game:`);
-      debugLog(`  W: ${wins}, L: ${losses}, D: ${draws}, Even Teams: ${teamsWereEven}, Denom: ${denominator}`);
-      
-      // Calculate the win rate based on the denominator
+      debugLog(`  W: ${wins}, L: ${losses}, D: ${draws}, Even Teams: ${teamsWereEven}, Total: ${totalDecidedGames}`);
+
+      // Calculate the win rate using points formula
       // Default to 0 if there are no games with outcomes
       let currentWinRate = 0;
-      if (denominator > 0) {
-        currentWinRate = (wins / denominator) * 100;
-        debugLog(`  Win Rate Formula: (${wins} / ${denominator}) * 100 = ${currentWinRate.toFixed(1)}%`);
+      if (totalDecidedGames > 0) {
+        const points = (wins * 3) + (draws * 1);
+        const maxPoints = totalDecidedGames * 3;
+        currentWinRate = (points / maxPoints) * 100;
+        debugLog(`  Points Formula: ((${wins}×3) + (${draws}×1)) / (${totalDecidedGames}×3) × 100 = ${points}/${maxPoints} = ${currentWinRate.toFixed(1)}%`);
       } else {
         debugLog(`  Win Rate: 0% (no valid games with outcomes yet)`);
       }
@@ -318,46 +304,31 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         });
       }
       
-      // For the final data point only, ensure we NEVER reset to 0% incorrectly
-      // Only use the official win rate if it's actually provided and valid
-      if (index === sortedGames.length - 1) {
-        // Check if we have a valid calculated win rate with actual wins
-        const validCalculatedRate = currentWinRate > 0 && wins > 0;
-        
-        // Check if backend value is valid (not null, undefined, or 0 when we have wins)
-        const invalidBackendRate = officialWinRate === null || 
-                                  officialWinRate === undefined || 
-                                  (officialWinRate === 0 && wins > 0);
-        
-        if (validCalculatedRate && invalidBackendRate) {
-          // Keep our calculated win rate - it's more reliable
-          debugLog(`⚠️ NOT using invalid backend win rate (${officialWinRate}) - keeping calculated ${currentWinRate.toFixed(1)}%`);
-        } else if (officialWinRate !== undefined && officialWinRate !== null) {
-          // Only use backend rate if it's actually a valid number
-          debugLog(`Using official win rate from backend: ${officialWinRate}%`);
-          currentWinRate = officialWinRate;
-        } else {
-          debugLog(`Backend rate is ${officialWinRate}, keeping calculated rate: ${currentWinRate.toFixed(1)}%`);
-        }
-        
-        // Final validation - never allow 0% if we have wins
-        if (currentWinRate === 0 && wins > 0) {
-          debugLog(`⚠️ Win rate incorrectly dropped to 0% at the last game despite ${wins} wins - fixing!`);
-          currentWinRate = (wins / (wins + losses + draws)) * 100;
-          debugLog(`Fixed final win rate: ${currentWinRate.toFixed(1)}%`);
-        }
+      // NOTE: We no longer override with officialWinRate here.
+      // The graph should show the cumulative calculated win rate at each point,
+      // not jump to a different backend value at the end.
+      // The backend win rate is shown separately in the StatsGrid component.
+
+      // Final validation - never allow 0% if we have wins
+      if (index === sortedGames.length - 1 && currentWinRate === 0 && wins > 0) {
+        debugLog(`⚠️ Win rate incorrectly dropped to 0% at the last game despite ${wins} wins - fixing!`);
+        const fixPoints = (wins * 3) + (draws * 1);
+        const fixMaxPoints = (wins + losses + draws) * 3;
+        currentWinRate = (fixPoints / fixMaxPoints) * 100;
+        debugLog(`Fixed final win rate: ${currentWinRate.toFixed(1)}%`);
       }
-      
+
       // Calculate the 10-game moving average (only consider the last 10 valid games)
+      // Uses the same points formula: (W×3 + D×1) / (G×3) × 100
       let movingAverage: number | null = null;
-      
+
       // Only calculate moving average if we have enough data
       // Look for the last 10 valid games
       let recentWins = 0;
       let recentLosses = 0;
       let recentDraws = 0;
       let recentGamesCount = 0;
-      
+
       // Start from current game and go backwards
       for (let i = index; i >= 0 && recentGamesCount < 10; i--) {
         const recentOutcome = getGameOutcome(sortedGames[i]);
@@ -372,13 +343,14 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
           }
         }
       }
-      
+
       // Only set a moving average if we have exactly 10 valid games with clear outcomes
-      // This ensures we're showing a true 10-game moving average
-      // Include draws in the denominator to match the database calculation formula
+      // Uses the same points formula for consistency
       if (recentGamesCount === 10) {
-        movingAverage = (recentWins / (recentWins + recentLosses + recentDraws)) * 100;
-        debugLog(`  Moving Avg Formula: (${recentWins} / (${recentWins} + ${recentLosses} + ${recentDraws})) * 100 = ${movingAverage.toFixed(1)}%`);
+        const recentPoints = (recentWins * 3) + (recentDraws * 1);
+        const recentMaxPoints = 10 * 3; // 10 games × 3 max points each
+        movingAverage = (recentPoints / recentMaxPoints) * 100;
+        debugLog(`  Moving Avg: ((${recentWins}×3) + (${recentDraws}×1)) / 30 = ${recentPoints}/30 = ${movingAverage.toFixed(1)}%`);
       } else {
         movingAverage = null; // No moving average until we have 10 valid games
       }
@@ -445,9 +417,40 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
     return processGameData(games);
   }, [games, getGameOutcome]);
 
-  // Process game data when dependencies change
+  // Process game data when dependencies change - log for diagnostics
   React.useEffect(() => {
-    // No debug logging in production
+    if (DEBUG_WIN_RATE && graphData.length > 0) {
+      console.log('=== WIN RATE GRAPH DEBUG DATA ===');
+      console.log(`Total games: ${graphData.length}`);
+      console.log(`Official win rate from backend: ${officialWinRate}`);
+
+      // Log last 15 games for analysis
+      const recentGames = graphData.slice(-15);
+      console.log('Recent 15 games (for copy/paste):');
+      console.table(recentGames.map(g => ({
+        '#': g.gameNumber,
+        'Outcome': g.outcome,
+        'WinRate': g.winRate,
+        'MovingAvg': g.movingAverage,
+        'Excluded': g.excludedFromWinRate,
+        'Reason': g.exclusionReason || '-',
+        'Team': g.rawGameData?.team || 'unknown',
+        'TeamSizes': `B:${g.rawGameData?.games?.team_sizes?.blue ?? '?'} O:${g.rawGameData?.games?.team_sizes?.orange ?? '?'}`
+      })));
+
+      // Count outcomes
+      const outcomes = graphData.reduce((acc, g) => {
+        acc[g.outcome] = (acc[g.outcome] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log('Outcome counts:', outcomes);
+
+      // Count excluded games
+      const excludedCount = graphData.filter(g => g.excludedFromWinRate).length;
+      console.log(`Excluded games: ${excludedCount}`);
+
+      console.log('=================================');
+    }
   }, [games, graphData, officialWinRate, getGameOutcome]);
 
   // If there's no data, show a message
@@ -479,18 +482,18 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
             outcome === 'Draw' ? 'text-purple-500 font-bold' :
             'text-gray-500'
           }>{outcome}</span></p>
-          <p>Win Rate: {winRate}%</p>
+          <p>Performance: {winRate}%</p>
           {movingAverage && <p>10-Game Avg: {movingAverage}%</p>}
-          
-          {/* Show additional information if the game is excluded from the win rate calculation */}
+
+          {/* Show additional information if the game is excluded from the calculation */}
           {isExcluded && (
             <div className="mt-1 pt-1 border-t border-gray-200">
               <p className="font-semibold text-amber-600">
-                Excluded from win rate calculation
+                Excluded from calculation
               </p>
               <p className="text-gray-600">
-                Reason: {exclusionReason === 'uneven_teams' ? 'Uneven teams' : 
-                        exclusionReason === 'unknown_outcome' ? 'Unknown outcome' : 
+                Reason: {exclusionReason === 'uneven_teams' ? 'Uneven teams' :
+                        exclusionReason === 'unknown_outcome' ? 'Unknown outcome' :
                         'Other'}
               </p>
             </div>
@@ -532,15 +535,15 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       className={`bg-white dark:bg-gray-800 shadow rounded-lg p-6 ${className}`}
     >
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Win Rate History</h2>
+        <h2 className="text-2xl font-bold">Performance History</h2>
       </div>
-      
+
       {/* Show legend above chart on mobile */}
       {isSmallScreen && (
         <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
           {/* Line indicators for the graph lines */}
           <span className="flex items-center gap-1 text-xs">
-            <span className="inline-block w-8 h-[2px] bg-blue-500"></span> Win Rate
+            <span className="inline-block w-8 h-[2px] bg-blue-500"></span> Performance
           </span>
           <span className="flex items-center gap-1 text-xs">
             <span className="inline-block w-8 h-[2px] bg-orange-500"></span> 10-Game Avg
@@ -573,14 +576,14 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
                 offset: -20, // Increased offset to move label further from axis
               }}
             />
-            <YAxis 
-              domain={[0, 100]} 
-              tickFormatter={(tick) => `${tick}%`} 
+            <YAxis
+              domain={[0, 100]}
+              tickFormatter={(tick) => `${tick}%`}
               label={{
-                value: 'Win Rate',
+                value: 'Performance',
                 angle: -90,
                 position: 'insideLeft',
-                dy: 40, 
+                dy: 40,
               }}
             />
             <RechartsTooltip
@@ -596,16 +599,16 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
                   paddingBottom: 10
                 }}
                 payload={[
-                  { value: 'Overall Win Rate', type: 'line', color: '#3b82f6' },
+                  { value: 'Overall Performance', type: 'line', color: '#3b82f6' },
                   { value: '10-Game Moving Avg', type: 'line', color: '#f97316' }
                 ]}
               />
             )}
-            {/* Line for Overall Win Rate */}
-            <Line 
-              type="monotone" 
-              dataKey="winRate" 
-              name="Overall Win Rate" 
+            {/* Line for Overall Performance */}
+            <Line
+              type="monotone"
+              dataKey="winRate"
+              name="Overall Performance" 
               stroke="#3b82f6" 
               activeDot={{ r: 8 }} 
               strokeWidth={2}
@@ -657,14 +660,24 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
                 
                 // Force direct outcome determination
                 let fillColor = '#9ca3af'; // Default grey
-                
+
                 // Assign colors based on outcome
-                if (gameOutcome === 'Won' || gameOutcome === 'Blue Won' || gameOutcome === 'Orange Won') {
+                if (gameOutcome === 'Won') {
                   fillColor = '#10b981'; // Green for wins
                 } else if (gameOutcome === 'Lost') {
                   fillColor = '#f43f5e'; // Red for losses
                 } else if (gameOutcome === 'Draw') {
                   fillColor = '#a855f7'; // Purple for draws
+                } else if (gameOutcome === 'Blue Won' || gameOutcome === 'Orange Won') {
+                  // These indicate the winning team, not the player's outcome
+                  // We need the player's team to determine if they won or lost
+                  const playerTeam = game.team?.toLowerCase();
+                  if (playerTeam) {
+                    const playerWon = (playerTeam === 'blue' && gameOutcome === 'Blue Won') ||
+                                     (playerTeam === 'orange' && gameOutcome === 'Orange Won');
+                    fillColor = playerWon ? '#10b981' : '#f43f5e'; // Green for wins, red for losses
+                  }
+                  // If no team, stays grey (Unknown)
                 }
                 
                 // For games excluded from win rate calculations, use a different visual style
@@ -741,19 +754,19 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
             {/* Inner colored square */}
             <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-[#10b981]"></div>
           </div>
-          <span className="text-xs">Excluded from Win Rate</span>
+          <span className="text-xs">Excluded</span>
         </div>
       </div>
       
       {/* Explanatory text below the graph with game stats */}
       <div className="text-center text-xs leading-tight text-gray-600 mt-3 px-4">
-        <p className="mb-1"><strong>About Win Rate Calculation:</strong></p>
-        <p className="mb-1">Only games with <span className="font-medium">even teams</span> and known outcomes (win, loss, or draw) are counted in the official win rate calculation.</p>
-        <p className="mb-1">Games with <span className="font-medium">uneven teams</span> or unknown outcomes (outlined with dashed borders) are excluded from the win rate.</p>
-        <p className="mb-1">The 10-game moving average (orange line) appears after 10 games with known outcomes.</p>
+        <p className="mb-1"><strong>About Performance Rating:</strong></p>
+        <p className="mb-1">Performance is calculated using a <span className="font-medium">points system</span>: Win = 3pts, Draw = 1pt, Loss = 0pts.</p>
+        <p className="mb-1">Rating = (Points earned / Maximum possible points) × 100%</p>
+        <p className="mb-1">The 10-game moving average (orange line) uses the same formula for your recent form.</p>
         <div className="mt-2 p-2 bg-base-200 rounded-md inline-block">
-          <p className="font-semibold">Summary: {gameStats.includedGames} of {gameStats.totalGames} games counted in win rate</p>
-          <p className="text-[10px]">({gameStats.excludedDueToUnevenTeams} excluded due to uneven teams, {gameStats.excludedDueToUnknownOutcome} due to unknown outcomes)</p>
+          <p className="font-semibold">Stats: {gameStats.wins}W / {gameStats.draws}D / {gameStats.losses}L from {gameStats.includedGames} games</p>
+          <p className="text-[10px]">({gameStats.excludedDueToUnknownOutcome} games excluded due to unknown outcomes)</p>
         </div>
       </div>
       

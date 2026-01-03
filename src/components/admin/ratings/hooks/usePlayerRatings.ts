@@ -20,19 +20,30 @@ export const usePlayerRatings = (isSuperAdmin: boolean) => {
     try {
       setLoading(true);
       // Use supabaseAdmin to bypass RLS
-      const { data: playersData, error: playersError } = await supabaseAdmin
+      // Fetch the peer-calculated average ratings, not individual legacy columns
+      const { data: rawPlayersData, error: playersError } = await supabaseAdmin
         .from('players')
         .select(`
           id,
           friendly_name,
-          attack_rating,
-          defense_rating,
-          game_iq,
+          average_attack_rating,
+          average_defense_rating,
+          average_game_iq_rating,
           average_gk_rating
         `)
-        .or('attack_rating.gt.0,defense_rating.gt.0,game_iq.gt.0,average_gk_rating.gt.0');
+        .or('average_attack_rating.gt.0,average_defense_rating.gt.0,average_game_iq_rating.gt.0,average_gk_rating.gt.0');
 
       if (playersError) throw playersError;
+
+      // Map the average columns to the expected property names for the UI
+      const playersData = (rawPlayersData || []).map(p => ({
+        id: p.id,
+        friendly_name: p.friendly_name,
+        attack_rating: p.average_attack_rating,
+        defense_rating: p.average_defense_rating,
+        game_iq: p.average_game_iq_rating,
+        average_gk_rating: p.average_gk_rating
+      }));
 
       // Fetch derived attributes for all players
       const { data: derivedAttributesData, error: derivedError} = await supabaseAdmin

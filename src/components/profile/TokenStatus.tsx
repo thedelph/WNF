@@ -52,17 +52,6 @@ export default function TokenStatus({
     }
   };
 
-  // Debug logging
-  console.log('[TokenStatus] Props:', {
-    status,
-    isEligible,
-    hasPlayedInLastTenGames,
-    hasRecentSelection,
-    hasOutstandingPayments,
-    outstandingPaymentsCount,
-    recentGames
-  });
-
   if (isLoading) {
     return (
       <motion.div 

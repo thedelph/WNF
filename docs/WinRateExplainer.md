@@ -1,6 +1,26 @@
-Win Rate Calculation in WNF
+Performance Calculation in WNF
 
-Win rates in WNF are carefully calculated to ensure they represent a fair and accurate measure of player performance. Here's a detailed explanation of how they work:
+Performance scores in WNF are calculated using a **points-based formula** to ensure a fair and accurate measure of player performance. Here's a detailed explanation of how they work:
+
+## Points-Based Formula
+
+WNF uses a points-based system rather than simple win percentage:
+
+**Formula:** `(Wins×3 + Draws×1) / (TotalGames×3) × 100`
+
+| Result | Points |
+|--------|--------|
+| Win    | 3 points |
+| Draw   | 1 point |
+| Loss   | 0 points |
+
+**Example:**
+- Player has 25 wins, 9 draws, 26 losses (60 games total)
+- Total points: (25×3) + (9×1) + (26×0) = 75 + 9 + 0 = 84
+- Maximum possible: 60×3 = 180
+- Performance: 84/180 × 100 = **46.7%**
+
+This gives draws proper weight (1/3 of a win) rather than treating them as losses.
 
 Eligibility Requirements:
 ----------------------
@@ -17,89 +37,91 @@ How Wins Are Determined:
 
 Calculation Method:
 -----------------
-Win Rate = (Number of Wins in Even Team Games / Total Number of Even Team Games) × 100
+Performance = `(Wins×3 + Draws×1) / (TotalGames×3) × 100`
 
 For example:
 If a player has played 20 games total, but only 15 had even teams:
 - 9 wins in even team games
 - 4 losses in even team games
 - 2 draws in even team games
-Their win rate would be: (9/15) × 100 = 60%
+Their performance would be: ((9×3) + (2×1)) / (15×3) × 100 = 29/45 × 100 = **64.4%**
 
 Note: The other 5 games where teams were uneven are completely excluded from the calculation.
 
-Recent Win Rate:
---------------
-In addition to overall win rate, WNF also calculates a "Recent Win Rate" based on a player's last 10 games. This provides insight into a player's current form.
+Recent Performance:
+-----------------
+In addition to overall performance, WNF also calculates "Recent Performance" based on a player's last 10 games. This provides insight into a player's current form.
 
-- Recent Win Rate = (Number of Wins in Last 10 Games / (Wins + Losses + Draws)) × 100
-- Like the overall win rate, draws ARE included in the denominator
-- Only includes games with even teams and valid outcomes (same criteria as overall win rate)
-- Form Indicator: Shows the difference between recent and overall win rates
-  - indicates better recent form (e.g.,  2.0% means recent win rate is 2% higher than overall)
-  - indicates worse recent form (e.g.,  3.5% means recent win rate is 3.5% lower than overall)
-  - indicates unchanged form (recent win rate equals overall win rate)
+- Recent Performance = `(Wins×3 + Draws×1) / (TotalGames×3) × 100` for the last 10 games
+- Uses the same points formula as overall performance
+- Only includes games with even teams and valid outcomes (same criteria as overall performance)
+- Form Indicator: Shows the difference between recent and overall performance
+  - ▲ indicates better recent form (e.g., ▲ 2.0% means recent is 2% higher than overall)
+  - ▼ indicates worse recent form (e.g., ▼ 3.5% means recent is 3.5% lower than overall)
+  - ⟷ indicates unchanged form (recent equals overall)
 
-The recent win rate helps identify players who are improving or declining in performance, regardless of their overall win rate.
+The recent performance helps identify players who are improving or declining, regardless of their overall performance.
 
 Display Rules:
 ------------
-- Win rates are rounded to 1 decimal place
-- Players need at least 10 games with even teams to be eligible for the "Best Win Rates" award
-- When displaying top win rates, all players who match or exceed the third-highest win rate are shown (this means you might see more than 3 players if there are ties)
-- Win rates and W/D/L records are displayed on the back of player cards
-- For players with less than 10 games, "Pending (X/10)" is shown instead of a win rate percentage
-- Win rates are consistently formatted across all components using the same database function
-- The StatsGrid component displays both overall win rate and recent win rate in the same cell, with a form indicator showing the difference
+- Performance scores are rounded to 1 decimal place
+- Players need at least 10 games with even teams to be eligible for the "Best Performance" award
+- When displaying top performers, all players who match or exceed the third-highest score are shown (this means you might see more than 3 players if there are ties)
+- Performance and W/D/L records are displayed on the back of player cards
+- For players with less than 10 games, "Pending (X/10)" is shown instead of a performance percentage
+- Performance is consistently formatted across all components using the same database function
+- The StatsGrid component displays both overall performance and recent performance in the same cell, with a form indicator showing the difference
 
-Win Rate Visualisation:
----------------------
-The WinRateGraph component shows a player's win rate history with special visual indicators:
-- Games excluded from win rate calculation (those with uneven teams or unknown outcomes) are shown with a dashed border
-- Only games with even teams and clear outcomes (win/loss/draw) affect the blue win rate line
+Performance Visualisation:
+------------------------
+The WinRateGraph component (Performance History) shows a player's performance history with special visual indicators:
+- Games excluded from calculation (those with uneven teams or unknown outcomes) are shown with a dashed border
+- Only games with even teams and clear outcomes (win/loss/draw) affect the blue performance line
 - Enhanced tooltips explain why certain games are excluded from the calculations
 - A summary below the graph shows statistics about included vs excluded games
+- **Bug Fix (Jan 2026)**: Fixed outcome determination to correctly check player's team when game outcome is 'Blue Won' or 'Orange Won'
 
 Technical Implementation:
 ----------------------
 
-1. Win Rate Display Components:
-The following components use the `get_player_win_rates` and `get_player_recent_win_rates` functions to display win rates:
-- PlayerCardBack: Shows detailed W/D/L stats and win rate
-- PlayerSelectionResults: Displays win rates for selected and reserve players
-- RegisteredPlayers: Shows win rates for all registered players
-- TeamSelectionResults: Displays win rates for selected team members
-- StatsGrid: Shows both overall and recent win rates with form indicator
+1. Performance Display Components:
+The following components use the `get_player_win_rates` and `get_player_recent_win_rates` functions to display performance:
+- PlayerCardBack: Shows detailed W/D/L stats and performance
+- PlayerSelectionResults: Displays performance for selected and reserve players
+- RegisteredPlayers: Shows performance for all registered players
+- TeamSelectionResults: Displays performance for selected team members
+- StatsGrid: Shows both overall and recent performance with form indicator
 
-2. Win Rate Calculation Functions:
-   
-   a. The `get_player_win_rates` function calculates overall win rates for all players based on their game history. This function:
+2. Performance Calculation Functions:
+
+   a. The `get_player_win_rates` function calculates overall performance for all players using the points formula. This function:
    - Only counts games where the player was selected to play
    - Only includes games with recorded outcomes
    - Only counts games with even teams (same number of players on both sides)
-   - Requires at least 10 eligible games for a win rate to be calculated
+   - Uses formula: `(Wins×3 + Draws×1) / (TotalGames×3) × 100`
+   - Requires at least 10 eligible games for a score to be calculated
 
-   b. The `get_player_recent_win_rates` function calculates win rates for the last 10 games for each player. This function:
+   b. The `get_player_recent_win_rates` function calculates performance for the last 10 games for each player. This function:
    - Uses ROW_NUMBER() to select only the 10 most recent games for each player
-   - Follows the same win/loss/draw determination logic as the overall win rate function
+   - Follows the same points-based formula as the overall performance function
    - Returns results even for players with fewer than 10 recent games
 
 3. Automatic Updates:
-Win rates are automatically updated in the following scenarios:
+Performance scores are automatically updated in the following scenarios:
 - When a game is completed
 - When a game's outcome is changed
 - When a game's teams are modified
 
-This ensures that player win rates are always up-to-date and reflect their current performance.
+This ensures that player performance is always up-to-date and reflects their current standing.
 
 5. Visual Indicators in WinRateGraph:
-The player profile page's win rate graph includes visual indicators to explain the win rate calculation:
-- Dashed-border squares indicate games excluded from win rate calculations (uneven teams, unknown outcomes)
+The player profile page's performance graph includes visual indicators to explain the calculation:
+- Dashed-border squares indicate games excluded from calculations (uneven teams, unknown outcomes)
 - Solid-border squares indicate games included in the calculation
 - Tooltips on each game provide details about why a game might be excluded
 - Summary statistics below the graph show the breakdown of excluded vs included games
 
-This helps players understand why certain games might not appear to affect their overall win rate.
+This helps players understand why certain games might not appear to affect their overall performance.
 
 4. Database Implementation:
 ```sql
@@ -288,8 +310,8 @@ Key Points About Implementation:
    - Consistent outcome checking between overall and recent win rate functions
 
 This calculation method ensures that:
-1. Win rates are only based on fair matches where teams were balanced in numbers
-2. Players need a significant number of games (10+) to be eligible for overall win rate calculations
-3. Recent win rates provide insight into current form regardless of overall performance
-4. The system accounts for draws and different team colors fairly
+1. Performance is only based on fair matches where teams were balanced in numbers
+2. Players need a significant number of games (10+) to be eligible for overall performance calculations
+3. Recent performance provides insight into current form regardless of overall standing
+4. The system accounts for draws fairly (1/3 value of a win) and different team colors correctly
 5. The implementation is efficient, secure, and maintainable

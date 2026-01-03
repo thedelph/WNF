@@ -1,10 +1,15 @@
-# WinRateGraph Component
+# WinRateGraph Component (Performance History)
 
 ## Overview
-The WinRateGraph component displays a player's win rate history over time as a responsive graph. It shows two key metrics:
+The WinRateGraph component displays a player's **performance history** over time as a responsive graph. It shows two key metrics using a **points-based formula**:
 
-1. **Overall Win Rate** - Cumulative win rate over all games played (blue line)
-2. **Recent Win Rate** - 10-game moving average win rate (orange line) 
+1. **Overall Performance** - Cumulative performance score over all games played (blue line)
+2. **Recent Performance** - 10-game moving average performance (orange line)
+
+**Points Formula:** `(Wins×3 + Draws×1) / (TotalGames×3) × 100`
+- Wins = 3 points
+- Draws = 1 point
+- Losses = 0 points
 
 The graph also displays colored square indicators on the x-axis to show individual game outcomes:
 - 🟩 **Green squares**: Wins
@@ -33,13 +38,15 @@ The component renders a combination chart with:
 
 ## Data Processing
 
-The component processes game history to calculate:
+The component processes game history to calculate performance using a **points-based formula**:
 
-1. **Cumulative Win Rate**: Total wins / total games played (only games with clear outcomes are counted)
-2. **10-Game Moving Average**: Win rate over the last 10 games, calculated as (Wins / (Wins + Losses + Draws)) × 100
-   - Draws ARE included in the denominator, consistent with the database win rate calculation
-   - Only appears once the player has completed at least 10 games with valid outcomes (wins/losses/draws)
-   - Uses exactly the same formula as the recent win rate shown on player profiles
+1. **Cumulative Performance**: `(Wins×3 + Draws×1) / (TotalGames×3) × 100`
+   - Only games with clear outcomes (win/loss/draw) are counted
+   - Games with unknown outcomes or uneven teams are excluded
+
+2. **10-Game Moving Average**: Same points formula applied to the last 10 games
+   - Only appears once the player has completed at least 10 games with valid outcomes
+   - Uses exactly the same formula as the backend database calculations
 
 ## Responsive Behavior
 
@@ -56,15 +63,16 @@ The component processes game history to calculate:
   - Red squares for losses
   - Purple squares for draws
   - Grey squares for games with unknown outcomes
-  - Dashed border around squares for games excluded from win rate calculation
-- Games are excluded from win rate calculations if they have:
-  - Uneven teams (different number of players on each side)
-  - Unknown outcomes
-- Only games with even teams and clear win/loss/draw outcomes contribute to the win rate line
+  - Dashed border around squares for games excluded from performance calculation
+- Games are excluded from performance calculations if they have:
+  - Uneven teams (e.g., game 27 had 8v9 teams)
+  - Unknown outcomes (no score recorded)
+- **Outcome Determination**: When `getGameOutcome()` returns 'Blue Won' or 'Orange Won', the component checks the player's team assignment to determine if they won or lost
+- Only games with even teams and clear win/loss/draw outcomes contribute to the performance line
 - The 10-game moving average (orange line) only appears after the player has at least 10 valid games with win/loss outcomes
 - The component uses Framer Motion for smooth animations when loading
 - Enhanced tooltips provide detailed information about specific games when hovering over data points, including why certain games are excluded from calculations
-- Summary statistics below the graph show how many games are included/excluded from the win rate calculation
+- Summary statistics below the graph show how many games are included/excluded from the performance calculation
 - The legend includes an example of an excluded game for clarity
 
 ## Usage
@@ -86,15 +94,16 @@ const { getGameOutcome } = useGameHistory();
 
 ## Technical Implementation
 
-- Uses Recharts' `ComposedChart` to combine line charts (for win rates) with scatter plots (for game outcomes)
+- Uses Recharts' `ComposedChart` to combine line charts (for performance) with scatter plots (for game outcomes)
 - Custom shape functions are used to render square markers for game outcomes and special dashed borders for excluded games
-- Y-axis domain is precisely set to [0, 100] for the win rate percentage range
+- Y-axis domain is precisely set to [0, 100] for the performance percentage range
 - Outcome indicators (squares) are positioned at y=2 to ensure visibility while maintaining a clean axis
 - Responsive design logic detects screen size and adjusts layout accordingly
 - Enhanced tooltip uses a custom component to display detailed game information including exclusion status and reasons
 - Tracks statistics about included and excluded games to provide a summary below the chart
+- **Bug Fix (Jan 2026)**: Fixed outcome determination to correctly check player's team when `getGameOutcome()` returns 'Blue Won' or 'Orange Won' instead of treating all as wins
 
 ## Related Components
 
-- [StatsGrid](./StatsGrid.md) - Shows static win rate data
+- [StatsGrid](./StatsGrid.md) - Shows static performance data
 - [GameHistoryTable](./GameHistoryTable.md) - Shows complete game history in tabular format

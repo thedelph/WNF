@@ -1,9 +1,11 @@
 /**
  * StatsGrid Component
- * 
- * Displays player statistics in a grid layout including XP, streaks, win rates, caps (games played), 
- * and highest XP achievements.
- * 
+ *
+ * Displays player statistics in a grid layout including XP, streaks, performance (points-based),
+ * caps (games played), and highest XP achievements.
+ *
+ * Performance uses points formula: (W×3 + D×1) / (G×3) × 100
+ *
  * Comprehensive documentation for this component can be found at:
  * /docs/components/StatsGrid.md
  */
@@ -56,18 +58,6 @@ interface StatItem {
 }
 
 export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
-  // Debug log to see what data is being passed to the component
-  console.log('StatsGrid received stats:', stats);
-  console.log('Highest XP data:', { 
-    highest_xp: stats.highest_xp, 
-    highest_xp_date: stats.highest_xp_date 
-  });
-  console.log('Streak data:', {
-    current_streak: stats.current_streak,
-    max_streak: stats.max_streak,
-    max_streak_date: stats.max_streak_date
-  });
-
   const getRarityDescription = (rarity: string) => {
     switch (rarity) {
       case 'Legendary':
@@ -203,10 +193,10 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
     }
   ];
 
-  // Add win rate stats if available
+  // Add performance stats if available (uses points formula: W×3 + D×1)
   if (stats.win_rate !== undefined && stats.win_rate !== null) {
     statsItems.push({
-      label: 'Win Rate',
+      label: 'Performance',
       value: (
         <div className="flex flex-col items-center">
           <div className="text-lg font-semibold">
@@ -225,8 +215,8 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
         </div>
       ),
       tooltip: stats.recent_win_rate !== undefined && stats.recent_win_rate !== null
-        ? `Overall Win Rate: ${Number(stats.win_rate).toFixed(1)}%\nRecent Win Rate (last 10 games): ${Number(stats.recent_win_rate).toFixed(1)}%`
-        : `Win Rate: ${Number(stats.win_rate).toFixed(1)}%`
+        ? `Overall Performance: ${Number(stats.win_rate).toFixed(1)}%\nRecent Performance (last 10 games): ${Number(stats.recent_win_rate).toFixed(1)}%`
+        : `Performance: ${Number(stats.win_rate).toFixed(1)}%`
     });
   }
 

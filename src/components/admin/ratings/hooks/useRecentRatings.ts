@@ -115,12 +115,13 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
       );
 
       // Fetch previous values from history for each rating
+      // Note: Position history is NOT tracked in player_ratings_history - positions are in player_position_ratings
       const ratingsWithHistory = await Promise.all(
         data.map(async (rating) => {
           // Get the most recent history entry before the current update
           const { data: historyData } = await supabaseAdmin
             .from('player_ratings_history')
-            .select('attack_rating, defense_rating, game_iq_rating, gk_rating, playstyle_id, position_1st, position_2nd, position_3rd')
+            .select('attack_rating, defense_rating, game_iq_rating, gk_rating, playstyle_id')
             .eq('rating_id', rating.id)
             .lt('changed_at', rating.updated_at || rating.created_at)
             .order('changed_at', { ascending: false })
@@ -149,9 +150,10 @@ export const useRecentRatings = (isSuperAdmin: boolean, limit: number = 10, rate
             position_1st: currentPositions.first ?? null,
             position_2nd: currentPositions.second ?? null,
             position_3rd: currentPositions.third ?? null,
-            previous_position_1st: previousRating?.position_1st ?? null,
-            previous_position_2nd: previousRating?.position_2nd ?? null,
-            previous_position_3rd: previousRating?.position_3rd ?? null
+            // Position history not tracked - previous positions not available
+            previous_position_1st: null,
+            previous_position_2nd: null,
+            previous_position_3rd: null
           };
         })
       );

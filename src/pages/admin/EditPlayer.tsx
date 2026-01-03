@@ -9,10 +9,11 @@ type Player = {
   friendly_name: string
   caps: number
   xp: number
-  attack_rating?: number
-  defense_rating?: number
-  game_iq?: number
-  gk_rating?: number
+  // Peer-calculated averages (read-only, computed from player_ratings)
+  average_attack_rating?: number
+  average_defense_rating?: number
+  average_game_iq_rating?: number
+  average_gk_rating?: number
   is_test_user: boolean
   is_beta_tester: boolean
   calculated_caps?: number
@@ -120,10 +121,8 @@ const EditPlayer: React.FC = () => {
           caps: useManualOverride ? player.caps : calculatedCaps,
           is_test_user: player.is_test_user,
           manual_caps_override: useManualOverride,
-          ...(player.attack_rating ? { attack_rating: player.attack_rating } : {}),
-          ...(player.defense_rating ? { defense_rating: player.defense_rating } : {}),
-          ...(player.game_iq ? { game_iq: player.game_iq } : {}),
-          ...(player.gk_rating ? { gk_rating: player.gk_rating } : {}),
+          // Note: Rating fields (average_attack_rating, etc.) are NOT updated here
+          // They are peer-calculated averages from the player_ratings table
           whatsapp_group_member: player.whatsapp_group_member || null,
           whatsapp_mobile_number: player.whatsapp_mobile_number || null,
           shield_tokens_available: player.shield_tokens_available || 0,
@@ -229,69 +228,29 @@ const EditPlayer: React.FC = () => {
             className="input input-bordered w-full"
           />
         </div>
-        <div className="form-control">
-          <label className="label" htmlFor="attack_rating">
-            <span className="label-text">Attack Rating</span>
-          </label>
-          <input
-            type="number"
-            id="attack_rating"
-            name="attack_rating"
-            value={player.attack_rating || ''}
-            onChange={handleChange}
-            min="0"
-            max="10"
-            step="0.01"
-            className="input input-bordered w-full"
-          />
+        {/* Peer-Calculated Ratings (Read-Only) */}
+        <div className="divider">Peer Ratings (Read-Only)</div>
+        <div className="alert alert-info mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span className="text-sm">These ratings are calculated from peer reviews and cannot be edited directly.</span>
         </div>
-        <div className="form-control">
-          <label className="label" htmlFor="defense_rating">
-            <span className="label-text">Defense Rating</span>
-          </label>
-          <input
-            type="number"
-            id="defense_rating"
-            name="defense_rating"
-            value={player.defense_rating || ''}
-            onChange={handleChange}
-            min="0"
-            max="10"
-            step="0.01"
-            className="input input-bordered w-full"
-          />
-        </div>
-        <div className="form-control">
-          <label className="label" htmlFor="game_iq">
-            <span className="label-text">Game IQ Rating</span>
-          </label>
-          <input
-            type="number"
-            id="game_iq"
-            name="game_iq"
-            value={player.game_iq || ''}
-            onChange={handleChange}
-            min="0"
-            max="10"
-            step="0.01"
-            className="input input-bordered w-full"
-          />
-        </div>
-        <div className="form-control">
-          <label className="label" htmlFor="gk_rating">
-            <span className="label-text">GK Rating</span>
-          </label>
-          <input
-            type="number"
-            id="gk_rating"
-            name="gk_rating"
-            value={player.gk_rating || ''}
-            onChange={handleChange}
-            min="0"
-            max="10"
-            step="0.01"
-            className="input input-bordered w-full"
-          />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="stat bg-base-200 rounded-lg p-4">
+            <div className="stat-title text-xs">Attack</div>
+            <div className="stat-value text-lg">{player.average_attack_rating?.toFixed(1) ?? 'N/A'}</div>
+          </div>
+          <div className="stat bg-base-200 rounded-lg p-4">
+            <div className="stat-title text-xs">Defense</div>
+            <div className="stat-value text-lg">{player.average_defense_rating?.toFixed(1) ?? 'N/A'}</div>
+          </div>
+          <div className="stat bg-base-200 rounded-lg p-4">
+            <div className="stat-title text-xs">Game IQ</div>
+            <div className="stat-value text-lg">{player.average_game_iq_rating?.toFixed(1) ?? 'N/A'}</div>
+          </div>
+          <div className="stat bg-base-200 rounded-lg p-4">
+            <div className="stat-title text-xs">GK</div>
+            <div className="stat-value text-lg">{player.average_gk_rating?.toFixed(1) ?? 'N/A'}</div>
+          </div>
         </div>
 
         {/* Shield Token Section */}

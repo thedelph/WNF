@@ -1,7 +1,7 @@
 # StatsGrid Component
 
 ## Overview
-The StatsGrid component displays various player statistics in a grid layout. It is used in both the Profile and PlayerProfile pages to show player information such as XP, streaks, win rates, caps (games played), and highest XP achievements.
+The StatsGrid component displays various player statistics in a grid layout. It is used in both the Profile and PlayerProfile pages to show player information such as XP, streaks, performance (points-based), caps (games played), and highest XP achievements.
 
 ## Features
 
@@ -20,10 +20,12 @@ The StatsGrid component displays various player statistics in a grid layout. It 
 - Shows the player's current streak
 - Displays the player's maximum streak
 
-### Win Rate Display
-- Shows the player's overall win rate as the primary value
-- Includes a form indicator showing the difference between recent and overall win rates (▲ for improvement, ▼ for decline)
-- Displays the recent win rate (last 10 games) below in a smaller font
+### Performance Display
+- Shows the player's overall performance as the primary value
+- **Points Formula**: `(Wins×3 + Draws×1) / (TotalGames×3) × 100`
+  - Wins = 3 points, Draws = 1 point, Losses = 0 points
+- Includes a form indicator showing the difference between recent and overall performance (▲ for improvement, ▼ for decline)
+- Displays the recent performance (last 10 games) below in a smaller font
 - Provides a tooltip that shows both values on hover
 
 ### Caps Display

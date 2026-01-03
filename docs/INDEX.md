@@ -55,7 +55,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 
 ### Player Features
 - **[Reserve Status Visualization](features/ReserveStatusVisualization.md)** - Last 40 games wheel with reserve tracking
-- **[Win Rate Explainer](WinRateExplainer.md)** - Win rate calculation methodology
+- **[Win Rate Explainer](WinRateExplainer.md)** - Performance calculation methodology (points-based formula)
 - **[Goal Differential Feature](GoalDifferentialFeature.md)** - Goal diff tracking and display
 - **[Streaks Features](WinningStreaksFeature.md)** - Winning and unbeaten streaks
 - **[Player Chemistry](features/PlayerChemistry.md)** - Chemistry scores between player pairs + team balancing integration
@@ -83,7 +83,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Stats Card](components/StatsCard.md)** - Individual stat card component
 
 ### Performance Visualizations
-- **[Win Rate Graph](components/WinRateGraph.md)** - Win rate trend visualization
+- **[Win Rate Graph](components/WinRateGraph.md)** - Performance history visualization (points-based)
 - **[Game Results Bar](components/GameResultsBar.md)** - W/L/D result bars
 - **[Streak Bar](components/StreakBar.md)** - Winning/unbeaten streak display
 - **[Goals Distribution Bar](components/GoalsDistributionBar.md)** - Goal scoring patterns
