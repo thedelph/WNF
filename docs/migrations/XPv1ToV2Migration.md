@@ -1,8 +1,31 @@
 # XP v1 to v2 Migration Runbook
 
-> **Target Date**: January 2026 (manual execution when ready)
-> **Estimated Duration**: 15-30 minutes
-> **Risk Level**: Medium (rollback available)
+> **Status**: ✅ **COMPLETED** - January 3, 2026
+> **Original Target**: January 2026
+> **Actual Duration**: Completed in stages (December 2025 - January 2026)
+> **Post-Migration Fix**: player_stats view updated January 3, 2026
+
+---
+
+## Migration Summary
+
+The v1 to v2 migration was completed in stages:
+
+1. **December 2025**: Initial table swap (`player_xp` ↔ `player_xp_v2`)
+2. **January 2, 2026**: XP triggers updated to use v2 calculation functions
+3. **January 3, 2026**: **Critical fix** - `player_stats` view updated to use `player_xp` instead of `player_xp_legacy`
+
+### Post-Migration Issue Discovered (January 3, 2026)
+
+The `player_stats` view was still pointing to `player_xp_legacy` (v1 XP), causing a discrepancy between:
+- **Display** (using `player_xp` directly) → showed v2 XP
+- **Selection** (using `player_stats` view) → used v1 XP
+
+This was fixed with migration `fix_player_stats_view_use_v2_xp`.
+
+---
+
+## Original Runbook (For Reference)
 
 ## Pre-Migration Checklist
 
@@ -260,3 +283,47 @@ These files read from `player_xp` table - they'll automatically use v2 after tab
 ### Issue: Rarity badges incorrect
 **Cause**: Percentile thresholds may need recalculation
 **Fix**: Check `recalculate_all_player_xp_v2()` includes rarity update
+
+### Issue: player_stats view using legacy XP (ACTUAL ISSUE - January 3, 2026)
+**Symptom**:
+- RegisteredPlayers showed players in correct v2 XP order
+- Simulation and actual selection used different (v1) XP order
+- Players appeared in wrong merit/random sections
+
+**Cause**: The `player_stats` view was not updated during the table swap. It continued to join `player_xp_legacy` instead of `player_xp`.
+
+**Discovery**: Noticed player "Simon" showing in randomiser section in the UI but simulation showed him in merit section.
+
+**Fix Applied**:
+```sql
+CREATE OR REPLACE VIEW player_stats AS
+SELECT p.id,
+    p.user_id,
+    p.friendly_name,
+    p.caps,
+    p.active_bonuses,
+    p.active_penalties,
+    p.win_rate,
+    p.attack_rating,
+    p.defense_rating,
+    p.avatar_svg,
+    p.avatar_options,
+    p.current_streak,
+    p.max_streak,
+    COALESCE(px.xp, 0) AS xp
+FROM players p
+LEFT JOIN player_xp px ON p.id = px.player_id;  -- Changed from player_xp_legacy
+```
+
+**Lesson Learned**: When swapping tables, audit ALL views that reference the old table name. The `player_stats` view was a hidden dependency that wasn't in the original migration checklist.
+
+---
+
+## Post-Migration Cleanup Checklist
+
+- [x] player_xp table contains v2 values
+- [x] player_xp_legacy contains archived v1 values
+- [x] XP triggers use v2 calculation functions
+- [x] **player_stats view uses player_xp (not player_xp_legacy)**
+- [ ] (Optional) Drop player_xp_legacy after 30 days if not needed
+- [ ] (Optional) Rename v2 functions to remove suffix

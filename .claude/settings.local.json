@@ -58,7 +58,9 @@
       "Bash(dir:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(xargs -I {} bash -c 'echo \"\"File: {}\"\"; head -200 \"\"{}\"\"')",
+      "Bash(xargs -I {} bash -c 'echo \"\"===== {} =====\"\"; head -300 {}')"
     ]
   },
   "enableAllProjectMcpServers": true,

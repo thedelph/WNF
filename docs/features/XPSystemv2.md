@@ -1,7 +1,8 @@
 # XP System v2
 
-> **Status**: Live as of January 2026
+> **Status**: ✅ Fully Live as of January 2026
 > **Comparison Tool**: `/admin/xp-comparison`
+> **Migration Completed**: January 3, 2026 (including player_stats view fix)
 
 ## Overview
 
@@ -185,18 +186,24 @@ A: Yes! Visit `/admin/xp-comparison` (admin only) to see v1 vs v2 XP side-by-sid
 
 ## Database Objects
 
-### Tables
-- `player_xp_v2` - Stores v2 XP values, ranks, and rarity tiers
+### Tables (Post-Migration)
+- `player_xp` - **Primary table** containing v2 XP values, ranks, and rarity tiers
+- `player_xp_legacy` - Archived v1 XP values (for historical reference)
+- `player_xp_v1_backup` - Backup of original v1 data before migration
+
+### Views
+- `player_stats` - Convenience view joining players with XP data (uses `player_xp`)
+- `player_xp_comparison` - Side-by-side v1 vs v2 comparison
 
 ### Functions
 - `calculate_player_xp_v2(player_id)` - Calculate XP for one player
 - `recalculate_all_player_xp_v2()` - Batch recalculate all players
 
-### Views
-- `player_xp_comparison` - Side-by-side v1 vs v2 comparison
-
 ### Triggers
-- `trigger_xp_v2_on_game_complete` - Auto-recalculate when games complete
+- Game completion triggers now call v2 recalculation functions
+
+### Important Note: player_stats View
+The `player_stats` view is used by both the simulation feature and actual player selection (`playerSelection.ts`). This view was updated on January 3, 2026 to use `player_xp` (v2) instead of `player_xp_legacy` (v1) to ensure consistent XP values across display and selection.
 
 ---
 
