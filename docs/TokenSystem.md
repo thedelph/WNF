@@ -33,13 +33,20 @@ The token system provides players with a guaranteed slot option for games. Each 
 - `use_player_token(player_id UUID, game_id UUID)`: Marks a token as used for a specific game
 - `get_token_history(player_id UUID, game_id UUID, start_date TIMESTAMP, end_date TIMESTAMP)`: Retrieves token action history
 
-### Dropout Handling (Added 2025-10-24)
+### Dropout Handling (Added 2025-10-24, Updated January 2026)
 Players who drop out after being selected are treated the same as selected players for token eligibility:
 - If a player is selected for a game but drops out, their registration status changes to `dropped_out`
 - The `check_token_eligibility` function checks for both `status = 'selected'` AND `status = 'dropped_out'`
 - This prevents players from getting priority tokens immediately after dropping out of a game they were selected for
 - **Frontend**: The `useTokenStatus` hook queries for both statuses when determining eligibility
 - **UI**: The TokenStatus component clarifies that "Selection Cooldown" includes dropouts
+
+**Shield Token Integration (January 2026):**
+Players who need to drop out can optionally use a shield token to protect their streak:
+- If they have shield tokens available, they can choose to use one when dropping out
+- Shield protects their streak with gradual decay instead of instant reset
+- Without a shield, dropping out causes streak to reset to 0 when game completes
+- See [Shield Token System - Dropout with Shield Protection](ShieldTokenSystem.md#dropout-with-shield-protection-added-january-2026) for full details
 
 ## Implementation Details
 

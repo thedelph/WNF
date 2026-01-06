@@ -12,8 +12,12 @@ export type AwardCategory =
   | 'hot_streak'
   | 'the_wall'
   | 'appearance_king'
-  | 'dream_team'
+  | 'dynamic_duo'        // Best chemistry pair
+  | 'cursed_duos'        // Worst chemistry pair
   | 'best_buddies'
+  | 'fiercest_rivalry'   // Most lopsided head-to-head
+  | 'dream_team_trio'    // Best trio chemistry
+  | 'cursed_trio'        // Worst trio chemistry
   | 'blue_blood'
   | 'dutch_master'
   | 'super_sub';
@@ -31,6 +35,8 @@ export interface Award {
   value: number;
   partnerId?: string;
   partnerName?: string;
+  partner2Id?: string;    // For trio awards (dream_team_trio)
+  partner2Name?: string;  // For trio awards (dream_team_trio)
   awardedAt: string;
 }
 
@@ -47,6 +53,8 @@ export interface AwardFromDB {
   value: number;
   partner_id: string | null;
   partner_name: string | null;
+  partner2_id: string | null;    // For trio awards
+  partner2_name: string | null;  // For trio awards
   awarded_at: string;
 }
 
@@ -61,6 +69,8 @@ export interface PlayerTrophy {
   value: number;
   partnerId?: string;
   partnerName?: string;
+  partner2Id?: string;    // For trio awards
+  partner2Name?: string;  // For trio awards
   awardedAt: string;
 }
 
@@ -75,6 +85,8 @@ export interface PlayerTrophyFromDB {
   value: number;
   partner_id: string | null;
   partner_name: string | null;
+  partner2_id: string | null;    // For trio awards
+  partner2_name: string | null;  // For trio awards
   awarded_at: string;
 }
 
@@ -99,6 +111,7 @@ export interface AwardCategoryConfig {
   color: string; // Tailwind color class
   valueFormatter: (value: number) => string;
   isPairAward: boolean;
+  isTrioAward?: boolean; // For 3-player awards (dream_team_trio)
 }
 
 /**
@@ -134,3 +147,24 @@ export interface TrophyCabinetData {
  * Year filter type for awards
  */
 export type AwardYearFilter = number | 'all';
+
+/**
+ * Extended award data for live "All Time" display
+ * Includes W/D/L breakdown for chemistry-related awards
+ */
+export interface LiveAward extends Award {
+  /** Number of wins (chemistry/trio awards) */
+  wins?: number;
+  /** Number of draws (chemistry/trio awards) */
+  draws?: number;
+  /** Number of losses (chemistry/trio awards) */
+  losses?: number;
+  /** Number of games together (chemistry/buddies/trio awards) */
+  gamesTogether?: number;
+  /** Win percentage (rivalry awards) */
+  winPercentage?: number;
+  /** Number of games against opponent (rivalry awards) */
+  gamesAgainst?: number;
+  /** Date when the achievement was recorded (XP Champion, streaks) */
+  achievedDate?: string;
+}

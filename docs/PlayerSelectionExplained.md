@@ -491,3 +491,71 @@ The system provides feedback through:
 - Database status updates
 - UI state updates
 - Detailed error messages when issues occur
+
+## Player Dropout (After Registration Closes) - Added January 2026
+
+After registration closes, selected and reserve players can drop out of the game. This section documents the dropout process and shield protection integration.
+
+### Dropout Flow
+
+1. **Player navigates to game page** after registration has closed
+2. **Sees "DROP OUT" button** if they are selected or in reserves
+3. **Clicks dropout button** which opens `DropoutConfirmModal`
+4. **Modal displays**:
+   - Current streak and XP bonus at risk
+   - Shield token toggle (if player has tokens available)
+   - Warning about streak loss if no shield used
+5. **Player confirms** - triggers `dropout_with_shield()` database function
+
+### Shield Protection Display
+
+Dropped out players with active shield protection are visually indicated:
+
+**Card View (`PlayerList.tsx`)**:
+- Shield icon displayed on player card via `PlayerCard` component
+- Props: `shieldActive={true}`, `frozenStreakValue={protectedStreak}`
+
+**List View (`PlayerListView.tsx`)**:
+- Blue shield icon with protected streak number next to player name
+- Tooltip: "Shield Active - Protected streak: X games"
+
+### With vs Without Shield
+
+| Aspect | Without Shield | With Shield |
+|--------|----------------|-------------|
+| Streak | Resets to 0 on game completion | Protected with gradual decay |
+| XP Bonus | Lost immediately | Gradually decays over recovery period |
+| Recovery | Start from 0, full rebuild | Recovers in `CEIL(streak/2)` games |
+| Token Cost | None | 1 shield token consumed |
+
+### Admin Dropout
+
+Admins can drop players out via the Game Registrations modal:
+- Click ⋮ menu next to player name
+- Choose from:
+  - **Unregister** - Remove registration entirely
+  - **Drop Out** - Mark as dropped_out (streak breaks)
+  - **Drop Out + Use Shield** - Mark as dropped_out AND activate shield protection
+
+### Key Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `DropoutConfirmModal` | `src/components/game/` | Player-facing confirmation with shield option |
+| `PlayerActionMenu` | `src/components/admin/games/` | Admin dropdown menu |
+| `PlayerSelectionResults` | `src/components/games/` | Shows dropped out players with shield status |
+
+### Database Function
+
+```sql
+-- dropout_with_shield(player_id, game_id, use_shield, admin_id)
+-- Returns: {success: boolean, message: text}
+SELECT dropout_with_shield(
+  'player-uuid',
+  'game-uuid',
+  true,  -- use shield token
+  null   -- null for player-initiated, admin_id for admin-initiated
+);
+```
+
+See [Shield Token System](./ShieldTokenSystem.md) for complete shield documentation.

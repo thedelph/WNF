@@ -417,6 +417,7 @@ export interface MultiObjectiveScore {
   attributeBalance: number;   // Average difference in 6 derived attributes (lower is better)
   tierFairness: number;       // Tier distribution variance + quality concentration (lower is better)
   performanceGap: number;     // Combined win rate + goal differential gap (lower is better)
+  coreSkillDominance: number; // Penalty when one team wins 0/3 core skills (lower is better) - Jan 2026
   systematicBias: number;     // Cross-category dominance penalty (lower is better)
   positionBalance: number;    // Position distribution balance (lower is better) - prevents striker imbalance
   avgRatingBalance: number;   // Average three-layer rating difference (lower is better)
@@ -425,11 +426,12 @@ export interface MultiObjectiveScore {
 }
 
 export interface OptimizationWeights {
-  skillsBalance: number;      // Default: 0.20
+  skillsBalance: number;      // Default: 0.18
   shootingBalance: number;    // Default: 0.08
-  attributeBalance: number;   // Default: 0.11
+  attributeBalance: number;   // Default: 0.10
   tierFairness: number;       // Default: 0.05
   performanceGap: number;     // Default: 0.08
+  coreSkillDominance: number; // Default: 0.12 - Jan 2026: Penalty for core skill domination
   systematicBias: number;     // Default: 0.22
   positionBalance: number;    // Default: 0.09
   avgRatingBalance: number;   // Default: 0.07
@@ -446,18 +448,19 @@ export interface SwapEvaluation {
 }
 
 // Default weights for multi-objective optimization
-// Priority: Systematic Bias > Core Skills > Chemistry > Position Balance > Attributes > Avg Rating
-// Dec 2025 Update: Added chemistryBalance (10%) to balance intra-team chemistry scores
+// Priority: Systematic Bias > Core Skill Dominance > Skills > Position Balance > Attributes > Chemistry > Avg Rating
+// Jan 2026 Update: Added coreSkillDominance (12%) to ensure SA finds solutions where each team wins at least 1 core skill
 const DEFAULT_WEIGHTS: OptimizationWeights = {
-  skillsBalance: 0.20,      // Attack/Defense/Game IQ balance
-  shootingBalance: 0.08,    // Shooting distribution
-  attributeBalance: 0.11,   // Pace, passing, etc.
-  tierFairness: 0.05,       // Only care about top 4 / bottom 4 split
-  performanceGap: 0.08,     // Win rate gap
-  systematicBias: 0.22,     // Heavily penalize one team dominating all categories
-  positionBalance: 0.09,    // Position balance to prevent striker imbalance
-  avgRatingBalance: 0.07,   // Average three-layer rating difference
-  chemistryBalance: 0.10,   // Intra-team chemistry balance (player partnership scores)
+  skillsBalance: 0.18,        // Attack/Defense/Game IQ balance (reduced from 0.20)
+  shootingBalance: 0.08,      // Shooting distribution
+  attributeBalance: 0.09,     // Pace, passing, etc. (reduced from 0.11)
+  tierFairness: 0.05,         // Only care about top 4 / bottom 4 split
+  performanceGap: 0.08,       // Win rate gap
+  coreSkillDominance: 0.12,   // NEW Jan 2026: Penalty when one team wins 0/3 core skills
+  systematicBias: 0.20,       // Heavily penalize one team dominating all categories (reduced from 0.22)
+  positionBalance: 0.08,      // Position balance to prevent striker imbalance (reduced from 0.09)
+  avgRatingBalance: 0.07,     // Average three-layer rating difference
+  chemistryBalance: 0.05,     // Intra-team chemistry balance (reduced from 0.10)
 };
 
 // Phase 4: Multi-Swap Combinations Interface
@@ -2418,27 +2421,35 @@ function calculateMultiObjectiveScore(
   // 5. Performance Gap (win rate + goal differential)
   const performanceGap = calculatePerformanceGap(blueTeam, orangeTeam);
 
-  // 6. Systematic Bias (cross-category dominance)
+  // 6. Core Skill Dominance (Jan 2026: penalty when one team wins 0/3 core skills)
+  // This ensures SA actively avoids solutions where one team dominates Attack/Defense/Game IQ
+  const gkIdSet = new Set(permanentGKIds ?? []);
+  const coreStatus = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
+  // Penalty scale: 0 = balanced (1-1 or 1-2), 0.5 = dominated (0-2 or 0-3)
+  const coreSkillDominance = coreStatus.isCoreSkillDominated ? 0.5 : 0;
+
+  // 7. Systematic Bias (cross-category dominance)
   const systematicBias = calculateSystematicBias(blueTeam, orangeTeam, permanentGKIds ?? []);
 
-  // 7. Position Balance (Phase 2: prevents striker imbalance during SA)
+  // 8. Position Balance (Phase 2: prevents striker imbalance during SA)
   const positionBalance = calculatePositionBalanceScore(blueTeam, orangeTeam);
 
-  // 8. Average Rating Balance (Phase 3: ensures similar team quality)
+  // 9. Average Rating Balance (Phase 3: ensures similar team quality)
   const blueAvgRating = blueTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / blueTeam.length;
   const orangeAvgRating = orangeTeam.reduce((sum, p) => sum + p.threeLayerRating, 0) / orangeTeam.length;
   const avgRatingBalance = Math.abs(blueAvgRating - orangeAvgRating);
 
-  // 9. Chemistry Balance (Dec 2025: balance intra-team chemistry)
+  // 10. Chemistry Balance (Dec 2025: balance intra-team chemistry)
   const chemistryBalance = calculateChemistryBalance(blueTeam, orangeTeam, chemistryLookup);
 
-  // Calculate weighted overall score (now 9 objectives)
+  // Calculate weighted overall score (now 10 objectives)
   const overall =
     (skillsBalance * weights.skillsBalance) +
     (shootingBalance * weights.shootingBalance) +
     (attributeBalance * weights.attributeBalance) +
     (tierFairness * weights.tierFairness) +
     (performanceGap * weights.performanceGap) +
+    (coreSkillDominance * weights.coreSkillDominance) +
     (systematicBias * weights.systematicBias) +
     (positionBalance * weights.positionBalance) +
     (avgRatingBalance * weights.avgRatingBalance) +
@@ -2450,6 +2461,7 @@ function calculateMultiObjectiveScore(
     attributeBalance,
     tierFairness,
     performanceGap,
+    coreSkillDominance,
     systematicBias,
     positionBalance,
     avgRatingBalance,
@@ -2477,6 +2489,7 @@ function evaluateSwap(
     'attributeBalance',
     'tierFairness',
     'performanceGap',
+    'coreSkillDominance',  // Jan 2026: track core skill dominance penalty
     'systematicBias',
     'positionBalance',
     'avgRatingBalance',
@@ -3480,7 +3493,7 @@ function validateAndFixCatastrophicGaps(
   debugLog?: { value: string }
 ): boolean {
   const CATASTROPHIC_GAP_THRESHOLD = 1.5; // Any single attribute gap > 1.5 is catastrophic (lowered from 2.0)
-  const MAX_BALANCE_DEGRADATION = 0.12; // Phase 2: Maximum allowed balance degradation
+  const MAX_BALANCE_DEGRADATION = 0.20; // Jan 2026: Increased from 0.12 to allow fixing catastrophic gaps with minimal impact
 
   // Convert to Set if array
   const gkIdSet = permanentGKIds instanceof Set ? permanentGKIds : new Set(permanentGKIds);
@@ -3955,6 +3968,10 @@ function emergencyCoreSkillFix(
   // Try swaps with progressively relaxed constraints
   const ratingThresholds = [1.0, 1.5, 2.0, 2.5, 3.0];
 
+  // Balance degradation guard: max 20% degradation allowed for emergency fixes
+  const MAX_BALANCE_DEGRADATION = 0.20;
+  const balanceBefore = calculateBalanceScore(blueTeam, orangeTeam);
+
   for (const maxRatingDiff of ratingThresholds) {
     for (const playerFromDominant of dominantNonGK) {
       for (const playerFromWeaker of weakerNonGK) {
@@ -3974,17 +3991,30 @@ function emergencyCoreSkillFix(
         // Check if core skill balance improved
         const afterStatus = calculateCoreSkillDominance(blueTeam, orangeTeam, gkIdSet);
 
-        // Accept if we broke the dominance (each team now wins at least 1 skill)
+        // Calculate balance after swap
+        const balanceAfter = calculateBalanceScore(blueTeam, orangeTeam);
+        const degradation = (balanceAfter - balanceBefore) / balanceBefore;
+
+        // Accept if we broke the dominance AND balance degradation is acceptable
         if (!afterStatus.isCoreSkillDominated) {
-          if (debugLog) {
-            debugLog.value += `   ✓ EMERGENCY FIX SUCCESS: ${playerFromDominant.friendly_name} ↔ ${playerFromWeaker.friendly_name}\n`;
-            debugLog.value += `     Core skill balance: ${coreStatus.blueWins}-${coreStatus.orangeWins} → ${afterStatus.blueWins}-${afterStatus.orangeWins}\n`;
-            debugLog.value += `     Rating diff: ${ratingDiff.toFixed(2)} (threshold: ${maxRatingDiff})\n`;
+          if (degradation <= MAX_BALANCE_DEGRADATION) {
+            if (debugLog) {
+              debugLog.value += `   ✓ EMERGENCY FIX SUCCESS: ${playerFromDominant.friendly_name} ↔ ${playerFromWeaker.friendly_name}\n`;
+              debugLog.value += `     Core skill balance: ${coreStatus.blueWins}-${coreStatus.orangeWins} → ${afterStatus.blueWins}-${afterStatus.orangeWins}\n`;
+              debugLog.value += `     Rating diff: ${ratingDiff.toFixed(2)} (threshold: ${maxRatingDiff})\n`;
+              debugLog.value += `     Balance impact: ${balanceBefore.toFixed(3)} → ${balanceAfter.toFixed(3)} (${degradation > 0 ? '+' : ''}${(degradation * 100).toFixed(1)}%)\n`;
+            }
+            return true;
+          } else {
+            // Swap would fix core skills but degrade balance too much
+            if (debugLog) {
+              debugLog.value += `   ⚠️ Rejected ${playerFromDominant.friendly_name} ↔ ${playerFromWeaker.friendly_name}: `;
+              debugLog.value += `balance degradation too high (${balanceBefore.toFixed(3)} → ${balanceAfter.toFixed(3)}, ${(degradation * 100).toFixed(1)}% > ${MAX_BALANCE_DEGRADATION * 100}% max)\n`;
+            }
           }
-          return true;
         }
 
-        // Swap didn't help enough, revert
+        // Swap didn't help enough or degraded balance too much, revert
         [dominantTeamPlayers[domIdx], weakerTeamPlayers[weakIdx]] = [weakerTeamPlayers[weakIdx], dominantTeamPlayers[domIdx]];
       }
     }
@@ -6974,8 +7004,8 @@ function optimizeTeams(
   const allTiers = Array.from(new Set([...blueTiers.keys(), ...orangeTiers.keys()])).sort((a, b) => b - a);
   
   let totalIterations = 0;
-  const MAX_ITERATIONS = 100;
-  const MAX_OPTIMIZATION_ROUNDS = 10; // INCREASED from 5 to 10 for simulated annealing
+  const MAX_ITERATIONS = 300; // Jan 2026: INCREASED from 100 to 300 (target 200-500 for 18 players)
+  const MAX_OPTIMIZATION_ROUNDS = 30; // Jan 2026: INCREASED from 10 to 30 for better exploration
   let optimizationRound = 0;
   let madeSwapThisRound = true;
   let totalFailedAttempts = 0; // Track total failed swap attempts for progressive relaxation
@@ -6985,14 +7015,14 @@ function optimizeTeams(
   // ============================================================================
   let temperature = 1.0;              // Start with high exploration for probabilistic annealing
   const MIN_TEMPERATURE = 0.01;       // Minimum temperature before stopping
-  const COOLING_RATE = 0.80;          // Cool by 20% each round (0.80 = faster convergence, less oscillation)
+  const COOLING_RATE = 0.92;          // Jan 2026: Cool by 8% each round (was 20%) - slower cooling = more exploration
   const REHEAT_TEMP = 0.4;            // Reheat to this when stuck
   let consecutiveNoImprovement = 0;   // Track rounds without improvement
   const REHEAT_THRESHOLD = 3;         // Reheat after 3 rounds without improvement
 
   // Convergence detection parameters
   const CONVERGENCE_THRESHOLD = 0.001; // Score change below this is considered stable
-  const MIN_ITERATIONS_BEFORE_CONVERGE = 20; // Minimum iterations before early exit allowed
+  const MIN_ITERATIONS_BEFORE_CONVERGE = 50; // Jan 2026: INCREASED from 20 to 50 for more exploration
   const STABLE_ROUNDS_TO_CONVERGE = 5;  // Consecutive stable rounds to trigger convergence
   let stableRoundCount = 0;             // Track consecutive stable rounds
   let previousRoundBalance = currentBalance; // Track previous balance for stability check

@@ -29,6 +29,11 @@ import { AttributeCombination } from '../types/playstyle';
 import { Position } from '../types/positions';
 import { usePlayerChemistry } from '../hooks/usePlayerChemistry';
 import { PairChemistryCard, TopChemistryPartners } from '../components/profile/PlayerChemistry';
+import { usePlayerRivalry } from '../hooks/useRivalry';
+import { usePlayerTrios } from '../hooks/useTrioChemistry';
+import { RivalryCard } from '../components/profile/RivalryCard';
+import { TopRivals } from '../components/profile/TopRivals';
+import { TopTrios } from '../components/profile/TopTrios';
 import TrophyCabinet from '../components/profile/TrophyCabinet';
 
 // Helper function to format date consistently as "12 Mar 2025"
@@ -92,6 +97,28 @@ export default function PlayerProfileNew() {
   } = usePlayerChemistry({
     playerId: player?.id || '',
     currentPlayerId,
+    limit: 3
+  });
+
+  // Fetch rivalry data for the viewed player
+  const {
+    dominates,
+    dominatedBy,
+    pairRivalry,
+    loading: rivalryLoading,
+    gamesUntilRivalry
+  } = usePlayerRivalry({
+    playerId: player?.id || '',
+    currentPlayerId,
+    limit: 3
+  });
+
+  // Fetch trio chemistry data for the viewed player
+  const {
+    playerTrios,
+    loading: triosLoading
+  } = usePlayerTrios({
+    playerId: player?.id || '',
     limit: 3
   });
 
@@ -798,7 +825,26 @@ export default function PlayerProfileNew() {
           />
         </div>
 
-        {/* Your Chemistry with this Player - Right below Top Chemistry Partners */}
+        {/* Top Rivals - After chemistry partners */}
+        <div className="w-full">
+          <TopRivals
+            dominates={dominates}
+            dominatedBy={dominatedBy}
+            playerName={player.friendly_name}
+            loading={rivalryLoading}
+          />
+        </div>
+
+        {/* Best Trio Combinations - After rivals */}
+        <div className="w-full">
+          <TopTrios
+            trios={playerTrios}
+            loading={triosLoading}
+            title={`${player.friendly_name}'s Best Trio Combinations`}
+          />
+        </div>
+
+        {/* Your Chemistry with this Player - Below chemistry/rivalry/trio sections */}
         {user && user.id !== player.user_id && (
           <div className="w-full">
             <PairChemistryCard
@@ -806,6 +852,18 @@ export default function PlayerProfileNew() {
               playerName={player.friendly_name}
               gamesUntilChemistry={gamesUntilChemistry}
               loading={chemistryLoading}
+            />
+          </div>
+        )}
+
+        {/* Your Rivalry with this Player - After chemistry card */}
+        {user && user.id !== player.user_id && (
+          <div className="w-full">
+            <RivalryCard
+              rivalry={pairRivalry}
+              playerName={player.friendly_name}
+              gamesUntilRivalry={gamesUntilRivalry}
+              loading={rivalryLoading}
             />
           </div>
         )}

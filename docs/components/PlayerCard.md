@@ -301,6 +301,8 @@ See individual component documentation for detailed prop information:
 | caps | number | Player's total caps (shown on back of card) |
 | recentGames | number? | Number of games played in last 40 completed games (shown on front of card) |
 | benchWarmerStreak | number | Player's consecutive games in reserves |
+| shieldActive | boolean? | Whether player has active shield protection (shows shield visual state) |
+| frozenStreakValue | number \| null | Protected streak value when shield is active (shown in shield display) |
 
 ## Usage
 
@@ -315,9 +317,52 @@ import { PlayerCard } from '../components/player-card/PlayerCard';
   caps={5}
   recentGames={4} // Games played in last 40 completed games
   benchWarmerStreak={3}
+  shieldActive={true} // Shows shield protection display
+  frozenStreakValue={14} // Protected streak value
   // ... other props
 />
 ```
+
+### Shield Props for Dropped Out Players (Added January 2026)
+
+When displaying dropped out players on the Player Selection Results page, shield props should be passed to show their protection status:
+
+```tsx
+// In PlayerSelectionResults.tsx - Query includes shield data
+const { data: playerData } = await supabase
+  .from('players')
+  .select(`
+    id,
+    shield_active,
+    protected_streak_value,
+    shield_tokens_available,
+    player_xp (xp, rank, rarity)
+  `)
+  .in('id', playerIds);
+
+// Map to playerStats with shield props
+const playerStats = playerData.reduce((acc, player) => ({
+  ...acc,
+  [player.id]: {
+    shieldActive: player.shield_active || false,
+    protectedStreakValue: player.protected_streak_value || null,
+    // ... other stats
+  }
+}), {});
+
+// Pass to dropped out player cards
+droppedOutPlayers.map(player => (
+  <PlayerCard
+    {...player}
+    shieldActive={playerStats[player.id]?.shieldActive}
+    frozenStreakValue={playerStats[player.id]?.protectedStreakValue}
+  />
+))
+```
+
+**Key Files:**
+- `src/components/games/PlayerSelectionResults.tsx` - Query and data mapping
+- `src/components/games/PlayerList.tsx` - Passes shield props to PlayerCard
 
 ## Troubleshooting
 

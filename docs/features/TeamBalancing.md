@@ -3,7 +3,11 @@
 ## Overview
 The team balancing system ensures fair and competitive matches by automatically distributing players across two teams (Blue and Orange) based on multiple performance metrics.
 
-## Balancing Metrics (Updated December 2025)
+> **Current Algorithm:** Brute-Force Optimal (v12.0, January 2026)
+>
+> For complete technical documentation, see: [BruteForceOptimalAlgorithm.md](../algorithms/BruteForceOptimalAlgorithm.md)
+
+## Balancing Metrics (Updated January 2026)
 
 The system now considers **5 core metrics** plus **derived attributes** and **player chemistry**:
 
@@ -43,28 +47,45 @@ The system now considers **5 core metrics** plus **derived attributes** and **pl
    - Algorithm balances total team chemistry between both teams
    - See [Player Chemistry](PlayerChemistry.md) for details
 
-## Algorithm (Updated September 8, 2025)
+## Algorithm (Updated January 2026)
 
-### Three-Layer Rating System (Tier-Based Snake Draft)
+### Brute-Force Optimal Algorithm (Current)
+
+The current algorithm evaluates **ALL valid team combinations** and selects the optimal solution.
+
+**Scoring Weights:**
+| Component | Weight |
+|-----------|--------|
+| Core Ratings (Attack, Defense, Game IQ, GK) | 40% |
+| Chemistry (pair chemistry scores) | 20% |
+| Performance (recent win rate, goal diff) | 20% |
+| Position Balance (coverage, ST distribution) | 10% |
+| Attributes (pace, shooting, etc.) | 10% |
+
+**Spread Constraint:**
+- Players are sorted by overall rating into thirds (top/middle/bottom)
+- Each team MUST have equal players from each third
+- For 18 players: 3-3-3 distribution per team
+- Prevents all top/bottom players clustering on one team
+
+**Performance:**
+- ~8,000 combinations evaluated for 18 players
+- ~340ms compute time
+- Guaranteed optimal solution
+
+For complete technical documentation, see: [BruteForceOptimalAlgorithm.md](../algorithms/BruteForceOptimalAlgorithm.md)
+
+---
+
+### Legacy: Tier-Based Snake Draft
+
+> **Note:** The tier-based algorithm is still available as a fallback option.
+> See [TierBasedSnakeDraftImplementation.md](../TierBasedSnakeDraftImplementation.md) for legacy documentation.
+
 When using the tier-based algorithm, player ratings are calculated with:
 - **Layer 1 (60%)**: Core skills (Attack/Defense/Game IQ)
 - **Layer 2 (20%)**: Derived attributes from playstyles
 - **Layer 3 (20%)**: Performance metrics (12% track record + 8% recent form)
-
-> **Note**: The weight distribution was rebalanced on September 8, 2025, reducing derived attributes from 30% to 20% and increasing performance metrics from 10% to 20%. This change was accompanied by a statistical scaling calibration fix that replaced simple attribute adjustments with z-score based scaling, creating more meaningful and balanced attribute impacts.
-
-### Two-Phase Optimization Approach
-
-#### Phase 1: Unknown Player Distribution
-Players with <10 games ("unknowns") lack win rate and goal differential data. The algorithm:
-1. Separates players into unknown (<10 games) and experienced (≥10 games) groups
-2. Finds the optimal distribution of unknowns based on Attack/Defense/Game IQ
-3. Evaluates all possible distributions and selects the best one
-
-#### Phase 2: Experienced Player Optimization
-1. With unknowns optimally pre-distributed, optimizes experienced player placement
-2. Uses all 5 metrics for evaluation
-3. Selects the combination with the lowest overall balance score
 
 ### Balance Score Calculation
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect, memo } from 'react';
 import { FaUser, FaUserClock } from 'react-icons/fa';
 import { MdPauseCircle } from 'react-icons/md';
 import { useUser } from '../../hooks/useUser';
-import { handlePlayerSelfDropout } from '../../utils/dropoutHandler';
 import { PlayerSelectionResultsProps } from '../../types/playerSelection';
 import { toast } from 'react-hot-toast';
 import { SlotOfferCountdown } from './SlotOfferCountdown';
@@ -18,6 +17,7 @@ import { PlayerCard } from '../player-card';
 import { WeightedSelectionExplanation } from './WeightedSelectionExplanation';
 import { findClosestPlaystyle } from '../../utils/playstyleUtils';
 import { PREDEFINED_PLAYSTYLES } from '../../data/playstyles';
+import { DropoutConfirmModal } from '../game/DropoutConfirmModal';
 
 interface SelectionReasoningProps {
   selectedPlayers: any[];
@@ -230,6 +230,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
   const [playerStats, setPlayerStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [showDropoutModal, setShowDropoutModal] = useState(false);
 
   const { player } = useUser();
   const {
@@ -266,6 +267,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             win_rate,
             unpaid_games,
             unpaid_games_modifier,
+            shield_active,
+            protected_streak_value,
+            shield_tokens_available,
             player_xp (
               xp,
               rank,
@@ -425,7 +429,10 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               playstyleCategory: playstyleMatch?.category,
               playstyleRatingsCount: derivedAttrsMap[player.id]?.total_ratings_count || 0,
               recentGames: recentGamesMap?.[player.id] || 0,
-              gameParticipation: participationMap[player.id] || new Array(40).fill(null)
+              gameParticipation: participationMap[player.id] || new Array(40).fill(null),
+              shieldActive: player.shield_active || false,
+              protectedStreakValue: player.protected_streak_value || null,
+              shieldTokensAvailable: player.shield_tokens_available || 0
             }
           };
         }, {});
@@ -497,22 +504,17 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
     }
   };
 
-  const handleDropout = async () => {
-    try {
-      if (!player?.id || !gameId) {
-        toast.error('Unable to drop out: Missing player or game information');
-        return;
-      }
-      
-      const result = await handlePlayerSelfDropout(player.id, gameId);
-      if (result.success) {
-        await refreshPlayers();
-      } else {
-        toast.error(result.error || 'Failed to drop out');
-      }
-    } catch (error) {
-      toast.error('Failed to drop out');
+  const handleDropout = () => {
+    if (!player?.id || !gameId) {
+      toast.error('Unable to drop out: Missing player or game information');
+      return;
     }
+    setShowDropoutModal(true);
+  };
+
+  const handleDropoutComplete = async () => {
+    await refreshPlayers();
+    setShowDropoutModal(false);
   };
 
   // Determine button properties based on game and player state
@@ -741,7 +743,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               usingToken: player.using_token,
               playstyleRatingsCount: playerStats[player.id]?.playstyleRatingsCount || 0,
               recentGames: playerStats[player.id]?.recentGames || 0,
-              gameParticipation: playerStats[player.id]?.gameParticipation || new Array(40).fill(null)
+              gameParticipation: playerStats[player.id]?.gameParticipation || new Array(40).fill(null),
+              shieldActive: playerStats[player.id]?.shieldActive || false,
+              frozenStreakValue: playerStats[player.id]?.protectedStreakValue || null
             }))}
             isExpanded={showDroppedOut}
             onToggle={() => setShowDroppedOut(!showDroppedOut)}
@@ -849,7 +853,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
             registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
             registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false,
-            usingToken: player.using_token
+            usingToken: player.using_token,
+            shieldActive: playerStats[player.id]?.shieldActive || false,
+            frozenStreakValue: playerStats[player.id]?.protectedStreakValue || null
           }))}
           playerStats={playerStats}
         />
@@ -860,6 +866,20 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
           reservePlayers={reservePlayers}
           playerStats={playerStats}
           gameData={gameData}
+        />
+      )}
+
+      {/* Dropout Confirmation Modal */}
+      {player?.id && (
+        <DropoutConfirmModal
+          isOpen={showDropoutModal}
+          onClose={() => setShowDropoutModal(false)}
+          playerId={player.id}
+          playerName={player.friendly_name || 'Player'}
+          gameId={gameId}
+          currentStreak={playerStats[player.id]?.currentStreak || 0}
+          shieldTokensAvailable={playerStats[player.id]?.shieldTokensAvailable || 0}
+          onDropoutComplete={handleDropoutComplete}
         />
       )}
     </div>

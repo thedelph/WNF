@@ -15,8 +15,9 @@ interface AwardCardProps {
   description?: string;
   className?: string;
   icon?: React.ReactNode;
-  color?: 'blue' | 'orange' | 'purple' | 'green' | 'pink' | 'indigo' | 'teal' | 'red' | 'rose' | 'amber' | 'yellow';
+  color?: 'blue' | 'orange' | 'purple' | 'green' | 'pink' | 'indigo' | 'teal' | 'red' | 'rose' | 'amber' | 'yellow' | 'slate';
   valueHeader?: string; // Optional header label for the value column
+  isMultiPlayer?: boolean; // For pair/trio awards - enables responsive name wrapping
 }
 
 // Emoji medals for top three positions
@@ -33,7 +34,8 @@ const gradientColors = {
   red: 'from-red-400 via-red-600 to-red-800',
   rose: 'from-rose-400 via-rose-600 to-rose-800',
   amber: 'from-amber-600 via-amber-700 to-amber-900',
-  yellow: 'from-yellow-600 via-yellow-700 to-yellow-900'
+  yellow: 'from-yellow-600 via-yellow-700 to-yellow-900',
+  slate: 'from-slate-500 via-slate-600 to-slate-800'  // For cursed/negative stats
 };
 
 const shadowColors = {
@@ -47,10 +49,11 @@ const shadowColors = {
   red: 'shadow-red-600/50',
   rose: 'shadow-rose-600/50',
   amber: 'shadow-amber-700/50',
-  yellow: 'shadow-amber-700/50'
+  yellow: 'shadow-amber-700/50',
+  slate: 'shadow-slate-600/50'  // For cursed/negative stats
 };
 
-export const AwardCard = ({ title, winners, description, className, icon, color = 'blue', valueHeader }: AwardCardProps) => {
+export const AwardCard = ({ title, winners, description, className, icon, color = 'blue', valueHeader, isMultiPlayer = false }: AwardCardProps) => {
   // Determine medal positions using Olympic-style ranking with ties
   // e.g., if two players tie for gold, next player gets bronze (skips silver)
   const getMedalPosition = (currentIndex: number, winners: Winner[]) => {
@@ -119,19 +122,21 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
+                className="py-0.5"
               >
-                <div key={winner.id} className="flex justify-between items-center gap-2">
+                {/* Responsive layout: stack on mobile for multi-player awards, horizontal on desktop */}
+                <div className={`flex ${isMultiPlayer ? 'flex-col sm:flex-row sm:justify-between sm:items-center' : 'justify-between items-center'} gap-1 sm:gap-2`}>
                   {/* Player name with medal - left side */}
-                  <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
+                  <div className={`flex items-start sm:items-center gap-2 min-w-0 ${isMultiPlayer ? 'w-full sm:max-w-[65%]' : 'flex-shrink flex-grow overflow-hidden max-w-[50%]'}`}>
                     {medalIndex !== null && medalIndex < medals.length ? (
                       <span className="w-5 h-5 flex-shrink-0">{medals[medalIndex]}</span>
                     ) : (
                       <span className="w-5 h-5 flex-shrink-0">{/* Empty space to maintain alignment */}</span>
                     )}
-                    <span className="drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] truncate block">{winner.name}</span>
+                    <span className={`drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] leading-tight ${isMultiPlayer ? 'break-words' : 'truncate block'}`}>{winner.name}</span>
                   </div>
-                  {/* Value display - right side */}
-                  <div className="flex-shrink-0 drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] text-right">{winner.value}</div>
+                  {/* Value display - indented on mobile for multi-player, right-aligned on desktop */}
+                  <div className={`flex flex-col ${isMultiPlayer ? 'items-start pl-8 sm:pl-0 sm:items-end' : 'items-end'} flex-shrink-0 drop-shadow-[0_0_1px_rgba(0,0,0,0.5)]`}>{winner.value}</div>
                 </div>
               </motion.div>
             );

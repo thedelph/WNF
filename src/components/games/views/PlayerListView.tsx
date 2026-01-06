@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUser, FaUserClock, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { FaUser, FaUserClock, FaChevronDown, FaChevronRight, FaShieldAlt } from 'react-icons/fa';
 import { PiCoinDuotone } from "react-icons/pi";
 import { useAdminPermissions } from '../../../hooks/useAdminPermissions';
 import { handlePlayerDropoutAndOffers } from '../../../utils/dropout';
@@ -18,6 +18,8 @@ interface PlayerSectionProps {
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
     using_token?: boolean;
+    shieldActive?: boolean;
+    frozenStreakValue?: number | null;
   }[];
   icon: React.ComponentType;
   isExpanded: boolean;
@@ -34,6 +36,8 @@ interface PlayerListViewProps {
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
     using_token?: boolean;
+    shieldActive?: boolean;
+    frozenStreakValue?: number | null;
   }[];
   reservePlayers: {
     id: string;
@@ -43,6 +47,8 @@ interface PlayerListViewProps {
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
     using_token?: boolean;
+    shieldActive?: boolean;
+    frozenStreakValue?: number | null;
   }[];
   droppedOutPlayers: {
     id: string;
@@ -52,6 +58,8 @@ interface PlayerListViewProps {
     isRandomlySelected?: boolean;
     has_slot_offer?: boolean;
     using_token?: boolean;
+    shieldActive?: boolean;
+    frozenStreakValue?: number | null;
   }[];
   playerStats: Record<string, { xp: number }>;
 }
@@ -113,6 +121,18 @@ const PlayerSection: React.FC<PlayerSectionProps> = ({
                         animate={{ scale: 1 }}
                       >
                         <PiCoinDuotone size={24} className="text-yellow-400" />
+                      </motion.div>
+                    </Tooltip>
+                  )}
+                  {player.shieldActive && player.frozenStreakValue && (
+                    <Tooltip content={`Shield Active - Protected streak: ${player.frozenStreakValue} games`}>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="flex items-center gap-1"
+                      >
+                        <FaShieldAlt size={18} className="text-primary" />
+                        <span className="text-xs text-primary font-medium">{player.frozenStreakValue}</span>
                       </motion.div>
                     </Tooltip>
                   )}

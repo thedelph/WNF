@@ -75,6 +75,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 playstyleRatingsCount={player.playstyleRatingsCount}
                 recentGames={player.recentGames}
                 gameParticipation={player.gameParticipation}
+                shieldActive={player.shieldActive}
+                frozenStreakValue={player.frozenStreakValue}
               />
               {renderPlayerExtra && renderPlayerExtra(player)}
             </div>

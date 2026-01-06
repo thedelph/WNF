@@ -6,7 +6,7 @@
 import { AwardCategory, AwardCategoryConfig } from '../types/awards';
 
 // Gradient colors matching AwardCard.tsx pattern
-export type GradientColor = 'blue' | 'orange' | 'purple' | 'green' | 'pink' | 'indigo' | 'teal' | 'red' | 'rose' | 'amber' | 'yellow';
+export type GradientColor = 'blue' | 'orange' | 'purple' | 'green' | 'pink' | 'indigo' | 'teal' | 'red' | 'rose' | 'amber' | 'yellow' | 'slate';
 
 export const gradientColors: Record<GradientColor, string> = {
   blue: 'from-blue-300 via-blue-500 to-blue-700',
@@ -20,6 +20,7 @@ export const gradientColors: Record<GradientColor, string> = {
   rose: 'from-rose-400 via-rose-600 to-rose-800',
   amber: 'from-amber-400 via-amber-500 to-amber-700',
   yellow: 'from-yellow-400 via-yellow-500 to-yellow-700',
+  slate: 'from-slate-400 via-slate-600 to-slate-800',
 };
 
 export const shadowColors: Record<GradientColor, string> = {
@@ -34,22 +35,37 @@ export const shadowColors: Record<GradientColor, string> = {
   rose: 'shadow-rose-600/50',
   amber: 'shadow-amber-500/50',
   yellow: 'shadow-yellow-500/50',
+  slate: 'shadow-slate-600/50',
 };
 
 // Category to gradient color mapping
+// Color philosophy: semantic colors that match award meaning
+// - amber: champions/excellence (gold trophy energy)
+// - green: victory/success (winning, positive outcomes)
+// - purple: royalty/elite (prestige, "king" awards)
+// - indigo: endurance/strength (steel, fortress, defensive)
+// - rose: heat/intensity (fire, momentum, streaks)
+// - pink: chemistry/connection (partnership warmth)
+// - teal: friendship/support (loyalty, fresh energy)
+// - red: danger/battle (rivalry, losing, conflict)
+// - blue/orange: team semantic colors
 export const categoryGradients: Record<AwardCategory, GradientColor> = {
-  xp_champion: 'amber',
-  win_rate_leader: 'green',
-  net_positive: 'orange',
-  iron_man: 'blue',
-  hot_streak: 'rose',
-  the_wall: 'indigo',
-  appearance_king: 'purple',
-  dream_team: 'pink',
-  best_buddies: 'teal',
-  blue_blood: 'blue',
-  dutch_master: 'orange',
-  super_sub: 'green',
+  xp_champion: 'amber',      // 🏆 Gold = champions, #1 status
+  win_rate_leader: 'green',  // ✅ Green = success, winning
+  net_positive: 'orange',    // ⚽ Orange = goals, scoring
+  iron_man: 'indigo',        // 🔩 Indigo = steel/iron, durability
+  hot_streak: 'rose',        // 🔥 Rose = fire, heat, momentum
+  the_wall: 'indigo',        // 🏰 Indigo = fortress, impenetrable
+  appearance_king: 'purple', // 👑 Purple = royalty, nobility
+  dynamic_duo: 'pink',       // 💕 Pink = chemistry, connection
+  cursed_duos: 'rose',       // 💔 Rose = soured chemistry (inverted pink)
+  best_buddies: 'teal',      // 🤝 Teal = friendship, loyalty
+  fiercest_rivalry: 'red',   // ⚔️ Red = battle, fierce competition
+  dream_team_trio: 'purple', // ✨ Purple = elite, prestige
+  cursed_trio: 'slate',      // 👻 Slate = cursed, dark, unlucky
+  blue_blood: 'blue',        // 🔵 Team semantic
+  dutch_master: 'orange',    // 🟠 Dutch national color
+  super_sub: 'teal',         // 🌱 Teal = fresh energy, support role
 };
 
 /**
@@ -88,7 +104,7 @@ export const AWARD_CATEGORIES: Record<AwardCategory, AwardCategoryConfig> = {
     title: 'Iron Man',
     description: 'Longest attendance streak',
     icon: 'Shield',
-    color: 'blue',
+    color: 'indigo',
     valueFormatter: (value) => `${Math.round(value)} games`,
     isPairAward: false,
   },
@@ -119,13 +135,22 @@ export const AWARD_CATEGORIES: Record<AwardCategory, AwardCategoryConfig> = {
     valueFormatter: (value) => `${Math.round(value)} caps`,
     isPairAward: false,
   },
-  dream_team: {
-    id: 'dream_team',
-    title: 'Dream Team',
-    description: 'Best chemistry pair',
+  dynamic_duo: {
+    id: 'dynamic_duo',
+    title: 'Dynamic Duo',
+    description: 'Best chemistry pair (win rate × games played)',
     icon: 'Users',
     color: 'pink',
-    valueFormatter: (value) => `${value.toFixed(1)}%`,
+    valueFormatter: (value) => `${value.toFixed(1)} chemistry`,
+    isPairAward: true,
+  },
+  cursed_duos: {
+    id: 'cursed_duos',
+    title: 'Cursed Duos',
+    description: 'Worst chemistry pair (loss rate × games played)',
+    icon: 'Users',
+    color: 'rose',
+    valueFormatter: (value) => `${value.toFixed(1)} curse`,
     isPairAward: true,
   },
   best_buddies: {
@@ -136,6 +161,35 @@ export const AWARD_CATEGORIES: Record<AwardCategory, AwardCategoryConfig> = {
     color: 'teal',
     valueFormatter: (value) => `${Math.round(value)} games`,
     isPairAward: true,
+  },
+  fiercest_rivalry: {
+    id: 'fiercest_rivalry',
+    title: 'Fiercest Rivalry',
+    description: 'Most lopsided head-to-head (dominance × games played)',
+    icon: 'Swords',
+    color: 'red',
+    valueFormatter: (value) => `${value.toFixed(1)} rivalry`,
+    isPairAward: true,
+  },
+  dream_team_trio: {
+    id: 'dream_team_trio',
+    title: 'Dream Team Trio',
+    description: 'Best 3-player chemistry (win rate × games played)',
+    icon: 'Users',
+    color: 'purple',
+    valueFormatter: (value) => `${value.toFixed(1)} chemistry`,
+    isPairAward: false,
+    isTrioAward: true,
+  },
+  cursed_trio: {
+    id: 'cursed_trio',
+    title: 'Cursed Trio',
+    description: 'Worst 3-player chemistry (loss rate × games played)',
+    icon: 'Users',
+    color: 'slate',
+    valueFormatter: (value) => `${value.toFixed(1)} curse`,
+    isPairAward: false,
+    isTrioAward: true,
   },
   blue_blood: {
     id: 'blue_blood',
@@ -160,7 +214,7 @@ export const AWARD_CATEGORIES: Record<AwardCategory, AwardCategoryConfig> = {
     title: 'Super Sub',
     description: 'Most reserve appearances',
     icon: 'Clock',
-    color: 'green',
+    color: 'teal',
     valueFormatter: (value) => `${Math.round(value)} games`,
     isPairAward: false,
   },
@@ -204,8 +258,12 @@ export const AWARD_CATEGORY_ORDER: AwardCategory[] = [
   'hot_streak',
   'the_wall',
   'appearance_king',
-  'dream_team',
+  'dynamic_duo',
+  'cursed_duos',
   'best_buddies',
+  'fiercest_rivalry',
+  'dream_team_trio',
+  'cursed_trio',
   'blue_blood',
   'dutch_master',
   'super_sub',

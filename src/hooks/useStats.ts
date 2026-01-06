@@ -61,6 +61,7 @@ export type ChemistryPairStats = {
   lossesTogether: number;
   performanceRate: number;
   chemistryScore: number;
+  curseScore: number;
 };
 
 // Re-export for external use
@@ -112,6 +113,7 @@ export interface Stats {
   };
   bestBuddies: BuddyStats[];
   bestChemistry: ChemistryPairStats[];
+  worstChemistry: ChemistryPairStats[];
   topWinStreaks: PlayerStats[];
   currentWinStreaks: PlayerStats[];
   topUnbeatenStreaks: PlayerStats[];
@@ -144,6 +146,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
     },
     bestBuddies: [],
     bestChemistry: [],
+    worstChemistry: [],
     topWinStreaks: [],
     currentWinStreaks: [],
     topUnbeatenStreaks: [],
@@ -470,22 +473,54 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           // Don't throw - chemistry is optional, continue with empty array
         }
 
-        // Deduplicate chemistry pairs by only keeping pairs where player1 id < player2 id
-        const transformedChemistry: ChemistryPairStats[] = (chemistryData || [])
+        // Deduplicate chemistry pairs and recalculate using points system
+        // Points: Win=3, Draw=1, Loss=0
+        // Formula: performanceRate = (wins×3 + draws×1) / (games×3) × 100
+        // Chemistry score = performanceRate × (games / (games + K)) where K=10
+        // Curse score = (100 - performanceRate) × (games / (games + K))
+        const CHEMISTRY_K = 10;
+        const allChemistryPairs: ChemistryPairStats[] = (chemistryData || [])
           .filter((pair: any) => pair.player1_id < pair.player2_id)
-          .slice(0, 10)
-          .map((pair: any) => ({
-            player1Id: pair.player1_id,
-            player1Name: pair.player1_name,
-            player2Id: pair.player2_id,
-            player2Name: pair.player2_name,
-            gamesTogether: Number(pair.games_together),
-            winsTogether: Number(pair.wins_together),
-            drawsTogether: Number(pair.draws_together),
-            lossesTogether: Number(pair.losses_together),
-            performanceRate: Number(pair.performance_rate),
-            chemistryScore: Number(pair.chemistry_score)
-          }));
+          .map((pair: any) => {
+            const games = Number(pair.games_together);
+            const wins = Number(pair.wins_together);
+            const draws = Number(pair.draws_together);
+            const losses = Number(pair.losses_together);
+
+            // Calculate performance rate using points system
+            const pointsEarned = (wins * 3) + (draws * 1);
+            const pointsAvailable = games * 3;
+            const performanceRate = pointsAvailable > 0 ? (pointsEarned / pointsAvailable) * 100 : 0;
+
+            // Confidence-weighted scores
+            const confidenceFactor = games / (games + CHEMISTRY_K);
+            const chemistryScore = performanceRate * confidenceFactor;
+            const curseScore = (100 - performanceRate) * confidenceFactor;
+
+            return {
+              player1Id: pair.player1_id,
+              player1Name: pair.player1_name,
+              player2Id: pair.player2_id,
+              player2Name: pair.player2_name,
+              gamesTogether: games,
+              winsTogether: wins,
+              drawsTogether: draws,
+              lossesTogether: losses,
+              performanceRate,
+              chemistryScore,
+              curseScore
+            };
+          });
+
+        // Best chemistry (Dynamic Duo) - sorted by highest chemistry score
+        const transformedChemistry = [...allChemistryPairs]
+          .sort((a, b) => b.chemistryScore - a.chemistryScore)
+          .slice(0, 10);
+
+        // Worst chemistry (Cursed Duos) - sorted by highest curse score
+        const transformedWorstChemistry = [...allChemistryPairs]
+          .sort((a, b) => b.curseScore - a.curseScore)
+          .slice(0, 5);
 
         // Process and set stats
         setStats({
@@ -535,6 +570,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
           },
           bestBuddies: transformedBuddies.sort((a: BuddyStats, b: BuddyStats) => b.gamesTogether - a.gamesTogether),
           bestChemistry: transformedChemistry,
+          worstChemistry: transformedWorstChemistry,
           // Transform goal differential data
           goalDifferentials: goalDifferentials?.map((player: any) => ({
             id: player.id,
@@ -596,7 +632,7 @@ export const useStats = (year?: number, availableYears?: number[]) => {
       playerMap.set(player.id, {
         id: player.id,
         friendlyName: player.friendlyName,
-        xp: player.xp || 0,
+        xp: 0, // XP is fetched separately from player_xp table
         caps: player.caps,
         goalsFor: 0,
         goalsAgainst: 0,

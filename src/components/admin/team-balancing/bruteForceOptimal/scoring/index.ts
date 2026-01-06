@@ -1,0 +1,158 @@
+import type { BruteForcePlayer, ChemistryMap, RivalryMap, TrioMap, ScoringWeights, ScoreBreakdown } from '../types';
+import { calculateCoreRatingsScore, getCoreRatingsBreakdown } from './coreRatingsScore';
+import { calculateChemistryScore, getChemistryBreakdown } from './chemistryScore';
+import { calculateRivalryScore, getRivalryBreakdown } from './rivalryScore';
+import { calculateTrioScore, getTrioBreakdown } from './trioScore';
+import { calculatePerformanceScore, getPerformanceBreakdown } from './performanceScore';
+import { calculatePositionScore, getPositionBreakdown } from './positionScore';
+import { calculateAttributeScore, getAttributeBreakdown } from './attributeScore';
+
+// Re-export individual scorers
+export {
+  calculateCoreRatingsScore,
+  getCoreRatingsBreakdown,
+  calculateChemistryScore,
+  getChemistryBreakdown,
+  calculateRivalryScore,
+  getRivalryBreakdown,
+  calculateTrioScore,
+  getTrioBreakdown,
+  calculatePerformanceScore,
+  getPerformanceBreakdown,
+  calculatePositionScore,
+  getPositionBreakdown,
+  calculateAttributeScore,
+  getAttributeBreakdown,
+};
+
+/**
+ * Default scoring weights
+ */
+export const WEIGHTS: ScoringWeights = {
+  coreRatings: 0.40,
+  chemistry: 0.20,
+  performance: 0.20,
+  position: 0.10,
+  attributes: 0.10,
+};
+
+/**
+ * Internal chemistry component weights
+ * These determine how the 20% chemistry weight is split between:
+ * - Pairwise chemistry (same team synergy)
+ * - Rivalry (cross-team matchup balance)
+ * - Trio synergy (emergent 3-player effects)
+ */
+export const CHEMISTRY_INTERNAL_WEIGHTS = {
+  pairwise: 0.50,  // 50% of chemistry = 10% of total
+  rivalry: 0.30,   // 30% of chemistry = 6% of total
+  trio: 0.20,      // 20% of chemistry = 4% of total
+};
+
+/**
+ * Calculate the combined chemistry score including pairwise, rivalry, and trio
+ */
+function calculateCombinedChemistryScore(
+  blueTeam: BruteForcePlayer[],
+  orangeTeam: BruteForcePlayer[],
+  chemistryMap: ChemistryMap,
+  rivalryMap: RivalryMap,
+  trioMap: TrioMap
+): { combined: number; pairwise: number; rivalry: number; trio: number } {
+  const pairwiseScore = calculateChemistryScore(blueTeam, orangeTeam, chemistryMap);
+  const rivalryScore = calculateRivalryScore(blueTeam, orangeTeam, rivalryMap);
+  const trioScore = calculateTrioScore(blueTeam, orangeTeam, trioMap);
+
+  const combined =
+    pairwiseScore * CHEMISTRY_INTERNAL_WEIGHTS.pairwise +
+    rivalryScore * CHEMISTRY_INTERNAL_WEIGHTS.rivalry +
+    trioScore * CHEMISTRY_INTERNAL_WEIGHTS.trio;
+
+  return { combined, pairwise: pairwiseScore, rivalry: rivalryScore, trio: trioScore };
+}
+
+/**
+ * Calculate the total balance score for a team configuration
+ *
+ * @param blueTeam - Players on the blue team
+ * @param orangeTeam - Players on the orange team
+ * @param chemistryMap - Chemistry data for player pairs (same team)
+ * @param rivalryMap - Rivalry data for player pairs (opposite teams)
+ * @param trioMap - Trio chemistry data
+ * @param weights - Optional custom weights (defaults to WEIGHTS)
+ *
+ * @returns Total score where 0 = perfect balance, higher = worse
+ */
+export function calculateTotalScore(
+  blueTeam: BruteForcePlayer[],
+  orangeTeam: BruteForcePlayer[],
+  chemistryMap: ChemistryMap,
+  rivalryMap: RivalryMap = new Map(),
+  trioMap: TrioMap = new Map(),
+  weights: ScoringWeights = WEIGHTS
+): number {
+  const coreScore = calculateCoreRatingsScore(blueTeam, orangeTeam);
+  const { combined: chemistryScore } = calculateCombinedChemistryScore(
+    blueTeam,
+    orangeTeam,
+    chemistryMap,
+    rivalryMap,
+    trioMap
+  );
+  const performanceScore = calculatePerformanceScore(blueTeam, orangeTeam);
+  const positionScore = calculatePositionScore(blueTeam, orangeTeam);
+  const attributeScore = calculateAttributeScore(blueTeam, orangeTeam);
+
+  return (
+    coreScore * weights.coreRatings +
+    chemistryScore * weights.chemistry +
+    performanceScore * weights.performance +
+    positionScore * weights.position +
+    attributeScore * weights.attributes
+  );
+}
+
+/**
+ * Calculate the total score with a detailed breakdown
+ */
+export function calculateScoreWithBreakdown(
+  blueTeam: BruteForcePlayer[],
+  orangeTeam: BruteForcePlayer[],
+  chemistryMap: ChemistryMap,
+  rivalryMap: RivalryMap = new Map(),
+  trioMap: TrioMap = new Map(),
+  weights: ScoringWeights = WEIGHTS
+): ScoreBreakdown {
+  const coreScore = calculateCoreRatingsScore(blueTeam, orangeTeam);
+  const chemistryDetails = calculateCombinedChemistryScore(
+    blueTeam,
+    orangeTeam,
+    chemistryMap,
+    rivalryMap,
+    trioMap
+  );
+  const performanceScore = calculatePerformanceScore(blueTeam, orangeTeam);
+  const positionScore = calculatePositionScore(blueTeam, orangeTeam);
+  const attributeScore = calculateAttributeScore(blueTeam, orangeTeam);
+
+  const total =
+    coreScore * weights.coreRatings +
+    chemistryDetails.combined * weights.chemistry +
+    performanceScore * weights.performance +
+    positionScore * weights.position +
+    attributeScore * weights.attributes;
+
+  return {
+    coreRatings: coreScore,
+    chemistry: chemistryDetails.combined,
+    chemistryDetails: {
+      pairwise: chemistryDetails.pairwise,
+      rivalry: chemistryDetails.rivalry,
+      trio: chemistryDetails.trio,
+    },
+    performance: performanceScore,
+    position: positionScore,
+    attributes: attributeScore,
+    total,
+  };
+}

@@ -18,6 +18,84 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.6.0',
+    date: '06/01/2026',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Dropout with Shield Protection',
+            details: "Players who registered but need to drop out can now use their shield token to protect their streak. After registration closes, click 'Drop Out' and choose whether to use a shield. Without a shield, your streak resets to 0. With a shield, it gradually recovers over half the games."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Shield Protection Display',
+            details: "Dropped out players with shield protection now show the shield icon on their player cards in both card view and list view."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    version: '1.5.0',
+    date: '06/01/2026',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Cursed Trio Award',
+            details: "The Hall of Fame now features Cursed Trios - the three-player combinations with the worst chemistry. If you and two mates keep losing together, you might just make the leaderboard!"
+          },
+          {
+            title: 'XP Champion Achievement Date',
+            details: "The Hall of Fame XP Champion award now shows when each player achieved their highest XP, matching the Stats page display."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Award Card Color Scheme',
+            details: "All award cards now use semantic colors with consistent meaning: amber for champions, green for victories, purple for royalty/elite status, pink for chemistry, red for rivalries, and slate for cursed awards. This creates visual consistency across the Stats page and Hall of Fame."
+          },
+          {
+            title: 'Stats & Hall of Fame Consistency',
+            details: "The Stats page and Hall of Fame tab now use identical naming, styling, and data display. Awards show the same labels ('chemistry', 'curse', 'rivalry'), W/D/L breakdowns, and font styling across both views."
+          },
+          {
+            title: 'Mobile-Friendly Multi-Player Awards',
+            details: "Pair and trio awards (Dynamic Duo, Cursed Duos, Dream Team Trio, etc.) now display properly on mobile devices. Player names wrap instead of being truncated with '...', and scores stack neatly below the names."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.4.0',
     date: '01/01/2026',
     sections: [

@@ -6,7 +6,7 @@
 import { motion } from 'framer-motion';
 import {
   Crown, Target, Zap, Shield, Flame, Lock,
-  Trophy, Users, Heart, Droplet, Clock
+  Trophy, Users, Heart, Droplet, Clock, Swords
 } from 'lucide-react';
 import { AwardsByCategory } from '../../types/awards';
 import { getCategoryGradient, getCategoryShadow } from '../../constants/awards';
@@ -30,6 +30,7 @@ const iconMap: Record<string, React.ElementType> = {
   Heart,
   Droplet,
   Clock,
+  Swords,
 };
 
 export const AwardCategory = ({ category, index }: AwardCategoryProps) => {

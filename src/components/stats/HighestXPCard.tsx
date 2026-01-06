@@ -39,9 +39,10 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
   // Determine if we're viewing a v1-era year (2024/2025) - for 'all' or 2026+ we use v2 values
   const isV1EraYear = selectedYear === 2024 || selectedYear === 2025;
 
-  // Using a custom red gradient that's not used elsewhere
-  const customGradient = 'from-red-300 via-red-500 to-red-700';
-  const customShadow = 'shadow-red-500/50';
+  // Using amber gradient to match XP Champion in Hall of Fame
+  // Amber = gold = champions, excellence, trophy energy
+  const customGradient = 'from-amber-400 via-amber-500 to-amber-700';
+  const customShadow = 'shadow-amber-500/50';
 
   useEffect(() => {
     const fetchHighestXP = async () => {
@@ -115,7 +116,7 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
       >
         <div className="card-body">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="card-title text-lg font-bold">XP Leaderboard</h2>
+            <h2 className="card-title text-lg font-bold">XP Champion</h2>
             <LineChart className="w-6 h-6" />
           </div>
           <p className="text-center">{error}</p>
@@ -133,7 +134,7 @@ export const HighestXPCard = ({ selectedYear }: HighestXPCardProps) => {
     >
       <div className="card-body">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="card-title text-lg font-bold">XP Leaderboard</h2>
+          <h2 className="card-title text-lg font-bold">XP Champion</h2>
           <Tooltip content="All-time highest XP scores achieved by players">
             <LineChart className="w-6 h-6" />
           </Tooltip>

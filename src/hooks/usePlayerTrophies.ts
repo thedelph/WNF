@@ -23,6 +23,8 @@ const transformTrophy = (dbTrophy: PlayerTrophyFromDB): PlayerTrophy => ({
   value: dbTrophy.value,
   partnerId: dbTrophy.partner_id ?? undefined,
   partnerName: dbTrophy.partner_name ?? undefined,
+  partner2Id: dbTrophy.partner2_id ?? undefined,
+  partner2Name: dbTrophy.partner2_name ?? undefined,
   awardedAt: dbTrophy.awarded_at,
 });
 

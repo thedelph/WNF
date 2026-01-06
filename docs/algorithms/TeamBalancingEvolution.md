@@ -1,12 +1,67 @@
 # Team Balancing Algorithm Evolution
 
-**Last Updated:** 2025-12-19
+**Last Updated:** 2026-01-05
 
 This document tracks the complete chronological history of team balancing algorithm improvements, from initial implementation through all major optimizations.
 
 ---
 
-## 📊 Current Algorithm (v11.0 - 2025-12-19)
+## 📊 Current Algorithm (v13.0 - 2026-01-05)
+
+### Brute-Force Optimal Algorithm
+
+> **For complete documentation, see: [BruteForceOptimalAlgorithm.md](BruteForceOptimalAlgorithm.md)**
+
+**Major Change:** Enhanced chemistry scoring with Rivalry (cross-team matchups) and Trio synergies.
+
+**Key Features:**
+- **Guarantees optimal solution** - Evaluates ALL valid team combinations
+- **Deterministic** - Same input always produces same output
+- **Transparent scoring** - Full breakdown of 5 weighted components + chemistry sub-breakdown
+- **Modular architecture** - 19 small files (added rivalry and trio scoring)
+
+**Scoring Weights:**
+| Component | Weight |
+|-----------|--------|
+| Core Ratings (Attack, Defense, Game IQ, GK) | 40% |
+| Chemistry (pairwise, rivalry, trio) | 20% |
+| Performance (recent win rate, goal diff) | 20% |
+| Position Balance (coverage, ST distribution) | 10% |
+| Attributes (pace, shooting, etc.) | 10% |
+
+**Chemistry Sub-Components (v13.0):**
+| Sub-Component | Internal Weight | Total Weight | Purpose |
+|---------------|-----------------|--------------|---------|
+| Pairwise | 50% | 10% | Same-team synergies |
+| Rivalry | 30% | 6% | Cross-team matchup balance |
+| Trio | 20% | 4% | Emergent 3-player effects |
+
+**Spread Constraint:**
+- Players sorted by overall rating into thirds (top/middle/bottom)
+- Each team MUST have equal players from each third
+- For 18 players: 3-3-3 distribution per team
+- Prevents all top/bottom players clustering on one team
+
+**Performance:**
+| Players | Combinations | Compute Time |
+|---------|--------------|--------------|
+| 12 | ~924 | <50ms |
+| 18 | ~8,000 | ~340ms |
+| 22 | ~64,000 | ~2-3 sec |
+
+**Location:** `src/components/admin/team-balancing/bruteForceOptimal/`
+
+---
+
+## 📜 Legacy Algorithm (v11.0 and earlier)
+
+> **Note:** The tier-based snake draft algorithm with Simulated Annealing is now legacy.
+> It remains available as a fallback but is no longer the primary algorithm.
+> For legacy documentation, see: [TierBasedSnakeDraftImplementation.md](../TierBasedSnakeDraftImplementation.md)
+
+---
+
+## 📜 Legacy: v11.0 - Tier-Based SA (2025-12-19)
 
 ### Weighting Formula
 
@@ -1007,6 +1062,105 @@ Chemistry Difference: 58 (normalized: 0.015)
 
 ---
 
+### Phase 8: Brute-Force Optimal Algorithm (2026-01-05)
+
+#### v12.0 - Brute-Force Optimal Algorithm (2026-01-05)
+
+**Change:** Complete algorithm rewrite replacing Simulated Annealing with brute-force optimal approach.
+
+**Motivation:** SA was complex, non-deterministic, and couldn't guarantee the best solution. With the spread constraint limiting combinations to ~8,000, brute force became computationally trivial.
+
+**Key Improvements:**
+- **Guarantees optimal solution** - Evaluates ALL valid team combinations
+- **Deterministic** - Same input always produces same output
+- **Transparent scoring** - Full breakdown of all 5 weighted components
+- **Modular architecture** - 16 small files instead of 1 massive file (412KB)
+
+**Spread Constraint:**
+```
+Players sorted by overall rating → divided into thirds
+Each team MUST have equal players from each third
+For 18 players: 3-3-3 distribution per team
+
+Valid combinations = C(6,3) × C(6,3) × C(6,3) = 8,000
+```
+
+**Performance:**
+| Players | Combinations | Compute Time |
+|---------|--------------|--------------|
+| 12 | ~924 | <50ms |
+| 18 | ~8,000 | ~340ms |
+| 22 | ~64,000 | ~2-3 sec |
+
+**Files Created:**
+- `src/components/admin/team-balancing/bruteForceOptimal/` (entire directory)
+  - `index.ts` - Main orchestrator
+  - `types.ts` - TypeScript interfaces
+  - `combinationGenerator.ts` - Valid team combinations
+  - `scoring/*.ts` - 5 scoring component files
+  - `dataLoaders/*.ts` - 5 data loader files
+
+---
+
+#### v13.0 - Enhanced Chemistry (Rivalry + Trio) (2026-01-05)
+
+**Change:** Enhanced chemistry scoring with three sub-components
+
+**Motivation:** Pairwise chemistry only captures same-team synergies. New components capture:
+- **Rivalry**: How players perform AGAINST each other (cross-team matchups)
+- **Trio**: Emergent effects when 3 specific players play together
+
+**Chemistry Sub-Components:**
+| Sub-Component | Internal Weight | Total Weight | Purpose |
+|---------------|-----------------|--------------|---------|
+| Pairwise | 50% | 10% | Balance same-team synergies |
+| Rivalry | 30% | 6% | Balance cross-team matchup advantages |
+| Trio | 20% | 4% | Balance emergent 3-player effects |
+
+**Data Availability:**
+- 134 rivalry pairs with 5+ games against each other
+- 545 trios with 3+ games together
+
+**Example Insights:**
+- **Lopsided rivalry**: Stephen beats Dom 81.3% of head-to-head games
+- **Dream trio**: Daniel + Simon + Jude = 100% win rate (6 games)
+- **Cursed trio**: James H + Mike M + Chris H = 0% win rate (6 games)
+
+**New RPC Functions:**
+```sql
+get_batch_player_rivalry(player_ids) -- Returns rivalry stats (5+ games threshold)
+get_batch_trio_chemistry(player_ids) -- Returns trio stats (3+ games threshold)
+```
+
+**Debug Output:**
+```
+=== Data Loading Stats ===
+Chemistry pairs loaded: 134
+Rivalry pairs loaded: 134
+Trios loaded: 545
+
+=== Score Breakdown ===
+Chemistry (20%): 0.0160
+  └─ Pairwise (50%): 0.0045
+  └─ Rivalry (30%): 0.0425
+  └─ Trio (20%): 0.0048
+```
+
+**Files Created:**
+- `supabase/migrations/20260105_add_rivalry_trio_chemistry.sql`
+- `src/.../dataLoaders/loadRivalry.ts`
+- `src/.../dataLoaders/loadTrioChemistry.ts`
+- `src/.../scoring/rivalryScore.ts`
+- `src/.../scoring/trioScore.ts`
+
+**Files Modified:**
+- `src/.../bruteForceOptimal/types.ts` - Added RivalryPair, TrioChemistry types
+- `src/.../bruteForceOptimal/scoring/index.ts` - Combined chemistry scoring
+- `src/.../bruteForceOptimal/dataLoaders/index.ts` - Load rivalry/trio data
+- `src/.../TierBasedTeamGenerator.tsx` - Updated debug display
+
+---
+
 ## 📈 Performance Metrics
 
 ### Balance Score Improvements
@@ -1020,8 +1174,12 @@ Chemistry Difference: 58 (normalized: 0.015)
 | v9.0 | 0.2-0.4 | 3-5 | Position balance as hard constraint |
 | v10.0 | 0.2-0.4 | 3-5 | Pipeline striker protection |
 | v11.0 | 0.2-0.4 | 3-5 | Player chemistry integration |
+| v12.0 | 0.01-0.05 | N/A | **Brute-Force** - Guaranteed optimal |
+| v13.0 | 0.01-0.05 | N/A | Enhanced chemistry (rivalry + trio) |
 
 **80% improvement** from v6.0 to v7.0!
+
+**95%+ improvement** from v11.0 to v12.0 - Brute force evaluates all combinations, guaranteeing the mathematically optimal solution.
 
 ---
 

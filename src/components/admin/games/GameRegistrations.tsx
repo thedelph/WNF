@@ -3,16 +3,17 @@ import { motion } from 'framer-motion';
 import { supabase, supabaseAdmin } from '../../../utils/supabase';
 import { getRarity } from '../../../utils/rarityCalculations';
 import { PlayerCard } from '../../player-card/PlayerCard';
-import { ExtendedPlayerData } from '../../../types/playerSelection';
+import { RegistrationPlayerData } from '../../../types/playerSelection';
 import { Modal } from '../../common/modals/Modal';
 import { SearchBar } from '../../common/inputs/SearchBar';
 import { PlayerSelectionPanel } from './PlayerSelectionPanel';
-import { FaCheckSquare, FaSquare, FaTimes } from 'react-icons/fa';
+import { FaCheckSquare, FaSquare } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
 import { useAdmin } from '../../../hooks/useAdmin';
 import { usePlayerToken } from '../../../hooks/usePlayerToken';
 import { Tooltip } from '../../ui/Tooltip';
+import { PlayerActionMenu } from './PlayerActionMenu';
 
 interface GameRegistrationsProps {
   gameId: string;
@@ -35,7 +36,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
   const { isAdmin } = useAdmin();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [registrations, setRegistrations] = React.useState<ExtendedPlayerData[]>([]);
+  const [registrations, setRegistrations] = React.useState<RegistrationPlayerData[]>([]);
   const [selectedPlayerIds, setSelectedPlayerIds] = React.useState<string[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isSelectAll, setIsSelectAll] = React.useState(false);
@@ -73,6 +74,9 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
             current_streak,
             max_streak,
             avatar_svg
+          ),
+          players!game_registrations_player_id_fkey (
+            shield_tokens_available
           )
         `)
         .eq('game_id', gameId)
@@ -104,6 +108,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
         selectionMethod: reg.selection_method,
         team: reg.team,
         usingToken: reg.using_token,
+        shieldTokensAvailable: (reg.players as any)?.shield_tokens_available || 0,
         player: {
           id: reg.player_stats.id,
           friendlyName: reg.player_stats.friendly_name,
@@ -492,7 +497,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
         onClose();
       }}
       title="Game Registrations"
-      className="w-full max-w-[95vw] md:max-w-4xl mx-auto"
+      maxWidth="max-w-4xl"
     >
       {loading && (
         <div className="flex justify-center items-center h-64">
@@ -534,7 +539,6 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                 value={searchTerm}
                 onChange={setSearchTerm}
                 placeholder="Search players..."
-                className="w-full"
               />
             </div>
             <div className="flex space-x-2">
@@ -568,11 +572,16 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                       key={player.id}
                       className={`flex items-center justify-between p-2 sm:p-3 rounded text-sm sm:text-base ${
                         player.status === 'selected' ? 'bg-base-200' : ''
-                      }`}
+                      } ${player.status === 'dropped_out' ? 'opacity-50' : ''}`}
                     >
                       <div className="flex items-center space-x-2 flex-grow mr-2">
                         <span className="font-medium truncate">{player.player.friendlyName}</span>
                         <div className="flex items-center gap-2">
+                          {player.status === 'dropped_out' && (
+                            <span className="text-xs px-2 py-1 rounded bg-red-100 text-red-800 whitespace-nowrap">
+                              Dropped Out
+                            </span>
+                          )}
                           {player.status === 'selected' && (
                             <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
                               player.selectionMethod === 'random'
@@ -582,31 +591,37 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                               {player.selectionMethod === 'random' ? 'Random' : 'Merit'}
                             </span>
                           )}
-                          <Tooltip content="Toggle guaranteed slot token">
-                            <button
-                              onClick={() => handleTokenToggle(player.id, player.playerId, player.usingToken)}
-                              className={`btn btn-xs ${player.usingToken ? 'btn-primary' : 'btn-ghost'}`}
-                            >
-                              🎟️
-                            </button>
-                          </Tooltip>
-                          <Tooltip content="Issue new token">
-                            <button
-                              onClick={() => handleIssueToken(player.playerId)}
-                              className="text-primary hover:text-primary-focus"
-                            >
-                              🎟️
-                            </button>
-                          </Tooltip>
+                          {player.status !== 'dropped_out' && (
+                            <>
+                              <Tooltip content="Toggle guaranteed slot token">
+                                <button
+                                  onClick={() => handleTokenToggle(player.id, player.playerId, player.usingToken)}
+                                  className={`btn btn-xs ${player.usingToken ? 'btn-primary' : 'btn-ghost'}`}
+                                >
+                                  🎟️
+                                </button>
+                              </Tooltip>
+                              <Tooltip content="Issue new token">
+                                <button
+                                  onClick={() => handleIssueToken(player.playerId)}
+                                  className="text-primary hover:text-primary-focus"
+                                >
+                                  🎟️
+                                </button>
+                              </Tooltip>
+                            </>
+                          )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleUnregister(player.id)}
-                        className="text-red-500 hover:text-red-700 p-2"
-                        aria-label="Unregister player"
-                      >
-                        <FaTimes className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
+                      <PlayerActionMenu
+                        registrationId={player.id}
+                        playerId={player.playerId}
+                        playerName={player.player.friendlyName}
+                        gameId={gameId}
+                        currentStatus={player.status}
+                        shieldTokensAvailable={player.shieldTokensAvailable}
+                        onActionComplete={fetchRegistrations}
+                      />
                     </div>
                   ))}
                 </div>

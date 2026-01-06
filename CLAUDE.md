@@ -191,7 +191,7 @@ await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 ### Core Systems
 - **[Token System](/docs/TokenSystem.md)** - Priority tokens, shield tokens, eligibility
 - **[Ratings System](/docs/RatingsSystemGuide.md)** - Attack, Defense, Game IQ, GK, Playstyles, Positions
-- **[Team Balancing](/docs/features/TeamBalancing.md)** - Tier-based snake draft algorithm
+- **[Team Balancing](/docs/features/TeamBalancing.md)** - Brute-force optimal algorithm (v12.0, Jan 2026)
 - **[XP System v2](/docs/features/XPSystemv2.md)** - Current XP calculation (production)
 - **[XP System v1](/docs/XPSystemExplained.md)** - Legacy system (pre-Jan 2026)
 
@@ -214,6 +214,7 @@ await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 ### Development Patterns
 - **[Core Development Patterns](/docs/systems/CoreDevelopmentPatterns.md)** - Essential coding conventions ⭐
 - **[Database Patterns](/docs/systems/DatabasePatterns.md)** - RLS, triggers, migrations ⭐
+- **[Brute-Force Optimal Algorithm](/docs/algorithms/BruteForceOptimalAlgorithm.md)** - Current team balancing (v12.0) ⭐
 - **[Team Balancing Algorithm Evolution](/docs/algorithms/TeamBalancingEvolution.md)** - Complete algorithm history
 
 ### Component Documentation

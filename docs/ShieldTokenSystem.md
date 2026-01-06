@@ -24,6 +24,40 @@ The Shield Token system provides streak protection for players who need to miss 
   - Can toggle between using/cancelling during the registration window
   - Once registration closes, shield usage is final
 
+### Dropout with Shield Protection (Added January 2026)
+
+Players who registered for a game but need to drop out can use their shield token to protect their streak.
+
+**How It Works:**
+1. **During Registration Window**: Player can use shield (auto-cancels registration)
+2. **After Registration Closes**: Player sees "Drop Out" button on game page
+3. **Shield Option**: If player has shields, they can choose to use one
+4. **Without Shield**: Streak resets to 0 when game completes
+5. **With Shield**: Streak protected with gradual decay
+
+**Admin Dropout:**
+Admins can drop players out via the Game Registrations modal:
+- Click ⋮ menu next to player name
+- Choose from:
+  - **Unregister** - Remove registration entirely
+  - **Drop Out** - Mark as dropped_out (streak breaks)
+  - **Drop Out + Use Shield** - Mark as dropped_out AND activate shield protection
+
+**Player Self-Service:**
+After registration closes, registered/selected players see:
+- Warning alert showing their registration status
+- "I Can't Make It - Drop Out" button (red/warning style)
+- Confirmation modal with:
+  - Current streak info and XP bonus
+  - Shield toggle option (if shields available)
+  - Warnings about streak loss if not using shield
+
+**Why Scarcity Prevents Abuse:**
+- Shield tokens are expensive: 10 games (~2.5 months) to earn one
+- Maximum 4 tokens caps potential abuse
+- Players who waste shields on frivolous dropouts won't have them for real emergencies
+- Self-policing through natural resource scarcity
+
 ### Protected Streak with Gradual Decay
 When a shield token is used:
 1. Current streak value is **protected** (e.g., 10-game streak)
@@ -281,7 +315,27 @@ Core processing function called after player selection:
 - **For players who missed game without shield:**
   - If had active shield: removes protection, resets streak to 0
   - If no shield: normal streak decay
+- **CRITICAL (Fixed January 2026):** Skips shields used for the CURRENT game
+  - Only evaluates convergence for shields from PREVIOUS games
+  - Prevents premature shield removal when player hasn't actually missed the game yet
+  - See [Shield Convergence Timing Fix](fixes/ShieldConvergenceTimingFix.md)
 - Returns: Array of `{player_id, action_taken, details}`
+
+#### 6b. `dropout_with_shield(player_id, game_id, use_shield, admin_id)` (Added January 2026)
+Handles player dropout with optional shield protection:
+- Validates player has active registration for this game
+- If `use_shield = true`:
+  - Validates player has shield tokens available
+  - Activates shield protection (stores current streak)
+  - Decrements shield token count
+  - Marks registration as `dropped_out`
+  - Logs action in shield_token_history
+- If `use_shield = false`:
+  - Simply marks registration as `dropped_out`
+  - No shield protection (streak will break on game completion)
+- `admin_id` parameter for audit trail (null for player-initiated)
+- Returns: `{success: boolean, message: text}`
+- Used by: `PlayerActionMenu` (admin), `DropoutConfirmModal` (player)
 
 #### 7. `remove_shield_tokens(player_id, amount, reason, admin_id)`
 Removes shield tokens from a player (admin only):
@@ -481,7 +535,58 @@ Enhanced registration flow with mutual exclusivity:
   - Cannot use shield while registered to play
   - Clear visual feedback and instructions for both states
 
-#### 9. Updated `PlayerCard` Components
+#### 9. `DropoutConfirmModal` Component (Added January 2026)
+Player-facing confirmation modal for dropping out with shield option:
+- Located in: `src/components/game/DropoutConfirmModal.tsx`
+- Shows current streak info and XP bonus at risk
+- Shield token toggle (checkbox) if player has shields available
+- Dynamic content based on shield choice:
+  - **With Shield**: Purple/info styling, explains gradual decay protection
+  - **Without Shield**: Red/error styling, warns about streak loss
+- Animated transitions using Framer Motion
+- Processing state with loading spinner
+- Calls `dropout_with_shield` RPC on confirmation
+
+Props:
+```typescript
+{
+  isOpen: boolean
+  onClose: () => void
+  playerId: string
+  playerName: string
+  gameId: string
+  currentStreak: number
+  shieldTokensAvailable: number
+  onDropoutComplete: () => void
+}
+```
+
+#### 10. `PlayerActionMenu` Component (Added January 2026)
+Admin dropdown menu for player actions in Game Registrations modal:
+- Located in: `src/components/admin/games/PlayerActionMenu.tsx`
+- Three-dot (⋮) menu trigger button
+- Dropdown options:
+  - **Unregister** - Removes registration entirely (delete)
+  - **Drop Out** - Marks as dropped_out (streak breaks)
+  - **Drop Out + Use Shield** - Uses shield token (only if available)
+- Confirmation dialog before executing destructive actions
+- Shows "Dropped Out" badge instead of menu for already dropped players
+- Animated dropdown and confirmation using Framer Motion
+
+Props:
+```typescript
+{
+  registrationId: string
+  playerId: string
+  playerName: string
+  gameId: string
+  currentStatus: string
+  shieldTokensAvailable: number
+  onActionComplete: () => void
+}
+```
+
+#### 11. Updated `PlayerCard` Components
 Player cards now show shield protection visually:
 
 **PlayerCardModifiers Component** (Streak row):
@@ -520,6 +625,28 @@ Player cards now show shield protection visually:
   - Player list page (/players - PlayerCardGrid component)
   - Any other location where PlayerCard is used
 - Consistent visual treatment across all card instances
+
+### Shield Display on Player Selection Results (Added January 2026)
+
+After registration closes, dropped out players with active shield protection are visually indicated:
+
+**Card View (`PlayerList.tsx`)**
+- Shield icon displayed on player card via `PlayerCard` component
+- Props: `shieldActive={true}`, `frozenStreakValue={protectedStreak}`
+
+**List View (`PlayerListView.tsx`)**
+- Blue shield icon with protected streak number next to player name
+- Tooltip: "Shield Active - Protected streak: X games"
+
+**Data Flow:**
+1. `PlayerSelectionResults.tsx` fetches `shield_active`, `protected_streak_value`, `shield_tokens_available` from players table
+2. Data mapped to `shieldActive` and `frozenStreakValue` in playerStats
+3. Props passed through to card/list components
+
+**Key Files:**
+- `src/components/games/PlayerSelectionResults.tsx` - Query and data mapping
+- `src/components/games/PlayerList.tsx` - Passes shield props to PlayerCard
+- `src/components/games/views/PlayerListView.tsx` - Shield icon in list view
 
 ### Player Selection Integration
 
@@ -963,6 +1090,40 @@ For issues or questions:
 4. Contact admin team for manual intervention if needed
 
 ## Changelog
+
+**v1.2.0** - Dropout with Shield Protection (2026-01-06)
+- **Dropout with Shield Feature**: Players who registered but need to drop out can now use their shield token
+  - Admin can drop players out via ⋮ menu in Game Registrations modal
+  - Players see "Drop Out" button after registration closes
+  - Option to use shield token (protects streak) or drop without (streak breaks)
+- **New Database Function**: `dropout_with_shield(player_id, game_id, use_shield, admin_id)`
+  - Handles dropout with optional shield activation
+  - Validates token availability before use
+  - Logs all actions with admin ID for audit trail
+- **New Frontend Components**:
+  - `DropoutConfirmModal` - Player-facing modal with shield toggle (uses XP v2 streak bonus calculation)
+  - `PlayerActionMenu` - Admin dropdown with Unregister/Drop Out/Drop Out + Shield options
+- **Bug Fix**: Shield Convergence Timing
+  - Fixed shields being incorrectly removed when used for CURRENT game
+  - `process_shield_streak_protection()` now skips shields where `shield_game_id = current_game_id`
+  - See [Shield Convergence Timing Fix](fixes/ShieldConvergenceTimingFix.md)
+- **Bug Fix**: Shield Display on Player Selection Results
+  - Fixed dropped out players not showing shield protection on player cards
+  - Added `shield_active`, `protected_streak_value`, `shield_tokens_available` to PlayerSelectionResults query
+  - Card view: Shield indicator via `PlayerCard` component (`shieldActive` and `frozenStreakValue` props)
+  - List view: Blue shield icon with protected streak number and tooltip in `PlayerListView`
+- **Bug Fix**: Dropout Button Shield Option
+  - Integrated `DropoutConfirmModal` into `PlayerSelectionResults` for player self-service dropout
+  - Modal shows current streak, XP bonus at risk, and shield token toggle
+- **Updated Types**: Added to `ExtendedPlayerData` in `src/types/playerSelection.ts`:
+  - `shieldActive?: boolean`
+  - `frozenStreakValue?: number | null`
+- **Updated Components**:
+  - `PlayerList.tsx` - Now passes `shieldActive` and `frozenStreakValue` props to `PlayerCard`
+  - `PlayerListView.tsx` - Added shield icon display for dropped out players
+  - `GameRegistration.tsx` - Shows dropout controls after registration closes for registered/selected players
+- **New Type**: `RegistrationPlayerData` in `src/types/playerSelection.ts`
+- Migration: `20260106_add_dropout_with_shield.sql`, `20260106_fix_shield_convergence_timing.sql`
 
 **v1.1.1** - Admin Shield Management & Visual Convergence Display (2025-12-12)
 - **Admin Shield Token Management in Game Registrations Modal**:

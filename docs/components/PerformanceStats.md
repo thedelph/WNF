@@ -75,6 +75,28 @@ The PerformanceStats component is integrated into the Stats page and displayed i
 
 ## Recent Updates
 
+### January 2026 Updates
+1. **Naming Consistency**: All award titles now match Hall of Fame naming:
+   - "Most Caps" → "Appearance King"
+   - "Best Win Rates" → "Win Rate Leader"
+   - "Longest Attendance Streaks" → "Iron Man"
+   - "Longest Win Streaks" → "Hot Streak"
+   - "Longest Unbeaten Streaks" → "The Wall"
+   - "XP Leaderboard" → "XP Champion"
+   - "Blue Team Specialists" → "Blue Blood"
+   - "Orange Team Specialists" → "Dutch Master"
+
+2. **Semantic Color Scheme**: Colors assigned by meaning (amber=champions, green=victory, purple=royalty, etc.)
+
+3. **Multi-Player Awards**: Added `isMultiPlayer` prop for responsive layouts on:
+   - Dynamic Duo, Cursed Duos, Fiercest Rivalry
+   - Dream Team Trio, Cursed Trio, Best Buddies
+
+4. **Display Parity with Hall of Fame**:
+   - Shows score labels ("45.2 chemistry", "32.1 curse", "28.5 rivalry")
+   - Always shows W/D/L details (not hidden on mobile)
+   - Matching font sizes and weights (`text-sm opacity-90 font-medium`, `text-xs opacity-70`)
+
 ### May 2025 Updates
 1. **Enhanced Goal Differentials Card**: Updated to include GF/GA ratio and change sorting to prioritize this efficiency metric
 2. **Improved Visual Consistency**: Ensured consistent styling across all award cards

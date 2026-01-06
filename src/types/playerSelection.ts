@@ -43,17 +43,17 @@ export interface ExtendedPlayerData extends PlayerStats {
   isRandomlySelected?: boolean;
   hasSlotOffer?: boolean;
   slotOfferStatus?: 'pending' | 'declined';
-  slotOfferExpiresAt?: string; 
-  slotOfferAvailableAt?: string; 
+  slotOfferExpiresAt?: string;
+  slotOfferAvailableAt?: string;
   slotOffers?: {
     status: string;
     expires_at?: string;
     available_at?: string;
   }[];
   whatsapp_group_member?: string;
-  benchWarmerStreak?: number;  
-  registrationStreakBonus?: number; 
-  registrationStreakBonusApplies?: boolean; 
+  benchWarmerStreak?: number;
+  registrationStreakBonus?: number;
+  registrationStreakBonusApplies?: boolean;
   using_token?: boolean;
   had_token?: boolean;
   status?: 'selected' | 'reserve' | 'dropped_out' | 'none';
@@ -64,6 +64,51 @@ export interface ExtendedPlayerData extends PlayerStats {
   unpaidGames?: number;
   unpaidGamesModifier?: number;
   recentGames?: number;
+  // Shield protection properties
+  shieldActive?: boolean;
+  frozenStreakValue?: number | null;
+  // Mapped/transformed properties (camelCase versions)
+  friendlyName?: string;
+  avatarSvg?: string;
+  activeBonuses?: number;
+  activePenalties?: number;
+  currentStreak?: number;
+  maxStreak?: number;
+  winRate?: number;
+  wins?: number;
+  draws?: number;
+  losses?: number;
+  totalGames?: number;
+  rarity?: string;
+  rank?: number;
+  potentialOfferTimes?: any;
+  hasActiveSlotOffers?: boolean;
+  gameParticipation?: Array<'selected' | 'reserve' | null>;
+}
+
+// Registration-specific type used in GameRegistrations.tsx
+export interface RegistrationPlayerData {
+  id: string;
+  gameId: string;
+  playerId: string;
+  status: 'registered' | 'selected' | 'reserve' | 'dropped_out';
+  selectionMethod: string | null;
+  team: 'blue' | 'orange' | null;
+  usingToken: boolean;
+  shieldTokensAvailable: number;
+  player: {
+    id: string;
+    friendlyName: string;
+    xp: number;
+    caps: number;
+    activeBonuses: number;
+    activePenalties: number;
+    winRate: number;
+    currentStreak: number;
+    maxStreak: number;
+    avatarSvg: string;
+    rarity: string;
+  };
 }
 
 export interface PlayerSelectionResultsProps {

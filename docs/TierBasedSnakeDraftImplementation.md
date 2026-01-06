@@ -1,5 +1,25 @@
 # Tier-Based Snake Draft Implementation
 
+---
+
+> ## ⚠️ LEGACY ALGORITHM
+>
+> **This algorithm has been superseded by the Brute-Force Optimal Algorithm (v12.0) as of January 2026.**
+>
+> The tier-based snake draft with Simulated Annealing remains available as a fallback option but is no longer the primary algorithm.
+>
+> **For the current algorithm documentation, see: [BruteForceOptimalAlgorithm.md](algorithms/BruteForceOptimalAlgorithm.md)**
+>
+> **Key differences:**
+> | Feature | Brute-Force (Current) | Tier-Based SA (Legacy) |
+> |---------|----------------------|------------------------|
+> | Optimal Guarantee | Yes | No (heuristic) |
+> | Deterministic | Yes | No |
+> | Transparency | Full scoring breakdown | Limited |
+> | Architecture | 16 modular files | 1 large file |
+
+---
+
 ## Overview
 Implemented a tier-based snake draft algorithm alongside the existing optimal team balancing algorithm. This allows comparison between two different approaches to team balancing.
 

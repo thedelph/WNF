@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2025-12-19
+**Last Updated:** 2026-01-06 (Awards UI consistency, semantic color scheme)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -23,9 +23,10 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Admin Ratings Integration](features/AdminRatingsIntegration.md)** - Position integration in admin interface
 
 ### Team Management
-- **[Team Balancing](features/TeamBalancing.md)** - Tier-based snake draft overview
+- **[Team Balancing](features/TeamBalancing.md)** - Overview of team balancing system
+- **[Brute-Force Optimal Algorithm](algorithms/BruteForceOptimalAlgorithm.md)** - Current algorithm (v12.0, January 2026)
 - **[Team Balancing Algorithm Evolution](algorithms/TeamBalancingEvolution.md)** - Complete algorithm history
-- **[Tier-Based Snake Draft](TierBasedSnakeDraftImplementation.md)** - Detailed implementation guide
+- **[Tier-Based Snake Draft](TierBasedSnakeDraftImplementation.md)** - Legacy algorithm (pre-January 2026)
 - **[Formation Suggester](features/FormationSuggester.md)** - Position consensus + playstyle formation assignments
 
 ---
@@ -122,6 +123,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Priority Token Consumption Fix](fixes/PriorityTokenConsumptionFix.md)** - Token usage bugs
 - **[Selection Odds Token Counting Fix](fixes/SelectionOddsTokenCountingFix.md)** - Accurate odds calculation
 - **[Token Eligibility Fixes](TokenSystem.md#fixes)** - Dropout handling, selection cooldown
+- **[Shield Convergence Timing Fix](fixes/ShieldConvergenceTimingFix.md)** - Fixed premature shield removal for current game shields
 
 ### Query & Performance Fixes
 - **[Payment Splitting Query Limit Fix](fixes/PaymentSplittingQueryLimitFix.md)** - Supabase query limits

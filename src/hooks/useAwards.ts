@@ -1,5 +1,8 @@
 /**
  * Hook for fetching awards data for the Awards page
+ *
+ * For "All Time" view: Uses live data from RPCs (real-time leaderboards)
+ * For specific years: Uses stored award snapshots from player_awards table
  */
 
 import { useState, useEffect } from 'react';
@@ -9,9 +12,11 @@ import {
   AwardFromDB,
   AwardsByCategory,
   AwardYearFilter,
-  AwardCategory
+  AwardCategory,
+  LiveAward
 } from '../types/awards';
 import { AWARD_CATEGORIES, AWARD_CATEGORY_ORDER } from '../constants/awards';
+import { useLiveAwards } from './useLiveAwards';
 
 /**
  * Transform database award to frontend format
@@ -26,21 +31,51 @@ const transformAward = (dbAward: AwardFromDB): Award => ({
   value: dbAward.value,
   partnerId: dbAward.partner_id ?? undefined,
   partnerName: dbAward.partner_name ?? undefined,
+  partner2Id: dbAward.partner2_id ?? undefined,
+  partner2Name: dbAward.partner2_name ?? undefined,
   awardedAt: dbAward.awarded_at,
 });
 
 /**
  * Group awards by category for display
+ * Deduplicates pair/trio awards (each player gets their own DB record,
+ * but we only want to show one entry per unique pair/trio in the Hall of Fame)
  */
 const groupAwardsByCategory = (awards: Award[]): AwardsByCategory[] => {
   const grouped: AwardsByCategory[] = [];
 
   for (const categoryId of AWARD_CATEGORY_ORDER) {
-    const categoryAwards = awards.filter(a => a.category === categoryId);
+    let categoryAwards = awards.filter(a => a.category === categoryId);
+    const config = AWARD_CATEGORIES[categoryId];
+
+    // Deduplicate pair awards (keep one entry per unique pair per medal)
+    if (config.isPairAward) {
+      const seen = new Set<string>();
+      categoryAwards = categoryAwards.filter(award => {
+        const ids = [award.playerId, award.partnerId].sort();
+        const key = `${award.medalType}_${ids.join('_')}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    // Deduplicate trio awards (keep one entry per unique trio per medal)
+    if (config.isTrioAward) {
+      const seen = new Set<string>();
+      categoryAwards = categoryAwards.filter(award => {
+        const ids = [award.playerId, award.partnerId, award.partner2Id].sort();
+        const key = `${award.medalType}_${ids.join('_')}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
     if (categoryAwards.length > 0) {
       grouped.push({
         category: categoryId,
-        config: AWARD_CATEGORIES[categoryId],
+        config: config,
         awards: categoryAwards.sort((a, b) => {
           // Sort by medal: gold, silver, bronze
           const medalOrder = { gold: 0, silver: 1, bronze: 2 };
@@ -55,46 +90,22 @@ const groupAwardsByCategory = (awards: Award[]): AwardsByCategory[] => {
 
 /**
  * Hook to fetch awards for a specific year or all-time
+ *
+ * Uses live data from RPCs for both "All Time" and specific years
+ * This provides real-time leaderboards with W/D/L details for all views
  */
 export const useAwards = (yearFilter: AwardYearFilter) => {
-  const [awards, setAwards] = useState<Award[]>([]);
-  const [awardsByCategory, setAwardsByCategory] = useState<AwardsByCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Convert year filter to format expected by useLiveAwards
+  const liveYearFilter = yearFilter === 'all' ? 'all' : yearFilter;
 
-  useEffect(() => {
-    const fetchAwards = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const targetYear = yearFilter === 'all' ? null : yearFilter;
-
-        const { data, error: fetchError } = await supabase.rpc('get_awards_by_year', {
-          target_year: targetYear,
-        });
-
-        if (fetchError) throw fetchError;
-
-        const transformedAwards = (data as AwardFromDB[]).map(transformAward);
-        setAwards(transformedAwards);
-        setAwardsByCategory(groupAwardsByCategory(transformedAwards));
-      } catch (err) {
-        console.error('Error fetching awards:', err);
-        setError('Failed to load awards');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAwards();
-  }, [yearFilter]);
+  // Use live awards for all years (live calculation with W/D/L details)
+  const liveAwards = useLiveAwards(liveYearFilter);
 
   return {
-    awards,
-    awardsByCategory,
-    loading,
-    error,
+    awards: liveAwards.awards,
+    awardsByCategory: liveAwards.awardsByCategory,
+    loading: liveAwards.loading,
+    error: liveAwards.error,
   };
 };
 

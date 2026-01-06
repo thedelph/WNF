@@ -6,13 +6,16 @@
 import { motion } from 'framer-motion';
 import {
   Trophy, Crown, Flame, Award, Percent, TrendingUp, Shield,
-  TrendingDown, XCircle, Beaker, ShirtIcon, Heart, Star
+  TrendingDown, XCircle, Beaker, ShirtIcon, Heart, Star, Swords, Users
 } from 'lucide-react';
 import { AwardCard } from '../stats/AwardCard';
 import { StatsCard } from '../stats/StatsCard';
 import { GoalDifferentialsCard } from '../stats/GoalDifferentialsCard';
 import { HighestXPCard } from '../stats/HighestXPCard';
 import { Stats, PlayerStats, ChemistryPairStats, TeamColorStats, BestBuddies } from '../../hooks/useStats';
+import { useRivalryLeaderboard } from '../../hooks/useRivalry';
+import { useTrioLeaderboard } from '../../hooks/useTrioChemistry';
+import { RivalryPairLeaderboard, TrioLeaderboard } from '../../types/chemistry';
 
 interface LiveStatsTabProps {
   stats: Stats;
@@ -20,6 +23,11 @@ interface LiveStatsTabProps {
 }
 
 export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
+  // Fetch rivalry and trio leaderboard data
+  const yearFilter = selectedYear === 'all' ? null : selectedYear;
+  const { rivalries } = useRivalryLeaderboard(yearFilter, 5);
+  const { dreamTeams, cursedTrios } = useTrioLeaderboard(yearFilter, 5);
+
   // Animation variants for container
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -58,7 +66,7 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
             Current Streaks
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Current Attendance Streaks */}
+            {/* Current Attendance Streaks - matches Iron Man (indigo = steel/endurance) */}
             <AwardCard
               title="Current Attendance Streaks"
               winners={stats.currentStreaks.map((player: PlayerStats) => ({
@@ -68,10 +76,10 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
                 id: player.id
               }))}
               icon={<Flame className="w-6 h-6" />}
-              color="green"
+              color="indigo"
             />
 
-            {/* Current Win Streaks */}
+            {/* Current Win Streaks - matches Hot Streak (rose) */}
             <AwardCard
               title="Current Win Streaks"
               winners={stats.currentWinStreaks.map((player: PlayerStats) => ({
@@ -81,7 +89,7 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
                 id: player.id
               }))}
               icon={<TrendingUp className="w-6 h-6" />}
-              color="blue"
+              color="rose"
             />
 
             {/* Current Unbeaten Streaks */}
@@ -97,7 +105,7 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
               color="indigo"
             />
 
-            {/* Current Loss Streaks */}
+            {/* Current Loss Streaks - red (danger, losing) */}
             <AwardCard
               title="Current Loss Streaks"
               winners={stats.currentLossStreaks.map((player: PlayerStats) => ({
@@ -107,10 +115,10 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
                 id: player.id
               }))}
               icon={<TrendingDown className="w-6 h-6" />}
-              color="rose"
+              color="red"
             />
 
-            {/* Current Winless Streaks */}
+            {/* Current Winless Streaks - amber (negative version of unbeaten) */}
             <AwardCard
               title="Current Winless Streaks"
               winners={stats.currentWinlessStreaks.map((player: PlayerStats) => ({
@@ -120,7 +128,7 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
                 id: player.id
               }))}
               icon={<XCircle className="w-6 h-6" />}
-              color="yellow"
+              color="amber"
             />
           </div>
         </section>
@@ -136,50 +144,145 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
           {/* XP Leaderboard */}
           <HighestXPCard selectedYear={selectedYear} />
 
-          {/* Most Caps */}
+          {/* Appearance King - purple = royalty */}
           <AwardCard
-            title="Most Caps"
+            title="Appearance King"
             winners={stats.mostCaps.map((player: PlayerStats) => ({
               name: player.friendlyName,
               value: `${player.caps} games`,
               id: player.id
             }))}
             icon={<Trophy className="w-6 h-6" />}
-            color="indigo"
+            color="purple"
           />
 
-          {/* Best Win Rates */}
+          {/* Win Rate Leader - green = success */}
           <StatsCard
-            title="Best Win Rates"
+            title="Win Rate Leader"
             value=""
             stats={stats.bestWinRates}
             icon={<Percent className="w-6 h-6" />}
             description="Points system: W=3, D=1, L=0. Min 10 even-team games."
-            color="teal"
+            color="green"
           />
 
-          {/* Best Chemistry */}
+          {/* Dynamic Duo (Best Chemistry) - pink = chemistry, connection */}
           <AwardCard
-            title="Best Chemistry"
+            title="Dynamic Duo"
             winners={stats.bestChemistry.map((pair: ChemistryPairStats) => ({
               id: `${pair.player1Id}-${pair.player2Id}`,
               name: `${pair.player1Name} & ${pair.player2Name}`,
               value: (
-                <div className="flex flex-col items-end text-right">
-                  <span className="font-bold">{pair.chemistryScore.toFixed(1)}</span>
-                  <div className="text-xs opacity-80">
-                    <span className="hidden sm:inline">{pair.winsTogether}W {pair.drawsTogether}D {pair.lossesTogether}L · </span>
-                    <span>{pair.gamesTogether} games · {pair.performanceRate.toFixed(0)}%</span>
+                <>
+                  <span className="text-sm opacity-90 font-medium">{pair.chemistryScore.toFixed(1)} chemistry</span>
+                  <div className="text-xs opacity-70">
+                    {pair.winsTogether}W {pair.drawsTogether}D {pair.lossesTogether}L · {pair.gamesTogether} games · {pair.performanceRate.toFixed(0)}%
                   </div>
-                </div>
+                </>
               ),
               rawValue: pair.chemistryScore
             }))}
             icon={<Beaker className="w-6 h-6" />}
-            color="green"
-            valueHeader="Score"
-            description="Score factors in win rate and sample size (min 10 games)"
+            color="pink"
+            description="Best chemistry pair (win rate × games played)"
+            isMultiPlayer
           />
+
+          {/* Cursed Duos (Worst Chemistry) */}
+          {stats.worstChemistry.length > 0 && (
+            <AwardCard
+              title="Cursed Duos"
+              winners={stats.worstChemistry.map((pair: ChemistryPairStats) => ({
+                id: `${pair.player1Id}-${pair.player2Id}`,
+                name: `${pair.player1Name} & ${pair.player2Name}`,
+                value: (
+                  <>
+                    <span className="text-sm opacity-90 font-medium">{pair.curseScore.toFixed(1)} curse</span>
+                    <div className="text-xs opacity-70">
+                      {pair.winsTogether}W {pair.drawsTogether}D {pair.lossesTogether}L · {pair.gamesTogether} games · {pair.performanceRate.toFixed(0)}%
+                    </div>
+                  </>
+                ),
+                rawValue: pair.curseScore
+              }))}
+              icon={<Beaker className="w-6 h-6" />}
+              color="rose"
+              description="Worst chemistry pair (loss rate × games played)"
+              isMultiPlayer
+            />
+          )}
+
+          {/* Fiercest Rivalry */}
+          {rivalries.length > 0 && (
+            <AwardCard
+              title="Fiercest Rivalry"
+              winners={rivalries.map((rivalry: RivalryPairLeaderboard) => ({
+                id: `${rivalry.player1Id}-${rivalry.player2Id}`,
+                name: `${rivalry.player1Name} vs ${rivalry.player2Name}`,
+                value: (
+                  <>
+                    <span className="text-sm opacity-90 font-medium">{rivalry.rivalryScore.toFixed(1)} rivalry</span>
+                    <div className="text-xs opacity-70">
+                      {rivalry.playerWins}W {rivalry.draws}D {rivalry.opponentWins}L · {rivalry.gamesAgainst} games · {rivalry.performanceRate.toFixed(0)}%
+                    </div>
+                  </>
+                ),
+                rawValue: rivalry.rivalryScore
+              }))}
+              icon={<Swords className="w-6 h-6" />}
+              color="red"
+              description="Head-to-head when on opposite teams (min 5 games)"
+              isMultiPlayer
+            />
+          )}
+
+          {/* Dream Team Trio */}
+          {dreamTeams.length > 0 && (
+            <AwardCard
+              title="Dream Team Trio"
+              winners={dreamTeams.map((trio: TrioLeaderboard) => ({
+                id: `${trio.player1Id}-${trio.player2Id}-${trio.player3Id}`,
+                name: `${trio.player1Name}, ${trio.player2Name} & ${trio.player3Name}`,
+                value: (
+                  <>
+                    <span className="text-sm opacity-90 font-medium">{trio.trioScore.toFixed(1)} chemistry</span>
+                    <div className="text-xs opacity-70">
+                      {trio.wins}W {trio.draws}D {trio.losses}L · {trio.gamesTogether} games · {trio.performanceRate.toFixed(0)}%
+                    </div>
+                  </>
+                ),
+                rawValue: trio.trioScore
+              }))}
+              icon={<Users className="w-6 h-6" />}
+              color="purple"
+              description="Best 3-player combos (min 3 games)"
+              isMultiPlayer
+            />
+          )}
+
+          {/* Cursed Trio */}
+          {cursedTrios.length > 0 && (
+            <AwardCard
+              title="Cursed Trio"
+              winners={cursedTrios.map((trio: TrioLeaderboard) => ({
+                id: `${trio.player1Id}-${trio.player2Id}-${trio.player3Id}`,
+                name: `${trio.player1Name}, ${trio.player2Name} & ${trio.player3Name}`,
+                value: (
+                  <>
+                    <span className="text-sm opacity-90 font-medium">{trio.curseScore.toFixed(1)} curse</span>
+                    <div className="text-xs opacity-70">
+                      {trio.wins}W {trio.draws}D {trio.losses}L · {trio.gamesTogether} games · {trio.performanceRate.toFixed(0)}%
+                    </div>
+                  </>
+                ),
+                rawValue: trio.curseScore
+              }))}
+              icon={<Users className="w-6 h-6" />}
+              color="slate"
+              description="Worst 3-player combos (min 3 games)"
+              isMultiPlayer
+            />
+          )}
 
           {/* Goal Differentials */}
           <GoalDifferentialsCard goalDifferentials={stats.goalDifferentials} />
@@ -193,9 +296,9 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
           Historical Records
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Longest Attendance Streaks */}
+          {/* Iron Man - indigo = steel/endurance */}
           <AwardCard
-            title="Longest Attendance Streaks"
+            title="Iron Man"
             winners={stats.topAttendanceStreaks.map((player: PlayerStats) => ({
               name: player.friendlyName,
               value: (
@@ -212,12 +315,12 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
               id: player.id
             }))}
             icon={<Crown className="w-6 h-6" />}
-            color="purple"
+            color="indigo"
           />
 
-          {/* Longest Win Streaks */}
+          {/* Hot Streak - rose = fire, momentum */}
           <AwardCard
-            title="Longest Win Streaks"
+            title="Hot Streak"
             winners={stats.topWinStreaks
               .sort((a, b) => (b?.maxWinStreak || 0) - (a?.maxWinStreak || 0))
               .map(player => ({
@@ -236,13 +339,13 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
                 id: player?.id
               }))}
             icon={<Award className="w-6 h-6" />}
-            color="green"
+            color="rose"
             description="Broken by both losses and draws"
           />
 
-          {/* Longest Unbeaten Streaks */}
+          {/* The Wall - indigo = fortress */}
           <AwardCard
-            title="Longest Unbeaten Streaks"
+            title="The Wall"
             winners={stats.topUnbeatenStreaks
               .sort((a, b) => (b?.maxUnbeatenStreak || 0) - (a?.maxUnbeatenStreak || 0))
               .map(player => ({
@@ -261,7 +364,7 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
                 id: player?.id
               }))}
             icon={<Shield className="w-6 h-6" />}
-            color="purple"
+            color="indigo"
             description="Only broken by losses (draws maintain streak)"
           />
 
@@ -333,7 +436,7 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
             icon={<ShirtIcon className="w-6 h-6" />}
           />
 
-          {/* Best Buddies */}
+          {/* Best Buddies - teal = friendship, loyalty */}
           <AwardCard
             title="Best Buddies"
             winners={stats.bestBuddies.map((buddy: BestBuddies) => ({
@@ -342,32 +445,33 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
               value: `${buddy.gamesTogether} games`
             }))}
             icon={<Heart className="w-6 h-6" />}
-            color="pink"
+            color="teal"
             description="Players on the same team most often"
+            isMultiPlayer
           />
 
-          {/* Blue Team Specialists */}
+          {/* Blue Blood - blue = team semantic */}
           <AwardCard
-            title="Blue Team Specialists"
+            title="Blue Blood"
             winners={stats.teamColorFrequency.blue.map((player: TeamColorStats) => ({
               name: player.friendlyName,
               value: `${(player.teamFrequency * 100).toFixed(1)}%`,
               id: player.id
             }))}
-            description="Players with 10+ caps on blue team most often"
+            description="Highest % on blue team"
             icon={<Star className="w-6 h-6" />}
             color="blue"
           />
 
-          {/* Orange Team Specialists */}
+          {/* Dutch Master - orange = team semantic */}
           <AwardCard
-            title="Orange Team Specialists"
+            title="Dutch Master"
             winners={stats.teamColorFrequency.orange.map((player: TeamColorStats) => ({
               name: player.friendlyName,
               value: `${(player.teamFrequency * 100).toFixed(1)}%`,
               id: player.id
             }))}
-            description="Players with 10+ caps on orange team most often"
+            description="Highest % on orange team"
             icon={<Star className="w-6 h-6" />}
             color="orange"
           />

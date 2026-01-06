@@ -54,9 +54,30 @@ const gradientColors = {
   green: 'from-emerald-300 via-emerald-500 to-emerald-700',
   pink: 'from-pink-300 via-pink-500 to-pink-700',
   indigo: 'from-indigo-300 via-indigo-500 to-indigo-700',
-  teal: 'from-teal-300 via-teal-500 to-teal-700'
+  teal: 'from-teal-300 via-teal-500 to-teal-700',
+  red: 'from-red-400 via-red-600 to-red-800',
+  rose: 'from-rose-400 via-rose-600 to-rose-800',
+  amber: 'from-amber-600 via-amber-700 to-amber-900',
+  slate: 'from-slate-500 via-slate-600 to-slate-800'
 };
 ```
+
+### Semantic Color Scheme (January 2026)
+
+Colors are assigned based on semantic meaning for consistency across Stats and Hall of Fame:
+
+| Color | Meaning | Used For |
+|-------|---------|----------|
+| amber | Champions, gold, #1 | XP Champion |
+| green | Victory, success | Win Rate Leader |
+| purple | Royalty, elite | Appearance King, Dream Team Trio |
+| indigo | Strength, endurance | Iron Man, The Wall |
+| rose | Fire, heat, momentum | Hot Streak, Cursed Duos |
+| pink | Chemistry, connection | Dynamic Duo |
+| teal | Friendship, support | Best Buddies, Super Sub |
+| red | Battle, competition | Fiercest Rivalry |
+| slate | Cursed, dark, unlucky | Cursed Trio |
+| blue/orange | Team semantic | Blue Blood, Dutch Master |
 
 ## Usage
 
@@ -73,6 +94,12 @@ const gradientColors = {
 ```
 
 ## Recent Updates
+
+### January 2026 Updates
+1. **Semantic Color Scheme**: Colors now have consistent meaning across all award displays
+2. **New Color Options**: Added `red`, `rose`, `amber`, `slate` for expanded award types
+3. **Multi-Player Support**: Added `isMultiPlayer` prop for responsive pair/trio layouts (in AwardCard)
+4. **Mobile Responsiveness**: Names wrap instead of truncate, scores stack below on mobile
 
 ### May 2025 Updates
 1. **Updated Medal Display**: Replaced Lucide Medal icons with emoji medals (🥇, 🥈, 🥉) for improved visual consistency with other award cards
