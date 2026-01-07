@@ -107,25 +107,48 @@ Merges a source player (typically a test user) into a target player (real user),
 - `target_player_id`: UUID of the target player (to receive data)
 
 **Behavior:**
-1. Updates token_history references to point to the target player
-2. Handles token history foreign key constraints before modifying tokens
-3. Transfers or marks as used any active tokens from the source player
-4. Deletes any remaining tokens from the source player
-5. Combines XP from both players
-6. Updates all foreign key references from source to target:
-   - Game registrations
-   - Player ratings (as rated player and as rater)
-   - Notifications
-   - Player penalties
-7. Deletes the source player
+The function handles all tables with foreign key references to the `players` table:
+
+1. Updates `player_ratings_history` references (rater_id, rated_player_id)
+2. Updates `player_rating_audit` references
+3. Updates `payment_presets` references
+4. Updates `player_status_changes` references
+5. Updates `bot_interactions` references
+6. Deletes `permanent_goalkeepers` entries (player-specific, not transferable)
+7. Updates `player_awards` (player_id, partner_id, partner2_id)
+8. Deletes `player_derived_attributes` (will be recalculated automatically)
+9. Deletes `player_position_consensus` (will be recalculated from ratings)
+10. Updates `shield_token_history` references
+11. Deletes `shield_token_usage` entries (will be recalculated)
+12. Updates `slot_offers` (player_id, dropped_out_player_id, admin_id)
+13. Handles `admin_roles` (transfer if target doesn't have one, otherwise delete)
+14. Updates `token_history` references (player_id, performed_by)
+15. Handles `player_tokens` (transfer active tokens or mark as used)
+16. Updates `reserve_xp_transactions` references
+17. Merges `player_xp_snapshots` (keeps higher XP for same dates)
+18. Combines `player_xp` (sums XP from both players)
+19. Handles `player_xp_legacy` (transfer if target doesn't have one)
+20. Merges `game_registrations` with conflict resolution (preserves payment info)
+21. Merges `player_ratings` with conflict resolution (keeps most recent)
+22. Merges `player_position_ratings` with conflict resolution
+23. Updates `notifications` references
+24. Updates `player_penalties` references
+25. Deletes the source player
+26. **Recalculates derived values for target player:**
+    - **Caps**: Counts historical games played on blue/orange team
+    - **Rank**: Recalculates XP rank based on position
+    - **Rarity**: Recalculates percentile-based rarity for ALL players (to maintain consistency)
 
 **Error Handling:**
-- Properly handles foreign key constraints, especially for token_history
+- Properly handles foreign key constraints for all referenced tables
+- Uses conflict resolution for tables where both players may have entries
 - Raises exceptions for debugging
 - Returns FALSE if merge fails, TRUE if successful
 
 **Security:**
 - Uses SECURITY DEFINER to ensure proper permissions
+
+**Updated:** January 2026 - Added support for new tables and automatic recalculation of derived values
 
 ## Game Management Functions
 

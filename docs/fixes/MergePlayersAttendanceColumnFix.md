@@ -71,3 +71,26 @@ After applying the fix:
 - The `game_registrations` table has 17 columns, none of which is `attendance_confirmed`
 - This fix also addressed an earlier migration (`20250725145520_fix_merge_players_function.sql`) that had the same issue
 - The function now properly handles all current tables in the schema including recent additions like `player_ratings_history` and `player_rating_audit`
+
+## Subsequent Enhancements (January 2026)
+
+The `merge_players` function was further enhanced to:
+
+1. **Handle additional tables** that were added after the original fix:
+   - `bot_interactions`
+   - `permanent_goalkeepers`
+   - `player_awards` (player_id, partner_id, partner2_id)
+   - `player_derived_attributes`
+   - `player_position_consensus`
+   - `shield_token_history`
+   - `shield_token_usage`
+   - `player_xp_legacy`
+
+2. **Automatically recalculate derived values** after merge:
+   - **Caps**: Recalculated from actual game registrations
+   - **Rank**: Recalculated based on XP position
+   - **Rarity**: Recalculated using percentile-based system for all players
+
+This prevents issues where merged accounts have incorrect caps (showing 0) or incorrect rarity tiers.
+
+See `docs/DatabaseFunctions.md` for the complete current behavior.

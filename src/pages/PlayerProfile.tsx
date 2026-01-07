@@ -209,7 +209,7 @@ export default function PlayerProfileNew() {
               } else {
                 // Multiple matches found - take the first one but show a notification
                 playerData = partialResult.data[0];
-                toast.info(`Multiple players found with similar names. Showing first match.`);
+                toast(`Multiple players found with similar names. Showing first match.`, { id: 'multiple-players' });
               }
             }
             playerError = partialResult.error;
@@ -236,7 +236,8 @@ export default function PlayerProfileNew() {
               .from('player_xp')
               .select('xp, rank, rarity')
               .eq('player_id', playerData.id)
-              .single()
+              .limit(1)
+              .maybeSingle()
           );
 
           if (!xpError && xpData) {
@@ -272,6 +273,7 @@ export default function PlayerProfileNew() {
                 .from('player_xp_breakdown')
                 .select('reserve_games, reserve_xp')
                 .eq('friendly_name', playerData.friendly_name)
+                .limit(1)
                 .maybeSingle()
             );
             
