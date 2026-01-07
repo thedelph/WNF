@@ -53,6 +53,47 @@ Helper function to check if a player has any active tokens besides the specified
 - TRUE if the player has any other active tokens
 - FALSE if the player has no other active tokens
 
+### recalculate_token_forgiveness
+```sql
+recalculate_token_forgiveness(p_game_id UUID)
+RETURNS TABLE(out_player_id UUID, out_friendly_name TEXT, out_merit_position INT, out_forgiven BOOLEAN)
+```
+Recalculates token forgiveness for a game when the player pool changes (e.g., after dropouts or slot acceptances). This ensures token users who now qualify by merit have their tokens returned.
+
+**Parameters:**
+- `p_game_id`: UUID of the game to recalculate
+
+**Behavior:**
+1. Checks game is NOT completed (skips if already completed - tokens already consumed)
+2. Counts active registrations (selected + reserve)
+3. If `active_registrations ≤ total_slots`, all positions qualify by merit (everyone gets in)
+4. Otherwise calculates `effective_merit_slots = selected_count - random_slots`
+5. Ranks selected players by merit order:
+   - XP (descending)
+   - WhatsApp status (Yes/Proxy first)
+   - Current streak (descending)
+   - Caps (descending)
+   - Registration time (ascending)
+6. For each token user where `merit_position ≤ effective_merit_slots`:
+   - Sets `using_token = false`, `selection_method = 'merit'`
+   - Logs to `token_history` with action `'token_forgiven'`
+7. Returns list of token users with their forgiveness status
+
+**Triggers:**
+- `recalculate_forgiveness_on_status_change` fires on `game_registrations.status` updates
+- Activated when: `selected` → `dropped_out` (dropout) or `reserve` → `selected` (slot acceptance)
+
+**Security:**
+- Uses SECURITY DEFINER for elevated permissions
+
+**Usage Example:**
+```sql
+-- Manually recalculate token forgiveness for a game
+SELECT * FROM recalculate_token_forgiveness('game_uuid');
+```
+
+**Added:** January 2026
+
 ## User Management Functions
 
 ### merge_players

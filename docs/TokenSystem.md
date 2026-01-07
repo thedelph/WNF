@@ -111,6 +111,56 @@ The system includes a token forgiveness mechanism:
 4. Token forgiveness is calculated after all token effects are considered
 5. The merit cutoff is based on the remaining slots after token usage
 
+#### Automatic Forgiveness Recalculation (Added January 2026)
+Token forgiveness is automatically recalculated whenever the selected player pool changes:
+
+**Triggers:**
+- When a selected player drops out (`selected` → `dropped_out`)
+- When a reserve accepts a slot offer (`reserve` → `selected`)
+
+**How it works:**
+1. System counts active registrations (selected + reserve)
+2. **Key check:** If `active_registrations ≤ total_slots`, everyone gets in by merit
+3. Otherwise calculates `effective_merit_slots = selected_count - random_slots`
+4. Ranks ALL selected players by merit order:
+   - XP (descending) → WhatsApp status → Streak → Caps → Registration time
+5. For each token user still selected:
+   - If their merit position ≤ effective_merit_slots, token is forgiven
+   - `using_token` set to `false`, `selection_method` changed to `'merit'`
+   - Entry logged to `token_history` with action `'token_forgiven'`
+
+**Important Notes:**
+- Only applies to non-completed games (completed games have already consumed tokens)
+- If reserves backfill dropout slots, merit threshold stays the same
+- Token users must move INTO the merit range for forgiveness to occur
+
+**Example Scenario:**
+```
+Initial: 19 registrations, 18 slots (16 merit + 2 random)
+- Player A uses token (merit position 17) → needs token
+- Player B uses token (merit position 18) → needs token
+
+After 2 dropouts (no reserves backfill):
+- 16 selected remain, 14 merit slots
+- Player A now at merit position 15 → forgiven (qualifies by merit)
+- Player B now at merit position 16 → forgiven (qualifies by merit)
+
+After 2 dropouts (reserves backfill):
+- 18 selected remain, 16 merit slots
+- Player A still at merit position 17 → still needs token
+- Player B still at merit position 18 → still needs token
+
+"Everyone gets in" scenario:
+- 18 registrations for 18 slots (no reserves)
+- Player A uses token (merit position 17)
+- Player B uses token (merit position 18)
+- Since 18 ≤ 18, ALL positions are merit → both forgiven
+```
+
+**Database Implementation:**
+- Function: `recalculate_token_forgiveness(p_game_id UUID)`
+- Trigger: `recalculate_forgiveness_on_status_change` on `game_registrations.status`
+
 ### Token Cooldown Effect
 Using a token has a balancing effect on the next game:
 1. After using a token, the player is pushed to the bottom of the selection list for the next sequential game
