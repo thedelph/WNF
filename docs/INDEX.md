@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-01-07 (Rivalry, Trio Chemistry, Awards System, DaisyUI v5 migration docs)
+**Last Updated:** 2026-01-08 (DaisyUI v5 Framer Motion fixes, Ratings page player card redesign)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 

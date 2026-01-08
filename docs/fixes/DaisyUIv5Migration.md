@@ -1,6 +1,6 @@
 # DaisyUI v5 Migration
 
-**Last Updated:** January 7, 2026
+**Last Updated:** January 8, 2026
 **Migration Date:** January 2026
 **From Version:** 2.51.6
 **To Version:** 5.5.14
@@ -125,6 +125,75 @@ The navbar component works best with semantic section classes rather than generi
 - `navbar-center` - Center section (centered)
 - `navbar-end` - Right section (50% width, right-aligned)
 
+### 7. Framer Motion Animation Conflicts
+
+**Issue:** Framer Motion `scale` animations conflict with DaisyUI v5 components, causing visual overlap and layout issues.
+
+**Root Cause:** When using `whileHover={{ scale: 1.05 }}` on elements inside DaisyUI components (buttons, tabs, menu items), the scaled element overflows its container and overlaps adjacent elements.
+
+```tsx
+/* ❌ WRONG - Causes overlap in DaisyUI v5 */
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  className="btn btn-primary"
+>
+  Click me
+</motion.button>
+
+/* ✅ CORRECT - Use CSS transitions instead */
+<button className="btn btn-primary transition-colors duration-200">
+  Click me
+</button>
+```
+
+**Files fixed:**
+- `src/components/layout/Header.tsx` - Removed scale from nav links
+- `src/components/leaderboards/LeaderboardsTabs.tsx` - Removed scale from tab buttons
+- `src/pages/Ratings.tsx` - Removed scale from action buttons
+
+**Recommendation:** Let DaisyUI handle hover states natively. If animation is needed, use `transition-colors`, `transition-opacity`, or other non-layout-affecting properties.
+
+### 8. Tab Sizing
+
+DaisyUI v5 tabs may appear squashed without explicit size modifiers.
+
+**Fix:** Add `tabs-lg` and padding for proper appearance:
+
+```tsx
+/* Properly sized tabs */
+<div className="tabs tabs-box tabs-lg bg-base-200">
+  <button className="tab px-6">Tab 1</button>
+  <button className="tab px-6 tab-active">Tab 2</button>
+  <button className="tab px-6">Tab 3</button>
+</div>
+```
+
+**Size modifiers available:**
+- `tabs-xs` - Extra small
+- `tabs-sm` - Small
+- `tabs-md` - Medium (default)
+- `tabs-lg` - Large
+
+### 9. Menu Element Types
+
+DaisyUI v5 menus style `<a>` elements consistently, but `<button>` elements may have inconsistent sizing.
+
+```tsx
+/* ✅ CORRECT - Use <a> for consistent menu styling */
+<ul className="menu">
+  <li><a onClick={handleClick}>Action Item</a></li>
+  <li><a href="/page">Link Item</a></li>
+</ul>
+
+/* ❌ May have inconsistent sizing */
+<ul className="menu">
+  <li><button onClick={handleClick}>Button Item</button></li>
+</ul>
+```
+
+**Note:** Using `<a>` with `onClick` handlers works fine for actions that don't navigate.
+
 ## TypeScript Fixes
 
 Several pre-existing TypeScript errors were discovered and fixed during the migration:
@@ -185,15 +254,16 @@ Custom fieldset styles added to `src/index.css` for v5 compatibility:
 After migration, verify these pages render correctly:
 
 - [ ] Login/Register pages
-- [ ] Main dashboard
+- [x] Main dashboard (Header fixed)
 - [ ] Admin portal (games, players, tokens)
 - [ ] Team balancing pages
 - [ ] Profile pages
 - [ ] Game registration
 - [ ] Modals and dropdowns
-- [ ] Forms and inputs
-- [ ] Tables and cards
-- [ ] Mobile responsiveness
+- [x] Forms and inputs (Ratings page fixed)
+- [x] Tables and cards (Ratings page player cards redesigned)
+- [x] Mobile responsiveness
+- [x] Leaderboards page (tabs fixed)
 
 ## Rollback
 
