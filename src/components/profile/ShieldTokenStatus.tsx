@@ -8,7 +8,7 @@ interface ShieldTokenStatusProps {
   gamesTowardNextToken: number;
   gamesUntilNextToken: number;
   shieldActive: boolean;
-  protectedStreakValue: number | null;  // Original streak value when shield was activated
+  protectedStreakValue?: number | null;  // Original streak value when shield was activated
   currentStreak?: number;                // Current natural streak (for decay display)
   isLoading?: boolean;
   playerName?: string;

@@ -13,14 +13,12 @@ interface FilterHeaderProps {
 export const FilterHeader = ({ filters, setFilters }: FilterHeaderProps) => {
   return (
     <div className="flex flex-wrap gap-4 mb-4 p-4 bg-base-200 rounded-lg">
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Date Range</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Date Range</legend>
         <div className="flex gap-2">
           <input
             type="date"
-            className="input input-bordered input-sm"
+            className="input input-sm"
             onChange={(e) => setFilters(prev => ({
               ...prev,
               dateRange: { ...prev.dateRange, start: e.target.value ? new Date(e.target.value) : null }
@@ -28,21 +26,19 @@ export const FilterHeader = ({ filters, setFilters }: FilterHeaderProps) => {
           />
           <input
             type="date"
-            className="input input-bordered input-sm"
+            className="input input-sm"
             onChange={(e) => setFilters(prev => ({
               ...prev,
               dateRange: { ...prev.dateRange, end: e.target.value ? new Date(e.target.value) : null }
             }))}
           />
         </div>
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Team</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Team</legend>
         <select
-          className="select select-bordered select-sm"
+          className="select select-sm"
           value={filters.team}
           onChange={(e) => setFilters(prev => ({ ...prev, team: e.target.value as typeof filters.team }))}
         >
@@ -50,14 +46,12 @@ export const FilterHeader = ({ filters, setFilters }: FilterHeaderProps) => {
           <option value="Blue">Blue</option>
           <option value="Orange">Orange</option>
         </select>
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Outcome</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Outcome</legend>
         <select
-          className="select select-bordered select-sm"
+          className="select select-sm"
           value={filters.outcome}
           onChange={(e) => setFilters(prev => ({ ...prev, outcome: e.target.value as typeof filters.outcome }))}
         >
@@ -67,9 +61,9 @@ export const FilterHeader = ({ filters, setFilters }: FilterHeaderProps) => {
           <option value="Draw">Draw</option>
           <option value="Unknown">Unknown</option>
         </select>
-      </div>
+      </fieldset>
 
-      <div className="form-control self-end">
+      <div className="self-end">
         <button
           className="btn btn-sm"
           onClick={() => setFilters({

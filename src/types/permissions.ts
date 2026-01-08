@@ -20,6 +20,8 @@ export interface Role {
   is_system: boolean;
   created_at: string;
   updated_at: string;
+  // Optional permissions array - populated when fetched with role_permissions join
+  permissions?: Permission[];
 }
 
 export interface RolePermission {

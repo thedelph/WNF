@@ -60,7 +60,12 @@
       "Bash(cat:*)",
       "Bash(wc:*)",
       "Bash(xargs -I {} bash -c 'echo \"\"File: {}\"\"; head -200 \"\"{}\"\"')",
-      "Bash(xargs -I {} bash -c 'echo \"\"===== {} =====\"\"; head -300 {}')"
+      "Bash(xargs -I {} bash -c 'echo \"\"===== {} =====\"\"; head -300 {}')",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:daisyui.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(xargs sed:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

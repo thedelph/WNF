@@ -91,18 +91,16 @@ const AdminPasswordReset: React.FC = () => {
         </p>
       </Tooltip>
       
-      <div className="form-control w-full mb-4">
-        <label className="label">
-          <span className="label-text">User Email</span>
-        </label>
+      <fieldset className="fieldset w-full mb-4">
+        <legend className="fieldset-legend">User Email</legend>
         <input
           type="email"
           placeholder="Enter user email"
-          className="input input-bordered w-full"
+          className="input w-full"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-      </div>
+      </fieldset>
       
       <button
         className={`btn btn-primary w-full ${isLoading ? 'loading' : ''}`}

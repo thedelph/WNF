@@ -3,7 +3,8 @@
 ## Overview
 The team balancing system ensures fair and competitive matches by automatically distributing players across two teams (Blue and Orange) based on multiple performance metrics.
 
-> **Current Algorithm:** Brute-Force Optimal (v12.0, January 2026)
+> **Current Algorithm:** Brute-Force Optimal (v13.0, January 2026)
+> **v13.0 Enhancement:** Added Rivalry and Trio Chemistry scoring
 >
 > For complete technical documentation, see: [BruteForceOptimalAlgorithm.md](../algorithms/BruteForceOptimalAlgorithm.md)
 
@@ -57,10 +58,19 @@ The current algorithm evaluates **ALL valid team combinations** and selects the 
 | Component | Weight |
 |-----------|--------|
 | Core Ratings (Attack, Defense, Game IQ, GK) | 40% |
-| Chemistry (pair chemistry scores) | 20% |
+| Chemistry (combined) | 20% |
 | Performance (recent win rate, goal diff) | 20% |
 | Position Balance (coverage, ST distribution) | 10% |
 | Attributes (pace, shooting, etc.) | 10% |
+
+**Chemistry Sub-Components (v13.0):**
+| Sub-Component | Of Chemistry | Of Total | Purpose |
+|---------------|--------------|----------|---------|
+| Pairwise Chemistry | 50% | 10% | Same-team synergy |
+| Rivalry | 30% | 6% | Cross-team matchups |
+| Trio Chemistry | 20% | 4% | 3-player synergy |
+
+See: [Player Chemistry](PlayerChemistry.md), [Rivalry System](RivalrySystem.md), [Trio Chemistry](TrioChemistry.md)
 
 **Spread Constraint:**
 - Players are sorted by overall rating into thirds (top/middle/bottom)
@@ -285,30 +295,38 @@ Individual Position Gaps:
   ST: Blue 1 vs Orange 1 (gap: 0) ✅
 ```
 
-## Chemistry Balance (Added December 2025)
+## Chemistry Balance (Enhanced January 2026 - v13.0)
 
 ### Overview
-The algorithm now considers player chemistry to ensure teams have similar levels of teammate familiarity and synergy.
+The algorithm considers three dimensions of player relationships:
+
+1. **Pairwise Chemistry** - Same-team synergy (how players perform together)
+2. **Rivalry** - Cross-team matchups (how players perform against each other)
+3. **Trio Chemistry** - 3-player synergy effects
 
 ### How It Works
-1. **Data Fetching**: Chemistry data for all player pairs is fetched before balancing
-2. **Team Chemistry Score**: Sum of all pairwise chemistry scores within each team
-3. **Balance Objective**: Minimizes the difference between team chemistry totals (10% weight)
-4. **Partnership Protection**: Swaps that break high-chemistry pairs (score > 50) incur a penalty
+1. **Data Fetching**: All chemistry, rivalry, and trio data fetched in parallel
+2. **Pairwise Score**: Balances same-team synergies between teams
+3. **Rivalry Score**: Balances cross-team matchup advantages
+4. **Trio Score**: Balances emergent 3-player effects
 
 ### Configuration
-| Setting | Value |
-|---------|-------|
-| Default score (no history) | 35 |
-| High chemistry threshold | 50+ |
-| Minimum games | 10 |
-| Objective weight | 10% |
+| Setting | Pairwise | Rivalry | Trio |
+|---------|----------|---------|------|
+| Minimum games | 10 | 5 | 3 |
+| Default score | 50 | 50 | 50 |
+| Internal weight | 50% | 30% | 20% |
+| Total weight | 10% | 6% | 4% |
 
 ### Graceful Degradation
-- Pairs with <10 games: Use neutral default score
-- Chemistry fetch fails: Algorithm proceeds without chemistry consideration
+- Missing data: Use neutral score (50)
+- Data load fails: Algorithm proceeds without that component
+- All components optional: Algorithm remains functional
 
-**See:** [Player Chemistry](PlayerChemistry.md) for full chemistry system documentation.
+**See:**
+- [Player Chemistry](PlayerChemistry.md) - Full chemistry system
+- [Rivalry System](RivalrySystem.md) - Cross-team matchups
+- [Trio Chemistry](TrioChemistry.md) - 3-player synergy
 
 ## Future Enhancements
 - Historical performance trends

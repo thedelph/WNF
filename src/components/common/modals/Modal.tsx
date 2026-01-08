@@ -8,6 +8,8 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   maxWidth?: string;
+  /** Size preset for the modal (maps to Tailwind max-width classes) */
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
 }
 
 /**
@@ -18,8 +20,11 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   children,
-  maxWidth = '4xl'
+  maxWidth,
+  size
 }) => {
+  // Use size prop to determine maxWidth if provided, otherwise fall back to maxWidth prop
+  const effectiveMaxWidth = size || maxWidth || '4xl';
   const handleEscapeKey = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {
       console.log('Escape key pressed, calling onClose');
@@ -47,7 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className={`bg-base-100 rounded-lg shadow-xl p-6 w-full max-w-${maxWidth} max-h-[90vh] overflow-y-auto`}
+            className={`bg-base-100 rounded-lg shadow-xl p-6 w-full max-w-${effectiveMaxWidth} max-h-[90vh] overflow-y-auto`}
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">{title}</h2>

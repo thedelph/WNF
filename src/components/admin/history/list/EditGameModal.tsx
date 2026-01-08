@@ -398,7 +398,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
           </h2>
           
           {/* Tab Navigation */}
-          <div className="tabs tabs-boxed mt-4">
+          <div className="tabs tabs-box mt-4">
             <button 
               className={`tab ${activeTab === 'teams' ? 'tab-active' : ''}`}
               onClick={() => setActiveTab('teams')}
@@ -424,18 +424,16 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
           {/* Teams Tab */}
           {activeTab === 'teams' && (
             <div className="space-y-6">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Game Date</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Game Date</legend>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="input input-bordered"
+                  className="input"
                   required
                 />
-              </div>
+              </fieldset>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Blue Team */}
@@ -516,45 +514,39 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
           {/* Payment & Scores Tab */}
           {activeTab === 'payment' && (
             <div className="space-y-6">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Payment Link (Monzo)</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Payment Link (Monzo)</legend>
                 <input
                   type="url"
                   value={paymentLink}
                   onChange={(e) => setPaymentLink(e.target.value)}
-                  className="input input-bordered w-full"
+                  className="input w-full"
                   placeholder="https://monzo.me/..."
                 />
-              </div>
+              </fieldset>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Blue Score</span>
-                  </label>
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Blue Score</legend>
                   <input
                     type="number"
                     value={blueScore}
                     onChange={(e) => setBlueScore(e.target.value)}
-                    className="input input-bordered"
+                    className="input"
                     min="0"
                   />
-                </div>
+                </fieldset>
 
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Orange Score</span>
-                  </label>
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Orange Score</legend>
                   <input
                     type="number"
                     value={orangeScore}
                     onChange={(e) => setOrangeScore(e.target.value)}
-                    className="input input-bordered"
+                    className="input"
                     min="0"
                   />
-                </div>
+                </fieldset>
               </div>
 
               {(blueScore !== '' || orangeScore !== '') && !isOutcomeValid() && (
@@ -563,12 +555,10 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
                 </div>
               )}
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Game Outcome</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Game Outcome</legend>
                 <select
-                  className="select select-bordered w-full"
+                  className="select w-full"
                   value={outcome || ''}
                   onChange={(e) => setOutcome(e.target.value as GameOutcome)}
                 >
@@ -577,7 +567,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
                   <option value="orange_win">Orange Team Won</option>
                   <option value="draw">Draw</option>
                 </select>
-              </div>
+              </fieldset>
 
               {/* Player Payment Status Summary */}
               <div className="bg-base-200 p-4 rounded-lg">

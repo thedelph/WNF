@@ -112,7 +112,7 @@ export default function MergeTestUserModal({
         </p>
 
         <select
-          className="select select-bordered w-full mb-4"
+          className="select w-full mb-4"
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(e.target.value)}
         >

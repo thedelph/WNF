@@ -29,6 +29,9 @@ import { Player } from '../types/player';
 import { useWeatherCard } from '../hooks/useWeatherCard';
 import { utcToUkTime } from '../utils/dateUtils';
 
+// Define registration status type to match expected values
+type RegistrationStatus = 'registered' | 'selected' | 'reserve' | 'dropped_out' | 'shield_protected';
+
 // Define types for player data state to fix TypeScript errors
 interface PlayerDataState {
   registrations: Array<{
@@ -36,7 +39,7 @@ interface PlayerDataState {
       registrationStreak?: number;
       registrationStreakApplies?: boolean;
     };
-    status: string;
+    status: RegistrationStatus;
     using_token?: boolean;
     created_at: string;
   }>;
@@ -226,14 +229,14 @@ const Game = () => {
           player: {
             ...reg.player!,
             // Safely access registration streak data with null checks and defaults
-            registrationStreak: reg.player?.friendly_name && regStreakMap[reg.player.friendly_name] 
-              ? regStreakMap[reg.player.friendly_name].registrationStreak 
+            registrationStreak: reg.player?.friendly_name && regStreakMap[reg.player.friendly_name]
+              ? regStreakMap[reg.player.friendly_name].registrationStreak
               : 0,
-            registrationStreakApplies: reg.player?.friendly_name && regStreakMap[reg.player.friendly_name] 
-              ? regStreakMap[reg.player.friendly_name].registrationStreakApplies 
+            registrationStreakApplies: reg.player?.friendly_name && regStreakMap[reg.player.friendly_name]
+              ? regStreakMap[reg.player.friendly_name].registrationStreakApplies
               : false
           },
-          status: reg.status,
+          status: (reg.status || 'registered') as RegistrationStatus,
           using_token: reg.using_token,
           created_at: reg.created_at || new Date().toISOString()
         })),
@@ -540,10 +543,8 @@ const Game = () => {
 
       {/* Show PlayerSelectionResults after registration closes but before team announcement */}
       {upcomingGame.status === 'players_announced' && !isTeamAnnouncementTime && (
-        <PlayerSelectionResults 
-          gameId={upcomingGame.id} 
-          selectedPlayers={playerData.selectedPlayers}
-          reservePlayers={playerData.reservePlayers}
+        <PlayerSelectionResults
+          gameId={upcomingGame.id}
         />
       )}
 
@@ -552,9 +553,6 @@ const Game = () => {
         <TeamSelectionResults
           key={`team-selection-${playerData.selectedPlayers.length}`}
           gameId={upcomingGame.id}
-          blueTeam={blueTeam}
-          orangeTeam={orangeTeam}
-          reservePlayers={playerData.reservePlayers}
         />
       )}
     </div>

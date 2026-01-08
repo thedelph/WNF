@@ -59,19 +59,19 @@ const TeamListView: React.FC<TeamListViewProps> = ({ title, players, color }) =>
   );
 };
 
-const getPlayerWithRank = (player: ExtendedPlayerData) => {
-  return {
-    ...player,
-    rank: playerStats[player.id]?.rank
-  };
-};
-
 export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ gameId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<GameSelection | null>(null);
-  const [view, setView] = useState<'cards' | 'list'>('cards');
+  const [view, setView] = useState<'card' | 'list'>('card');
   const [playerStats, setPlayerStats] = useState<Record<string, any>>({});
+
+  const getPlayerWithRank = (player: ExtendedPlayerData) => {
+    return {
+      ...player,
+      rank: playerStats[player.id]?.rank
+    };
+  };
   const { xpValues: globalXpValues, loading: globalXpLoading, error: globalXpError } = useGlobalXP();
 
   useEffect(() => {

@@ -38,30 +38,30 @@ export const GameTimingDetails: React.FC<GameTimingDetailsProps> = ({
       {/* Only show registration fields for upcoming games */}
       {gamePhase === GAME_STATUSES.UPCOMING && (
         <>
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Registration Window Start</span>
-              <button 
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend flex items-center justify-between w-full">
+              <span>Registration Window Start</span>
+              <button
                 type="button"
                 className="btn btn-xs"
                 onClick={() => onRegistrationStartChange(new Date().toISOString().slice(0, 16))}
               >
                 Set to Now
               </button>
-            </label>
+            </legend>
             <input
               type="datetime-local"
               value={registrationStart}
               onChange={(e) => onRegistrationStartChange(e.target.value)}
-              className="input input-bordered"
+              className="input"
               required
             />
-          </div>
+          </fieldset>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Registration Window End</span>
-              <button 
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend flex items-center justify-between w-full">
+              <span>Registration Window End</span>
+              <button
                 type="button"
                 className="btn btn-xs"
                 onClick={() => {
@@ -72,22 +72,22 @@ export const GameTimingDetails: React.FC<GameTimingDetailsProps> = ({
               >
                 1m from now
               </button>
-            </label>
+            </legend>
             <input
               type="datetime-local"
               value={registrationEnd}
               onChange={(e) => onRegistrationEndChange(e.target.value)}
-              className="input input-bordered"
+              className="input"
               required
             />
-          </div>
+          </fieldset>
         </>
       )}
 
       {/* Show team announcement time for both upcoming and player selection phases */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Team Announcement Time</span>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend flex items-center justify-between w-full">
+          <span>Team Announcement Time</span>
           {gamePhase === GAME_STATUSES.UPCOMING && (
             <button
               type="button"
@@ -115,15 +115,15 @@ export const GameTimingDetails: React.FC<GameTimingDetailsProps> = ({
               4H Before Game
             </button>
           )}
-        </label>
+        </legend>
         <input
           type="datetime-local"
           value={teamAnnouncementTime}
           onChange={(e) => onTeamAnnouncementTimeChange(e.target.value)}
-          className="input input-bordered"
+          className="input"
           required
         />
-      </div>
+      </fieldset>
     </>
   );
 };

@@ -244,23 +244,19 @@ const RoleManagement: React.FC = () => {
           <div className="modal-box max-w-2xl">
             <h3 className="font-bold text-lg mb-4">Create New Role</h3>
             
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">Role Name</span>
-              </label>
+            <fieldset className="fieldset mb-4">
+              <legend className="fieldset-legend">Role Name</legend>
               <input
                 type="text"
-                className="input input-bordered"
+                className="input"
                 value={newRoleName}
                 onChange={(e) => setNewRoleName(e.target.value)}
                 placeholder="e.g., Finance Manager"
               />
-            </div>
+            </fieldset>
 
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">Description (optional)</span>
-              </label>
+            <fieldset className="fieldset mb-4">
+              <legend className="fieldset-legend">Description (optional)</legend>
               <textarea
                 className="textarea textarea-bordered"
                 value={newRoleDescription}
@@ -268,7 +264,7 @@ const RoleManagement: React.FC = () => {
                 placeholder="Describe this role's responsibilities"
                 rows={3}
               />
-            </div>
+            </fieldset>
 
             <div className="mb-4">
               <h4 className="font-semibold mb-2">Permissions</h4>

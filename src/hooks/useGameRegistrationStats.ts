@@ -9,8 +9,8 @@ interface PlayerStats {
   wins: number;
   draws: number;
   losses: number;
-  total_games: number;
-  win_rate: number;
+  totalGames: number;
+  winRate: number;
   rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired';
   caps: number;
   activeBonuses: number;
@@ -148,7 +148,7 @@ export const useGameRegistrationStats = (
           );
 
           if (!tokenCooldownError && tokenCooldownData) {
-            const cooldownIds = new Set(tokenCooldownData.map((u: { player_id: string }) => u.player_id));
+            const cooldownIds = new Set<string>(tokenCooldownData.map((u: { player_id: string }) => u.player_id));
             setTokenCooldownPlayerIds(cooldownIds);
           }
 
@@ -286,8 +286,8 @@ export const useGameRegistrationStats = (
         }, {} as Record<string, Array<'selected' | 'reserve' | 'dropped_out' | null>>) || {};
 
         // Count total games for backwards compatibility (only count 'selected')
-        const recentGamesMap = Object.entries(recentGamesParticipationMap).reduce((acc: any, [playerId, participation]) => {
-          acc[playerId] = participation.filter(status => status === 'selected').length;
+        const recentGamesMap = Object.entries(recentGamesParticipationMap).reduce((acc: Record<string, number>, [playerId, participation]) => {
+          acc[playerId] = (participation as Array<'selected' | 'reserve' | 'dropped_out' | null>).filter(status => status === 'selected').length;
           return acc;
         }, {} as Record<string, number>);
 

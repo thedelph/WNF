@@ -106,7 +106,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({ onPresetSelect }
         <span className="label-text">Select Preset</span>
       </label>
       <select
-        className="select select-bordered w-full"
+        className="select w-full"
         onChange={(e) => handlePresetSelect(e.target.value)}
         defaultValue=""
       >

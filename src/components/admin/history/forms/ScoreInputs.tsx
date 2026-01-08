@@ -15,33 +15,29 @@ const ScoreInputs: React.FC<Props> = ({
 }) => {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Blue Team Score</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Blue Team Score</legend>
         <input
           type="number"
           value={blueScore}
           onChange={(e) => onBlueScoreChange(e.target.value)}
-          className="input input-bordered"
+          className="input"
           min="0"
           placeholder="Optional"
         />
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Orange Team Score</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Orange Team Score</legend>
         <input
           type="number"
           value={orangeScore}
           onChange={(e) => onOrangeScoreChange(e.target.value)}
-          className="input input-bordered"
+          className="input"
           min="0"
           placeholder="Optional"
         />
-      </div>
+      </fieldset>
     </div>
   )
 }

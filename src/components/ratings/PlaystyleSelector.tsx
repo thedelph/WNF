@@ -69,20 +69,20 @@ export default function PlaystyleSelector({
     : 'None';
 
   return (
-    <div className="form-control">
-      <label className="label">
-        <span className="label-text font-medium">Player Attributes</span>
+    <fieldset className="fieldset">
+      <legend className="fieldset-legend font-medium flex items-center justify-between w-full">
+        <span>Player Attributes</span>
         {checkedAttributes.length > 0 && (
           <button
             type="button"
-            className="label-text-alt text-xs opacity-70 hover:opacity-100 cursor-pointer underline"
+            className="text-xs opacity-70 hover:opacity-100 cursor-pointer underline font-normal"
             onClick={clearSelection}
             disabled={disabled}
           >
             Clear all
           </button>
         )}
-      </label>
+      </legend>
       
       <div className="mb-3 p-4 bg-base-200 rounded-lg">
         <div className="text-sm font-medium mb-3">Select attributes this player has:</div>
@@ -152,6 +152,6 @@ export default function PlaystyleSelector({
           </div>
         </div>
       )}
-    </div>
+    </fieldset>
   );
 }

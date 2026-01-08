@@ -151,7 +151,9 @@ export interface PositionBalanceComparison {
  * Extends the base player type with position information
  */
 export interface PlayerWithPositions {
-  id: string;
+  /** Player identifier - supports both 'id' and 'player_id' for compatibility */
+  id?: string;
+  player_id?: string;
   friendly_name: string;
 
   /** Position consensus data for this player */

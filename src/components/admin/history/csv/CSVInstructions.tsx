@@ -42,7 +42,7 @@ const CSVInstructions: React.FC<Props> = ({ onFileUpload }) => {
             type="file"
             accept=".csv"
             onChange={onFileUpload}
-            className="file-input file-input-bordered file-input-sm w-full max-w-xs"
+            className="file-input file-input-sm w-full max-w-xs"
           />
         </div>
       </div>

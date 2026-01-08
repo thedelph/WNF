@@ -23,16 +23,16 @@ export const TeamPlayerList: React.FC<Props> = ({
   onSelectionTypeChange
 }) => {
   return (
-    <div className="form-control">
-      <label className="label">
-        <span className="label-text">{label}</span>
+    <fieldset className="fieldset">
+      <legend className="fieldset-legend flex items-center gap-2">
+        {label}
         <Tooltip content="Select players for this team. Mark players as 'Random Pick' if they were selected through random selection." side="right">
-          <span className="label-text-alt cursor-help">ℹ️</span>
+          <span className="cursor-help">ℹ️</span>
         </Tooltip>
-      </label>
+      </legend>
       <div className="flex flex-col gap-2">
         <select
-          className="select select-bordered w-full"
+          className="select w-full"
           onChange={(e) => {
             const player = players.find(p => p.id === e.target.value)
             if (player) {
@@ -43,7 +43,7 @@ export const TeamPlayerList: React.FC<Props> = ({
         >
           <option value="">Add player...</option>
           {players
-            .filter(p => !selectedPlayers.find(sp => sp.id === p.id) && 
+            .filter(p => !selectedPlayers.find(sp => sp.id === p.id) &&
                         !otherTeamPlayers.find(op => op.id === p.id))
             .map(player => (
               <option key={player.id} value={player.id}>
@@ -62,7 +62,7 @@ export const TeamPlayerList: React.FC<Props> = ({
             >
               <span className="flex-1">{player.name}</span>
               <select
-                className="select select-bordered select-sm"
+                className="select select-sm"
                 value={player.selectionType || 'merit'}
                 onChange={(e) => onSelectionTypeChange(player.id, e.target.value as 'merit' | 'random')}
               >
@@ -80,6 +80,6 @@ export const TeamPlayerList: React.FC<Props> = ({
           ))}
         </div>
       </div>
-    </div>
+    </fieldset>
   )
 }

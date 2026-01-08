@@ -260,7 +260,7 @@ const FeatureFlagManagement: React.FC = () => {
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1">
-          <div className="form-control">
+          <fieldset className="fieldset">
             <div className="input-group">
               <span>
                 <FaSearch />
@@ -268,12 +268,12 @@ const FeatureFlagManagement: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search feature flags..."
-                className="input input-bordered flex-1"
+                className="input flex-1"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </div>
+          </fieldset>
         </div>
         <button
           className="btn btn-primary gap-2"
@@ -392,40 +392,32 @@ const FeatureFlagManagement: React.FC = () => {
         size="lg"
       >
         <div className="space-y-4">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Internal Name</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Internal Name</legend>
             <input
               type="text"
               placeholder="e.g., playstyle_ratings"
-              className="input input-bordered"
+              className="input"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               disabled={!isNewFlag}
             />
-            <label className="label">
-              <span className="label-text-alt">Lowercase, underscores only</span>
-            </label>
-          </div>
+            <p className="fieldset-label">Lowercase, underscores only</p>
+          </fieldset>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Display Name</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Display Name</legend>
             <input
               type="text"
               placeholder="e.g., Playstyle Rating System"
-              className="input input-bordered"
+              className="input"
               value={formData.display_name}
               onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
             />
-          </div>
+          </fieldset>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Description</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Description</legend>
             <textarea
               placeholder="Describe what this feature does..."
               className="textarea textarea-bordered"
@@ -433,12 +425,10 @@ const FeatureFlagManagement: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
             />
-          </div>
+          </fieldset>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Enable For Groups</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Enable For Groups</legend>
             <div className="flex flex-wrap gap-2">
               {AVAILABLE_GROUPS.map((group) => (
                 <button
@@ -454,14 +444,11 @@ const FeatureFlagManagement: React.FC = () => {
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           {formData.enabled_for.includes('production') && (
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Rollout Percentage</span>
-                <span className="label-text-alt">{formData.rollout_percentage}%</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Rollout Percentage</legend>
               <input
                 type="range"
                 min="0"
@@ -478,24 +465,23 @@ const FeatureFlagManagement: React.FC = () => {
                 <span>75%</span>
                 <span>100%</span>
               </div>
-            </div>
+              <p className="fieldset-label">{formData.rollout_percentage}%</p>
+            </fieldset>
           )}
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Target Specific Users</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Target Specific Users</legend>
             <input
               type="text"
               placeholder="Search users..."
-              className="input input-bordered input-sm mb-2"
+              className="input input-sm mb-2"
               value={userSearchTerm}
               onChange={(e) => setUserSearchTerm(e.target.value)}
             />
             <div className="max-h-48 overflow-y-auto border border-base-300 rounded-lg p-2">
               {filteredPlayers.map((player) => (
-                <label key={player.id} className="label cursor-pointer">
-                  <span className="label-text">{player.friendly_name}</span>
+                <label key={player.id} className="flex items-center justify-between cursor-pointer py-1">
+                  <span>{player.friendly_name}</span>
                   <input
                     type="checkbox"
                     className="checkbox checkbox-sm"
@@ -505,11 +491,11 @@ const FeatureFlagManagement: React.FC = () => {
                 </label>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          <div className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text">Active</span>
+          <fieldset className="fieldset">
+            <label className="flex items-center justify-between cursor-pointer">
+              <legend className="fieldset-legend">Active</legend>
               <input
                 type="checkbox"
                 className="toggle toggle-primary"
@@ -517,7 +503,7 @@ const FeatureFlagManagement: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
               />
             </label>
-          </div>
+          </fieldset>
 
           <div className="flex justify-end gap-2">
             <button className="btn" onClick={() => setIsModalOpen(false)}>

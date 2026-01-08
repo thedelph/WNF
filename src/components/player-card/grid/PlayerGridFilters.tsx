@@ -74,7 +74,7 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
             placeholder="Search players..."
             value={filterBy}
             onChange={(e) => setFilterBy(e.target.value)}
-            className="input input-bordered w-full"
+            className="input w-full"
           />
         </div>
 
@@ -139,14 +139,14 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
                         placeholder="Min"
                         value={filters.minCaps}
                         onChange={(e) => setFilters({ ...filters, minCaps: e.target.value })}
-                        className="input input-bordered w-full"
+                        className="input w-full"
                       />
                       <input
                         type="number"
                         placeholder="Max"
                         value={filters.maxCaps}
                         onChange={(e) => setFilters({ ...filters, maxCaps: e.target.value })}
-                        className="input input-bordered w-full"
+                        className="input w-full"
                       />
                     </div>
                   </div>
@@ -160,14 +160,14 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
                         placeholder="Min"
                         value={filters.minWinRate}
                         onChange={(e) => setFilters({ ...filters, minWinRate: e.target.value })}
-                        className="input input-bordered w-full"
+                        className="input w-full"
                       />
                       <input
                         type="number"
                         placeholder="Max"
                         value={filters.maxWinRate}
                         onChange={(e) => setFilters({ ...filters, maxWinRate: e.target.value })}
-                        className="input input-bordered w-full"
+                        className="input w-full"
                       />
                     </div>
                   </div>
@@ -181,14 +181,14 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
                         placeholder="Min"
                         value={filters.minStreak}
                         onChange={(e) => setFilters({ ...filters, minStreak: e.target.value })}
-                        className="input input-bordered w-full"
+                        className="input w-full"
                       />
                       <input
                         type="number"
                         placeholder="Max"
                         value={filters.maxStreak}
                         onChange={(e) => setFilters({ ...filters, maxStreak: e.target.value })}
-                        className="input input-bordered w-full"
+                        className="input w-full"
                       />
                     </div>
                   </div>
@@ -199,7 +199,7 @@ export const PlayerGridFilters: React.FC<FiltersProps> = ({
                     <select
                       value={filters.rarity}
                       onChange={(e) => setFilters({ ...filters, rarity: e.target.value })}
-                      className="select select-bordered w-full"
+                      className="select w-full"
                     >
                       <option value="">All</option>
                       <option value="Academy">Academy</option>

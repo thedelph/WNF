@@ -97,7 +97,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ roles, onSubmit, onCancel }) => {
           <span className="label-text">Select Player</span>
         </label>
         <select
-          className="select select-bordered w-full"
+          className="select w-full"
           value={selectedPlayer}
           onChange={(e) => setSelectedPlayer(e.target.value)}
         >
@@ -142,7 +142,7 @@ const AdminForm: React.FC<AdminFormProps> = ({ roles, onSubmit, onCancel }) => {
             <span className="label-text">Select Role</span>
           </label>
           <select
-            className="select select-bordered w-full"
+            className="select w-full"
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
           >

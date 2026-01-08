@@ -35,35 +35,35 @@ export const GameMessagesParser: React.FC<Props> = ({ onParsed, onError }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Game Message</span>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend flex items-center gap-2">
+          Game Message
           <Tooltip content="Paste the WhatsApp game announcement message here" side="right">
-            <span className="label-text-alt cursor-help">ℹ️</span>
+            <span className="cursor-help">ℹ️</span>
           </Tooltip>
-        </label>
+        </legend>
         <textarea
           className="textarea textarea-bordered h-48"
           value={gameMessage}
           onChange={(e) => setGameMessage(e.target.value)}
           placeholder="Paste game message here..."
         />
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Teams Message</span>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend flex items-center gap-2">
+          Teams Message
           <Tooltip content="Paste the WhatsApp teams announcement message here" side="right">
-            <span className="label-text-alt cursor-help">ℹ️</span>
+            <span className="cursor-help">ℹ️</span>
           </Tooltip>
-        </label>
+        </legend>
         <textarea
           className="textarea textarea-bordered h-48"
           value={teamsMessage}
           onChange={(e) => setTeamsMessage(e.target.value)}
           placeholder="Paste teams message here..."
         />
-      </div>
+      </fieldset>
 
       <div className="col-span-2">
         <button 

@@ -174,7 +174,7 @@ const RatingsView: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search players..."
-                className="input input-bordered input-sm w-full"
+                className="input input-sm w-full"
                 value={comparisonSearchTerm}
                 onChange={(e) => setComparisonSearchTerm(e.target.value)}
               />

@@ -121,20 +121,18 @@ export default function PositionSelector({
     const currentValue = selectedPositions[rank] || '';
 
     return (
-      <div key={rank} className="form-control">
+      <fieldset key={rank} className="fieldset">
         {/* Rank label with badge */}
-        <label className="label">
-          <span className="label-text flex items-center gap-2">
-            <span className={`px-2 py-0.5 rounded text-xs font-bold ${style.badge}`}>
-              {style.emoji} {style.label}
-            </span>
-            <span className="text-xs opacity-70">({style.points} points)</span>
+        <legend className="fieldset-legend flex items-center gap-2">
+          <span className={`px-2 py-0.5 rounded text-xs font-bold ${style.badge}`}>
+            {style.emoji} {style.label}
           </span>
-        </label>
+          <span className="text-xs opacity-70">({style.points} points)</span>
+        </legend>
 
         {/* Dropdown selector */}
         <select
-          className={`select select-bordered w-full ${
+          className={`select w-full ${
             currentValue ? 'select-primary' : ''
           }`}
           value={currentValue}
@@ -194,25 +192,25 @@ export default function PositionSelector({
               ))}
           </optgroup>
         </select>
-      </div>
+      </fieldset>
     );
   };
 
   return (
-    <div className="form-control">
+    <fieldset className="fieldset">
       {/* Header */}
-      <label className="label">
-        <span className="label-text font-medium">Position Preferences</span>
+      <legend className="fieldset-legend font-medium flex items-center justify-between w-full">
+        <span>Position Preferences</span>
         {selectedCount > 0 && !disabled && (
           <button
             type="button"
             onClick={clearAll}
-            className="label-text-alt underline hover:text-primary transition-colors"
+            className="text-xs underline hover:text-primary transition-colors font-normal"
           >
             Clear all ({selectedCount})
           </button>
         )}
-      </label>
+      </legend>
 
       {/* Main selection area */}
       <div className="p-4 bg-base-200 rounded-lg space-y-4">
@@ -259,6 +257,6 @@ export default function PositionSelector({
           )}
         </div>
       )}
-    </div>
+    </fieldset>
   );
 }

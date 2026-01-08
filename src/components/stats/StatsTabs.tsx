@@ -48,7 +48,7 @@ export const StatsTabs = ({ children, tabs }: StatsTabsProps) => {
     <div className="w-full">
       {/* Tab navigation */}
       <div className="flex justify-center mb-8">
-        <div className="tabs tabs-boxed bg-base-200 p-1">
+        <div className="tabs tabs-box bg-base-200 p-1">
           {tabs.map((tab, index) => (
             <motion.button
               key={tab.id}

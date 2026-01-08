@@ -30,6 +30,8 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   usingToken?: boolean,
   playstyleRatingsCount?: number,
   shieldActive?: boolean,
+  protectedStreakValue?: number | null,
+  /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null,
   recentGames?: number,
   gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>, // Array of 40 elements showing participation status in each of the last 40 games
@@ -66,6 +68,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   playstyleCategory,
   playstyleRatingsCount,
   shieldActive = false,
+  protectedStreakValue = null,
   frozenStreakValue = null,
   recentGames = 0,
   gameParticipation = new Array(40).fill(null),
@@ -334,7 +337,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         registrationStreakBonusApplies={registrationStreakBonusApplies}
         status={status}
         shieldActive={shieldActive}
-        frozenStreakValue={frozenStreakValue}
+        protectedStreakValue={protectedStreakValue ?? frozenStreakValue}
       />
 
       <div className="mt-auto">

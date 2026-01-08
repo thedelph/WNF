@@ -278,15 +278,26 @@ export const calculateBestSwaps = (
             
             // Calculate game IQ differences
             const originalGameIqDiff = Math.abs(
-                blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / blueTeam.length - 
+                blueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / blueTeam.length -
                 orangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / orangeTeam.length
             );
-            
+
             const newGameIqDiff = Math.abs(
-                newBlueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / newBlueTeam.length - 
+                newBlueTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / newBlueTeam.length -
                 newOrangeTeam.reduce((sum, p) => sum + (p.game_iq_rating ?? 0), 0) / newOrangeTeam.length
             );
-            
+
+            // Calculate GK rating differences
+            const originalGkDiff = Math.abs(
+                blueTeam.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / blueTeam.length -
+                orangeTeam.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / orangeTeam.length
+            );
+
+            const newGkDiff = Math.abs(
+                newBlueTeam.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / newBlueTeam.length -
+                newOrangeTeam.reduce((sum, p) => sum + (p.gk_rating ?? 0), 0) / newOrangeTeam.length
+            );
+
             // Calculate win rate differences if data available
             const bluePlayersWithWinRate = blueTeam.filter(p => p.win_rate !== null && p.win_rate !== undefined && (p.total_games || 0) >= 10);
             const orangePlayersWithWinRate = orangeTeam.filter(p => p.win_rate !== null && p.win_rate !== undefined && (p.total_games || 0) >= 10);
@@ -339,6 +350,7 @@ export const calculateBestSwaps = (
             const attackDiffImprovement = originalAttackDiff - newAttackDiff;
             const defenseDiffImprovement = originalDefenseDiff - newDefenseDiff;
             const gameIqDiffImprovement = originalGameIqDiff - newGameIqDiff;
+            const gkDiffImprovement = originalGkDiff - newGkDiff;
             
             // Calculate weighted improvement based on focus metric or default weighting
             let totalDiffImprovement;
@@ -400,26 +412,28 @@ export const calculateBestSwaps = (
             // Only include if it's an improvement
             if (totalDiffImprovement > 0) {
                 // Calculate which metric has the biggest improvement
-                const improvements = [
+                const improvements: { metric: 'attack' | 'defense' | 'gameIq' | 'gk' | 'winRate' | 'goalDifferential'; value: number }[] = [
                     { metric: 'attack', value: attackDiffImprovement },
                     { metric: 'defense', value: defenseDiffImprovement },
                     { metric: 'gameIq', value: gameIqDiffImprovement },
+                    { metric: 'gk', value: gkDiffImprovement },
                     { metric: 'winRate', value: winRateDiffImprovement },
                     { metric: 'goalDifferential', value: goalDiffImprovement }
                 ];
-                
+
                 // Sort by improvement value (descending)
                 improvements.sort((a, b) => b.value - a.value);
-                
+
                 // The metric with the biggest improvement
                 const primaryImpactMetric = improvements[0].metric;
-                
+
                 swapSuggestions.push({
                     bluePlayer,
                     orangePlayer,
                     attackDiffImprovement,
                     defenseDiffImprovement,
                     gameIqDiffImprovement,
+                    gkDiffImprovement,
                     winRateDiffImprovement,
                     goalDiffImprovement,
                     totalDiffImprovement,

@@ -133,7 +133,8 @@ export default function ProfileContent({
             gamesTowardNextToken={shieldStatus.gamesTowardNextToken}
             gamesUntilNextToken={shieldStatus.gamesUntilNextToken}
             shieldActive={shieldStatus.shieldActive}
-            frozenStreakValue={shieldStatus.frozenStreakValue}
+            protectedStreakValue={shieldStatus.protectedStreakValue}
+            currentStreak={shieldStatus.currentStreak}
             isLoading={shieldLoading}
           />
         ) : (
@@ -142,7 +143,7 @@ export default function ProfileContent({
             gamesTowardNextToken={0}
             gamesUntilNextToken={10}
             shieldActive={false}
-            frozenStreakValue={null}
+            protectedStreakValue={null}
             isLoading={shieldLoading}
           />
         )}

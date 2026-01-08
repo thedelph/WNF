@@ -227,10 +227,9 @@ export default function HistoricalGames() {
             <div className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Games Needing Completion</h2>
               {pendingGames.map(game => (
-                <GameCompletionForm 
-                  key={game.id} 
+                <GameCompletionForm
+                  key={game.id}
                   game={game}
-                  date={game.date}
                   onComplete={handleGameComplete}
                 />
               ))}
@@ -245,7 +244,7 @@ export default function HistoricalGames() {
 
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-2xl font-semibold mb-4">Import Historical Games</h2>
-              <CSVImport onGamesImported={fetchGames} />
+              <CSVImport onImportComplete={fetchGames} />
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">

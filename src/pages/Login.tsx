@@ -128,9 +128,9 @@ const Login: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="px-8 py-6 mt-4 text-left bg-white shadow-lg rounded-lg max-w-md w-full">
         {/* Session Recovery Banner */}
-        {auth && (
+        {auth && auth.sessionHealth && (
           <SessionRecoveryBanner
-            sessionHealth={auth.sessionHealth || 'healthy'}
+            sessionHealth={auth.sessionHealth}
             isRecovering={auth.isRecovering || false}
             onRecoverSession={auth.recoverSession || (() => Promise.resolve(false))}
             error={auth.error}

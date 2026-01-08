@@ -18,20 +18,18 @@ const NumberInput: React.FC<NumberInputProps> = ({
   required = false
 }) => {
   return (
-    <div className="form-control">
-      <label className="label">
-        <span className="label-text">{label}</span>
-      </label>
+    <fieldset className="fieldset">
+      <legend className="fieldset-legend">{label}</legend>
       <input
         type="number"
-        className="input input-bordered w-full"
+        className="input w-full"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         min={min}
         max={max}
         required={required}
       />
-    </div>
+    </fieldset>
   )
 }
 

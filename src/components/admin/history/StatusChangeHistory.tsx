@@ -2,20 +2,7 @@ import React from 'react'
 import { format } from 'date-fns'
 import { Tooltip } from '../../ui/Tooltip'
 
-interface StatusChange {
-  id: string
-  player_id: string
-  game_id: string
-  from_status: string
-  to_status: string
-  change_type: 'dropout' | 'slot_response'
-  is_game_day: boolean
-  created_at: string
-  player: {
-    id: string
-    friendly_name: string
-  }
-}
+import { StatusChange } from './types'
 
 interface StatusChangeHistoryProps {
   changes: StatusChange[]

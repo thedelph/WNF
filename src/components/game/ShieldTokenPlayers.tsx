@@ -1,13 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Player } from '../../types/player';
 import { ViewToggle } from '../games/views/ViewToggle';
 import { PlayerCard } from '../player-card/PlayerCard';
 import { useGlobalXP } from '../../hooks/useGlobalXP';
 import { useGameRegistrationStats } from '../../hooks/useGameRegistrationStats';
 
+// Extended Player type for shield token users
+interface ShieldPlayer {
+  id: string;
+  friendly_name: string;
+  avatar_svg?: string;
+  whatsapp_group_member?: string;
+}
+
 interface ShieldTokenUser {
-  player: Player;
+  player: ShieldPlayer;
   used_at: string;
   protected_streak_value: number;
   protected_streak_base: number;

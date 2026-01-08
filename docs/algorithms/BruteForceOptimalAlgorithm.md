@@ -2,7 +2,7 @@
 
 > **Version:** 13.0
 > **Status:** Current (Primary Algorithm)
-> **Last Updated:** January 5, 2026
+> **Last Updated:** January 7, 2026
 > **Location:** `src/components/admin/team-balancing/bruteForceOptimal/`
 >
 > **v13.0 Changes:** Enhanced chemistry scoring with Rivalry (cross-team matchups) and Trio synergies
@@ -566,6 +566,12 @@ To add a new scoring component:
 
 ## See Also
 
+### Feature Documentation
 - [Team Balancing Overview](../features/TeamBalancing.md) - High-level feature overview
+- [Player Chemistry](../features/PlayerChemistry.md) - Chemistry system overview
+- [Rivalry System](../features/RivalrySystem.md) - Head-to-head cross-team performance
+- [Trio Chemistry](../features/TrioChemistry.md) - 3-player synergy tracking
+
+### Algorithm History
 - [Team Balancing Evolution](TeamBalancingEvolution.md) - Complete algorithm history
 - [Tier-Based Snake Draft (Legacy)](../TierBasedSnakeDraftImplementation.md) - Previous algorithm documentation

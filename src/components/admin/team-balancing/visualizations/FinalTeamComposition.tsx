@@ -32,6 +32,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
         attack_rating: p.attack_rating,
         defense_rating: p.defense_rating,
         game_iq_rating: p.game_iq_rating,
+        gk_rating: p.gk_rating,
         win_rate: p.win_rate,
         goal_differential: p.goal_differential,
         overall_win_rate: p.overall_win_rate,

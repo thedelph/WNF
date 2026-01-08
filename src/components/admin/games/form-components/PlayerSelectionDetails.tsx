@@ -36,10 +36,8 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
       className="space-y-4"
     >
       {/* Selected Players Display */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Selected Players ({confirmedPlayers.length})</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Selected Players ({confirmedPlayers.length})</legend>
         <select
           multiple
           value={confirmedPlayers}
@@ -47,7 +45,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
             const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
             onConfirmedPlayersChange(selectedOptions);
           }}
-          className="select select-bordered h-32"
+          className="select h-32"
         >
           {players.map((player) => (
             <option key={player.id} value={player.id}>
@@ -55,13 +53,11 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
             </option>
           ))}
         </select>
-      </div>
+      </fieldset>
 
       {/* Random Pick Players Display */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Random Pick Players ({randomPickPlayers.length})</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Random Pick Players ({randomPickPlayers.length})</legend>
         <select
           multiple
           value={randomPickPlayers}
@@ -69,7 +65,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
             const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
             onRandomPickPlayersChange(selectedOptions);
           }}
-          className="select select-bordered h-32"
+          className="select h-32"
         >
           {players.map((player) => (
             <option key={player.id} value={player.id}>
@@ -77,13 +73,11 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
             </option>
           ))}
         </select>
-      </div>
+      </fieldset>
 
       {/* Reserve Players Display */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Reserve Players ({reservePlayers.length})</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Reserve Players ({reservePlayers.length})</legend>
         <select
           multiple
           value={reservePlayers}
@@ -91,7 +85,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
             const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
             onReservePlayersChange(selectedOptions);
           }}
-          className="select select-bordered h-32"
+          className="select h-32"
         >
           {players.map((player) => (
             <option key={player.id} value={player.id}>
@@ -99,13 +93,11 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
             </option>
           ))}
         </select>
-      </div>
+      </fieldset>
 
       {/* Dropped Out Players Display */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Dropped Out Players ({droppedOutPlayers.length})</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Dropped Out Players ({droppedOutPlayers.length})</legend>
         <select
           multiple
           value={droppedOutPlayers}
@@ -113,7 +105,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
             const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
             onDroppedOutPlayersChange(selectedOptions);
           }}
-          className="select select-bordered h-32"
+          className="select h-32"
         >
           {players.map((player) => (
             <option key={player.id} value={player.id}>
@@ -121,7 +113,7 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
             </option>
           ))}
         </select>
-      </div>
+      </fieldset>
     </motion.div>
   );
 };

@@ -3,7 +3,7 @@
  * Design: Clean gradient card style matching site aesthetics
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Trophy, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
@@ -29,7 +29,7 @@ const medals: Record<string, string> = {
   bronze: '🥉',
 };
 
-const TrophyItem = ({ trophy, index }: TrophyItemProps) => {
+const TrophyItem = forwardRef<HTMLDivElement, TrophyItemProps>(({ trophy, index }, ref) => {
   const config = AWARD_CATEGORIES[trophy.category];
   const medal = medals[trophy.medalType];
   const gradientClass = getCategoryGradient(trophy.category);
@@ -37,6 +37,7 @@ const TrophyItem = ({ trophy, index }: TrophyItemProps) => {
 
   return (
     <motion.div
+      ref={ref}
       className={`relative rounded-lg bg-gradient-to-br ${gradientClass} ${shadowClass} shadow-md p-3 text-white`}
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -64,7 +65,9 @@ const TrophyItem = ({ trophy, index }: TrophyItemProps) => {
       )}
     </motion.div>
   );
-};
+});
+
+TrophyItem.displayName = 'TrophyItem';
 
 // Confetti celebration for trophy achievements
 const triggerTrophyConfetti = (goldCount: number) => {

@@ -50,7 +50,7 @@ export interface PlayerStats {
   rarity: string;
   whatsapp_group_member?: string;
   gameHistory?: {
-    sequence?: number;
+    sequence: number;
     status: string;
   }[];
   games_played_together?: number;
@@ -61,17 +61,29 @@ export interface PlayerStats {
     gk_rating: number;
   } | null;
   reserveXP?: number;
+  reserve_xp?: number;
   reserveCount?: number;
+  reserve_games?: number;
   bench_warmer_streak?: number;
   unpaidGames?: number;
   registrationStreak?: number;
   registrationStreakApplies?: boolean;
   token_status?: {
     status: string;
-    last_used_at: string | null;
-    next_token_at: string | null;
-    created_at: string;
+    lastUsedAt?: string | null;
+    last_used_at?: string | null;
+    nextTokenAt?: string | null;
+    next_token_at?: string | null;
+    createdAt?: string;
+    created_at?: string;
+    isEligible?: boolean;
     is_eligible?: boolean;
-    recent_games?: { id: string; sequence_number: number; date: string }[];
+    recentGames?: { display: string; status: 'selected' | 'dropped_out' }[];
+    recent_games?: { display: string; status: 'selected' | 'dropped_out' }[];
+    hasPlayedInLastTenGames?: boolean;
+    hasRecentSelection?: boolean;
+    hasOutstandingPayments?: boolean;
+    outstandingPaymentsCount?: number;
+    whatsappGroupMember?: boolean;
   };
 }

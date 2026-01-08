@@ -233,7 +233,7 @@ export default function Players() {
             placeholder="Search players..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input input-bordered w-full sm:w-auto sm:max-w-xs"
+            className="input w-full sm:w-auto sm:max-w-xs"
           />
         </div>
         

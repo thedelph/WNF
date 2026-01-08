@@ -165,10 +165,8 @@ const EditPlayer: React.FC = () => {
     >
       <h1 className="text-3xl font-bold mb-6">Edit Player</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="form-control">
-          <label className="label" htmlFor="friendly_name">
-            <span className="label-text">Friendly Name</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Friendly Name</legend>
           <input
             type="text"
             id="friendly_name"
@@ -176,12 +174,12 @@ const EditPlayer: React.FC = () => {
             value={player.friendly_name}
             onChange={handleChange}
             required
-            className="input input-bordered w-full"
+            className="input w-full"
           />
-        </div>
-        <div className="form-control">
+        </fieldset>
+        <fieldset className="fieldset">
           <label className="label cursor-pointer">
-            <span className="label-text">Use Manual Caps Override</span>
+            <legend className="fieldset-legend">Use Manual Caps Override</legend>
             <input
               type="checkbox"
               checked={useManualOverride}
@@ -194,16 +192,14 @@ const EditPlayer: React.FC = () => {
               className="checkbox checkbox-primary"
             />
           </label>
-        </div>
+        </fieldset>
         {!useManualOverride && calculatedCaps !== null && (
           <div className="alert alert-info">
             <span>Calculated caps based on game history: {calculatedCaps}</span>
           </div>
         )}
-        <div className="form-control">
-          <label className="label" htmlFor="caps">
-            <span className="label-text">Caps</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Caps</legend>
           <input
             type="number"
             id="caps"
@@ -212,22 +208,20 @@ const EditPlayer: React.FC = () => {
             onChange={handleChange}
             required
             disabled={!useManualOverride}
-            className="input input-bordered w-full"
+            className="input w-full"
           />
-        </div>
-        <div className="form-control">
-          <label className="label" htmlFor="xp">
-            <span className="label-text">XP</span>
-          </label>
+        </fieldset>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">XP</legend>
           <input
             type="number"
             id="xp"
             name="xp"
             value={player.xp}
             onChange={handleChange}
-            className="input input-bordered w-full"
+            className="input w-full"
           />
-        </div>
+        </fieldset>
         {/* Peer-Calculated Ratings (Read-Only) */}
         <div className="divider">Peer Ratings (Read-Only)</div>
         <div className="alert alert-info mb-4">
@@ -262,11 +256,8 @@ const EditPlayer: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control">
-            <label className="label" htmlFor="shield_tokens_available">
-              <span className="label-text">Shield Tokens Available</span>
-              <span className="label-text-alt">Max: 4</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Shield Tokens Available</legend>
             <input
               type="number"
               id="shield_tokens_available"
@@ -275,15 +266,13 @@ const EditPlayer: React.FC = () => {
               onChange={handleChange}
               min="0"
               max="4"
-              className="input input-bordered w-full"
+              className="input w-full"
             />
-          </div>
+            <p className="fieldset-label">Max: 4</p>
+          </fieldset>
 
-          <div className="form-control">
-            <label className="label" htmlFor="games_played_since_shield_launch">
-              <span className="label-text">Games Played (Shield System)</span>
-              <span className="label-text-alt">1 token per 10 games</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Games Played (Shield System)</legend>
             <input
               type="number"
               id="games_played_since_shield_launch"
@@ -291,9 +280,10 @@ const EditPlayer: React.FC = () => {
               value={player.games_played_since_shield_launch || 0}
               onChange={handleChange}
               min="0"
-              className="input input-bordered w-full"
+              className="input w-full"
             />
-          </div>
+            <p className="fieldset-label">1 token per 10 games</p>
+          </fieldset>
         </div>
 
         {player.shield_active && (
@@ -308,9 +298,9 @@ const EditPlayer: React.FC = () => {
           </div>
         )}
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label cursor-pointer">
-            <span className="label-text">Test User</span>
+            <legend className="fieldset-legend">Test User</legend>
             <input
               type="checkbox"
               name="is_test_user"
@@ -319,11 +309,9 @@ const EditPlayer: React.FC = () => {
               className="checkbox checkbox-primary"
             />
           </label>
-        </div>
-        <div className="form-control">
-          <label className="label" htmlFor="whatsapp_group_member">
-            <span className="label-text">WhatsApp Group Member</span>
-          </label>
+        </fieldset>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">WhatsApp Group Member</legend>
           <select
             id="whatsapp_group_member"
             name="whatsapp_group_member"
@@ -336,23 +324,20 @@ const EditPlayer: React.FC = () => {
                 setPhoneError('');
               }
             }}
-            className="select select-bordered w-full"
+            className="select w-full"
           >
             <option value="">Select status</option>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
             <option value="Proxy">Proxy</option>
           </select>
-        </div>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label" htmlFor="whatsapp_mobile_number">
-            <span className="label-text">
-              WhatsApp Mobile Number
-              {player.whatsapp_group_member === 'Yes' && <span className="text-error ml-1">*</span>}
-            </span>
-            <span className="label-text-alt text-gray-500">Format: +447123456789</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">
+            WhatsApp Mobile Number
+            {player.whatsapp_group_member === 'Yes' && <span className="text-error ml-1">*</span>}
+          </legend>
           <input
             type="tel"
             id="whatsapp_mobile_number"
@@ -368,18 +353,17 @@ const EditPlayer: React.FC = () => {
             }}
             pattern="^\+[1-9]\d{1,14}$"
             placeholder="+447123456789"
-            className={`input input-bordered w-full ${phoneError ? 'input-error' : ''} ${
+            className={`input w-full ${phoneError ? 'input-error' : ''} ${
               player.whatsapp_group_member !== 'Yes' ? 'input-disabled bg-base-200' : ''
             }`}
             disabled={player.whatsapp_group_member !== 'Yes'}
             required={player.whatsapp_group_member === 'Yes'}
           />
+          <p className="fieldset-label text-gray-500">Format: +447123456789</p>
           {phoneError && (
-            <label className="label">
-              <span className="label-text-alt text-error">{phoneError}</span>
-            </label>
+            <p className="fieldset-label text-error">{phoneError}</p>
           )}
-        </div>
+        </fieldset>
         <div className="flex justify-between mt-6">
           <motion.button
             whileHover={{ scale: 1.05 }}

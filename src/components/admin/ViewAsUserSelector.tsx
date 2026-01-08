@@ -150,12 +150,12 @@ const ViewAsUserSelector: React.FC<ViewAsUserSelectorProps> = ({ onSelectUser, o
           <input
             type="text"
             placeholder="Search users..."
-            className="input input-bordered flex-1"
+            className="input flex-1"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <select
-            className="select select-bordered"
+            className="select"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as any)}
           >

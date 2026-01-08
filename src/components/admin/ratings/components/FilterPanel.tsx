@@ -40,7 +40,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               max="10"
               value={filterConfig.minAttack}
               onChange={(e) => onFilterChange({ ...filterConfig, minAttack: Number(e.target.value) })}
-              className="input input-bordered w-full"
+              className="input w-full"
             />
             <span className="self-center">to</span>
             <input
@@ -49,7 +49,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               max="10"
               value={filterConfig.maxAttack}
               onChange={(e) => onFilterChange({ ...filterConfig, maxAttack: Number(e.target.value) })}
-              className="input input-bordered w-full"
+              className="input w-full"
             />
           </div>
         </div>
@@ -63,7 +63,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               max="10"
               value={filterConfig.minDefense}
               onChange={(e) => onFilterChange({ ...filterConfig, minDefense: Number(e.target.value) })}
-              className="input input-bordered w-full"
+              className="input w-full"
             />
             <span className="self-center">to</span>
             <input
@@ -72,7 +72,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               max="10"
               value={filterConfig.maxDefense}
               onChange={(e) => onFilterChange({ ...filterConfig, maxDefense: Number(e.target.value) })}
-              className="input input-bordered w-full"
+              className="input w-full"
             />
           </div>
         </div>
@@ -86,7 +86,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               max="10"
               value={filterConfig.minGameIq}
               onChange={(e) => onFilterChange({ ...filterConfig, minGameIq: Number(e.target.value) })}
-              className="input input-bordered w-full"
+              className="input w-full"
             />
             <span className="self-center">to</span>
             <input
@@ -95,7 +95,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               max="10"
               value={filterConfig.maxGameIq}
               onChange={(e) => onFilterChange({ ...filterConfig, maxGameIq: Number(e.target.value) })}
-              className="input input-bordered w-full"
+              className="input w-full"
             />
           </div>
         </div>
@@ -202,7 +202,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           min="0"
           value={filterConfig.minTotalRatings}
           onChange={(e) => onFilterChange({ ...filterConfig, minTotalRatings: Number(e.target.value) })}
-          className="input input-bordered w-full"
+          className="input w-full"
         />
       </div>
     </motion.div>

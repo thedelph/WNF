@@ -16,9 +16,11 @@ import { POSITION_THRESHOLDS, getAdaptiveMinRaters } from '../constants/position
 /**
  * Player type with position consensus data
  * Minimal interface for position balancing
+ * Note: Supports both 'id' and 'player_id' for compatibility with different player types
  */
 export interface PlayerWithPositions {
-  id: string;
+  id?: string;
+  player_id?: string;
   friendly_name: string;
   positions?: PositionConsensus[];
   primaryPosition?: Position | null;

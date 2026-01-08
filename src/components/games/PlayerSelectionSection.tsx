@@ -8,10 +8,10 @@ interface PlayerSelectionSectionProps {
   title: string;
   icon: IconType;
   players: ExtendedPlayerData[];
-  allXpValues: number[];
   isExpanded: boolean;
   onToggle: () => void;
   renderPlayerExtra?: (player: ExtendedPlayerData) => React.ReactNode;
+  children?: (player: ExtendedPlayerData) => React.ReactNode;
 }
 
 /**
@@ -22,12 +22,15 @@ export const PlayerSelectionSection: React.FC<PlayerSelectionSectionProps> = ({
   title,
   icon,
   players,
-  allXpValues,
   isExpanded,
   onToggle,
-  renderPlayerExtra
+  renderPlayerExtra,
+  children
 }) => {
   if (players.length === 0) return null;
+
+  // Use children as render function if provided, otherwise use renderPlayerExtra
+  const playerRenderer = children || renderPlayerExtra;
 
   return (
     <div className="flex flex-col space-y-4">
@@ -41,8 +44,7 @@ export const PlayerSelectionSection: React.FC<PlayerSelectionSectionProps> = ({
       <PlayerList
         players={players}
         isExpanded={isExpanded}
-        allXpValues={allXpValues}
-        renderPlayerExtra={renderPlayerExtra}
+        renderPlayerExtra={playerRenderer}
       />
     </div>
   );

@@ -125,7 +125,7 @@ The function handles all tables with foreign key references to the `players` tab
 14. Updates `token_history` references (player_id, performed_by)
 15. Handles `player_tokens` (transfer active tokens or mark as used)
 16. Updates `reserve_xp_transactions` references
-17. Merges `player_xp_snapshots` (keeps higher XP for same dates)
+17. Merges `player_xp_snapshots` (keeps higher XP for same dates, **preserves xp_v2**)
 18. Combines `player_xp` (sums XP from both players)
 19. Handles `player_xp_legacy` (transfer if target doesn't have one)
 20. Merges `game_registrations` with conflict resolution (preserves payment info)
@@ -148,7 +148,7 @@ The function handles all tables with foreign key references to the `players` tab
 **Security:**
 - Uses SECURITY DEFINER to ensure proper permissions
 
-**Updated:** January 2026 - Added support for new tables and automatic recalculation of derived values
+**Updated:** January 7, 2026 - Added player_awards trophy handling, xp_v2 snapshot preservation, and automatic recalculation of derived values
 
 ## Game Management Functions
 

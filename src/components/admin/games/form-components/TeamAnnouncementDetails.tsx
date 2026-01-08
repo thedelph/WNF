@@ -29,52 +29,44 @@ export const TeamAnnouncementDetails: React.FC<TeamAnnouncementDetailsProps> = (
     >
       <div className="grid grid-cols-2 gap-4">
         {/* Orange Team */}
-        <div className="space-y-4">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Orange Team Players</span>
-            </label>
-            <select
-              multiple
-              value={teamAPlayers}
-              onChange={(e) => {
-                const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-                onTeamAPlayersChange(selectedOptions);
-              }}
-              className="select select-bordered h-48"
-            >
-              {players.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {player.friendly_name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Orange Team Players</legend>
+          <select
+            multiple
+            value={teamAPlayers}
+            onChange={(e) => {
+              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+              onTeamAPlayersChange(selectedOptions);
+            }}
+            className="select h-48"
+          >
+            {players.map((player) => (
+              <option key={player.id} value={player.id}>
+                {player.friendly_name}
+              </option>
+            ))}
+          </select>
+        </fieldset>
 
         {/* Blue Team */}
-        <div className="space-y-4">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Blue Team Players</span>
-            </label>
-            <select
-              multiple
-              value={teamBPlayers}
-              onChange={(e) => {
-                const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-                onTeamBPlayersChange(selectedOptions);
-              }}
-              className="select select-bordered h-48"
-            >
-              {players.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {player.friendly_name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Blue Team Players</legend>
+          <select
+            multiple
+            value={teamBPlayers}
+            onChange={(e) => {
+              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+              onTeamBPlayersChange(selectedOptions);
+            }}
+            className="select h-48"
+          >
+            {players.map((player) => (
+              <option key={player.id} value={player.id}>
+                {player.friendly_name}
+              </option>
+            ))}
+          </select>
+        </fieldset>
       </div>
     </motion.div>
   );

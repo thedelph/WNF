@@ -44,8 +44,8 @@ interface Player {
   };
 }
 
-type SortOption = 'alphabetical' | 'games_played' | 'rated' | 'unrated' | 'attack_asc' | 'attack_desc' | 'defense_asc' | 'defense_desc' | 'game_iq_asc' | 'game_iq_desc' | 'gk_asc' | 'gk_desc';
-type FilterOption = 'all' | 'rated' | 'unrated' | 'min_games';
+type SortOption = 'alphabetical' | 'games_played' | 'rated' | 'unrated' | 'attack_asc' | 'attack_desc' | 'defense_asc' | 'defense_desc' | 'game_iq_asc' | 'game_iq_desc' | 'gk_asc' | 'gk_desc' | 'playstyle_name';
+type FilterOption = 'all' | 'rated' | 'unrated' | 'min_games' | 'has_playstyle' | 'no_playstyle';
 
 export default function Ratings() {
   const { user } = useAuth();
@@ -307,6 +307,8 @@ export default function Ratings() {
         setCurrentPlayer({
           id: viewAsUser.playerId,
           friendly_name: viewAsUser.friendlyName || '',
+          games_played: 0,
+          whatsapp_group_member: 'Yes',
           is_beta_tester: viewAsUser.isBetaTester,
           is_super_admin: viewAsUser.isSuperAdmin
         });

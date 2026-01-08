@@ -120,7 +120,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
           currentStreak: reg.player_stats.current_streak || 0,
           maxStreak: reg.player_stats.max_streak || 0,
           avatarSvg: reg.player_stats.avatar_svg || '',
-          rarity: rarityMap?.[reg.player_stats.id] || 'Amateur'
+          rarity: (rarityMap?.[reg.player_stats.id] || 'Amateur') as 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired'
         }
       }));
 
@@ -604,7 +604,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                               <Tooltip content="Issue new token">
                                 <button
                                   onClick={() => handleIssueToken(player.playerId)}
-                                  className="text-primary hover:text-primary-focus"
+                                  className="text-primary hover:opacity-80"
                                 >
                                   🎟️
                                 </button>

@@ -36,7 +36,7 @@ export default function DesignPreview() {
         .order('date', { ascending: false });
 
       if (data) {
-        const years = [...new Set(data.map((g) => new Date(g.date).getFullYear()))];
+        const years = [...new Set((data as Array<{ date: string }>).map((g) => new Date(g.date).getFullYear()))];
         setAvailableYears(years.sort((a, b) => b - a));
       }
     };

@@ -342,6 +342,8 @@ export const getWeatherForecast = async (
           precipitation: 0,
           icon: '03d',     // Default to few clouds icon
           weather: [{ id: 802, main: 'Clouds', description: 'scattered clouds', icon: '03d' }],
+          rain: null,
+          snow: null,
           wind: { speed: 5, deg: 0 },
           sys: {
             sunrise: new Date(targetDate).setHours(6, 0, 0, 0) / 1000,
@@ -370,7 +372,15 @@ export const getWeatherForecast = async (
       windSpeed: 3 + Math.random() * 5,
       windDirection: Math.random() * 360,
       precipitation: isWinter ? 30 + Math.random() * 40 : 10 + Math.random() * 20,
-      icon: isWinter ? '03d' : '01d'
+      icon: isWinter ? '03d' : '01d',
+      weather: [{ id: 802, main: isWinter ? 'Clouds' : 'Clear', description: isWinter ? 'scattered clouds' : 'clear sky', icon: isWinter ? '03d' : '01d' }],
+      rain: null,
+      snow: null,
+      wind: { speed: 3 + Math.random() * 5, deg: Math.random() * 360 },
+      sys: {
+        sunrise: new Date(targetDate).setHours(6, 0, 0, 0) / 1000,
+        sunset: new Date(targetDate).setHours(18, 0, 0, 0) / 1000
+      }
     };
   }
 };

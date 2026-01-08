@@ -23,11 +23,11 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
   if (isError) {
     console.error('Error loading token info');
     return (
-      <div className="form-control">
-        <label className="label cursor-pointer gap-4">
+      <fieldset className="fieldset">
+        <label className="flex items-center cursor-pointer gap-4">
           <span className="flex items-center gap-2 text-error">
             <PiCoinDuotone size={20} className="text-gray-400" />
-            <span className="label-text">Error checking token</span>
+            <span>Error checking token</span>
           </span>
           <input
             type="checkbox"
@@ -36,7 +36,7 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
             disabled={true}
           />
         </label>
-      </div>
+      </fieldset>
     );
   }
 
@@ -46,12 +46,12 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
   // Show loading state
   if (isLoading) {
     return (
-      <div className="form-control animate-pulse">
-        <label className="label gap-4">
-          <span className="label-text">Checking token availability...</span>
+      <fieldset className="fieldset animate-pulse">
+        <label className="flex items-center gap-4">
+          <span>Checking token availability...</span>
           <div className="w-12 h-6 bg-base-300 rounded-full"></div>
         </label>
-      </div>
+      </fieldset>
     );
   }
 
@@ -67,14 +67,14 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
         <p className="text-sm text-base-content/70">You can still get a token even if you registered, were a reserve, or dropped out - only being selected to play counts against you.</p>
       </div>
     }>
-      <div className="form-control">
-        <label className="label cursor-pointer gap-4">
+      <fieldset className="fieldset">
+        <label className="flex items-center cursor-pointer gap-4">
           <span className="flex items-center gap-2">
-            <PiCoinDuotone 
-              size={20} 
-              className={value ? 'text-yellow-400' : 'text-gray-400'} 
+            <PiCoinDuotone
+              size={20}
+              className={value ? 'text-yellow-400' : 'text-gray-400'}
             />
-            <span className="label-text">Use priority token?</span>
+            <span>Use priority token?</span>
           </span>
           <input
             type="checkbox"
@@ -84,7 +84,7 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
             disabled={disabled}
           />
         </label>
-      </div>
+      </fieldset>
     </Tooltip>
   );
 };

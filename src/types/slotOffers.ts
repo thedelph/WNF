@@ -1,4 +1,4 @@
-import { Database } from './supabase';
+import { Database } from './database';
 
 export type SlotOfferStatus = 'pending' | 'accepted' | 'declined' | 'expired';
 

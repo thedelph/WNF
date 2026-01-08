@@ -5,17 +5,17 @@ import { motion } from 'framer-motion'
 import { supabaseAdmin } from '../../../utils/supabase'
 import { toast } from 'react-hot-toast'
 import { useVenues } from '../../../hooks/useVenues'
-import { Player } from '../../../types/player'
 import { GameMessagesParser } from './forms/GameMessagesParser'
 import { TeamPlayerList } from './forms/TeamPlayerList'
 import { PlayerStatusLists } from './forms/PlayerStatusLists'
-import { 
-  TeamPlayer, 
-  ReservePlayer, 
-  DropoutPlayer, 
-  ParsedGameInfo, 
+import {
+  TeamPlayer,
+  ReservePlayer,
+  DropoutPlayer,
+  ParsedGameInfo,
   ParsedTeams,
-  GameOutcomeType 
+  GameOutcomeType,
+  Player
 } from './types'
 
 interface Props {
@@ -167,10 +167,10 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
     for (const playerInfo of parsedGame.reservePlayers) {
       const player = mapPlayer(playerInfo)
       if (player) {
-        const reservePlayer = {
+        const reservePlayer: ReservePlayer = {
           id: player.id,
           name: player.friendly_name,
-          type: 'whatsapp' as const
+          isWhatsAppMember: true
         }
         setReservePlayers(prev => [...prev, reservePlayer])
       } else {
@@ -361,25 +361,28 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
       }
 
       // Update caps for selected players only
-      for (const player of [...bluePlayers, ...orangePlayers]) {
-        const { error: capsError } = await supabaseAdmin
-          .from('players')
-          .update({ caps: player.caps + 1 })
-          .eq('id', player.id)
+      // First, fetch current caps for all selected players
+      const selectedPlayerIds = [...bluePlayers, ...orangePlayers].map(p => p.id)
+      const { data: playersData, error: fetchError } = await supabaseAdmin
+        .from('players')
+        .select('id, caps')
+        .in('id', selectedPlayerIds)
 
-        if (capsError) {
-          console.error(`Error updating caps for player ${player.id}:`, capsError)
-          toast.error(`Failed to update caps for ${player.name}`)
-        } else {
-          // Update the player's caps in the form state
-          if (bluePlayers.find(p => p.id === player.id)) {
-            setBluePlayers(prev => prev.map(p => 
-              p.id === player.id ? { ...p, caps: (p.caps || 0) + 1 } : p
-            ))
-          } else {
-            setOrangePlayers(prev => prev.map(p => 
-              p.id === player.id ? { ...p, caps: (p.caps || 0) + 1 } : p
-            ))
+      if (fetchError) {
+        console.error('Error fetching player caps:', fetchError)
+        toast.error('Failed to fetch player caps for update')
+      } else if (playersData) {
+        for (const playerData of playersData) {
+          const currentCaps = playerData.caps ?? 0
+          const { error: capsError } = await supabaseAdmin
+            .from('players')
+            .update({ caps: currentCaps + 1 })
+            .eq('id', playerData.id)
+
+          if (capsError) {
+            console.error(`Error updating caps for player ${playerData.id}:`, capsError)
+            const playerName = [...bluePlayers, ...orangePlayers].find(p => p.id === playerData.id)?.name
+            toast.error(`Failed to update caps for ${playerName}`)
           }
         }
       }
@@ -446,25 +449,21 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Date</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Date</legend>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="input input-bordered w-full"
+              className="input w-full"
               required
             />
-          </div>
+          </fieldset>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Venue</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Venue</legend>
             <select
-              className="select select-bordered w-full"
+              className="select w-full"
               value={venueId}
               onChange={(e) => setVenueId(e.target.value)}
             >
@@ -475,7 +474,7 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
                 </option>
               ))}
             </select>
-          </div>
+          </fieldset>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <TeamPlayerList
@@ -484,10 +483,10 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
               selectedPlayers={bluePlayers}
               otherTeamPlayers={[...orangePlayers]}
               onAddPlayer={(player) => {
-                const teamPlayer = { 
-                  id: player.id, 
+                const teamPlayer: TeamPlayer = {
+                  id: player.id,
                   name: player.friendly_name,
-                  selectionType: 'merit' 
+                  selectionType: 'merit' as const
                 }
                 setBluePlayers([...bluePlayers, teamPlayer])
               }}
@@ -506,10 +505,10 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
               selectedPlayers={orangePlayers}
               otherTeamPlayers={[...bluePlayers]}
               onAddPlayer={(player) => {
-                const teamPlayer = { 
-                  id: player.id, 
+                const teamPlayer: TeamPlayer = {
+                  id: player.id,
                   name: player.friendly_name,
-                  selectionType: 'merit' 
+                  selectionType: 'merit' as const
                 }
                 setOrangePlayers([...orangePlayers, teamPlayer])
               }}
@@ -542,39 +541,33 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Blue Score (Optional)</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Blue Score (Optional)</legend>
               <input
                 type="number"
                 value={blueScore}
                 onChange={(e) => setBlueScore(e.target.value)}
-                className="input input-bordered w-full"
+                className="input w-full"
                 min="0"
               />
-            </div>
+            </fieldset>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Orange Score (Optional)</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Orange Score (Optional)</legend>
               <input
                 type="number"
                 value={orangeScore}
                 onChange={(e) => setOrangeScore(e.target.value)}
-                className="input input-bordered w-full"
+                className="input w-full"
                 min="0"
               />
-            </div>
+            </fieldset>
           </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Game Outcome (if scores unknown)</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Game Outcome (if scores unknown)</legend>
             <select
-              className="select select-bordered w-full"
+              className="select w-full"
               value={outcome || ''}
               onChange={(e) => setOutcome(e.target.value as GameOutcomeType)}
               disabled={blueScore !== '' || orangeScore !== ''}
@@ -584,7 +577,7 @@ const HistoricalGameForm: React.FC<Props> = ({ onGameAdded }) => {
               <option value="orange_win">Orange Team Won</option>
               <option value="draw">Draw</option>
             </select>
-          </div>
+          </fieldset>
 
           <div className="card-actions justify-end">
             <button 

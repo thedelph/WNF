@@ -27,17 +27,17 @@ export const PlayerStatusLists: React.FC<Props> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Reserve Players</span>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend flex items-center gap-2">
+          Reserve Players
           <Tooltip content="Players who were available but not selected. WhatsApp members get priority in reserves list." side="right">
-            <span className="label-text-alt cursor-help">ℹ️</span>
+            <span className="cursor-help">ℹ️</span>
           </Tooltip>
-        </label>
+        </legend>
         <div className="flex flex-col gap-2">
           <div className="join">
             <select
-              className="select select-bordered join-item"
+              className="select join-item"
               onChange={(e) => {
                 const player = availablePlayers.find(p => p.id === e.target.value)
                 if (player) {
@@ -56,7 +56,7 @@ export const PlayerStatusLists: React.FC<Props> = ({
                 ))}
             </select>
             <select
-              className="select select-bordered join-item"
+              className="select join-item"
               onChange={(e) => {
                 const player = availablePlayers.find(p => p.id === e.target.value)
                 if (player) {
@@ -92,18 +92,18 @@ export const PlayerStatusLists: React.FC<Props> = ({
             ))}
           </div>
         </div>
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Dropouts</span>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend flex items-center gap-2">
+          Dropouts
           <Tooltip content="Players who registered but dropped out or were removed." side="right">
-            <span className="label-text-alt cursor-help">ℹ️</span>
+            <span className="cursor-help">ℹ️</span>
           </Tooltip>
-        </label>
+        </legend>
         <div className="flex flex-col gap-2">
           <select
-            className="select select-bordered w-full"
+            className="select w-full"
             onChange={(e) => {
               const player = availablePlayers.find(p => p.id === e.target.value)
               if (player) {
@@ -128,7 +128,7 @@ export const PlayerStatusLists: React.FC<Props> = ({
                 <input
                   type="text"
                   placeholder="Reason (optional)"
-                  className="input input-bordered input-sm w-32"
+                  className="input input-sm w-32"
                   value={player.reason || ''}
                   onChange={(e) => onDropoutReasonChange(player.id, e.target.value)}
                 />
@@ -143,7 +143,7 @@ export const PlayerStatusLists: React.FC<Props> = ({
             ))}
           </div>
         </div>
-      </div>
+      </fieldset>
     </div>
   )
 }

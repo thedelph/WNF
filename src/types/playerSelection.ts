@@ -49,12 +49,14 @@ export interface ExtendedPlayerData extends PlayerStats {
     status: string;
     expires_at?: string;
     available_at?: string;
+    declined_at?: string | null;
   }[];
   whatsapp_group_member?: string;
   benchWarmerStreak?: number;
   registrationStreakBonus?: number;
   registrationStreakBonusApplies?: boolean;
   using_token?: boolean;
+  usingToken?: boolean;
   had_token?: boolean;
   status?: 'selected' | 'reserve' | 'dropped_out' | 'none';
   averagedPlaystyle?: string;
@@ -63,6 +65,12 @@ export interface ExtendedPlayerData extends PlayerStats {
   playstyleRatingsCount?: number;
   unpaidGames?: number;
   unpaidGamesModifier?: number;
+  // Snake case versions (from database)
+  unpaid_games?: number;
+  unpaid_games_modifier?: number;
+  total_games?: number;
+  registration_streak_bonus?: number;
+  registration_streak_bonus_applies?: boolean;
   recentGames?: number;
   // Shield protection properties
   shieldActive?: boolean;
@@ -84,6 +92,12 @@ export interface ExtendedPlayerData extends PlayerStats {
   potentialOfferTimes?: any;
   hasActiveSlotOffers?: boolean;
   gameParticipation?: Array<'selected' | 'reserve' | null>;
+  // Selection-related properties
+  selection_method?: string;
+  registration_time?: string;
+  declinedAt?: string | null;
+  // Team assignment
+  team?: 'blue' | 'orange' | null;
 }
 
 // Registration-specific type used in GameRegistrations.tsx
@@ -107,26 +121,16 @@ export interface RegistrationPlayerData {
     currentStreak: number;
     maxStreak: number;
     avatarSvg: string;
-    rarity: string;
+    rarity: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired';
   };
 }
 
 export interface PlayerSelectionResultsProps {
   gameId: string;
-  selectedPlayers: Array<{
-    player: Player;
-    selection_type: string;
-    team: string;
-  }>;
-  reservePlayers: Player[];
-  onClose?: () => void;
 }
 
 export interface TeamSelectionResultsProps {
   gameId: string;
-  blueTeam: Player[];
-  orangeTeam: Player[];
-  reservePlayers: Player[];
 }
 
 export interface ReservePlayer {
@@ -141,4 +145,20 @@ export interface ReservePlayer {
     active_penalties: number;
     current_streak: number;
   };
+}
+
+/**
+ * Registration type for game registrations
+ * Used in RegisteredPlayers, RegisteredPlayerGrid, RegisteredPlayerListView components
+ */
+export interface Registration {
+  player: {
+    id: string;
+    friendly_name: string;
+    avatar_svg?: string;
+    whatsapp_group_member?: string;
+  };
+  status: 'registered' | 'selected' | 'reserve' | 'dropped_out' | 'shield_protected';
+  using_token?: boolean;
+  created_at?: string;
 }

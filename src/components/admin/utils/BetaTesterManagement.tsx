@@ -163,7 +163,7 @@ const BetaTesterManagement: React.FC = () => {
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <div className="form-control">
+        <fieldset className="fieldset">
           <div className="input-group">
             <span className="bg-base-300">
               <FaSearch />
@@ -171,12 +171,12 @@ const BetaTesterManagement: React.FC = () => {
             <input
               type="text"
               placeholder="Search players..."
-              className="input input-bordered flex-1"
+              className="input flex-1"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-        </div>
+        </fieldset>
 
         <div className="flex gap-2">
           <button
@@ -259,8 +259,8 @@ const BetaTesterManagement: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="form-control">
-                    <label className="label cursor-pointer">
+                  <fieldset className="fieldset">
+                    <label className="cursor-pointer">
                       <input
                         type="checkbox"
                         className="toggle toggle-warning"
@@ -268,7 +268,7 @@ const BetaTesterManagement: React.FC = () => {
                         onChange={() => handleToggleBetaTester(player.id, player.is_beta_tester)}
                       />
                     </label>
-                  </div>
+                  </fieldset>
                 </motion.div>
               ))
             )}

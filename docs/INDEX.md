@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-01-06 (Awards UI consistency, semantic color scheme)
+**Last Updated:** 2026-01-07 (Rivalry, Trio Chemistry, Awards System, DaisyUI v5 migration docs)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -24,7 +24,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 
 ### Team Management
 - **[Team Balancing](features/TeamBalancing.md)** - Overview of team balancing system
-- **[Brute-Force Optimal Algorithm](algorithms/BruteForceOptimalAlgorithm.md)** - Current algorithm (v12.0, January 2026)
+- **[Brute-Force Optimal Algorithm](algorithms/BruteForceOptimalAlgorithm.md)** - Current algorithm (v13.0, January 2026)
 - **[Team Balancing Algorithm Evolution](algorithms/TeamBalancingEvolution.md)** - Complete algorithm history
 - **[Tier-Based Snake Draft](TierBasedSnakeDraftImplementation.md)** - Legacy algorithm (pre-January 2026)
 - **[Formation Suggester](features/FormationSuggester.md)** - Position consensus + playstyle formation assignments
@@ -60,6 +60,10 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Goal Differential Feature](GoalDifferentialFeature.md)** - Goal diff tracking and display
 - **[Streaks Features](WinningStreaksFeature.md)** - Winning and unbeaten streaks
 - **[Player Chemistry](features/PlayerChemistry.md)** - Chemistry scores between player pairs + team balancing integration
+- **[Rivalry System](features/RivalrySystem.md)** - Head-to-head cross-team performance *(New Jan 2026)*
+- **[Trio Chemistry](features/TrioChemistry.md)** - 3-player synergy tracking *(New Jan 2026)*
+- **[Awards System](features/AwardsSystem.md)** - Hall of Fame awards and trophies *(New Jan 2026)*
+- **[Dropout with Shield](features/DropoutWithShield.md)** - Dropout mechanics with shield protection *(New Jan 2026)*
 - **[Player Stats Overview](PlayerStatsFeaturesOverview.md)** - Comprehensive stats features
 
 ### Admin Features
@@ -154,6 +158,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Similarity-Based Specialist Detection](fixes/SimilarityBasedSpecialistDetection.md)** - Improved detection
 - **[Streak Reset on Game Completion Fix](fixes/StreakResetOnGameCompletionFix.md)** - Streak calculation
 - **[Registration Streak Bonus Fix](fixes/RegistrationStreakBonusFix.md)** - Bonus calculation
+- **[DaisyUI v5 Migration](fixes/DaisyUIv5Migration.md)** *(New Jan 2026)* - v2.51.6 to v5.5.14 upgrade documentation
 
 ---
 

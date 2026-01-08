@@ -201,28 +201,24 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
         {/* Add/Edit Form */}
         {isAdding && (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Preset Name</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Preset Name</legend>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input input-bordered"
+                className="input"
                 placeholder="e.g., Wednesday Night Football"
                 required
               />
-            </div>
+            </fieldset>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Venue</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Venue</legend>
               <select
                 value={venueId}
                 onChange={(e) => setVenueId(e.target.value)}
-                className="select select-bordered"
+                className="select"
                 required
               >
                 <option value="">Select a venue...</option>
@@ -232,16 +228,14 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
                   </option>
                 ))}
               </select>
-            </div>
+            </fieldset>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Day of Week</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Day of Week</legend>
               <select
                 value={dayOfWeek}
                 onChange={(e) => setDayOfWeek(e.target.value)}
-                className="select select-bordered"
+                className="select"
                 required
               >
                 {daysOfWeek.map((day) => (
@@ -250,86 +244,72 @@ export const PresetManagement: React.FC<Props> = ({ venues, onUpdate }) => {
                   </option>
                 ))}
               </select>
-            </div>
+            </fieldset>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Start Time</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Start Time</legend>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="input input-bordered"
+                className="input"
                 required
               />
-            </div>
+            </fieldset>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Registration Hours Before</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Registration Hours Before</legend>
                 <input
                   type="number"
                   value={regHoursBefore}
                   onChange={(e) => setRegHoursBefore(parseInt(e.target.value))}
-                  className="input input-bordered"
+                  className="input"
                   min={1}
                   required
                 />
-              </div>
+              </fieldset>
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Registration Hours Until</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Registration Hours Until</legend>
                 <input
                   type="number"
                   value={regHoursUntil}
                   onChange={(e) => setRegHoursUntil(parseInt(e.target.value))}
-                  className="input input-bordered"
+                  className="input"
                   min={1}
                   required
                 />
-              </div>
+              </fieldset>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Team Announcement Hours Before Game</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Team Announcement Hours Before Game</legend>
               <input
                 type="number"
                 value={teamAnnouncementHours}
                 onChange={(e) => setTeamAnnouncementHours(parseInt(e.target.value))}
-                className="input input-bordered"
+                className="input"
                 min={1}
                 max={48}
                 required
               />
-              <label className="label">
-                <span className="label-text-alt">Hours before game start when teams will be announced</span>
-              </label>
-            </div>
+              <p className="fieldset-label">Hours before game start when teams will be announced</p>
+            </fieldset>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Pitch Cost (£)</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Pitch Cost (£)</legend>
               <input
                 type="number"
                 value={pitchCost}
                 onChange={(e) => setPitchCost(parseFloat(e.target.value))}
-                className="input input-bordered"
+                className="input"
                 min={0}
                 step={0.01}
                 required
               />
-              <label className="label">
-                <span className="label-text-alt">Total cost for renting the pitch</span>
-              </label>
-            </div>
+              <p className="fieldset-label">Total cost for renting the pitch</p>
+            </fieldset>
 
             <div className="flex gap-2">
               <motion.button

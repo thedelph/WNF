@@ -14,6 +14,7 @@ export interface Venue {
   name: string
   address: string
   google_maps_url?: string
+  is_default?: boolean
 }
 
 export interface VenuePreset {
@@ -107,6 +108,7 @@ export interface GameHistory {
   games: {
     id: string;
     date: string;
+    sequence_number?: number;  // WNF sequence number
     score_blue: number | null;
     score_orange: number | null;
     outcome: 'blue_win' | 'orange_win' | 'draw' | null;

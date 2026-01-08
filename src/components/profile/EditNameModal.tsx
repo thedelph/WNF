@@ -32,20 +32,18 @@ export default function EditNameModal({ currentName, onSave, onClose }: EditName
       >
         <h2 className="text-2xl font-bold mb-4">Edit Name</h2>
         <form onSubmit={handleSubmit}>
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">Display Name</span>
-            </label>
+          <fieldset className="fieldset mb-4">
+            <legend className="fieldset-legend">Display Name</legend>
             <input
               type="text"
               value={friendlyName}
               onChange={(e) => setFriendlyName(e.target.value)}
-              className="input input-bordered w-full"
+              className="input w-full"
               placeholder="Enter your name"
               maxLength={50}
               required
             />
-          </div>
+          </fieldset>
           <div className="flex gap-2 justify-end">
             <button
               type="button"

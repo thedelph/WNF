@@ -33,52 +33,42 @@ const RegistrationForm: React.FC = () => {
     <>
       <h2 className="card-title justify-center mb-4">Create your WNF Account</h2>
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Email</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Email</legend>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="input input-bordered w-full"
+            className="input w-full"
             required
           />
-        </div>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Friendly Name</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Friendly Name</legend>
           <input
             type="text"
             value={friendlyName}
             onChange={(e) => setFriendlyName(e.target.value)}
             placeholder="Your name on the teamsheet"
-            className="input input-bordered w-full"
+            className="input w-full"
             required
           />
-          <label className="label">
-            <span className="label-text-alt text-neutral-500">This name must be unique</span>
-          </label>
-        </div>
+          <p className="fieldset-label text-neutral-500">This name must be unique</p>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Password</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Password</legend>
           <PasswordInput
             value={password}
             onChange={setPassword}
             required
           />
-        </div>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Confirm Password</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Confirm Password</legend>
           <PasswordInput
             value={confirmPassword}
             onChange={setConfirmPassword}
@@ -87,52 +77,46 @@ const RegistrationForm: React.FC = () => {
             confirmValue={password}
             required
           />
-        </div>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label cursor-pointer justify-start gap-2">
+        <fieldset className="fieldset">
+          <label className="flex items-center cursor-pointer justify-start gap-2">
             <input
               type="checkbox"
               className="checkbox checkbox-primary"
               checked={isWhatsAppMember}
               onChange={(e) => setIsWhatsAppMember(e.target.checked)}
             />
-            <span className="label-text">WNF WhatsApp Group Member</span>
+            <span>WNF WhatsApp Group Member</span>
           </label>
-          <label className="label">
-            <span className="label-text-alt text-neutral-500">
-              Currently, registration is only open to WNF WhatsApp Group members
-            </span>
-          </label>
-        </div>
+          <p className="fieldset-label text-neutral-500">
+            Currently, registration is only open to WNF WhatsApp Group members
+          </p>
+        </fieldset>
 
         {isWhatsAppMember && (
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">WhatsApp Mobile Number</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">WhatsApp Mobile Number</legend>
             <input
               type="tel"
               value={whatsAppNumber}
               onChange={(e) => setWhatsAppNumber(e.target.value)}
               placeholder="+44"
-              className={`input input-bordered w-full ${
+              className={`input w-full ${
                 whatsAppNumber && !validateUKMobileNumber(whatsAppNumber) ? 'input-error' : ''
               }`}
               required={isWhatsAppMember}
             />
-            <label className="label">
-              <span className="label-text-alt text-neutral-500">
-                Enter the same mobile number you use for the WNF WhatsApp group (format: +44XXXXXXXXXX)
-              </span>
-            </label>
-          </div>
+            <p className="fieldset-label text-neutral-500">
+              Enter the same mobile number you use for the WNF WhatsApp group (format: +44XXXXXXXXXX)
+            </p>
+          </fieldset>
         )}
 
-        <div className="form-control mt-6">
+        <div className="mt-6">
           {isWhatsAppMember ? (
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
               disabled={isLoading || !validateUKMobileNumber(whatsAppNumber)}
             >

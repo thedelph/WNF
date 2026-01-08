@@ -4,15 +4,13 @@ import { Tooltip } from '../../ui/Tooltip'
 
 export const GameOutcome: React.FC<GameOutcomeProps> = ({ outcome, scoreBlue, scoreOrange, onChange, isValid }) => {
   return (
-    <div className="form-control">
-      <label className="label">
-        <span className="label-text">Game Outcome</span>
-      </label>
+    <fieldset className="fieldset">
+      <legend className="fieldset-legend">Game Outcome</legend>
       <Tooltip content={!isValid ? "Selected outcome does not match the scores" : "Select the game outcome"}>
         <select
           value={outcome || ''}
           onChange={(e) => onChange(e.target.value)}
-          className={`select select-bordered w-full ${!isValid ? 'select-error' : ''}`}
+          className={`select w-full ${!isValid ? 'select-error' : ''}`}
           required
         >
           <option value="">Select Outcome</option>
@@ -21,6 +19,6 @@ export const GameOutcome: React.FC<GameOutcomeProps> = ({ outcome, scoreBlue, sc
           <option value="draw">Draw</option>
         </select>
       </Tooltip>
-    </div>
+    </fieldset>
   )
 }

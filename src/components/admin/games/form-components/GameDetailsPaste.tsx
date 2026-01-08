@@ -338,29 +338,27 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
   };
 
   return (
-    <motion.div
+    <motion.fieldset
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
-      className="form-control"
+      className="fieldset"
     >
-      <label className="label">
-        <span className="label-text">
-          {gamePhase === 'teams_announced' 
-            ? 'Paste Player Registration or Team Announcement' 
-            : 'Paste Full Game Details'}
-        </span>
-      </label>
+      <legend className="fieldset-legend">
+        {gamePhase === 'teams_announced'
+          ? 'Paste Player Registration or Team Announcement'
+          : 'Paste Full Game Details'}
+      </legend>
       <textarea
         className="textarea textarea-bordered h-48"
         placeholder={
           gamePhase === 'teams_announced'
-            ? "First paste the player registration message, then paste the team announcement (🟠 Orange Team / 🔵 Blue Team)..."
-            : "Paste the full game details here, including date, time, and player lists with emojis (🪙 for tokens, 🎲 for random, 💰 for unpaid games)..."
+            ? "First paste the player registration message, then paste the team announcement (Orange Team / Blue Team)..."
+            : "Paste the full game details here, including date, time, and player lists with emojis (tokens, random, unpaid games)..."
         }
         onChange={(e) => handleFullTextPaste(e.target.value)}
       />
-    </motion.div>
+    </motion.fieldset>
   );
 };
 

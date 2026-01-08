@@ -1,16 +1,20 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from '../../../components/ui/Tooltip';
-import { GameHistory } from '../../../types/game';
+import { PlayerGameHistory } from '../../../hooks/useGameHistory';
 import clsx from 'clsx';
 
+type SortKey = 'date' | 'team' | 'sequence_number' | 'outcome';
+
+interface SortConfig {
+  key: SortKey;
+  direction: 'asc' | 'desc';
+}
+
 interface GameHistoryTableProps {
-  games: GameHistory[];
-  sortConfig: {
-    key: keyof GameHistory['games'] | 'team' | 'sequence_number';
-    direction: 'asc' | 'desc';
-  };
-  handleSort: (key: typeof sortConfig.key) => void;
-  getGameOutcome: (game: GameHistory) => string | null;
+  games: PlayerGameHistory[];
+  sortConfig: SortConfig;
+  handleSort: (key: SortKey) => void;
+  getGameOutcome: (game: PlayerGameHistory) => string | null;
 }
 
 /**
@@ -90,9 +94,9 @@ export const GameHistoryTable = ({
   );
 };
 
-const TableRow = ({ game, getGameOutcome }: { 
-  game: GameHistory; 
-  getGameOutcome: (game: GameHistory) => string | null;
+const TableRow = ({ game, getGameOutcome }: {
+  game: PlayerGameHistory;
+  getGameOutcome: (game: PlayerGameHistory) => string | null;
 }) => {
   const outcome = getGameOutcome(game);
   
@@ -124,8 +128,8 @@ const TableRow = ({ game, getGameOutcome }: {
 };
 
 const GameCard = ({ game, getGameOutcome }: {
-  game: GameHistory;
-  getGameOutcome: (game: GameHistory) => string | null;
+  game: PlayerGameHistory;
+  getGameOutcome: (game: PlayerGameHistory) => string | null;
 }) => {
   const outcome = getGameOutcome(game);
 
@@ -195,7 +199,7 @@ const OutcomeBadge = ({ outcome }: { outcome: string | null }) => {
   );
 };
 
-const ScoreDisplay = ({ game }: { game: GameHistory }) => {
+const ScoreDisplay = ({ game }: { game: PlayerGameHistory }) => {
   if (game.games.score_blue === null || game.games.score_orange === null) {
     return (
       <Tooltip content="This match has no recorded score, but the outcome still counts towards win rate calculation.">

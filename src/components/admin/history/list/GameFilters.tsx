@@ -18,36 +18,30 @@ const GameFilters: React.FC<Props> = ({ filters, onFiltersChange }) => {
     <div className="bg-base-200 p-4 rounded-lg">
       <h3 className="font-semibold mb-4">Filters</h3>
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">From Date</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">From Date</legend>
           <input
             type="date"
             value={filters.dateFrom}
             onChange={(e) => onFiltersChange({ ...filters, dateFrom: e.target.value })}
-            className="input input-bordered w-full"
+            className="input w-full"
           />
-        </div>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">To Date</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">To Date</legend>
           <input
             type="date"
             value={filters.dateTo}
             onChange={(e) => onFiltersChange({ ...filters, dateTo: e.target.value })}
-            className="input input-bordered w-full"
+            className="input w-full"
           />
-        </div>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Has Score</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Has Score</legend>
           <select
-            className="select select-bordered w-full"
+            className="select w-full"
             value={filters.hasScore}
             onChange={(e) => onFiltersChange({ ...filters, hasScore: e.target.value })}
           >
@@ -55,7 +49,7 @@ const GameFilters: React.FC<Props> = ({ filters, onFiltersChange }) => {
             <option value="yes">With Scores</option>
             <option value="no">Without Scores</option>
           </select>
-        </div>
+        </fieldset>
 
         <PlayerFilter
           value={filters.playerId}

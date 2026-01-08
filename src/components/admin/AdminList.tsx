@@ -252,7 +252,7 @@ const AdminList: React.FC<AdminListProps> = ({ admins, roles, onUpdate }) => {
                 {editingAdminId === admin.id && admin.admin_roles && admin.admin_roles.length > 0 ? (
                   <div className="space-y-2">
                     <select
-                      className="select select-bordered select-sm w-full"
+                      className="select select-sm w-full"
                       value={selectedRoleId}
                       onChange={(e) => setSelectedRoleId(e.target.value)}
                     >

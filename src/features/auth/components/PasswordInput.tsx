@@ -75,7 +75,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   const passwordsMatch = isConfirm ? value === confirmValue : true;
 
   return (
-    <div className="form-control w-full">
+    <div className="w-full">
       <div className="relative">
         <Tooltip content={isConfirm ? 'Passwords must match' : requirementsText}>
           <input
@@ -85,7 +85,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
-            className={`input input-bordered w-full ${
+            className={`input w-full ${
               isConfirm && value && !passwordsMatch ? 'input-error' : ''
             }`}
             required={required}
@@ -112,11 +112,9 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
 
       {/* Show match indicator for confirm password */}
       {isConfirm && value && (
-        <label className="label">
-          <span className={`label-text-alt ${passwordsMatch ? 'text-success' : 'text-error'}`}>
-            {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
-          </span>
-        </label>
+        <p className={`fieldset-label ${passwordsMatch ? 'text-success' : 'text-error'}`}>
+          {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+        </p>
       )}
     </div>
   );

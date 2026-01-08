@@ -10,6 +10,11 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<any>;
   signUp: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
+  // Session health and recovery properties (optional for backwards compatibility)
+  sessionHealth?: 'healthy' | 'degraded' | 'unhealthy';
+  isRecovering?: boolean;
+  recoverSession?: () => Promise<boolean>;
+  getSessionDiagnostics?: () => Record<string, any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

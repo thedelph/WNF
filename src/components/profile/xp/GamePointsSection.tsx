@@ -1,9 +1,15 @@
 import React from 'react';
 import clsx from 'clsx';
-import { GameHistory } from '../../../types/game';
+
+// Local interface for XP calculation game history (different from profile GameHistory type)
+interface XPGameHistory {
+  sequence: number;
+  status: string;
+  unpaid?: boolean;
+}
 
 interface GamePointsSectionProps {
-  gameHistory: GameHistory[];
+  gameHistory: XPGameHistory[];
   latestSequence: number;
   baseXP: number;
 }

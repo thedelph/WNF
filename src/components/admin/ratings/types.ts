@@ -46,6 +46,37 @@ export interface Rating {
   previous_position_3rd?: Position | null;
 }
 
+/**
+ * Represents a rating given by a rater (used in rater statistics)
+ */
+export interface RatingGiven {
+  id: string;
+  attack_rating: number;
+  defense_rating: number;
+  game_iq_rating: number;
+  gk_rating: number;
+  created_at: string;
+  updated_at?: string;
+  playstyle_id?: string | null;
+  playstyle?: {
+    id: string;
+    name: string;
+    category: 'attacking' | 'midfield' | 'defensive';
+  } | null;
+  rated_player: {
+    id: string;
+    friendly_name: string;
+  };
+  rater: {
+    id: string;
+    friendly_name: string;
+    is_admin: boolean;
+  };
+  position_1st?: Position | null;
+  position_2nd?: Position | null;
+  position_3rd?: Position | null;
+}
+
 export interface Player {
   id: string;
   friendly_name: string;
@@ -54,6 +85,8 @@ export interface Player {
   game_iq: number;
   average_gk_rating: number;
   ratings: Rating[];
+  // Ratings given by this player (when used as a rater)
+  ratings_given?: RatingGiven[];
   // Derived attributes from playstyle ratings
   derived_attributes?: {
     pace: number;

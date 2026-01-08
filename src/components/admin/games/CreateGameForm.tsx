@@ -446,16 +446,14 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     <FormContainer title="Create New Game">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Game Phase Selection */}
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Game Phase</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Game Phase</legend>
           <select
             value={gamePhase}
             onChange={(e) => {
               const newPhase = e.target.value as GameStatus;
               setGamePhase(newPhase);
-              
+
               // Reset parsed counts when changing phase
               setParsedCounts({
                 selected: 0,
@@ -471,20 +469,20 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
                 droppedOut: 0
               });
               setUnmatchedPlayers([]);
-              
+
               // Set team announcement time when switching to Player Selection Phase
               if (newPhase === GAME_STATUSES.PLAYERS_ANNOUNCED && date && time) {
                 const gameDateTime = `${date}T${time}`;
                 setTeamAnnouncementTime(calculateTeamAnnouncementTime(gameDateTime));
               }
             }}
-            className="select select-bordered w-full"
+            className="select w-full"
           >
             <option value={GAME_STATUSES.UPCOMING}>Upcoming Game</option>
             <option value={GAME_STATUSES.PLAYERS_ANNOUNCED}>Player Selection Phase</option>
             <option value={GAME_STATUSES.TEAMS_ANNOUNCED}>Team Announcement Phase</option>
           </select>
-        </div>
+        </fieldset>
 
         {/* Game Details Paste */}
         <GameDetailsPaste

@@ -22,7 +22,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="input input-bordered w-full pl-10"
+        className="input w-full pl-10"
       />
       <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
     </div>

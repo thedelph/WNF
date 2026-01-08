@@ -135,28 +135,26 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
     <div className="p-4 border rounded-lg bg-base-100">
       <h3 className="text-lg font-semibold mb-4">Add Player</h3>
       <div className="flex flex-col gap-4">
-        <div className="form-control">
+        <fieldset className="fieldset">
           <Tooltip content="Search for a player to add to the game">
             <input
               type="text"
               placeholder="Search players..."
-              className="input input-bordered w-full"
+              className="input w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Tooltip>
-        </div>
+        </fieldset>
 
         {loading && <div className="text-gray-500">Searching...</div>}
 
         {players.length > 0 && (
           <div className="flex flex-col gap-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Select Player</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Select Player</legend>
               <select
-                className="select select-bordered"
+                className="select"
                 value={selectedPlayer?.id || ''}
                 onChange={(e) => {
                   const player = players.find(p => p.id === e.target.value)
@@ -170,16 +168,14 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
                   </option>
                 ))}
               </select>
-            </div>
+            </fieldset>
 
             {selectedPlayer && (
               <>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Assign To</span>
-                  </label>
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Assign To</legend>
                   <select
-                    className="select select-bordered"
+                    className="select"
                     value={selectedTeam || ''}
                     onChange={(e) => {
                       const value = e.target.value
@@ -191,14 +187,12 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
                     <option value="blue">Blue Team</option>
                     <option value="orange">Orange Team</option>
                   </select>
-                </div>
+                </fieldset>
 
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Status</span>
-                  </label>
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Status</legend>
                   <select
-                    className="select select-bordered"
+                    className="select"
                     value={selectedStatus}
                     onChange={handleStatusChange}
                   >
@@ -212,7 +206,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
                       <option value="selected">Selected</option>
                     )}
                   </select>
-                </div>
+                </fieldset>
 
                 {showDatePicker && (
                   <div>
@@ -224,7 +218,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
                       max={format(new Date(), 'yyyy-MM-dd')}
-                      className="input input-bordered w-full"
+                      className="input w-full"
                     />
                     <p className="text-sm text-base-content/70 mt-1">
                       {format(new Date(selectedDate), 'yyyy-MM-dd') === format(parsedGameDate, 'yyyy-MM-dd')

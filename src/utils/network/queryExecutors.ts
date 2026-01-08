@@ -8,10 +8,10 @@ import { RetryOptions, defaultOptions, calculateNextDelay, wait } from './retryC
  * @param queryFn - Function that returns a Supabase query promise
  * @param options - Retry configuration options
  */
-export async function executeWithRetry<T>(
+export async function executeWithRetry<T = any>(
   queryFn: () => Promise<{ data: T | null; error: PostgrestError | null }>,
   options: RetryOptions = {}
-): Promise<{ data: T | null; error: PostgrestError | null }> {
+): Promise<{ data: T; error: PostgrestError | null }> {
   const { maxRetries = defaultOptions.maxRetries, initialDelay = defaultOptions.initialDelay, maxDelay = defaultOptions.maxDelay, shouldToast = defaultOptions.shouldToast } = options;
   let attempt = 0;
   let delay = initialDelay;

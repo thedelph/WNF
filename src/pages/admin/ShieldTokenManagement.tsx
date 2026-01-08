@@ -296,7 +296,7 @@ const ShieldTokenManagement: React.FC = () => {
         <input
           type="text"
           placeholder="Search players by name..."
-          className="input input-bordered w-full max-w-md"
+          className="input w-full max-w-md"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

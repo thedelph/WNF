@@ -73,7 +73,7 @@ export const VenueForm: React.FC<VenueFormProps> = ({
         </label>
         <input
           type="text"
-          className="input input-bordered w-full"
+          className="input w-full"
           value={venueName}
           onChange={(e) => setVenueName(e.target.value)}
           required
@@ -86,7 +86,7 @@ export const VenueForm: React.FC<VenueFormProps> = ({
         </label>
         <input
           type="text"
-          className="input input-bordered w-full"
+          className="input w-full"
           value={venueAddress}
           onChange={(e) => setVenueAddress(e.target.value)}
           required
@@ -99,15 +99,15 @@ export const VenueForm: React.FC<VenueFormProps> = ({
         </label>
         <input
           type="url"
-          className="input input-bordered w-full"
+          className="input w-full"
           value={googleMapsUrl}
           onChange={(e) => setGoogleMapsUrl(e.target.value)}
         />
       </div>
 
-      <div className="form-control">
+      <fieldset className="fieldset">
         <label className="label cursor-pointer">
-          <span className="label-text">Set as Default Venue</span>
+          <legend className="fieldset-legend">Set as Default Venue</legend>
           <input
             type="checkbox"
             className="checkbox"
@@ -115,7 +115,7 @@ export const VenueForm: React.FC<VenueFormProps> = ({
             onChange={(e) => setIsDefault(e.target.checked)}
           />
         </label>
-      </div>
+      </fieldset>
 
       <div className="flex justify-end space-x-2">
         <button

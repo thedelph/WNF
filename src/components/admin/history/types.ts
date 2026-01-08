@@ -1,4 +1,7 @@
-import { Game, Notification, Player } from '../../../types/game'
+import { Game, Player } from '../../../types/game'
+
+// Re-export Player type for use by form components
+export type { Player }
 
 export interface GameCompletionFormProps {
   game: Game
@@ -7,12 +10,17 @@ export interface GameCompletionFormProps {
 
 export interface StatusChange {
   id: string
-  playerId: string
-  fromStatus: string
-  toStatus: string
-  changeType: 'dropout' | 'slot_offer' | 'slot_response'
-  createdAt: string
-  isGameDay: boolean
+  player_id: string
+  game_id: string
+  from_status: string
+  to_status: string
+  change_type: 'dropout' | 'slot_offer' | 'slot_response'
+  created_at: string
+  is_game_day: boolean
+  player?: {
+    id: string
+    friendly_name: string
+  }
 }
 
 export type PlayerStatus = 'selected' | 'registered' | 'reserve' | 'reserve_declined' | 'dropped_out'
@@ -30,8 +38,9 @@ export interface TeamSectionProps {
   showUnassigned?: boolean
   gameDate: Date
   onTeamChange: (playerId: string, team: 'blue' | 'orange' | null) => void
-  onStatusChange: (playerId: string, status: PlayerStatus, changeDate: Date, isGameDay: boolean) => void
+  onStatusChange: (playerId: string, status: PlayerStatus, changeDate: Date, isGameDay: boolean, wasReserve?: boolean) => void
   onPaymentStatusChange: (playerId: string, status: 'unpaid' | 'marked_paid' | 'admin_verified') => void
+  onRemovePlayer: (playerId: string) => void
 }
 
 export interface ScoreInputProps {

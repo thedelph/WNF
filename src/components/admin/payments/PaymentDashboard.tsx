@@ -221,9 +221,9 @@ const PaymentDashboard: React.FC = () => {
       
       {/* Responsive control panel */}
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-        <div className="form-control">
-          <label className="label cursor-pointer justify-start">
-            <span className="label-text mr-2">Show Archived</span>
+        <fieldset className="fieldset">
+          <label className="flex items-center cursor-pointer justify-start">
+            <span className="mr-2">Show Archived</span>
             <input
               type="checkbox"
               className="toggle toggle-primary"
@@ -231,12 +231,12 @@ const PaymentDashboard: React.FC = () => {
               onChange={(e) => setShowArchived(e.target.checked)}
             />
           </label>
-        </div>
+        </fieldset>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <input
             type="date"
-            className="input input-bordered w-full sm:w-auto"
+            className="input w-full sm:w-auto"
             onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : null)}
           />
           <button

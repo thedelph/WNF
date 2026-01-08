@@ -188,6 +188,7 @@ export default function StandaloneStats() {
           <ParallaxSection>
             <StatsCard
               title="Best Win Rates"
+              value=""
               stats={stats.bestWinRates}
               icon={<Percent className="w-6 h-6" />}
               description="Stats based on games with known outcomes and even teams only"

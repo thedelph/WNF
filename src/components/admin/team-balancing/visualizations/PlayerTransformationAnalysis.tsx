@@ -44,30 +44,30 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
 
 
   // Extract transformation data from teams if not in playerTransformations
-  const transformations = useMemo(() => {
+  const transformations: PlayerTransformation[] = useMemo(() => {
     // Always use team data since it has the full player objects with performance scores
     const allPlayers = [...(data.blueTeam || []), ...(data.orangeTeam || [])];
-    
-    
+
+
     // If we have playerTransformations, merge with team data to get performance scores
     if (data.playerTransformations && data.playerTransformations.length > 0) {
-      return data.playerTransformations.map(transformedPlayer => {
+      return data.playerTransformations.map((transformedPlayer): PlayerTransformation => {
         // Find the corresponding player in team data to get performance scores
         const fullPlayer = allPlayers.find(p => p.friendly_name === transformedPlayer.name);
-        
+
         if (fullPlayer) {
-          const hasPerformanceData = fullPlayer.overallPerformanceScore !== undefined && 
+          const hasPerformanceData = fullPlayer.overallPerformanceScore !== undefined &&
                                     fullPlayer.recentFormScore !== undefined;
-          
+
           // Get playstyle info if available
-          let playstyle = undefined;
-          let topAttributes = undefined;
-          
-          if (fullPlayer.playstyle_id) {
+          let playstyle: string | undefined = undefined;
+          let topAttributes: Array<{ name: string; value: number }> | undefined = undefined;
+
+          if (fullPlayer.derived_attributes?.mostCommonPlaystyleId) {
             // We'll need to fetch this or pass it in
             playstyle = 'Playstyle'; // Placeholder - will be fetched
           }
-          
+
           if (fullPlayer.derived_attributes) {
             const attrs = fullPlayer.derived_attributes;
             const attrArray = [
@@ -80,7 +80,7 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
             ].sort((a, b) => b.value - a.value).slice(0, 2);
             topAttributes = attrArray;
           }
-          
+
           return {
             ...transformedPlayer,
             // Add performance scores from full player data
@@ -88,34 +88,46 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
             recentPerformance: hasPerformanceData ? fullPlayer.recentFormScore : undefined,
             momentumScore: hasPerformanceData ? fullPlayer.momentumScore : undefined,
             // Add raw stats if available
-            overallWinRate: fullPlayer.overall_win_rate,
-            recentWinRate: fullPlayer.win_rate,
-            overallGoalDiff: fullPlayer.overall_goal_differential,
-            recentGoalDiff: fullPlayer.goal_differential,
+            overallWinRate: fullPlayer.overall_win_rate ?? undefined,
+            recentWinRate: fullPlayer.win_rate ?? undefined,
+            overallGoalDiff: fullPlayer.overall_goal_differential ?? undefined,
+            recentGoalDiff: fullPlayer.goal_differential ?? undefined,
             // Add playstyle info
             playstyle,
             topAttributes
           };
         }
-        
-        return transformedPlayer;
+
+        // Return base transformation without full player data
+        return {
+          ...transformedPlayer,
+          overallPerformance: undefined,
+          recentPerformance: undefined,
+          momentumScore: undefined,
+          overallWinRate: undefined,
+          recentWinRate: undefined,
+          overallGoalDiff: undefined,
+          recentGoalDiff: undefined,
+          playstyle: undefined,
+          topAttributes: undefined
+        };
       });
     }
     
     // Fallback: create transformations from team data
-    return allPlayers.map(player => {
+    return allPlayers.map((player): PlayerTransformation => {
       // Use performance scores from tier-based algorithm
-      const hasPerformanceData = player.overallPerformanceScore !== undefined && 
+      const hasPerformanceData = player.overallPerformanceScore !== undefined &&
                                 player.recentFormScore !== undefined;
-      
+
       // Get playstyle info if available
-      let playstyle = undefined;
-      let topAttributes = undefined;
-      
-      if (player.playstyle_id) {
+      let playstyle: string | undefined = undefined;
+      let topAttributes: Array<{ name: string; value: number }> | undefined = undefined;
+
+      if (player.derived_attributes?.mostCommonPlaystyleId) {
         playstyle = 'Playstyle'; // Placeholder - will be fetched
       }
-      
+
       if (player.derived_attributes) {
         const attrs = player.derived_attributes;
         const attrArray = [
@@ -128,23 +140,23 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
         ].sort((a, b) => b.value - a.value).slice(0, 2);
         topAttributes = attrArray;
       }
-      
+
       return {
         name: player.friendly_name,
         baseSkill: player.baseSkillRating || 0,
         threeLayerRating: player.threeLayerRating || 0,
         change: (player.threeLayerRating || 0) - (player.baseSkillRating || 0),
         performanceCategory: '',
-        momentum: player.momentumCategory as 'hot' | 'cold' | 'steady' || 'steady',
+        momentum: (player.momentumCategory as 'hot' | 'cold' | 'steady') || 'steady',
         // Store performance scores for heatmap
         overallPerformance: hasPerformanceData ? player.overallPerformanceScore : undefined,
         recentPerformance: hasPerformanceData ? player.recentFormScore : undefined,
         momentumScore: hasPerformanceData ? player.momentumScore : undefined,
         // Keep original values for display if available
-        overallWinRate: player.overall_win_rate,
-        recentWinRate: player.win_rate,
-        overallGoalDiff: player.overall_goal_differential,
-        recentGoalDiff: player.goal_differential,
+        overallWinRate: player.overall_win_rate ?? undefined,
+        recentWinRate: player.win_rate ?? undefined,
+        overallGoalDiff: player.overall_goal_differential ?? undefined,
+        recentGoalDiff: player.goal_differential ?? undefined,
         // Add playstyle info
         playstyle,
         topAttributes

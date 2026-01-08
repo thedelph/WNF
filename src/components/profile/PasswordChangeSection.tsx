@@ -164,9 +164,9 @@ export default function PasswordChangeSection({ onClose }: PasswordChangeSection
       }
       
       // Now use the new session to update the password
+      // Note: updateUser uses the current session from tempClient automatically
       const { error } = await tempClient.auth.updateUser(
-        { password: newPassword },
-        { session: data.session }
+        { password: newPassword }
       )
       
       if (error) {
@@ -229,20 +229,18 @@ export default function PasswordChangeSection({ onClose }: PasswordChangeSection
       {passwordResetStep === 'verify' ? (
         // Step 1: Verify current password
         <form onSubmit={handleVerify}>
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">Current Password</span>
-            </label>
+          <fieldset className="fieldset mb-4">
+            <legend className="fieldset-legend">Current Password</legend>
             <div className="relative">
               <input
                 type={showCurrentPassword ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="input input-bordered w-full pr-10"
+                className="input w-full pr-10"
                 placeholder="Enter your current password"
                 required
               />
-              <button 
+              <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
@@ -261,16 +259,14 @@ export default function PasswordChangeSection({ onClose }: PasswordChangeSection
               </button>
             </div>
             <Tooltip content="Your current password is required for security reasons">
-              <label className="label cursor-pointer">
-                <span className="label-text-alt text-info flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Verification required
-                </span>
-              </label>
+              <p className="fieldset-label text-info flex items-center gap-1 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Verification required
+              </p>
             </Tooltip>
-          </div>
+          </fieldset>
           <div className="flex gap-2 justify-end">
             <button
               type="button"
@@ -292,21 +288,19 @@ export default function PasswordChangeSection({ onClose }: PasswordChangeSection
       ) : (
         // Step 2: Reset password
         <form onSubmit={handleReset}>
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">New Password</span>
-            </label>
+          <fieldset className="fieldset mb-4">
+            <legend className="fieldset-legend">New Password</legend>
             <div className="relative">
               <input
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="input input-bordered w-full pr-10"
+                className="input w-full pr-10"
                 placeholder="Enter new password"
                 minLength={8}
                 required
               />
-              <button 
+              <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
                 onClick={() => setShowNewPassword(!showNewPassword)}
@@ -324,24 +318,20 @@ export default function PasswordChangeSection({ onClose }: PasswordChangeSection
                 )}
               </button>
             </div>
-            <label className="label">
-              <span className="label-text-alt text-info">Password must be at least 8 characters</span>
-            </label>
-          </div>
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">Confirm New Password</span>
-            </label>
+            <p className="fieldset-label text-info">Password must be at least 8 characters</p>
+          </fieldset>
+          <fieldset className="fieldset mb-4">
+            <legend className="fieldset-legend">Confirm New Password</legend>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input input-bordered w-full pr-10"
+                className="input w-full pr-10"
                 placeholder="Confirm new password"
                 required
               />
-              <button 
+              <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -359,7 +349,7 @@ export default function PasswordChangeSection({ onClose }: PasswordChangeSection
                 )}
               </button>
             </div>
-          </div>
+          </fieldset>
           <div className="flex gap-2 justify-end">
             <button
               type="button"

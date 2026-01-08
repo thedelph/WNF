@@ -353,15 +353,15 @@ const TokenManagement: React.FC = () => {
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <div className="flex justify-between items-center mb-6">
-            <div className="form-control w-full max-w-xs">
+            <fieldset className="fieldset w-full max-w-xs">
               <input
                 type="text"
                 placeholder="Search players..."
-                className="input input-bordered w-full"
+                className="input w-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </div>
+            </fieldset>
 
             <TokenStats tokens={allTokens} />
           </div>

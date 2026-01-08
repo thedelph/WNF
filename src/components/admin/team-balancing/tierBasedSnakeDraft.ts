@@ -2,7 +2,7 @@ import { TeamAssignment } from './types';
 import { calculateBalanceScore } from '../../../utils/teamBalancing';
 import { attachPrimaryPositions, evaluateSwapPositionImpact, logPositionBalanceStatus, checkIndividualPositionBalance, PlayerWithPositions } from '../../../utils/positionBalancing';
 import { comparePositionBalance } from '../../../utils/positionClassifier';
-import { PositionConsensus } from '../../../types/positions';
+import { Position, PositionConsensus } from '../../../types/positions';
 
 // Configuration constants for the three-layer system
 const WEIGHT_SKILL = 0.60;      // 60% base skills (Attack/Defense/Game IQ/GK - 15% each)
@@ -401,7 +401,7 @@ export interface PlayerWithRating extends TeamAssignment {
   momentumAdjustment?: number;
   tier?: number;
   positions?: PositionConsensus[];
-  primaryPosition?: string | null;
+  primaryPosition?: Position | null;
 }
 
 export interface TierInfo {

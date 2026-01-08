@@ -313,8 +313,18 @@ Returns chemistry stats for all trios within a given player list. Returns games_
 - `src/types/awards.ts` - Added `cursed_trio` to AwardCategory, `achievedDate` to LiveAward
 
 ## Related Documentation
+
+### Core System Docs
+- [Rivalry System](RivalrySystem.md) - Detailed rivalry documentation
+- [Trio Chemistry](TrioChemistry.md) - Detailed trio chemistry documentation
+- [Awards System](AwardsSystem.md) - Hall of Fame awards including chemistry awards
+
+### Stats & Display
 - [Player Stats Overview](../PlayerStatsFeaturesOverview.md)
 - [Win Rate Explainer](../WinRateExplainer.md)
 - [Performance Stats Component](../components/PerformanceStats.md)
+
+### Algorithm Integration
 - [Team Balancing](TeamBalancing.md)
+- [Brute-Force Optimal Algorithm](../algorithms/BruteForceOptimalAlgorithm.md)
 - [Team Balancing Algorithm Evolution](../algorithms/TeamBalancingEvolution.md)

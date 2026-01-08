@@ -3,7 +3,6 @@ import { supabase, supabaseAdmin } from '../utils/supabase';
 import { useUser } from '../hooks/useUser';
 import { motion } from 'framer-motion';
 import { UserCog } from 'lucide-react';
-import { NotificationButtons } from '../components/notifications/NotificationButtons';
 import { NotificationItem } from '../components/notifications/NotificationItem';
 import { SlotOfferItem } from '../components/notifications/SlotOfferItem';
 import { NotificationHistory } from '../components/notifications/NotificationHistory';
@@ -225,7 +224,7 @@ const NotificationsPage = () => {
 
       {/* Tabs for admin view */}
       {player.isAdmin && showAdminView && (
-        <div className="tabs tabs-boxed mb-6">
+        <div className="tabs tabs-box mb-6">
           <button
             className={`tab ${!showAdminView ? 'tab-active' : ''}`}
             onClick={() => setShowAdminView(false)}

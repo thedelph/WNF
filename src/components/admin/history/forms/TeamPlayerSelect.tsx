@@ -26,10 +26,8 @@ const TeamPlayerSelect: React.FC<Props> = ({
       transition={{ duration: 0.3 }}
     >
       {['blue', 'orange'].map((team) => (
-        <div key={team} className="form-control">
-          <label className="label">
-            <span className="label-text font-semibold">{team.charAt(0).toUpperCase() + team.slice(1)} Team Players</span>
-          </label>
+        <fieldset key={team} className="fieldset">
+          <legend className="fieldset-legend font-semibold">{team.charAt(0).toUpperCase() + team.slice(1)} Team Players</legend>
           <select
             multiple
             value={selectedPlayers[team as 'blue' | 'orange']}
@@ -37,11 +35,11 @@ const TeamPlayerSelect: React.FC<Props> = ({
               team as 'blue' | 'orange',
               Array.from(e.target.selectedOptions, option => option.value)
             )}
-            className="select select-bordered h-48 overflow-y-auto"
+            className="select h-48 overflow-y-auto"
           >
             {players.map(player => (
-              <option 
-                key={player.id} 
+              <option
+                key={player.id}
                 value={player.id}
                 disabled={selectedPlayers[team === 'blue' ? 'orange' : 'blue'].includes(player.id)}
                 className={`py-2 px-4 ${selectedPlayers[team as 'blue' | 'orange'].includes(player.id) ? 'bg-primary text-primary-content' : ''}`}
@@ -50,10 +48,10 @@ const TeamPlayerSelect: React.FC<Props> = ({
               </option>
             ))}
           </select>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="fieldset-label">
             Selected: {selectedPlayers[team as 'blue' | 'orange'].length}
           </p>
-        </div>
+        </fieldset>
       ))}
     </motion.div>
   )

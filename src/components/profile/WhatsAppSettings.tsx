@@ -158,10 +158,8 @@ export default function WhatsAppSettings({
           className="bg-base-300 rounded-lg p-4 space-y-4"
         >
           {/* Group Member Status */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-semibold">Are you in the WhatsApp group?</span>
-            </label>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend font-semibold">Are you in the WhatsApp group?</legend>
             <select
               value={groupMember}
               onChange={(e) => {
@@ -172,26 +170,26 @@ export default function WhatsAppSettings({
                   setPhoneError('')
                 }
               }}
-              className="select select-bordered w-full"
+              className="select w-full"
             >
               <option value="">Select status</option>
               <option value="Yes">Yes - I'm in the group</option>
               <option value="No">No - Not in the group</option>
               <option value="Proxy">Proxy - Someone else registers for me</option>
             </select>
-          </div>
+          </fieldset>
 
           {/* Phone Number Input */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-semibold">
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend font-semibold flex items-center justify-between w-full">
+              <span>
                 WhatsApp Mobile Number
                 {groupMember === 'Yes' && <span className="text-error ml-1">*</span>}
               </span>
-              <span className="label-text-alt text-base-content/70">
+              <span className="text-base-content/70 font-normal text-sm">
                 Format: +447123456789
               </span>
-            </label>
+            </legend>
             <input
               type="tel"
               value={phoneNumber}
@@ -205,25 +203,21 @@ export default function WhatsAppSettings({
               }}
               pattern="^\+[1-9]\d{1,14}$"
               placeholder="+447123456789"
-              className={`input input-bordered w-full ${phoneError ? 'input-error' : ''} ${
+              className={`input w-full ${phoneError ? 'input-error' : ''} ${
                 groupMember !== 'Yes' ? 'input-disabled' : ''
               }`}
               disabled={groupMember !== 'Yes'}
               required={groupMember === 'Yes'}
             />
             {phoneError && (
-              <label className="label">
-                <span className="label-text-alt text-error">{phoneError}</span>
-              </label>
+              <p className="fieldset-label text-error">{phoneError}</p>
             )}
             {!phoneError && groupMember === 'Yes' && (
-              <label className="label">
-                <span className="label-text-alt text-info">
-                  Include country code (e.g., +44 for UK, +1 for US)
-                </span>
-              </label>
+              <p className="fieldset-label text-info">
+                Include country code (e.g., +44 for UK, +1 for US)
+              </p>
             )}
-          </div>
+          </fieldset>
 
           {/* Action Buttons */}
           <div className="flex gap-2">

@@ -5,17 +5,6 @@ import { TeamSectionProps, PlayerWithTeam, StatusChange } from './types'
 import { Tooltip } from '../../../components/ui/Tooltip'
 import { StatusChangeForm } from './StatusChangeForm'
 
-export interface TeamSectionProps {
-  players: PlayerWithTeam[]
-  teamColor?: 'blue' | 'orange'
-  showUnassigned?: boolean
-  gameDate: Date
-  onTeamChange: (playerId: string, team: 'blue' | 'orange' | null) => void
-  onStatusChange: (playerId: string, status: PlayerWithTeam['status'], changeDate: Date, isGameDay: boolean, wasReserve?: boolean) => void
-  onPaymentStatusChange: (playerId: string, status: 'unpaid' | 'marked_paid' | 'admin_verified') => void
-  onRemovePlayer: (playerId: string) => void
-}
-
 export const TeamSection: React.FC<TeamSectionProps> = ({
   players,
   teamColor,
@@ -41,13 +30,13 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
 
     return player.statusChanges.map((change, index) => {
       let description = ''
-      if (change.changeType === 'dropout') {
-        description = `Dropped out ${change.isGameDay ? 'on' : 'before'} game day`
-      } else if (change.changeType === 'slot_response') {
-        if (change.toStatus === 'selected') {
-          description = `Accepted slot ${change.isGameDay ? 'on' : 'before'} game day`
+      if (change.change_type === 'dropout') {
+        description = `Dropped out ${change.is_game_day ? 'on' : 'before'} game day`
+      } else if (change.change_type === 'slot_response') {
+        if (change.to_status === 'selected') {
+          description = `Accepted slot ${change.is_game_day ? 'on' : 'before'} game day`
         } else {
-          description = `Declined slot ${change.isGameDay ? 'on' : 'before'} game day`
+          description = `Declined slot ${change.is_game_day ? 'on' : 'before'} game day`
         }
       }
 
@@ -55,7 +44,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
         <div key={index} className="mb-1">
           <span>{description}</span>
           <span className="text-sm text-gray-500 ml-2">
-            {format(new Date(change.timestamp), 'MMM d, HH:mm')}
+            {format(new Date(change.created_at), 'MMM d, HH:mm')}
           </span>
         </div>
       )

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabaseAdmin } from '../../../utils/supabase'
 import { toast } from 'react-hot-toast'
+import { ALL_POSITIONS } from '../../../constants/positions'
 
 interface BulkCreateTestUsersModalProps {
   isOpen: boolean
@@ -21,7 +22,7 @@ const BulkCreateTestUsersModal: React.FC<BulkCreateTestUsersModalProps> = ({
     try {
       const testUsers = Array.from({ length: count }, (_, i) => ({
         friendly_name: `Test User ${i + 1}`,
-        preferred_position: positions[Math.floor(Math.random() * positions.length)],
+        preferred_position: ALL_POSITIONS[Math.floor(Math.random() * ALL_POSITIONS.length)],
         is_test_user: true,
         caps: 0,
         xp: 0,
@@ -60,20 +61,18 @@ const BulkCreateTestUsersModal: React.FC<BulkCreateTestUsersModalProps> = ({
           >
             <h2 className="text-2xl font-bold mb-4">Bulk Create Test Users</h2>
             <form onSubmit={handleCreateTestUsers}>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Number of Users to Create</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Number of Users to Create</legend>
                 <input
                   type="number"
-                  className="input input-bordered"
+                  className="input"
                   value={count}
                   onChange={(e) => setCount(parseInt(e.target.value))}
                   min="1"
                   max="50"
                   required
                 />
-              </div>
+              </fieldset>
 
               <div className="mt-6 flex gap-4">
                 <motion.button

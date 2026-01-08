@@ -68,25 +68,21 @@ const CreateTestUserModal: React.FC<CreateTestUserModalProps> = ({
           >
             <h2 className="text-2xl font-bold mb-4">Create Test User</h2>
             <form onSubmit={handleCreateTestUser}>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Friendly Name</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Friendly Name</legend>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input"
                   value={formData.friendly_name}
                   onChange={(e) => setFormData({...formData, friendly_name: e.target.value})}
                   required
                 />
-              </div>
+              </fieldset>
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Preferred Position</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Preferred Position</legend>
                 <select
-                  className="select select-bordered"
+                  className="select"
                   value={formData.preferred_position}
                   onChange={(e) => setFormData({...formData, preferred_position: e.target.value})}
                 >
@@ -95,49 +91,43 @@ const CreateTestUserModal: React.FC<CreateTestUserModalProps> = ({
                     <option key={pos} value={pos}>{pos}</option>
                   ))}
                 </select>
-              </div>
+              </fieldset>
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Attack Rating</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Attack Rating</legend>
                 <input
                   type="number"
-                  className="input input-bordered"
+                  className="input"
                   value={formData.attack_rating}
                   onChange={(e) => setFormData({...formData, attack_rating: e.target.value ? parseInt(e.target.value) : undefined})}
                   min="1"
                   max="10"
                 />
-              </div>
+              </fieldset>
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Defense Rating</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Defense Rating</legend>
                 <input
                   type="number"
-                  className="input input-bordered"
+                  className="input"
                   value={formData.defense_rating}
                   onChange={(e) => setFormData({...formData, defense_rating: e.target.value ? parseInt(e.target.value) : undefined})}
                   min="1"
                   max="10"
                 />
-              </div>
+              </fieldset>
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Initial Caps</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Initial Caps</legend>
                 <input
                   type="number"
-                  className="input input-bordered"
+                  className="input"
                   value={formData.caps}
                   onChange={(e) => setFormData({...formData, caps: parseInt(e.target.value)})}
                   min="0"
                   required
                 />
-              </div>
+              </fieldset>
 
               <div className="mt-6 flex gap-4">
                 <motion.button

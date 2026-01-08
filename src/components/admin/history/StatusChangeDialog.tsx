@@ -60,7 +60,7 @@ export const StatusChangeDialog: React.FC<StatusChangeDialogProps> = ({
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               max={format(new Date(), 'yyyy-MM-dd')}
-              className="input input-bordered w-full"
+              className="input w-full"
             />
           </div>
 

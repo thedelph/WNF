@@ -55,8 +55,37 @@ export function useTokenStatus(playerId: string) {
       try {
         setLoading(true);
         
+        // Define types for query results
+        interface LatestGameData {
+          sequence_number: number;
+        }
+
+        interface GameIdData {
+          id: string;
+          sequence_number: number;
+        }
+
+        interface PlayerWhatsAppData {
+          whatsapp_group_member: string | null;
+        }
+
+        interface GameRegistrationData {
+          game_id: string;
+          status: string;
+        }
+
+        interface UnpaidRegistrationData {
+          id: string;
+          games: {
+            id: string;
+            date: string;
+            is_historical: boolean;
+            completed: boolean;
+          };
+        }
+
         // Get latest sequence number first
-        const { data: latestGameData, error: latestGameError } = await executeWithRetry(
+        const { data: latestGameData, error: latestGameError } = await executeWithRetry<LatestGameData>(
           async () => {
             const result = await supabase
               .from('games')
@@ -76,9 +105,7 @@ export function useTokenStatus(playerId: string) {
           console.error('Error fetching latest game:', latestGameError);
         }
 
-        // Safely cast the data
-        const latestGame = latestGameData as GameRecord | null;
-        const latestSequence = latestGame?.sequence_number || 0;
+        const latestSequence = latestGameData?.sequence_number || 0;
         const lastThreeSequences = [latestSequence, latestSequence - 1, latestSequence - 2];
         const lastTenSequences = Array.from(
           { length: 10 }, 
@@ -111,7 +138,7 @@ export function useTokenStatus(playerId: string) {
           : null;
 
         // Get player data to check WhatsApp member status
-        const { data: playerData, error: playerError } = await executeWithRetry(
+        const { data: playerData, error: playerError } = await executeWithRetry<PlayerWhatsAppData>(
           async () => {
             const result = await supabase
               .from('players')
@@ -131,11 +158,11 @@ export function useTokenStatus(playerId: string) {
         }
 
         // Check if player is a WhatsApp group member
-        const whatsappGroupMember = playerData?.whatsapp_group_member === 'Yes' || 
+        const whatsappGroupMember = playerData?.whatsapp_group_member === 'Yes' ||
                                     playerData?.whatsapp_group_member === 'Proxy';
 
         // First, get the last 10 completed game IDs
-        const { data: last10Games, error: last10GamesError } = await executeWithRetry(
+        const { data: last10Games, error: last10GamesError } = await executeWithRetry<GameIdData[]>(
           async () => {
             const result = await supabase
               .from('games')
@@ -168,7 +195,7 @@ export function useTokenStatus(playerId: string) {
         let recentGamesError = null;
 
         if (last10GameIds.length > 0) {
-          const result = await executeWithRetry(
+          const result = await executeWithRetry<GameRegistrationData[]>(
             async () => {
               const queryResult = await supabase
                 .from('game_registrations')
@@ -211,7 +238,7 @@ export function useTokenStatus(playerId: string) {
         });
 
         // Check for outstanding payments - query game_registrations directly
-        const { data: unpaidRegistrations, error: unpaidRegistrationsError } = await executeWithRetry(
+        const { data: unpaidRegistrations, error: unpaidRegistrationsError } = await executeWithRetry<UnpaidRegistrationData[]>(
           async () => {
             const result = await supabase
               .from('game_registrations')

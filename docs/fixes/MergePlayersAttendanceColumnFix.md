@@ -94,3 +94,41 @@ The `merge_players` function was further enhanced to:
 This prevents issues where merged accounts have incorrect caps (showing 0) or incorrect rarity tiers.
 
 See `docs/DatabaseFunctions.md` for the complete current behavior.
+
+## January 7, 2026 Fixes
+
+### Issue 1: Trophy Loss on Merge
+
+**Problem:** When merging players, trophies stored in `player_awards` were being cascade-deleted because the table wasn't included in the merge logic. The table has `ON DELETE CASCADE` on its foreign key to `players`, so when the source player was deleted at the end of the merge, all their trophies were lost.
+
+**Affected User:** Paul - lost all 6 trophies after merge (including 3 golds for XP Champion, Iron Man, and Dream Team Trio)
+
+**Fix:** Added comprehensive handling for `player_awards` table:
+- Transfer awards from source to target player (with conflict resolution for duplicates)
+- Update `partner_id` references for duo awards (dynamic_duo, best_buddies, fiercest_rivalry)
+- Update `partner2_id` references for trio awards (dream_team_trio, cursed_trio)
+
+**Migration:** `20260107_fix_merge_players_awards.sql`
+
+### Issue 2: XP Display Incorrect After Merge
+
+**Problem:** XP snapshots weren't preserving the `xp_v2` column during merge. This caused the "Highest XP" display to show incorrect values - instead of showing "Highest: 757 (v1: 1,630)", it would just show "Highest: 1,630" without the v1 indicator.
+
+**Root Cause:** The XP snapshot handling in `merge_players` didn't include `xp_v2` in the SELECT, UPDATE, or INSERT statements.
+
+**Fix:** Added `xp_v2` to all XP snapshot operations:
+```sql
+-- Before
+SELECT snapshot_date, xp, created_at, rank, rarity
+-- After
+SELECT snapshot_date, xp, xp_v2, created_at, rank, rarity
+```
+
+**Migration:** `20260107_fix_merge_players_xp_v2_snapshots.sql`
+
+### Data Recovery
+
+After fixing the function, Paul's data was restored:
+- Recalculated all awards via `SELECT * FROM calculate_awards(NULL)`
+- Updated his highest XP snapshot to include `xp_v2 = 757`
+- Result: 6 trophies restored including 3 golds

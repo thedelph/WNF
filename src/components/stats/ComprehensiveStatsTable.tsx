@@ -584,7 +584,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
             <input
               type="text"
               placeholder="Search players..."
-              className="input input-bordered w-full"
+              className="input w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

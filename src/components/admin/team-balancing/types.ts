@@ -57,10 +57,47 @@ export interface TeamAssignment {
 }
 
 export interface TeamComparison {
+  blue: {
+    attack: number;
+    defense: number;
+    gameIq: number;
+    gk: number;
+    winRate: number;
+    goalDifferential: number;
+    playerCount: number;
+  };
+  orange: {
+    attack: number;
+    defense: number;
+    gameIq: number;
+    gk: number;
+    winRate: number;
+    goalDifferential: number;
+    playerCount: number;
+  };
   attackDiff: number;
   defenseDiff: number;
-  ratingDiff: number;
-  sizeDiff: number;
+  gameIqDiff: number;
+  gkDiff: number;
+  winRateDiff: number;
+  goalDifferentialDiff: number;
+  currentScore: number;
+  // Normalized values for visualization
+  normalizedAttackDiff?: number;
+  normalizedDefenseDiff?: number;
+  normalizedGameIqDiff?: number;
+  normalizedGkDiff?: number;
+  normalizedWinRateDiff?: number;
+  normalizedGoalDiffDiff?: number;
+  normalizedWeightedAttackDiff?: number;
+  normalizedWeightedDefenseDiff?: number;
+  normalizedWeightedGameIqDiff?: number;
+  normalizedWeightedGkDiff?: number;
+  normalizedWeightedWinRateDiff?: number;
+  normalizedWeightedGoalDiffDiff?: number;
+  // Optional extra fields used in swap calculations
+  totalDiff?: number;
+  improvement?: number;
 }
 
 export interface Game {

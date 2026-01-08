@@ -321,12 +321,12 @@ const AdminManagement: React.FC = () => {
               </div>
 
               {/* Search Box */}
-              <div className="form-control w-full sm:w-auto">
+              <fieldset className="fieldset w-full sm:w-auto">
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Search admins..."
-                    className="input input-bordered w-full sm:w-80 pr-10"
+                    className="input w-full sm:w-80 pr-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -334,7 +334,7 @@ const AdminManagement: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
-              </div>
+              </fieldset>
             </div>
           </div>
 
@@ -392,12 +392,10 @@ const AdminManagement: React.FC = () => {
                 You will be redirected to the admin portal with their permissions.
               </p>
               
-              <div className="form-control mb-6">
-                <label className="label">
-                  <span className="label-text">Select Admin</span>
-                </label>
-                <select 
-                  className="select select-bordered w-full"
+              <fieldset className="fieldset mb-6">
+                <legend className="fieldset-legend">Select Admin</legend>
+                <select
+                  className="select w-full"
                   value={selectedViewAsAdmin || ''}
                   onChange={(e) => setSelectedViewAsAdmin(e.target.value || null)}
                 >
@@ -411,7 +409,7 @@ const AdminManagement: React.FC = () => {
                     } else if (admin.admin_roles?.length > 0) {
                       adminType = ` (${admin.admin_roles[0]?.role?.name || 'Role-based'})`
                     }
-                    
+
                     return (
                       <option key={admin.id} value={admin.id}>
                         {admin.friendly_name}{adminType}
@@ -419,7 +417,7 @@ const AdminManagement: React.FC = () => {
                     )
                   })}
                 </select>
-              </div>
+              </fieldset>
 
               {selectedViewAsAdmin && (
                 <div className="alert alert-warning mb-6">

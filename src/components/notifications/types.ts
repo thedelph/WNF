@@ -1,3 +1,5 @@
+export type AdminRole = 'super_admin' | 'admin' | 'moderator' | null;
+
 export interface Notification {
   id: string;
   player_id: string;
@@ -20,6 +22,8 @@ export interface SlotOffer {
   created_at: string;
   offered_at: string;
   responded_at: string | null;
+  accepted_at?: string | null;
+  rejected_at?: string | null;
   player: {
     id: string;
     friendly_name: string;

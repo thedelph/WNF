@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { toast } from 'react-hot-toast'
 import { supabaseAdmin } from '../../../utils/supabase'
-import { Notification } from '../../../types/game'
 import { GameCompletionFormProps, PlayerWithTeam, StatusChange } from './types'
 import { ScoreInput } from './ScoreInput'
 import { GameOutcome } from './GameOutcome'
@@ -504,19 +503,17 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
               onChange={setOutcome}
               isValid={isOutcomeValid()}
             />
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Payment Link</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Payment Link</legend>
               <input
                 type="url"
                 value={paymentLink}
                 onChange={(e) => setPaymentLink(e.target.value)}
-                className="input input-bordered w-full"
+                className="input w-full"
                 placeholder="https://monzo.me/..."
                 required
               />
-            </div>
+            </fieldset>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -7,14 +7,14 @@ export interface PlayerCardProps {
   activeBonuses: number
   activePenalties: number
   winRate: number
-  wins: number
-  draws: number
-  losses: number
-  totalGames: number
+  wins?: number
+  draws?: number
+  losses?: number
+  totalGames?: number
   currentStreak: number
   maxStreak: number
-  benchWarmerStreak: number
-  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired'
+  benchWarmerStreak?: number
+  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired' | 'Academy'
   avatarSvg?: string
   isRandomlySelected?: boolean
   status?: string
@@ -27,8 +27,8 @@ export interface PlayerCardProps {
   whatsapp_group_member?: string
   children?: React.ReactNode
   rank?: number
-  unpaidGames: number
-  unpaidGamesModifier: number
+  unpaidGames?: number
+  unpaidGamesModifier?: number
   registrationStreakBonus?: number // Length of current registration streak
   registrationStreakBonusApplies?: boolean // Whether the bonus should be applied
   averagedPlaystyle?: string // Closest matching playstyle name based on averaged attributes

@@ -138,23 +138,19 @@ const ImportPlayersModal: React.FC<ImportPlayersModalProps> = ({
             </div>
 
             <form onSubmit={handleImport}>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">CSV File</span>
-                </label>
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">CSV File</legend>
                 <input
                   type="file"
                   accept=".csv"
                   onChange={handleFileChange}
-                  className="file-input file-input-bordered w-full"
+                  className="file-input w-full"
                   required
                 />
-                <label className="label">
-                  <span className="label-text-alt text-base-content/70">
-                    CSV should contain: friendly_name, caps, xp
-                  </span>
-                </label>
-              </div>
+                <p className="fieldset-label text-base-content/70">
+                  CSV should contain: friendly_name, caps, xp
+                </p>
+              </fieldset>
 
               <div className="mt-6 flex gap-4">
                 <motion.button

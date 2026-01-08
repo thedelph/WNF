@@ -184,7 +184,7 @@ const PaymentHistory = () => {
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
         <select 
-          className="select select-bordered select-sm"
+          className="select select-sm"
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
         >
@@ -193,7 +193,7 @@ const PaymentHistory = () => {
         </select>
 
         <select 
-          className="select select-bordered select-sm"
+          className="select select-sm"
           value={paymentFilter}
           onChange={(e) => {
             setPaymentFilter(e.target.value)
@@ -207,7 +207,7 @@ const PaymentHistory = () => {
         </select>
 
         <select 
-          className="select select-bordered select-sm"
+          className="select select-sm"
           value={dateRange}
           onChange={(e) => {
             setDateRange(e.target.value as 'all' | 'month' | '3months' | '6months')

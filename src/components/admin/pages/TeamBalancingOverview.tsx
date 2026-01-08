@@ -170,10 +170,12 @@ const TeamBalancingOverview = () => {
     console.log('Team assignments for stats calculation:', assignments);
     if (!assignments || assignments.length === 0) {
       return {
-        blue: { attack: 0, defense: 0, winRate: 0, goalDifferential: 0, playerCount: 0 },
-        orange: { attack: 0, defense: 0, winRate: 0, goalDifferential: 0, playerCount: 0 },
+        blue: { attack: 0, defense: 0, gameIq: 0, gk: 0, winRate: 0, goalDifferential: 0, playerCount: 0 },
+        orange: { attack: 0, defense: 0, gameIq: 0, gk: 0, winRate: 0, goalDifferential: 0, playerCount: 0 },
         attackDiff: 0,
         defenseDiff: 0,
+        gameIqDiff: 0,
+        gkDiff: 0,
         winRateDiff: 0,
         goalDifferentialDiff: 0,
         currentScore: 0
@@ -328,7 +330,7 @@ const TeamBalancingOverview = () => {
   }, [previewState, assignments, updateAssignments]);
 
   // Calculate stats for a swap
-  const calculateSwapStats = useCallback((swapToCalculate: PlayerSwapSuggestion): TeamComparison | null => {
+  const calculateSwapStats = useCallback((swapToCalculate: Pick<PlayerSwapSuggestion, 'bluePlayer' | 'orangePlayer'>): (TeamComparison & { totalDiff: number; improvement: number }) | null => {
     const { bluePlayer, orangePlayer } = swapToCalculate;
 
     // Make a deep copy of the current teams
@@ -502,7 +504,9 @@ const TeamBalancingOverview = () => {
             {permanentGKIds.length > 0 && (
               <span className="badge badge-primary">{permanentGKIds.length} selected</span>
             )}
-            <Tooltip content="Select players who will stay in goal for the full game (e.g., injured players volunteering as GK). These players will be distributed evenly between teams before standard team balancing." />
+            <Tooltip content="Select players who will stay in goal for the full game (e.g., injured players volunteering as GK). These players will be distributed evenly between teams before standard team balancing.">
+              <span className="cursor-help text-info">(?)</span>
+            </Tooltip>
           </div>
         </div>
         <div className="collapse-content">
@@ -568,16 +572,16 @@ const TeamBalancingOverview = () => {
           // Update all assignments with the new team assignments
           const updatedAssignments = [...assignments].map(player => {
             const bluePlayer = blueTeam.find(p => p.player_id === player.player_id);
-            if (bluePlayer) return { ...player, team: 'blue' };
-            
+            if (bluePlayer) return { ...player, team: 'blue' as const };
+
             const orangePlayer = orangeTeam.find(p => p.player_id === player.player_id);
-            if (orangePlayer) return { ...player, team: 'orange' };
-            
+            if (orangePlayer) return { ...player, team: 'orange' as const };
+
             return player;
           });
-          
+
           updateAssignments(updatedAssignments);
-          
+
           // Store result for comparison
           setCurrentAlgorithmResult({
             blueTeam,
@@ -595,10 +599,10 @@ const TeamBalancingOverview = () => {
           // Update all assignments with the new team assignments
           const updatedAssignments = [...assignments].map(player => {
             const bluePlayer = blueTeam.find(p => p.player_id === player.player_id);
-            if (bluePlayer) return { ...player, team: 'blue' };
+            if (bluePlayer) return { ...player, team: 'blue' as const };
 
             const orangePlayer = orangeTeam.find(p => p.player_id === player.player_id);
-            if (orangePlayer) return { ...player, team: 'orange' };
+            if (orangePlayer) return { ...player, team: 'orange' as const };
 
             return player;
           });

@@ -37,40 +37,34 @@ export const BasicGameDetails: React.FC<BasicGameDetailsProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Game Date</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Game Date</legend>
         <input
           type="date"
           value={date}
           onChange={(e) => onDateChange(e.target.value)}
-          className="input input-bordered"
+          className="input"
           required
         />
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Start Time</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Start Time</legend>
         <input
           type="time"
           value={time}
           onChange={(e) => onTimeChange(e.target.value)}
-          className="input input-bordered"
+          className="input"
           required
         />
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Venue</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Venue</legend>
         <select
           value={venueId}
           onChange={(e) => onVenueChange(e.target.value)}
-          className="select select-bordered"
+          className="select"
           required
         >
           <option value="">Select a venue</option>
@@ -80,50 +74,44 @@ export const BasicGameDetails: React.FC<BasicGameDetailsProps> = ({
             </option>
           ))}
         </select>
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Max Players</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Max Players</legend>
         <input
           type="number"
           value={maxPlayers}
           onChange={(e) => onMaxPlayersChange(parseInt(e.target.value))}
-          className="input input-bordered"
+          className="input"
           required
           min="1"
         />
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Random Slots</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Random Slots</legend>
         <input
           type="number"
           value={randomSlots}
           onChange={(e) => onRandomSlotsChange(parseInt(e.target.value))}
-          className="input input-bordered"
+          className="input"
           required
           min="0"
         />
-      </div>
+      </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Pitch Cost (£)</span>
-        </label>
+      <fieldset className="fieldset">
+        <legend className="fieldset-legend">Pitch Cost (GBP)</legend>
         <input
           type="number"
           value={pitchCost}
           onChange={(e) => onPitchCostChange(parseFloat(e.target.value))}
-          className="input input-bordered"
+          className="input"
           required
           min="0"
           step="0.01"
         />
-      </div>
+      </fieldset>
     </div>
   );
 };

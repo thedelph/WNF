@@ -15,10 +15,8 @@ const TeamAnnouncementPhaseDetails: React.FC<TeamAnnouncementPhaseDetailsProps> 
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         {/* Team A Section */}
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Team A Players</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Team A Players</legend>
           <select
             multiple
             value={formData.teamAPlayers || []}
@@ -26,23 +24,21 @@ const TeamAnnouncementPhaseDetails: React.FC<TeamAnnouncementPhaseDetailsProps> 
               const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
               onChange('teamAPlayers', selectedOptions);
             }}
-            className="select select-bordered w-full h-48"
+            className="select w-full h-48"
           >
             {/* Player options will be populated from the database */}
           </select>
-          
+
           {/* Team A Stats Display */}
           <div className="mt-2 text-sm">
             <p>Attack Rating: {formData.teamAAttackRating || 0}</p>
             <p>Defense Rating: {formData.teamADefenseRating || 0}</p>
           </div>
-        </div>
+        </fieldset>
 
         {/* Team B Section */}
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Team B Players</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Team B Players</legend>
           <select
             multiple
             value={formData.teamBPlayers || []}
@@ -50,17 +46,17 @@ const TeamAnnouncementPhaseDetails: React.FC<TeamAnnouncementPhaseDetailsProps> 
               const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
               onChange('teamBPlayers', selectedOptions);
             }}
-            className="select select-bordered w-full h-48"
+            className="select w-full h-48"
           >
             {/* Player options will be populated from the database */}
           </select>
-          
+
           {/* Team B Stats Display */}
           <div className="mt-2 text-sm">
             <p>Attack Rating: {formData.teamBAttackRating || 0}</p>
             <p>Defense Rating: {formData.teamBDefenseRating || 0}</p>
           </div>
-        </div>
+        </fieldset>
       </div>
 
       {/* Team Balance Indicator */}

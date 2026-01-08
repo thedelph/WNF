@@ -114,8 +114,87 @@ export const usePlayerGrid = () => {
             .in('status', ['selected', 'reserve', 'dropped_out'])
         ];
 
+        // Define types for query results
+        interface PlayerData {
+          id: string;
+          friendly_name: string;
+          avatar_svg: string | null;
+          whatsapp_group_member: string | null;
+          caps: number | null;
+          active_bonuses: number | null;
+          active_penalties: number | null;
+          current_streak: number | null;
+          bench_warmer_streak: number | null;
+          shield_active: boolean | null;
+          protected_streak_value: number | null;
+          player_xp: {
+            xp: number;
+            rank: number;
+            rarity: string;
+          } | null;
+        }
+
+        interface WinRateData {
+          id: string;
+          wins: number;
+          draws: number;
+          losses: number;
+          total_games: number;
+          win_rate: number;
+        }
+
+        interface UnpaidGamesData {
+          friendly_name: string;
+          unpaid_games_count: number;
+          unpaid_games_modifier: number;
+        }
+
+        interface RegistrationStreakData {
+          friendly_name: string;
+          current_streak_length: number;
+          bonus_applies: boolean;
+        }
+
+        interface StreakStatsData {
+          friendly_name: string;
+          longest_streak: number;
+          longest_streak_period: string | null;
+        }
+
+        interface DerivedAttributesData {
+          player_id: string;
+          pace_rating: number | null;
+          shooting_rating: number | null;
+          passing_rating: number | null;
+          dribbling_rating: number | null;
+          defending_rating: number | null;
+          physical_rating: number | null;
+          total_ratings_count: number;
+        }
+
+        interface GameRegistrationData {
+          player_id: string;
+          game_id: string;
+          status: 'selected' | 'reserve' | 'dropped_out';
+          games: {
+            sequence_number: number;
+            is_historical: boolean;
+            completed: boolean;
+          };
+        }
+
+        type BatchQueryResults = [
+          PlayerData[] | null,
+          WinRateData[] | null,
+          UnpaidGamesData[] | null,
+          RegistrationStreakData[] | null,
+          StreakStatsData[] | null,
+          DerivedAttributesData[] | null,
+          GameRegistrationData[] | null
+        ];
+
         // Execute all queries with retry logic
-        const { data: results, error: batchError } = await executeBatchQueries(queries);
+        const { data: results, error: batchError } = await executeBatchQueries<BatchQueryResults>(queries);
 
         if (batchError || !results) {
           throw batchError || new Error('Failed to fetch player data');
@@ -262,8 +341,8 @@ export const usePlayerGrid = () => {
           return {
             id: player.id,
             friendlyName: player.friendly_name,
-            avatarSvg: player.avatar_svg,
-            whatsapp_group_member: player.whatsapp_group_member,
+            avatarSvg: player.avatar_svg ?? undefined,
+            whatsapp_group_member: player.whatsapp_group_member ?? undefined,
             caps: player.caps || 0,
             xp: player.player_xp?.xp || 0,
             activeBonuses: player.active_bonuses || 0,
@@ -272,7 +351,7 @@ export const usePlayerGrid = () => {
             maxStreak: correctMaxStreak,
             benchWarmerStreak: player.bench_warmer_streak || 0,
             // Use the database rarity value which now correctly handles Academy vs Retired
-            rarity: player.player_xp?.rarity || (player.player_xp?.xp === 0 ? 'Academy' : 'Amateur'),
+            rarity: (player.player_xp?.rarity || (player.player_xp?.xp === 0 ? 'Academy' : 'Amateur')) as 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired' | 'Academy',
             rank: player.player_xp?.rank || 0,
             wins: winRateMap[player.id]?.wins || 0,
             draws: winRateMap[player.id]?.draws || 0,
@@ -297,7 +376,7 @@ export const usePlayerGrid = () => {
             // Legacy alias for backwards compatibility
             frozenStreakValue: player.protected_streak_value || null,
             recentGames: recentGamesMap[player.id] || 0,
-            gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(null)
+            gameParticipation: recentGamesParticipationMap[player.id] || new Array<'selected' | 'reserve' | 'dropped_out' | null>(40).fill(null)
           };
         });
 

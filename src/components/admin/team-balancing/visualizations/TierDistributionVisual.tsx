@@ -64,8 +64,8 @@ const TierItem: React.FC<{
             width: `${Math.max(widthPercentage, 30)}%`,
             minWidth: '200px',
             maxWidth: '600px',
-            ringColor: color
-          }}
+            '--tw-ring-color': color
+          } as React.CSSProperties}
         >
           <div className="text-white font-bold text-lg">
             Tier {tier.tier}

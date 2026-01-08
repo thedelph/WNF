@@ -682,7 +682,7 @@ const SessionDiagnostics: React.FC = () => {
             <input
               type="email"
               placeholder="Enter user email..."
-              className="input input-bordered flex-1"
+              className="input flex-1"
               value={searchEmail}
               onChange={(e) => setSearchEmail(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && searchUser()}

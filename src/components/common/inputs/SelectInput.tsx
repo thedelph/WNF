@@ -21,12 +21,10 @@ const SelectInput: React.FC<SelectInputProps> = ({
   required = false
 }) => {
   return (
-    <div className="form-control">
-      <label className="label">
-        <span className="label-text">{label}</span>
-      </label>
+    <fieldset className="fieldset">
+      <legend className="fieldset-legend">{label}</legend>
       <select
-        className="select select-bordered w-full"
+        className="select w-full"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
@@ -38,7 +36,7 @@ const SelectInput: React.FC<SelectInputProps> = ({
           </option>
         ))}
       </select>
-    </div>
+    </fieldset>
   )
 }
 

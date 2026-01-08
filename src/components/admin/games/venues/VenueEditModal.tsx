@@ -57,7 +57,7 @@ export const VenueEditModal: React.FC<VenueEditModalProps> = ({
             </label>
             <input
               type="text"
-              className="input input-bordered w-full"
+              className="input w-full"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
@@ -69,7 +69,7 @@ export const VenueEditModal: React.FC<VenueEditModalProps> = ({
             </label>
             <input
               type="text"
-              className="input input-bordered w-full"
+              className="input w-full"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               required
@@ -81,14 +81,14 @@ export const VenueEditModal: React.FC<VenueEditModalProps> = ({
             </label>
             <input
               type="url"
-              className="input input-bordered w-full"
+              className="input w-full"
               value={formData.google_maps_url}
               onChange={(e) => setFormData({ ...formData, google_maps_url: e.target.value })}
             />
           </div>
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label cursor-pointer">
-              <span className="label-text">Set as Default Venue</span>
+              <legend className="fieldset-legend">Set as Default Venue</legend>
               <input
                 type="checkbox"
                 className="checkbox"
@@ -96,7 +96,7 @@ export const VenueEditModal: React.FC<VenueEditModalProps> = ({
                 onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
               />
             </label>
-          </div>
+          </fieldset>
           <div className="flex justify-end space-x-2 mt-4">
             <button
               type="button"

@@ -13,6 +13,7 @@ interface RecentGame {
 interface TokenStatusProps {
   status: string;
   lastUsedAt?: string | null;
+  nextTokenAt?: string | null;
   createdAt?: string;
   isEligible?: boolean;
   recentGames?: RecentGame[];

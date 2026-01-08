@@ -21,7 +21,7 @@ interface PlayerSectionProps {
     shieldActive?: boolean;
     frozenStreakValue?: number | null;
   }[];
-  icon: React.ComponentType;
+  icon: React.ComponentType<{ className?: string }>;
   isExpanded: boolean;
   onToggle: () => void;
   allXpValues: number[];

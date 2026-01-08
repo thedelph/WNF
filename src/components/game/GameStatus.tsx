@@ -58,13 +58,11 @@ export const GameStatus: React.FC<GameStatusProps> = ({
     case 'open':
     case 'upcoming':
       return (
-        <RegisteredPlayers 
+        <RegisteredPlayers
           registrations={registrations}
-          isUserRegistered={isUserRegistered}
-          isRegistrationClosed={isRegistrationClosed}
-          onRegister={handleRegisterClick}
-          isRegistering={isRegistering}
-          gameStatus={game.status}
+          maxPlayers={game.max_players}
+          randomSlots={game.random_slots}
+          gameId={game.id}
         />
       );
     case 'players_announced':
@@ -72,11 +70,9 @@ export const GameStatus: React.FC<GameStatusProps> = ({
     case 'teams_announced':
     case 'completed':
       return (
-        <TeamSelectionResults 
+        <TeamSelectionResults
           key={`team-selection-${selectedPlayers.length}`}
           gameId={game.id}
-          selectedPlayers={selectedPlayers}
-          reservePlayers={reservePlayers}
         />
       );
     default:

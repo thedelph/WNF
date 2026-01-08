@@ -1,9 +1,9 @@
+/* FIFA Theme Styles - must be first */
+@import './styles/fifa-theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* FIFA Theme Styles */
-@import './styles/fifa-theme.css';
 
 /* Custom styles */
 body {
@@ -30,14 +30,18 @@ body {
   @apply px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
 }
 
-.input-bordered {
-  @apply border-gray-300;
-}
+/* DaisyUI v5: input-bordered removed (border is default)
+   form-control and label-text migrated to fieldset pattern */
 
-.form-control {
+/* Fieldset styles for v5 compatibility */
+.fieldset {
   @apply space-y-1;
 }
 
-.label-text {
+.fieldset-legend {
   @apply text-sm font-medium text-gray-700;
+}
+
+.fieldset-label {
+  @apply text-xs text-gray-500;
 }

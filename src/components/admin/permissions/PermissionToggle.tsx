@@ -9,22 +9,22 @@ interface PermissionToggleProps {
 
 const PermissionToggle: React.FC<PermissionToggleProps> = ({ label, isEnabled, onChange }) => {
   return (
-    <motion.div 
-      className="form-control"
+    <motion.fieldset
+      className="fieldset"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <label className="label cursor-pointer">
-        <span className="label-text">{label}</span>
-        <input 
-          type="checkbox" 
-          className="toggle toggle-primary" 
+      <label className="flex items-center justify-between cursor-pointer">
+        <span>{label}</span>
+        <input
+          type="checkbox"
+          className="toggle toggle-primary"
           checked={isEnabled}
           onChange={(e) => onChange(e.target.checked)}
         />
       </label>
-    </motion.div>
+    </motion.fieldset>
   )
 }
 

@@ -127,44 +127,38 @@ export const VenueManagement: React.FC<Props> = ({ venues, onUpdate }) => {
         {/* Add/Edit Venue Form */}
         {(isAddingVenue || isEditingVenue) ? (
           <form onSubmit={handleVenueSubmit} className="space-y-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Venue Name</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Venue Name</legend>
               <input
                 type="text"
                 value={newVenueName}
                 onChange={(e) => setNewVenueName(e.target.value)}
-                className="input input-bordered"
+                className="input"
                 required
               />
-            </div>
+            </fieldset>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Address</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Address</legend>
               <input
                 type="text"
                 value={newVenueAddress}
                 onChange={(e) => setNewVenueAddress(e.target.value)}
-                className="input input-bordered"
+                className="input"
                 required
               />
-            </div>
+            </fieldset>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Google Maps URL</span>
-              </label>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Google Maps URL</legend>
               <input
                 type="url"
                 value={newVenueMapUrl}
                 onChange={(e) => setNewVenueMapUrl(e.target.value)}
-                className="input input-bordered"
+                className="input"
                 placeholder="https://maps.google.com/..."
               />
-            </div>
+            </fieldset>
 
             <button
               type="submit"

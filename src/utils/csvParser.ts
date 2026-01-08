@@ -34,8 +34,8 @@ export const parseHistoricalGamesCsv = async (file: File): Promise<ProcessedGame
 
           if (playerError) throw playerError
 
-          const playerMap = new Map(
-            players.map(p => [p.friendly_name.toLowerCase(), p.id])
+          const playerMap = new Map<string, string>(
+            (players || []).map((p: { id: string; friendly_name: string }) => [p.friendly_name.toLowerCase(), p.id])
           )
 
           // Group rows by date

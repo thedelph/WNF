@@ -1,30 +1,28 @@
 import React from 'react';
-import { PlayerRegistration } from '../../types/database.types';
-import { Box, List, ListItem, Typography } from '@mui/material';
-import { getCalculatedXP } from '../../utils/playerUtils';
+import { ExtendedPlayerData } from '../../types/playerSelection';
 
 interface PlayerSelectionListProps {
-  players: PlayerRegistration[];
+  players: ExtendedPlayerData[];
   title: string;
 }
 
 export const PlayerSelectionList: React.FC<PlayerSelectionListProps> = ({ players, title }) => {
   return (
-    <Box>
-      <Typography variant="h6" component="h2" gutterBottom>
+    <div className="space-y-2">
+      <h2 className="text-xl font-semibold">
         {title} ({players.length})
-      </Typography>
-      <List>
+      </h2>
+      <ul className="space-y-1">
         {players.map((player) => (
-          <ListItem key={player.id}>
-            <Typography>
-              {player.friendly_name} - XP: {getCalculatedXP(player)}
+          <li key={player.id} className="p-2 bg-base-200 rounded">
+            <span>
+              {player.friendly_name || player.friendlyName} - XP: {player.xp || 0}
               {player.isRandomlySelected && ' (Random)'}
-            </Typography>
-          </ListItem>
+            </span>
+          </li>
         ))}
-      </List>
-    </Box>
+      </ul>
+    </div>
   );
 };
 

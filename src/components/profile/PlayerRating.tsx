@@ -15,8 +15,9 @@ interface PlayerRatingProps {
     attack: number;
     defense: number;
     gameIq: number;
+    gk: number;
   };
-  setRatings: (ratings: { attack: number; defense: number; gameIq: number }) => void;
+  setRatings: (ratings: { attack: number; defense: number; gameIq: number; gk: number }) => void;
 }
 
 export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }: PlayerRatingProps) => {

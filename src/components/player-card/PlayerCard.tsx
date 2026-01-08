@@ -15,14 +15,14 @@ interface PlayerCardProps {
   activeBonuses: number
   activePenalties: number
   winRate: number
-  wins: number
-  draws: number
-  losses: number
-  totalGames: number
+  wins?: number
+  draws?: number
+  losses?: number
+  totalGames?: number
   currentStreak: number
   maxStreak: number
-  benchWarmerStreak: number
-  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired'
+  benchWarmerStreak?: number
+  rarity?: 'Amateur' | 'Semi Pro' | 'Professional' | 'World Class' | 'Legendary' | 'Retired' | 'Academy'
   avatarSvg?: string
   isRandomlySelected?: boolean
   status?: string
@@ -45,9 +45,11 @@ interface PlayerCardProps {
   playstyleCategory?: 'attacking' | 'midfield' | 'defensive'
   playstyleRatingsCount?: number
   shieldActive?: boolean
+  protectedStreakValue?: number | null
+  /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null
   recentGames?: number
-  gameParticipation?: Array<'selected' | 'reserve' | null>
+  gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>
   onTokenCooldown?: boolean
 }
 
@@ -59,13 +61,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   activeBonuses,
   activePenalties,
   winRate,
-  wins,
-  draws,
-  losses,
-  totalGames,
+  wins = 0,
+  draws = 0,
+  losses = 0,
+  totalGames = 0,
   currentStreak,
   maxStreak,
-  benchWarmerStreak,
+  benchWarmerStreak = 0,
   rarity,
   avatarSvg,
   isRandomlySelected,
@@ -88,6 +90,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   playstyleCategory,
   playstyleRatingsCount,
   shieldActive = false,
+  protectedStreakValue = null,
   frozenStreakValue = null,
   recentGames = 0,
   gameParticipation = new Array(40).fill(null),
@@ -149,7 +152,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               caps={caps}
               activeBonuses={activeBonuses}
               activePenalties={activePenalties}
+              winRate={winRate}
               currentStreak={currentStreak}
+              maxStreak={maxStreak}
               benchWarmerStreak={benchWarmerStreak}
               rarity={rarity}
               isRandomlySelected={isRandomlySelected}
@@ -176,7 +181,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               playstyleCategory={playstyleCategory}
               playstyleRatingsCount={playstyleRatingsCount}
               shieldActive={shieldActive}
-              frozenStreakValue={frozenStreakValue}
+              protectedStreakValue={protectedStreakValue ?? frozenStreakValue}
               recentGames={recentGames}
               gameParticipation={gameParticipation}
               onTokenCooldown={onTokenCooldown}
@@ -187,6 +192,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               friendlyName={friendlyName}
               xp={xp}
               caps={caps}
+              activeBonuses={activeBonuses}
+              activePenalties={activePenalties}
               winRate={winRate}
               wins={wins}
               draws={draws}
@@ -198,15 +205,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               avatarSvg={avatarSvg}
               whatsapp_group_member={whatsapp_group_member}
               shieldActive={shieldActive}
-              frozenStreakValue={frozenStreakValue}
+              protectedStreakValue={protectedStreakValue ?? frozenStreakValue}
             />
           )}
         </div>
 
         {/* Back of card */}
-        <div 
+        <div
           className={`absolute w-full h-full ${getRarityColor(rarity)} text-white rounded-xl p-4`}
-          style={{ 
+          style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)'
           }}
@@ -216,6 +223,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             friendlyName={friendlyName}
             xp={xp}
             caps={caps}
+            activeBonuses={activeBonuses}
+            activePenalties={activePenalties}
             winRate={winRate}
             wins={wins}
             draws={draws}
@@ -226,6 +235,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             rarity={rarity}
             avatarSvg={avatarSvg}
             whatsapp_group_member={whatsapp_group_member}
+            shieldActive={shieldActive}
+            protectedStreakValue={protectedStreakValue ?? frozenStreakValue}
           />
         </div>
       </motion.div>

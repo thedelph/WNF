@@ -1098,6 +1098,7 @@ function selectBestFormation(
     return {
       name: 'Custom',
       positions: {
+        GK: 0,
         DEF: Math.floor(outfieldCount * 0.35),
         WB: 0,
         W: 0,
@@ -1642,6 +1643,7 @@ function calculateAttributeUtilization(
 
   // Define which attributes each position actually uses (threshold > 0.05 in weights)
   const positionUsesAttribute: Record<PositionType, Set<string>> = {
+    GK: new Set(['gk']),
     DEF: new Set(['defending', 'physical', 'passing']),
     WB: new Set(['defending', 'pace', 'physical', 'passing', 'dribbling']),
     W: new Set(['pace', 'dribbling', 'passing', 'shooting']),
@@ -1734,6 +1736,7 @@ function getPlayerType(
  * Position importance weights for optimization priority
  */
 const POSITION_IMPORTANCE: Record<PositionType, number> = {
+  GK: 0.0,   // Not used in outfield formations
   ST: 1.0,   // Most critical - primary scorer
   CAM: 0.9,  // Very important - playmaker
   CDM: 0.8,  // Important - defensive anchor
@@ -1941,7 +1944,7 @@ function optimizeAssignments(
 
         // Position hierarchy (attacking to defensive)
         const positionHierarchy: Record<PositionType, number> = {
-          ST: 6, CAM: 5, W: 4.5, CM: 4, CDM: 3, WB: 2, DEF: 1
+          GK: 0, ST: 6, CAM: 5, W: 4.5, CM: 4, CDM: 3, WB: 2, DEF: 1
         };
 
         // Don't move attacking players to significantly more defensive positions
@@ -2480,7 +2483,7 @@ function assignPlayersToPositions(
 
   const assignedPlayers = new Set<string>();
   const positionCounts: Record<PositionType, number> = {
-    DEF: 0, WB: 0, W: 0, CDM: 0, CM: 0, CAM: 0, ST: 0
+    GK: 0, DEF: 0, WB: 0, W: 0, CDM: 0, CM: 0, CAM: 0, ST: 0
   };
 
   // Calculate player flexibility for Phase 1 prioritization

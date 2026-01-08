@@ -21,33 +21,31 @@ const BaseInput: React.FC<BaseInputProps> = ({
   error
 }) => {
   return (
-    <motion.div 
-      className="form-control w-full"
+    <motion.fieldset
+      className="fieldset w-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <label className="label">
-        <span className="label-text font-medium">{label}</span>
-      </label>
+      <legend className="fieldset-legend font-medium">{label}</legend>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`input input-bordered w-full ${error ? 'input-error' : ''}`}
+        className={`input w-full ${error ? 'input-error' : ''}`}
         placeholder={placeholder}
         required={required}
       />
       {error && (
-        <motion.label 
-          className="label"
+        <motion.p
+          className="fieldset-label text-error"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <span className="label-text-alt text-error">{error}</span>
-        </motion.label>
+          {error}
+        </motion.p>
       )}
-    </motion.div>
+    </motion.fieldset>
   )
 }
 

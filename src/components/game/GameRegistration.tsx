@@ -96,7 +96,7 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
   const canDropout = isRegistrationClosed &&
     playerId &&
     (registrationStatus === 'registered' || registrationStatus === 'selected') &&
-    !game.completed;
+    game.status !== 'completed';
 
   // Show dropout UI when registration is closed but player can drop out
   if (isRegistrationClosed && canDropout) {

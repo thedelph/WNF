@@ -97,7 +97,19 @@ export function useShieldStatus(playerId: string | undefined) {
 
       // If no data in materialized view, fetch directly from players table
       if (!statusData) {
-        const { data: playerData, error: playerError } = await executeWithRetry(
+        // Define type for player data query result
+        interface PlayerShieldData {
+          id: string;
+          friendly_name: string;
+          shield_tokens_available: number;
+          games_played_since_shield_launch: number;
+          shield_active: boolean;
+          protected_streak_value: number | null;
+          protected_streak_base: number | null;
+          current_streak: number;
+        }
+
+        const { data: playerData, error: playerError } = await executeWithRetry<PlayerShieldData>(
           async () => {
             const result = await supabase
               .from('players')

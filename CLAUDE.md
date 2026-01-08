@@ -191,9 +191,15 @@ await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 ### Core Systems
 - **[Token System](/docs/TokenSystem.md)** - Priority tokens, shield tokens, eligibility
 - **[Ratings System](/docs/RatingsSystemGuide.md)** - Attack, Defense, Game IQ, GK, Playstyles, Positions
-- **[Team Balancing](/docs/features/TeamBalancing.md)** - Brute-force optimal algorithm (v12.0, Jan 2026)
+- **[Team Balancing](/docs/features/TeamBalancing.md)** - Brute-force optimal algorithm (v13.0, Jan 2026)
 - **[XP System v2](/docs/features/XPSystemv2.md)** - Current XP calculation (production)
 - **[XP System v1](/docs/XPSystemExplained.md)** - Legacy system (pre-Jan 2026)
+
+### Recent Major Features (2026)
+- **[Rivalry System](/docs/features/RivalrySystem.md)** (Jan 2026) - Head-to-head cross-team performance tracking
+- **[Trio Chemistry](/docs/features/TrioChemistry.md)** (Jan 2026) - 3-player synergy tracking
+- **[Awards System](/docs/features/AwardsSystem.md)** (Jan 2026) - Hall of Fame awards and trophies
+- **[Dropout with Shield](/docs/features/DropoutWithShield.md)** (Jan 2026) - Dropout mechanics with shield protection
 
 ### Recent Major Features (2025)
 - **[Player Chemistry](/docs/features/PlayerChemistry.md)** (Dec 2025) - Chemistry leaderboards + team balancing integration
@@ -214,7 +220,7 @@ await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 ### Development Patterns
 - **[Core Development Patterns](/docs/systems/CoreDevelopmentPatterns.md)** - Essential coding conventions ⭐
 - **[Database Patterns](/docs/systems/DatabasePatterns.md)** - RLS, triggers, migrations ⭐
-- **[Brute-Force Optimal Algorithm](/docs/algorithms/BruteForceOptimalAlgorithm.md)** - Current team balancing (v12.0) ⭐
+- **[Brute-Force Optimal Algorithm](/docs/algorithms/BruteForceOptimalAlgorithm.md)** - Current team balancing (v13.0) ⭐
 - **[Team Balancing Algorithm Evolution](/docs/algorithms/TeamBalancingEvolution.md)** - Complete algorithm history
 
 ### Component Documentation
