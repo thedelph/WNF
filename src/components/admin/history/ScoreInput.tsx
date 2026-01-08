@@ -8,8 +8,8 @@ export const ScoreInput: React.FC<ScoreInputProps> = ({ label, value, onChange }
       <input
         type="number"
         min="0"
-        value={value || ''}
-        onChange={(e) => onChange(parseInt(e.target.value))}
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
         className="input w-full"
         required
       />

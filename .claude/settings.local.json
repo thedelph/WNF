@@ -65,7 +65,10 @@
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:daisyui.com)",
       "WebFetch(domain:github.com)",
-      "Bash(xargs sed:*)"
+      "Bash(xargs sed:*)",
+      "Bash(git push:*)",
+      "Bash(git branch:*)",
+      "Bash(git commit:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
