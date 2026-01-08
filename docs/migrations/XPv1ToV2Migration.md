@@ -325,5 +325,35 @@ LEFT JOIN player_xp px ON p.id = px.player_id;  -- Changed from player_xp_legacy
 - [x] player_xp_legacy contains archived v1 values
 - [x] XP triggers use v2 calculation functions
 - [x] **player_stats view uses player_xp (not player_xp_legacy)**
+- [x] **Duplicate XP trigger removed** (January 8, 2026)
 - [ ] (Optional) Drop player_xp_legacy after 30 days if not needed
 - [ ] (Optional) Rename v2 functions to remove suffix
+
+---
+
+## Post-Migration Issue: Duplicate XP Trigger (January 8, 2026)
+
+### Symptom
+Rank shield numbers on Player List page didn't match XP-sorted order. Example: ranks appeared as `1, 2, 3, 4, 5, 6, 7, 10, 9, 12, 8...` instead of sequential.
+
+### Root Cause
+A duplicate trigger `update_player_xp_on_game_completion` existed alongside `trigger_xp_v2_on_game_complete`:
+- The duplicate trigger only updated XP for game participants (not ranks)
+- When both triggers fired, XP changed AFTER ranks were calculated
+- This trigger was not in migration files (likely created via Supabase dashboard)
+
+### Discovery
+First noticed after the January 8, 2026 game - the first game where players used shield tokens. Database queries confirmed 17 out of 30 top players had mismatched ranks.
+
+### Fix Applied
+```sql
+-- Migration: 20260108_remove_duplicate_xp_trigger.sql
+DROP TRIGGER IF EXISTS update_player_xp_on_game_completion ON games;
+```
+
+Additionally ran `SELECT recalculate_all_player_xp_v2();` to fix existing ranks.
+
+### Lesson Learned
+When migrating XP systems, audit ALL triggers on the `games` table - not just the ones in migration files. Triggers created via dashboard or hotfixes won't appear in codebase searches.
+
+**See:** [Duplicate XP Trigger Fix](../fixes/DuplicateXPTriggerFix.md) for full details

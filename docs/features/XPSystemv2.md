@@ -200,7 +200,9 @@ A: Yes! Visit `/admin/xp-comparison` (admin only) to see v1 vs v2 XP side-by-sid
 - `recalculate_all_player_xp_v2()` - Batch recalculate all players
 
 ### Triggers
-- Game completion triggers now call v2 recalculation functions
+- `trigger_xp_v2_on_game_complete` - **Primary trigger** that fires on game completion
+  - Calls `recalculate_all_player_xp_v2()` to update ALL players' XP, ranks, and rarity
+  - Single source of truth for XP/rank updates (duplicate trigger removed Jan 8, 2026)
 
 ### Important Note: player_stats View
 The `player_stats` view is used by both the simulation feature and actual player selection (`playerSelection.ts`). This view was updated on January 3, 2026 to use `player_xp` (v2) instead of `player_xp_legacy` (v1) to ensure consistent XP values across display and selection.

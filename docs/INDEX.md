@@ -148,6 +148,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Playstyle Feature Visibility Issue](fixes/PlaystyleFeatureVisibilityIssue.md)** - Feature flag visibility
 
 ### Other Fixes
+- **[Duplicate XP Trigger Fix](fixes/DuplicateXPTriggerFix.md)** *(New Jan 2026)* - Rank/XP desync caused by duplicate triggers
 - **[Game Deletion Fix](GameDeletionFix.md)** - Cascading deletion
 - **[Game Deletion Stack Depth Fix](GameDeletionStackDepthFix.md)** - Recursion limits
 - **[Orphaned Game Registrations Fix](fixes/OrphanedGameRegistrationsFix.md)** - Data cleanup

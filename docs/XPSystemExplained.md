@@ -357,7 +357,9 @@ CREATE TABLE reserve_xp_transactions (
 ```
 
 #### Trigger System
-The XP system automatically updates through these triggers:
+> **Note (January 2026):** The trigger architecture has changed. The current production system uses `trigger_xp_v2_on_game_complete` as the single source of truth for XP/rank updates. See [XP System v2](./features/XPSystemv2.md) for current triggers.
+
+The XP system automatically updates through these triggers (legacy v1):
 1. `on_game_registration_change`: Fires when players register/update registration
 2. `on_game_completion`: Fires when a game is marked as completed
 3. `on_reserve_xp_change`: Fires when reserve XP transactions are added
