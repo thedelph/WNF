@@ -813,33 +813,46 @@ export default function Ratings() {
             <motion.div
               key={player.id}
               variants={itemVariants}
-              className="card bg-base-100 shadow-xl"
+              className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow border border-base-200"
             >
-              <div className="card-body">
-                <h2 className="card-title">{player.friendly_name}</h2>
-                <p>Games played together: {player.games_played}</p>
+              <div className="card-body p-4 gap-3">
+                {/* Header: Prominent name + games badge */}
+                <div className="flex justify-between items-start">
+                  <h2 className="text-lg font-bold text-base-content">{player.friendly_name}</h2>
+                  <span className="badge badge-ghost badge-sm">{player.games_played}g</span>
+                </div>
                 
                 {player.games_played >= 5 ? (
                   <div className="space-y-2">
                     {player.current_rating && (
-                      <div className="text-sm text-gray-600">
-                        <p>Current Ratings:</p>
-                        <p>Attack: {formatStarRating(player.current_rating.attack_rating)}</p>
-                        <p>Defense: {formatStarRating(player.current_rating.defense_rating)}</p>
-                        <p>Game IQ: {formatStarRating(player.current_rating.game_iq_rating)}</p>
-                        <p>GK: {formatStarRating(player.current_rating.gk_rating)}</p>
+                      <div>
+                        {/* Compact 4-column rating grid */}
+                        <div className="grid grid-cols-4 gap-1 text-center py-2 border-y border-base-200">
+                          {[
+                            { label: 'ATK', value: player.current_rating.attack_rating },
+                            { label: 'DEF', value: player.current_rating.defense_rating },
+                            { label: 'IQ', value: player.current_rating.game_iq_rating },
+                            { label: 'GK', value: player.current_rating.gk_rating },
+                          ].map(attr => (
+                            <div key={attr.label} className="flex flex-col">
+                              <span className="text-[10px] font-semibold text-base-content/50 uppercase tracking-wide">{attr.label}</span>
+                              <span className="text-base font-bold text-base-content">
+                                {attr.value ? attr.value.toFixed(1) : '-'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Playstyle - inline with icon */}
                         {(() => {
                           const rating = player.current_rating;
-                          // Generate playstyle name from attributes
                           let playstyleName = '';
-                          
+
                           if (rating?.playstyles?.name) {
-                            // Use database playstyle name if available
                             playstyleName = rating.playstyles.name;
-                          } else if (rating && (rating.has_pace !== null || rating.has_shooting !== null || 
-                                              rating.has_passing !== null || rating.has_dribbling !== null || 
+                          } else if (rating && (rating.has_pace !== null || rating.has_shooting !== null ||
+                                              rating.has_passing !== null || rating.has_dribbling !== null ||
                                               rating.has_defending !== null || rating.has_physical !== null)) {
-                            // Generate from individual attributes
                             const attributes: AttributeCombination = {
                               has_pace: rating.has_pace || false,
                               has_shooting: rating.has_shooting || false,
@@ -850,9 +863,8 @@ export default function Ratings() {
                             };
                             playstyleName = generatePlaystyleName(attributes);
                           }
-                          
+
                           if (playstyleName && playstyleName !== 'No Style Selected') {
-                            // Get the attributes for abbreviations
                             const attributes: AttributeCombination = {
                               has_pace: rating.has_pace || false,
                               has_shooting: rating.has_shooting || false,
@@ -864,54 +876,36 @@ export default function Ratings() {
                             const abbreviations = generateAttributeAbbreviations(attributes);
 
                             return (
-                              <div className="mt-2">
-                                <p className="font-semibold text-xs">Playstyle:</p>
-                                <div className="mt-1">
-                                  <span className="text-xs font-medium text-primary">
-                                    {playstyleName}
-                                  </span>
-                                  {abbreviations && (
-                                    <span className="text-xs text-gray-500 ml-1">
-                                      ({abbreviations})
-                                    </span>
-                                  )}
-                                </div>
+                              <div className="flex items-center justify-center gap-2 text-sm pt-2">
+                                <span className="text-base-content/50">🎯</span>
+                                <span className="font-medium text-primary">{playstyleName}</span>
+                                {abbreviations && (
+                                  <span className="text-xs text-base-content/40">({abbreviations})</span>
+                                )}
                               </div>
                             );
                           }
                           return null;
                         })()}
 
-                        {/* My Ranked Position Selections Display */}
+                        {/* Position badges - inline without label */}
                         {(() => {
-                          // Show what positions I've rated this player for (not consensus)
                           const selections = player.my_position_selections;
                           const hasAnySelection = selections && (selections.first || selections.second || selections.third);
 
-                          if (!hasAnySelection) {
-                            return null;
-                          }
+                          if (!hasAnySelection) return null;
 
                           return (
-                            <div className="mt-2">
-                              <p className="font-semibold text-xs">You rated as:</p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {selections.first && (
-                                  <span className="px-2 py-1 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
-                                    🥇 {selections.first}
-                                  </span>
-                                )}
-                                {selections.second && (
-                                  <span className="px-2 py-1 rounded text-xs font-medium bg-[#9CA3AF] text-white">
-                                    🥈 {selections.second}
-                                  </span>
-                                )}
-                                {selections.third && (
-                                  <span className="px-2 py-1 rounded text-xs font-medium bg-[#EA580C] text-white">
-                                    🥉 {selections.third}
-                                  </span>
-                                )}
-                              </div>
+                            <div className="flex flex-wrap justify-center gap-2 pt-1">
+                              {selections.first && (
+                                <span className="badge badge-warning badge-sm gap-1">🥇 {selections.first}</span>
+                              )}
+                              {selections.second && (
+                                <span className="badge badge-ghost badge-sm gap-1">🥈 {selections.second}</span>
+                              )}
+                              {selections.third && (
+                                <span className="badge badge-sm gap-1" style={{ backgroundColor: '#EA580C', color: 'white' }}>🥉 {selections.third}</span>
+                              )}
                             </div>
                           );
                         })()}
@@ -1015,9 +1009,11 @@ export default function Ratings() {
                     </button>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">
-                    Need {5 - player.games_played} more games to rate
-                  </p>
+                  <div className="text-center py-4">
+                    <p className="text-sm text-base-content/50">
+                      {5 - player.games_played} more games needed
+                    </p>
+                  </div>
                 )}
               </div>
             </motion.div>
