@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAdmin } from '../../hooks/useAdmin'
-import { motion } from 'framer-motion'
 import { supabase } from '../../utils/supabase'
 import { toast } from 'react-toastify'
 import NotificationBell from '../notifications/NotificationBell'
@@ -25,11 +24,6 @@ const Header: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const buttonVariants = {
-    hover: { scale: 1.05 },
-    tap: { scale: 0.95 }
-  }
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()
@@ -43,58 +37,76 @@ const Header: React.FC = () => {
 
   const NavLinks = () => (
     <>
-      <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
-        <Link to="/games" onClick={() => setIsMenuOpen(false)}>Games</Link>
-      </motion.li>
-      <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
-        <Link to="/players" onClick={() => setIsMenuOpen(false)}>Players</Link>
-      </motion.li>
+      <li>
+        <Link to="/games" onClick={() => setIsMenuOpen(false)} className="transition-colors duration-200">
+          Games
+        </Link>
+      </li>
+      <li>
+        <Link to="/players" onClick={() => setIsMenuOpen(false)} className="transition-colors duration-200">
+          Players
+        </Link>
+      </li>
       {user && (
         <>
-          <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
-            <Link to="/ratings" onClick={() => setIsMenuOpen(false)}>Ratings</Link>
-          </motion.li>
-          <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
-            <Link to="/profile" onClick={() => setIsMenuOpen(false)}>Profile</Link>
-          </motion.li>
+          <li>
+            <Link to="/ratings" onClick={() => setIsMenuOpen(false)} className="transition-colors duration-200">
+              Ratings
+            </Link>
+          </li>
+          <li>
+            <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="transition-colors duration-200">
+              Profile
+            </Link>
+          </li>
           {!loading && (isAdmin || isSuperAdmin) && (
-            <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
-              <Link to="/admin" onClick={() => setIsMenuOpen(false)}>Admin</Link>
-            </motion.li>
+            <li>
+              <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="transition-colors duration-200">
+                Admin
+              </Link>
+            </li>
           )}
-          <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
-            <button onClick={handleLogout}>Logout</button>
-          </motion.li>
+          <li>
+            <a onClick={handleLogout} className="transition-colors duration-200 cursor-pointer">
+              Logout
+            </a>
+          </li>
         </>
       )}
       {!user && (
-        <motion.li variants={buttonVariants} whileHover="hover" whileTap="tap">
-          <Link to="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
-        </motion.li>
+        <li>
+          <Link to="/login" onClick={() => setIsMenuOpen(false)} className="transition-colors duration-200">
+            Login
+          </Link>
+        </li>
       )}
     </>
   )
 
   return (
-    <div className="navbar bg-base-100 shadow-lg">
-      <div className="container mx-auto px-4">
-        <div className="flex-1">
-          <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
-            <img src="/assets/wnf-logo-removed-bg.png" alt="WNF Logo" className="h-12 w-auto" />
-          </Link>
-        </div>
-        <div className="flex-none hidden lg:block">
-          <ul className="menu menu-horizontal px-1 items-center">
-            <NavLinks />
-            {user && (
-              <li className="ml-2">
-                <NotificationBell />
-              </li>
-            )}
-          </ul>
-        </div>
-        <div className="flex-none lg:hidden relative" ref={menuRef}>
-          <button 
+    <div className="navbar bg-base-100 shadow-lg px-4">
+      {/* Logo - Left aligned */}
+      <div className="navbar-start">
+        <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
+          <img src="/assets/wnf-logo-removed-bg.png" alt="WNF Logo" className="h-12 w-auto" />
+        </Link>
+      </div>
+
+      {/* Navigation - Right aligned */}
+      <div className="navbar-end">
+        {/* Desktop Navigation */}
+        <ul className="menu menu-horizontal menu-sm px-1 items-center hidden lg:flex">
+          <NavLinks />
+          {user && (
+            <li className="ml-2">
+              <NotificationBell />
+            </li>
+          )}
+        </ul>
+
+        {/* Mobile Menu Button */}
+        <div className="lg:hidden relative" ref={menuRef}>
+          <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="btn btn-square btn-ghost"
           >

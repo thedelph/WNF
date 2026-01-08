@@ -98,6 +98,33 @@ Note: The old pattern still works. Migration to fieldset is optional but recomme
 | `text-primary-focus` | `text-primary/80` or hover state |
 | `bg-primary-focus` | `bg-primary/80` or hover state |
 
+### 6. Navbar Pattern
+
+The navbar component works best with semantic section classes rather than generic flex utilities inside a container wrapper.
+
+**Old pattern (breaks flex alignment):**
+```tsx
+<div className="navbar">
+  <div className="container mx-auto px-4">
+    <div className="flex-1">...</div>
+    <div className="flex-none">...</div>
+  </div>
+</div>
+```
+
+**New pattern (v5 best practice):**
+```tsx
+<div className="navbar px-4">
+  <div className="navbar-start">...</div>
+  <div className="navbar-end">...</div>
+</div>
+```
+
+**Available sections:**
+- `navbar-start` - Left section (50% width, left-aligned)
+- `navbar-center` - Center section (centered)
+- `navbar-end` - Right section (50% width, right-aligned)
+
 ## TypeScript Fixes
 
 Several pre-existing TypeScript errors were discovered and fixed during the migration:
