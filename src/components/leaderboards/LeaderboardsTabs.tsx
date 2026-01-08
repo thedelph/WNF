@@ -69,11 +69,11 @@ export const LeaderboardsTabs = ({
     <div className="w-full">
       {/* Tab navigation */}
       <div className="flex justify-center mb-8">
-        <div className="tabs tabs-box bg-base-200 p-1">
+        <div className="tabs tabs-box tabs-lg bg-base-200">
           {tabs.map((tab, index) => (
             <motion.button
               key={tab.id}
-              className={`tab gap-2 transition-colors duration-200 ${activeTab === tab.id ? 'tab-active' : ''}`}
+              className={`tab gap-2 px-6 transition-colors duration-200 ${activeTab === tab.id ? 'tab-active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
