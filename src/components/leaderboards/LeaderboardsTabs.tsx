@@ -73,10 +73,8 @@ export const LeaderboardsTabs = ({
           {tabs.map((tab, index) => (
             <motion.button
               key={tab.id}
-              className={`tab gap-2 ${activeTab === tab.id ? 'tab-active' : ''}`}
+              className={`tab gap-2 transition-colors duration-200 ${activeTab === tab.id ? 'tab-active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
