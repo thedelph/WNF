@@ -621,7 +621,7 @@ export default function Ratings() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by name or playstyle..."
-                    className="w-full p-2 border rounded-md bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="input input-bordered w-full"
                   />
                 </div>
 
@@ -630,7 +630,7 @@ export default function Ratings() {
                   <div className="flex-1 min-w-[200px]">
                     <label className="block text-sm font-medium mb-2">Sort By</label>
                     <select
-                      className="w-full p-2 border rounded-md bg-white"
+                      className="select select-bordered w-full"
                       value={sortOption}
                       onChange={(e) => {
                         if (
@@ -668,7 +668,7 @@ export default function Ratings() {
                   <div className="flex-1 min-w-[200px]">
                     <label className="block text-sm font-medium mb-2">Filter</label>
                     <select
-                      className="w-full p-2 border rounded-md bg-white"
+                      className="select select-bordered w-full"
                       value={filterOption}
                       onChange={(e) => {
                         const newFilter = e.target.value as FilterOption;
@@ -776,26 +776,22 @@ export default function Ratings() {
             </div>
 
             <div className="flex justify-end gap-2 mt-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="btn btn-ghost"
+              <button
+                className="btn btn-ghost transition-colors duration-200"
                 onClick={() => setSelectedPlayer(null)}
               >
                 Cancel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: viewAsUser.isViewingAs ? 1 : 1.05 }}
-                whileTap={{ scale: viewAsUser.isViewingAs ? 1 : 0.95 }}
-                className={`btn ${viewAsUser.isViewingAs ? 'btn-disabled' : 'bg-primary hover:bg-primary/90'} text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2`}
+              </button>
+              <button
+                className={`btn ${viewAsUser.isViewingAs ? 'btn-disabled' : 'btn-primary'} gap-2`}
                 onClick={viewAsUser.isViewingAs ? undefined : handleRatingSubmit}
                 disabled={viewAsUser.isViewingAs}
               >
-                <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-                <span className="font-medium">
+                <span>⭐</span>
+                <span>
                   {viewAsUser.isViewingAs ? 'CANNOT SUBMIT (VIEW-ONLY)' : 'SUBMIT RATING'}
                 </span>
-              </motion.button>
+              </button>
             </div>
           </motion.div>
         </motion.div>
@@ -921,10 +917,8 @@ export default function Ratings() {
                         })()}
                       </div>
                     )}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="btn bg-primary hover:bg-primary/90 text-white h-10 min-h-0 px-4 py-0 flex items-center justify-center gap-2"
+                    <button
+                      className="btn btn-primary w-full gap-2"
                       onClick={async () => {
                         setSelectedPlayer(player);
                         setRatings({
@@ -1016,9 +1010,9 @@ export default function Ratings() {
                         }
                       }}
                     >
-                      <span className="inline-flex items-center justify-center w-4 h-4">⭐</span>
-                      <span className="font-medium">{getRatingButtonText(player.current_rating)}</span>
-                    </motion.button>
+                      <span>⭐</span>
+                      <span>{getRatingButtonText(player.current_rating)}</span>
+                    </button>
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">
