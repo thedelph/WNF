@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabase';
-import { Tooltip } from '../ui/Tooltip';
 
 interface YearSelectorProps {
   selectedYear: number | 'all';
@@ -92,17 +91,13 @@ export const YearSelector = ({ selectedYear, onYearChange, onYearsLoaded }: Year
       </button>
       
       {availableYears.map(year => (
-        <Tooltip 
+        <button
           key={year}
-          content={!isYearWithData(year) ? 'No data available yet' : ''}
+          className={getButtonStyle(year)}
+          onClick={() => onYearChange(year)}
         >
-          <button
-            className={getButtonStyle(year)}
-            onClick={() => onYearChange(year)}
-          >
-            {year}
-          </button>
-        </Tooltip>
+          {year}
+        </button>
       ))}
     </div>
   );
