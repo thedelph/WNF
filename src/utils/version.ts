@@ -18,6 +18,39 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.7.0',
+    date: '09/01/2026',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Site-Wide Dark Mode',
+            details: "WNF now supports dark mode! The app automatically detects your system preference, or you can manually toggle between light and dark modes using the sun/moon button in the header. Your preference is saved and persists across sessions."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Header Icon Consistency',
+            details: "Theme toggle and hamburger menu icons now match the notification bell size for visual consistency."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.6.0',
     date: '06/01/2026',
     sections: [

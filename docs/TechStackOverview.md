@@ -11,6 +11,16 @@
 - **Tailwind CSS**: Utility-first CSS framework for rapid UI development
 - **Daisy UI**: Component library built on top of Tailwind CSS that provides pre-designed UI components
 
+### Theming
+- **Dark Mode**: Site-wide dark mode with system preference detection + manual toggle
+- **ThemeContext**: React context for theme state management (`src/context/ThemeContext.tsx`)
+- **ThemeToggle**: Sun/Moon toggle component (`src/components/ui/ThemeToggle.tsx`)
+- **localStorage**: Theme preference persistence (key: `wnf-theme`)
+- **DaisyUI Themes**: Light and dark themes via `data-theme` attribute on `<html>`
+- **Tailwind Dark Mode**: Class-based dark mode (`darkMode: 'class'` in config)
+- **Flash Prevention**: Inline script in `index.html` prevents white flash on load
+- See [Dark Mode documentation](features/DarkMode.md) for full details
+
 ### Backend
 - **Supabase**: Open-source Firebase alternative providing:
   - Authentication services
