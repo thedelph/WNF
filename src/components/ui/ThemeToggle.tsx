@@ -13,9 +13,9 @@ const ThemeToggle: React.FC = () => {
       title={`Switch to ${resolvedTheme === 'light' ? 'dark' : 'light'} mode`}
     >
       {resolvedTheme === 'light' ? (
-        <Moon className="h-5 w-5" />
+        <Moon className="h-6 w-6" />
       ) : (
-        <Sun className="h-5 w-5" />
+        <Sun className="h-6 w-6" />
       )}
     </button>
   );
