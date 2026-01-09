@@ -443,6 +443,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       playstyleRatingsCount={playerStats[player.id]?.playstyleRatingsCount || 0}
                       recentGames={playerStats[player.id]?.recentGames || 0}
                       gameParticipation={playerStats[player.id]?.gameParticipation || new Array(40).fill(null)}
+                      shieldActive={playerStats[player.id]?.shieldActive || false}
+                      protectedStreakValue={playerStats[player.id]?.protectedStreakValue || null}
                     />
                   </motion.div>
                 ))}
@@ -499,6 +501,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       playstyleRatingsCount={playerStats[player.id]?.playstyleRatingsCount || 0}
                       recentGames={playerStats[player.id]?.recentGames || 0}
                       gameParticipation={playerStats[player.id]?.gameParticipation || new Array(40).fill(null)}
+                      shieldActive={playerStats[player.id]?.shieldActive || false}
+                      protectedStreakValue={playerStats[player.id]?.protectedStreakValue || null}
                     />
                   </motion.div>
                 ))}

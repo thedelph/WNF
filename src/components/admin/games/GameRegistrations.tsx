@@ -688,9 +688,17 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
               >
                 <h3 className="text-xl font-bold">Unassigned Players ({registrations.length})</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {registrations.map(player => (
-                    <PlayerCard key={player.id} {...player.player} />
-                  ))}
+                  {registrations.map(player => {
+                    const shieldData = shieldUsers.find(s => s.player_id === player.playerId);
+                    return (
+                      <PlayerCard
+                        key={player.id}
+                        {...player.player}
+                        shieldActive={!!shieldData}
+                        protectedStreakValue={shieldData?.protected_streak_value || null}
+                      />
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
@@ -707,9 +715,17 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                 >
                   <h3 className="text-xl font-bold text-blue-500">Blue Team ({registrations.filter(player => player.team === 'blue').length})</h3>
                   <div className="grid grid-cols-1 gap-4">
-                    {registrations.filter(player => player.team === 'blue').map(player => (
-                      <PlayerCard key={player.id} {...player.player} />
-                    ))}
+                    {registrations.filter(player => player.team === 'blue').map(player => {
+                      const shieldData = shieldUsers.find(s => s.player_id === player.playerId);
+                      return (
+                        <PlayerCard
+                          key={player.id}
+                          {...player.player}
+                          shieldActive={!!shieldData}
+                          protectedStreakValue={shieldData?.protected_streak_value || null}
+                        />
+                      );
+                    })}
                   </div>
                 </motion.div>
               )}
@@ -724,9 +740,17 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                 >
                   <h3 className="text-xl font-bold text-orange-500">Orange Team ({registrations.filter(player => player.team === 'orange').length})</h3>
                   <div className="grid grid-cols-1 gap-4">
-                    {registrations.filter(player => player.team === 'orange').map(player => (
-                      <PlayerCard key={player.id} {...player.player} />
-                    ))}
+                    {registrations.filter(player => player.team === 'orange').map(player => {
+                      const shieldData = shieldUsers.find(s => s.player_id === player.playerId);
+                      return (
+                        <PlayerCard
+                          key={player.id}
+                          {...player.player}
+                          shieldActive={!!shieldData}
+                          protectedStreakValue={shieldData?.protected_streak_value || null}
+                        />
+                      );
+                    })}
                   </div>
                 </motion.div>
               )}

@@ -143,6 +143,8 @@ export const PlayerCardView: React.FC<PlayerCardViewProps> = ({ players, title }
                         registrationStreakBonus={player.registration_streak_bonus || 0}
                         registrationStreakBonusApplies={player.registration_streak_bonus_applies || false}
                         usingToken={player.using_token}
+                        shieldActive={player.shieldActive || false}
+                        protectedStreakValue={player.protectedStreakValue || null}
                       />
                     </motion.div>
                   );

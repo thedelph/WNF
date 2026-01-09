@@ -604,7 +604,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
                 usingToken: player.using_token,
                 playstyleRatingsCount: playerStats[player.id]?.playstyleRatingsCount || 0,
                 recentGames: playerStats[player.id]?.recentGames || 0,
-                gameParticipation: playerStats[player.id]?.gameParticipation || new Array(40).fill(null)
+                gameParticipation: playerStats[player.id]?.gameParticipation || new Array(40).fill(null),
+                shieldActive: playerStats[player.id]?.shieldActive || false,
+                protectedStreakValue: playerStats[player.id]?.protectedStreakValue || null
               }))}
             isExpanded={showSelected}
             onToggle={() => setShowSelected(!showSelected)}
@@ -694,7 +696,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
                 usingToken: player.using_token,
                 playstyleRatingsCount: playerStats[player.id]?.playstyleRatingsCount || 0,
                 recentGames: playerStats[player.id]?.recentGames || 0,
-                gameParticipation: playerStats[player.id]?.gameParticipation || new Array(40).fill(null)
+                gameParticipation: playerStats[player.id]?.gameParticipation || new Array(40).fill(null),
+                shieldActive: playerStats[player.id]?.shieldActive || false,
+                protectedStreakValue: playerStats[player.id]?.protectedStreakValue || null
               }))}
             isExpanded={showReserves}
             onToggle={() => setShowReserves(!showReserves)}

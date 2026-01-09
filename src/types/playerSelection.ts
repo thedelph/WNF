@@ -74,6 +74,7 @@ export interface ExtendedPlayerData extends PlayerStats {
   recentGames?: number;
   // Shield protection properties
   shieldActive?: boolean;
+  protectedStreakValue?: number | null;
   frozenStreakValue?: number | null;
   // Mapped/transformed properties (camelCase versions)
   friendlyName?: string;

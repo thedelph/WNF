@@ -76,6 +76,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 recentGames={player.recentGames}
                 gameParticipation={player.gameParticipation}
                 shieldActive={player.shieldActive}
+                protectedStreakValue={player.protectedStreakValue ?? player.frozenStreakValue}
                 frozenStreakValue={player.frozenStreakValue}
               />
               {renderPlayerExtra && renderPlayerExtra(player)}
