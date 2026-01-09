@@ -91,7 +91,9 @@ export default function ProfileContent({
           benchWarmerStreak: profile.bench_warmer_streak || 0,
           registrationStreak: profile.registrationStreak || 0,
           registrationStreakApplies: profile.registrationStreakApplies || false,
-          unpaidGames: profile.unpaidGames || 0
+          unpaidGames: profile.unpaidGames || 0,
+          shieldActive: shieldStatus?.shieldActive || false,
+          frozenStreakValue: shieldStatus?.effectiveStreak ?? null
         }} />
       </motion.div>
 

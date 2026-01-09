@@ -887,7 +887,9 @@ export default function PlayerProfileNew() {
                 benchWarmerStreak: player.bench_warmer_streak || 0,
                 registrationStreak: player.registrationStreak || 0,
                 registrationStreakApplies: player.registrationStreakApplies || false,
-                unpaidGames: player.unpaidGames || 0
+                unpaidGames: player.unpaidGames || 0,
+                shieldActive: shieldStatus?.shieldActive || false,
+                frozenStreakValue: shieldStatus?.effectiveStreak ?? null
               }}
               showTotal={true}
             />
