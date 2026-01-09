@@ -25,7 +25,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         <h1 className="text-3xl font-bold">{title}</h1>
       </div>
       {description && (
-        <p className="text-gray-600">{description}</p>
+        <p className="text-gray-600 dark:text-gray-300">{description}</p>
       )}
       {children && (
         <div className="flex gap-2 mt-2">

@@ -64,8 +64,8 @@ export const NotificationHistory: React.FC<NotificationHistoryProps> = ({ player
       pending: 'text-yellow-500',
       accepted: 'text-green-500',
       declined: 'text-red-500',
-      sent: 'text-gray-500'
-    }[status] || 'text-gray-500';
+      sent: 'text-gray-500 dark:text-gray-400'
+    }[status] || 'text-gray-500 dark:text-gray-400';
 
     const displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
 

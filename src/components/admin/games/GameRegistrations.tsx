@@ -578,15 +578,15 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
                         <span className="font-medium truncate">{player.player.friendlyName}</span>
                         <div className="flex items-center gap-2">
                           {player.status === 'dropped_out' && (
-                            <span className="text-xs px-2 py-1 rounded bg-red-100 text-red-800 whitespace-nowrap">
+                            <span className="text-xs px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 whitespace-nowrap">
                               Dropped Out
                             </span>
                           )}
                           {player.status === 'selected' && (
                             <span className={`text-xs px-2 py-1 rounded whitespace-nowrap ${
                               player.selectionMethod === 'random'
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-green-100 text-green-800'
+                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
+                                : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                             }`}>
                               {player.selectionMethod === 'random' ? 'Random' : 'Merit'}
                             </span>
@@ -735,7 +735,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
 
           {registrations.length === 0 && (
             <div className="col-span-3 text-center py-8">
-              <p className="text-gray-500">No registrations found</p>
+              <p className="text-gray-500 dark:text-gray-400">No registrations found</p>
             </div>
           )}
         </div>

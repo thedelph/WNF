@@ -55,7 +55,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onChange, label }) => {
   return (
     <div className="flex flex-col items-start gap-2">
       <div className="flex items-center gap-4 w-full">
-        <span className="text-sm font-medium text-gray-700">{label}</span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{label}</span>
         <div className="relative">
           <input
             type="number"
@@ -67,7 +67,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onChange, label }) => {
             onBlur={handleInputBlur}
             className="w-16 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <span className="absolute right-[-24px] top-1/2 transform -translate-y-1/2 text-sm text-gray-500">/5</span>
+          <span className="absolute right-[-24px] top-1/2 transform -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400">/5</span>
         </div>
       </div>
       <div className="flex gap-1">
@@ -99,7 +99,7 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onChange, label }) => {
 
                 {/* Empty star */}
                 <svg
-                  className="absolute inset-0 w-full h-full text-gray-300"
+                  className="absolute inset-0 w-full h-full text-gray-300 dark:text-gray-600"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >

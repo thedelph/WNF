@@ -281,7 +281,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
       formatter: (value) => {
         if (value === null || value === undefined) return 'N/A';
         const formattedValue = value > 0 ? `+${value}` : value;
-        const colorClass = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : '';
+        const colorClass = value > 0 ? 'text-green-600 dark:text-green-400' : value < 0 ? 'text-red-600 dark:text-red-400' : '';
         return <span className={`font-semibold ${colorClass}`}>{formattedValue}</span>;
       }
     },
@@ -300,9 +300,9 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
         // Handle division by zero case
         if (goalsAgainst === 0) {
           // If goalsFor is also 0, ratio is 0. Otherwise, it's technically infinite
-          return goalsFor === 0 ? 
-            <span className="font-semibold">0.00</span> : 
-            <span className="font-semibold text-green-600">∞</span>;
+          return goalsFor === 0 ?
+            <span className="font-semibold">0.00</span> :
+            <span className="font-semibold text-green-600 dark:text-green-400">∞</span>;
         }
         
         // Calculate ratio and format to 2 decimal places
@@ -310,8 +310,8 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
         const formattedRatio = ratio.toFixed(2);
         
         // Color based on value: green if > 1, red if < 1, neutral if = 1
-        const colorClass = ratio > 1 ? 'text-green-600' : ratio < 1 ? 'text-red-600' : '';
-        
+        const colorClass = ratio > 1 ? 'text-green-600 dark:text-green-400' : ratio < 1 ? 'text-red-600 dark:text-red-400' : '';
+
         return <span className={`font-semibold ${colorClass}`}>{formattedRatio}</span>;
       }
     },
@@ -867,7 +867,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
                                   const value = player.goalDifferential;
                                   if (value === null || value === undefined) return 'N/A';
                                   const formattedValue = value > 0 ? `+${value}` : value;
-                                  const colorClass = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : '';
+                                  const colorClass = value > 0 ? 'text-green-600 dark:text-green-400' : value < 0 ? 'text-red-600 dark:text-red-400' : '';
                                   return <span className={`font-semibold ${colorClass}`}>{formattedValue}</span>;
                                 })()}
                               </div>

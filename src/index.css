@@ -7,7 +7,7 @@
 
 /* Custom styles */
 body {
-  @apply bg-gray-50;
+  @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
 }
 
 .btn {
@@ -23,7 +23,7 @@ body {
 }
 
 .btn-ghost {
-  @apply bg-transparent hover:bg-gray-100 text-gray-700;
+  @apply bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200;
 }
 
 .input {
@@ -39,9 +39,9 @@ body {
 }
 
 .fieldset-legend {
-  @apply text-sm font-medium text-gray-700;
+  @apply text-sm font-medium text-gray-700 dark:text-gray-200;
 }
 
 .fieldset-label {
-  @apply text-xs text-gray-500;
+  @apply text-xs text-gray-500 dark:text-gray-400;
 }

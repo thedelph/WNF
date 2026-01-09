@@ -43,7 +43,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
       return (
         <div key={index} className="mb-1">
           <span>{description}</span>
-          <span className="text-sm text-gray-500 ml-2">
+          <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
             {format(new Date(change.created_at), 'MMM d, HH:mm')}
           </span>
         </div>

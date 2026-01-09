@@ -32,9 +32,9 @@ export const StreakBar = ({
       <div className="flex flex-col w-full gap-1">
         <div className="flex justify-between text-xs">
           <span className="font-semibold">{label} Streak</span>
-          <span className="text-gray-500 font-semibold">No streak data</span>
+          <span className="text-gray-500 dark:text-gray-400 font-semibold">No streak data</span>
         </div>
-        <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200"></div>
+        <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700"></div>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export const StreakBar = ({
         </div>
         
         {/* Thinner bar for mobile */}
-        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200 relative">
+        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 relative">
           {/* Max streak segment */}
           <div 
             className={`${barColor} h-full transition-all duration-300 ease-in-out`} 
@@ -130,7 +130,7 @@ export const StreakBar = ({
       </div>
       
       {/* The bar itself */}
-      <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200 relative">
+      <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 relative">
         {/* Max streak segment */}
         <div 
           className={`${barColor} h-full transition-all duration-300 ease-in-out`} 

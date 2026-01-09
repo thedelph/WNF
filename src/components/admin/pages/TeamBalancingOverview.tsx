@@ -633,7 +633,7 @@ const TeamBalancingOverview = () => {
             <div className="flex flex-col items-center">
               <div className="text-xs font-medium text-blue-600">Attack</div>
               <div className="text-sm">{(metricImpact.attack * 100).toFixed(1)}%</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                 <div 
                   className="bg-blue-500 h-2 rounded-full" 
                   style={{ width: `${Math.min(100, metricImpact.attack * 100)}%` }}
@@ -644,7 +644,7 @@ const TeamBalancingOverview = () => {
             <div className="flex flex-col items-center">
               <div className="text-xs font-medium text-green-600">Defense</div>
               <div className="text-sm">{(metricImpact.defense * 100).toFixed(1)}%</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                 <div 
                   className="bg-green-500 h-2 rounded-full" 
                   style={{ width: `${Math.min(100, metricImpact.defense * 100)}%` }}
@@ -655,7 +655,7 @@ const TeamBalancingOverview = () => {
             <div className="flex flex-col items-center">
               <div className="text-xs font-medium text-purple-600">Game IQ</div>
               <div className="text-sm">{(metricImpact.gameIq * 100).toFixed(1)}%</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                 <div 
                   className="bg-purple-500 h-2 rounded-full" 
                   style={{ width: `${Math.min(100, metricImpact.gameIq * 100)}%` }}
@@ -666,7 +666,7 @@ const TeamBalancingOverview = () => {
             <div className="flex flex-col items-center">
               <div className="text-xs font-medium text-yellow-600">Win Rate</div>
               <div className="text-sm">{(metricImpact.winRate * 100).toFixed(1)}%</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                 <div 
                   className="bg-yellow-500 h-2 rounded-full" 
                   style={{ width: `${Math.min(100, metricImpact.winRate * 100)}%` }}
@@ -677,7 +677,7 @@ const TeamBalancingOverview = () => {
             <div className="flex flex-col items-center">
               <div className="text-xs font-medium text-red-600">Goal Diff</div>
               <div className="text-sm">{(metricImpact.goalDifferential * 100).toFixed(1)}%</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                 <div 
                   className="bg-red-500 h-2 rounded-full" 
                   style={{ width: `${Math.min(100, metricImpact.goalDifferential * 100)}%` }}

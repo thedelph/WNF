@@ -34,19 +34,19 @@ interface PositionSelectorProps {
  */
 const RANK_STYLES = {
   first: {
-    badge: 'bg-[#FCD34D] text-gray-900',
+    badge: 'bg-[#FCD34D] text-gray-900 dark:text-gray-900',
     label: '1st Choice',
     emoji: '🥇',
     points: 3
   },
   second: {
-    badge: 'bg-[#9CA3AF] text-white',
+    badge: 'bg-[#9CA3AF] text-white dark:text-white',
     label: '2nd Choice',
     emoji: '🥈',
     points: 2
   },
   third: {
-    badge: 'bg-[#EA580C] text-white',
+    badge: 'bg-[#EA580C] text-white dark:text-white',
     label: '3rd Choice',
     emoji: '🥉',
     points: 1
@@ -241,17 +241,17 @@ export default function PositionSelector({
         <div className="mt-2 p-2 bg-base-300 rounded flex flex-wrap gap-2 items-center">
           <span className="text-xs font-medium opacity-70">Selected:</span>
           {selectedPositions.first && (
-            <span className="px-2 py-1 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+            <span className="px-2 py-1 rounded text-xs font-medium bg-[#FCD34D] text-gray-900 dark:text-gray-900">
               🥇 {selectedPositions.first}
             </span>
           )}
           {selectedPositions.second && (
-            <span className="px-2 py-1 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+            <span className="px-2 py-1 rounded text-xs font-medium bg-[#9CA3AF] text-white dark:text-white">
               🥈 {selectedPositions.second}
             </span>
           )}
           {selectedPositions.third && (
-            <span className="px-2 py-1 rounded text-xs font-medium bg-[#EA580C] text-white">
+            <span className="px-2 py-1 rounded text-xs font-medium bg-[#EA580C] text-white dark:text-white">
               🥉 {selectedPositions.third}
             </span>
           )}

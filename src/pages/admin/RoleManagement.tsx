@@ -203,7 +203,7 @@ const RoleManagement: React.FC = () => {
                     {role.name}
                     {role.is_system && <span className="badge badge-info ml-2">System</span>}
                   </h2>
-                  {role.description && <p className="text-gray-600">{role.description}</p>}
+                  {role.description && <p className="text-gray-600 dark:text-gray-300">{role.description}</p>}
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -230,7 +230,7 @@ const RoleManagement: React.FC = () => {
                     <span key={rp.permission} className="badge badge-primary">
                       {PERMISSION_DISPLAY_NAMES[rp.permission as keyof typeof PERMISSION_DISPLAY_NAMES] || rp.permission}
                     </span>
-                  )) || <span className="text-gray-500">No permissions assigned</span>}
+                  )) || <span className="text-gray-500 dark:text-gray-400">No permissions assigned</span>}
                 </div>
               </div>
             </div>
@@ -287,7 +287,7 @@ const RoleManagement: React.FC = () => {
                     />
                     <div className="ml-3">
                       <div className="font-medium">{PERMISSION_DISPLAY_NAMES[permission]}</div>
-                      <div className="text-sm text-gray-600">{PERMISSION_DESCRIPTIONS[permission]}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">{PERMISSION_DESCRIPTIONS[permission]}</div>
                     </div>
                   </label>
                 ))}
@@ -337,7 +337,7 @@ const RoleManagement: React.FC = () => {
                     />
                     <div className="ml-3">
                       <div className="font-medium">{PERMISSION_DISPLAY_NAMES[permission]}</div>
-                      <div className="text-sm text-gray-600">{PERMISSION_DESCRIPTIONS[permission]}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">{PERMISSION_DESCRIPTIONS[permission]}</div>
                     </div>
                   </label>
                 ))}

@@ -40,7 +40,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
         <div className="py-12">
           <div className="text-6xl mb-4">✨</div>
           <p className="text-lg font-medium">Perfect Balance Achieved!</p>
-          <p className="text-gray-500 mt-2">No optimization was needed - the snake draft produced well-balanced teams.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">No optimization was needed - the snake draft produced well-balanced teams.</p>
         </div>
       </motion.div>
     );
@@ -80,7 +80,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                     <span className="badge badge-sm">Tier {swap.tier}</span>
                     <div className="flex items-center gap-2 text-lg font-medium flex-wrap">
                       <div className="flex items-center gap-1">
-                        <span className="text-blue-600">{swap.bluePlayer}</span>
+                        <span className="text-blue-600 dark:text-blue-400">{swap.bluePlayer}</span>
                         {(() => {
                           const bluePos = getPlayerPosition(swap.bluePlayer);
                           if (bluePos) {
@@ -101,7 +101,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       </div>
                       <span>↔</span>
                       <div className="flex items-center gap-1">
-                        <span className="text-orange-600">{swap.orangePlayer}</span>
+                        <span className="text-orange-600 dark:text-orange-400">{swap.orangePlayer}</span>
                         {(() => {
                           const orangePos = getPlayerPosition(swap.orangePlayer);
                           if (orangePos) {
@@ -124,11 +124,11 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                   </div>
                   <div className="text-right">
                     <div className="text-success font-bold">+{swap.improvement.toFixed(3)}</div>
-                    <div className="text-xs text-gray-500">improvement</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">improvement</div>
                   </div>
                 </div>
                 {swap.reason && (
-                  <p className="text-sm text-gray-600 mb-3">{swap.reason}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{swap.reason}</p>
                 )}
 
                 {/* Metric Changes */}
@@ -138,7 +138,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                     <div className="mb-3 p-2 bg-base-300 rounded text-sm">
                       {/* Reason for swap */}
                       <div className="mb-2">
-                        <p className="font-semibold text-xs uppercase text-gray-600 mb-1">📊 Reason</p>
+                        <p className="font-semibold text-xs uppercase text-gray-600 dark:text-gray-300 mb-1">📊 Reason</p>
                         <p className="text-xs">
                           {(() => {
                             const reasons: string[] = [];
@@ -173,7 +173,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
 
                       {/* Impact of swap */}
                       <div>
-                        <p className="font-semibold text-xs uppercase text-gray-600 mb-1">✅ Impact</p>
+                        <p className="font-semibold text-xs uppercase text-gray-600 dark:text-gray-300 mb-1">✅ Impact</p>
                         <p className="text-xs">
                           {(() => {
                             const improvements: string[] = [];
@@ -258,13 +258,13 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       </div>
                     </div>
 
-                    <p className="text-xs font-semibold text-gray-500 mb-2">DETAILED METRICS</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">DETAILED METRICS</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
                       {/* Core Skills */}
                       {swap.metricChanges.attack && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Attack:</span>
-                          <span className="text-gray-500">{swap.metricChanges.attack.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.attack.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.attack.after < swap.metricChanges.attack.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.attack.after.toFixed(2)}
@@ -274,7 +274,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.defense && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Defense:</span>
-                          <span className="text-gray-500">{swap.metricChanges.defense.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.defense.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.defense.after < swap.metricChanges.defense.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.defense.after.toFixed(2)}
@@ -284,7 +284,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.gameIq && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Game IQ:</span>
-                          <span className="text-gray-500">{swap.metricChanges.gameIq.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.gameIq.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.gameIq.after < swap.metricChanges.gameIq.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.gameIq.after.toFixed(2)}
@@ -296,7 +296,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.pace && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Pace:</span>
-                          <span className="text-gray-500">{swap.metricChanges.pace.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.pace.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.pace.after < swap.metricChanges.pace.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.pace.after.toFixed(2)}
@@ -306,7 +306,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.shooting && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Shooting:</span>
-                          <span className="text-gray-500">{swap.metricChanges.shooting.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.shooting.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.shooting.after < swap.metricChanges.shooting.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.shooting.after.toFixed(2)}
@@ -316,7 +316,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.passing && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Passing:</span>
-                          <span className="text-gray-500">{swap.metricChanges.passing.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.passing.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.passing.after < swap.metricChanges.passing.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.passing.after.toFixed(2)}
@@ -326,7 +326,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.dribbling && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Dribbling:</span>
-                          <span className="text-gray-500">{swap.metricChanges.dribbling.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.dribbling.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.dribbling.after < swap.metricChanges.dribbling.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.dribbling.after.toFixed(2)}
@@ -336,7 +336,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.defending && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Defending:</span>
-                          <span className="text-gray-500">{swap.metricChanges.defending.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.defending.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.defending.after < swap.metricChanges.defending.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.defending.after.toFixed(2)}
@@ -346,7 +346,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.physical && (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">Physical:</span>
-                          <span className="text-gray-500">{swap.metricChanges.physical.before.toFixed(2)}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.physical.before.toFixed(2)}</span>
                           <span>→</span>
                           <span className={swap.metricChanges.physical.after < swap.metricChanges.physical.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.physical.after.toFixed(2)}
@@ -358,7 +358,7 @@ export const OptimizationJourney: React.FC<OptimizationJourneyProps> = ({ data }
                       {swap.metricChanges.winRateGap && (
                         <div className="flex items-center gap-1 col-span-2">
                           <span className="font-medium">Win Rate Gap:</span>
-                          <span className="text-gray-500">{swap.metricChanges.winRateGap.before.toFixed(1)}%</span>
+                          <span className="text-gray-500 dark:text-gray-400">{swap.metricChanges.winRateGap.before.toFixed(1)}%</span>
                           <span>→</span>
                           <span className={swap.metricChanges.winRateGap.after < swap.metricChanges.winRateGap.before ? 'text-success' : 'text-warning'}>
                             {swap.metricChanges.winRateGap.after.toFixed(1)}%

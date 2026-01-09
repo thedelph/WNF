@@ -359,7 +359,7 @@ const EditPlayer: React.FC = () => {
             disabled={player.whatsapp_group_member !== 'Yes'}
             required={player.whatsapp_group_member === 'Yes'}
           />
-          <p className="fieldset-label text-gray-500">Format: +447123456789</p>
+          <p className="fieldset-label text-gray-500 dark:text-gray-400">Format: +447123456789</p>
           {phoneError && (
             <p className="fieldset-label text-error">{phoneError}</p>
           )}

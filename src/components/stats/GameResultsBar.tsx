@@ -36,9 +36,9 @@ export const GameResultsBar = ({
       <div className="flex flex-col w-full gap-1">
         <div className="flex justify-between text-xs">
           <span className="font-semibold">0 caps</span>
-          <span className="text-gray-500 font-semibold">No games played</span>
+          <span className="text-gray-500 dark:text-gray-400 font-semibold">No games played</span>
         </div>
-        <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200"></div>
+        <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700"></div>
       </div>
     );
   }
@@ -60,7 +60,7 @@ export const GameResultsBar = ({
         </div>
         
         {/* Thinner bar for mobile */}
-        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 flex">
+        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 flex">
           {/* Wins segment */}
           {wins > 0 && (
             <div 
@@ -111,7 +111,7 @@ export const GameResultsBar = ({
       </div>
       
       {/* The bar itself */}
-      <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 flex">
+      <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 flex">
         {/* Wins segment */}
         {wins > 0 && (
           <div 

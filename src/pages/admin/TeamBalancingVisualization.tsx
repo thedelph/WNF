@@ -161,7 +161,7 @@ export default function TeamBalancingVisualization() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Team Balancing Visualization</h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {parsedData.executiveSummary.totalPlayers} players • 
                 {parsedData.executiveSummary.tierCount} tiers • 
                 Balance: {parsedData.executiveSummary.finalBalance.toFixed(3)} ({parsedData.executiveSummary.balanceQuality})
@@ -237,23 +237,23 @@ export default function TeamBalancingVisualization() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                 <div>
-                  <span className="text-xs text-gray-500">GK:</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">GK:</span>
                   <span className="ml-1">{positionBalanceSummary.bluePositions.goalkeepers} vs {positionBalanceSummary.orangePositions.goalkeepers}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-500">DEF:</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">DEF:</span>
                   <span className="ml-1">{positionBalanceSummary.bluePositions.defenders} vs {positionBalanceSummary.orangePositions.defenders}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-500">MID:</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">MID:</span>
                   <span className="ml-1">{positionBalanceSummary.bluePositions.midfielders} vs {positionBalanceSummary.orangePositions.midfielders}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-500">ATK:</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">ATK:</span>
                   <span className="ml-1">{positionBalanceSummary.bluePositions.attackers} vs {positionBalanceSummary.orangePositions.attackers}</span>
                 </div>
               </div>
-              <div className="text-xs text-gray-500 mt-2">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 Max gap: {positionBalanceSummary.maxGap} • {positionBalanceSummary.totalBlue + positionBalanceSummary.totalOrange}/{parsedData.executiveSummary.totalPlayers} players with position data
               </div>
             </div>

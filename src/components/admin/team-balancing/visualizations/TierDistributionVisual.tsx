@@ -76,7 +76,7 @@ const TierItem: React.FC<{
         </div>
         
         {/* Rating range */}
-        <div className="text-center mt-1 text-sm text-gray-500">
+        <div className="text-center mt-1 text-sm text-gray-500 dark:text-gray-400">
           {tier.minRating.toFixed(1)} - {tier.maxRating.toFixed(1)}
         </div>
       </motion.div>
@@ -120,7 +120,7 @@ const TierItem: React.FC<{
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500">Rating: {player.rating.toFixed(2)}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Rating: {player.rating.toFixed(2)}</div>
                     </div>
                   );
                 })}
@@ -190,7 +190,7 @@ export const TierDistributionVisual: React.FC<TierDistributionVisualProps> = ({ 
           );
         })}
         
-        <div className="text-center mt-4 text-sm text-gray-500">
+        <div className="text-center mt-4 text-sm text-gray-500 dark:text-gray-400">
           <p>Click on a tier to see player details</p>
         </div>
       </div>
@@ -287,7 +287,7 @@ export const TierDistributionVisual: React.FC<TierDistributionVisualProps> = ({ 
                 />
                 Tier {tier.tier}
               </h4>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {tier.count} players • {tier.minRating.toFixed(1)} - {tier.maxRating.toFixed(1)}
               </span>
             </div>
@@ -303,7 +303,7 @@ export const TierDistributionVisual: React.FC<TierDistributionVisualProps> = ({ 
                   transition={{ delay: playerIndex * 0.02 }}
                 >
                   <div className="font-medium truncate">{player.name}</div>
-                  <div className="text-xs text-gray-500">{player.rating.toFixed(2)}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{player.rating.toFixed(2)}</div>
                 </motion.div>
               ))}
             </div>

@@ -126,8 +126,8 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
       return (
         <div className="stats shadow bg-base-100">
           <div className="stat place-items-center">
-            <div className="stat-title text-blue-500">Blue Team</div>
-            <div className="stat-value text-blue-500">{game.score_blue}</div>
+            <div className="stat-title text-blue-500 dark:text-blue-400">Blue Team</div>
+            <div className="stat-value text-blue-500 dark:text-blue-400">{game.score_blue}</div>
             {game.outcome === 'blue_win' && (
               <div className="stat-desc">
                 <div className="badge badge-primary badge-sm">Winner</div>
@@ -135,8 +135,8 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
             )}
           </div>
           <div className="stat place-items-center">
-            <div className="stat-title text-orange-500">Orange Team</div>
-            <div className="stat-value text-orange-500">{game.score_orange}</div>
+            <div className="stat-title text-orange-500 dark:text-orange-400">Orange Team</div>
+            <div className="stat-value text-orange-500 dark:text-orange-400">{game.score_orange}</div>
             {game.outcome === 'orange_win' && (
               <div className="stat-desc">
                 <div className="badge badge-warning badge-sm">Winner</div>
@@ -305,7 +305,7 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
                 {/* Blue Team */}
                 <div className="card bg-blue-500/10">
                   <div className="card-body p-3">
-                    <h4 className="card-title text-sm text-blue-500">Blue Team</h4>
+                    <h4 className="card-title text-sm text-blue-500 dark:text-blue-400">Blue Team</h4>
                     <ul className="list-none">
                       {getTeamPlayers(game.game_registrations, 'blue').map(reg => (
                         <li key={reg.id} className="text-sm">
@@ -318,7 +318,7 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
                 {/* Orange Team */}
                 <div className="card bg-orange-500/10">
                   <div className="card-body p-3">
-                    <h4 className="card-title text-sm text-orange-500">Orange Team</h4>
+                    <h4 className="card-title text-sm text-orange-500 dark:text-orange-400">Orange Team</h4>
                     <ul className="list-none">
                       {getTeamPlayers(game.game_registrations, 'orange').map(reg => (
                         <li key={reg.id} className="text-sm">

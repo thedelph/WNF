@@ -8,7 +8,7 @@ interface FormContainerProps {
 const FormContainer: React.FC<FormContainerProps> = ({ title, children }) => {
   return (
     <div className="container mx-auto mt-8 p-4">
-      <div className="max-w-md mx-auto bg-white shadow-lg rounded-lg p-6">
+      <div className="max-w-md mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
         {title && <h2 className="text-2xl font-bold mb-6">{title}</h2>}
         {children}
       </div>

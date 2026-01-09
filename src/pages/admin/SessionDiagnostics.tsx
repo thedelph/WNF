@@ -456,7 +456,7 @@ const SessionDiagnostics: React.FC = () => {
         toast.success(
           <div>
             <p className="font-bold">✅ Temporary password set!</p>
-            <p className="text-sm mt-1 font-mono bg-gray-100 p-1 rounded select-all">{tempPassword}</p>
+            <p className="text-sm mt-1 font-mono bg-gray-100 dark:bg-gray-800 p-1 rounded select-all">{tempPassword}</p>
             <p className="text-sm mt-2">Click to select and copy</p>
           </div>,
           { duration: 20000 }
@@ -698,7 +698,7 @@ const SessionDiagnostics: React.FC = () => {
 
           {problemUsers.length > 0 && (
             <div className="mt-2">
-              <span className="text-sm text-gray-500">Known issues with: </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Known issues with: </span>
               {problemUsers.map((email, i) => (
                 <button
                   key={i}
@@ -770,7 +770,7 @@ const SessionDiagnostics: React.FC = () => {
             {isSuperAdmin && Object.keys(userInfo.app_metadata).length > 0 && (
               <details className="mt-4">
                 <summary className="cursor-pointer text-sm font-semibold">Metadata</summary>
-                <pre className="mt-2 text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                <pre className="mt-2 text-xs bg-gray-50 dark:bg-gray-900 p-2 rounded overflow-x-auto">
                   {JSON.stringify({ app_metadata: userInfo.app_metadata, user_metadata: userInfo.user_metadata }, null, 2)}
                 </pre>
               </details>

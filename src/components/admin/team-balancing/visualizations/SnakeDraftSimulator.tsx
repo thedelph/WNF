@@ -37,7 +37,7 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
         className="bg-base-100 rounded-lg shadow-lg p-6 text-center"
       >
         <h2 className="text-xl font-bold mb-4">Snake Draft Process</h2>
-        <p className="text-gray-500">No draft data available</p>
+        <p className="text-gray-500 dark:text-gray-400">No draft data available</p>
       </motion.div>
     );
   }
@@ -114,8 +114,8 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
             <h3 className="font-bold text-lg">PHASE 0: Permanent Goalkeeper Assignment</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="font-semibold text-blue-700 mb-2">Blue Team</div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+              <div className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Blue Team</div>
               {permanentGKs.blue.length > 0 ? (
                 <div className="space-y-2">
                   {permanentGKs.blue.map(gk => (
@@ -126,11 +126,11 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                   ))}
                 </div>
               ) : (
-                <span className="text-gray-500 text-sm">No permanent GK</span>
+                <span className="text-gray-500 dark:text-gray-400 text-sm">No permanent GK</span>
               )}
             </div>
-            <div className="bg-orange-50 p-3 rounded-lg">
-              <div className="font-semibold text-orange-700 mb-2">Orange Team</div>
+            <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
+              <div className="font-semibold text-orange-700 dark:text-orange-300 mb-2">Orange Team</div>
               {permanentGKs.orange.length > 0 ? (
                 <div className="space-y-2">
                   {permanentGKs.orange.map(gk => (
@@ -141,11 +141,11 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                   ))}
                 </div>
               ) : (
-                <span className="text-gray-500 text-sm">No permanent GK</span>
+                <span className="text-gray-500 dark:text-gray-400 text-sm">No permanent GK</span>
               )}
             </div>
           </div>
-          <div className="text-xs text-gray-600 bg-base-100 p-2 rounded">
+          <div className="text-xs text-gray-600 dark:text-gray-300 bg-base-100 p-2 rounded">
             ℹ️ Permanent GKs are assigned before the snake draft and remain with their team throughout the game
           </div>
         </div>
@@ -221,12 +221,12 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
             <div className={`
               inline-block px-6 py-3 rounded-lg text-lg font-medium
               ${pick.team === 'blue'
-                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                : 'bg-orange-100 text-orange-700 border-2 border-orange-300'}
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-2 border-blue-300 dark:border-blue-700'
+                : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-2 border-orange-300 dark:border-orange-700'}
             `}>
               {pick.player} → {pick.team === 'blue' ? 'Blue' : 'Orange'} Team
             </div>
-            <div className="text-sm text-gray-500 mt-2">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
               Tier {pick.tier} • Rating: {pick.rating?.toFixed(2) || 'N/A'}
               {playerData?.gk_rating && ` • GK: ${formatRating(playerData.gk_rating)}`}
               {(() => {
@@ -247,8 +247,8 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
       {/* Draft Board */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Blue Team */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h3 className="font-bold text-blue-700 mb-3">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+          <h3 className="font-bold text-blue-700 dark:text-blue-300 mb-3">
             Blue Team ({currentBlueTeam.length} players)
           </h3>
           <div className="space-y-2">
@@ -262,12 +262,12 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="bg-white p-2 rounded"
+                    className="bg-white dark:bg-gray-800 p-2 rounded"
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{pick.player}</span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           Tier {pick.tier}
                         </span>
                         {(() => {
@@ -296,7 +296,7 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                       </div>
                     </div>
                     {playerData?.gk_rating && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         GK: {formatRating(playerData.gk_rating)}
                       </div>
                     )}
@@ -308,8 +308,8 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
         </div>
 
         {/* Orange Team */}
-        <div className="bg-orange-50 rounded-lg p-4">
-          <h3 className="font-bold text-orange-700 mb-3">
+        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+          <h3 className="font-bold text-orange-700 dark:text-orange-300 mb-3">
             Orange Team ({currentOrangeTeam.length} players)
           </h3>
           <div className="space-y-2">
@@ -323,12 +323,12 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.3 }}
-                    className="bg-white p-2 rounded"
+                    className="bg-white dark:bg-gray-800 p-2 rounded"
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{pick.player}</span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           Tier {pick.tier}
                         </span>
                         {(() => {
@@ -357,7 +357,7 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                       </div>
                     </div>
                     {playerData?.gk_rating && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         GK: {formatRating(playerData.gk_rating)}
                       </div>
                     )}
@@ -412,9 +412,9 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                     transition={{ delay: (tierIndex * 0.1) + (pickIndex * 0.05) }}
                     className={`
                       flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium
-                      ${pick.team === 'blue' 
-                        ? 'bg-blue-100 text-blue-700 border-2 border-blue-300' 
-                        : 'bg-orange-100 text-orange-700 border-2 border-orange-300'}
+                      ${pick.team === 'blue'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-2 border-blue-300 dark:border-blue-700'
+                        : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-2 border-orange-300 dark:border-orange-700'}
                     `}
                   >
                     <div>{pick.player}</div>
@@ -427,7 +427,7 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
             {/* Connection to next tier */}
             {tierIndex < data.snakeDraftPicks.length - 1 && (
               <div className="flex justify-center mt-4">
-                <div className="text-gray-400">↓</div>
+                <div className="text-gray-400 dark:text-gray-500">↓</div>
               </div>
             )}
           </div>
@@ -461,7 +461,7 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
               <div key={index} className="flex items-center justify-between bg-success bg-opacity-10 p-3 rounded-lg">
                 <div>
                   <span className="font-medium">{pick.player}</span>
-                  <span className={`ml-2 text-sm ${pick.team === 'blue' ? 'text-blue-600' : 'text-orange-600'}`}>
+                  <span className={`ml-2 text-sm ${pick.team === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     ({pick.team})
                   </span>
                 </div>
@@ -469,7 +469,7 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                   <div className="text-sm font-medium text-success">
                     +{pick.value.toFixed(2)} above tier avg
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     Tier {pick.tier} • Pick #{pick.pickNumber}
                   </div>
                 </div>
@@ -491,7 +491,7 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                   <div className="text-sm text-warning">
                     Tier {reach.tier}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     {reach.reason}
                   </div>
                 </div>
@@ -523,8 +523,8 @@ export const SnakeDraftSimulator: React.FC<SnakeDraftSimulatorProps> = ({ data }
                       <td className="font-medium">Tier {tier.tier}</td>
                       <td>{tier.picks[0]?.player || '-'}</td>
                       <td>{tier.picks[tier.picks.length - 1]?.player || '-'}</td>
-                      <td className="text-blue-600">{bluePicks}</td>
-                      <td className="text-orange-600">{orangePicks}</td>
+                      <td className="text-blue-600 dark:text-blue-400">{bluePicks}</td>
+                      <td className="text-orange-600 dark:text-orange-400">{orangePicks}</td>
                     </tr>
                   );
                 })}

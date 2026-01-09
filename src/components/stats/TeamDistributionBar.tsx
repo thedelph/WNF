@@ -23,7 +23,7 @@ export const TeamDistributionBar = ({
           <span className="text-blue-600 font-semibold">{bluePercentage.toFixed(1)}%</span>
           <span className="text-orange-500 font-semibold">{orangePercentage.toFixed(1)}%</span>
         </div>
-        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 flex">
+        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 flex">
           <div 
             className="bg-blue-500 h-full transition-all duration-300 ease-in-out" 
             style={{ width: `${bluePercentage}%` }}
@@ -46,7 +46,7 @@ export const TeamDistributionBar = ({
         <span className="text-blue-600 font-semibold">{bluePercentage.toFixed(1)}%</span>
         <span className="text-orange-500 font-semibold">{orangePercentage.toFixed(1)}%</span>
       </div>
-      <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 flex">
+      <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 flex">
         <div 
           className="bg-blue-500 h-full transition-all duration-300 ease-in-out" 
           style={{ width: `${bluePercentage}%` }}

@@ -484,7 +484,7 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
         className="bg-base-100 rounded-lg shadow-lg p-6"
       >
         <h2 className="text-xl font-bold mb-4">Player Transformation Analysis</h2>
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <p>No player transformation data available</p>
           <p className="text-sm mt-2">Debug: {transformations?.length || 0} transformations found</p>
         </div>
@@ -582,15 +582,15 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
             <div className="flex flex-wrap gap-4 justify-center mb-6">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-red-500"></div>
-                <span className="text-sm">Hot Streak 🔥</span>
+                <span className="text-sm dark:text-gray-300">Hot Streak 🔥</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-                <span className="text-sm">Cold Streak ❄️</span>
+                <span className="text-sm dark:text-gray-300">Cold Streak ❄️</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
-                <span className="text-sm">Steady Performance ●</span>
+                <span className="text-sm dark:text-gray-300">Steady Performance ●</span>
               </div>
             </div>
           </motion.div>
@@ -604,7 +604,7 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
             exit={{ opacity: 0 }}
           >
             <HeatmapView />
-            <div className="mt-4 text-sm text-gray-500 space-y-2">
+            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 space-y-2">
               <p>Color intensity indicates relative values within each metric.</p>
               <p>Green = positive change, Red = negative change, Blue = skill values</p>
               <div className="bg-base-200 p-3 rounded-lg">
@@ -616,7 +616,7 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
                   <li>• <strong>0.7+</strong> = Excellent performance</li>
                   <li>• <strong>0.3-</strong> = Poor performance</li>
                 </ul>
-                <p className="mt-2 text-xs">Scores combine win rate (70%) and goal differential (30%) into a single metric.</p>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Scores combine win rate (70%) and goal differential (30%) into a single metric.</p>
               </div>
             </div>
           </motion.div>
@@ -665,7 +665,7 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
                           <span className="font-medium">{player.name}</span>
                           <div className="text-right">
                             <span className="text-success font-bold">+{player.change.toFixed(2)}</span>
-                            <div className="text-xs text-gray-500">Performance boost</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Performance boost</div>
                           </div>
                         </div>
                       ))}
@@ -686,7 +686,7 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
                           <span className="font-medium">{player.name}</span>
                           <div className="text-right">
                             <span className="text-error font-bold">{player.change.toFixed(2)}</span>
-                            <div className="text-xs text-gray-500">Performance penalty</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Performance penalty</div>
                           </div>
                         </div>
                       ))}
@@ -722,19 +722,19 @@ export const PlayerTransformationAnalysis: React.FC<PlayerTransformationAnalysis
               return (
                 <>
                   <div>
-                    <span className="text-gray-500">Base Skill:</span> {formatRating(player.baseSkill)}
+                    <span className="text-gray-500 dark:text-gray-400">Base Skill:</span> {formatRating(player.baseSkill)}
                   </div>
                   <div>
-                    <span className="text-gray-500">Final Rating:</span> {formatRating(player.threeLayerRating)}
+                    <span className="text-gray-500 dark:text-gray-400">Final Rating:</span> {formatRating(player.threeLayerRating)}
                   </div>
                   <div>
-                    <span className="text-gray-500">Change:</span> 
+                    <span className="text-gray-500 dark:text-gray-400">Change:</span> 
                     <span className={player.change > 0 ? 'text-success' : player.change < 0 ? 'text-error' : ''}>
                       {player.change > 0 ? '+' : ''}{player.change.toFixed(2)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Momentum:</span> {player.momentum}
+                    <span className="text-gray-500 dark:text-gray-400">Momentum:</span> {player.momentum}
                     {player.momentum === 'hot' && ' 🔥'}
                     {player.momentum === 'cold' && ' ❄️'}
                     {player.momentum === 'steady' && ' ●'}

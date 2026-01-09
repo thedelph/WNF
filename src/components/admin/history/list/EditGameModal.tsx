@@ -438,7 +438,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Blue Team */}
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                  <h3 className="text-xl font-bold mb-4 text-blue-600">Blue Team</h3>
+                  <h3 className="text-xl font-bold mb-4 text-blue-600 dark:text-blue-400">Blue Team</h3>
                   <TeamSection
                     players={players}
                     teamColor="blue"
@@ -453,7 +453,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
 
                 {/* Orange Team */}
                 <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-                  <h3 className="text-xl font-bold mb-4 text-orange-600">Orange Team</h3>
+                  <h3 className="text-xl font-bold mb-4 text-orange-600 dark:text-orange-400">Orange Team</h3>
                   <TeamSection
                     players={players}
                     teamColor="orange"

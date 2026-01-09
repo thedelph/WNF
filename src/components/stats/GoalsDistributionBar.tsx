@@ -46,9 +46,9 @@ export const GoalsDistributionBar = ({
             {goalDifferential > 0 ? '+' : ''}{goalDifferential}
           </span>
         </div>
-        <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200 relative">
+        <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 relative">
           {/* Middle divider line */}
-          <div className="absolute h-full w-[1px] bg-gray-400 left-1/2 transform -translate-x-1/2 z-10" />
+          <div className="absolute h-full w-[1px] bg-gray-400 dark:bg-gray-500 left-1/2 transform -translate-x-1/2 z-10" />
           
           {/* The bar itself */}
           {isPositive ? (
@@ -81,7 +81,7 @@ export const GoalsDistributionBar = ({
           <span className="text-green-600 font-semibold">0</span>
           <span className="text-red-600 font-semibold">0</span>
         </div>
-        <div className={`${mobile ? 'h-3' : 'h-4'} w-full rounded-full overflow-hidden border border-gray-300 bg-gray-200`}></div>
+        <div className={`${mobile ? 'h-3' : 'h-4'} w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700`}></div>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export const GoalsDistributionBar = ({
           <span className="text-green-600 font-semibold">{goalsFor}</span>
           <span className="text-red-600 font-semibold">{goalsAgainst}</span>
         </div>
-        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 flex">
+        <div className="h-3 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 flex">
           <div 
             className="bg-green-500 h-full transition-all duration-300 ease-in-out" 
             style={{ width: `${forPercentage}%` }}
@@ -121,7 +121,7 @@ export const GoalsDistributionBar = ({
         <span className="text-green-600 font-semibold">{goalsFor}</span>
         <span className="text-red-600 font-semibold">{goalsAgainst}</span>
       </div>
-      <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 flex">
+      <div className="h-4 w-full rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 flex">
         <div 
           className="bg-green-500 h-full transition-all duration-300 ease-in-out" 
           style={{ width: `${forPercentage}%` }}

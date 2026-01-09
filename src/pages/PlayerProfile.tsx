@@ -1052,7 +1052,7 @@ export default function PlayerProfileNew() {
         >
           <div className="card-body">
             <h2 className="card-title">Player Rating</h2>
-            <p className="text-gray-500">You cannot rate yourself</p>
+            <p className="text-gray-500 dark:text-gray-400">You cannot rate yourself</p>
           </div>
         </motion.div>
       )}

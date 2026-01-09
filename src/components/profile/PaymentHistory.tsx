@@ -269,7 +269,7 @@ const PaymentHistory = () => {
 
       {games.length === 0 && currentPage === 1 ? (
         <div className="text-center p-8">
-          <p className="text-gray-500">No games found matching your filters.</p>
+          <p className="text-gray-500 dark:text-gray-400">No games found matching your filters.</p>
         </div>
       ) : (
         <>

@@ -134,7 +134,7 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
       >
         <Link
           to={`/player/${toUrlFriendly(registration.player.friendly_name)}`}
-          className="text-blue-500 hover:text-blue-600 flex-1"
+          className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 flex-1"
         >
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">

@@ -120,7 +120,7 @@ const Teams: React.FC = () => {
         <span className="text-sm font-medium">{label}</span>
         <span className="text-sm font-medium">{value.toFixed(1)}</span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
         <motion.div
           className="bg-primary h-2.5 rounded-full"
           initial={{ width: 0 }}
@@ -136,11 +136,11 @@ const Teams: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`p-6 rounded-lg shadow-lg ${
-        team === 'blue' ? 'bg-blue-100' : 'bg-orange-100'
+        team === 'blue' ? 'bg-blue-100 dark:bg-blue-900/20' : 'bg-orange-100 dark:bg-orange-900/20'
       }`}
     >
       <h3 className={`text-2xl font-bold mb-4 ${
-        team === 'blue' ? 'text-blue-800' : 'text-orange-800'
+        team === 'blue' ? 'text-blue-800 dark:text-blue-200' : 'text-orange-800 dark:text-orange-200'
       }`}>
         {team === 'blue' ? 'Blue Team' : 'Orange Team'}
       </h3>

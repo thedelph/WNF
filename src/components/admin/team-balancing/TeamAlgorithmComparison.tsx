@@ -121,7 +121,7 @@ export const TeamAlgorithmComparison: React.FC<TeamAlgorithmComparisonProps> = (
                 </div>
                 <div className="flex gap-2 items-center">
                   <div className="flex-1">
-                    <div className="bg-gray-200 rounded-full h-2 relative">
+                    <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 relative">
                       <div 
                         className="bg-primary h-2 rounded-full"
                         style={{ width: maxDiff > 0 ? `${(currentDiff / maxDiff) * 100}%` : '0%' }}
@@ -130,7 +130,7 @@ export const TeamAlgorithmComparison: React.FC<TeamAlgorithmComparisonProps> = (
                     <div className="text-xs mt-0.5">Current: {currentDiff.toFixed(2)}</div>
                   </div>
                   <div className="flex-1">
-                    <div className="bg-gray-200 rounded-full h-2 relative">
+                    <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 relative">
                       <div 
                         className="bg-secondary h-2 rounded-full"
                         style={{ width: maxDiff > 0 ? `${(tierDiff / maxDiff) * 100}%` : '0%' }}
@@ -166,7 +166,7 @@ export const TeamAlgorithmComparison: React.FC<TeamAlgorithmComparisonProps> = (
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">Both algorithms produced the same team assignments</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Both algorithms produced the same team assignments</p>
         )}
       </div>
 

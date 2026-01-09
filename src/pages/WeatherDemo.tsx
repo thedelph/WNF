@@ -174,19 +174,19 @@ const WeatherDemo: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="mb-8 relative"
           >
-            <div className="bg-white rounded-lg p-6 shadow-2xl">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-2xl">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
                     {weatherConditions[selectedCard].title}
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     {weatherConditions[selectedCard].description}
                   </p>
                 </div>
                 <button
                   onClick={() => setSelectedCard(null)}
-                  className="btn btn-circle btn-ghost text-gray-600"
+                  className="btn btn-circle btn-ghost text-gray-600 dark:text-gray-300"
                 >
                   <i className="fa-solid fa-times text-xl"></i>
                 </button>
@@ -261,7 +261,7 @@ const WeatherDemo: React.FC = () => {
               className="cursor-pointer"
               onClick={() => setSelectedCard(index)}
             >
-              <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+              <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                 {/* Weather animation preview */}
                 <div
                   className={`relative h-40 ${condition.animationClass}`}
@@ -318,11 +318,11 @@ const WeatherDemo: React.FC = () => {
                 </div>
 
                 {/* Card info */}
-                <div className="p-4 bg-white">
-                  <h3 className="font-bold text-gray-800 mb-1">
+                <div className="p-4 bg-white dark:bg-gray-800">
+                  <h3 className="font-bold text-gray-800 dark:text-white mb-1">
                     {condition.title}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     {condition.description}
                   </p>
                 </div>

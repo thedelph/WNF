@@ -370,7 +370,7 @@ const AdminManagement: React.FC = () => {
           {/* Admin List */}
           <div>
             {filteredAdmins.length === 0 && searchQuery && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 No admins found matching "{searchQuery}"
               </div>
             )}

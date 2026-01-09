@@ -80,7 +80,7 @@ export const AdminSlotOffers: React.FC<AdminSlotOffersProps> = ({ slotOffers, on
                     {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
                   </span>
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Game #{offer.game?.sequence_number} - {formatDate(offer.game?.date)}
                 </p>
               </div>
@@ -102,7 +102,7 @@ export const AdminSlotOffers: React.FC<AdminSlotOffersProps> = ({ slotOffers, on
               )}
             </div>
 
-            <div className="text-sm space-y-1 text-gray-600">
+            <div className="text-sm space-y-1 text-gray-600 dark:text-gray-300">
               <p>Offered: {formatDate(offer.offered_at)}</p>
               {offer.responded_at && (
                 <p>Responded: {formatDate(offer.responded_at)}</p>
@@ -118,7 +118,7 @@ export const AdminSlotOffers: React.FC<AdminSlotOffersProps> = ({ slotOffers, on
         ))}
 
         {slotOffers.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             No active slot offers found
           </div>
         )}

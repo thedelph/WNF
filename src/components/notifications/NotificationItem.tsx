@@ -53,7 +53,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 
       <div className="flex flex-col gap-1">
         <p className="text-sm">{notification.message}</p>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-gray-500 dark:text-gray-400">
           {format(new Date(notification.created_at), 'MMM d, h:mm a')}
         </span>
       </div>

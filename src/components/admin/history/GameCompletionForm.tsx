@@ -519,7 +519,7 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Blue Team */}
             <div>
-              <h3 className="text-xl font-bold mb-4 text-blue-600">Blue Team</h3>
+              <h3 className="text-xl font-bold mb-4 text-blue-600 dark:text-blue-400">Blue Team</h3>
               <TeamSection
                 players={players}
                 teamColor="blue"
@@ -534,7 +534,7 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
 
             {/* Orange Team */}
             <div>
-              <h3 className="text-xl font-bold mb-4 text-orange-600">Orange Team</h3>
+              <h3 className="text-xl font-bold mb-4 text-orange-600 dark:text-orange-400">Orange Team</h3>
               <TeamSection
                 players={players}
                 teamColor="orange"

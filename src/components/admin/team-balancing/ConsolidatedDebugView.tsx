@@ -234,7 +234,7 @@ export const ConsolidatedDebugView: React.FC<ConsolidatedDebugViewProps> = ({ de
                     <div className="mt-2 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <div className="text-blue-600 font-medium">Blue Team</div>
+                          <div className="text-blue-600 dark:text-blue-400 font-medium">Blue Team</div>
                           {debugLog.playerAnalysis
                             .filter(p => p.team === 'blue')
                             .sort((a, b) => {
@@ -242,16 +242,16 @@ export const ConsolidatedDebugView: React.FC<ConsolidatedDebugViewProps> = ({ de
                               return posOrder.indexOf(a.assignedPosition) - posOrder.indexOf(b.assignedPosition);
                             })
                             .map(player => (
-                              <div key={player.playerId} className={`text-xs ${player.isNaturalPosition ? 'text-green-600' : ''}`}>
+                              <div key={player.playerId} className={`text-xs ${player.isNaturalPosition ? 'text-green-600 dark:text-green-400' : ''}`}>
                                 {player.assignedPosition}: {player.playerName} {player.isNaturalPosition ? '✓' : ''}
                                 {player.detectedPlaystyle && (
-                                  <span className="text-gray-500 ml-1">({player.detectedPlaystyle})</span>
+                                  <span className="text-gray-500 dark:text-gray-400 ml-1">({player.detectedPlaystyle})</span>
                                 )}
                               </div>
                             ))}
                         </div>
                         <div className="space-y-1">
-                          <div className="text-orange-600 font-medium">Orange Team</div>
+                          <div className="text-orange-600 dark:text-orange-400 font-medium">Orange Team</div>
                           {debugLog.playerAnalysis
                             .filter(p => p.team === 'orange')
                             .sort((a, b) => {
@@ -259,10 +259,10 @@ export const ConsolidatedDebugView: React.FC<ConsolidatedDebugViewProps> = ({ de
                               return posOrder.indexOf(a.assignedPosition) - posOrder.indexOf(b.assignedPosition);
                             })
                             .map(player => (
-                              <div key={player.playerId} className={`text-xs ${player.isNaturalPosition ? 'text-green-600' : ''}`}>
+                              <div key={player.playerId} className={`text-xs ${player.isNaturalPosition ? 'text-green-600 dark:text-green-400' : ''}`}>
                                 {player.assignedPosition}: {player.playerName} {player.isNaturalPosition ? '✓' : ''}
                                 {player.detectedPlaystyle && (
-                                  <span className="text-gray-500 ml-1">({player.detectedPlaystyle})</span>
+                                  <span className="text-gray-500 dark:text-gray-400 ml-1">({player.detectedPlaystyle})</span>
                                 )}
                               </div>
                             ))}

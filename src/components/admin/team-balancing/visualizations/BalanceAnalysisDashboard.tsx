@@ -162,8 +162,8 @@ export const BalanceAnalysisDashboard: React.FC<BalanceAnalysisDashboardProps> =
 
           {/* Team advantages */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-700 mb-2">Blue Team Advantages</h4>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-2">Blue Team Advantages</h4>
               <ul className="space-y-1 text-sm">
                 {data.balanceBreakdown.metrics
                   .filter(m => m.blueValue > m.orangeValue)
@@ -175,8 +175,8 @@ export const BalanceAnalysisDashboard: React.FC<BalanceAnalysisDashboardProps> =
                   ))}
               </ul>
             </div>
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <h4 className="font-medium text-orange-700 mb-2">Orange Team Advantages</h4>
+            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-orange-700 dark:text-orange-300 mb-2">Orange Team Advantages</h4>
               <ul className="space-y-1 text-sm">
                 {data.balanceBreakdown.metrics
                   .filter(m => m.orangeValue > m.blueValue)
@@ -243,8 +243,8 @@ export const BalanceAnalysisDashboard: React.FC<BalanceAnalysisDashboardProps> =
               <thead>
                 <tr>
                   <th>Metric</th>
-                  <th className="text-blue-600">Blue Team</th>
-                  <th className="text-orange-600">Orange Team</th>
+                  <th className="text-blue-600 dark:text-blue-400">Blue Team</th>
+                  <th className="text-orange-600 dark:text-orange-400">Orange Team</th>
                   <th>Difference</th>
                   <th>Status</th>
                 </tr>
@@ -253,8 +253,8 @@ export const BalanceAnalysisDashboard: React.FC<BalanceAnalysisDashboardProps> =
                 {data.balanceBreakdown.metrics.map((metric, index) => (
                   <tr key={index}>
                     <td className="font-medium">{metric.name}</td>
-                    <td className="text-blue-600">{metric.blueValue.toFixed(2)}</td>
-                    <td className="text-orange-600">{metric.orangeValue.toFixed(2)}</td>
+                    <td className="text-blue-600 dark:text-blue-400">{metric.blueValue.toFixed(2)}</td>
+                    <td className="text-orange-600 dark:text-orange-400">{metric.orangeValue.toFixed(2)}</td>
                     <td className={metric.difference < 0.5 ? 'text-success' : metric.difference < 1.0 ? 'text-warning' : 'text-error'}>
                       {metric.difference.toFixed(2)}
                     </td>
@@ -281,7 +281,7 @@ export const BalanceAnalysisDashboard: React.FC<BalanceAnalysisDashboardProps> =
             <p className="text-2xl font-bold mb-2" style={{ color: quality.color }}>
               {data.balanceBreakdown.description}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {data.executiveSummary.advantage}
             </p>
           </div>

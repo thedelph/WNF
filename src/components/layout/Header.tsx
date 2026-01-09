@@ -5,6 +5,7 @@ import { useAdmin } from '../../hooks/useAdmin'
 import { supabase } from '../../utils/supabase'
 import { toast } from 'react-toastify'
 import NotificationBell from '../notifications/NotificationBell'
+import ThemeToggle from '../ui/ThemeToggle'
 
 const Header: React.FC = () => {
   const navigate = useNavigate()
@@ -97,8 +98,11 @@ const Header: React.FC = () => {
         {/* Desktop Navigation */}
         <ul className="menu menu-horizontal menu-sm px-1 items-center hidden lg:flex">
           <NavLinks />
+          <li className="ml-2">
+            <ThemeToggle />
+          </li>
           {user && (
-            <li className="ml-2">
+            <li>
               <NotificationBell />
             </li>
           )}
@@ -117,13 +121,12 @@ const Header: React.FC = () => {
           {isMenuOpen && (
             <div className="absolute top-full right-0 mt-2 w-80 p-2 shadow-lg bg-base-100 rounded-box z-50">
               <ul className="menu menu-vertical">
-                {user && (
-                  <li className="mb-2 flex justify-end">
-                    <div className="scale-90">
-                      <NotificationBell />
-                    </div>
-                  </li>
-                )}
+                <li className="mb-2 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <ThemeToggle />
+                    {user && <NotificationBell />}
+                  </div>
+                </li>
                 <NavLinks />
               </ul>
             </div>

@@ -158,7 +158,7 @@ const BetaTesterManagement: React.FC = () => {
         </Tooltip>
       </div>
 
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         Manage which players have access to beta features. Beta testers can see and use new features before they're released to everyone.
       </p>
 
@@ -226,7 +226,7 @@ const BetaTesterManagement: React.FC = () => {
         <div className="max-h-96 overflow-y-auto border border-base-300 rounded-lg">
           <AnimatePresence>
             {filteredPlayers.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 No players found
               </div>
             ) : (
@@ -254,7 +254,7 @@ const BetaTesterManagement: React.FC = () => {
                           <span className="badge badge-warning badge-sm">Beta</span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {player.caps} caps
                       </div>
                     </div>
@@ -276,7 +276,7 @@ const BetaTesterManagement: React.FC = () => {
         </div>
       )}
 
-      <div className="mt-4 text-sm text-gray-500">
+      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
         <strong>Tip:</strong> Use the search to find specific players, or use bulk selection to update multiple players at once.
       </div>
     </div>

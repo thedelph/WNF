@@ -113,7 +113,7 @@ export const PlayerActionMenu: React.FC<PlayerActionMenuProps> = ({
   // Don't show menu for already dropped out players
   if (currentStatus === 'dropped_out') {
     return (
-      <span className="text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+      <span className="text-xs px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
         Dropped Out
       </span>
     );
@@ -154,7 +154,7 @@ export const PlayerActionMenu: React.FC<PlayerActionMenuProps> = ({
                   onClick={() => openConfirmDialog('unregister')}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-base-200 rounded text-left"
                 >
-                  <FaTimes className="w-4 h-4 text-gray-500" />
+                  <FaTimes className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   <span>Unregister</span>
                 </button>
 

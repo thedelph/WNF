@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       screens: {
@@ -150,6 +151,7 @@ export default {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["light"],
+    themes: ["light", "dark"],
+    darkTheme: "dark",
   }
 }

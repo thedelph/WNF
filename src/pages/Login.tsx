@@ -125,8 +125,8 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="px-8 py-6 mt-4 text-left bg-white shadow-lg rounded-lg max-w-md w-full">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="px-8 py-6 mt-4 text-left bg-white dark:bg-gray-800 shadow-lg rounded-lg max-w-md w-full">
         {/* Session Recovery Banner */}
         {auth && auth.sessionHealth && (
           <SessionRecoveryBanner
@@ -177,12 +177,12 @@ const Login: React.FC = () => {
 
               {/* Magic Link Option for Problem Users */}
               {showDiagnostics && (
-                <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-semibold text-blue-900">Alternative Login Method</span>
+                    <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">Alternative Login Method</span>
                   </div>
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
                     If you continue to have issues, you can request a magic link.
                   </p>
                   <button
@@ -211,7 +211,7 @@ const Login: React.FC = () => {
 
         {/* Session Diagnostics (hidden by default, shown for debugging) */}
         {showDiagnostics && auth?.getSessionDiagnostics && (
-          <details className="mt-4 p-2 bg-gray-50 rounded text-xs">
+          <details className="mt-4 p-2 bg-gray-50 dark:bg-gray-900 rounded text-xs">
             <summary className="cursor-pointer font-semibold">Session Diagnostics</summary>
             <pre className="mt-2 overflow-x-auto">
               {JSON.stringify(auth.getSessionDiagnostics(), null, 2)}

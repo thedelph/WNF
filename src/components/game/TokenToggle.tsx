@@ -26,7 +26,7 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
       <fieldset className="fieldset">
         <label className="flex items-center cursor-pointer gap-4">
           <span className="flex items-center gap-2 text-error">
-            <PiCoinDuotone size={20} className="text-gray-400" />
+            <PiCoinDuotone size={20} className="text-gray-400 dark:text-gray-500" />
             <span>Error checking token</span>
           </span>
           <input
@@ -72,7 +72,7 @@ export const TokenToggle: React.FC<TokenToggleProps> = ({
           <span className="flex items-center gap-2">
             <PiCoinDuotone
               size={20}
-              className={value ? 'text-yellow-400' : 'text-gray-400'}
+              className={value ? 'text-yellow-400' : 'text-gray-400 dark:text-gray-500'}
             />
             <span>Use priority token?</span>
           </span>

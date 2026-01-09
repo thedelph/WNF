@@ -138,7 +138,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
       whileHover={{ scale: 1.05 }}
       className={`
         p-3 rounded-lg shadow-md cursor-pointer
-        ${team === 'blue' ? 'bg-blue-50 border-2 border-blue-200' : 'bg-orange-50 border-2 border-orange-200'}
+        ${team === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700' : 'bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-700'}
       `}
     >
       <div className="flex items-center justify-between mb-2">
@@ -152,16 +152,16 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
       </div>
       <div className="grid grid-cols-2 gap-1 text-xs">
         <div>
-          <span className="text-gray-500">ATK:</span> {formatRating(player.attack_rating)}
+          <span className="text-gray-500 dark:text-gray-400">ATK:</span> {formatRating(player.attack_rating)}
         </div>
         <div>
-          <span className="text-gray-500">DEF:</span> {formatRating(player.defense_rating)}
+          <span className="text-gray-500 dark:text-gray-400">DEF:</span> {formatRating(player.defense_rating)}
         </div>
         <div>
-          <span className="text-gray-500">IQ:</span> {formatRating(player.game_iq_rating)}
+          <span className="text-gray-500 dark:text-gray-400">IQ:</span> {formatRating(player.game_iq_rating)}
         </div>
         <div>
-          <span className="text-gray-500">GK:</span> {formatRating(player.gk_rating)}
+          <span className="text-gray-500 dark:text-gray-400">GK:</span> {formatRating(player.gk_rating)}
         </div>
       </div>
       {(player.total_games || 0) >= 10 && (
@@ -173,7 +173,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
         </div>
       )}
       {(player.total_games || 0) < 10 && (
-        <div className="mt-2 text-xs text-gray-500 text-center">
+        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
           NEW PLAYER
         </div>
       )}
@@ -182,7 +182,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
           <div className="text-purple-600 font-medium">
             {getPlaystyleSummary(player)}
           </div>
-          <div className="text-gray-500">
+          <div className="text-gray-500 dark:text-gray-400">
             {getAttributeDisplay(player)}
           </div>
         </div>
@@ -242,7 +242,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Blue Team */}
           <div>
-            <h3 className="font-bold text-blue-600 mb-4">
+            <h3 className="font-bold text-blue-600 dark:text-blue-400 mb-4">
               Blue Team ({blueTeam.length} players)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -254,7 +254,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
 
           {/* Orange Team */}
           <div>
-            <h3 className="font-bold text-orange-600 mb-4">
+            <h3 className="font-bold text-orange-600 dark:text-orange-400 mb-4">
               Orange Team ({orangeTeam.length} players)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -274,8 +274,8 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
               <thead>
                 <tr>
                   <th>Metric</th>
-                  <th className="text-blue-600">Blue Team</th>
-                  <th className="text-orange-600">Orange Team</th>
+                  <th className="text-blue-600 dark:text-blue-400">Blue Team</th>
+                  <th className="text-orange-600 dark:text-orange-400">Orange Team</th>
                   <th>Difference</th>
                 </tr>
               </thead>
@@ -346,8 +346,8 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
 
           {/* Visual representation */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-bold text-blue-600 mb-3">Blue Team Strengths</h4>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h4 className="font-bold text-blue-600 dark:text-blue-400 mb-3">Blue Team Strengths</h4>
               <div className="space-y-2">
                 {blueStats.avgAttack > orangeStats.avgAttack && (
                   <div className="flex items-center gap-2">
@@ -375,8 +375,8 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                 )}
               </div>
             </div>
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <h4 className="font-bold text-orange-600 mb-3">Orange Team Strengths</h4>
+            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+              <h4 className="font-bold text-orange-600 dark:text-orange-400 mb-3">Orange Team Strengths</h4>
               <div className="space-y-2">
                 {orangeStats.avgAttack > blueStats.avgAttack && (
                   <div className="flex items-center gap-2">
@@ -415,7 +415,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
               <h4 className="font-bold mb-3">Tier {tier.tier}</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <div className="font-medium text-blue-600 mb-2">
+                  <div className="font-medium text-blue-600 dark:text-blue-400 mb-2">
                     Blue Team ({tier.blueCount} players)
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -429,7 +429,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                   </div>
                 </div>
                 <div>
-                  <div className="font-medium text-orange-600 mb-2">
+                  <div className="font-medium text-orange-600 dark:text-orange-400 mb-2">
                     Orange Team ({tier.orangeCount} players)
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -484,7 +484,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
       )}
 
       {viewMode === 'formation' && !formationSuggestions && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           No formation suggestions available. Teams may be empty or have insufficient data.
         </div>
       )}
@@ -495,7 +495,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Blue Team Playstyles */}
             <div>
-              <h3 className="font-bold text-blue-600 mb-4">
+              <h3 className="font-bold text-blue-600 dark:text-blue-400 mb-4">
                 Blue Team Playstyles
               </h3>
               <div className="space-y-2">
@@ -517,14 +517,14 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                   return Array.from(playstyleCount.entries())
                     .sort((a, b) => b[1].count - a[1].count)
                     .map(([name, data]) => (
-                      <div key={name} className="bg-blue-50 p-3 rounded-lg">
+                      <div key={name} className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
                         <div className="flex justify-between items-start">
                           <div>
                             <span className="font-medium">{name}</span>
                             <span className="ml-2 badge badge-sm">{data.count}</span>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-600 mt-1">
+                        <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                           {data.players.join(', ')}
                         </div>
                       </div>
@@ -535,7 +535,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
 
             {/* Orange Team Playstyles */}
             <div>
-              <h3 className="font-bold text-orange-600 mb-4">
+              <h3 className="font-bold text-orange-600 dark:text-orange-400 mb-4">
                 Orange Team Playstyles
               </h3>
               <div className="space-y-2">
@@ -557,14 +557,14 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                   return Array.from(playstyleCount.entries())
                     .sort((a, b) => b[1].count - a[1].count)
                     .map(([name, data]) => (
-                      <div key={name} className="bg-orange-50 p-3 rounded-lg">
+                      <div key={name} className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
                         <div className="flex justify-between items-start">
                           <div>
                             <span className="font-medium">{name}</span>
                             <span className="ml-2 badge badge-sm">{data.count}</span>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-600 mt-1">
+                        <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                           {data.players.join(', ')}
                         </div>
                       </div>
@@ -582,8 +582,8 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                 <thead>
                   <tr>
                     <th>Attribute</th>
-                    <th className="text-blue-600">Blue Team</th>
-                    <th className="text-orange-600">Orange Team</th>
+                    <th className="text-blue-600 dark:text-blue-400">Blue Team</th>
+                    <th className="text-orange-600 dark:text-orange-400">Orange Team</th>
                     <th>Difference</th>
                   </tr>
                 </thead>
@@ -649,7 +649,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                 </tbody>
               </table>
             </div>
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               * Attributes are derived from player playstyles (0-10 scale)
             </div>
           </div>
@@ -762,7 +762,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                 })()}
               </ResponsiveContainer>
             </div>
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               Radar chart shows averaged team attributes with dynamic scaling
             </div>
           </div>
@@ -775,7 +775,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Blue Team Positions */}
             <div>
-              <h3 className="font-bold text-blue-600 mb-4">
+              <h3 className="font-bold text-blue-600 dark:text-blue-400 mb-4">
                 Blue Team Position Distribution
               </h3>
               <div className="space-y-2">
@@ -816,7 +816,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                               <span className="ml-2 badge badge-sm badge-warning">{categoryCount.goalkeepers}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                             {categoryPlayers.goalkeepers.join(', ')}
                           </div>
                         </div>
@@ -829,7 +829,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                               <span className="ml-2 badge badge-sm badge-info">{categoryCount.defenders}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                             {categoryPlayers.defenders.join(', ')}
                           </div>
                         </div>
@@ -842,7 +842,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                               <span className="ml-2 badge badge-sm badge-secondary">{categoryCount.midfielders}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                             {categoryPlayers.midfielders.join(', ')}
                           </div>
                         </div>
@@ -855,7 +855,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                               <span className="ml-2 badge badge-sm badge-error">{categoryCount.attackers}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                             {categoryPlayers.attackers.join(', ')}
                           </div>
                         </div>
@@ -868,7 +868,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
 
             {/* Orange Team Positions */}
             <div>
-              <h3 className="font-bold text-orange-600 mb-4">
+              <h3 className="font-bold text-orange-600 dark:text-orange-400 mb-4">
                 Orange Team Position Distribution
               </h3>
               <div className="space-y-2">
@@ -909,7 +909,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                               <span className="ml-2 badge badge-sm badge-warning">{categoryCount.goalkeepers}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                             {categoryPlayers.goalkeepers.join(', ')}
                           </div>
                         </div>
@@ -922,7 +922,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                               <span className="ml-2 badge badge-sm badge-info">{categoryCount.defenders}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                             {categoryPlayers.defenders.join(', ')}
                           </div>
                         </div>
@@ -935,7 +935,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                               <span className="ml-2 badge badge-sm badge-secondary">{categoryCount.midfielders}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                             {categoryPlayers.midfielders.join(', ')}
                           </div>
                         </div>
@@ -948,7 +948,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                               <span className="ml-2 badge badge-sm badge-error">{categoryCount.attackers}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                             {categoryPlayers.attackers.join(', ')}
                           </div>
                         </div>
@@ -968,8 +968,8 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                 <thead>
                   <tr>
                     <th>Position</th>
-                    <th className="text-blue-600">Blue Team</th>
-                    <th className="text-orange-600">Orange Team</th>
+                    <th className="text-blue-600 dark:text-blue-400">Blue Team</th>
+                    <th className="text-orange-600 dark:text-orange-400">Orange Team</th>
                     <th>Gap</th>
                     <th>Status</th>
                   </tr>
@@ -1026,7 +1026,7 @@ export const FinalTeamComposition: React.FC<FinalTeamCompositionProps> = ({ data
                 </tbody>
               </table>
             </div>
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               * Maximum acceptable gap per position: {POSITION_THRESHOLDS.MAX_INDIVIDUAL_POSITION_GAP} players
             </div>
           </div>

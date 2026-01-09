@@ -104,7 +104,7 @@ export const VenueManagement: React.FC<Props> = ({ venues, onUpdate }) => {
             >
               <div>
                 <h3 className="font-medium">{venue.name}</h3>
-                <p className="text-sm text-gray-500">{venue.address}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{venue.address}</p>
               </div>
               <div className="flex gap-2">
                 <button

@@ -185,7 +185,7 @@ export const AnalyticsInsights: React.FC<AnalyticsInsightsProps> = ({ data }) =>
                   </div>
                 ))}
               {Object.keys(playstyleDistribution).length > 4 && (
-                <div className="text-xs text-gray-500 text-center pt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 text-center pt-1">
                   +{Object.keys(playstyleDistribution).length - 4} more styles
                 </div>
               )}
@@ -199,7 +199,7 @@ export const AnalyticsInsights: React.FC<AnalyticsInsightsProps> = ({ data }) =>
           <div className="space-y-2 text-sm">
             {biggestGainer.change > 0 && (
               <div>
-                <div className="text-xs text-gray-500">Biggest Gain</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Biggest Gain</div>
                 <div className="flex justify-between items-center">
                   <span>{biggestGainer.name}</span>
                   <span className="text-success font-medium">+{biggestGainer.change.toFixed(2)}</span>
@@ -208,7 +208,7 @@ export const AnalyticsInsights: React.FC<AnalyticsInsightsProps> = ({ data }) =>
             )}
             {biggestLoser.change < 0 && (
               <div className="mt-2">
-                <div className="text-xs text-gray-500">Biggest Drop</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Biggest Drop</div>
                 <div className="flex justify-between items-center">
                   <span>{biggestLoser.name}</span>
                   <span className="text-error font-medium">{biggestLoser.change.toFixed(2)}</span>
@@ -216,7 +216,7 @@ export const AnalyticsInsights: React.FC<AnalyticsInsightsProps> = ({ data }) =>
               </div>
             )}
             <div className="mt-2">
-              <div className="text-xs text-gray-500">Performance Impact</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Performance Impact</div>
               <div className="flex justify-between items-center">
                 <span>Major Changes:</span>
                 <span className="font-medium">{performanceStats.majorBoosts + performanceStats.majorDrops}</span>

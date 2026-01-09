@@ -107,7 +107,7 @@ export const AlgorithmTimeline: React.FC<AlgorithmTimelineProps> = ({
                   <div className={`font-medium ${isActive ? 'text-primary' : ''}`}>
                     {phase.title}
                   </div>
-                  <div className="text-xs text-gray-500 max-w-[120px]">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 max-w-[120px]">
                     {phase.description}
                   </div>
                 </div>
@@ -160,7 +160,7 @@ export const AlgorithmTimeline: React.FC<AlgorithmTimelineProps> = ({
                   <div className={`font-medium ${isActive ? 'text-primary' : ''}`}>
                     {phase.title}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
                     {phase.description}
                   </div>
                 </div>

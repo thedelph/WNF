@@ -166,7 +166,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
               </span>
               <CountdownTimer targetDate={nextEvent} />
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               {formatDate(utcToUkTime(nextEvent))}
             </div>
           </div>
@@ -185,12 +185,12 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           {/* Progress Bar */}
           <div className="mb-4">
             <div className="flex justify-between items-center mb-1.5">
-              <span className="text-sm text-gray-600">Players Registered</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Players Registered</span>
               <span className={`text-sm font-medium ${currentlyRegistered > game.max_players ? 'text-orange-500' : ''}`}>
                 {currentlyRegistered}/{game.max_players}
               </span>
             </div>
-            <div className="w-full bg-gray-300 rounded-full h-2.5 overflow-hidden">
+            <div className="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-2.5 overflow-hidden">
               <div 
                 className={`h-2.5 transition-all duration-300 ${
                   currentlyRegistered > game.max_players 
@@ -223,16 +223,16 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
               <div className="text-2xl font-bold mb-1">
                 {(game.max_players || 0) - (game.random_slots || 0) - priorityTokenCount}
               </div>
-              <div className="text-xs text-gray-600 uppercase tracking-wide">
+              <div className="text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wide">
                 XP Slots
               </div>
             </div>
 
-            <div className="text-center border-l border-r border-gray-300 px-3">
+            <div className="text-center border-l border-r border-gray-300 dark:border-gray-600 px-3">
               <div className="text-2xl font-bold mb-1 flex items-center justify-center gap-1">
                 {game.random_slots || 0}
               </div>
-              <div className="text-xs text-gray-600 uppercase tracking-wide">
+              <div className="text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wide">
                 Random Slots
               </div>
             </div>
@@ -242,7 +242,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 {priorityTokenCount}
                 <PiCoinDuotone className="text-yellow-500" />
               </div>
-              <div className="text-xs text-gray-600 uppercase tracking-wide">
+              <div className="text-xs text-gray-600 dark:text-gray-300 uppercase tracking-wide">
                 Priority Tokens
               </div>
             </div>

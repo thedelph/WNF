@@ -194,7 +194,7 @@ export const TrophyCabinet = ({ playerId, playerName }: TrophyCabinetProps) => {
                   </span>
                 )}
                 {counts.silver > 0 && (
-                  <span className="badge badge-sm bg-gray-400/20 text-gray-600 border-gray-400/30">
+                  <span className="badge badge-sm bg-gray-400/20 text-gray-600 dark:text-gray-300 border-gray-400/30">
                     🥈 {counts.silver}
                   </span>
                 )}

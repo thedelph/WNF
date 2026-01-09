@@ -31,7 +31,7 @@ export const StarRating: React.FC<StarRatingProps> = ({ score, maxScore = 5 }) =
         } else if (i === fullStars && hasHalfStar) {
           return <span key={i} className="text-yellow-400">⯨</span>;
         } else {
-          return <span key={i} className="text-gray-300">★</span>;
+          return <span key={i} className="text-gray-300 dark:text-gray-600">★</span>;
         }
       })}
     </div>

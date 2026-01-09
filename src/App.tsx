@@ -15,6 +15,7 @@ import Players from "./pages/admin/players"
 import EditPlayer from "./pages/admin/EditPlayer"
 import { AuthProvider } from "./context/AuthContext"
 import { ViewAsProvider } from "./context/ViewAsContext"
+import { ThemeProvider } from "./context/ThemeContext"
 import ErrorBoundary from './components/ErrorBoundary'
 import { Toaster } from 'react-hot-toast'
 import HistoricalGames from './pages/admin/history/HistoricalGames'
@@ -65,9 +66,10 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ViewAsProvider>
-          <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <ViewAsProvider>
+            <ErrorBoundary>
             <ScrollToTop />
             <Routes>
             {/* Redirect root to leaderboards */}
@@ -132,9 +134,10 @@ const App: React.FC = () => {
               </Route>
             </Routes>
             <Toaster />
-          </ErrorBoundary>
-        </ViewAsProvider>
-      </AuthProvider>
+            </ErrorBoundary>
+          </ViewAsProvider>
+        </AuthProvider>
+      </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
       {/* Vercel Analytics - Tracks page views and other metrics */}
       <Analytics />

@@ -312,7 +312,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Attack</div>
                     <div className="text-sm">{formatStat(stats.attackDiff * 0.15)}</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                       <div
                         className="bg-blue-500 h-2 rounded-full"
                         style={{ width: `${Math.min(100, (stats.normalizedWeightedAttackDiff || 0) * 100)}%` }}
@@ -322,7 +322,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Defense</div>
                     <div className="text-sm">{formatStat(stats.defenseDiff * 0.15)}</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                       <div
                         className="bg-green-500 h-2 rounded-full"
                         style={{ width: `${Math.min(100, (stats.normalizedWeightedDefenseDiff || 0) * 100)}%` }}
@@ -332,7 +332,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Game IQ</div>
                     <div className="text-sm">{formatStat(stats.gameIqDiff * 0.15)}</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                       <div
                         className="bg-purple-500 h-2 rounded-full"
                         style={{ width: `${Math.min(100, (stats.normalizedWeightedGameIqDiff || 0) * 100)}%` }}
@@ -342,7 +342,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">GK</div>
                     <div className="text-sm">{formatStat(stats.gkDiff * 0.15)}</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                       <div
                         className="bg-orange-500 h-2 rounded-full"
                         style={{ width: `${Math.min(100, (stats.normalizedWeightedGkDiff || 0) * 100)}%` }}
@@ -352,7 +352,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Win Rate</div>
                     <div className="text-sm">{formatStat(stats.winRateDiff * 0.20)}</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                       <div
                         className="bg-yellow-500 h-2 rounded-full"
                         style={{ width: `${Math.min(100, (stats.normalizedWeightedWinRateDiff || 0) * 100)}%` }}
@@ -362,7 +362,7 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
                   <div className="flex flex-col items-center">
                     <div className="text-xs font-medium">Goal Diff</div>
                     <div className="text-sm">{formatStat(stats.goalDifferentialDiff * 0.20)}</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                       <div
                         className="bg-red-500 h-2 rounded-full"
                         style={{ width: `${Math.min(100, (stats.normalizedWeightedGoalDiffDiff || 0) * 100)}%` }}
@@ -423,15 +423,15 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
       {/* Mobile view - card-based layout */}
       <div className="md:hidden space-y-4">
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-blue-50 p-3 rounded">
-            <h4 className="font-medium text-blue-700">Blue Team</h4>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
+            <h4 className="font-medium text-blue-700 dark:text-blue-300">Blue Team</h4>
             <p className="text-sm">Attack: {formatStat(stats.blue.attack)}</p>
             <p className="text-sm">Defense: {formatStat(stats.blue.defense)}</p>
             <p className="text-sm">Game IQ: {formatStat(stats.blue.gameIq)}</p>
             <p className="text-sm">GK: {formatStat(stats.blue.gk)}</p>
             <p className="text-sm">Win Rate: {formatStat(stats.blue.winRate)}%</p>
             {hasPositionData && (
-              <div className="text-xs mt-2 pt-2 border-t border-blue-200">
+              <div className="text-xs mt-2 pt-2 border-t border-blue-200 dark:border-blue-700">
                 <div className="font-medium">Positions:</div>
                 {bluePositions.goalkeepers > 0 && <div>🥅 GK: {bluePositions.goalkeepers}</div>}
                 {bluePositions.defenders > 0 && <div>🛡️ DEF: {bluePositions.defenders}</div>}
@@ -441,15 +441,15 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
             )}
           </div>
 
-          <div className="bg-orange-50 p-3 rounded">
-            <h4 className="font-medium text-orange-700">Orange Team</h4>
+          <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded">
+            <h4 className="font-medium text-orange-700 dark:text-orange-300">Orange Team</h4>
             <p className="text-sm">Attack: {formatStat(stats.orange.attack)}</p>
             <p className="text-sm">Defense: {formatStat(stats.orange.defense)}</p>
             <p className="text-sm">Game IQ: {formatStat(stats.orange.gameIq)}</p>
             <p className="text-sm">GK: {formatStat(stats.orange.gk)}</p>
             <p className="text-sm">Win Rate: {formatStat(stats.orange.winRate)}%</p>
             {hasPositionData && (
-              <div className="text-xs mt-2 pt-2 border-t border-orange-200">
+              <div className="text-xs mt-2 pt-2 border-t border-orange-200 dark:border-orange-700">
                 <div className="font-medium">Positions:</div>
                 {orangePositions.goalkeepers > 0 && <div>🥅 GK: {orangePositions.goalkeepers}</div>}
                 {orangePositions.defenders > 0 && <div>🛡️ DEF: {orangePositions.defenders}</div>}
@@ -494,8 +494,8 @@ export const TeamStats: React.FC<TeamStatsProps> = ({ blueTeam, orangeTeam, stat
         
         {/* Comparison stats for mobile */}
         {comparisonStats && (
-          <div className="bg-green-50 p-3 rounded">
-            <h4 className="font-medium text-green-700">After Swap</h4>
+          <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded">
+            <h4 className="font-medium text-green-700 dark:text-green-300">After Swap</h4>
             <p className="text-sm">Attack Diff: {formatStat(comparisonStats.attackDiff)}</p>
             <p className="text-sm">Defense Diff: {formatStat(comparisonStats.defenseDiff)}</p>
             <p className="text-sm">Game IQ Diff: {formatStat(comparisonStats.gameIqDiff)}</p>

@@ -247,7 +247,7 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
             </Tooltip>
           </div>
         </div>
-        <p className="text-sm text-gray-500 mt-2">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
           {algorithm === 'brute-force'
             ? 'Evaluates all combinations with spread constraint (equal players from top/middle/bottom thirds). Guaranteed optimal.'
             : 'Uses snake draft with simulated annealing. May not find global optimum.'}
@@ -357,7 +357,7 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
                       <div className="font-medium text-sm mb-1">
                         Tier {tier.tierNumber} ({tier.players.length} players)
                       </div>
-                      <div className="text-xs text-gray-500 mb-1">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                         Rating: {tier.skillRange.min.toFixed(1)} - {tier.skillRange.max.toFixed(1)}
                       </div>
                       {showDetails && (
@@ -376,8 +376,8 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
 
               {/* Team assignments */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <h5 className="font-medium text-blue-700 mb-2">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                  <h5 className="font-medium text-blue-700 dark:text-blue-300 mb-2">
                     Blue Team ({tierBasedResult.blueTeam.length} players)
                   </h5>
                   <div className="text-sm mb-2">
@@ -392,11 +392,11 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
                           {player.friendly_name}
                           <span className="badge badge-xs">Tier {player.tier}</span>
                         </span>
-                        <div className="text-xs text-gray-500 ml-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                           <Tooltip content={`Three-layer rating: ${player.threeLayerRating.toFixed(2)}`}>
                             <span>
-                              A: {formatRating(player.attack_rating)}, 
-                              D: {formatRating(player.defense_rating)}, 
+                              A: {formatRating(player.attack_rating)},
+                              D: {formatRating(player.defense_rating)},
                               IQ: {formatRating(player.game_iq_rating)}
                             </span>
                           </Tooltip>
@@ -405,9 +405,9 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
                     ))}
                   </ul>
                 </div>
-                
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  <h5 className="font-medium text-orange-700 mb-2">
+
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
+                  <h5 className="font-medium text-orange-700 dark:text-orange-300 mb-2">
                     Orange Team ({tierBasedResult.orangeTeam.length} players)
                   </h5>
                   <div className="text-sm mb-2">
@@ -422,7 +422,7 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
                           {player.friendly_name}
                           <span className="badge badge-xs">Tier {player.tier}</span>
                         </span>
-                        <div className="text-xs text-gray-500 ml-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                           <Tooltip content={`Three-layer rating: ${player.threeLayerRating.toFixed(2)}`}>
                             <span>
                               A: {formatRating(player.attack_rating)}, 
@@ -534,36 +534,36 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
                 <div className="grid grid-cols-5 gap-2 text-xs">
                   <div className="text-center">
                     <div className="font-medium">Core</div>
-                    <div className="text-gray-500">{(bruteForceResult.scoreBreakdown.coreRatings * 100).toFixed(1)}%</div>
-                    <div className="text-xs text-gray-400">40% weight</div>
+                    <div className="text-gray-500 dark:text-gray-400">{(bruteForceResult.scoreBreakdown.coreRatings * 100).toFixed(1)}%</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">40% weight</div>
                   </div>
                   <div className="text-center">
                     <div className="font-medium">Chemistry</div>
-                    <div className="text-gray-500">{(bruteForceResult.scoreBreakdown.chemistry * 100).toFixed(1)}%</div>
-                    <div className="text-xs text-gray-400">20% weight</div>
+                    <div className="text-gray-500 dark:text-gray-400">{(bruteForceResult.scoreBreakdown.chemistry * 100).toFixed(1)}%</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">20% weight</div>
                   </div>
                   <div className="text-center">
                     <div className="font-medium">Performance</div>
-                    <div className="text-gray-500">{(bruteForceResult.scoreBreakdown.performance * 100).toFixed(1)}%</div>
-                    <div className="text-xs text-gray-400">20% weight</div>
+                    <div className="text-gray-500 dark:text-gray-400">{(bruteForceResult.scoreBreakdown.performance * 100).toFixed(1)}%</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">20% weight</div>
                   </div>
                   <div className="text-center">
                     <div className="font-medium">Position</div>
-                    <div className="text-gray-500">{(bruteForceResult.scoreBreakdown.position * 100).toFixed(1)}%</div>
-                    <div className="text-xs text-gray-400">10% weight</div>
+                    <div className="text-gray-500 dark:text-gray-400">{(bruteForceResult.scoreBreakdown.position * 100).toFixed(1)}%</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">10% weight</div>
                   </div>
                   <div className="text-center">
                     <div className="font-medium">Attributes</div>
-                    <div className="text-gray-500">{(bruteForceResult.scoreBreakdown.attributes * 100).toFixed(1)}%</div>
-                    <div className="text-xs text-gray-400">10% weight</div>
+                    <div className="text-gray-500 dark:text-gray-400">{(bruteForceResult.scoreBreakdown.attributes * 100).toFixed(1)}%</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">10% weight</div>
                   </div>
                 </div>
               </div>
 
               {/* Team assignments */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <h5 className="font-medium text-blue-700 mb-2">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                  <h5 className="font-medium text-blue-700 dark:text-blue-300 mb-2">
                     Blue Team ({bruteForceResult.blueTeam.length} players)
                   </h5>
                   <div className="text-sm mb-2">
@@ -580,7 +580,7 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
                             <span className="badge badge-xs">{player.primaryPosition}</span>
                           )}
                         </span>
-                        <div className="text-xs text-gray-500 ml-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                           A: {player.attack.toFixed(1)}, D: {player.defense.toFixed(1)}, IQ: {player.gameIq.toFixed(1)}
                         </div>
                       </li>
@@ -588,8 +588,8 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
                   </ul>
                 </div>
 
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  <h5 className="font-medium text-orange-700 mb-2">
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
+                  <h5 className="font-medium text-orange-700 dark:text-orange-300 mb-2">
                     Orange Team ({bruteForceResult.orangeTeam.length} players)
                   </h5>
                   <div className="text-sm mb-2">
@@ -606,7 +606,7 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
                             <span className="badge badge-xs">{player.primaryPosition}</span>
                           )}
                         </span>
-                        <div className="text-xs text-gray-500 ml-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                           A: {player.attack.toFixed(1)}, D: {player.defense.toFixed(1)}, IQ: {player.gameIq.toFixed(1)}
                         </div>
                       </li>

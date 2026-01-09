@@ -209,17 +209,17 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
                     const renderPositionBadges = (first?: string | null, second?: string | null, third?: string | null, isNew = false, isOld = false) => (
                       <div className={`flex flex-wrap gap-1 ${isOld ? 'line-through opacity-60' : ''}`}>
                         {first && (
-                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900 dark:text-gray-900">
                             🥇{first}
                           </span>
                         )}
                         {second && (
-                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white dark:text-white">
                             🥈{second}
                           </span>
                         )}
                         {third && (
-                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white">
+                          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white dark:text-white">
                             🥉{third}
                           </span>
                         )}

@@ -1,6 +1,17 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function() {
+        var theme = localStorage.getItem('wnf-theme');
+        var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var resolved = theme === 'dark' || (theme !== 'light' && systemDark) ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', resolved);
+        if (resolved === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/assets/wnf-logo-removed-bg.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

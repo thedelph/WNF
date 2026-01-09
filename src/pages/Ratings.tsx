@@ -597,7 +597,7 @@ export default function Ratings() {
       <div className="mb-6">
         <button
           onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <span>{isFiltersOpen ? '−' : '+'}</span>
           Sorting & Filtering Options
@@ -612,7 +612,7 @@ export default function Ratings() {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="mt-4 p-4 bg-white rounded-lg shadow-md space-y-4">
+              <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md space-y-4">
                 {/* Search Input */}
                 <div className="flex-1">
                   <label className="block text-sm font-medium mb-2">Search Players</label>
@@ -702,7 +702,7 @@ export default function Ratings() {
                     onChange={(e) => setWhatsAppMembersOnly(e.target.checked)}
                     className="checkbox checkbox-primary"
                   />
-                  <label htmlFor="whatsAppMembersOnly" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="whatsAppMembersOnly" className="text-sm font-medium text-gray-700 dark:text-gray-200">
                     WhatsApp Members Only
                   </label>
                 </div>
@@ -724,7 +724,7 @@ export default function Ratings() {
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
-            className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full space-y-4 relative z-50 max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 max-w-md w-full space-y-4 relative z-50 max-h-[90vh] overflow-y-auto"
           >
             <h2 className="text-xl font-semibold">
               Rate {selectedPlayer.friendly_name}

@@ -177,8 +177,8 @@ export const OptimalTeamGenerator: React.FC<OptimalTeamGeneratorProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* Team summary stats */}
             <div className="col-span-2 grid grid-cols-2 gap-4 mb-2">
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <h5 className="font-medium text-blue-700 mb-2">Blue Team Summary</h5>
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <h5 className="font-medium text-blue-700 dark:text-blue-300 mb-2">Blue Team Summary</h5>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="font-medium">Avg Attack:</span> {(optimalTeams.blueTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / optimalTeams.blueTeam.length).toFixed(1)}
@@ -220,8 +220,8 @@ export const OptimalTeamGenerator: React.FC<OptimalTeamGeneratorProps> = ({
                 </div>
               </div>
               
-              <div className="bg-orange-50 p-3 rounded-lg">
-                <h5 className="font-medium text-orange-700 mb-2">Orange Team Summary</h5>
+              <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
+                <h5 className="font-medium text-orange-700 dark:text-orange-300 mb-2">Orange Team Summary</h5>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="font-medium">Avg Attack:</span> {(optimalTeams.orangeTeam.reduce((sum, p) => sum + (p.attack_rating ?? 0), 0) / optimalTeams.orangeTeam.length).toFixed(1)}
@@ -263,8 +263,8 @@ export const OptimalTeamGenerator: React.FC<OptimalTeamGeneratorProps> = ({
                 </div>
               </div>
             </div>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <h5 className="font-medium text-blue-700 mb-2">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+              <h5 className="font-medium text-blue-700 dark:text-blue-300 mb-2">
                 Blue Team ({optimalTeams.blueTeam.length} players
                 {(() => {
                   const newCount = optimalTeams.blueTeam.filter(isUnknownPlayer).length;
@@ -282,7 +282,7 @@ export const OptimalTeamGenerator: React.FC<OptimalTeamGeneratorProps> = ({
                         </Tooltip>
                       )}
                     </span>
-                    <div className="text-xs text-gray-500 ml-2">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                       <Tooltip content="Attack, Defense, and Game IQ ratings">
                         <span>A: {formatRating(player.attack_rating)}, D: {formatRating(player.defense_rating)}, IQ: {formatRating(player.game_iq_rating)}</span>
                       </Tooltip>
@@ -302,8 +302,8 @@ export const OptimalTeamGenerator: React.FC<OptimalTeamGeneratorProps> = ({
               </ul>
             </div>
             
-            <div className="bg-orange-50 p-3 rounded-lg">
-              <h5 className="font-medium text-orange-700 mb-2">
+            <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
+              <h5 className="font-medium text-orange-700 dark:text-orange-300 mb-2">
                 Orange Team ({optimalTeams.orangeTeam.length} players
                 {(() => {
                   const newCount = optimalTeams.orangeTeam.filter(isUnknownPlayer).length;
@@ -321,7 +321,7 @@ export const OptimalTeamGenerator: React.FC<OptimalTeamGeneratorProps> = ({
                         </Tooltip>
                       )}
                     </span>
-                    <div className="text-xs text-gray-500 ml-2">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                       <Tooltip content="Attack, Defense, and Game IQ ratings">
                         <span>A: {formatRating(player.attack_rating)}, D: {formatRating(player.defense_rating)}, IQ: {formatRating(player.game_iq_rating)}</span>
                       </Tooltip>

@@ -221,7 +221,7 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
               <div key={tier.tier} className="mb-4">
                 <div className="flex items-center mb-2">
                   <span className="font-medium mr-2">Tier {tier.tier}</span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     ({parsedData.tierData[tierIndex]?.skillRange.min.toFixed(1)} - {parsedData.tierData[tierIndex]?.skillRange.max.toFixed(1)})
                   </span>
                 </div>
@@ -242,8 +242,8 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
                             px-3 py-2 rounded-lg text-sm font-medium cursor-pointer
                             transition-all hover:scale-105
                             ${pick.team === 'blue' 
-                              ? 'bg-blue-100 text-blue-700 border-2 border-blue-300' 
-                              : 'bg-orange-100 text-orange-700 border-2 border-orange-300'}
+                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-2 border-blue-300 dark:border-blue-600'
+                              : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-2 border-orange-300 dark:border-orange-600'}
                           `}
                         >
                           {pick.player}
@@ -267,15 +267,15 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
         {/* Legend */}
         <div className="mt-4 pt-4 border-t flex gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-100 border-2 border-blue-300 rounded"></div>
+            <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-600 rounded"></div>
             <span>Blue Team</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-orange-100 border-2 border-orange-300 rounded"></div>
+            <div className="w-4 h-4 bg-orange-100 dark:bg-orange-900/30 border-2 border-orange-300 dark:border-orange-600 rounded"></div>
             <span>Orange Team</span>
           </div>
           <div className="flex items-center gap-2 ml-auto">
-            <span className="text-gray-500">→ ← Snake draft direction</span>
+            <span className="text-gray-500 dark:text-gray-400">→ ← Snake draft direction</span>
           </div>
         </div>
       </div>
@@ -296,7 +296,7 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
         <div className="mb-6">
           <div className="relative h-80 bg-base-200 rounded-lg p-4">
             {/* Y-axis labels */}
-            <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-gray-500">
+            <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400">
               <span>{maxRating.toFixed(1)}</span>
               <span>{((maxRating + minRating) / 2).toFixed(1)}</span>
               <span>{minRating.toFixed(1)}</span>
@@ -405,7 +405,7 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
         {/* Overall Score */}
         <div className="mb-6 text-center">
           <div className="text-3xl font-bold">{parsedData.balanceBreakdown.overallBalance.toFixed(3)}</div>
-          <div className="text-sm text-gray-500">{parsedData.balanceBreakdown.description}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">{parsedData.balanceBreakdown.description}</div>
           <div className="text-xs mt-1">Lower score = Better balance</div>
         </div>
         
@@ -415,16 +415,16 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
             <div key={metric.name} className="border rounded-lg p-3">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-medium">{metric.name}</span>
-                <span className="text-sm text-gray-500">Diff: {metric.difference.toFixed(2)}</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Diff: {metric.difference.toFixed(2)}</span>
               </div>
               
               {/* Visual comparison bars */}
               <div className="flex gap-2 items-center">
                 <div className="flex-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-blue-600">Blue: {metric.blueValue.toFixed(1)}</span>
+                    <span className="text-blue-600 dark:text-blue-400">Blue: {metric.blueValue.toFixed(1)}</span>
                   </div>
-                  <div className="h-6 bg-blue-100 rounded-full overflow-hidden">
+                  <div className="h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-blue-500 rounded-full transition-all"
                       style={{ width: `${(metric.blueValue / (metric.blueValue + metric.orangeValue)) * 100}%` }}
@@ -434,9 +434,9 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
                 
                 <div className="flex-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-orange-600">Orange: {metric.orangeValue.toFixed(1)}</span>
+                    <span className="text-orange-600 dark:text-orange-400">Orange: {metric.orangeValue.toFixed(1)}</span>
                   </div>
-                  <div className="h-6 bg-orange-100 rounded-full overflow-hidden">
+                  <div className="h-6 bg-orange-100 dark:bg-orange-900/30 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-orange-500 rounded-full transition-all"
                       style={{ width: `${(metric.orangeValue / (metric.blueValue + metric.orangeValue)) * 100}%` }}
@@ -447,7 +447,7 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
               
               {/* Difference indicator */}
               <div className="mt-2">
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
                     className={`h-full rounded-full transition-all ${
                       metric.difference < 0.5 ? 'bg-green-500' : 
@@ -477,7 +477,7 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
       return (
         <div className="bg-base-100 p-4 rounded-lg">
           <h3 className="text-lg font-bold mb-4">Optimization Impact</h3>
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             No optimization was needed - the initial draft was already well-balanced!
           </div>
         </div>
@@ -514,16 +514,16 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
                 <div className="flex items-center gap-3">
                   <span className="badge badge-sm">Tier {swap.tier}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-blue-600">{swap.bluePlayer}</span>
+                    <span className="font-medium text-blue-600 dark:text-blue-400">{swap.bluePlayer}</span>
                     <span className="text-xl">↔</span>
-                    <span className="font-medium text-orange-600">{swap.orangePlayer}</span>
+                    <span className="font-medium text-orange-600 dark:text-orange-400">{swap.orangePlayer}</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-medium text-green-600">
+                  <div className="text-sm font-medium text-green-600 dark:text-green-400">
                     +{swap.improvement.toFixed(3)}
                   </div>
-                  <div className="text-xs text-gray-500">improvement</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">improvement</div>
                 </div>
               </div>
             </div>
@@ -574,28 +574,28 @@ export const TierBasedDebugVisualization: React.FC<TierBasedDebugVisualizationPr
         <h4 className="font-bold mb-2">Executive Summary</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
           <div>
-            <span className="text-gray-500">Players:</span> {parsedData.executiveSummary.totalPlayers}
+            <span className="text-gray-500 dark:text-gray-400">Players:</span> {parsedData.executiveSummary.totalPlayers}
           </div>
           <div>
-            <span className="text-gray-500">Rated:</span> {parsedData.executiveSummary.ratedPlayers}
+            <span className="text-gray-500 dark:text-gray-400">Rated:</span> {parsedData.executiveSummary.ratedPlayers}
           </div>
           <div>
-            <span className="text-gray-500">New:</span> {parsedData.executiveSummary.newPlayers}
+            <span className="text-gray-500 dark:text-gray-400">New:</span> {parsedData.executiveSummary.newPlayers}
           </div>
           <div>
-            <span className="text-gray-500">Tiers:</span> {parsedData.executiveSummary.tierCount}
+            <span className="text-gray-500 dark:text-gray-400">Tiers:</span> {parsedData.executiveSummary.tierCount}
           </div>
           <div>
-            <span className="text-gray-500">Balance:</span> {parsedData.executiveSummary.finalBalance.toFixed(3)}
+            <span className="text-gray-500 dark:text-gray-400">Balance:</span> {parsedData.executiveSummary.finalBalance.toFixed(3)}
           </div>
           <div>
-            <span className="text-gray-500">Quality:</span> {parsedData.executiveSummary.balanceQuality}
+            <span className="text-gray-500 dark:text-gray-400">Quality:</span> {parsedData.executiveSummary.balanceQuality}
           </div>
           <div>
-            <span className="text-gray-500">Swaps:</span> {parsedData.executiveSummary.optimizationSwaps}
+            <span className="text-gray-500 dark:text-gray-400">Swaps:</span> {parsedData.executiveSummary.optimizationSwaps}
           </div>
           <div>
-            <span className="text-gray-500">Advantage:</span> {parsedData.executiveSummary.advantage}
+            <span className="text-gray-500 dark:text-gray-400">Advantage:</span> {parsedData.executiveSummary.advantage}
           </div>
         </div>
       </div>

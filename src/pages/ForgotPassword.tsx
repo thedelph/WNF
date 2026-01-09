@@ -52,9 +52,9 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <motion.div 
-        className="px-8 py-6 mt-4 text-left bg-white shadow-lg rounded-lg max-w-md w-full"
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <motion.div
+        className="px-8 py-6 mt-4 text-left bg-white dark:bg-gray-800 shadow-lg rounded-lg max-w-md w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -108,7 +108,7 @@ const ForgotPassword: React.FC = () => {
               </div>
             </div>
             
-            <p className="text-gray-700 mb-4">
+            <p className="text-gray-700 dark:text-gray-200 mb-4">
               We've sent a password reset link to <span className="font-semibold">{email}</span>.
               Please check your email and click on the link to reset your password.
             </p>
@@ -125,7 +125,7 @@ const ForgotPassword: React.FC = () => {
               </div>
             </div>
             
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
               The email contains a link labelled "Reset Password" that you need to click.
               If the link text doesn't work, you may need to copy and paste the full URL from the email into your browser.
             </p>

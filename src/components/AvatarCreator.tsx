@@ -79,18 +79,18 @@ const AvatarCreator: React.FC<AvatarCreatorProps> = ({ onSave, onClose, initialO
       exit={{ opacity: 0, y: -20 }}
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
     >
-      <div ref={modalRef} className="bg-white rounded-lg p-6 max-w-md w-full">
-        <h3 className="text-2xl font-bold mb-4">Create Your Avatar</h3>
-        
+      <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+        <h3 className="text-2xl font-bold mb-4 dark:text-white">Create Your Avatar</h3>
+
         <div className="flex flex-col items-center gap-4">
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="bg-gray-100 p-4 rounded-lg"
+            className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg"
           >
-            <img 
+            <img
               src={avatarUrl || '/src/assets/default-avatar.svg'}
-              alt="Avatar Preview" 
-              className="w-48 h-48 rounded-full bg-white"
+              alt="Avatar Preview"
+              className="w-48 h-48 rounded-full bg-white dark:bg-gray-600"
             />
           </motion.div>
           

@@ -21,7 +21,7 @@ export const SlotOfferItem: React.FC<SlotOfferItemProps> = ({ slotOffer, onDismi
       case 'declined':
         return 'text-error';
       case 'voided':
-        return 'text-gray-500';
+        return 'text-gray-500 dark:text-gray-400';
       default:
         return 'text-warning';
     }
@@ -58,12 +58,12 @@ export const SlotOfferItem: React.FC<SlotOfferItemProps> = ({ slotOffer, onDismi
           <p>
             Game #{slotOffer.game.sequence_number} at {slotOffer.game.venue.name}
           </p>
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             {formatDate(slotOffer.game.date)}
           </p>
         </div>
 
-        <div className="text-xs text-gray-500 mt-1">
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           <p>Offered: {formatDate(slotOffer.offered_at)}</p>
           {slotOffer.responded_at && (
             <p>Responded: {formatDate(slotOffer.responded_at)}</p>

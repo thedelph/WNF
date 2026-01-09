@@ -85,8 +85,8 @@ const ResetPassword: React.FC = () => {
   // If no hash is present, show error message
   if (!hashPresent) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="px-8 py-6 mt-4 text-left bg-white shadow-lg rounded-lg max-w-md w-full">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="px-8 py-6 mt-4 text-left bg-white dark:bg-gray-800 shadow-lg rounded-lg max-w-md w-full">
           <h3 className="text-2xl font-bold text-center text-red-600">Invalid Reset Link</h3>
           <p className="mt-4 text-center">
             This page should only be accessed from a password reset email link.
@@ -105,9 +105,9 @@ const ResetPassword: React.FC = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <motion.div 
-        className="px-8 py-6 mt-4 text-left bg-white shadow-lg rounded-lg max-w-md w-full"
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <motion.div
+        className="px-8 py-6 mt-4 text-left bg-white dark:bg-gray-800 shadow-lg rounded-lg max-w-md w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}

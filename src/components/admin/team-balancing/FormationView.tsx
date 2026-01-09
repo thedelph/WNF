@@ -25,15 +25,15 @@ export const FormationView: React.FC<FormationViewProps> = ({
   const [expandedPositions, setExpandedPositions] = useState<Set<PositionType>>(new Set());
 
   const getTeamColorClass = () => {
-    return teamColor === 'blue' 
-      ? 'bg-blue-50 border-blue-300' 
-      : 'bg-orange-50 border-orange-300';
+    return teamColor === 'blue'
+      ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+      : 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700';
   };
 
   const getTeamAccentClass = () => {
-    return teamColor === 'blue' 
-      ? 'text-blue-600 border-blue-400' 
-      : 'text-orange-600 border-orange-400';
+    return teamColor === 'blue'
+      ? 'text-blue-600 dark:text-blue-400 border-blue-400 dark:border-blue-600'
+      : 'text-orange-600 dark:text-orange-400 border-orange-400 dark:border-orange-600';
   };
 
   const renderPlayerCard = (assignment: PlayerPositionAssignment, compact = false) => {
@@ -94,7 +94,7 @@ export const FormationView: React.FC<FormationViewProps> = ({
 
           {/* Show consensus position if different from assignment */}
           {!compact && hasConsensus && consensusLabel && (
-            <div className="text-xs text-gray-600 mt-0.5">
+            <div className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
               Consensus: {consensusLabel}
             </div>
           )}
@@ -120,7 +120,7 @@ export const FormationView: React.FC<FormationViewProps> = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg p-2 z-10"
+              className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg p-2 z-10"
             >
               <div className="text-xs font-medium mb-1">Also suitable for:</div>
               <div className="space-y-0.5">
@@ -131,7 +131,7 @@ export const FormationView: React.FC<FormationViewProps> = ({
                 ))}
               </div>
               {hasConsensus && (
-                <div className="mt-2 pt-2 border-t text-xs text-gray-600">
+                <div className="mt-2 pt-2 border-t dark:border-gray-700 text-xs text-gray-600 dark:text-gray-300">
                   <div className="font-medium">Position Data Source:</div>
                   <div>
                     {positionSource === 'consensus' && '👥 Peer ratings (position consensus)'}
@@ -303,7 +303,7 @@ export const FormationView: React.FC<FormationViewProps> = ({
         )}
 
         {/* Position labels on the side */}
-        <div className="absolute left-2 top-6 text-xs text-gray-600 space-y-8 hidden lg:block">
+        <div className="absolute left-2 top-6 text-xs text-gray-600 dark:text-gray-300 space-y-8 hidden lg:block">
           {ST.length > 0 && <div>ST</div>}
           {CAM.length > 0 && <div>CAM</div>}
           {CM.length > 0 && <div>CM</div>}
@@ -373,19 +373,19 @@ export const FormationView: React.FC<FormationViewProps> = ({
         <h4 className="font-semibold mb-2">Area Strength</h4>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
           <div>
-            <span className="text-xs text-gray-600">Defense:</span>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Defense:</span>
             <div className="font-semibold">{formation.balanceScore.defense.toFixed(1)}</div>
           </div>
           <div>
-            <span className="text-xs text-gray-600">Midfield:</span>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Midfield:</span>
             <div className="font-semibold">{formation.balanceScore.midfield.toFixed(1)}</div>
           </div>
           <div>
-            <span className="text-xs text-gray-600">Attack:</span>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Attack:</span>
             <div className="font-semibold">{formation.balanceScore.attack.toFixed(1)}</div>
           </div>
           <div>
-            <span className="text-xs text-gray-600">Overall:</span>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Overall:</span>
             <div className="font-semibold">{formation.balanceScore.overall.toFixed(1)}</div>
           </div>
         </div>

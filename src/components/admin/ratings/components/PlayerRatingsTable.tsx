@@ -84,17 +84,17 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
               <td className="hidden lg:table-cell">
                 <div className="flex flex-wrap gap-1">
                   {rating.position_1st && (
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900 dark:text-gray-900">
                       🥇 {rating.position_1st}
                     </span>
                   )}
                   {rating.position_2nd && (
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white dark:text-white">
                       🥈 {rating.position_2nd}
                     </span>
                   )}
                   {rating.position_3rd && (
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white dark:text-white">
                       🥉 {rating.position_3rd}
                     </span>
                   )}
@@ -117,17 +117,17 @@ export const PlayerRatingsTable: React.FC<PlayerRatingsTableProps> = ({
                   {(rating.position_1st || rating.position_2nd || rating.position_3rd) && (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {rating.position_1st && (
-                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#FCD34D] text-gray-900 dark:text-gray-900">
                           🥇 {rating.position_1st}
                         </span>
                       )}
                       {rating.position_2nd && (
-                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#9CA3AF] text-white dark:text-white">
                           🥈 {rating.position_2nd}
                         </span>
                       )}
                       {rating.position_3rd && (
-                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[#EA580C] text-white dark:text-white">
                           🥉 {rating.position_3rd}
                         </span>
                       )}
