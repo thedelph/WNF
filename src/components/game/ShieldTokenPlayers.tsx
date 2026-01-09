@@ -110,10 +110,11 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 justify-items-center place-items-center">
             {shieldTokenUsers.map((shieldUser) => {
-              const streakModifier = calculateStreakBonus(stats[shieldUser.player.id].currentStreak);
-              const bonusModifier = stats[shieldUser.player.id].activeBonuses * 0.1;
-              const penaltyModifier = stats[shieldUser.player.id].activePenalties * -0.1;
-              const unpaidGamesModifier = stats[shieldUser.player.id].unpaidGamesModifier;
+              const playerStatData = stats[shieldUser.player.id] || {};
+              const streakModifier = calculateStreakBonus(playerStatData.currentStreak || 0);
+              const bonusModifier = (playerStatData.activeBonuses || 0) * 0.1;
+              const penaltyModifier = (playerStatData.activePenalties || 0) * -0.1;
+              const unpaidGamesModifier = playerStatData.unpaidGamesModifier || 0;
 
               return (
                 <motion.div
@@ -127,8 +128,8 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
                     friendlyName={shieldUser.player.friendly_name}
                     xp={playerStats[shieldUser.player.id]?.xp || 0}
                     caps={playerStats[shieldUser.player.id]?.caps || 0}
-                    activeBonuses={stats[shieldUser.player.id].activeBonuses}
-                    activePenalties={stats[shieldUser.player.id].activePenalties}
+                    activeBonuses={playerStatData.activeBonuses || 0}
+                    activePenalties={playerStatData.activePenalties || 0}
                     winRate={playerStats[shieldUser.player.id]?.winRate || 0}
                     currentStreak={playerStats[shieldUser.player.id]?.currentStreak || 0}
                     maxStreak={playerStats[shieldUser.player.id]?.maxStreak || 0}
@@ -150,6 +151,8 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
                     playstyleMatchDistance={playerStats[shieldUser.player.id]?.playstyleMatchDistance}
                     playstyleCategory={playerStats[shieldUser.player.id]?.playstyleCategory}
                     playstyleRatingsCount={playerStats[shieldUser.player.id]?.playstyleRatingsCount}
+                    recentGames={playerStats[shieldUser.player.id]?.recentGames || 0}
+                    gameParticipation={playerStats[shieldUser.player.id]?.gameParticipation || new Array(40).fill(null)}
                   />
                 </motion.div>
               );
