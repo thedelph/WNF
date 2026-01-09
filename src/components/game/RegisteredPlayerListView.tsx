@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PiCoinDuotone } from "react-icons/pi";
 import { MdPauseCircle } from "react-icons/md";
-import { FaCircle } from "react-icons/fa";
+import { FaCircle, FaShieldAlt } from "react-icons/fa";
 import { Registration } from '../../types/playerSelection';
 import { useUser } from '../../hooks/useUser';
 import { Tooltip } from '../ui/Tooltip';
@@ -116,6 +116,8 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
   const renderPlayerRow = (registration: Registration, showOdds: boolean = false) => {
     const xp = playerStats[registration.player.id]?.xp || 0;
     const benchWarmerStreak = playerStats[registration.player.id]?.benchWarmerStreak || 0;
+    const shieldActive = playerStats[registration.player.id]?.shieldActive || false;
+    const protectedStreakValue = playerStats[registration.player.id]?.protectedStreakValue;
 
     // Get odds for this player
     const odds = selectionOdds.get(registration.player.id);
@@ -152,6 +154,11 @@ export const RegisteredPlayerListView: React.FC<RegisteredPlayerListViewProps> =
               {tokenCooldownPlayerIds.has(registration.player.id) && (
                 <Tooltip content="Token Cooldown - used token in previous game">
                   <MdPauseCircle size={18} className="text-warning" />
+                </Tooltip>
+              )}
+              {shieldActive && protectedStreakValue && (
+                <Tooltip content={`Shield Active - ${protectedStreakValue}-game streak protected`}>
+                  <FaShieldAlt size={14} className="text-purple-400" />
                 </Tooltip>
               )}
               {/* Show selection points for players in random zone */}

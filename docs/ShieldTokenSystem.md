@@ -1091,6 +1091,19 @@ For issues or questions:
 
 ## Changelog
 
+**v1.2.1** - XP v2 Shield Integration Fix (2026-01-09)
+- **Critical Bug Fix**: Shield protection was not being applied in XP v2 calculations
+  - `calculate_player_xp_v2()` was using `current_streak` directly without checking `shield_active`
+  - Players with active shields were getting 0% streak bonus instead of their protected bonus
+  - Root cause: XP v2 function was created during migration without the shield integration from v1.0.4
+- **Affected Players (Jan 7, 2026 game)**:
+  - Joe: 304 → 483 XP (+59% from 14-game protected streak)
+  - James H: 363 → 580 XP (+60% from 15-game protected streak)
+  - Jack G: 410 → 693 XP (+69% from 24-game protected streak)
+- **Fix Applied**: Function now checks for `shield_active` and uses gradual decay formula:
+  - `effective_streak = MAX(current_streak, protected_streak_value - current_streak)`
+- Migration: `20260109_fix_xp_v2_shield_integration.sql`
+
 **v1.2.0** - Dropout with Shield Protection (2026-01-06)
 - **Dropout with Shield Feature**: Players who registered but need to drop out can now use their shield token
   - Admin can drop players out via ⋮ menu in Game Registrations modal

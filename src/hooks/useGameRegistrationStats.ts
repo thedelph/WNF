@@ -29,6 +29,8 @@ interface PlayerStats {
   playstyleRatingsCount?: number;
   recentGames?: number;
   gameParticipation?: Array<'selected' | 'reserve' | null>;
+  shieldActive: boolean;
+  protectedStreakValue: number | null;
 }
 
 interface UseGameRegistrationStatsReturn {
@@ -82,6 +84,8 @@ export const useGameRegistrationStats = (
             bench_warmer_streak,
             unpaid_games,
             unpaid_games_modifier,
+            shield_active,
+            protected_streak_value,
             player_xp (
               xp,
               rank,
@@ -355,7 +359,9 @@ export const useGameRegistrationStats = (
               playstyleCategory: playstyleMatch?.category,
               playstyleRatingsCount: playerAttributes?.total_ratings_count || 0,
               recentGames: recentGamesMap[player.id] || 0,
-              gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(null)
+              gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(null),
+              shieldActive: player.shield_active || false,
+              protectedStreakValue: player.protected_streak_value || null
             }
           };
         }, {});

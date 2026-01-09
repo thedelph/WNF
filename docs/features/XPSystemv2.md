@@ -196,7 +196,7 @@ A: Yes! Visit `/admin/xp-comparison` (admin only) to see v1 vs v2 XP side-by-sid
 - `player_xp_comparison` - Side-by-side v1 vs v2 comparison
 
 ### Functions
-- `calculate_player_xp_v2(player_id)` - Calculate XP for one player
+- `calculate_player_xp_v2(player_id)` - Calculate XP for one player (includes shield protection integration)
 - `recalculate_all_player_xp_v2()` - Batch recalculate all players
 
 ### Triggers
@@ -206,6 +206,21 @@ A: Yes! Visit `/admin/xp-comparison` (admin only) to see v1 vs v2 XP side-by-sid
 
 ### Important Note: player_stats View
 The `player_stats` view is used by both the simulation feature and actual player selection (`playerSelection.ts`). This view was updated on January 3, 2026 to use `player_xp` (v2) instead of `player_xp_legacy` (v1) to ensure consistent XP values across display and selection.
+
+### Important Note: Shield Token Integration (Fixed January 9, 2026)
+The `calculate_player_xp_v2()` function was missing shield protection integration when initially created. Players with `shield_active = true` were not receiving their protected streak bonus.
+
+**Issue:** Players who used shield tokens had their XP calculated with 0% streak bonus instead of their protected streak bonus.
+
+**Fix:** The function now checks for `shield_active` and uses the gradual decay formula:
+```sql
+effective_streak = MAX(current_streak, protected_streak_value - current_streak)
+```
+
+**Affected Players (Jan 7, 2026 game):**
+- Joe: 304 → 483 XP (+59% from 14-game protected streak)
+- James H: 363 → 580 XP (+60% from 15-game protected streak)
+- Jack G: 410 → 693 XP (+69% from 24-game protected streak)
 
 ---
 

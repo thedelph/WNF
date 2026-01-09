@@ -134,6 +134,8 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
           recentGames={playerStats[registration.player.id]?.recentGames || 0}
           gameParticipation={playerStats[registration.player.id]?.gameParticipation || new Array(40).fill(null)}
           onTokenCooldown={tokenCooldownPlayerIds.has(registration.player.id)}
+          shieldActive={playerStats[registration.player.id]?.shieldActive || false}
+          protectedStreakValue={playerStats[registration.player.id]?.protectedStreakValue || null}
         />
 
         {/* Selection odds badge and dots container - only for random zone */}
