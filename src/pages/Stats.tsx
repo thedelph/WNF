@@ -7,7 +7,6 @@ import { AttendanceStats } from '../components/stats/AttendanceStats';
 import { PerformanceStats } from '../components/stats/PerformanceStats';
 import { OtherStats } from '../components/stats/OtherStats';
 import { ComprehensiveStatsTable } from '../components/stats/ComprehensiveStatsTable';
-import { Tooltip } from '../components/ui/Tooltip';
 
 /**
  * Stats page component
@@ -67,10 +66,6 @@ export default function Stats() {
             onYearChange={handleYearChange}
             onYearsLoaded={setAvailableYears}
           />
-          
-          <Tooltip content="Filter stats by year or view all-time statistics">
-            <span className="cursor-help text-info">ⓘ</span>
-          </Tooltip>
         </div>
       </motion.div>
 

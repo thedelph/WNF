@@ -13,7 +13,6 @@ import { LeaderboardsTabs, defaultLeaderboardTabs } from '../components/leaderbo
 import { HallOfFameTab } from '../components/leaderboards/HallOfFameTab';
 import { LiveStatsTab } from '../components/leaderboards/LiveStatsTab';
 import { AllPlayersTab } from '../components/leaderboards/AllPlayersTab';
-import { Tooltip } from '../components/ui/Tooltip';
 
 export default function Leaderboards() {
   // State for year selection
@@ -77,10 +76,6 @@ export default function Leaderboards() {
             onYearChange={handleYearChange}
             onYearsLoaded={setAvailableYears}
           />
-
-          <Tooltip content="Filter stats by year or view all-time statistics">
-            <span className="cursor-help text-info">i</span>
-          </Tooltip>
         </div>
 
         {/* Current filter badge */}
