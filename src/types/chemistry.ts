@@ -633,3 +633,96 @@ export function transformPlayerTrio(raw: PlayerBestTriosResponse): PlayerTrio {
     curseScore,
   };
 }
+
+// ============================================================================
+// Team Placement Types (Same team vs Opposite team frequency)
+// ============================================================================
+
+/**
+ * Minimum games required for team placement stats to be calculated
+ */
+export const TEAM_PLACEMENT_MIN_GAMES = 5;
+
+/**
+ * Pair-specific team placement stats (for viewing your relationship with another player)
+ */
+export interface PairTeamPlacement {
+  /** Total games where both players participated */
+  totalGames: number;
+  /** Games where both were on the same team */
+  gamesTogether: number;
+  /** Games where they were on opposite teams */
+  gamesAgainst: number;
+  /** Percentage of games on the same team (0-100) */
+  togetherRate: number;
+}
+
+/**
+ * Raw database response from get_player_pair_team_placement RPC
+ */
+export interface PairTeamPlacementResponse {
+  total_games: number;
+  games_together: number;
+  games_against: number;
+  together_rate: string | number;
+}
+
+/**
+ * Team placement partner for global view (frequent teammates/opponents)
+ */
+export interface TeamPlacementPartner {
+  /** Partner player's ID */
+  partnerId: string;
+  /** Partner player's name */
+  partnerName: string;
+  /** Total games where both played */
+  totalGames: number;
+  /** Games on same team */
+  gamesTogether: number;
+  /** Games on opposite teams */
+  gamesAgainst: number;
+  /** Percentage on same team (0-100) */
+  togetherRate: number;
+  /** Percentage on opposite teams (0-100) */
+  againstRate: number;
+}
+
+/**
+ * Raw database response from get_player_team_placements RPC
+ */
+export interface TeamPlacementResponse {
+  partner_id: string;
+  partner_name: string;
+  total_games: number;
+  games_together: number;
+  games_against: number;
+  together_rate: string | number;
+  against_rate: string | number;
+}
+
+/**
+ * Transform raw database response to PairTeamPlacement
+ */
+export function transformPairTeamPlacement(raw: PairTeamPlacementResponse): PairTeamPlacement {
+  return {
+    totalGames: Number(raw.total_games),
+    gamesTogether: Number(raw.games_together),
+    gamesAgainst: Number(raw.games_against),
+    togetherRate: Number(raw.together_rate),
+  };
+}
+
+/**
+ * Transform raw database response to TeamPlacementPartner
+ */
+export function transformTeamPlacementPartner(raw: TeamPlacementResponse): TeamPlacementPartner {
+  return {
+    partnerId: raw.partner_id,
+    partnerName: raw.partner_name,
+    totalGames: Number(raw.total_games),
+    gamesTogether: Number(raw.games_together),
+    gamesAgainst: Number(raw.games_against),
+    togetherRate: Number(raw.together_rate),
+    againstRate: Number(raw.against_rate),
+  };
+}

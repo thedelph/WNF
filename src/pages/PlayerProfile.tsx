@@ -35,6 +35,9 @@ import { RivalryCard } from '../components/profile/RivalryCard';
 import { TopRivals } from '../components/profile/TopRivals';
 import { TopTrios } from '../components/profile/TopTrios';
 import TrophyCabinet from '../components/profile/TrophyCabinet';
+import { TeamPlacements } from '../components/profile/TeamPlacements';
+import { PairTeamPlacementCard } from '../components/profile/PairTeamPlacementCard';
+import { useTeamPlacements, usePairTeamPlacement } from '../hooks/useTeamPlacements';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -120,6 +123,26 @@ export default function PlayerProfileNew() {
   } = usePlayerTrios({
     playerId: player?.id || '',
     limit: 3
+  });
+
+  // Fetch team placement data for the viewed player
+  const {
+    frequentTeammates,
+    frequentOpponents,
+    loading: teamPlacementsLoading
+  } = useTeamPlacements({
+    playerId: player?.id || '',
+    limit: 5
+  });
+
+  // Fetch pair team placement data (for current user vs viewed player)
+  const {
+    pairPlacement,
+    gamesUntilPlacement,
+    loading: pairPlacementLoading
+  } = usePairTeamPlacement({
+    playerId: player?.id || '',
+    currentPlayerId: currentPlayerId || undefined
   });
 
   const fetchPlaystyles = async () => {
@@ -846,6 +869,16 @@ export default function PlayerProfileNew() {
           />
         </div>
 
+        {/* Team Placement Patterns - After trios */}
+        <div className="w-full">
+          <TeamPlacements
+            frequentTeammates={frequentTeammates}
+            frequentOpponents={frequentOpponents}
+            playerName={player.friendly_name}
+            loading={teamPlacementsLoading}
+          />
+        </div>
+
         {/* Your Chemistry with this Player - Below chemistry/rivalry/trio sections */}
         {user && user.id !== player.user_id && (
           <div className="w-full">
@@ -866,6 +899,18 @@ export default function PlayerProfileNew() {
               playerName={player.friendly_name}
               gamesUntilRivalry={gamesUntilRivalry}
               loading={rivalryLoading}
+            />
+          </div>
+        )}
+
+        {/* Your Team History with this Player - After rivalry card */}
+        {user && user.id !== player.user_id && (
+          <div className="w-full">
+            <PairTeamPlacementCard
+              placement={pairPlacement}
+              playerName={player.friendly_name}
+              gamesUntilPlacement={gamesUntilPlacement}
+              loading={pairPlacementLoading}
             />
           </div>
         )}

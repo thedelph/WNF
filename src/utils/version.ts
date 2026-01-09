@@ -18,6 +18,43 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.8.0',
+    date: '09/01/2026',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Team Placement Patterns',
+            details: "Player profiles now show who they're most often placed with or against. See their top 5 frequent teammates and top 5 frequent opponents, with percentage breakdowns showing how often they end up on the same team vs opposite teams."
+          },
+          {
+            title: 'Your Team History',
+            details: "When viewing another player's profile, you can now see your specific relationship with them - how many times you've been teammates vs opponents. Includes fun tiered messages like 'You two are practically inseparable!' or 'The algorithm keeps putting you on opposite sides!' based on your together percentage."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No changes in this release."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.7.0',
     date: '09/01/2026',
     sections: [
