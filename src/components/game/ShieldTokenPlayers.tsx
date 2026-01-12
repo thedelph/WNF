@@ -53,11 +53,13 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
 
   // Convert shield token users to registration format for stats hook
   // Memoize to prevent recreating on every render
+  // Use 'absent' status - they're not registered but have token protection
   const registrations = useMemo(() =>
     shieldTokenUsers.map(su => ({
       player: su.player,
-      status: 'shield_protected' as const,
+      status: 'absent' as const,
       using_token: false,
+      using_shield: true,
       created_at: su.used_at
     })),
     [shieldTokenUsers]
@@ -136,7 +138,7 @@ export const ShieldTokenPlayers: React.FC<ShieldTokenPlayersProps> = ({
                     benchWarmerStreak={playerStats[shieldUser.player.id]?.benchWarmerStreak || 0}
                     rarity={playerStats[shieldUser.player.id]?.rarity || 'Amateur'}
                     avatarSvg={shieldUser.player.avatar_svg || ''}
-                    status="shield_protected"
+                    status="absent"
                     wins={playerStats[shieldUser.player.id]?.wins || 0}
                     draws={playerStats[shieldUser.player.id]?.draws || 0}
                     losses={playerStats[shieldUser.player.id]?.losses || 0}

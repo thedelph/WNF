@@ -58,7 +58,9 @@ export interface ExtendedPlayerData extends PlayerStats {
   using_token?: boolean;
   usingToken?: boolean;
   had_token?: boolean;
-  status?: 'selected' | 'reserve' | 'dropped_out' | 'none';
+  using_shield?: boolean;
+  using_injury?: boolean;
+  status?: 'selected' | 'reserve' | 'dropped_out' | 'absent' | 'none';
   averagedPlaystyle?: string;
   playstyleMatchDistance?: number;
   playstyleCategory?: 'attacking' | 'midfield' | 'defensive';
@@ -159,7 +161,9 @@ export interface Registration {
     avatar_svg?: string;
     whatsapp_group_member?: string;
   };
-  status: 'registered' | 'selected' | 'reserve' | 'dropped_out' | 'shield_protected';
+  status: 'registered' | 'selected' | 'reserve' | 'dropped_out' | 'absent';
   using_token?: boolean;
+  using_shield?: boolean;
+  using_injury?: boolean;
   created_at?: string;
 }

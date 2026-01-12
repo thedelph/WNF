@@ -30,7 +30,7 @@ import { useWeatherCard } from '../hooks/useWeatherCard';
 import { utcToUkTime } from '../utils/dateUtils';
 
 // Define registration status type to match expected values
-type RegistrationStatus = 'registered' | 'selected' | 'reserve' | 'dropped_out' | 'shield_protected';
+type RegistrationStatus = 'registered' | 'selected' | 'reserve' | 'dropped_out' | 'absent';
 
 // Define types for player data state to fix TypeScript errors
 interface PlayerDataState {
@@ -135,6 +135,8 @@ const Game = () => {
 
             selection_method,
             using_token,
+            using_shield,
+            using_injury,
             player:players!game_registrations_player_id_fkey (
 
               id,

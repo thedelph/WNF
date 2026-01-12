@@ -6,6 +6,8 @@ interface GameDetailsPasteProps {
   onPlayerListsExtracted: (selected: string[], random: string[], reserve: string[], droppedOut: string[], tokenUsers: string[]) => void;
   onMaxPlayersExtracted: (maxPlayers: number) => void;
   onTeamsExtracted?: (orangeTeam: string[], blueTeam: string[]) => void;
+  onShieldPlayersExtracted?: (shieldPlayers: string[]) => void;
+  onInjuryPlayersExtracted?: (injuryPlayers: string[]) => void;
   gamePhase?: string;
 }
 
@@ -22,6 +24,8 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
   onPlayerListsExtracted,
   onMaxPlayersExtracted,
   onTeamsExtracted,
+  onShieldPlayersExtracted,
+  onInjuryPlayersExtracted,
   gamePhase,
 }) => {
   // Function to validate if a string is likely a player name
@@ -324,7 +328,53 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       reserve: reservePlayers,
       droppedOut: droppedOutPlayers
     });
-    
+
+    // Parse shield players section
+    // Format: "🛡️ Protected Players (using streak shields):" followed by "🛡️ Player Name (X game streak protected)"
+    const shieldSectionMatch = text.match(/🛡️\s*Protected Players[^:]*:\s*\n+([\s\S]*?)(?=\n\n⚖️|\n\nAnyone|$)/);
+    const shieldPlayers: string[] = [];
+
+    if (shieldSectionMatch) {
+      const shieldLines = shieldSectionMatch[1].split('\n');
+      for (const line of shieldLines) {
+        const trimmed = line.trim();
+        if (trimmed.length === 0) continue;
+
+        // Parse "🛡️ Chris H (29 game streak protected)" -> "Chris H"
+        const playerMatch = trimmed.match(/🛡️\s*([^(]+)/);
+        if (playerMatch) {
+          const playerName = playerMatch[1].trim();
+          if (playerName && isLikelyPlayerName(playerName)) {
+            shieldPlayers.push(playerName);
+            console.log(`Parsed shield player: "${playerName}"`);
+          }
+        }
+      }
+    }
+
+    // Parse injury players section (if present)
+    // Format: "🩹 Injured Players:" followed by "🩹 Player Name (X game streak protected)"
+    const injurySectionMatch = text.match(/🩹\s*Injured Players[^:]*:\s*\n+([\s\S]*?)(?=\n\n|$)/);
+    const injuryPlayers: string[] = [];
+
+    if (injurySectionMatch) {
+      const injuryLines = injurySectionMatch[1].split('\n');
+      for (const line of injuryLines) {
+        const trimmed = line.trim();
+        if (trimmed.length === 0) continue;
+
+        // Parse "🩹 Player Name (X game streak protected)" -> "Player Name"
+        const playerMatch = trimmed.match(/🩹\s*([^(]+)/);
+        if (playerMatch) {
+          const playerName = playerMatch[1].trim();
+          if (playerName && isLikelyPlayerName(playerName)) {
+            injuryPlayers.push(playerName);
+            console.log(`Parsed injury player: "${playerName}"`);
+          }
+        }
+      }
+    }
+
     console.log('=== Final player counts ===');
     console.log('Selected players count:', selectedPlayers.length);
     console.log('Selected player names:', selectedPlayers);
@@ -332,9 +382,21 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     console.log('Token players count:', tokenPlayers.length);
     console.log('Reserve players count:', reservePlayers.length);
     console.log('Dropped out players count:', droppedOutPlayers.length);
+    console.log('Shield players count:', shieldPlayers.length);
+    console.log('Shield player names:', shieldPlayers);
+    console.log('Injury players count:', injuryPlayers.length);
+    console.log('Injury player names:', injuryPlayers);
     console.log('=== handleFullTextPaste END ===');
 
     onPlayerListsExtracted(selectedPlayers, randomPlayers, reservePlayers, droppedOutPlayers, tokenPlayers);
+
+    // Call shield/injury callbacks if provided
+    if (onShieldPlayersExtracted && shieldPlayers.length > 0) {
+      onShieldPlayersExtracted(shieldPlayers);
+    }
+    if (onInjuryPlayersExtracted && injuryPlayers.length > 0) {
+      onInjuryPlayersExtracted(injuryPlayers);
+    }
   };
 
   return (

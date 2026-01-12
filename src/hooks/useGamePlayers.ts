@@ -10,6 +10,7 @@ export const useGamePlayers = (gameId: string) => {
   const [selectedPlayers, setSelectedPlayers] = useState<ExtendedPlayerData[]>([]);
   const [reservePlayers, setReservePlayers] = useState<ExtendedPlayerData[]>([]);
   const [droppedOutPlayers, setDroppedOutPlayers] = useState<ExtendedPlayerData[]>([]);
+  const [absentPlayers, setAbsentPlayers] = useState<ExtendedPlayerData[]>([]);
   const [activeSlotOffers, setActiveSlotOffers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -43,6 +44,8 @@ export const useGamePlayers = (gameId: string) => {
           game_id,
           using_token,
           had_token,
+          using_shield,
+          using_injury,
           player:players!game_registrations_player_id_fkey (
             id,
             friendly_name,
@@ -77,6 +80,8 @@ export const useGamePlayers = (gameId: string) => {
           selection_method: reg.selection_method,
           using_token: reg.using_token,
           had_token: reg.had_token,
+          using_shield: reg.using_shield,
+          using_injury: reg.using_injury,
           registration_id: reg.id,
           caps: reg.player_stats?.caps || 0,
           xp: reg.player_stats?.xp || 0,
@@ -186,6 +191,8 @@ export const useGamePlayers = (gameId: string) => {
             selection_method: reg.selection_method,
             using_token: reg.using_token,
             had_token: reg.had_token,
+            using_shield: reg.using_shield,
+            using_injury: reg.using_injury,
             isRandomlySelected: reg.selection_method === 'random',
             // Only set hasSlotOffer if there's an actual offer
             hasSlotOffer: !!latestOffer,
@@ -206,10 +213,13 @@ export const useGamePlayers = (gameId: string) => {
         const selectedPlayers = sortedPlayers.filter(p => p.status === 'selected');
         const reservePlayers = sortedPlayers.filter(p => p.status === 'reserve');
         const droppedOutPlayers = sortedPlayers.filter(p => p.status === 'dropped_out');
+        // Players with 'absent' status are token-only (shield/injury protection but didn't register)
+        const absentPlayers = sortedPlayers.filter(p => p.status === 'absent');
 
         setSelectedPlayers(selectedPlayers);
         setReservePlayers(reservePlayers);
         setDroppedOutPlayers(droppedOutPlayers);
+        setAbsentPlayers(absentPlayers);
         setActiveSlotOffers(slotOffers || []);
 
       }
@@ -231,6 +241,7 @@ export const useGamePlayers = (gameId: string) => {
     selectedPlayers,
     reservePlayers,
     droppedOutPlayers,
+    absentPlayers,
     activeSlotOffers,
     isLoading,
     error,

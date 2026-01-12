@@ -613,6 +613,43 @@ Considered (2-3 witnesses), but fair-use policy is simpler. If injuries are witn
 
 ---
 
+---
+
+## Per-Game Tracking (Added January 12, 2026)
+
+### Overview
+
+Injury token usage is now tracked per-game via the `using_injury` column on `game_registrations`. This allows viewing which players used their injury token for each specific game, separate from their global `injury_token_active` status.
+
+### Database Changes
+
+```sql
+ALTER TABLE game_registrations ADD COLUMN using_injury BOOLEAN DEFAULT false;
+```
+
+### Registration Status: 'absent'
+
+Players using injury tokens without registering for a game get status `absent`:
+- **No registration bonus** (neutral - not registered)
+- **No dropout penalty** (neutral - didn't drop out)
+- Perfect for players who know they can't make the game but want injury protection
+
+### UI Display
+
+**PlayerSelectionResults** shows an "Injury Reserve" section listing all players where `using_injury = true` for that game, with their return streak displayed.
+
+**CreateGameForm** allows admins to select injury token users when creating games, automatically creating `absent` registrations for them.
+
+### Global vs Per-Game Status
+
+| Field | Table | Purpose |
+|-------|-------|---------|
+| `injury_token_active` | `players` | Is player currently on injury reserve? |
+| `injury_return_streak` | `players` | What streak will they return with? |
+| `using_injury` | `game_registrations` | Did they use injury token for THIS game? |
+
+---
+
 *Document created: January 2026*
 *Last updated: January 12, 2026*
 *Status: ✅ Implemented*

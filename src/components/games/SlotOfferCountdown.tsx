@@ -42,8 +42,9 @@ export const SlotOfferCountdown: React.FC<SlotOfferCountdownProps> = ({
     }
   }
 
-  // If player has potential offer times, show them
-  if (player.potentialOfferTimes && player.slotOfferAvailableAt) {
+  // If player has potential offer times, show them ONLY if there are active offers (someone has dropped out)
+  // We don't want to show speculative times when no dropout has occurred yet
+  if (hasActiveOffers && player.potentialOfferTimes && player.slotOfferAvailableAt) {
     const availableAt = new Date(player.slotOfferAvailableAt);
     const now = new Date();
 

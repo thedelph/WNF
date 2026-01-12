@@ -502,6 +502,57 @@ For comprehensive documentation on Shield Tokens (streak protection for planned 
 
 ---
 
+## Per-Game Token Tracking (Added January 12, 2026)
+
+### Overview
+
+Token usage is now tracked at both the player level (global status) AND the game level (per-game usage). This allows viewing which tokens were used for each specific game.
+
+### Database Schema
+
+**New columns on `game_registrations` table:**
+
+```sql
+ALTER TABLE game_registrations ADD COLUMN using_shield BOOLEAN DEFAULT false;
+ALTER TABLE game_registrations ADD COLUMN using_injury BOOLEAN DEFAULT false;
+```
+
+### Registration Status: 'absent'
+
+A new registration status `absent` was added for players who use tokens without registering for a game:
+
+| Status | Description | Registration Bonus | Penalty |
+|--------|-------------|-------------------|---------|
+| `registered` | Signed up for game | ✅ Yes | No |
+| `selected` | Playing in game | ✅ Yes | No |
+| `reserve` | Waitlisted | ✅ Yes | No |
+| `dropped_out` | Withdrew after selection | No | ✅ Streak resets |
+| `absent` | Token protection only | No | No |
+
+**Use case:** Players who use shield/injury tokens but didn't register for the game (e.g., knew they couldn't make it but wanted streak protection).
+
+### UI Components
+
+**PlayerSelectionResults** shows per-game token sections:
+- 🛡️ Shield Token Users - Players who used shield for THIS game
+- 🩹 Injury Reserve - Players who activated injury token for THIS game
+
+**CreateGameForm** allows admins to:
+- Select shield token users when creating a game
+- Select injury token users when creating a game
+- Creates 'absent' registrations for token-only players
+
+### Differentiation: Global vs Per-Game
+
+| Property | Source | Purpose |
+|----------|--------|---------|
+| `shieldActive` | `players` table | Player's current global shield status |
+| `using_shield` | `game_registrations` | Whether shield was used for THIS game |
+| `injury_token_active` | `players` table | Player's current global injury status |
+| `using_injury` | `game_registrations` | Whether injury was used for THIS game |
+
+---
+
 ## Injury Token System (Added January 2026)
 
 The Injury Token (🩹) provides streak protection for players injured **during** WNF games.

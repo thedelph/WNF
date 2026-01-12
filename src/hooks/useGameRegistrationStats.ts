@@ -31,6 +31,8 @@ interface PlayerStats {
   gameParticipation?: Array<'selected' | 'reserve' | null>;
   shieldActive: boolean;
   protectedStreakValue: number | null;
+  injuryTokenActive: boolean;
+  injuryReturnStreak: number | null;
 }
 
 interface UseGameRegistrationStatsReturn {
@@ -86,6 +88,8 @@ export const useGameRegistrationStats = (
             unpaid_games_modifier,
             shield_active,
             protected_streak_value,
+            injury_token_active,
+            injury_return_streak,
             player_xp (
               xp,
               rank,
@@ -361,7 +365,9 @@ export const useGameRegistrationStats = (
               recentGames: recentGamesMap[player.id] || 0,
               gameParticipation: recentGamesParticipationMap[player.id] || new Array(40).fill(null),
               shieldActive: player.shield_active || false,
-              protectedStreakValue: player.protected_streak_value || null
+              protectedStreakValue: player.protected_streak_value || null,
+              injuryTokenActive: player.injury_token_active || false,
+              injuryReturnStreak: player.injury_return_streak || null
             }
           };
         }, {});

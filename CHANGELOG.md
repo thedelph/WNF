@@ -5,6 +5,22 @@ All notable changes to the WNF project will be documented in this file.
 ## [Unreleased]
 
 ### Added - January 12, 2026
+- **Per-Game Token Tracking**:
+  - Added `using_shield` and `using_injury` columns to `game_registrations` table
+  - Track which tokens were used for each specific game (vs global player status)
+  - PlayerSelectionResults shows "Shield Token Users" and "Injury Reserve" sections per game
+  - CreateGameForm allows admins to select shield/injury token users when creating games
+
+- **Registration Status: 'absent'**:
+  - New neutral status for players using tokens without registering
+  - No registration bonus (unlike 'registered')
+  - No dropout penalty (unlike 'dropped_out')
+  - Used for token-only protection when player can't make the game
+
+- **Slot Offer Display Fix**:
+  - Fixed "Potential slot offer available at..." showing for reserves when no one has dropped out
+  - Now only shows potential offer times when there are active slot offers (someone has dropped out)
+
 - **Injury Token System (🩹)**:
   - New token type for players injured during WNF games
   - Returns at 50% of original streak (e.g., 10-game streak → returns at 5)

@@ -57,6 +57,8 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   const [randomPickPlayers, setRandomPickPlayers] = useState<string[]>([]);
   const [droppedOutPlayers, setDroppedOutPlayers] = useState<string[]>([]);
   const [tokenPlayers, setTokenPlayers] = useState<string[]>([]);
+  const [shieldPlayers, setShieldPlayers] = useState<string[]>([]);
+  const [injuryPlayers, setInjuryPlayers] = useState<string[]>([]);
   const [teamAPlayers, setTeamAPlayers] = useState<string[]>([]);
   const [teamBPlayers, setTeamBPlayers] = useState<string[]>([]);
   
@@ -66,7 +68,9 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     random: 0,
     reserve: 0,
     droppedOut: 0,
-    token: 0
+    token: 0,
+    shield: 0,
+    injury: 0
   });
   
   // Track unmatched players
@@ -256,7 +260,9 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
                 player_id: playerId,
                 status: 'selected',
                 selection_method: randomPickPlayers.includes(playerId) ? 'random' : 'merit',
-                using_token: tokenPlayers.includes(playerId)
+                using_token: tokenPlayers.includes(playerId),
+                using_shield: shieldPlayers.includes(playerId),
+                using_injury: injuryPlayers.includes(playerId)
               }))
             );
 
@@ -273,14 +279,16 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
               game_id: gameResult.id,
               player_id: playerId,
               status: 'reserve',
-              selection_method: 'merit'
+              selection_method: 'merit',
+              using_shield: shieldPlayers.includes(playerId),
+              using_injury: injuryPlayers.includes(playerId)
             }))
           );
 
         if (reserveError) throw reserveError;
       }
 
-      // Register dropped out players
+      // Register dropped out players (with shield/injury token info)
       if (droppedOutPlayers.length > 0) {
         const { error: droppedOutError } = await supabase
           .from('game_registrations')
@@ -289,11 +297,113 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
               game_id: gameResult.id,
               player_id: playerId,
               status: 'dropped_out',
-              selection_method: 'merit'
+              selection_method: 'merit',
+              using_shield: shieldPlayers.includes(playerId),
+              using_injury: injuryPlayers.includes(playerId)
             }))
           );
 
         if (droppedOutError) throw droppedOutError;
+      }
+
+      // Register shield/injury players who aren't in any other list (just token protection)
+      // Use 'absent' status - they didn't register but are using token protection
+      // This does NOT count towards registration streaks
+      const allRegisteredPlayers = new Set([...allSelectedPlayers, ...reservePlayers, ...droppedOutPlayers]);
+      const tokenOnlyPlayers = [...shieldPlayers, ...injuryPlayers].filter(id => !allRegisteredPlayers.has(id));
+
+      if (tokenOnlyPlayers.length > 0) {
+        const { error: tokenOnlyError } = await supabase
+          .from('game_registrations')
+          .insert(
+            tokenOnlyPlayers.map(playerId => ({
+              game_id: gameResult.id,
+              player_id: playerId,
+              status: 'absent',
+              selection_method: 'none',
+              using_shield: shieldPlayers.includes(playerId),
+              using_injury: injuryPlayers.includes(playerId)
+            }))
+          );
+
+        if (tokenOnlyError) throw tokenOnlyError;
+      }
+
+      // Activate shield protection for shield players
+      for (const playerId of shieldPlayers) {
+        // Get player's current streak to protect
+        const { data: playerData, error: playerError } = await supabase
+          .from('players')
+          .select('current_streak, shield_tokens_available')
+          .eq('id', playerId)
+          .single();
+
+        if (playerError) {
+          console.error('Error fetching player for shield activation:', playerError);
+          continue;
+        }
+
+        const currentStreak = playerData?.current_streak || 0;
+        const tokensAvailable = playerData?.shield_tokens_available || 0;
+
+        // Only activate if player has tokens available
+        if (tokensAvailable > 0) {
+          // Activate shield protection on players table
+          const { error: shieldError } = await supabase
+            .from('players')
+            .update({
+              shield_active: true,
+              protected_streak_value: currentStreak,
+              protected_streak_base: currentStreak,
+              shield_tokens_available: tokensAvailable - 1
+            })
+            .eq('id', playerId);
+
+          if (shieldError) {
+            console.error('Error activating shield protection:', shieldError);
+            toast.error(`Failed to activate shield for player`);
+          } else {
+            console.log(`Activated shield for player ${playerId}: protecting ${currentStreak}-game streak`);
+          }
+        } else {
+          console.warn(`Player ${playerId} has no shield tokens available`);
+          toast.error(`Player has no shield tokens available`);
+        }
+      }
+
+      // Activate injury tokens for injury players
+      if (injuryPlayers.length > 0) {
+        for (const playerId of injuryPlayers) {
+          // Get player's current streak to calculate return streak
+          const { data: playerData, error: playerError } = await supabase
+            .from('players')
+            .select('current_streak')
+            .eq('id', playerId)
+            .single();
+
+          if (playerError) {
+            console.error('Error fetching player for injury activation:', playerError);
+            continue;
+          }
+
+          const currentStreak = playerData?.current_streak || 0;
+          const returnStreak = Math.ceil(currentStreak / 2); // 50% of original streak
+
+          // Activate injury token
+          const { error: injuryError } = await supabase
+            .from('players')
+            .update({
+              injury_token_active: true,
+              injury_original_streak: currentStreak,
+              injury_return_streak: returnStreak
+            })
+            .eq('id', playerId);
+
+          if (injuryError) {
+            console.error('Error activating injury token:', injuryError);
+            toast.error(`Failed to activate injury token for player`);
+          }
+        }
       }
 
       // Assign teams if in team announcement phase
@@ -340,13 +450,15 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     tokenUsers: string[]
   ) => {
     // Update parsed counts immediately with raw counts
-    setParsedCounts({
+    // Note: shield and injury are extracted separately via their own callbacks
+    setParsedCounts(prev => ({
+      ...prev,
       selected: selectedPlayers.length,
       random: randomPlayers.length,
       reserve: reservePlayers.length,
       droppedOut: droppedOutPlayers.length,
       token: tokenUsers.length
-    });
+    }));
 
     // Track all unmatched players
     const allUnmatchedPlayers: string[] = [];
@@ -460,7 +572,9 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
                 random: 0,
                 reserve: 0,
                 droppedOut: 0,
-                token: 0
+                token: 0,
+                shield: 0,
+                injury: 0
               });
               setMatchedCounts({
                 selected: 0,
@@ -469,6 +583,8 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
                 droppedOut: 0
               });
               setUnmatchedPlayers([]);
+              setShieldPlayers([]);
+              setInjuryPlayers([]);
 
               // Set team announcement time when switching to Player Selection Phase
               if (newPhase === GAME_STATUSES.PLAYERS_ANNOUNCED && date && time) {
@@ -501,10 +617,28 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
             setMaxPlayers(maxPlayers);
           }}
           onTeamsExtracted={handleTeamsExtracted}
+          onShieldPlayersExtracted={(shieldPlayerNames) => {
+            // Convert shield player names to IDs
+            const validShieldPlayers = shieldPlayerNames
+              .map(name => players.find(p => p.friendly_name === name))
+              .filter((p): p is Player => p !== undefined)
+              .map(p => p.id);
+            setShieldPlayers(validShieldPlayers);
+            console.log('Shield players extracted:', validShieldPlayers);
+          }}
+          onInjuryPlayersExtracted={(injuryPlayerNames) => {
+            // Convert injury player names to IDs
+            const validInjuryPlayers = injuryPlayerNames
+              .map(name => players.find(p => p.friendly_name === name))
+              .filter((p): p is Player => p !== undefined)
+              .map(p => p.id);
+            setInjuryPlayers(validInjuryPlayers);
+            console.log('Injury players extracted:', validInjuryPlayers);
+          }}
         />
 
         {/* Parsed Player Counts Display */}
-        {(parsedCounts.selected > 0 || parsedCounts.reserve > 0 || parsedCounts.droppedOut > 0) && (
+        {(parsedCounts.selected > 0 || parsedCounts.reserve > 0 || parsedCounts.droppedOut > 0 || shieldPlayers.length > 0 || injuryPlayers.length > 0) && (
           <>
             <div className="alert alert-info">
               <div className="flex flex-col gap-1">
@@ -515,6 +649,8 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
                   <div>🎲 Random Picks: {parsedCounts.random}</div>
                   <div>🔄 Reserve Players: {parsedCounts.reserve}</div>
                   <div>❌ Dropped Out: {parsedCounts.droppedOut}</div>
+                  {shieldPlayers.length > 0 && <div>🛡️ Shield Users: {shieldPlayers.length}</div>}
+                  {injuryPlayers.length > 0 && <div>🩹 Injured: {injuryPlayers.length}</div>}
                 </div>
               </div>
             </div>
@@ -586,10 +722,14 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
             reservePlayers={reservePlayers}
             randomPickPlayers={randomPickPlayers}
             droppedOutPlayers={droppedOutPlayers}
+            shieldPlayers={shieldPlayers}
+            injuryPlayers={injuryPlayers}
             onConfirmedPlayersChange={setConfirmedPlayers}
             onReservePlayersChange={setReservePlayers}
             onRandomPickPlayersChange={setRandomPickPlayers}
             onDroppedOutPlayersChange={setDroppedOutPlayers}
+            onShieldPlayersChange={setShieldPlayers}
+            onInjuryPlayersChange={setInjuryPlayers}
           />
         )}
 

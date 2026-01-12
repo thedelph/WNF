@@ -237,6 +237,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
     selectedPlayers,
     reservePlayers,
     droppedOutPlayers,
+    absentPlayers,
     isLoading,
     gameDate,
     firstDropoutTime,
@@ -250,8 +251,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
       try {
         setLoading(true);
         
-        // Get player stats for all players
-        const playerIds = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers].map(player => player.id);
+        // Get player stats for all players (including absent players with token protection)
+        const playerIds = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers, ...absentPlayers].map(player => player.id);
         
         // Get player stats and XP data
         const { data: playerData, error: playerError } = await supabase
@@ -270,6 +271,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             shield_active,
             protected_streak_value,
             shield_tokens_available,
+            injury_token_active,
+            injury_return_streak,
             player_xp (
               xp,
               rank,
@@ -432,7 +435,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               gameParticipation: participationMap[player.id] || new Array(40).fill(null),
               shieldActive: player.shield_active || false,
               protectedStreakValue: player.protected_streak_value || null,
-              shieldTokensAvailable: player.shield_tokens_available || 0
+              shieldTokensAvailable: player.shield_tokens_available || 0,
+              injuryTokenActive: player.injury_token_active || false,
+              injuryReturnStreak: player.injury_return_streak || null
             }
           };
         }, {});
@@ -446,9 +451,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
     };
 
     fetchPlayerStats();
-  }, [selectedPlayers, reservePlayers, droppedOutPlayers]);
+  }, [selectedPlayers, reservePlayers, droppedOutPlayers, absentPlayers]);
 
-  const allPlayers = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers];
+  const allPlayers = [...selectedPlayers, ...reservePlayers, ...droppedOutPlayers, ...absentPlayers];
   
   const getPlayerWithRank = (player) => {
     return {
@@ -872,6 +877,68 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
           gameData={gameData}
         />
       )}
+
+      {/* Shield Token Users Section - shows players who used shield for THIS game */}
+      {(() => {
+        const shieldUsers = allPlayers.filter(p => p.using_shield);
+        if (shieldUsers.length === 0) return null;
+
+        return (
+          <div className="mt-6 bg-info/10 border border-info/30 rounded-lg p-4">
+            <h3 className="font-bold text-base-content flex items-center gap-2 mb-3">
+              <span className="text-lg">🛡️</span>
+              Shield Token Users ({shieldUsers.length})
+            </h3>
+            <p className="text-sm text-base-content/70 mb-3">
+              These players used their shield token to protect their streak for this game:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {shieldUsers.map(player => (
+                <div key={player.id} className="badge badge-info gap-2 py-3">
+                  <span>🛡️</span>
+                  <span>{player.friendly_name}</span>
+                  {playerStats[player.id]?.protectedStreakValue && (
+                    <span className="text-info-content/70">
+                      ({playerStats[player.id].protectedStreakValue} game streak protected)
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Injury Token Users Section - shows players who used injury for THIS game */}
+      {(() => {
+        const injuryUsers = allPlayers.filter(p => p.using_injury);
+        if (injuryUsers.length === 0) return null;
+
+        return (
+          <div className="mt-4 bg-warning/10 border border-warning/30 rounded-lg p-4">
+            <h3 className="font-bold text-base-content flex items-center gap-2 mb-3">
+              <span className="text-lg">🩹</span>
+              Injury Reserve ({injuryUsers.length})
+            </h3>
+            <p className="text-sm text-base-content/70 mb-3">
+              These players activated their injury token for this game (50% streak protection):
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {injuryUsers.map(player => (
+                <div key={player.id} className="badge badge-warning gap-2 py-3">
+                  <span>🩹</span>
+                  <span>{player.friendly_name}</span>
+                  {playerStats[player.id]?.injuryReturnStreak && (
+                    <span className="text-warning-content/70">
+                      (will return with {playerStats[player.id].injuryReturnStreak} game streak)
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Dropout Confirmation Modal */}
       {player?.id && (
