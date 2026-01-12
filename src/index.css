@@ -7,31 +7,13 @@
 
 /* Custom styles */
 body {
-  @apply bg-gray-50 dark:bg-gray-900 transition-colors duration-200;
+  @apply bg-base-100 transition-colors duration-200;
 }
 
-.btn {
-  @apply px-4 py-2 rounded-lg transition-colors duration-200;
-}
-
-.btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700;
-}
-
-.btn-secondary {
-  @apply bg-gray-600 text-white hover:bg-gray-700;
-}
-
-.btn-ghost {
-  @apply bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200;
-}
-
-.input {
-  @apply px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
-}
-
-/* DaisyUI v5: input-bordered removed (border is default)
-   form-control and label-text migrated to fieldset pattern */
+/* DaisyUI v5: btn, btn-primary, btn-secondary, btn-ghost, input are all
+   provided by DaisyUI with proper theme support - no overrides needed.
+   input-bordered removed (border is default).
+   form-control and label-text migrated to fieldset pattern. */
 
 /* Fieldset styles for v5 compatibility */
 .fieldset {
@@ -39,9 +21,9 @@ body {
 }
 
 .fieldset-legend {
-  @apply text-sm font-medium text-gray-700 dark:text-gray-200;
+  @apply text-sm font-medium text-base-content;
 }
 
 .fieldset-label {
-  @apply text-xs text-gray-500 dark:text-gray-400;
+  @apply text-xs text-base-content opacity-60;
 }

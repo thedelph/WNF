@@ -154,7 +154,7 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
 
               {/* Check if there are registrations to display */}
               {(!game.game_registrations || game.game_registrations.length === 0) ? (
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-4 text-base-content/50">
                   No players found for this game. This may be a data loading issue.
                 </div>
               ) : (
@@ -213,7 +213,7 @@ const GamePaymentList: React.FC<Props> = ({ games, loading, showArchived, onUpda
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center text-gray-500 dark:text-gray-400 mt-8"
+          className="text-center text-base-content/50 mt-8"
         >
           No games found with outstanding payments.
         </motion.p>

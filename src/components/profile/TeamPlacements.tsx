@@ -45,7 +45,7 @@ export const TeamPlacements: React.FC<TeamPlacementsProps> = ({
   playerName,
   loading = false,
 }) => {
-  const medals = ['text-yellow-500', 'text-gray-400', 'text-amber-600'];
+  const medals = ['text-yellow-500', 'text-base-content/60', 'text-amber-600'];
   const medalIcons = ['1st', '2nd', '3rd'];
 
   if (loading) {

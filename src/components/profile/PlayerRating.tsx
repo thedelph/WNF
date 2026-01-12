@@ -111,7 +111,7 @@ export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }
       >
         <div className="card-body">
           <h2 className="card-title">Player Rating</h2>
-          <p className="text-gray-500 dark:text-gray-400">You cannot rate yourself</p>
+          <p className="text-base-content/50">You cannot rate yourself</p>
         </div>
       </motion.div>
     );
@@ -131,7 +131,7 @@ export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }
             {player.games_played_together >= 5 ? (
               <div className="space-y-4">
                 {player.my_rating && (
-                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                  <div className="text-sm text-base-content/70">
                     <p>Your Current Ratings:</p>
                     <p>Attack: {formatStarRating(player.my_rating.attack_rating)}</p>
                     <p>Defense: {formatStarRating(player.my_rating.defense_rating)}</p>
@@ -144,7 +144,7 @@ export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }
                             {playstyleName}
                           </span>
                           {attributeAbbreviations && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                            <span className="text-xs text-base-content/50 ml-1">
                               ({attributeAbbreviations})
                             </span>
                           )}
@@ -164,7 +164,7 @@ export const PlayerRating = ({ player, user, onRatePlayer, ratings, setRatings }
                 </motion.button>
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-base-content/50">
                 You need to play {5 - player.games_played_together} more games with this player to rate them
               </p>
             )}

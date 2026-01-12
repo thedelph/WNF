@@ -745,7 +745,7 @@ React with ONE option only:
         <div className="modal modal-open">
           <div className="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
             <h3 className="font-bold text-lg mb-4">Registration Close Simulation Results</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            <p className="text-sm text-base-content/70 mb-4">
               Game: {game.venue?.name || 'No venue'} - {formatDate(game.date)}
             </p>
             
@@ -994,7 +994,7 @@ React with ONE option only:
 
             <div className="modal-action mt-6 border-t pt-4">
               <div className="flex justify-between items-center w-full">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Scroll up to see selection reasoning ↑</span>
+                <span className="text-sm text-base-content/50">Scroll up to see selection reasoning ↑</span>
                 <button 
                   className="btn btn-primary"
                   onClick={() => {

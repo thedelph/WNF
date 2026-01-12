@@ -456,8 +456,8 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
   // If there's no data, show a message
   if (!games || games.length === 0 || !graphData || graphData.length === 0) {
     return (
-      <div className={`bg-white dark:bg-gray-800 shadow rounded-lg p-6 flex justify-center items-center ${className}`}>
-        <p className="text-gray-500 dark:text-gray-400">No game data available to display win rate graph.</p>
+      <div className={`bg-base-200 shadow rounded-lg p-6 flex justify-center items-center ${className}`}>
+        <p className="text-base-content/50">No game data available to display win rate graph.</p>
       </div>
     );
   }
@@ -474,24 +474,24 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       const exclusionReason = data.exclusionReason;
       
       return (
-        <div className="custom-tooltip bg-white dark:bg-gray-800 p-2 border border-gray-300 dark:border-gray-600 shadow-md rounded-md text-xs">
+        <div className="custom-tooltip bg-base-200 p-2 border border-base-content/30 shadow-md rounded-md text-xs">
           <p className="font-semibold">Game #{data.gameNumber} ({dateStr})</p>
           <p>Outcome: <span className={
             outcome === 'Won' ? 'text-green-500 font-bold' :
             outcome === 'Lost' ? 'text-red-500 font-bold' :
             outcome === 'Draw' ? 'text-purple-500 font-bold' :
-            'text-gray-500 dark:text-gray-400'
+            'text-base-content/50'
           }>{outcome}</span></p>
           <p>Performance: {winRate}%</p>
           {movingAverage && <p>10-Game Avg: {movingAverage}%</p>}
 
           {/* Show additional information if the game is excluded from the calculation */}
           {isExcluded && (
-            <div className="mt-1 pt-1 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-1 pt-1 border-t border-base-content/20">
               <p className="font-semibold text-amber-600">
                 Excluded from calculation
               </p>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-base-content/70">
                 Reason: {exclusionReason === 'uneven_teams' ? 'Uneven teams' :
                         exclusionReason === 'unknown_outcome' ? 'Unknown outcome' :
                         'Other'}
@@ -532,7 +532,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`bg-white dark:bg-gray-800 shadow rounded-lg p-6 ${className}`}
+      className={`bg-base-200 shadow rounded-lg p-6 ${className}`}
     >
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Performance History</h2>
@@ -759,7 +759,7 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
       </div>
       
       {/* Explanatory text below the graph with game stats */}
-      <div className="text-center text-xs leading-tight text-gray-600 dark:text-gray-300 mt-3 px-4">
+      <div className="text-center text-xs leading-tight text-base-content/70 mt-3 px-4">
         <p className="mb-1"><strong>About Performance Rating:</strong></p>
         <p className="mb-1">Performance is calculated using a <span className="font-medium">points system</span>: Win = 3pts, Draw = 1pt, Loss = 0pts.</p>
         <p className="mb-1">Rating = (Points earned / Maximum possible points) × 100%</p>

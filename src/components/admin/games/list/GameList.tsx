@@ -126,7 +126,7 @@ export const GameList = forwardRef<{ fetchGames: () => void }, GameListProps>(({
       ))}
       {games.length === 0 && !isLoading && (
         <div className="text-center py-8">
-          <p className="text-gray-500 dark:text-gray-400">No upcoming games found</p>
+          <p className="text-base-content/50">No upcoming games found</p>
         </div>
       )}
     </div>

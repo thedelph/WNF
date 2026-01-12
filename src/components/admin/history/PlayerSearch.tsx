@@ -147,7 +147,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
           </Tooltip>
         </fieldset>
 
-        {loading && <div className="text-gray-500 dark:text-gray-400">Searching...</div>}
+        {loading && <div className="text-base-content/50">Searching...</div>}
 
         {players.length > 0 && (
           <div className="flex flex-col gap-4">
@@ -241,7 +241,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onPlayerAdd, existin
         )}
 
         {searchQuery.length >= 2 && players.length === 0 && !loading && (
-          <div className="text-gray-500 dark:text-gray-400">No players found</div>
+          <div className="text-base-content/50">No players found</div>
         )}
       </div>
     </div>

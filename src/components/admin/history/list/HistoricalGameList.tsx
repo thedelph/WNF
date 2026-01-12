@@ -87,7 +87,7 @@ const HistoricalGameList: React.FC<Props> = ({ games, loading, onGameDeleted, re
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center text-gray-500 dark:text-gray-400 mt-8"
+          className="text-center text-base-content/50 mt-8"
         >
           No games found matching the current filters.
         </motion.p>

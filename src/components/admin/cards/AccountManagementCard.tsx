@@ -24,7 +24,7 @@ const AccountManagementCard: React.FC = () => {
           </Tooltip>
         </h2>
         
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <p className="text-sm text-base-content/50 mb-4">
           Manage user accounts, reset passwords, and resolve login issues.
         </p>
         

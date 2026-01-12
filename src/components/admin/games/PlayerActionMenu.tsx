@@ -154,7 +154,7 @@ export const PlayerActionMenu: React.FC<PlayerActionMenuProps> = ({
                   onClick={() => openConfirmDialog('unregister')}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-base-200 rounded text-left"
                 >
-                  <FaTimes className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <FaTimes className="w-4 h-4 text-base-content/50" />
                   <span>Unregister</span>
                 </button>
 

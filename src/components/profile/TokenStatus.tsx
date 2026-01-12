@@ -61,7 +61,7 @@ export default function TokenStatus({
         className="card bg-base-200 shadow-xl p-4"
       >
         <div className="flex items-center gap-2 mb-4">
-          <PiCoinDuotone size={24} className="text-gray-400" />
+          <PiCoinDuotone size={24} className="text-base-content/60" />
           <h3 className="text-lg font-bold">Priority Token Status</h3>
         </div>
         <div className="flex items-center justify-center py-8">
@@ -107,7 +107,7 @@ export default function TokenStatus({
       <div className="flex items-center gap-2 mb-4">
         <PiCoinDuotone 
           size={24} 
-          className={status === 'AVAILABLE' && isEligible ? 'text-yellow-400' : 'text-gray-400'} 
+          className={status === 'AVAILABLE' && isEligible ? 'text-yellow-400' : 'text-base-content/60'} 
         />
         <h3 className="text-lg font-bold">Priority Token Status</h3>
       </div>

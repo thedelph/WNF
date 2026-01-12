@@ -52,7 +52,7 @@ export default function ShieldTokenStatus({
         className="card bg-base-200 shadow-xl p-4"
       >
         <div className="flex items-center gap-2 mb-4">
-          <Shield size={24} className="text-gray-400" />
+          <Shield size={24} className="text-base-content/60" />
           <h3 className="text-lg font-bold">Shield Token Status</h3>
         </div>
         <div className="flex items-center justify-center py-8">
@@ -75,7 +75,7 @@ export default function ShieldTokenStatus({
       <div className="flex items-center gap-2 mb-4">
         <Shield
           size={24}
-          className={hasTokens ? 'text-purple-500' : 'text-gray-400'}
+          className={hasTokens ? 'text-purple-500' : 'text-base-content/60'}
         />
         <h3 className="text-lg font-bold">Shield Token Status</h3>
       </div>

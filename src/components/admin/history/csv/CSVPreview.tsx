@@ -59,7 +59,7 @@ const CSVPreview: React.FC<Props> = ({ csvData, maxPreviewRows = 5 }) => {
           </table>
         </div>
         {hasMoreRows && (
-          <div className="text-sm text-gray-500 mt-2">
+          <div className="text-sm text-base-content/50 mt-2">
             And {csvData.length - maxPreviewRows} more games...
           </div>
         )}

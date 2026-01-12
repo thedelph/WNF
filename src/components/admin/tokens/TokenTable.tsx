@@ -231,7 +231,7 @@ export const TokenTable: React.FC<TokenTableProps> = ({
                         <div className="flex items-center gap-2">
                           <PiCoinDuotone 
                             size={20} 
-                            className={!token.used_at ? 'text-yellow-400' : token.is_eligible ? 'text-green-400' : 'text-gray-400'} 
+                            className={!token.used_at ? 'text-yellow-400' : token.is_eligible ? 'text-green-400' : 'text-base-content/40'} 
                           />
                           <span className={`badge ${tokenStatus.badge}`}>
                             {tokenStatus.status}

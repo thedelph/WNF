@@ -86,7 +86,7 @@ const AdminPasswordReset: React.FC = () => {
       <h2 className="text-xl font-bold mb-4">Admin Password Reset</h2>
       
       <Tooltip content="Use this utility to reset a user's password when they cannot access the standard reset flow">
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-base-content/50 mb-4">
           This tool allows administrators to set a temporary password for users who are having trouble with the standard password reset flow.
         </p>
       </Tooltip>

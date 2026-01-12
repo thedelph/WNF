@@ -145,7 +145,7 @@ export default function ProfileHeader({
         <div className="flex-1 text-center sm:text-left">
           {/* Player Name */}
           <div className="flex flex-col items-center sm:items-start mt-1 mb-2 md:mb-0">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white sm:text-left">
+            <h2 className="text-xl md:text-2xl font-bold text-base-content sm:text-left">
               {profile.friendly_name}
             </h2>
           </div>

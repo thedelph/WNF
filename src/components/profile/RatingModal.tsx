@@ -60,7 +60,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
         exit={{ scale: 0.9 }}
-        className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 max-w-md w-full space-y-4 relative z-50 max-h-[90vh] overflow-y-auto"
+        className="bg-base-200 rounded-lg p-4 sm:p-6 max-w-md w-full space-y-4 relative z-50 max-h-[90vh] overflow-y-auto"
       >
         <h2 className="text-xl font-semibold">
           Rate {player?.friendly_name}

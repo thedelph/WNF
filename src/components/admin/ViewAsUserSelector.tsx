@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../../utils/supabase'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Permission } from '../../types/permissions'
 
 interface User {
@@ -137,9 +137,22 @@ const ViewAsUserSelector: React.FC<ViewAsUserSelectorProps> = ({ onSelectUser, o
   }
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-4xl">
-        <h3 className="font-bold text-lg mb-4">View As User</h3>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+        onClick={onCancel}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-base-100 rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="font-bold text-lg mb-4">View As User</h3>
         <p className="text-sm text-base-content/70 mb-6">
           Select any user to view the application with their permissions and feature access.
           This allows you to test what any user would see, including feature flags and beta features.
@@ -249,7 +262,7 @@ const ViewAsUserSelector: React.FC<ViewAsUserSelectorProps> = ({ onSelectUser, o
         )}
 
         {/* Action Buttons */}
-        <div className="modal-action">
+        <div className="flex justify-end gap-2 mt-6">
           <button className="btn" onClick={onCancel}>
             Cancel
           </button>
@@ -261,8 +274,9 @@ const ViewAsUserSelector: React.FC<ViewAsUserSelectorProps> = ({ onSelectUser, o
             View As Selected User
           </button>
         </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   )
 }
 

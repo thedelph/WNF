@@ -759,7 +759,7 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
 
           {registrations.length === 0 && (
             <div className="col-span-3 text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">No registrations found</p>
+              <p className="text-base-content/50">No registrations found</p>
             </div>
           )}
         </div>
