@@ -33,6 +33,9 @@ interface XPBreakdownProps {
     unpaidGames: number; // Number of unpaid games (required)
     shieldActive?: boolean; // Whether player has active shield protection
     frozenStreakValue?: number | null; // Frozen streak value when shield is active
+    // Injury token fields
+    injuryTokenActive?: boolean; // Whether player is on injury reserve
+    injuryReturnStreak?: number | null; // Streak value when returning from injury
   };
   showTotal?: boolean;
 }
@@ -90,10 +93,14 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
   });
 
   // Calculate streak modifier (v2: diminishing returns)
-  // Use frozen streak value if shield is active, otherwise use current streak
-  const effectiveStreak = stats.shieldActive && stats.frozenStreakValue !== null && stats.frozenStreakValue !== undefined
-    ? stats.frozenStreakValue
-    : stats.currentStreak;
+  // Priority: injury return streak > shield frozen streak > current streak
+  // When injured, player is not actively playing so they have no current streak bonus
+  const isInjured = stats.injuryTokenActive === true;
+  const effectiveStreak = isInjured
+    ? 0 // Injured players don't have an active streak bonus
+    : stats.shieldActive && stats.frozenStreakValue !== null && stats.frozenStreakValue !== undefined
+      ? stats.frozenStreakValue
+      : stats.currentStreak;
 
   // v2 diminishing returns formula:
   // First 10 games: 10%, 9%, 8%, 7%, 6%, 5%, 4%, 3%, 2%, 1% (total 55%)
@@ -219,8 +226,33 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                 />
                 {debugLog('[XPBreakdown] ReserveXPSection props:', { reserveXP: stats.reserveXP, reserveCount: stats.reserveCount })}
 
+                {/* Injury Reserve Section */}
+                {isInjured && stats.injuryReturnStreak && (
+                  (() => {
+                    const returnStreak = stats.injuryReturnStreak;
+                    const returnBonus = returnStreak <= 0 ? 0
+                      : returnStreak <= 10
+                        ? Math.round((returnStreak * 11 - (returnStreak * (returnStreak + 1)) / 2))
+                        : 55 + (returnStreak - 10);
+                    return (
+                      <div className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-400/40 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">🩹</span>
+                            <span className="font-medium text-amber-200">Injured</span>
+                          </div>
+                          <span className="text-amber-200 font-bold">Returns at +{returnBonus}%</span>
+                        </div>
+                        <p className="text-sm text-amber-200/70 mt-2">
+                          Will return with {returnStreak}-game streak bonus when back
+                        </p>
+                      </div>
+                    );
+                  })()
+                )}
+
                 {/* Attendance Streak Section */}
-                {effectiveStreak > 0 && (
+                {effectiveStreak > 0 && !isInjured && (
                   <StreakSection
                     title={stats.shieldActive && stats.frozenStreakValue ? "🛡️ Protected Streak" : "Attendance Streak"}
                     streakCount={effectiveStreak}
