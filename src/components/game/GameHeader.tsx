@@ -37,8 +37,10 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   isRegistrationClosed,
   weatherCardProps
 }) => {
-  // Get the total number of registrations (excluding 'absent' status - token-only players who didn't register)
-  const currentlyRegistered = game.game_registrations?.filter(reg => reg.status !== 'absent')?.length || 0;
+  // Get the total number of active registrations (excluding 'absent' and 'dropped_out' statuses)
+  const currentlyRegistered = game.game_registrations?.filter(reg =>
+    reg.status !== 'absent' && reg.status !== 'dropped_out'
+  )?.length || 0;
 
   // Count priority token users
   const priorityTokenCount = game.game_registrations?.filter(reg => reg.using_token === true)?.length || 0;
