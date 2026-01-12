@@ -33,6 +33,10 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   protectedStreakValue?: number | null,
   /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null,
+  // Injury token fields
+  injuryTokenActive?: boolean,
+  injuryOriginalStreak?: number | null,
+  injuryReturnStreak?: number | null,
   recentGames?: number,
   gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>, // Array of 40 elements showing participation status in each of the last 40 games
   onTokenCooldown?: boolean,
@@ -70,6 +74,9 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   shieldActive = false,
   protectedStreakValue = null,
   frozenStreakValue = null,
+  injuryTokenActive = false,
+  injuryOriginalStreak = null,
+  injuryReturnStreak = null,
   recentGames = 0,
   gameParticipation = new Array(40).fill(null),
   onTokenCooldown = false,
@@ -338,6 +345,9 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         status={status}
         shieldActive={shieldActive}
         protectedStreakValue={protectedStreakValue ?? frozenStreakValue}
+        injuryTokenActive={injuryTokenActive}
+        injuryOriginalStreak={injuryOriginalStreak}
+        injuryReturnStreak={injuryReturnStreak}
       />
 
       <div className="mt-auto">

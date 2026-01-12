@@ -1,8 +1,9 @@
 # Injury Token System
 
-> **Status:** Approved by community vote (12-0)
-> **Date:** January 2026
-> **Document Purpose:** Comprehensive design specification for implementation
+> **Status:** ✅ Implemented
+> **Implemented:** January 12, 2026
+> **Approved:** January 2026 (community vote 12-0)
+> **Document Purpose:** Feature specification and implementation reference
 
 ---
 
@@ -501,18 +502,84 @@ Worth adding? Poll below.
 
 ---
 
-## Next Steps
+## Implementation Status
 
-1. [ ] Create database migration for injury token tables
-2. [ ] Implement activation function
-3. [ ] Implement return processing function
-4. [ ] Add UI for injury token status on player profile
-5. [ ] Add activation flow (react 🩹 or button)
-6. [ ] Add admin management interface
-7. [ ] Update streak calculation to handle injury returns
-8. [ ] Add audit logging
-9. [ ] Test edge cases
-10. [ ] Deploy and announce to community
+All implementation tasks completed on January 12, 2026:
+
+1. [x] Create database migration for injury token tables
+2. [x] Implement activation function
+3. [x] Implement return processing function
+4. [x] Add UI for injury token status on player profile
+5. [x] Add activation flow (react 🩹 or button)
+6. [x] Add admin management interface
+7. [x] Update streak calculation to handle injury returns
+8. [x] Add audit logging
+9. [x] Test edge cases
+10. [x] Deploy and announce to community
+
+---
+
+## Implementation Details
+
+### Database Schema
+
+**Tables Created:**
+- `injury_token_usage` - Tracks active and historical injury claims
+- `injury_token_history` - Audit trail for all actions
+
+**Columns Added to `players`:**
+- `injury_token_active` (BOOLEAN)
+- `injury_original_streak` (INTEGER)
+- `injury_return_streak` (INTEGER)
+- `injury_activated_at` (TIMESTAMPTZ)
+- `injury_game_id` (UUID)
+
+**RPC Functions:**
+| Function | Purpose |
+|----------|---------|
+| `check_injury_token_eligibility` | Validates player can claim for a game |
+| `activate_injury_token` | Player self-serve activation |
+| `admin_activate_injury_token` | Admin activation with audit |
+| `process_injury_return` | Auto-return on game registration |
+| `deny_injury_token` | Admin denial with reason |
+| `get_injury_token_status` | Get player's current status |
+| `get_eligible_injury_games` | Games eligible for claiming |
+| `get_injury_token_stats` | Admin dashboard statistics |
+
+### Frontend Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `InjuryTokenStatus` | `src/components/profile/` | Profile page display |
+| `InjuryTokenBadge` | `src/components/player-card/` | Player card badge |
+| `InjuryTokenButton` | `src/components/game/` | Claim button with modal |
+| `InjuryTokenManagementCard` | `src/components/admin/cards/` | Admin portal card |
+| `InjuryTokenManagement` | `src/pages/admin/` | Full admin management page |
+
+### Hooks
+
+| Hook | Purpose |
+|------|---------|
+| `useInjuryTokenStatus` | Main status hook with real-time updates |
+| `useInjuryTokenEligibility` | Check eligibility for a game |
+| `useEligibleInjuryGames` | Get games eligible for claiming |
+| `useInjuryToken` | Actions (activate, adminActivate, deny) |
+| `useInjuryTokenStats` | Admin statistics |
+| `useInjuryTokenClaims` | Admin claims list with real-time subscription |
+
+### Integration Points
+
+1. **Game Registration** (`useGameRegistration.ts`): Auto-processes injury return when player registers
+2. **Player Card** (`PlayerCardModifiers.tsx`): Shows amber injury badge when active
+3. **Shield Token** (`ShieldTokenStatus.tsx`): Clarification text added about Shield vs Injury
+4. **Admin Portal**: New card and route at `/admin/injuries`
+
+### Color Scheme
+
+- **Amber/Orange theme** (distinct from Shield's purple)
+- Badge: `badge-warning`
+- Card: `from-amber-900/40 via-orange-900/40 to-amber-900/40`
+- Border: `border-amber-400/60`
 
 ---
 
@@ -547,5 +614,5 @@ Considered (2-3 witnesses), but fair-use policy is simpler. If injuries are witn
 ---
 
 *Document created: January 2026*
-*Last updated: January 2026*
-*Status: Ready for implementation*
+*Last updated: January 12, 2026*
+*Status: ✅ Implemented*

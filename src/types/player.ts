@@ -86,4 +86,10 @@ export interface PlayerStats {
     outstandingPaymentsCount?: number;
     whatsappGroupMember?: boolean;
   };
+  // Injury token fields (from players table)
+  injury_token_active?: boolean;
+  injury_original_streak?: number | null;
+  injury_return_streak?: number | null;
+  injury_activated_at?: string | null;
+  injury_game_id?: string | null;
 }

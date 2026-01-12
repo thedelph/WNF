@@ -11,11 +11,6 @@ import { PlayerGridLayout } from './grid/PlayerGridLayout';
 export default function PlayerCardGrid() {
   const { players, loading } = usePlayerGrid();
 
-  // Debug to see what we get from usePlayerGrid
-  const chrisH = players.find(p => p.friendlyName === 'Chris H');
-  if (chrisH) {
-    console.log('🎲 PlayerCardGrid - Chris H from usePlayerGrid:', chrisH);
-  }
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Player;
     direction: 'asc' | 'desc';
@@ -106,14 +101,6 @@ export default function PlayerCardGrid() {
           sortConfig={sortConfig}
           setSortConfig={setSortConfig}
         />
-        {/* Debug sortedPlayers */}
-        {(() => {
-          const chrisHSorted = sortedPlayers.find(p => p.friendlyName === 'Chris H');
-          if (chrisHSorted) {
-            console.log('🎲 PlayerCardGrid - Chris H in sortedPlayers:', chrisHSorted);
-          }
-          return null;
-        })()}
         <PlayerGridLayout players={sortedPlayers} />
       </div>
     </div>

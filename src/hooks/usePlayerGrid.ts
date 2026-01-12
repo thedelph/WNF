@@ -52,6 +52,9 @@ export const usePlayerGrid = () => {
               bench_warmer_streak,
               shield_active,
               protected_streak_value,
+              injury_token_active,
+              injury_original_streak,
+              injury_return_streak,
               player_xp (
                 xp,
                 rank,
@@ -127,6 +130,9 @@ export const usePlayerGrid = () => {
           bench_warmer_streak: number | null;
           shield_active: boolean | null;
           protected_streak_value: number | null;
+          injury_token_active: boolean | null;
+          injury_original_streak: number | null;
+          injury_return_streak: number | null;
           player_xp: {
             xp: number;
             rank: number;
@@ -210,10 +216,6 @@ export const usePlayerGrid = () => {
           gameRegistrationsData
         ] = results;
 
-        // Debug logging for playstyle data
-        console.log('🎯 usePlayerGrid - Derived attributes data:', derivedAttributesData);
-        console.log('🎯 usePlayerGrid - Number of players with attributes:', derivedAttributesData?.length || 0);
-
         // Create maps for efficient lookups
         const winRateMap = (winRateData || []).reduce((acc, player) => {
           acc[player.id] = {
@@ -265,9 +267,6 @@ export const usePlayerGrid = () => {
           return acc;
         }, {} as Record<string, any>);
 
-        console.log('🎯 usePlayerGrid - Derived attributes map:', derivedAttributesMap);
-        console.log('🎯 usePlayerGrid - Player IDs in map:', Object.keys(derivedAttributesMap));
-
         // Calculate recent games (last 40 completed games)
         // Create a map of game IDs to their position in the last 40 games (0 = oldest, 39 = most recent)
         const gameIdToIndexMap = (latestGameData || []).reduce((acc, game, index) => {
@@ -299,44 +298,15 @@ export const usePlayerGrid = () => {
           return acc;
         }, {} as Record<string, number>);
 
-        const last40SequenceNumbers = (latestGameData || []).map(g => g.sequence_number);
-        console.log('🎯 usePlayerGrid - Recent games calculation:', {
-          last40GamesCount: latestGameData?.length || 0,
-          last40SequenceNumbers: last40SequenceNumbers.slice(0, 5),
-          minSequence: last40SequenceNumbers.length > 0 ? Math.min(...last40SequenceNumbers) : 0,
-          maxSequence: last40SequenceNumbers.length > 0 ? Math.max(...last40SequenceNumbers) : 0,
-          totalRegistrations: gameRegistrationsData?.length || 0,
-          playersWithRecentGames: Object.keys(recentGamesMap).length,
-          sampleCounts: Object.entries(recentGamesMap).slice(0, 3).map(([id, count]) => ({ id, count }))
-        });
-
         // Combine all data
         const combinedPlayers = (playersData || []).map(player => {
           // Use the longest_streak from player_streak_stats if available, otherwise fall back to max_streak from players table
           const correctMaxStreak = streakStatsMap[player.friendly_name]?.longestStreak || 0;
 
-          // Log for debugging if there's a discrepancy
-          if (streakStatsMap[player.friendly_name]?.longestStreak !== correctMaxStreak) {
-            console.log(`Max streak discrepancy for ${player.friendly_name}:`, {
-              from_players_table: 0,
-              from_streak_stats: streakStatsMap[player.friendly_name]?.longestStreak,
-              using: correctMaxStreak
-            });
-          }
-
           // Calculate closest playstyle match
           const playerAttributes = derivedAttributesMap[player.id];
           const playstyleMatch = playerAttributes ?
             findClosestPlaystyle(playerAttributes, PREDEFINED_PLAYSTYLES) : null;
-
-          // Debug logging for specific players
-          if (player.friendly_name === 'Chris H' || player.friendly_name === 'Nathan') {
-            console.log(`🎯 usePlayerGrid - ${player.friendly_name}:`, {
-              playerId: player.id,
-              attributes: playerAttributes,
-              playstyleMatch: playstyleMatch
-            });
-          }
 
           return {
             id: player.id,
@@ -375,27 +345,24 @@ export const usePlayerGrid = () => {
             protectedStreakValue: player.protected_streak_value || null,
             // Legacy alias for backwards compatibility
             frozenStreakValue: player.protected_streak_value || null,
+            // Injury token fields
+            injuryTokenActive: player.injury_token_active || false,
+            injuryOriginalStreak: player.injury_original_streak || null,
+            injuryReturnStreak: player.injury_return_streak || null,
             recentGames: recentGamesMap[player.id] || 0,
             gameParticipation: recentGamesParticipationMap[player.id] || new Array<'selected' | 'reserve' | 'dropped_out' | null>(40).fill(null)
           };
         });
 
-        // Debug log to see how many players have playstyles
-        const playersWithPlaystyles = combinedPlayers.filter(p => p.averagedPlaystyle);
-        console.log('🎯 usePlayerGrid - Players with playstyles:', {
-          total: combinedPlayers.length,
-          withPlaystyles: playersWithPlaystyles.length,
-          sample: playersWithPlaystyles.slice(0, 3).map(p => ({
+        // Debug: Log players with active injury tokens
+        const injuredPlayers = combinedPlayers.filter(p => p.injuryTokenActive);
+        if (injuredPlayers.length > 0) {
+          console.log('🩹 usePlayerGrid - Players with injury tokens:', injuredPlayers.map(p => ({
             name: p.friendlyName,
-            playstyle: p.averagedPlaystyle,
-            distance: p.playstyleMatchDistance
-          }))
-        });
-
-        // Debug Chris H specifically in the final array
-        const chrisHFinal = combinedPlayers.find(p => p.friendlyName === 'Chris H');
-        if (chrisHFinal) {
-          console.log('🎯 usePlayerGrid - Chris H final object:', chrisHFinal);
+            injuryTokenActive: p.injuryTokenActive,
+            originalStreak: p.injuryOriginalStreak,
+            returnStreak: p.injuryReturnStreak
+          })));
         }
 
         setPlayers(combinedPlayers);

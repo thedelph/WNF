@@ -122,7 +122,33 @@ export const useGameRegistration = ({
           console.error('Error registering:', registrationError);
           toast.error(`Failed to register for game: ${registrationError.message}`);
         } else {
-          toast.success(`Successfully registered for game${useToken ? ' using token' : ''}`);
+          // Check if player has active injury token and process return
+          const { data: playerData } = await supabase
+            .from('players')
+            .select('injury_token_active, injury_return_streak')
+            .eq('id', playerProfile.id)
+            .single();
+
+          if (playerData?.injury_token_active) {
+            // Process injury return
+            const { data: returnResult, error: returnError } = await supabase.rpc('process_injury_return', {
+              p_player_id: playerProfile.id,
+              p_return_game_id: gameId
+            });
+
+            if (returnError) {
+              console.error('Error processing injury return:', returnError);
+              // Don't fail registration, just log the error
+            } else if (returnResult?.[0]?.success) {
+              const returnStreak = returnResult[0].return_streak;
+              toast.success(
+                `Welcome back from injury! Your streak is now ${returnStreak} games.`,
+                { duration: 5000, icon: '🩹' }
+              );
+            }
+          } else {
+            toast.success(`Successfully registered for game${useToken ? ' using token' : ''}`);
+          }
         }
       }
 

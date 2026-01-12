@@ -39,6 +39,10 @@ export interface PlayerCardProps {
   protectedStreakValue?: number | null // The original streak value when shield was activated (for gradual decay)
   /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null // Legacy alias for protectedStreakValue
+  // Injury token fields
+  injuryTokenActive?: boolean // Whether player is on injury reserve
+  injuryOriginalStreak?: number | null // Original streak before injury
+  injuryReturnStreak?: number | null // Streak value when returning
   recentGames?: number // Number of games played in last 40 completed games (XP-relevant window)
   gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null> // Array of 40 elements showing participation status in each of the last 40 games (index 0 = oldest, 39 = most recent)
 }
@@ -67,6 +71,10 @@ export interface PlayerCardModifiersProps {
   protectedStreakValue?: number | null // Original streak value for gradual decay
   /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null
+  // Injury token props
+  injuryTokenActive?: boolean // Whether player is on injury reserve
+  injuryOriginalStreak?: number | null // Original streak before injury
+  injuryReturnStreak?: number | null // Streak value when returning
 }
 
 export interface PlayerCardStatsProps {

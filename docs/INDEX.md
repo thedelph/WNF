@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-01-09 (Site-wide dark mode implementation)
+**Last Updated:** 2026-01-12 (Injury Token system implementation)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -64,6 +64,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Trio Chemistry](features/TrioChemistry.md)** - 3-player synergy tracking *(New Jan 2026)*
 - **[Awards System](features/AwardsSystem.md)** - Hall of Fame awards and trophies *(New Jan 2026)*
 - **[Dropout with Shield](features/DropoutWithShield.md)** - Dropout mechanics with shield protection *(New Jan 2026)*
+- **[Injury Token](features/InjuryToken.md)** - Streak protection for WNF injuries *(New Jan 2026)*
 - **[Player Stats Overview](PlayerStatsFeaturesOverview.md)** - Comprehensive stats features
 
 ### Admin Features

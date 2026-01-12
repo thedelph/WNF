@@ -46,6 +46,7 @@ import FeatureFlagManagement from './pages/admin/FeatureFlagManagement'
 import TeamBalancingVisualization from './pages/admin/TeamBalancingVisualization'
 import SessionDiagnostics from './pages/admin/SessionDiagnostics'
 import ShieldTokenManagement from './pages/admin/ShieldTokenManagement'
+import InjuryTokenManagement from './pages/admin/InjuryTokenManagement'
 import XPComparison from './pages/admin/XPComparison'
 import WhatsAppBotHelp from './pages/WhatsAppBotHelp'
 import WeatherDemo from './pages/WeatherDemo'
@@ -123,6 +124,7 @@ const App: React.FC = () => {
                 <Route path="/admin/slot-offers" element={<SlotOffersPage />} />
                 <Route path="/admin/tokens" element={<TokenManagement />} />
                 <Route path="/admin/shields" element={<ShieldTokenManagement />} />
+                <Route path="/admin/injuries" element={<InjuryTokenManagement />} />
                 <Route path="/admin/account-management" element={<AccountManagement />} />
                 <Route path="/admin/session-diagnostics" element={<SessionDiagnostics />} />
                 <Route path="/admin/xp-comparison" element={<XPComparison />} />

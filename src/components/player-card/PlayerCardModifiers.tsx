@@ -28,6 +28,10 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   shieldActive = false,
   protectedStreakValue = null,
   frozenStreakValue = null, // Legacy prop
+  // Injury token props
+  injuryTokenActive = false,
+  injuryOriginalStreak = null,
+  injuryReturnStreak = null,
 }) => {
   const { player } = useUser()
   const [showShieldTooltip, setShowShieldTooltip] = useState(false)
@@ -93,10 +97,10 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   return (
     <div className="space-y-2">
       {registrationStreakBonusApplies && registrationStreakBonus > 0 && (
-        <Tooltip content={registrationStreakBonus === 1 
-          ? "Bonus for registering this week" 
+        <Tooltip content={registrationStreakBonus === 1
+          ? "Bonus for registering this week"
           : `Bonus for registering ${registrationStreakBonus} weeks in a row`}>
-          <motion.div 
+          <motion.div
             className="flex justify-between items-center bg-blue-500/20 rounded-lg p-2"
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -106,6 +110,36 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
               <span className="text-sm">Reg. Streak</span>
             </div>
             <span className="text-sm font-bold">+{(registrationStreakModifier * 100).toFixed(1)}%</span>
+          </motion.div>
+        </Tooltip>
+      )}
+      {/* Injury Token Section - Amber/Warning theme */}
+      {injuryTokenActive && (
+        <Tooltip content={`On injury reserve. Returns at ${injuryReturnStreak ?? 0}-game streak (was ${injuryOriginalStreak ?? 0})`}>
+          <motion.div
+            className="rounded-lg p-2 relative overflow-hidden bg-gradient-to-br from-amber-900/40 via-orange-900/40 to-amber-900/40 backdrop-blur-sm border-2 border-amber-400/60 shadow-lg shadow-amber-500/20"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+          >
+            {/* Animated shimmer effect */}
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-amber-400/20 via-orange-400/10 to-amber-400/20"></div>
+              <div className="absolute top-1/2 left-1/4 w-6 h-6 bg-amber-300/20 rounded-full blur-lg animate-pulse"></div>
+            </div>
+
+            {/* Content */}
+            <div className="flex justify-between items-center relative z-10 text-amber-100">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🩹</span>
+                <span className="text-sm font-semibold">Injury Reserve</span>
+              </div>
+            </div>
+
+            {/* Return streak info */}
+            <div className="mt-2 relative z-10 flex items-center justify-between text-xs text-amber-200/80">
+              <span>Return at {injuryReturnStreak ?? 0} games</span>
+              <span className="opacity-75">(was {injuryOriginalStreak ?? 0})</span>
+            </div>
           </motion.div>
         </Tooltip>
       )}
