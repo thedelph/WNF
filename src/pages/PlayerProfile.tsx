@@ -24,6 +24,7 @@ import ShieldTokenStatus from '../components/profile/ShieldTokenStatus';
 import { executeWithRetry } from '../utils/network';
 import { useTokenStatus } from '../hooks/useTokenStatus';
 import { useShieldStatus } from '../hooks/useShieldStatus';
+import { useInjuryTokenStatus } from '../hooks/useInjuryTokenStatus';
 import WinRateGraph from '../components/profile/WinRateGraph';
 import { AttributeCombination } from '../types/playstyle';
 import { Position } from '../types/positions';
@@ -89,6 +90,7 @@ export default function PlayerProfileNew() {
 
   const { tokenStatus, loading: tokenLoading } = useTokenStatus(player?.id || '');
   const { shieldStatus, loading: shieldLoading } = useShieldStatus(player?.id);
+  const { injuryStatus, loading: injuryLoading } = useInjuryTokenStatus(player?.id);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
 
   // Fetch chemistry data for the viewed player
@@ -809,7 +811,7 @@ export default function PlayerProfileNew() {
       exit={{ opacity: 0 }}
       className="container mx-auto px-4 py-8"
     >
-      <PlayerHeader player={player} />
+      <PlayerHeader player={player} gamesMissed={injuryStatus?.gamesMissed} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

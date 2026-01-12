@@ -178,10 +178,10 @@ export const PlayerSelectionDetails: React.FC<PlayerSelectionDetailsProps> = ({
       <fieldset className="fieldset bg-warning/10 border border-warning/30 rounded-lg p-4">
         <legend className="fieldset-legend flex items-center gap-2">
           <span>🩹</span>
-          <span>Injury Reserve ({injuryPlayers.length})</span>
+          <span>Injured ({injuryPlayers.length})</span>
         </legend>
         <p className="text-sm text-base-content/70 mb-3">
-          Select players on injury reserve (50% streak protection). This will activate their injury token.
+          Select injured players (50% streak protection). This will activate their injury token.
         </p>
         <select
           multiple

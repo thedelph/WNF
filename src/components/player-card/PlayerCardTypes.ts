@@ -40,7 +40,7 @@ export interface PlayerCardProps {
   /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null // Legacy alias for protectedStreakValue
   // Injury token fields
-  injuryTokenActive?: boolean // Whether player is on injury reserve
+  injuryTokenActive?: boolean // Whether player is injured
   injuryOriginalStreak?: number | null // Original streak before injury
   injuryReturnStreak?: number | null // Streak value when returning
   recentGames?: number // Number of games played in last 40 completed games (XP-relevant window)
@@ -72,7 +72,7 @@ export interface PlayerCardModifiersProps {
   /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null
   // Injury token props
-  injuryTokenActive?: boolean // Whether player is on injury reserve
+  injuryTokenActive?: boolean // Whether player is injured
   injuryOriginalStreak?: number | null // Original streak before injury
   injuryReturnStreak?: number | null // Streak value when returning
 }

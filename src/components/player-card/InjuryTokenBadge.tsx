@@ -2,7 +2,7 @@ import React from 'react';
 import { Tooltip } from '../ui/Tooltip';
 
 interface InjuryTokenBadgeProps {
-  /** Whether the player is on injury reserve */
+  /** Whether the player is injured */
   isActive: boolean;
   /** The streak value they'll return with */
   returnStreak?: number | null;
@@ -27,8 +27,8 @@ export const InjuryTokenBadge: React.FC<InjuryTokenBadgeProps> = ({
   if (!isActive) return null;
 
   const tooltipContent = originalStreak != null && returnStreak != null
-    ? `On injury reserve. Returns at ${returnStreak}-game streak (was ${originalStreak})`
-    : 'On injury reserve';
+    ? `Injured. Returns at ${returnStreak}-game streak (was ${originalStreak})`
+    : 'Injured';
 
   if (compact) {
     return (
@@ -42,7 +42,7 @@ export const InjuryTokenBadge: React.FC<InjuryTokenBadgeProps> = ({
     <Tooltip content={tooltipContent}>
       <div className={`badge badge-warning gap-1 ${className}`}>
         <span>🩹</span>
-        <span className="hidden sm:inline">Injury Reserve</span>
+        <span className="hidden sm:inline">Injured</span>
       </div>
     </Tooltip>
   );

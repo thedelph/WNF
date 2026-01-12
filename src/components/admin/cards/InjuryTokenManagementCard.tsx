@@ -17,12 +17,12 @@ export const InjuryTokenManagementCard: React.FC = () => {
           <span className="text-2xl">🩹</span>
           <span className="text-amber-400">Injury Tokens</span>
         </h2>
-        <p>Manage injury reserve players, review claims, and handle token activation</p>
+        <p>Manage injured players, review claims, and handle token activation</p>
 
         {/* Quick Stats */}
         <div className="stats stats-vertical bg-base-200 shadow mt-2">
           <div className="stat py-2">
-            <div className="stat-title text-xs">Active Reserves</div>
+            <div className="stat-title text-xs">Currently Injured</div>
             <div className="stat-value text-warning text-xl">
               {loading ? (
                 <span className="loading loading-spinner loading-sm"></span>

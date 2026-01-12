@@ -60,7 +60,7 @@ export function useInjuryTokenStatus(playerId: string | undefined) {
           injuryGameId: null,
           injuryGameDate: null,
           injuryGameNumber: null,
-          daysOnReserve: null
+          gamesMissed: null
         });
       } else {
         setInjuryStatus({
@@ -71,7 +71,7 @@ export function useInjuryTokenStatus(playerId: string | undefined) {
           injuryGameId: statusData.injury_game_id ?? null,
           injuryGameDate: statusData.injury_game_date ?? null,
           injuryGameNumber: statusData.injury_game_number ?? null,
-          daysOnReserve: statusData.days_on_reserve ?? null
+          gamesMissed: statusData.games_missed ?? null
         });
       }
 
@@ -449,7 +449,7 @@ export function useInjuryTokenStats() {
         thisMonthCount: result?.this_month_count ?? 0,
         totalReturned: result?.total_returned ?? 0,
         totalDenied: result?.total_denied ?? 0,
-        avgRecoveryDays: result?.avg_recovery_days ?? 0
+        avgGamesMissed: result?.avg_games_missed ?? 0
       });
       setError(null);
     } catch (err) {
@@ -512,7 +512,7 @@ export function useInjuryTokenClaims(statusFilter?: string) {
         status: 'active' | 'returned' | 'denied' | 'expired';
         activated_at: string;
         returned_at: string | null;
-        days_on_reserve: number;
+        games_missed: number;
       }) => ({
         id: c.id,
         playerId: c.player_id,
@@ -525,7 +525,7 @@ export function useInjuryTokenClaims(statusFilter?: string) {
         status: c.status,
         activatedAt: c.activated_at,
         returnedAt: c.returned_at,
-        daysOnReserve: c.days_on_reserve
+        gamesMissed: c.games_missed
       }));
 
       setClaims(mappedClaims);

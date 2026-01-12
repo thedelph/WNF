@@ -62,7 +62,7 @@ export interface InjuryTokenStatusData {
   injuryGameId: string | null;
   injuryGameDate: string | null;
   injuryGameNumber: number | null;
-  daysOnReserve: number | null;
+  gamesMissed: number | null;
 }
 
 export interface InjuryTokenEligibility {
@@ -87,7 +87,7 @@ export interface InjuryTokenStats {
   thisMonthCount: number;
   totalReturned: number;
   totalDenied: number;
-  avgRecoveryDays: number;
+  avgGamesMissed: number;
 }
 
 export interface InjuryTokenClaim {
@@ -102,5 +102,5 @@ export interface InjuryTokenClaim {
   status: InjuryTokenStatus;
   activatedAt: string;
   returnedAt: string | null;
-  daysOnReserve: number;
+  gamesMissed: number;
 }

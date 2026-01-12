@@ -34,7 +34,7 @@ interface XPBreakdownProps {
     shieldActive?: boolean; // Whether player has active shield protection
     frozenStreakValue?: number | null; // Frozen streak value when shield is active
     // Injury token fields
-    injuryTokenActive?: boolean; // Whether player is on injury reserve
+    injuryTokenActive?: boolean; // Whether player is injured
     injuryReturnStreak?: number | null; // Streak value when returning from injury
   };
   showTotal?: boolean;

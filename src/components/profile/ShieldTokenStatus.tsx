@@ -213,7 +213,7 @@ export default function ShieldTokenStatus({
                   </p>
                   <p className="text-xs">
                     Use the <strong>Injury Token</strong> instead! It's free and designed for injuries during games.
-                    Check your profile for the Injury Reserve section.
+                    Check your profile for the Injury Token section.
                   </p>
                 </div>
               </div>

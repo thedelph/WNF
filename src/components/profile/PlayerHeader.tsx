@@ -4,15 +4,21 @@ import { Tooltip } from '../ui/Tooltip';
 
 interface PlayerHeaderProps {
   player: PlayerStats;
+  gamesMissed?: number | null;
 }
 
-export const PlayerHeader = ({ player }: PlayerHeaderProps) => {
+export const PlayerHeader = ({ player, gamesMissed }: PlayerHeaderProps) => {
   // Calculate return bonus for tooltip
   const returnStreak = player.injury_return_streak ?? 0;
   const returnBonus = returnStreak <= 0 ? 0
     : returnStreak <= 10
       ? Math.round((returnStreak * 11 - (returnStreak * (returnStreak + 1)) / 2))
       : 55 + (returnStreak - 10);
+
+  // Build tooltip content for injury badge
+  const injuryTooltip = gamesMissed != null && gamesMissed > 0
+    ? `Injured during WNF. Out for ${gamesMissed} ${gamesMissed === 1 ? 'game' : 'games'}. Will return with ${returnStreak}-game streak (+${returnBonus}% bonus)`
+    : `Injured during WNF. Will return with ${returnStreak}-game streak (+${returnBonus}% bonus)`;
 
   return (
     <motion.div
@@ -30,10 +36,15 @@ export const PlayerHeader = ({ player }: PlayerHeaderProps) => {
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold">{player.friendly_name}</h1>
             {player.injury_token_active && (
-              <Tooltip content={`Injured during WNF. Will return with ${returnStreak}-game streak (+${returnBonus}% bonus)`}>
+              <Tooltip content={injuryTooltip}>
                 <span className="badge badge-warning gap-1">
                   <span>🩹</span>
                   <span>Injured</span>
+                  {gamesMissed != null && gamesMissed > 0 && (
+                    <span className="text-warning-content/80 text-xs">
+                      ({gamesMissed} {gamesMissed === 1 ? 'game' : 'games'})
+                    </span>
+                  )}
                 </span>
               </Tooltip>
             )}

@@ -190,7 +190,7 @@ export default function ProfileHeader({
               </div>
             )}
             {profile.injury_token_active && (
-              <Tooltip content={`You're on injury reserve. Will return with ${returnStreak}-game streak (+${returnBonus}% bonus)`}>
+              <Tooltip content={`Injured. Will return with ${returnStreak}-game streak (+${returnBonus}% bonus)`}>
                 <div className="badge badge-lg badge-warning gap-1">
                   <span>🩹</span>
                   <span>Injured</span>

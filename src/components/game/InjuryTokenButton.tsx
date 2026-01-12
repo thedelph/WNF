@@ -163,7 +163,7 @@ export const InjuryTokenButton: React.FC<InjuryTokenButtonProps> = ({
                     Your <strong>{effectiveStreak}-game streak</strong> is recorded
                   </li>
                   <li>
-                    You go on <strong className="text-amber-400">injury reserve</strong>
+                    You're marked as <strong className="text-amber-400">injured</strong>
                   </li>
                   <li>
                     When you return, your streak will be{' '}

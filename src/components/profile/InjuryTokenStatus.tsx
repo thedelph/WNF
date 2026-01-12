@@ -37,7 +37,7 @@ export default function InjuryTokenStatus({
       >
         <div className="flex items-center gap-2 mb-4">
           <span className="text-2xl">🩹</span>
-          <h3 className="text-lg font-bold text-amber-400">Injury Reserve</h3>
+          <h3 className="text-lg font-bold text-amber-400">Injury Token</h3>
         </div>
         <div className="flex items-center justify-center py-8">
           <span className="loading loading-spinner loading-md text-amber-400"></span>
@@ -56,12 +56,12 @@ export default function InjuryTokenStatus({
       >
         <div className="flex items-center gap-2 mb-4">
           <span className="text-2xl opacity-50">🩹</span>
-          <h3 className="text-lg font-bold opacity-75">Injury Reserve</h3>
+          <h3 className="text-lg font-bold opacity-75">Injury Token</h3>
         </div>
 
         <div className="text-center py-4">
           <p className="text-sm opacity-75">
-            {playerName ? `${playerName} is not currently on injury reserve.` : 'Not currently on injury reserve.'}
+            {playerName ? `${playerName} is not currently injured.` : 'Not currently injured.'}
           </p>
         </div>
 
@@ -72,7 +72,7 @@ export default function InjuryTokenStatus({
             className="btn btn-sm btn-outline w-full"
           >
             <span>🩹</span>
-            {explanationOpen ? 'Hide' : 'What is Injury Reserve?'}
+            {explanationOpen ? 'Hide' : 'What is the Injury Token?'}
           </button>
 
           {explanationOpen && (
@@ -90,7 +90,7 @@ export default function InjuryTokenStatus({
     activatedAt,
     injuryGameDate,
     injuryGameNumber,
-    daysOnReserve
+    gamesMissed
   } = injuryStatus;
 
   return (
@@ -101,16 +101,16 @@ export default function InjuryTokenStatus({
     >
       <div className="flex items-center gap-2 mb-4">
         <span className="text-2xl">🩹</span>
-        <h3 className="text-lg font-bold text-amber-400">Injury Reserve</h3>
+        <h3 className="text-lg font-bold text-amber-400">Injury Token</h3>
       </div>
 
       <div className="flex flex-col gap-3">
         {/* Active Status Badge */}
-        <Tooltip content={playerName ? `${playerName} is on injury reserve` : 'You are on injury reserve'}>
+        <Tooltip content={playerName ? `${playerName} is currently injured` : 'You are currently injured'}>
           <div className="badge badge-warning gap-2 w-full justify-center py-3">
             <span>🩹</span>
             <span className="font-medium">
-              ON INJURY RESERVE
+              INJURED
             </span>
           </div>
         </Tooltip>
@@ -155,10 +155,10 @@ export default function InjuryTokenStatus({
               <span className="font-medium">{formatDate(activatedAt)}</span>
             </div>
           )}
-          {daysOnReserve != null && daysOnReserve > 0 && (
+          {gamesMissed != null && gamesMissed > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="opacity-75">Days on Reserve:</span>
-              <span className="font-medium">{daysOnReserve} {daysOnReserve === 1 ? 'day' : 'days'}</span>
+              <span className="opacity-75">Out For:</span>
+              <span className="font-medium">{gamesMissed} {gamesMissed === 1 ? 'game' : 'games'}</span>
             </div>
           )}
         </div>
@@ -170,7 +170,7 @@ export default function InjuryTokenStatus({
               Ready to return?
             </p>
             <p className="text-xs opacity-90">
-              Simply register for a game to come off injury reserve. Your streak will automatically be set to {returnStreak ?? 0} games.
+              Simply register for a game when you're ready. Your streak will automatically be set to {returnStreak ?? 0} games.
             </p>
           </div>
         </div>
@@ -207,10 +207,10 @@ function InjuryTokenExplanation() {
       <div>
         <h4 className="font-bold mb-1 flex items-center gap-1">
           <span>🩹</span>
-          What is Injury Reserve?
+          What is the Injury Token?
         </h4>
         <p className="text-xs opacity-90">
-          Injury Reserve is a protection system for players who get injured <strong>during</strong> a WNF game.
+          The Injury Token is a protection system for players who get injured <strong>during</strong> a WNF game.
           It preserves half of your game streak while you recover.
         </p>
       </div>
@@ -242,7 +242,7 @@ function InjuryTokenExplanation() {
       <div>
         <h4 className="font-bold mb-1">How to Return</h4>
         <p className="text-xs opacity-90">
-          Simply register for a game when you're ready. Your injury reserve status will be automatically
+          Simply register for a game when you're ready. Your injury protection will be automatically
           cleared and your streak will be set to the return value.
         </p>
       </div>

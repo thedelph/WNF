@@ -239,7 +239,7 @@ const InjuryTokenManagement: React.FC = () => {
           <div className="stat-figure text-warning">
             <span className="text-3xl">🩹</span>
           </div>
-          <div className="stat-title">Active Reserves</div>
+          <div className="stat-title">Currently Injured</div>
           <div className="stat-value text-warning text-2xl">
             {statsLoading ? <span className="loading loading-spinner loading-sm"></span> : stats?.activeCount ?? 0}
           </div>
@@ -268,7 +268,7 @@ const InjuryTokenManagement: React.FC = () => {
             {statsLoading ? (
               <span className="loading loading-spinner loading-sm"></span>
             ) : (
-              <>{stats?.avgRecoveryDays ?? 0} days</>
+              <>{stats?.avgGamesMissed ?? 0} games</>
             )}
           </div>
         </div>
@@ -317,7 +317,7 @@ const InjuryTokenManagement: React.FC = () => {
                 <th>Injury Game</th>
                 <th>Original → Return</th>
                 <th>Status</th>
-                <th>Days on Reserve</th>
+                <th>Out For</th>
                 <th>Activated</th>
                 <th>Actions</th>
               </tr>
@@ -350,8 +350,10 @@ const InjuryTokenManagement: React.FC = () => {
                     <StatusBadge status={claim.status} />
                   </td>
                   <td>
-                    {claim.status === 'active' ? (
-                      <span>{claim.daysOnReserve} {claim.daysOnReserve === 1 ? 'day' : 'days'}</span>
+                    {claim.status === 'active' && claim.gamesMissed > 0 ? (
+                      <span>{claim.gamesMissed} {claim.gamesMissed === 1 ? 'game' : 'games'}</span>
+                    ) : claim.status === 'active' ? (
+                      <span className="text-base-content/50">Just started</span>
                     ) : (
                       <span className="text-base-content/50">-</span>
                     )}
@@ -565,8 +567,8 @@ const InjuryTokenManagement: React.FC = () => {
                     <span className="font-bold ml-2 text-warning">{claimToDeny.returnStreak} games</span>
                   </div>
                   <div>
-                    <span className="opacity-75">Days on Reserve:</span>
-                    <span className="font-bold ml-2">{claimToDeny.daysOnReserve}</span>
+                    <span className="opacity-75">Out For:</span>
+                    <span className="font-bold ml-2">{claimToDeny.gamesMissed} {claimToDeny.gamesMissed === 1 ? 'game' : 'games'}</span>
                   </div>
                   <div>
                     <span className="opacity-75">Activated:</span>
@@ -589,7 +591,7 @@ const InjuryTokenManagement: React.FC = () => {
 
               <div className="alert alert-error py-2 text-sm">
                 <span>
-                  This will remove the player from injury reserve. Their streak will <strong>NOT</strong> be affected - they'll just lose the claim protection.
+                  This will remove the player's injury protection. Their streak will <strong>NOT</strong> be affected - they'll just lose the claim protection.
                 </span>
               </div>
             </>

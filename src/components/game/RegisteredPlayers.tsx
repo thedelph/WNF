@@ -132,7 +132,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
           <div className="mt-4 bg-warning/10 border border-warning/30 rounded-lg p-4">
             <h3 className="font-bold text-base-content flex items-center gap-2 mb-3">
               <span className="text-lg">🩹</span>
-              Injury Reserve ({injuryUsers.length})
+              Injured ({injuryUsers.length})
             </h3>
             <p className="text-sm text-base-content/70 mb-3">
               These players activated their injury token for this game (50% streak protection):
