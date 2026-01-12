@@ -200,6 +200,7 @@ await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 - **[Trio Chemistry](/docs/features/TrioChemistry.md)** (Jan 2026) - 3-player synergy tracking
 - **[Awards System](/docs/features/AwardsSystem.md)** (Jan 2026) - Hall of Fame awards and trophies
 - **[Dropout with Shield](/docs/features/DropoutWithShield.md)** (Jan 2026) - Dropout mechanics with shield protection
+- **[Injury Token](/docs/features/InjuryToken.md)** (Jan 2026) - Streak protection for WNF injuries
 
 ### Recent Major Features (2025)
 - **[Player Chemistry](/docs/features/PlayerChemistry.md)** (Dec 2025) - Chemistry leaderboards + team balancing integration

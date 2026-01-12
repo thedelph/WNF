@@ -4,6 +4,17 @@ All notable changes to the WNF project will be documented in this file.
 
 ## [Unreleased]
 
+### Added - January 12, 2026
+- **Injury Token System (🩹)**:
+  - New token type for players injured during WNF games
+  - Returns at 50% of original streak (e.g., 10-game streak → returns at 5)
+  - Free to use (unlike Shield tokens which must be earned)
+  - Admin portal for managing injury claims at `/admin/injuries`
+  - Auto-return when player registers for a game
+  - Fair-use policy with admin approval/denial
+  - Inherits effective streak from active Shield if present
+  - Comparison: Shield = planned absences, Injury = WNF injuries
+
 ### Added - September 5, 2025
 - **Playstyle Rating System**:
   - 24 playstyles across 3 categories (8 attacking, 9 midfield, 7 defensive)

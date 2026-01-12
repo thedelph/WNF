@@ -48,6 +48,10 @@ interface PlayerCardProps {
   protectedStreakValue?: number | null
   /** @deprecated Use protectedStreakValue instead */
   frozenStreakValue?: number | null
+  // Injury token fields
+  injuryTokenActive?: boolean
+  injuryOriginalStreak?: number | null
+  injuryReturnStreak?: number | null
   recentGames?: number
   gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>
   onTokenCooldown?: boolean
@@ -92,6 +96,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   shieldActive = false,
   protectedStreakValue = null,
   frozenStreakValue = null,
+  injuryTokenActive = false,
+  injuryOriginalStreak = null,
+  injuryReturnStreak = null,
   recentGames = 0,
   gameParticipation = new Array(40).fill(null),
   onTokenCooldown = false,
@@ -182,6 +189,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               playstyleRatingsCount={playstyleRatingsCount}
               shieldActive={shieldActive}
               protectedStreakValue={protectedStreakValue ?? frozenStreakValue}
+              injuryTokenActive={injuryTokenActive}
+              injuryOriginalStreak={injuryOriginalStreak}
+              injuryReturnStreak={injuryReturnStreak}
               recentGames={recentGames}
               gameParticipation={gameParticipation}
               onTokenCooldown={onTokenCooldown}

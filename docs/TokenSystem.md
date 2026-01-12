@@ -492,3 +492,51 @@ The selection process (implemented in `playerSelection.ts`) follows this order:
    - Current streak as third tiebreaker
    - Caps as fourth tiebreaker
    - Registration time as final tiebreaker
+
+---
+
+## Shield Token System
+
+For comprehensive documentation on Shield Tokens (streak protection for planned absences), see:
+- **[Shield Token System](ShieldTokenSystem.md)** - Full specification
+
+---
+
+## Injury Token System (Added January 2026)
+
+The Injury Token (🩹) provides streak protection for players injured **during** WNF games.
+
+### Key Differences from Shield Token
+
+| Feature | Shield Token 🛡️ | Injury Token 🩹 |
+|---------|-----------------|-----------------|
+| **Use for** | Planned absences (holidays, work) | WNF injuries |
+| **Cost** | Must earn (10 games per token) | Free |
+| **Return value** | Starts high, decays gradually | Starts at 50%, builds up |
+| **Best for** | 1-2 week breaks | 3+ week injuries |
+| **Activation** | Player self-serve | Player claim + Admin approval |
+
+### How It Works
+
+1. **Claim**: Player claims injury token for game where injury occurred
+2. **Reserve**: Streak is recorded, player goes on "injury reserve"
+3. **Return**: When registering for a game, streak is set to 50% of original
+4. **Build**: Player continues building streak from return value
+
+### Example
+
+```
+Original streak: 20 games (65% XP bonus)
+→ Injury occurs during Game #150
+→ Goes on injury reserve
+→ Returns for Game #160
+→ Return streak: 10 games (55% XP bonus)
+→ Continue building from 10
+```
+
+### Shield + Injury Interaction
+
+If player has active shield and gets injured, injury token uses the **effective streak** (including shield protection), then clears the shield.
+
+For full specification, see:
+- **[Injury Token](features/InjuryToken.md)** - Complete design document

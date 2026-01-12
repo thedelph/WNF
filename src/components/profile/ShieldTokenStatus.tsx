@@ -200,10 +200,22 @@ export default function ShieldTokenStatus({
                   What are Shield Tokens?
                 </h4>
                 <p className="text-xs opacity-90">
-                  Shield tokens protect your game streak when you need to miss a game.
+                  Shield tokens protect your game streak when you need to miss a game due to <strong>planned absences</strong> (holidays, work, travel).
                   When you use a shield, your streak bonus is <strong>gradually protected</strong> &mdash;
                   it decays as you rebuild, meeting your natural streak in the middle.
                 </p>
+              </div>
+
+              <div className="alert alert-warning py-2">
+                <div>
+                  <p className="text-xs font-semibold flex items-center gap-1">
+                    <span>🩹</span> Got injured during WNF?
+                  </p>
+                  <p className="text-xs">
+                    Use the <strong>Injury Token</strong> instead! It's free and designed for injuries during games.
+                    Check your profile for the Injury Reserve section.
+                  </p>
+                </div>
               </div>
 
               <div>

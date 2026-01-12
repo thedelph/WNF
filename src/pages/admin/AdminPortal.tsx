@@ -13,6 +13,7 @@ import RatingsCard from '../../components/admin/cards/RatingsCard'
 import { SlotOffersCard } from '../../components/admin/cards/SlotOffersCard'
 import { TokenManagementCard } from '../../components/admin/cards/TokenManagementCard'
 import { ShieldTokenManagementCard } from '../../components/admin/cards/ShieldTokenManagementCard'
+import { InjuryTokenManagementCard } from '../../components/admin/cards/InjuryTokenManagementCard'
 import AccountManagementCard from '../../components/admin/cards/AccountManagementCard'
 import RoleManagementCard from '../../components/admin/cards/RoleManagementCard'
 import FeatureFlagManagementCard from '../../components/admin/cards/FeatureFlagManagementCard'
@@ -94,6 +95,7 @@ const AdminPortal: React.FC = () => {
           hasPermission(PERMISSIONS.MANAGE_PAYMENTS) && <PaymentManagementCard key="payment" />,
           hasPermission(PERMISSIONS.MANAGE_TOKENS) && <TokenManagementCard key="token" />,
           hasPermission(PERMISSIONS.MANAGE_PLAYERS) && <ShieldTokenManagementCard key="shields" />,
+          hasPermission(PERMISSIONS.MANAGE_PLAYERS) && <InjuryTokenManagementCard key="injuries" />,
           hasPermission(PERMISSIONS.MANAGE_ACCOUNTS) && <AccountManagementCard key="account" />,
           hasPermission(PERMISSIONS.MANAGE_ADMINS) && <AdminManagementCard key="admin" />,
           hasPermission(PERMISSIONS.MANAGE_HISTORY) && <HistoricalDataCard key="historical" />,

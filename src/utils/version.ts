@@ -18,6 +18,39 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '1.9.0',
+    date: '12/01/2026',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Injury Token System (🩹)',
+            details: "Injured during a WNF game? You can now claim an Injury Token to protect your streak. When you return, your streak will be set to 50% of your original value - so a 20-game streak becomes 10, and you build from there. Unlike Shield tokens which need to be earned, Injury tokens are free to use for WNF injuries. Admins can manage claims at /admin/injuries."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Shield Token Clarification',
+            details: "The Shield Token status card now includes a callout explaining the difference between Shield (for planned absences like holidays) and Injury tokens (for WNF injuries). This helps players choose the right protection method."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.8.0',
     date: '09/01/2026',
     sections: [
