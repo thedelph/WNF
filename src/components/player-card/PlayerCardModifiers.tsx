@@ -114,24 +114,33 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
         </Tooltip>
       )}
       {/* Injury Token Section - Compact amber theme */}
-      {injuryTokenActive && (
-        <Tooltip content={`Injured during WNF. Returns at ${injuryReturnStreak ?? 0}-game streak (was ${injuryOriginalStreak ?? 0})`}>
-          <motion.div
-            className="flex justify-between items-center rounded-lg p-2 relative overflow-hidden bg-gradient-to-r from-amber-600/30 to-orange-600/30 border border-amber-400/40"
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-          >
-            <div className="flex items-center gap-2 text-amber-100">
-              <span>🩹</span>
-              <span className="text-sm font-semibold">Injured</span>
-            </div>
-            <span className="text-sm text-amber-200/80">
-              ↩ {injuryReturnStreak ?? 0} games
-            </span>
-          </motion.div>
-        </Tooltip>
-      )}
-      {(currentStreak > 0 || shieldActive) && (
+      {injuryTokenActive && (() => {
+        // Calculate the return bonus using v2 formula
+        const returnStreak = injuryReturnStreak ?? 0;
+        const returnBonus = returnStreak <= 0 ? 0
+          : returnStreak <= 10
+            ? Math.round((returnStreak * 11 - (returnStreak * (returnStreak + 1)) / 2))
+            : 55 + (returnStreak - 10);
+
+        return (
+          <Tooltip content={`Injured during WNF. Returns at ${returnStreak}-game streak (+${returnBonus}% bonus). Was ${injuryOriginalStreak ?? 0} games.`}>
+            <motion.div
+              className="flex justify-between items-center rounded-lg p-2 relative overflow-hidden bg-gradient-to-r from-amber-600/30 to-orange-600/30 border border-amber-400/40"
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+            >
+              <div className="flex items-center gap-2 text-amber-100">
+                <span>🩹</span>
+                <span className="text-sm font-semibold">Injured</span>
+              </div>
+              <span className="text-sm font-bold text-amber-200">
+                ↩ +{returnBonus}%
+              </span>
+            </motion.div>
+          </Tooltip>
+        );
+      })()}
+      {(currentStreak > 0 || shieldActive) && !injuryTokenActive && (
         <>
           {shieldActive && protectedValue != null ? (
             <Tooltip content={
