@@ -235,15 +235,15 @@ const XPBreakdown: React.FC<XPBreakdownProps> = ({ stats, showTotal = true }) =>
                         ? Math.round((returnStreak * 11 - (returnStreak * (returnStreak + 1)) / 2))
                         : 55 + (returnStreak - 10);
                     return (
-                      <div className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-400/40 rounded-lg p-4">
+                      <div className="bg-warning/30 border border-warning rounded-lg p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-xl">🩹</span>
-                            <span className="font-medium text-amber-200">Injured</span>
+                            <span className="font-medium text-base-content">Injured</span>
                           </div>
-                          <span className="text-amber-200 font-bold">Returns at +{returnBonus}%</span>
+                          <span className="text-base-content font-bold">Returns at +{returnBonus}%</span>
                         </div>
-                        <p className="text-sm text-amber-200/70 mt-2">
+                        <p className="text-sm text-base-content/80 mt-2">
                           Will return with {returnStreak}-game streak bonus when back
                         </p>
                       </div>

@@ -74,12 +74,19 @@ interface ProfileHeaderProps {
   onPasswordResetClick: () => void
 }
 
-export default function ProfileHeader({ 
-  profile, 
+export default function ProfileHeader({
+  profile,
   onEditClick,
   onAvatarEditClick,
   onPasswordResetClick
 }: ProfileHeaderProps) {
+  // Calculate return bonus for injury tooltip
+  const returnStreak = profile.injury_return_streak ?? 0;
+  const returnBonus = returnStreak <= 0 ? 0
+    : returnStreak <= 10
+      ? Math.round((returnStreak * 11 - (returnStreak * (returnStreak + 1)) / 2))
+      : 55 + (returnStreak - 10);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -172,8 +179,8 @@ export default function ProfileHeader({
             </Tooltip>
           </div>
 
-          {/* XP, Rarity and Playstyle Display */}
-          <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 items-center sm:items-start">
+          {/* XP, Rarity, Injury and Playstyle Display */}
+          <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 items-center sm:items-start flex-wrap">
             <div className="badge badge-lg badge-primary">
               {profile.total_xp || profile.xp} XP
             </div>
@@ -181,6 +188,14 @@ export default function ProfileHeader({
               <div className={`badge badge-lg ${getRarityBadgeClass(profile.rarity)}`}>
                 {profile.rarity}
               </div>
+            )}
+            {profile.injury_token_active && (
+              <Tooltip content={`You're on injury reserve. Will return with ${returnStreak}-game streak (+${returnBonus}% bonus)`}>
+                <div className="badge badge-lg badge-warning gap-1">
+                  <span>🩹</span>
+                  <span>Injured</span>
+                </div>
+              </Tooltip>
             )}
             {profile.averagedPlaystyle && (() => {
               // Check if we have enough ratings (5 or more)

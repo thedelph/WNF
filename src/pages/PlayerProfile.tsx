@@ -192,6 +192,9 @@ export default function PlayerProfileNew() {
             max_streak,
             bench_warmer_streak,
             whatsapp_group_member,
+            injury_token_active,
+            injury_original_streak,
+            injury_return_streak,
             player_xp (
               xp,
               rank,
@@ -599,7 +602,11 @@ export default function PlayerProfileNew() {
           highest_xp: highestXPRecord?.xp || 0,
           highest_xp_v2: highestXPRecord?.xp_v2,
           highest_xp_date: highestXPDate,
-          is_highest_xp_v1_era: highestXPRecord?.is_v1_era
+          is_highest_xp_v1_era: highestXPRecord?.is_v1_era,
+          // Injury token fields
+          injury_token_active: playerData.injury_token_active || false,
+          injury_original_streak: playerData.injury_original_streak ?? null,
+          injury_return_streak: playerData.injury_return_streak ?? null
         };
 
         setPlayer(playerStats);
@@ -934,7 +941,9 @@ export default function PlayerProfileNew() {
                 registrationStreakApplies: player.registrationStreakApplies || false,
                 unpaidGames: player.unpaidGames || 0,
                 shieldActive: shieldStatus?.shieldActive || false,
-                frozenStreakValue: shieldStatus?.effectiveStreak ?? null
+                frozenStreakValue: shieldStatus?.effectiveStreak ?? null,
+                injuryTokenActive: player.injury_token_active || false,
+                injuryReturnStreak: player.injury_return_streak ?? null
               }}
               showTotal={true}
             />
