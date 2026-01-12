@@ -93,7 +93,9 @@ export default function ProfileContent({
           registrationStreakApplies: profile.registrationStreakApplies || false,
           unpaidGames: profile.unpaidGames || 0,
           shieldActive: shieldStatus?.shieldActive || false,
-          frozenStreakValue: shieldStatus?.effectiveStreak ?? null
+          frozenStreakValue: shieldStatus?.effectiveStreak ?? null,
+          injuryTokenActive: profile.injury_token_active || false,
+          injuryReturnStreak: profile.injury_return_streak ?? null
         }} />
       </motion.div>
 

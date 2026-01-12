@@ -69,4 +69,8 @@ export interface ExtendedPlayerData {
   playstyleMatchDistance?: number;
   playstyleCategory?: 'attacking' | 'midfield' | 'defensive';
   playstyleRatingsCount?: number;
+  // Injury token fields
+  injury_token_active?: boolean;
+  injury_original_streak?: number | null;
+  injury_return_streak?: number | null;
 }

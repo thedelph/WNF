@@ -63,6 +63,9 @@ export default function Component() {
               whatsapp_group_member,
               whatsapp_mobile_number,
               bench_warmer_streak,
+              injury_token_active,
+              injury_original_streak,
+              injury_return_streak,
               player_xp (
                 xp,
                 rank,
@@ -337,7 +340,11 @@ export default function Component() {
           averagedPlaystyle: playstyleMatch?.playstyleName,
           playstyleMatchDistance: playstyleMatch?.matchDistance,
           playstyleCategory: playstyleMatch?.category,
-          playstyleRatingsCount: playstyleData?.total_ratings_count || 0
+          playstyleRatingsCount: playstyleData?.total_ratings_count || 0,
+          // Injury token fields
+          injury_token_active: playerData.injury_token_active || false,
+          injury_original_streak: playerData.injury_original_streak ?? null,
+          injury_return_streak: playerData.injury_return_streak ?? null
         };
 
         // Add debug logs to track XP data
