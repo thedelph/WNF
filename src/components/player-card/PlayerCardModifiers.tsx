@@ -113,33 +113,21 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
           </motion.div>
         </Tooltip>
       )}
-      {/* Injury Token Section - Amber/Warning theme */}
+      {/* Injury Token Section - Compact amber theme */}
       {injuryTokenActive && (
-        <Tooltip content={`On injury reserve. Returns at ${injuryReturnStreak ?? 0}-game streak (was ${injuryOriginalStreak ?? 0})`}>
+        <Tooltip content={`Injured during WNF. Returns at ${injuryReturnStreak ?? 0}-game streak (was ${injuryOriginalStreak ?? 0})`}>
           <motion.div
-            className="rounded-lg p-2 relative overflow-hidden bg-gradient-to-br from-amber-900/40 via-orange-900/40 to-amber-900/40 backdrop-blur-sm border-2 border-amber-400/60 shadow-lg shadow-amber-500/20"
+            className="flex justify-between items-center rounded-lg p-2 relative overflow-hidden bg-gradient-to-r from-amber-600/30 to-orange-600/30 border border-amber-400/40"
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
           >
-            {/* Animated shimmer effect */}
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-amber-400/20 via-orange-400/10 to-amber-400/20"></div>
-              <div className="absolute top-1/2 left-1/4 w-6 h-6 bg-amber-300/20 rounded-full blur-lg animate-pulse"></div>
+            <div className="flex items-center gap-2 text-amber-100">
+              <span>🩹</span>
+              <span className="text-sm font-semibold">Injured</span>
             </div>
-
-            {/* Content */}
-            <div className="flex justify-between items-center relative z-10 text-amber-100">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🩹</span>
-                <span className="text-sm font-semibold">Injury Reserve</span>
-              </div>
-            </div>
-
-            {/* Return streak info */}
-            <div className="mt-2 relative z-10 flex items-center justify-between text-xs text-amber-200/80">
-              <span>Return at {injuryReturnStreak ?? 0} games</span>
-              <span className="opacity-75">(was {injuryOriginalStreak ?? 0})</span>
-            </div>
+            <span className="text-sm text-amber-200/80">
+              ↩ {injuryReturnStreak ?? 0} games
+            </span>
           </motion.div>
         </Tooltip>
       )}
