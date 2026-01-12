@@ -782,7 +782,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             unpaidGames: playerStats[player.id]?.unpaidGames || 0,
             unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
             registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
-            registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
+            registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false,
+            shieldActive: playerStats[player.id]?.shieldActive || false,
+            frozenStreakValue: playerStats[player.id]?.protectedStreakValue || null
           }))}
           reservePlayers={[...reservePlayers]
             .sort((a, b) => {
@@ -839,7 +841,9 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               unpaidGames: playerStats[player.id]?.unpaidGames || 0,
               unpaidGamesModifier: playerStats[player.id]?.unpaidGamesModifier || 0,
               registrationStreakBonus: playerStats[player.id]?.registrationStreakBonus || 0,
-              registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false
+              registrationStreakBonusApplies: playerStats[player.id]?.registrationStreakBonusApplies || false,
+              shieldActive: playerStats[player.id]?.shieldActive || false,
+              frozenStreakValue: playerStats[player.id]?.protectedStreakValue || null
             }))}
           droppedOutPlayers={droppedOutPlayers.map(player => ({
             ...getPlayerWithRank(player),

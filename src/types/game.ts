@@ -33,7 +33,7 @@ export interface GameRegistration {
   id: string
   game_id: string
   player_id: string
-  status: 'registered' | 'selected' | 'reserve' | 'dropped_out'
+  status: 'registered' | 'selected' | 'reserve' | 'dropped_out' | 'absent'
   team?: 'blue' | 'orange' | null
   selection_method: 'merit' | 'random' | 'none'
   created_at: string
