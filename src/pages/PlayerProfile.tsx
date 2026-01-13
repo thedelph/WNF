@@ -39,6 +39,8 @@ import TrophyCabinet from '../components/profile/TrophyCabinet';
 import { TeamPlacements } from '../components/profile/TeamPlacements';
 import { PairTeamPlacementCard } from '../components/profile/PairTeamPlacementCard';
 import { useTeamPlacements, usePairTeamPlacement } from '../hooks/useTeamPlacements';
+import { LockedContent } from '../components/ui/LockedContent';
+import { PairChemistryCardSkeleton, RivalryCardSkeleton, TeamHistorySkeleton } from '../components/profile/ProfileSkeletons';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -889,38 +891,65 @@ export default function PlayerProfileNew() {
         </div>
 
         {/* Your Chemistry with this Player - Below chemistry/rivalry/trio sections */}
-        {user && user.id !== player.user_id && (
+        {user?.id !== player.user_id && (
           <div className="w-full">
-            <PairChemistryCard
-              chemistry={pairChemistry}
-              playerName={player.friendly_name}
-              gamesUntilChemistry={gamesUntilChemistry}
-              loading={chemistryLoading}
-            />
+            {user ? (
+              <PairChemistryCard
+                chemistry={pairChemistry}
+                playerName={player.friendly_name}
+                gamesUntilChemistry={gamesUntilChemistry}
+                loading={chemistryLoading}
+              />
+            ) : (
+              <LockedContent
+                title="Your Chemistry"
+                description={`Log in to see how you perform with ${player.friendly_name}`}
+              >
+                <PairChemistryCardSkeleton />
+              </LockedContent>
+            )}
           </div>
         )}
 
         {/* Your Rivalry with this Player - After chemistry card */}
-        {user && user.id !== player.user_id && (
+        {user?.id !== player.user_id && (
           <div className="w-full">
-            <RivalryCard
-              rivalry={pairRivalry}
-              playerName={player.friendly_name}
-              gamesUntilRivalry={gamesUntilRivalry}
-              loading={rivalryLoading}
-            />
+            {user ? (
+              <RivalryCard
+                rivalry={pairRivalry}
+                playerName={player.friendly_name}
+                gamesUntilRivalry={gamesUntilRivalry}
+                loading={rivalryLoading}
+              />
+            ) : (
+              <LockedContent
+                title="Your Rivalry"
+                description={`Log in to see your head-to-head record against ${player.friendly_name}`}
+              >
+                <RivalryCardSkeleton />
+              </LockedContent>
+            )}
           </div>
         )}
 
         {/* Your Team History with this Player - After rivalry card */}
-        {user && user.id !== player.user_id && (
+        {user?.id !== player.user_id && (
           <div className="w-full">
-            <PairTeamPlacementCard
-              placement={pairPlacement}
-              playerName={player.friendly_name}
-              gamesUntilPlacement={gamesUntilPlacement}
-              loading={pairPlacementLoading}
-            />
+            {user ? (
+              <PairTeamPlacementCard
+                placement={pairPlacement}
+                playerName={player.friendly_name}
+                gamesUntilPlacement={gamesUntilPlacement}
+                loading={pairPlacementLoading}
+              />
+            ) : (
+              <LockedContent
+                title="Your Team History"
+                description={`Log in to see how often you play with or against ${player.friendly_name}`}
+              >
+                <TeamHistorySkeleton />
+              </LockedContent>
+            )}
           </div>
         )}
 

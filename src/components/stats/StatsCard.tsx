@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useUser } from '../../hooks/useUser';
 
 interface StatsCardProps {
   title: string;
@@ -14,6 +15,9 @@ interface StatsCardProps {
 const medals = ['🥇', '🥈', '🥉'];
 
 export const StatsCard = ({ title, value, description, icon, color = 'blue', className, stats }: StatsCardProps) => {
+  // Get current user for highlighting their row
+  const { player: currentPlayer } = useUser();
+
   const gradientColors = {
     blue: 'from-blue-300 via-blue-500 to-blue-700',
     orange: 'from-orange-300 via-orange-500 to-orange-700',
@@ -60,12 +64,14 @@ export const StatsCard = ({ title, value, description, icon, color = 'blue', cla
         <div className="space-y-1 mb-4">
           {displayStats.map((player, index) => {
             const medalIndex = getMedalIndex(index, player.winRate, displayStats);
+            const isCurrentUser = player.id === currentPlayer?.id;
             return (
               <motion.div
                 key={player.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
+                className={isCurrentUser ? 'bg-white/20 px-2 rounded-lg ring-1 ring-white/40 -mx-2 py-0.5' : ''}
               >
                 <div className="flex justify-between items-center gap-2">
                   <div className="flex items-center gap-2 min-w-0 flex-shrink flex-grow overflow-hidden max-w-[50%]">
@@ -74,7 +80,10 @@ export const StatsCard = ({ title, value, description, icon, color = 'blue', cla
                     ) : (
                       <span className="w-5 h-5 flex-shrink-0"></span>
                     )}
-                    <span className="drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] truncate block">{player.friendlyName}</span>
+                    <span className="drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] truncate block">
+                      {player.friendlyName}
+                      {isCurrentUser && <span className="badge badge-sm badge-ghost ml-1">You</span>}
+                    </span>
                   </div>
                   <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 flex-shrink-0 justify-end">
                     <span className="font-bold whitespace-nowrap text-right w-14">{player.winRate.toFixed(1)}%</span>

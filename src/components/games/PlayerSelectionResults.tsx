@@ -1,7 +1,9 @@
 import React, { useState, useEffect, memo } from 'react';
-import { FaUser, FaUserClock } from 'react-icons/fa';
+import { Link, useLocation } from 'react-router-dom';
+import { FaUser, FaUserClock, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 import { MdPauseCircle } from 'react-icons/md';
 import { useUser } from '../../hooks/useUser';
+import { useAuth } from '../../hooks/useAuth';
 import { PlayerSelectionResultsProps } from '../../types/playerSelection';
 import { toast } from 'react-hot-toast';
 import { SlotOfferCountdown } from './SlotOfferCountdown';
@@ -233,6 +235,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
   const [showDropoutModal, setShowDropoutModal] = useState(false);
 
   const { player } = useUser();
+  const { user } = useAuth();
+  const location = useLocation();
   const {
     selectedPlayers,
     reservePlayers,
@@ -553,6 +557,39 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
 
   return (
     <div className="space-y-8">
+      {/* Login CTA for non-logged-in users */}
+      {!user && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30 shadow-lg"
+        >
+          <div className="card-body items-center text-center py-8">
+            <FaUserPlus className="text-4xl text-primary mb-2" />
+            <h3 className="card-title text-xl">Want to join future games?</h3>
+            <p className="text-base-content/70">
+              Log in to register your interest and track your stats
+            </p>
+            <div className="card-actions mt-4 flex-wrap justify-center gap-2">
+              <Link
+                to="/login"
+                state={{ from: location.pathname }}
+                className="btn btn-primary gap-2"
+              >
+                <FaSignInAlt /> Log in
+              </Link>
+              <Link
+                to="/register"
+                state={{ from: location.pathname }}
+                className="btn btn-ghost"
+              >
+                Sign up
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Drop Out Button */}
       {getButtonProps().show && (
         <div className="flex justify-center">

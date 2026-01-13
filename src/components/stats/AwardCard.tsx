@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import { ReactNode } from 'react';
+import { useUser } from '../../hooks/useUser';
 
 interface Winner {
   id: string;
@@ -54,6 +55,9 @@ const shadowColors = {
 };
 
 export const AwardCard = ({ title, winners, description, className, icon, color = 'blue', valueHeader, isMultiPlayer = false }: AwardCardProps) => {
+  // Get current user for highlighting their row
+  const { player: currentPlayer } = useUser();
+
   // Determine medal positions using Olympic-style ranking with ties
   // e.g., if two players tie for gold, next player gets bronze (skips silver)
   const getMedalPosition = (currentIndex: number, winners: Winner[]) => {
@@ -116,13 +120,14 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
           )}
           {winners.map((winner, index) => {
             const medalIndex = getMedalPosition(index, winners);
+            const isCurrentUser = winner.id === currentPlayer?.id;
             return (
               <motion.div
                 key={winner.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="py-0.5"
+                className={`py-0.5 ${isCurrentUser ? 'bg-white/20 px-2 rounded-lg ring-1 ring-white/40 -mx-2' : ''}`}
               >
                 {/* Responsive layout: stack on mobile for multi-player awards, horizontal on desktop */}
                 <div className={`flex ${isMultiPlayer ? 'flex-col sm:flex-row sm:justify-between sm:items-center' : 'justify-between items-center'} gap-1 sm:gap-2`}>
@@ -133,7 +138,10 @@ export const AwardCard = ({ title, winners, description, className, icon, color 
                     ) : (
                       <span className="w-5 h-5 flex-shrink-0">{/* Empty space to maintain alignment */}</span>
                     )}
-                    <span className={`drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] leading-tight ${isMultiPlayer ? 'break-words' : 'truncate block'}`}>{winner.name}</span>
+                    <span className={`drop-shadow-[0_0_1px_rgba(0,0,0,0.5)] leading-tight ${isMultiPlayer ? 'break-words' : 'truncate block'}`}>
+                      {winner.name}
+                      {isCurrentUser && <span className="badge badge-sm badge-ghost ml-1">You</span>}
+                    </span>
                   </div>
                   {/* Value display - indented on mobile for multi-player, right-aligned on desktop */}
                   <div className={`flex flex-col ${isMultiPlayer ? 'items-start pl-8 sm:pl-0 sm:items-end' : 'items-end'} flex-shrink-0 drop-shadow-[0_0_1px_rgba(0,0,0,0.5)]`}>{winner.value}</div>

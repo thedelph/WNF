@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { supabase } from '../utils/supabase'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
@@ -12,7 +12,11 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [showDiagnostics, setShowDiagnostics] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const auth = useAuth()
+
+  // Get the redirect path from location state (set by LockedContent or other CTAs)
+  const from = (location.state as { from?: string })?.from || '/'
 
   // Track specific problem users (you can update these)
   const problemUserEmails = [
@@ -89,7 +93,7 @@ const Login: React.FC = () => {
       }
 
       toast.success('Logged in successfully!')
-      navigate('/')
+      navigate(from, { replace: true })
     } catch (error: any) {
       console.error('Login error:', error)
       toast.error(error.message || 'Login failed. Please try again.')

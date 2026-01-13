@@ -12,6 +12,7 @@ interface RegisteredPlayersProps {
   maxPlayers?: number;
   randomSlots?: number;
   gameId?: string;
+  isRegistrationOpen?: boolean;
 }
 
 /**
@@ -30,7 +31,8 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
   registrations,
   maxPlayers = 18,
   randomSlots = 2,
-  gameId
+  gameId,
+  isRegistrationOpen = false
 }) => {
   const [view, setView] = useState<'list' | 'card'>('card');
   // Fetch global XP values and registration stats
@@ -78,6 +80,7 @@ export const RegisteredPlayers: React.FC<RegisteredPlayersProps> = ({
           maxPlayers={maxPlayers}
           unregisteredTokenHoldersCount={unregisteredTokenHoldersCount}
           unregisteredPlayersXP={unregisteredPlayersXP}
+          isRegistrationOpen={isRegistrationOpen}
         />
       ) : (
         <RegisteredPlayerListView

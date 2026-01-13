@@ -14,10 +14,16 @@ interface RegistrationForm {
   whatsAppNumber?: string
 }
 
+interface UseRegistrationOptions {
+  /** Path to redirect to after successful login (passed to login page) */
+  redirectTo?: string
+}
+
 /**
  * Custom hook to handle user registration logic
  */
-export const useRegistration = () => {
+export const useRegistration = (options: UseRegistrationOptions = {}) => {
+  const { redirectTo } = options
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -122,7 +128,8 @@ export const useRegistration = () => {
         duration: 5000
       })
       // Small delay to ensure toast is visible before navigation
-      setTimeout(() => navigate('/login'), 1500)
+      // Pass redirectTo so login page can redirect back after verification
+      setTimeout(() => navigate('/login', { state: { from: redirectTo } }), 1500)
     } catch (error: any) {
       console.error('Registration error:', error)
 
@@ -140,7 +147,7 @@ export const useRegistration = () => {
       } else if (error.message?.toLowerCase().includes('jwt expired')) {
         toast.error('Your session has expired. Please try again.')
         await supabase.auth.signOut()
-        navigate('/login')
+        navigate('/login', { state: { from: redirectTo } })
       } else {
         toast.error(error.message || 'Registration failed')
       }

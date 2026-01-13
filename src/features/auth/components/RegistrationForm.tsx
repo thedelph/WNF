@@ -3,11 +3,16 @@ import { Link } from 'react-router-dom'
 import { useRegistration } from '../hooks/useRegistration'
 import { PasswordInput } from './PasswordInput'
 
+interface RegistrationFormProps {
+  /** Path to redirect to after successful login (passed through to login page) */
+  redirectTo?: string;
+}
+
 /**
  * Registration form component with email, friendly name, and password fields
  * Features password strength validation and matching confirmation
  */
-const RegistrationForm: React.FC = () => {
+const RegistrationForm: React.FC<RegistrationFormProps> = ({ redirectTo }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -15,7 +20,7 @@ const RegistrationForm: React.FC = () => {
   const [isWhatsAppMember, setIsWhatsAppMember] = useState(false)
   const [whatsAppNumber, setWhatsAppNumber] = useState('+44')
   
-  const { handleRegistration, isLoading, validateUKMobileNumber } = useRegistration()
+  const { handleRegistration, isLoading, validateUKMobileNumber } = useRegistration({ redirectTo })
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -133,7 +138,7 @@ const RegistrationForm: React.FC = () => {
 
         <div className="text-center text-sm">
           Already have an account?{' '}
-          <Link to="/login" className="link link-primary">
+          <Link to="/login" state={{ from: redirectTo }} className="link link-primary">
             Login here
           </Link>
         </div>

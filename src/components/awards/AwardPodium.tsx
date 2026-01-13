@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Award, AwardCategoryConfig, LiveAward } from '../../types/awards';
 import { toUrlFriendly } from '../../utils/urlHelpers';
+import { useUser } from '../../hooks/useUser';
 
 // Type guard to check if award has extended stats
 const hasExtendedStats = (award: Award): award is LiveAward => {
@@ -40,6 +41,9 @@ const getMedalForType = (type: 'gold' | 'silver' | 'bronze'): string => {
 };
 
 export const AwardPodium = ({ awards, config }: AwardPodiumProps) => {
+  // Get current user for highlighting
+  const { player: currentPlayer } = useUser();
+
   // Sort awards: gold first, then silver, then bronze
   const sortedAwards = [...awards].sort((a, b) => {
     const order = { gold: 0, silver: 1, bronze: 2 };
@@ -55,13 +59,20 @@ export const AwardPodium = ({ awards, config }: AwardPodiumProps) => {
         // Determine if this is a multi-player award (pair or trio)
         const isMultiPlayer = config.isPairAward || config.isTrioAward;
 
+        // Check if current user is involved in this award
+        const currentUserName = currentPlayer?.friendly_name;
+        const isCurrentUserPrimary = currentUserName === award.playerName;
+        const isCurrentUserPartner = currentUserName === award.partnerName;
+        const isCurrentUserPartner2 = currentUserName === award.partner2Name;
+        const isCurrentUserInvolved = isCurrentUserPrimary || isCurrentUserPartner || isCurrentUserPartner2;
+
         return (
           <motion.div
             key={award.id}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="py-1"
+            className={`py-1 ${isCurrentUserInvolved ? 'bg-white/20 px-2 rounded-lg ring-1 ring-white/40 -mx-2' : ''}`}
           >
             {/* Responsive layout: stack on mobile for multi-player awards, horizontal on desktop */}
             <div className={`flex ${isMultiPlayer ? 'flex-col sm:flex-row sm:justify-between sm:items-center' : 'justify-between items-center'} gap-1 sm:gap-2`}>
@@ -72,6 +83,7 @@ export const AwardPodium = ({ awards, config }: AwardPodiumProps) => {
                   <Link to={playerUrl} className="hover:underline font-medium">
                     {award.playerName}
                   </Link>
+                  {isCurrentUserPrimary && <span className="badge badge-sm badge-ghost ml-1">You</span>}
                   {config.isPairAward && award.partnerName && (
                     <span className="opacity-90">
                       {/* Use "vs" for rivalries, "&" for partnerships */}
@@ -82,6 +94,7 @@ export const AwardPodium = ({ awards, config }: AwardPodiumProps) => {
                       >
                         {award.partnerName}
                       </Link>
+                      {isCurrentUserPartner && <span className="badge badge-sm badge-ghost ml-1">You</span>}
                     </span>
                   )}
                   {config.isTrioAward && award.partnerName && award.partner2Name && (
@@ -93,6 +106,7 @@ export const AwardPodium = ({ awards, config }: AwardPodiumProps) => {
                       >
                         {award.partnerName}
                       </Link>
+                      {isCurrentUserPartner && <span className="badge badge-sm badge-ghost ml-1">You</span>}
                       {' & '}
                       <Link
                         to={`/player/${toUrlFriendly(award.partner2Name)}`}
@@ -100,6 +114,7 @@ export const AwardPodium = ({ awards, config }: AwardPodiumProps) => {
                       >
                         {award.partner2Name}
                       </Link>
+                      {isCurrentUserPartner2 && <span className="badge badge-sm badge-ghost ml-1">You</span>}
                     </span>
                   )}
                 </span>

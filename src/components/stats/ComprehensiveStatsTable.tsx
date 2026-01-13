@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Search, ArrowUpDown, Info, ChevronDown, ChevronRight, ArrowDown, ArrowUp, Filter } from 'lucide-react';
 import { useStats } from '../../hooks/useStats';
+import { useUser } from '../../hooks/useUser';
 import { Tooltip } from '../ui/Tooltip';
 import { TeamDistributionBar } from './TeamDistributionBar';
 import { GoalsDistributionBar } from './GoalsDistributionBar';
@@ -50,6 +51,9 @@ interface Column {
  * @param selectedYear - The currently selected year filter
  */
 export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTableProps) => {
+  // Get current user for highlighting their row
+  const { player: currentPlayer } = useUser();
+
   // State for search filter and sorting
   const [searchQuery, setSearchQuery] = useState('');
   // Keep a reference to valid stats to avoid losing them during re-renders
@@ -623,21 +627,31 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
                 </tr>
               </thead>
               <tbody>
-                {sortedPlayers.map((player) => (
-                  <tr key={player.id}>
-                    {columns.map((column) => (
-                      <td key={`${player.id}-${column.key}`}>
-                        {/* Use formatter if available, otherwise display raw value */}
-                        {column.formatter
-                          ? column.formatter(player[column.key as keyof ComprehensivePlayerStats], player)
-                          : column.key === 'xp' 
-                            ? Math.max(0, player.xp || 0) /* Ensure XP always shows a non-negative value */
-                            : player[column.key as keyof ComprehensivePlayerStats] ?? 'N/A'
-                        }
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {sortedPlayers.map((player) => {
+                  const isCurrentUser = player.id === currentPlayer?.id;
+                  return (
+                    <tr
+                      key={player.id}
+                      className={isCurrentUser ? 'bg-primary/10 ring-2 ring-primary/30 ring-inset font-medium' : ''}
+                    >
+                      {columns.map((column) => (
+                        <td key={`${player.id}-${column.key}`}>
+                          {/* Use formatter if available, otherwise display raw value */}
+                          {column.formatter
+                            ? column.formatter(player[column.key as keyof ComprehensivePlayerStats], player)
+                            : column.key === 'xp'
+                              ? Math.max(0, player.xp || 0) /* Ensure XP always shows a non-negative value */
+                              : player[column.key as keyof ComprehensivePlayerStats] ?? 'N/A'
+                          }
+                          {/* Add "You" badge after the player name */}
+                          {column.key === 'friendlyName' && isCurrentUser && (
+                            <span className="badge badge-primary badge-sm ml-2">You</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
                 {sortedPlayers.length === 0 && (
                   <tr>
                     <td colSpan={columns.length} className="text-center py-4">
@@ -782,22 +796,27 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
             {/* List of sorted players */}
             {sortedPlayers.length > 0 ? (
               <div className="space-y-4">
-                {sortedPlayers.map((player) => (
-                  <motion.div 
-                    key={player.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="card bg-base-200 shadow-sm"
-                  >
-                    {/* Card header with player name, XP and toggle button */}
-                    <div className="card-body p-4 pb-2">
-                      <div 
-                        className="flex justify-between items-center cursor-pointer" 
-                        onClick={() => togglePlayerExpanded(player.id)}
-                      >
-                        <div className="flex flex-col">
-                          <h3 className="card-title text-lg">{player.friendlyName}</h3>
+                {sortedPlayers.map((player) => {
+                  const isCurrentUser = player.id === currentPlayer?.id;
+                  return (
+                    <motion.div
+                      key={player.id}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={`card shadow-sm ${isCurrentUser ? 'bg-primary/15 ring-2 ring-primary/40' : 'bg-base-200'}`}
+                    >
+                      {/* Card header with player name, XP and toggle button */}
+                      <div className="card-body p-4 pb-2">
+                        <div
+                          className="flex justify-between items-center cursor-pointer"
+                          onClick={() => togglePlayerExpanded(player.id)}
+                        >
+                          <div className="flex flex-col">
+                            <h3 className="card-title text-lg">
+                              {player.friendlyName}
+                              {isCurrentUser && <span className="badge badge-primary badge-sm ml-2">You</span>}
+                            </h3>
                           <p className="text-sm opacity-80">XP: {Math.max(0, player.xp || 0)}</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -944,7 +963,8 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
                       )}
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 bg-base-200 rounded-lg space-y-3">
@@ -954,7 +974,7 @@ export const ComprehensiveStatsTable = ({ selectedYear }: ComprehensiveStatsTabl
             )}
           </div>
         )}
-        
+
         <p className="text-sm opacity-80 mt-4">
           Note: Stats are based on games with known outcomes. Players must have at least 10 games with known outcomes (wins/losses/draws) to be displayed.
           <strong> {sortedPlayers.length} players shown.</strong>

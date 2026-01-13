@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaCircle } from 'react-icons/fa';
+import { FaCircle, FaUserPlus, FaSignInAlt } from 'react-icons/fa';
 import { PlayerCard } from '../player-card/PlayerCard';
 import { Registration } from '../../types/playerSelection';
 import { calculateSelectionOdds, formatOdds, getOddsColorClass } from '../../utils/selectionOdds';
 import { Tooltip } from '../ui/Tooltip';
+import { useAuth } from '../../context/AuthContext';
 
 interface RegisteredPlayerGridProps {
   registrations: Registration[];
@@ -15,6 +17,7 @@ interface RegisteredPlayerGridProps {
   maxPlayers?: number;
   unregisteredTokenHoldersCount?: number;
   unregisteredPlayersXP?: number[];
+  isRegistrationOpen?: boolean;
 }
 
 /**
@@ -30,7 +33,10 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
   maxPlayers = 18,
   unregisteredTokenHoldersCount = 0,
   unregisteredPlayersXP = [],
+  isRegistrationOpen = false,
 }) => {
+  const { user } = useAuth();
+  const location = useLocation();
   // Sort players to reflect selection order: Token users first, then regular players, then token cooldown players (all by XP)
   const sortedRegistrations = [...registrations].sort((a, b) => {
     const aXp = playerStats[a.player.id]?.xp || 0;
@@ -206,6 +212,39 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
 
   return (
     <div className="container mx-auto px-4 space-y-8">
+      {/* Login CTA for non-logged-in users */}
+      {!user && isRegistrationOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30 shadow-lg"
+        >
+          <div className="card-body items-center text-center py-8">
+            <FaUserPlus className="text-4xl text-primary mb-2" />
+            <h3 className="card-title text-xl">Want to play?</h3>
+            <p className="text-base-content/70">
+              Log in to register your interest for this game
+            </p>
+            <div className="card-actions mt-4 flex-wrap justify-center gap-3">
+              <Link
+                to="/login"
+                state={{ from: location.pathname }}
+                className="btn btn-primary gap-2"
+              >
+                <FaSignInAlt /> Log in
+              </Link>
+              <Link
+                to="/register"
+                state={{ from: location.pathname }}
+                className="btn btn-ghost"
+              >
+                Sign up
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Player Breakdown Summary */}
       <div className="stats stats-vertical sm:stats-horizontal shadow w-full">
         <div className="stat">

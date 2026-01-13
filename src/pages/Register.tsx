@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { AUTH_CONFIG } from '../features/auth/constants'
 import RegistrationForm from '../features/auth/components/RegistrationForm'
 
@@ -8,12 +8,16 @@ import RegistrationForm from '../features/auth/components/RegistrationForm'
  * Shows either the registration form or a message when registration is disabled
  */
 const Register: React.FC = () => {
+  const location = useLocation()
+  // Get the redirect path from location state (set by LockedContent or other CTAs)
+  const from = (location.state as { from?: string })?.from
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-base-200">
       <div className="card w-96 bg-base-100 shadow-xl">
         <div className="card-body">
           {AUTH_CONFIG.REGISTRATION_ENABLED ? (
-            <RegistrationForm />
+            <RegistrationForm redirectTo={from} />
           ) : (
             <div className="text-center space-y-4">
               <h2 className="card-title justify-center mb-4">Registration Coming Soon!</h2>
@@ -23,7 +27,7 @@ const Register: React.FC = () => {
               <div className="divider">OR</div>
               <div className="text-sm">
                 Already have an account?{' '}
-                <Link to="/login" className="link link-primary">
+                <Link to="/login" state={{ from }} className="link link-primary">
                   Login here
                 </Link>
               </div>
