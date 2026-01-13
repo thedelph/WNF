@@ -7,7 +7,7 @@ import type { PlayerStats } from '../types';
 export async function loadPlayerStats(playerIds: string[]): Promise<PlayerStats[]> {
   const { data, error } = await supabase
     .from('players')
-    .select('id, friendly_name, attack_rating, defense_rating, game_iq, gk, win_rate')
+    .select('id, friendly_name, average_attack_rating, average_defense_rating, average_game_iq_rating, average_gk_rating, win_rate')
     .in('id', playerIds);
 
   if (error) {
@@ -18,10 +18,10 @@ export async function loadPlayerStats(playerIds: string[]): Promise<PlayerStats[
   return (data || []).map((row) => ({
     player_id: row.id,
     friendly_name: row.friendly_name,
-    attack_rating: row.attack_rating,
-    defense_rating: row.defense_rating,
-    game_iq: row.game_iq,
-    gk: row.gk,
+    attack_rating: row.average_attack_rating,
+    defense_rating: row.average_defense_rating,
+    game_iq: row.average_game_iq_rating,
+    gk: row.average_gk_rating,
     win_rate: row.win_rate,
   }));
 }

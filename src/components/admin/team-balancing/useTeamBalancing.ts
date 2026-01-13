@@ -54,11 +54,9 @@ export const useTeamBalancing = () => {
           players!game_registrations_player_id_fkey (
             id,
             friendly_name,
-            attack_rating,
-            defense_rating,
-            game_iq,
+            average_attack_rating,
+            average_defense_rating,
             average_game_iq_rating,
-            gk,
             average_gk_rating,
             caps
           )
@@ -260,8 +258,8 @@ export const useTeamBalancing = () => {
         console.log('Fresh Lewis data from database:', {
           id: lewisData.players.id,
           name: lewisData.players.friendly_name,
-          attack: lewisData.players.attack_rating,
-          defense: lewisData.players.defense_rating,
+          attack: lewisData.players.average_attack_rating,
+          defense: lewisData.players.average_defense_rating,
           caps: lewisData.players.caps,
           winRate: winRateMap.get(lewisData.players.id) || 'N/A'
         });
@@ -299,10 +297,10 @@ export const useTeamBalancing = () => {
         return {
           player_id: playerId,
           friendly_name: reg.players.friendly_name,
-          attack_rating: reg.players.attack_rating || 5,
-          defense_rating: reg.players.defense_rating || 5,
-          game_iq_rating: reg.players.game_iq ?? reg.players.average_game_iq_rating ?? 5,
-          gk_rating: reg.players.gk ?? reg.players.average_gk_rating ?? 5,
+          attack_rating: reg.players.average_attack_rating ?? 5,
+          defense_rating: reg.players.average_defense_rating ?? 5,
+          game_iq_rating: reg.players.average_game_iq_rating ?? 5,
+          gk_rating: reg.players.average_gk_rating ?? 5,
           win_rate: winRate,
           goal_differential: goalDifferential,
           overall_win_rate: overallWinRate,
@@ -377,10 +375,10 @@ export const useTeamBalancing = () => {
           return {
             player_id: reg.players.id,
             friendly_name: reg.players.friendly_name,
-            attack_rating: reg.players.attack_rating,
-            defense_rating: reg.players.defense_rating,
-            game_iq_rating: reg.players.game_iq ?? reg.players.average_game_iq_rating ?? 5,
-            gk_rating: reg.players.gk ?? reg.players.average_gk_rating ?? 5,
+            attack_rating: reg.players.average_attack_rating ?? 5,
+            defense_rating: reg.players.average_defense_rating ?? 5,
+            game_iq_rating: reg.players.average_game_iq_rating ?? 5,
+            gk_rating: reg.players.average_gk_rating ?? 5,
             win_rate: winRate,
             goal_differential: goalDifferential,
             overall_win_rate: overallWinRate,
