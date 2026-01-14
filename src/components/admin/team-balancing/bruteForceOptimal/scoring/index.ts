@@ -4,6 +4,7 @@ import { calculateChemistryScore, getChemistryBreakdown } from './chemistryScore
 import { calculateRivalryScore, getRivalryBreakdown } from './rivalryScore';
 import { calculateTrioScore, getTrioBreakdown } from './trioScore';
 import { calculatePerformanceScore, getPerformanceBreakdown } from './performanceScore';
+import { calculateFormScore, getFormBreakdown } from './formScore';
 import { calculatePositionScore, getPositionBreakdown } from './positionScore';
 import { calculateAttributeScore, getAttributeBreakdown } from './attributeScore';
 
@@ -19,6 +20,8 @@ export {
   getTrioBreakdown,
   calculatePerformanceScore,
   getPerformanceBreakdown,
+  calculateFormScore,
+  getFormBreakdown,
   calculatePositionScore,
   getPositionBreakdown,
   calculateAttributeScore,
@@ -27,11 +30,13 @@ export {
 
 /**
  * Default scoring weights
+ * Note: Performance (15%) + Form (5%) = 20% total for form-related factors
  */
 export const WEIGHTS: ScoringWeights = {
   coreRatings: 0.40,
   chemistry: 0.20,
-  performance: 0.20,
+  performance: 0.15,
+  form: 0.05,
   position: 0.10,
   attributes: 0.10,
 };
@@ -100,6 +105,7 @@ export function calculateTotalScore(
     trioMap
   );
   const performanceScore = calculatePerformanceScore(blueTeam, orangeTeam);
+  const formScore = calculateFormScore(blueTeam, orangeTeam);
   const positionScore = calculatePositionScore(blueTeam, orangeTeam);
   const attributeScore = calculateAttributeScore(blueTeam, orangeTeam);
 
@@ -107,6 +113,7 @@ export function calculateTotalScore(
     coreScore * weights.coreRatings +
     chemistryScore * weights.chemistry +
     performanceScore * weights.performance +
+    formScore * weights.form +
     positionScore * weights.position +
     attributeScore * weights.attributes
   );
@@ -132,6 +139,7 @@ export function calculateScoreWithBreakdown(
     trioMap
   );
   const performanceScore = calculatePerformanceScore(blueTeam, orangeTeam);
+  const formScore = calculateFormScore(blueTeam, orangeTeam);
   const positionScore = calculatePositionScore(blueTeam, orangeTeam);
   const attributeScore = calculateAttributeScore(blueTeam, orangeTeam);
 
@@ -139,6 +147,7 @@ export function calculateScoreWithBreakdown(
     coreScore * weights.coreRatings +
     chemistryDetails.combined * weights.chemistry +
     performanceScore * weights.performance +
+    formScore * weights.form +
     positionScore * weights.position +
     attributeScore * weights.attributes;
 
@@ -151,6 +160,7 @@ export function calculateScoreWithBreakdown(
       trio: chemistryDetails.trio,
     },
     performance: performanceScore,
+    form: formScore,
     position: positionScore,
     attributes: attributeScore,
     total,

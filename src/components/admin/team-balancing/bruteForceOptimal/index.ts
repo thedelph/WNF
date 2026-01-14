@@ -174,6 +174,10 @@ export async function generateOptimalTeams(
     algorithm: 'brute-force-optimal',
     tierDistribution,
     dataLoadingStats,
+    // Include maps for detailed debug logging
+    chemistryMap: chemistry,
+    rivalryMap: rivalry,
+    trioMap: trios,
   };
 }
 
@@ -222,3 +226,15 @@ export function resultToTeamAssignments(result: BruteForceTeamResult): {
     orangeTeam: result.orangeTeam.map((p) => toTeamAssignment(p, 'orange')),
   };
 }
+
+// Re-export breakdown functions for detailed debug logging
+export {
+  getCoreRatingsBreakdown,
+  getPerformanceBreakdown,
+  getFormBreakdown,
+  getPositionBreakdown,
+  getAttributeBreakdown,
+  getChemistryBreakdown,
+  getRivalryBreakdown,
+  getTrioBreakdown,
+} from './scoring';

@@ -156,17 +156,20 @@ export interface ScoringWeights {
   coreRatings: number;
   chemistry: number;
   performance: number;
+  form: number;
   position: number;
   attributes: number;
 }
 
 /**
  * Default scoring weights
+ * Note: Performance (15%) + Form (5%) = 20% total for form-related factors
  */
 export const DEFAULT_WEIGHTS: ScoringWeights = {
   coreRatings: 0.40,
   chemistry: 0.20,
-  performance: 0.20,
+  performance: 0.15,
+  form: 0.05,
   position: 0.10,
   attributes: 0.10,
 };
@@ -184,6 +187,7 @@ export interface ScoreBreakdown {
     trio: number;       // Trio synergy balance
   };
   performance: number;
+  form: number;         // Hot/cold streak balance (recent vs career delta)
   position: number;
   attributes: number;
   total: number;
@@ -221,6 +225,10 @@ export interface BruteForceTeamResult {
   };
   // Data loading statistics for debugging
   dataLoadingStats: DataLoadingStats;
+  // Maps for detailed breakdown (optional, for debug logging)
+  chemistryMap?: ChemistryMap;
+  rivalryMap?: RivalryMap;
+  trioMap?: TrioMap;
 }
 
 /**

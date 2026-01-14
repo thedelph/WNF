@@ -11,7 +11,10 @@ function averageNonNull(values: (number | null)[]): number {
 
 /**
  * Calculate the performance balance score
- * Measures the difference in recent win rate and goal differential between teams
+ * Measures the difference in OVERALL/CAREER win rate between teams
+ *
+ * This represents baseline player ability, not current form.
+ * Current form (recent vs career) is handled by formScore.ts
  *
  * Returns: A normalized score where 0 = perfect balance, higher = worse
  */
@@ -19,29 +22,20 @@ export function calculatePerformanceScore(
   blueTeam: BruteForcePlayer[],
   orangeTeam: BruteForcePlayer[]
 ): number {
-  // Recent win rates (percentage 0-100)
-  const blueWinRate = averageNonNull(blueTeam.map((p) => p.recentWinRate));
-  const orangeWinRate = averageNonNull(orangeTeam.map((p) => p.recentWinRate));
+  // Overall/career win rates (percentage 0-100)
+  const blueWinRate = averageNonNull(blueTeam.map((p) => p.overallWinRate));
+  const orangeWinRate = averageNonNull(orangeTeam.map((p) => p.overallWinRate));
 
   // If no performance data, default to 50% (neutral)
   const effectiveBlueWinRate =
-    blueTeam.some((p) => p.recentWinRate !== null) ? blueWinRate : 50;
+    blueTeam.some((p) => p.overallWinRate !== null) ? blueWinRate : 50;
   const effectiveOrangeWinRate =
-    orangeTeam.some((p) => p.recentWinRate !== null) ? orangeWinRate : 50;
-
-  // Recent goal differentials (can be negative or positive)
-  const blueGoalDiff = averageNonNull(blueTeam.map((p) => p.recentGoalDiff));
-  const orangeGoalDiff = averageNonNull(orangeTeam.map((p) => p.recentGoalDiff));
+    orangeTeam.some((p) => p.overallWinRate !== null) ? orangeWinRate : 50;
 
   // Win rate difference (max is 100)
   const winRateDiff = Math.abs(effectiveBlueWinRate - effectiveOrangeWinRate) / 100;
 
-  // Goal differential difference
-  // Typical goal diff range is -10 to +10, so max diff is ~20
-  const goalDiffDiff = Math.abs(blueGoalDiff - orangeGoalDiff) / 20;
-
-  // Combine both metrics equally
-  return (winRateDiff + goalDiffDiff) / 2;
+  return winRateDiff;
 }
 
 /**
@@ -51,36 +45,42 @@ export function getPerformanceBreakdown(
   blueTeam: BruteForcePlayer[],
   orangeTeam: BruteForcePlayer[]
 ): {
-  blue: { winRate: number; goalDiff: number; playersWithData: number };
-  orange: { winRate: number; goalDiff: number; playersWithData: number };
-  gaps: { winRate: number; goalDiff: number };
+  blue: { overallWinRate: number; recentWinRate: number; recentGoalDiff: number; playersWithData: number };
+  orange: { overallWinRate: number; recentWinRate: number; recentGoalDiff: number; playersWithData: number };
+  gaps: { overallWinRate: number; recentWinRate: number; recentGoalDiff: number };
 } {
-  const bluePlayersWithWinRate = blueTeam.filter((p) => p.recentWinRate !== null).length;
-  const orangePlayersWithWinRate = orangeTeam.filter((p) => p.recentWinRate !== null).length;
+  // Overall stats (used for Performance scoring)
+  const bluePlayersWithOverall = blueTeam.filter((p) => p.overallWinRate !== null).length;
+  const orangePlayersWithOverall = orangeTeam.filter((p) => p.overallWinRate !== null).length;
+  const blueOverallWinRate = averageNonNull(blueTeam.map((p) => p.overallWinRate));
+  const orangeOverallWinRate = averageNonNull(orangeTeam.map((p) => p.overallWinRate));
 
-  const blueWinRate = averageNonNull(blueTeam.map((p) => p.recentWinRate));
-  const orangeWinRate = averageNonNull(orangeTeam.map((p) => p.recentWinRate));
-
-  const blueGoalDiff = averageNonNull(blueTeam.map((p) => p.recentGoalDiff));
-  const orangeGoalDiff = averageNonNull(orangeTeam.map((p) => p.recentGoalDiff));
+  // Recent stats (for display, not used in Performance scoring - Form uses these)
+  const blueRecentWinRate = averageNonNull(blueTeam.map((p) => p.recentWinRate));
+  const orangeRecentWinRate = averageNonNull(orangeTeam.map((p) => p.recentWinRate));
+  const blueRecentGoalDiff = averageNonNull(blueTeam.map((p) => p.recentGoalDiff));
+  const orangeRecentGoalDiff = averageNonNull(orangeTeam.map((p) => p.recentGoalDiff));
 
   return {
     blue: {
-      winRate: bluePlayersWithWinRate > 0 ? blueWinRate : 50,
-      goalDiff: blueGoalDiff,
-      playersWithData: bluePlayersWithWinRate,
+      overallWinRate: bluePlayersWithOverall > 0 ? blueOverallWinRate : 50,
+      recentWinRate: blueRecentWinRate,
+      recentGoalDiff: blueRecentGoalDiff,
+      playersWithData: bluePlayersWithOverall,
     },
     orange: {
-      winRate: orangePlayersWithWinRate > 0 ? orangeWinRate : 50,
-      goalDiff: orangeGoalDiff,
-      playersWithData: orangePlayersWithWinRate,
+      overallWinRate: orangePlayersWithOverall > 0 ? orangeOverallWinRate : 50,
+      recentWinRate: orangeRecentWinRate,
+      recentGoalDiff: orangeRecentGoalDiff,
+      playersWithData: orangePlayersWithOverall,
     },
     gaps: {
-      winRate: Math.abs(
-        (bluePlayersWithWinRate > 0 ? blueWinRate : 50) -
-          (orangePlayersWithWinRate > 0 ? orangeWinRate : 50)
+      overallWinRate: Math.abs(
+        (bluePlayersWithOverall > 0 ? blueOverallWinRate : 50) -
+          (orangePlayersWithOverall > 0 ? orangeOverallWinRate : 50)
       ),
-      goalDiff: Math.abs(blueGoalDiff - orangeGoalDiff),
+      recentWinRate: Math.abs(blueRecentWinRate - orangeRecentWinRate),
+      recentGoalDiff: Math.abs(blueRecentGoalDiff - orangeRecentGoalDiff),
     },
   };
 }

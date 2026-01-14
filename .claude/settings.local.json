@@ -73,7 +73,8 @@
       "mcp__context7__query-docs",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:api.github.com)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Skill(daisyui-frontend)"
     ]
   },
   "enableAllProjectMcpServers": true,

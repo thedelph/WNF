@@ -10,7 +10,15 @@ import { useTeamBalancingChemistry } from '../../../hooks/useTeamBalancingChemis
 import {
   generateOptimalTeams,
   resultToTeamAssignments,
-  BruteForceTeamResult
+  BruteForceTeamResult,
+  getCoreRatingsBreakdown,
+  getPerformanceBreakdown,
+  getFormBreakdown,
+  getPositionBreakdown,
+  getAttributeBreakdown,
+  getChemistryBreakdown,
+  getRivalryBreakdown,
+  getTrioBreakdown,
 } from './bruteForceOptimal';
 
 type AlgorithmType = 'tier-based' | 'brute-force';
@@ -109,9 +117,31 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
       setBruteForceResult(result);
       setTierBasedResult(null); // Clear other result
 
-      // Create a debug log for display
+      // Create a debug log for display with detailed breakdowns
       const stats = result.dataLoadingStats;
       const chemDetails = result.scoreBreakdown.chemistryDetails;
+
+      // Get detailed breakdowns for enhanced debug log
+      const coreBreakdown = getCoreRatingsBreakdown(result.blueTeam, result.orangeTeam);
+      const perfBreakdown = getPerformanceBreakdown(result.blueTeam, result.orangeTeam);
+      const formBreakdown = getFormBreakdown(result.blueTeam, result.orangeTeam);
+      const posBreakdown = getPositionBreakdown(result.blueTeam, result.orangeTeam);
+      const attrBreakdown = getAttributeBreakdown(result.blueTeam, result.orangeTeam);
+
+      // Get chemistry/rivalry/trio breakdowns if maps are available
+      const chemBreakdown = result.chemistryMap
+        ? getChemistryBreakdown(result.blueTeam, result.orangeTeam, result.chemistryMap)
+        : null;
+      const rivalryBreakdown = result.rivalryMap
+        ? getRivalryBreakdown(result.blueTeam, result.orangeTeam, result.rivalryMap)
+        : null;
+      const trioBreakdown = result.trioMap
+        ? getTrioBreakdown(result.blueTeam, result.orangeTeam, result.trioMap)
+        : null;
+
+      // Helper to format goal differential with +/- sign
+      const formatGD = (val: number) => val > 0 ? `+${val.toFixed(1)}` : val.toFixed(1);
+
       const debugLogStr = [
         '=== Brute-Force Optimal Algorithm ===',
         `Combinations evaluated: ${result.combinationsEvaluated.toLocaleString()}`,
@@ -127,6 +157,78 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
         `Players with position: ${stats.playersWithPosition}/${stats.totalPlayers}`,
         `Players with attributes: ${stats.playersWithAttributes}/${stats.totalPlayers}`,
         '',
+        '=== Team Averages Comparison ===',
+        `                Blue     Orange   Gap`,
+        `Attack:         ${coreBreakdown.blue.attack.toFixed(2).padStart(5)}    ${coreBreakdown.orange.attack.toFixed(2).padStart(5)}    ${coreBreakdown.gaps.attack.toFixed(2)}`,
+        `Defense:        ${coreBreakdown.blue.defense.toFixed(2).padStart(5)}    ${coreBreakdown.orange.defense.toFixed(2).padStart(5)}    ${coreBreakdown.gaps.defense.toFixed(2)}`,
+        `Game IQ:        ${coreBreakdown.blue.gameIq.toFixed(2).padStart(5)}    ${coreBreakdown.orange.gameIq.toFixed(2).padStart(5)}    ${coreBreakdown.gaps.gameIq.toFixed(2)}`,
+        `GK:             ${coreBreakdown.blue.gk.toFixed(2).padStart(5)}    ${coreBreakdown.orange.gk.toFixed(2).padStart(5)}    ${coreBreakdown.gaps.gk.toFixed(2)}`,
+        '',
+        '=== Performance Balance (Overall/Career) ===',
+        `                Blue     Orange   Gap`,
+        `Overall WR:     ${perfBreakdown.blue.overallWinRate.toFixed(1).padStart(5)}%   ${perfBreakdown.orange.overallWinRate.toFixed(1).padStart(5)}%   ${perfBreakdown.gaps.overallWinRate.toFixed(1)}%`,
+        `Recent WR:      ${perfBreakdown.blue.recentWinRate.toFixed(1).padStart(5)}%   ${perfBreakdown.orange.recentWinRate.toFixed(1).padStart(5)}%   ${perfBreakdown.gaps.recentWinRate.toFixed(1)}%`,
+        `Recent GD:      ${formatGD(perfBreakdown.blue.recentGoalDiff).padStart(6)}   ${formatGD(perfBreakdown.orange.recentGoalDiff).padStart(6)}   ${perfBreakdown.gaps.recentGoalDiff.toFixed(1)}`,
+        `Players w/data: ${perfBreakdown.blue.playersWithData}/${result.blueTeam.length}      ${perfBreakdown.orange.playersWithData}/${result.orangeTeam.length}`,
+        '',
+        '=== Form Analysis (Recent vs Career) ===',
+        `                Blue     Orange   Gap`,
+        `Avg Form Delta: ${formBreakdown.blue.avgFormDelta >= 0 ? '+' : ''}${formBreakdown.blue.avgFormDelta.toFixed(1).padStart(5)}%  ${formBreakdown.orange.avgFormDelta >= 0 ? '+' : ''}${formBreakdown.orange.avgFormDelta.toFixed(1).padStart(5)}%  ${formBreakdown.gap.toFixed(1)}%`,
+        `Hot streaks:    ${formBreakdown.blue.hotStreakCount.toString().padStart(5)}    ${formBreakdown.orange.hotStreakCount.toString().padStart(5)}`,
+        `Cold streaks:   ${formBreakdown.blue.coldStreakCount.toString().padStart(5)}    ${formBreakdown.orange.coldStreakCount.toString().padStart(5)}`,
+        ...(formBreakdown.mostHotStreak ? [
+          `Hottest: ${formBreakdown.mostHotStreak.name} (+${formBreakdown.mostHotStreak.delta.toFixed(0)}%) [${formBreakdown.mostHotStreak.team}]`,
+        ] : []),
+        ...(formBreakdown.mostColdStreak ? [
+          `Coldest: ${formBreakdown.mostColdStreak.name} (${formBreakdown.mostColdStreak.delta.toFixed(0)}%) [${formBreakdown.mostColdStreak.team}]`,
+        ] : []),
+        '',
+        '=== Position Distribution ===',
+        `                Blue  Orange  Gap`,
+        `Defenders:      ${posBreakdown.blue.DEF.toString().padStart(4)}  ${posBreakdown.orange.DEF.toString().padStart(6)}  ${posBreakdown.gaps.DEF}`,
+        `Midfielders:    ${posBreakdown.blue.MID.toString().padStart(4)}  ${posBreakdown.orange.MID.toString().padStart(6)}  ${posBreakdown.gaps.MID}`,
+        `Attackers:      ${posBreakdown.blue.ATT.toString().padStart(4)}  ${posBreakdown.orange.ATT.toString().padStart(6)}  ${posBreakdown.gaps.ATT}`,
+        `Strikers:       ${posBreakdown.blue.strikers.toString().padStart(4)}  ${posBreakdown.orange.strikers.toString().padStart(6)}  ${posBreakdown.gaps.strikers}`,
+        '',
+        '=== Attribute Balance ===',
+        `                Blue    Orange  Gap`,
+        `Pace:           ${attrBreakdown.blue.pace.toFixed(2).padStart(5)}   ${attrBreakdown.orange.pace.toFixed(2).padStart(5)}   ${attrBreakdown.gaps.pace.toFixed(3)}`,
+        `Shooting:       ${attrBreakdown.blue.shooting.toFixed(2).padStart(5)}   ${attrBreakdown.orange.shooting.toFixed(2).padStart(5)}   ${attrBreakdown.gaps.shooting.toFixed(3)}`,
+        `Passing:        ${attrBreakdown.blue.passing.toFixed(2).padStart(5)}   ${attrBreakdown.orange.passing.toFixed(2).padStart(5)}   ${attrBreakdown.gaps.passing.toFixed(3)}`,
+        `Dribbling:      ${attrBreakdown.blue.dribbling.toFixed(2).padStart(5)}   ${attrBreakdown.orange.dribbling.toFixed(2).padStart(5)}   ${attrBreakdown.gaps.dribbling.toFixed(3)}`,
+        `Defending:      ${attrBreakdown.blue.defending.toFixed(2).padStart(5)}   ${attrBreakdown.orange.defending.toFixed(2).padStart(5)}   ${attrBreakdown.gaps.defending.toFixed(3)}`,
+        `Physical:       ${attrBreakdown.blue.physical.toFixed(2).padStart(5)}   ${attrBreakdown.orange.physical.toFixed(2).padStart(5)}   ${attrBreakdown.gaps.physical.toFixed(3)}`,
+        '',
+        '=== Chemistry Analysis ===',
+        'Pairwise:',
+        ...(chemBreakdown ? [
+          `  Blue avg: ${chemBreakdown.blueAvgChemistry.toFixed(1)} (${chemBreakdown.bluePairsWithData} pairs)`,
+          `  Orange avg: ${chemBreakdown.orangeAvgChemistry.toFixed(1)} (${chemBreakdown.orangePairsWithData} pairs)`,
+          `  Gap: ${chemBreakdown.gap.toFixed(1)}`,
+        ] : ['  No pairwise chemistry data available']),
+        '',
+        'Rivalry:',
+        ...(rivalryBreakdown ? [
+          `  Net Blue advantage: ${rivalryBreakdown.netBlueAdvantage > 0 ? '+' : ''}${rivalryBreakdown.netBlueAdvantage.toFixed(1)}`,
+          `  Matchups with data: ${rivalryBreakdown.matchupsWithData}/${rivalryBreakdown.totalMatchups}`,
+          ...(rivalryBreakdown.mostLopsidedMatchup ? [
+            `  Most lopsided: ${rivalryBreakdown.mostLopsidedMatchup.bluePlayer} vs ${rivalryBreakdown.mostLopsidedMatchup.orangePlayer} (${rivalryBreakdown.mostLopsidedMatchup.blueAdvantage > 0 ? '+' : ''}${rivalryBreakdown.mostLopsidedMatchup.blueAdvantage.toFixed(1)} Blue)`,
+          ] : []),
+        ] : ['  No rivalry data available']),
+        '',
+        'Trio:',
+        ...(trioBreakdown ? [
+          `  Blue avg: ${trioBreakdown.blueAvgTrioScore.toFixed(1)} (${trioBreakdown.blueTriosWithData}/${trioBreakdown.blueTotalTrios} trios)`,
+          `  Orange avg: ${trioBreakdown.orangeAvgTrioScore.toFixed(1)} (${trioBreakdown.orangeTriosWithData}/${trioBreakdown.orangeTotalTrios} trios)`,
+          `  Gap: ${trioBreakdown.gap.toFixed(1)}`,
+          ...(trioBreakdown.topBlueTrio ? [
+            `  Top Blue trio: ${trioBreakdown.topBlueTrio.players.join(', ')} (${trioBreakdown.topBlueTrio.score.toFixed(1)})`,
+          ] : []),
+          ...(trioBreakdown.topOrangeTrio ? [
+            `  Top Orange trio: ${trioBreakdown.topOrangeTrio.players.join(', ')} (${trioBreakdown.topOrangeTrio.score.toFixed(1)})`,
+          ] : []),
+        ] : ['  No trio data available']),
+        '',
         '=== Score Breakdown ===',
         `Core Ratings (40%): ${result.scoreBreakdown.coreRatings.toFixed(4)}`,
         `Chemistry (20%): ${result.scoreBreakdown.chemistry.toFixed(4)}`,
@@ -135,7 +237,8 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
           `  └─ Rivalry (30%): ${chemDetails.rivalry.toFixed(4)}`,
           `  └─ Trio (20%): ${chemDetails.trio.toFixed(4)}`,
         ] : []),
-        `Performance (20%): ${result.scoreBreakdown.performance.toFixed(4)}`,
+        `Performance/Career (15%): ${result.scoreBreakdown.performance.toFixed(4)}`,
+        `Form/Streaks (5%): ${result.scoreBreakdown.form.toFixed(4)}`,
         `Position (10%): ${result.scoreBreakdown.position.toFixed(4)}`,
         `Attributes (10%): ${result.scoreBreakdown.attributes.toFixed(4)}`,
         '',
@@ -145,10 +248,22 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
         '',
         '=== Teams ===',
         'Blue Team:',
-        ...result.blueTeam.map(p => `  - ${p.friendly_name} (ATK: ${p.attack.toFixed(1)}, DEF: ${p.defense.toFixed(1)}, IQ: ${p.gameIq.toFixed(1)})`),
+        ...result.blueTeam.map(p => {
+          const pos = p.primaryPosition ? `[${p.primaryPosition}]` : '';
+          const wr = p.recentWinRate !== null ? `WR: ${p.recentWinRate.toFixed(0)}%` : '';
+          const gd = p.recentGoalDiff !== null ? `GD: ${p.recentGoalDiff > 0 ? '+' : ''}${p.recentGoalDiff.toFixed(0)}` : '';
+          const perf = [wr, gd].filter(Boolean).join(' ');
+          return `  - ${p.friendly_name} (ATK: ${p.attack.toFixed(1)}, DEF: ${p.defense.toFixed(1)}, IQ: ${p.gameIq.toFixed(1)}, GK: ${p.gk.toFixed(1)}) ${pos} ${perf}`.trim();
+        }),
         '',
         'Orange Team:',
-        ...result.orangeTeam.map(p => `  - ${p.friendly_name} (ATK: ${p.attack.toFixed(1)}, DEF: ${p.defense.toFixed(1)}, IQ: ${p.gameIq.toFixed(1)})`),
+        ...result.orangeTeam.map(p => {
+          const pos = p.primaryPosition ? `[${p.primaryPosition}]` : '';
+          const wr = p.recentWinRate !== null ? `WR: ${p.recentWinRate.toFixed(0)}%` : '';
+          const gd = p.recentGoalDiff !== null ? `GD: ${p.recentGoalDiff > 0 ? '+' : ''}${p.recentGoalDiff.toFixed(0)}` : '';
+          const perf = [wr, gd].filter(Boolean).join(' ');
+          return `  - ${p.friendly_name} (ATK: ${p.attack.toFixed(1)}, DEF: ${p.defense.toFixed(1)}, IQ: ${p.gameIq.toFixed(1)}, GK: ${p.gk.toFixed(1)}) ${pos} ${perf}`.trim();
+        }),
       ].join('\n');
 
       setDebugLog(debugLogStr);
