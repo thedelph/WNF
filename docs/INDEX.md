@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-01-12 (Injury Token system implementation)
+**Last Updated:** 2026-01-14 (Login Incentives System implementation)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -74,6 +74,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Rating Activity Tracking](features/RatingActivityTracking.md)** - Rating history and changes
 
 ### UI/UX Enhancements
+- **[Login Incentives System](features/LoginIncentivesSystem.md)** - Locked content, user highlighting, login CTAs *(New Jan 2026)*
 - **[Dark Mode](features/DarkMode.md)** - Site-wide dark mode with system preference detection and manual toggle *(New Jan 2026)*
 - **[Changelog Deep Linking](components/Changelog.md)** - Direct links to version sections
 - **[Timezone Handling](TimezoneHandling.md)** - UTC storage, local display
