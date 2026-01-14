@@ -59,11 +59,11 @@ export const AwardPodium = ({ awards, config }: AwardPodiumProps) => {
         // Determine if this is a multi-player award (pair or trio)
         const isMultiPlayer = config.isPairAward || config.isTrioAward;
 
-        // Check if current user is involved in this award
+        // Check if current user is involved in this award (only if logged in)
         const currentUserName = currentPlayer?.friendly_name;
-        const isCurrentUserPrimary = currentUserName === award.playerName;
-        const isCurrentUserPartner = currentUserName === award.partnerName;
-        const isCurrentUserPartner2 = currentUserName === award.partner2Name;
+        const isCurrentUserPrimary = currentUserName ? currentUserName === award.playerName : false;
+        const isCurrentUserPartner = currentUserName ? currentUserName === award.partnerName : false;
+        const isCurrentUserPartner2 = currentUserName ? currentUserName === award.partner2Name : false;
         const isCurrentUserInvolved = isCurrentUserPrimary || isCurrentUserPartner || isCurrentUserPartner2;
 
         return (
