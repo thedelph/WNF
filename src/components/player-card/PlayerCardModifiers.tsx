@@ -148,7 +148,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
                 ? `🛡️ Protection ready! If you miss this game, your ${protectedValue}-game streak bonus will gradually decay instead of resetting to 0.`
                 : isConverged
                   ? `🛡️ Fully recovered! Natural streak (${currentStreak}) has caught up. Shield protection complete.`
-                  : `🛡️ Recovering ${protectedValue}-game streak. ${gamesToConvergence} more ${gamesToConvergence === 1 ? 'game' : 'games'} to full recovery.`
+                  : `🛡️ Recovering from ${protectedValue}-game streak. Effective: ${effectiveStreak} games (+${effectiveStreakBonus}%). ${gamesToConvergence} more ${gamesToConvergence === 1 ? 'game' : 'games'} to full recovery.`
             }>
               <motion.div
                 className="rounded-lg p-2 relative overflow-hidden bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-900/40 backdrop-blur-sm border-2 border-purple-400/60 shadow-lg shadow-purple-500/20 cursor-pointer select-none"
@@ -171,7 +171,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4" fill="currentColor" />
                     <span className="text-sm font-semibold">
-                      {protectedValue}-game streak
+                      {effectiveStreak} Game Streak
                     </span>
                   </div>
                   <span className="text-sm font-bold">
@@ -215,7 +215,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
             >
               <div className="flex items-center gap-2">
                 <Flame className="w-4 h-4" />
-                <span className="text-sm font-semibold">Streak Bonus</span>
+                <span className="text-sm font-semibold">{currentStreak} Game Streak</span>
               </div>
               <span className="text-sm font-bold">
                 +{(streakModifier * 100).toFixed(0)}%
@@ -237,7 +237,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
                 ) : isConverged ? (
                   <span>🛡️ <span className="font-semibold">Fully recovered!</span> Natural streak ({currentStreak}) has caught up.</span>
                 ) : (
-                  <span>🛡️ <span className="font-semibold">Recovering {protectedValue}-game streak.</span> {gamesToConvergence} more {gamesToConvergence === 1 ? 'game' : 'games'} to full recovery. Current bonus: +{effectiveStreakBonus}%</span>
+                  <span>🛡️ <span className="font-semibold">Recovering from {protectedValue}-game streak.</span> Effective: {effectiveStreak} games. {gamesToConvergence} more {gamesToConvergence === 1 ? 'game' : 'games'} to full recovery.</span>
                 )}
               </div>
             </motion.div>
