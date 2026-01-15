@@ -30,6 +30,33 @@ const getMedalType = (rank: number): MedalType => {
   }
 };
 
+// Helper to assign ranks with ties (players with same value get same rank)
+// Returns array of ranks corresponding to each item in the sorted array
+const assignRanksWithTies = <T>(items: T[], getValue: (item: T) => number): number[] => {
+  if (items.length === 0) return [];
+
+  const ranks: number[] = [];
+  let currentRank = 1;
+
+  for (let i = 0; i < items.length; i++) {
+    if (i === 0) {
+      ranks.push(currentRank);
+    } else {
+      const prevValue = getValue(items[i - 1]);
+      const currValue = getValue(items[i]);
+      // If same value as previous, same rank; otherwise increment
+      if (currValue === prevValue) {
+        ranks.push(ranks[i - 1]);
+      } else {
+        currentRank = i + 1; // Standard competition ranking (1, 2, 2, 4)
+        ranks.push(currentRank);
+      }
+    }
+  }
+
+  return ranks;
+};
+
 // Helper to group awards by category and deduplicate pair/trio awards
 const groupLiveAwardsByCategory = (awards: LiveAward[]): AwardsByCategory[] => {
   const grouped: AwardsByCategory[] = [];
@@ -166,13 +193,15 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
 
         // Process XP Champion
         if (xpResult.data) {
-          xpResult.data.slice(0, 3).forEach((player: any, index: number) => {
+          const sorted = xpResult.data.slice(0, 3);
+          const ranks = assignRanksWithTies(sorted, (p: any) => p.xp_v2 ?? p.xp ?? 0);
+          sorted.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('xp_champion', index + 1, player.player_id),
+              id: createAwardId('xp_champion', ranks[index], player.player_id),
               playerId: player.player_id,
               playerName: player.friendly_name || 'Unknown',
               category: 'xp_champion',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(ranks[index]),
               year: null,
               value: player.xp_v2 ?? player.xp ?? 0,
               achievedDate: player.snapshot_date,
@@ -186,13 +215,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
           const sorted = winRatesResult.data
             .sort((a: any, b: any) => Number(b.win_rate) - Number(a.win_rate))
             .slice(0, 3);
+          const ranks = assignRanksWithTies(sorted, (p: any) => Number(p.win_rate));
           sorted.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('win_rate_leader', index + 1, player.id),
+              id: createAwardId('win_rate_leader', ranks[index], player.id),
               playerId: player.id,
               playerName: player.friendly_name,
               category: 'win_rate_leader',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(ranks[index]),
               year: null,
               value: Number(player.win_rate),
               wins: Number(player.wins),
@@ -209,13 +239,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
           const sorted = goalDiffsResult.data
             .sort((a: any, b: any) => Number(b.goal_differential) - Number(a.goal_differential))
             .slice(0, 3);
+          const ranks = assignRanksWithTies(sorted, (p: any) => Number(p.goal_differential));
           sorted.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('net_positive', index + 1, player.id),
+              id: createAwardId('net_positive', ranks[index], player.id),
               playerId: player.id,
               playerName: player.friendly_name,
               category: 'net_positive',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(ranks[index]),
               year: null,
               value: Number(player.goal_differential),
               awardedAt: new Date().toISOString(),
@@ -228,13 +259,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
           const sorted = attendanceStreaksResult.data
             .sort((a: any, b: any) => Number(b.max_streak) - Number(a.max_streak))
             .slice(0, 3);
+          const ranks = assignRanksWithTies(sorted, (p: any) => Number(p.max_streak));
           sorted.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('iron_man', index + 1, player.id),
+              id: createAwardId('iron_man', ranks[index], player.id),
               playerId: player.id,
               playerName: player.friendly_name,
               category: 'iron_man',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(ranks[index]),
               year: null,
               value: Number(player.max_streak),
               awardedAt: new Date().toISOString(),
@@ -247,13 +279,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
           const sorted = winStreaksResult.data
             .sort((a: any, b: any) => Number(b.max_win_streak) - Number(a.max_win_streak))
             .slice(0, 3);
+          const ranks = assignRanksWithTies(sorted, (p: any) => Number(p.max_win_streak));
           sorted.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('hot_streak', index + 1, player.id),
+              id: createAwardId('hot_streak', ranks[index], player.id),
               playerId: player.id,
               playerName: player.friendly_name,
               category: 'hot_streak',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(ranks[index]),
               year: null,
               value: Number(player.max_win_streak),
               awardedAt: new Date().toISOString(),
@@ -266,13 +299,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
           const sorted = unbeatenStreaksResult.data
             .sort((a: any, b: any) => Number(b.max_unbeaten_streak) - Number(a.max_unbeaten_streak))
             .slice(0, 3);
+          const ranks = assignRanksWithTies(sorted, (p: any) => Number(p.max_unbeaten_streak));
           sorted.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('the_wall', index + 1, player.id),
+              id: createAwardId('the_wall', ranks[index], player.id),
               playerId: player.id,
               playerName: player.friendly_name,
               category: 'the_wall',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(ranks[index]),
               year: null,
               value: Number(player.max_unbeaten_streak),
               awardedAt: new Date().toISOString(),
@@ -285,13 +319,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
           const sorted = capsResult.data
             .sort((a: any, b: any) => Number(b.total_games) - Number(a.total_games))
             .slice(0, 3);
+          const ranks = assignRanksWithTies(sorted, (p: any) => Number(p.total_games));
           sorted.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('appearance_king', index + 1, player.id),
+              id: createAwardId('appearance_king', ranks[index], player.id),
               playerId: player.id,
               playerName: player.friendly_name,
               category: 'appearance_king',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(ranks[index]),
               year: null,
               value: Number(player.total_games),
               awardedAt: new Date().toISOString(),
@@ -327,15 +362,16 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
             .sort((a, b) => b.chemistryScore - a.chemistryScore)
             .slice(0, 3);
 
+          const pairRanks = assignRanksWithTies(pairs, (p: any) => p.chemistryScore);
           pairs.forEach((pair, index: number) => {
             allAwards.push({
-              id: createAwardId('dynamic_duo', index + 1, pair.player1_id),
+              id: createAwardId('dynamic_duo', pairRanks[index], pair.player1_id),
               playerId: pair.player1_id,
               playerName: pair.player1_name,
               partnerId: pair.player2_id,
               partnerName: pair.player2_name,
               category: 'dynamic_duo',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(pairRanks[index]),
               year: null,
               value: pair.chemistryScore,
               wins: Number(pair.wins_together),
@@ -370,15 +406,16 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
             .sort((a, b) => b.curseScore - a.curseScore)
             .slice(0, 3);
 
+          const cursedPairRanks = assignRanksWithTies(cursedPairs, (p: any) => p.curseScore);
           cursedPairs.forEach((pair, index: number) => {
             allAwards.push({
-              id: createAwardId('cursed_duos', index + 1, pair.player1_id),
+              id: createAwardId('cursed_duos', cursedPairRanks[index], pair.player1_id),
               playerId: pair.player1_id,
               playerName: pair.player1_name,
               partnerId: pair.player2_id,
               partnerName: pair.player2_name,
               category: 'cursed_duos',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(cursedPairRanks[index]),
               year: null,
               value: pair.curseScore,
               wins: Number(pair.wins_together),
@@ -399,15 +436,16 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
             .sort((a: any, b: any) => Number(b.games_together) - Number(a.games_together))
             .slice(0, 3);
 
+          const buddyRanks = assignRanksWithTies(buddies, (b: any) => Number(b.games_together));
           buddies.forEach((buddy: any, index: number) => {
             allAwards.push({
-              id: createAwardId('best_buddies', index + 1, buddy.id),
+              id: createAwardId('best_buddies', buddyRanks[index], buddy.id),
               playerId: buddy.id,
               playerName: buddy.friendly_name,
               partnerId: buddy.buddy_id,
               partnerName: buddy.buddy_friendly_name,
               category: 'best_buddies',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(buddyRanks[index]),
               year: null,
               value: Number(buddy.games_together),
               gamesTogether: Number(buddy.games_together),
@@ -447,15 +485,16 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
             .sort((a, b) => b.rivalryScore - a.rivalryScore)
             .slice(0, 3);
 
+          const rivalryRanks = assignRanksWithTies(rivalriesWithScore, (r: any) => r.rivalryScore);
           rivalriesWithScore.forEach((rivalry, index: number) => {
             allAwards.push({
-              id: createAwardId('fiercest_rivalry', index + 1, rivalry.player1_id),
+              id: createAwardId('fiercest_rivalry', rivalryRanks[index], rivalry.player1_id),
               playerId: rivalry.player1_id,
               playerName: rivalry.player1_name,
               partnerId: rivalry.player2_id,
               partnerName: rivalry.player2_name,
               category: 'fiercest_rivalry',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(rivalryRanks[index]),
               year: null,
               value: rivalry.rivalryScore, // Weighted score: dominance × confidence
               wins: Number(rivalry.player1_wins),
@@ -495,9 +534,10 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
             .sort((a, b) => b.trioScore - a.trioScore)
             .slice(0, 3);
 
+          const trioRanks = assignRanksWithTies(triosWithScore, (t: any) => t.trioScore);
           triosWithScore.forEach((trio, index: number) => {
             allAwards.push({
-              id: createAwardId('dream_team_trio', index + 1, trio.player1_id),
+              id: createAwardId('dream_team_trio', trioRanks[index], trio.player1_id),
               playerId: trio.player1_id,
               playerName: trio.player1_name,
               partnerId: trio.player2_id,
@@ -505,7 +545,7 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
               partner2Id: trio.player3_id,
               partner2Name: trio.player3_name,
               category: 'dream_team_trio',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(trioRanks[index]),
               year: null,
               value: trio.trioScore,
               wins: Number(trio.wins),
@@ -543,9 +583,10 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
             .sort((a, b) => b.curseScore - a.curseScore)
             .slice(0, 3);
 
+          const cursedTrioRanks = assignRanksWithTies(cursedTriosWithScore, (t: any) => t.curseScore);
           cursedTriosWithScore.forEach((trio, index: number) => {
             allAwards.push({
-              id: createAwardId('cursed_trio', index + 1, trio.player1_id),
+              id: createAwardId('cursed_trio', cursedTrioRanks[index], trio.player1_id),
               playerId: trio.player1_id,
               playerName: trio.player1_name,
               partnerId: trio.player2_id,
@@ -553,7 +594,7 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
               partner2Id: trio.player3_id,
               partner2Name: trio.player3_name,
               category: 'cursed_trio',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(cursedTrioRanks[index]),
               year: null,
               value: trio.curseScore,
               wins: Number(trio.wins),
@@ -573,13 +614,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
             .sort((a: any, b: any) => Number(b.team_frequency) - Number(a.team_frequency))
             .slice(0, 3);
 
+          const blueRanks = assignRanksWithTies(blueTeam, (p: any) => Number(p.team_frequency));
           blueTeam.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('blue_blood', index + 1, player.id),
+              id: createAwardId('blue_blood', blueRanks[index], player.id),
               playerId: player.id,
               playerName: player.friendly_name,
               category: 'blue_blood',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(blueRanks[index]),
               year: null,
               value: Number(player.team_frequency) * 100, // Convert to percentage
               awardedAt: new Date().toISOString(),
@@ -591,13 +633,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
             .sort((a: any, b: any) => Number(b.team_frequency) - Number(a.team_frequency))
             .slice(0, 3);
 
+          const orangeRanks = assignRanksWithTies(orangeTeam, (p: any) => Number(p.team_frequency));
           orangeTeam.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('dutch_master', index + 1, player.id),
+              id: createAwardId('dutch_master', orangeRanks[index], player.id),
               playerId: player.id,
               playerName: player.friendly_name,
               category: 'dutch_master',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(orangeRanks[index]),
               year: null,
               value: Number(player.team_frequency) * 100, // Convert to percentage
               awardedAt: new Date().toISOString(),
@@ -608,13 +651,15 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
         // Process Super Sub (reserve appearances)
         // Fall back to direct query since RPC may not exist
         if (superSubResult.data && !superSubResult.error) {
-          superSubResult.data.slice(0, 3).forEach((player: any, index: number) => {
+          const superSubData = superSubResult.data.slice(0, 3);
+          const superSubRanks = assignRanksWithTies(superSubData, (p: any) => Number(p.reserve_count || p.total_games));
+          superSubData.forEach((player: any, index: number) => {
             allAwards.push({
-              id: createAwardId('super_sub', index + 1, player.id || player.player_id),
+              id: createAwardId('super_sub', superSubRanks[index], player.id || player.player_id),
               playerId: player.id || player.player_id,
               playerName: player.friendly_name,
               category: 'super_sub',
-              medalType: getMedalType(index + 1),
+              medalType: getMedalType(superSubRanks[index]),
               year: null,
               value: Number(player.reserve_count || player.total_games),
               awardedAt: new Date().toISOString(),
@@ -651,13 +696,14 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
               .sort((a, b) => b.count - a.count)
               .slice(0, 3);
 
+            const fallbackRanks = assignRanksWithTies(sorted, (p: any) => p.count);
             sorted.forEach((player: any, index: number) => {
               allAwards.push({
-                id: createAwardId('super_sub', index + 1, player.player_id),
+                id: createAwardId('super_sub', fallbackRanks[index], player.player_id),
                 playerId: player.player_id,
                 playerName: player.friendly_name,
                 category: 'super_sub',
-                medalType: getMedalType(index + 1),
+                medalType: getMedalType(fallbackRanks[index]),
                 year: null,
                 value: player.count,
                 awardedAt: new Date().toISOString(),
