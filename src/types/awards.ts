@@ -121,6 +121,8 @@ export interface AwardsByCategory {
   category: AwardCategory;
   config: AwardCategoryConfig;
   awards: Award[];
+  /** Optional placeholder message when no data meets threshold requirements */
+  placeholderMessage?: string;
 }
 
 /**

@@ -51,6 +51,8 @@ import XPComparison from './pages/admin/XPComparison'
 import WhatsAppBotHelp from './pages/WhatsAppBotHelp'
 import WeatherDemo from './pages/WeatherDemo'
 import DesignPreview from './pages/DesignPreview'
+import Results from './pages/Results'
+import GameDetail from './pages/GameDetail'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -109,6 +111,8 @@ const App: React.FC = () => {
                 <Route path="/admin/players" element={<Players />} />
                 <Route path="/admin/players/:id" element={<EditPlayer />} />
                 <Route path="/games" element={<Game />} />
+                <Route path="/results" element={<Results />} />
+                <Route path="/results/:sequenceNumber" element={<GameDetail />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin/history" element={<HistoricalGames />} />
                 <Route path="/players" element={<PlayerList />} />

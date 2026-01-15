@@ -18,6 +18,75 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '2.0.0',
+    date: '15/01/2026',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Public Game History & Results',
+            details: "Browse all completed WNF games at /results with filters for year, outcome, and participation. Each game has a dedicated page at /results/WNF# with a Sky Sports-style match report showing score hero, team sheets, match summary, and post-match insights."
+          },
+          {
+            title: 'Individual Game Pages',
+            details: "Click any game to see the full match report including: large score display with winner indicator, game metadata (date, venue, player count), collapsible team sheets showing Blue and Orange rosters, match summary highlights, and filterable post-match insights."
+          },
+          {
+            title: 'Personal Highlights Throughout',
+            details: "When logged in, you're highlighted everywhere: in team sheets (with ring, bold name, and 'You' badge), in match summary (highlighted rows when you're mentioned), and in post-match insights (your insights have primary-colored rings). Makes it easy to spot yourself!"
+          },
+          {
+            title: 'Smart Insights Display',
+            details: "Post-match reports now show the top 12 most important insights by priority, with a 'Show X more insights' button to expand and see everything. Filter by category (Trophies, Streaks, Chemistry, Rivalries, Records) or by specific player."
+          },
+          {
+            title: 'User-Centric Outcome Filters',
+            details: "When filtering to 'Games I Played', the outcome filter changes from 'Blue Wins/Orange Wins' to 'My Wins/My Losses' - making it personal! See your victories and defeats regardless of which team color you were on."
+          },
+          {
+            title: 'WhatsApp Summary Link',
+            details: "When copying the WhatsApp summary from the admin Post-Match Report, it now automatically includes a link to the public game page (e.g., wnf.app/results/127) so players can view the full report online."
+          },
+          {
+            title: 'Login Incentives',
+            details: "Non-logged-in users see prompts to log in for personalized features like 'My Games' filtering and 'My Insights' quick-filter. Links redirect back to the game page after login."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Collapsible Sections',
+            details: "Team Sheets and Post-Match Report sections are now collapsible with smooth animations. Click the header to expand/collapse - great for mobile users or when you just want to see the score."
+          },
+          {
+            title: 'Streamlined Match Summary',
+            details: "Removed redundant score banner from Match Summary since the score is already prominently displayed in the Score Hero at the top. Now shows just the key highlights."
+          },
+          {
+            title: 'Cleaner Team Sheets',
+            details: "Removed caps badges from team sheets - kept the focus on player names and avatars. Your name is highlighted if you played."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: '"You Played" Badge Accuracy',
+            details: "The 'You Played' badge on game cards now correctly shows only when you were actually selected to play or were a reserve - not for other registration statuses like 'registered' or 'dropped_out'."
+          },
+          {
+            title: 'Avatar Rendering',
+            details: "Fixed player avatars in team sheets that weren't displaying correctly. Now properly renders avatar images."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '1.9.0',
     date: '12/01/2026',
     sections: [

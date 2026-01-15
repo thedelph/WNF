@@ -58,7 +58,11 @@ const assignRanksWithTies = <T>(items: T[], getValue: (item: T) => number): numb
 };
 
 // Helper to group awards by category and deduplicate pair/trio awards
-const groupLiveAwardsByCategory = (awards: LiveAward[]): AwardsByCategory[] => {
+// placeholders: map of categoryId to placeholder message for categories without data
+const groupLiveAwardsByCategory = (
+  awards: LiveAward[],
+  placeholders: Map<AwardCategory, string> = new Map()
+): AwardsByCategory[] => {
   const grouped: AwardsByCategory[] = [];
 
   for (const categoryId of AWARD_CATEGORY_ORDER) {
@@ -89,7 +93,10 @@ const groupLiveAwardsByCategory = (awards: LiveAward[]): AwardsByCategory[] => {
       });
     }
 
-    if (categoryAwards.length > 0) {
+    const placeholderMessage = placeholders.get(categoryId);
+
+    // Include category if it has awards OR has a placeholder message
+    if (categoryAwards.length > 0 || placeholderMessage) {
       grouped.push({
         category: categoryId,
         config: config,
@@ -97,6 +104,7 @@ const groupLiveAwardsByCategory = (awards: LiveAward[]): AwardsByCategory[] => {
           const medalOrder = { gold: 0, silver: 1, bronze: 2 };
           return medalOrder[a.medalType] - medalOrder[b.medalType];
         }),
+        placeholderMessage: categoryAwards.length === 0 ? placeholderMessage : undefined,
       });
     }
   }
@@ -190,6 +198,8 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
         ]);
 
         const allAwards: LiveAward[] = [];
+        // Track placeholder messages for categories that don't meet thresholds
+        const placeholders = new Map<AwardCategory, string>();
 
         // Process XP Champion
         if (xpResult.data) {
@@ -212,26 +222,34 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
 
         // Process Win Rate Leader
         if (winRatesResult.data) {
+          // Filter out players who don't meet minimum games threshold (win_rate is null)
           const sorted = winRatesResult.data
+            .filter((p: any) => p.win_rate !== null)
             .sort((a: any, b: any) => Number(b.win_rate) - Number(a.win_rate))
             .slice(0, 3);
-          const ranks = assignRanksWithTies(sorted, (p: any) => Number(p.win_rate));
-          sorted.forEach((player: any, index: number) => {
-            allAwards.push({
-              id: createAwardId('win_rate_leader', ranks[index], player.id),
-              playerId: player.id,
-              playerName: player.friendly_name,
-              category: 'win_rate_leader',
-              medalType: getMedalType(ranks[index]),
-              year: null,
-              value: Number(player.win_rate),
-              wins: Number(player.wins),
-              draws: Number(player.draws),
-              losses: Number(player.losses),
-              gamesTogether: Number(player.total_games),
-              awardedAt: new Date().toISOString(),
+
+          if (sorted.length === 0) {
+            // No one meets the 10-game minimum threshold yet
+            placeholders.set('win_rate_leader', 'Check back after 10 even-team games have been played');
+          } else {
+            const ranks = assignRanksWithTies(sorted, (p: any) => Number(p.win_rate));
+            sorted.forEach((player: any, index: number) => {
+              allAwards.push({
+                id: createAwardId('win_rate_leader', ranks[index], player.id),
+                playerId: player.id,
+                playerName: player.friendly_name,
+                category: 'win_rate_leader',
+                medalType: getMedalType(ranks[index]),
+                year: null,
+                value: Number(player.win_rate),
+                wins: Number(player.wins),
+                draws: Number(player.draws),
+                losses: Number(player.losses),
+                gamesTogether: Number(player.total_games),
+                awardedAt: new Date().toISOString(),
+              });
             });
-          });
+          }
         }
 
         // Process Net Positive (goal differentials)
@@ -713,7 +731,7 @@ export const useLiveAwards = (yearFilter: 'all' | number = 'all') => {
         }
 
         setAwards(allAwards);
-        setAwardsByCategory(groupLiveAwardsByCategory(allAwards));
+        setAwardsByCategory(groupLiveAwardsByCategory(allAwards, placeholders));
       } catch (err) {
         console.error('Error fetching live awards:', err);
         setError('Failed to load live awards');

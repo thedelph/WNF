@@ -44,6 +44,11 @@ const Header: React.FC = () => {
         </Link>
       </li>
       <li>
+        <Link to="/results" onClick={() => setIsMenuOpen(false)} className="transition-colors duration-200">
+          Results
+        </Link>
+      </li>
+      <li>
         <Link to="/players" onClick={() => setIsMenuOpen(false)} className="transition-colors duration-200">
           Players
         </Link>

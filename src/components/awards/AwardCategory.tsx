@@ -34,7 +34,7 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export const AwardCategory = ({ category, index }: AwardCategoryProps) => {
-  const { config, awards } = category;
+  const { config, awards, placeholderMessage } = category;
   const IconComponent = iconMap[config.icon] || Trophy;
   const gradientClass = getCategoryGradient(config.id);
   const shadowClass = getCategoryShadow(config.id);
@@ -55,9 +55,17 @@ export const AwardCategory = ({ category, index }: AwardCategoryProps) => {
           <IconComponent className="w-6 h-6 drop-shadow-[0_0_2px_rgba(0,0,0,0.3)]" />
         </div>
 
-        {/* Winners podium */}
+        {/* Winners podium or placeholder */}
         <div className="mb-4">
-          <AwardPodium awards={awards} config={config} />
+          {awards.length > 0 ? (
+            <AwardPodium awards={awards} config={config} />
+          ) : placeholderMessage ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-sm opacity-80 text-center italic drop-shadow-[0_0_1px_rgba(0,0,0,0.5)]">
+                {placeholderMessage}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         {/* Description */}

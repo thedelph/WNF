@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BiUser } from 'react-icons/bi'
 import { FiEdit, FiTrash2 } from 'react-icons/fi'
 import { FaCalendar, FaClock, FaMapMarkerAlt, FaExclamationTriangle, FaUsers } from 'react-icons/fa'
+import { FileText } from 'lucide-react'
 import { supabaseAdmin } from '../../../../utils/supabase'
 import { toast } from 'react-hot-toast'
 import { Game } from '../../../../types/game'
 import EditGameModal from './EditGameModal'
+import { PostMatchReport } from '../../../game/PostMatchReport'
 import { formatDate, formatTime } from '../../../../utils/dateUtils'
 
 interface Props {
@@ -18,6 +20,7 @@ interface Props {
 
 const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showPlayers, setShowPlayers] = useState(false)
 
@@ -265,6 +268,13 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
           {/* Action Buttons */}
           <div className="flex gap-2">
             <button
+              onClick={() => setShowReportModal(true)}
+              className="btn btn-ghost btn-sm text-primary"
+              title="View Match Report"
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+            <button
               onClick={() => setShowEditModal(true)}
               className="btn btn-ghost btn-sm"
               title="Edit Game"
@@ -342,6 +352,14 @@ const GameCard: React.FC<Props> = ({ game, onGameDeleted }) => {
           onGameUpdated={onGameDeleted}
         />
       )}
+
+      {/* Post-Match Report Modal */}
+      <PostMatchReport
+        gameId={game.id}
+        sequenceNumber={game.sequence_number}
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+      />
     </motion.div>
   )
 }

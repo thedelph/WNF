@@ -11,6 +11,7 @@ import { PlayerSearch } from './PlayerSearch'
 import { Tooltip } from '../../../components/ui/Tooltip'
 import { StatusChangeHistory } from './StatusChangeHistory'
 import { TokenUsageSection } from './TokenUsageSection'
+import { PostMatchReport } from '../../game/PostMatchReport'
 import { useNavigate } from 'react-router-dom'
 
 const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplete }) => {
@@ -23,6 +24,8 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
   const [gameDate] = useState<Date>(new Date(game.date))
   const [statusChanges, setStatusChanges] = useState<StatusChange[]>([])
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({})
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [completedGameId, setCompletedGameId] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -467,8 +470,37 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
 
       if (error) throw error
 
-      toast.success('Game completed successfully')
-      navigate('/admin/games')
+      // Fetch post-match insights for toast
+      const { data: insightsData } = await supabaseAdmin
+        .rpc('get_post_match_analysis', { p_game_id: game.id })
+
+      const topInsights = (insightsData || []).slice(0, 2)
+
+      if (topInsights.length > 0) {
+        toast.success(
+          <div>
+            <div className="font-bold mb-1">Game #{game.sequence_number} completed!</div>
+            {topInsights.map((insight: { headline: string }, i: number) => (
+              <div key={i} className="text-sm">{insight.headline}</div>
+            ))}
+            <button
+              className="btn btn-xs btn-primary mt-2"
+              onClick={() => {
+                setCompletedGameId(game.id)
+                setShowReportModal(true)
+              }}
+            >
+              View Full Report
+            </button>
+          </div>,
+          { duration: 8000 }
+        )
+      } else {
+        toast.success('Game completed successfully')
+      }
+
+      // Don't navigate away immediately - let user see the report
+      setCompletedGameId(game.id)
     } catch (error) {
       console.error('Error completing game:', error)
       toast.error('Failed to complete game')
@@ -590,16 +622,46 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
           </div>
         </div>
 
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className={`btn btn-primary ${loading ? 'loading' : ''}`}
-            disabled={loading}
-          >
-            Complete Game
-          </button>
+        <div className="flex justify-end gap-2">
+          {completedGameId && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowReportModal(true)}
+            >
+              View Match Report
+            </button>
+          )}
+          {completedGameId && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => navigate('/admin/games')}
+            >
+              Done
+            </button>
+          )}
+          {!completedGameId && (
+            <button
+              type="submit"
+              className={`btn btn-primary ${loading ? 'loading' : ''}`}
+              disabled={loading}
+            >
+              Complete Game
+            </button>
+          )}
         </div>
       </form>
+
+      {/* Post-Match Report Modal */}
+      {completedGameId && (
+        <PostMatchReport
+          gameId={completedGameId}
+          sequenceNumber={game.sequence_number}
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+        />
+      )}
     </div>
   )
 }
