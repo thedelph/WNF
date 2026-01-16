@@ -1,7 +1,7 @@
 # Trio Chemistry System
 
-**Last Updated:** January 7, 2026
-**Version:** 1.0
+**Last Updated:** January 16, 2026
+**Version:** 1.1
 
 ## Overview
 
@@ -189,6 +189,42 @@ Recognizes the best-performing 3-player combination.
 Recognizes the worst-performing 3-player combination (most consistent losers).
 
 See: [Awards System](/docs/features/AwardsSystem.md)
+
+## Post-Match Insight Types
+
+When a game is completed, the post-match analysis generates trio-related insights:
+
+| Type | Trigger | Priority | Description |
+|------|---------|----------|-------------|
+| `trio_dream_team` | 65%+ win rate (5+ games) | 3 | Highlights high-performing trios that won together |
+| `trio_cursed` | ≤35% win rate (5+ games) | 4 | Highlights underperforming trios that lost together |
+
+**Example Headlines:**
+- "Dream team: Phil/Simon/Chris win again (70%)"
+- "Cursed trio: Dom/James/Calvin lose again (30%)"
+
+See: [Post-Match Insights](PostMatchInsights.md) for full insight type catalog
+
+## TopTrios Component Messaging
+
+**Location:** `src/components/profile/TopTrios.tsx`
+
+Displays contextual messages based on trio win rate tiers:
+
+| Tier | Win Rate | Example Messages |
+|------|----------|------------------|
+| Dream Team | 80%+ | "The holy trinity of WNF!", "Unstoppable trio. Just accept it." |
+| Elite | 70-80% | "This trio is box office every time.", "A dangerous three to leave together." |
+| Good | 60-70% | "A reliable trio that gets results.", "Solid partnership - keep the band together!" |
+| Average | 50-60% | "A trio that holds its own.", "Work in progress, but potential is there." |
+| Poor | 40-50% | "Some teething problems as a trio.", "The chemistry is still cooking..." |
+| Cursed | <40% | "The anti-chemistry special.", "Cursed trio energy. Avoid at all costs." |
+
+**Color Coding:**
+- 70%+ win rate: `text-success` (green)
+- 50-70%: `text-info` (blue)
+- 40-50%: `text-warning` (yellow)
+- <40%: `text-error` (red)
 
 ## Comparison with Chemistry System
 

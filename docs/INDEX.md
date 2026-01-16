@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-01-16 (Post-Match Insights v2.1 - new filter tabs, WhatsApp summary improvements)
+**Last Updated:** 2026-01-16 (Post-Match Analysis documentation - new component docs, updated feature docs)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -106,6 +106,10 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Registered Players](components/RegisteredPlayers.md)** - Selection odds, zones, visual indicators
 - **[Token Management](components/TokenManagement.md)** - Admin token interface
 - **[Comprehensive Stats Table](components/ComprehensiveStatsTable.md)** - Advanced stats table
+
+### Results Components
+- **[MatchSummary](components/MatchSummaryComponent.md)** - WhatsApp summary display with emoji mapping *(New Jan 2026)*
+- **[InsightsSection](components/InsightsSectionComponent.md)** - Filterable post-match insights display *(New Jan 2026)*
 
 ### Other Components
 - **[XP Breakdown](components/XPBreakdown.md)** - XP source breakdown

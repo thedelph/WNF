@@ -1,7 +1,7 @@
 # Awards System (Hall of Fame)
 
-**Last Updated:** January 7, 2026
-**Version:** 1.0
+**Last Updated:** January 16, 2026
+**Version:** 1.1
 
 ## Overview
 
@@ -207,9 +207,60 @@ CREATE TABLE awards (
 );
 ```
 
+## Post-Match Trophy Tracking
+
+When games are completed, the post-match analysis generates trophy-related insights to track Hall of Fame changes.
+
+### Trophy Insight Types
+
+| Type | Trigger | Priority | Example |
+|------|---------|----------|---------|
+| `trophy_change` | Medal position change | 2 | "Phil R takes gold for Appearance King" |
+| `trophy_new` | New medal earned | 2 | "Simon enters Hall of Fame: Win Rate Leader bronze" |
+| `trophy_extended` | Medal held again | 3 | "Chris holds Win Rate Leader gold for 3rd game" |
+| `trophy_defended` | Medal defended after threat | 3 | "Chris defends Iron Man gold" |
+| `award_defending_champion` | Won same award last year | 3 | "Defending champion: Chris won Iron Man gold in 2025" |
+
+### How Trophy Tracking Works
+
+1. **Pre-game snapshot**: Before awards regeneration, current medal positions are captured
+2. **Awards regeneration**: `regenerate_all_awards()` recalculates all 16 award categories
+3. **Post-game comparison**: New positions compared against snapshot
+4. **Insight generation**: Changes detected become `trophy_*` insights
+
+### Award Regeneration
+
+Awards auto-regenerate on game completion via the `on_game_complete` trigger chain:
+1. Game marked as `completed`
+2. Trigger fires `regenerate_all_awards()` RPC
+3. Trophy changes detected and insights created
+4. WhatsApp summary generated with trophy highlights
+
+### useLiveAwards Hook
+
+**Location:** `src/hooks/useLiveAwards.ts`
+
+Fetches live award standings across all 16 categories:
+
+```typescript
+const {
+  awards,       // Award[] - All awards
+  loading,      // boolean
+  error,        // string | null
+  awardsByCategory, // Record<AwardCategory, Award[]>
+  refresh,      // () => Promise<void>
+} = useLiveAwards(yearFilter);
+```
+
+Features:
+- Real-time calculation for all-time standings
+- Cached yearly data
+- Supports year filtering or all-time view
+
 ## Related Documentation
 
 - [Player Chemistry](/docs/features/PlayerChemistry.md) - Pair chemistry (Dynamic Duo, Cursed Duos)
 - [Rivalry System](/docs/features/RivalrySystem.md) - Head-to-head (Fiercest Rivalry)
 - [Trio Chemistry](/docs/features/TrioChemistry.md) - Trio awards (Dream Team, Cursed Trio)
 - [XP System v2](/docs/features/XPSystemv2.md) - XP Champion calculations
+- [Post-Match Insights](/docs/features/PostMatchInsights.md) - Trophy insight generation

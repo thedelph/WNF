@@ -1,7 +1,7 @@
 # Public Game Results
 
-**Last Updated:** January 15, 2026
-**Version:** 2.0.0
+**Last Updated:** January 16, 2026
+**Version:** 2.1.0
 
 ## Overview
 
@@ -231,13 +231,29 @@ Sky Sports-style large score display.
 
 **Location:** `src/components/results/MatchSummary.tsx`
 
-Displays WhatsApp summary highlights as numbered cards.
+Displays WhatsApp summary highlights as numbered cards with contextual emojis.
 
 **Features:**
 - Parses numbered format (1. highlight, 2. highlight, etc.)
+- Contextual emoji mapping (~40 keywords organized by category)
 - Highlights current user's name in primary color
-- Links player names to profiles using regex detection
-- Animated card entrance
+- "You" badge on cards mentioning current user
+- Collapsible section with highlight count badge
+- Animated card entrance (framer-motion)
+
+**Emoji Categories:**
+| Category | Example Keywords | Emoji |
+|----------|-----------------|-------|
+| Trophy | gold, silver, bronze, champion | 🥇🥈🥉🏆 |
+| Streak | on fire, in a row, streak ended, drought | 🔥💔🛡️🏜️ |
+| Chemistry | together, cursed, dream team | 🤝💀👑 |
+| Rivalry | nemesis, rivalry, revenge | 😈⚔️🎯 |
+| Game | goal fest, nail-biter, clean sheet | ⚽😬🧤 |
+| Appearance | debut, welcome back, iron man | ⭐👋🏃 |
+| Team Color | blue dominance, orange dominance | 💙🧡 |
+| Milestone | milestone, century, reaches | 🎖️💯 |
+
+See: [MatchSummary Component](../components/MatchSummaryComponent.md) for full emoji mapping
 
 ### TeamRoster
 
@@ -257,25 +273,50 @@ Collapsible team sheets for Blue, Orange, and Reserve players.
 
 **Location:** `src/components/results/InsightsSection.tsx`
 
-Filterable post-match insights display.
+Filterable post-match insights display with 8 category tabs.
 
 **Features:**
 - Collapsible section with insight count badge
-- Category tabs: All, Trophies, Streaks, Chemistry, Rivalries, Records
+- 8 category filter tabs with count badges
 - Player filter dropdown
 - "My Insights" quick filter button (logged-in users)
-- Priority-based card styling
+- Priority-based card styling with medal colors for trophies
 - Show more/less functionality (initially 12 insights)
-- Login prompt for non-logged-in users
+- Confidence badges for percentage-based insights
+- Dynamic confidence thresholds from database
 
-**Filter Categories:**
-| Category | Analysis Types |
-|----------|---------------|
-| Trophies | `trophy_*` |
-| Streaks | `*streak*`, `team_streak` |
-| Chemistry | `*chemistry*`, `*trio*`, `*partnership*` |
-| Rivalries | `*rivalry*` |
-| Records | `*record*`, `*milestone*`, `*personal_best*` |
+**Filter Categories (8 tabs):**
+| ID | Label | Icon | Analysis Types |
+|----|-------|------|---------------|
+| `all` | All | Sparkles | All insights |
+| `trophies` | Trophies | Trophy | `trophy_*`, `award_*` |
+| `streaks` | Streaks | Flame | `*streak*`, `team_streak`, `injury_token_*` |
+| `chemistry` | Chemistry | Users | `*chemistry*`, `*trio*`, `*partnership*` |
+| `rivalries` | Rivalries | Swords | `*rivalry*`, `never_beaten_rivalry`, `first_ever_win_nemesis` |
+| `appearances` | Appearances | UserPlus | `debut_appearance`, `return_after_absence`, `first_game_back_win`, `bench_warmer_promoted` |
+| `game` | Game | Gamepad2 | `game_record`, `blowout_game`, `shutout_game`, `team_color_*`, `low_scoring_game`, `team_best_score`, `player_color_curse` |
+| `milestones` | Milestones | Target | `*milestone*`, `*personal_best*` |
+
+**Confidence Badges:**
+For percentage-based insights (chemistry, rivalries, team color stats):
+- **High** (green badge) - Top third sample size for the insight type
+- **Med** (yellow badge) - Middle third sample size
+- **Low** (red badge) - Bottom third sample size
+
+Thresholds are dynamic, calculated from `get_confidence_thresholds()` RPC based on actual data distribution (33rd/67th percentiles).
+
+**Priority-Based Styling:**
+| Condition | Border | Background |
+|-----------|--------|------------|
+| User involved | primary | primary/10 + ring |
+| Trophy gold (1st) | yellow-500 | yellow-500/10 |
+| Trophy silver (2nd) | gray-400 | gray-400/10 |
+| Trophy bronze (3rd) | amber-600 | amber-600/10 |
+| Priority 1-2 | warning | warning/5 |
+| Priority 3 | primary | primary/5 |
+| Priority 4-5 | base-300 | (none) |
+
+See: [InsightsSection Component](../components/InsightsSectionComponent.md) for detailed implementation
 
 ## Responsive Design
 
