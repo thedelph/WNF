@@ -196,6 +196,8 @@ await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 - **[XP System v1](/docs/XPSystemExplained.md)** - Legacy system (pre-Jan 2026)
 
 ### Recent Major Features (2026)
+- **[Public Game Results](/docs/features/PublicGameResults.md)** (Jan 2026) - Results list + game detail pages with insights
+- **[Post-Match Insights](/docs/features/PostMatchInsights.md)** (Jan 2026) - Automated insight generation (streaks, chemistry, rivalries)
 - **[Login Incentives](/docs/features/LoginIncentivesSystem.md)** (Jan 2026) - Locked content, user highlighting, login CTAs
 - **[Rivalry System](/docs/features/RivalrySystem.md)** (Jan 2026) - Head-to-head cross-team performance tracking
 - **[Trio Chemistry](/docs/features/TrioChemistry.md)** (Jan 2026) - 3-player synergy tracking

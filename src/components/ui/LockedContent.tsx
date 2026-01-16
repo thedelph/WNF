@@ -33,7 +33,7 @@ export const LockedContent: React.FC<LockedContentProps> = ({
   }[blurIntensity];
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full overflow-hidden rounded-box">
       {/* Blurred content layer */}
       <div
         className={`${blurClass} pointer-events-none select-none`}
@@ -43,7 +43,7 @@ export const LockedContent: React.FC<LockedContentProps> = ({
       </div>
 
       {/* Overlay with CTA */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-base-100/80 backdrop-blur-sm rounded-box">
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-base-100/80 backdrop-blur-sm">
         <div className="text-center p-6 max-w-xs">
           <FaLock className="text-4xl text-primary mx-auto mb-3" />
           <h3 className="font-bold text-lg text-base-content">{title}</h3>

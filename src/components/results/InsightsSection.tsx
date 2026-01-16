@@ -6,13 +6,13 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Trophy, Flame, Users, Swords, Medal, User, Filter, ChevronDown, ChevronUp, LogIn } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import { PostMatchInsight, getInsightEmoji } from '../../hooks/usePostMatchAnalysis';
+import { Sparkles, Trophy, Flame, Users, Swords, Medal, User, Filter, ChevronDown, ChevronUp, UserPlus, Gamepad2, Target } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { PostMatchInsight, getInsightEmoji, useConfidenceThresholds, ConfidenceThreshold } from '../../hooks/usePostMatchAnalysis';
 import { useUser } from '../../hooks/useUser';
 import { useAuth } from '../../context/AuthContext';
 
-type InsightFilter = 'all' | 'trophies' | 'streaks' | 'chemistry' | 'rivalries' | 'records';
+type InsightFilter = 'all' | 'trophies' | 'streaks' | 'chemistry' | 'rivalries' | 'appearances' | 'game' | 'milestones';
 
 // Player info for the filter dropdown
 export interface GamePlayer {
@@ -29,11 +29,51 @@ interface InsightsSectionProps {
 
 // Map analysis types to filter categories
 const getFilterCategory = (analysisType: string): InsightFilter => {
-  if (analysisType.startsWith('trophy_')) return 'trophies';
-  if (analysisType.includes('streak') || analysisType.includes('team_streak')) return 'streaks';
+  // Trophy insights (Hall of Fame changes + year-over-year awards)
+  if (analysisType.startsWith('trophy_') || analysisType.startsWith('award_')) return 'trophies';
+
+  // Streak insights (win/loss/unbeaten/attendance streaks + injury token stats)
+  if (
+    analysisType.includes('streak') ||
+    analysisType.includes('team_streak') ||
+    analysisType === 'injury_token_used' ||
+    analysisType === 'injury_token_return'
+  ) return 'streaks';
+
+  // Chemistry insights (partnerships, duos, trios)
   if (analysisType.includes('chemistry') || analysisType.includes('trio') || analysisType.includes('partnership')) return 'chemistry';
-  if (analysisType.includes('rivalry')) return 'rivalries';
-  if (analysisType.includes('record') || analysisType.includes('milestone') || analysisType.includes('personal_best')) return 'records';
+
+  // Rivalry insights (head-to-head matchups)
+  if (analysisType.includes('rivalry') || analysisType === 'never_beaten_rivalry' || analysisType === 'first_ever_win_nemesis') return 'rivalries';
+
+  // Appearance insights (debuts, returns, bench promotions)
+  if (
+    analysisType === 'debut_appearance' ||
+    analysisType === 'return_after_absence' ||
+    analysisType === 'first_game_back_win' ||
+    analysisType === 'bench_warmer_promoted'
+  ) return 'appearances';
+
+  // Game insights (game-level events: scores, team colors, dominance)
+  if (
+    analysisType === 'game_record' ||
+    analysisType === 'blowout_game' ||
+    analysisType === 'shutout_game' ||
+    analysisType === 'team_color_loyalty' ||
+    analysisType === 'team_color_switch' ||
+    analysisType === 'low_scoring_game' ||
+    analysisType === 'team_best_score' ||
+    analysisType === 'team_color_dominance' ||
+    analysisType === 'team_color_streak_broken' ||
+    analysisType === 'player_color_curse'
+  ) return 'game';
+
+  // Milestone insights (personal achievements)
+  if (
+    analysisType.includes('milestone') ||
+    analysisType.includes('personal_best')
+  ) return 'milestones';
+
   return 'all';
 };
 
@@ -44,7 +84,9 @@ const FILTERS: { id: InsightFilter; label: string; icon: React.ReactNode; shortL
   { id: 'streaks', label: 'Streaks', shortLabel: 'Streak', icon: <Flame className="w-4 h-4" /> },
   { id: 'chemistry', label: 'Chemistry', shortLabel: 'Chem', icon: <Users className="w-4 h-4" /> },
   { id: 'rivalries', label: 'Rivalries', shortLabel: 'Rival', icon: <Swords className="w-4 h-4" /> },
-  { id: 'records', label: 'Records', shortLabel: 'Record', icon: <Medal className="w-4 h-4" /> },
+  { id: 'appearances', label: 'Appearances', shortLabel: 'Appear', icon: <UserPlus className="w-4 h-4" /> },
+  { id: 'game', label: 'Game', shortLabel: 'Game', icon: <Gamepad2 className="w-4 h-4" /> },
+  { id: 'milestones', label: 'Milestones', shortLabel: 'Miles', icon: <Target className="w-4 h-4" /> },
 ];
 
 export const InsightsSection: React.FC<InsightsSectionProps> = ({
@@ -55,7 +97,7 @@ export const InsightsSection: React.FC<InsightsSectionProps> = ({
 }) => {
   const { user } = useAuth();
   const { player: currentPlayer } = useUser();
-  const location = useLocation();
+  const { thresholds: confidenceThresholds } = useConfidenceThresholds();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [activeFilter, setActiveFilter] = useState<InsightFilter>('all');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('all');
@@ -148,7 +190,9 @@ export const InsightsSection: React.FC<InsightsSectionProps> = ({
       streaks: 0,
       chemistry: 0,
       rivalries: 0,
-      records: 0,
+      appearances: 0,
+      game: 0,
+      milestones: 0,
     };
 
     insights.forEach(insight => {
@@ -221,42 +265,26 @@ export const InsightsSection: React.FC<InsightsSectionProps> = ({
             <div className="space-y-4">
               {/* Filter Controls */}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                {/* Login prompt for non-logged-in users */}
-                {!user && (
-                  <div className="flex items-center gap-2 text-sm text-base-content/70">
-                    <LogIn className="w-4 h-4" />
-                    <span>
-                      <Link
-                        to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
-                        className="link link-primary"
-                      >
-                        Log in
-                      </Link>{' '}
-                      to filter insights about you
-                    </span>
-                  </div>
-                )}
-
                 {/* Player Filter Controls */}
                 <div className="flex items-center gap-2 ml-auto">
-                  {/* Message when logged in but no insights (didn't play) */}
-                  {user && currentPlayer && currentUserInsightCount === 0 && (
-                    <span className="text-xs text-base-content/50 hidden sm:inline">
-                      No personal insights (you didn't play)
-                    </span>
-                  )}
-
-                  {/* Quick "My Insights" button - only for logged-in users with insights */}
-                  {user && currentPlayer && currentUserInsightCount > 0 && (
+                  {/* Quick "My Insights" button - for logged-in users */}
+                  {user && currentPlayer && (
                     <button
-                      onClick={() => setSelectedPlayerId(
+                      onClick={() => currentUserInsightCount > 0 && setSelectedPlayerId(
                         selectedPlayerId === currentPlayer.id ? 'all' : currentPlayer.id
                       )}
+                      disabled={currentUserInsightCount === 0}
                       className={`btn btn-sm gap-1 ${
-                        selectedPlayerId === currentPlayer.id ? 'btn-primary' : 'btn-ghost'
+                        currentUserInsightCount === 0
+                          ? 'btn-ghost opacity-50 cursor-not-allowed'
+                          : selectedPlayerId === currentPlayer.id
+                            ? 'btn-primary'
+                            : 'btn-ghost'
                       }`}
+                      title={currentUserInsightCount === 0 ? "You didn't play in this game" : undefined}
                     >
                       <User className="w-4 h-4" />
+                      <span className="sm:hidden">Mine</span>
                       <span className="hidden sm:inline">My Insights</span>
                       <span className="badge badge-xs">{currentUserInsightCount}</span>
                     </button>
@@ -294,7 +322,7 @@ export const InsightsSection: React.FC<InsightsSectionProps> = ({
                             >
                               {player.friendly_name}
                               {player.id === currentPlayer?.id && (
-                                <span className="badge badge-xs badge-primary">You</span>
+                                <span className="badge badge-xs badge-primary text-primary-content">You</span>
                               )}
                             </a>
                           </li>
@@ -335,7 +363,7 @@ export const InsightsSection: React.FC<InsightsSectionProps> = ({
               {selectedPlayerId !== 'all' && (
                 <div className="flex items-center gap-2 text-sm text-base-content/70">
                   <span>Showing insights for:</span>
-                  <span className="badge badge-sm badge-primary">
+                  <span className="badge badge-sm badge-primary text-primary-content">
                     {playersInInsights.find(p => p.id === selectedPlayerId)?.friendly_name}
                     {selectedPlayerId === currentPlayer?.id && ' (You)'}
                   </span>
@@ -357,6 +385,7 @@ export const InsightsSection: React.FC<InsightsSectionProps> = ({
                       insight={insight}
                       index={index}
                       currentPlayerId={currentPlayer?.id}
+                      confidenceThresholds={confidenceThresholds}
                     />
                   ))}
                 </div>
@@ -406,16 +435,34 @@ export const InsightsSection: React.FC<InsightsSectionProps> = ({
   );
 };
 
+// Get medal icon for trophy insights
+const getMedalIcon = (medalPosition: number | undefined): string => {
+  switch (medalPosition) {
+    case 1: return '🥇';
+    case 2: return '🥈';
+    case 3: return '🥉';
+    default: return '';
+  }
+};
+
+// Format WDL stats for display
+const formatWDL = (wins?: number, draws?: number, losses?: number): string | null => {
+  if (wins === undefined || draws === undefined || losses === undefined) return null;
+  return `${wins}W-${draws}D-${losses}L`;
+};
+
 // Individual Insight Card
 interface InsightCardProps {
   insight: PostMatchInsight;
   index: number;
   currentPlayerId?: string;
+  confidenceThresholds: Record<string, ConfidenceThreshold>;
 }
 
-const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayerId }) => {
+const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayerId, confidenceThresholds }) => {
   const emoji = getInsightEmoji(insight.analysisType);
   const category = getFilterCategory(insight.analysisType);
+  const details = insight.details as Record<string, unknown>;
 
   // Check if current user is involved in this insight
   const isCurrentUserInvolved = useMemo(() => {
@@ -425,11 +472,96 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
     if (insight.playerIds?.includes(currentPlayerId)) return true;
 
     // Check details for player IDs
-    const details = insight.details as Record<string, unknown>;
     const idKeys = ['player_id', 'winner_id', 'loser_id', 'holder_id', 'player1_id', 'player2_id', 'player3_id'];
 
     return idKeys.some(key => details[key] === currentPlayerId);
-  }, [insight, currentPlayerId]);
+  }, [insight, currentPlayerId, details]);
+
+  // Get medal position for trophy insights
+  const medalPosition = details.medal_position as number | undefined;
+  const isTrophyInsight = insight.analysisType === 'trophy_change' || insight.analysisType.startsWith('award_');
+
+  // Get WDL stats if available in details
+  const wdlStats = useMemo(() => {
+    const wins = details.wins as number | undefined;
+    const draws = details.draws as number | undefined;
+    const losses = details.losses as number | undefined;
+    return formatWDL(wins, draws, losses);
+  }, [details]);
+
+  // Get win rate if available
+  const winRate = details.win_rate as number | undefined;
+  const pointsPct = details.points_pct as number | undefined;
+
+  // Get sample size for insights with sample data
+  const sampleSize = useMemo(() => {
+    // Try various fields that contain sample sizes
+    const games = details.games as number | undefined;
+    const gamesTogether = details.games_together as number | undefined;
+    const totalGames = details.total_games as number | undefined;
+    const matchups = details.matchups as number | undefined;
+    const encounters = details.encounters as number | undefined;
+    const gamesOnColor = details.games_on_color as number | undefined;
+
+    // Calculate from WDL if available (for rivalry insights)
+    const wins = details.wins as number | undefined;
+    const draws = details.draws as number | undefined;
+    const losses = details.losses as number | undefined;
+    const calculatedFromWDL = (wins !== undefined && draws !== undefined && losses !== undefined)
+      ? wins + draws + losses
+      : undefined;
+
+    return games || gamesTogether || totalGames || matchups || encounters || gamesOnColor || calculatedFromWDL;
+  }, [details]);
+
+  // Determine confidence level using dynamic thresholds from database
+  // Thresholds are calculated from actual data distribution (33rd/67th percentiles)
+  const getConfidenceInfo = (size: number | undefined, analysisType: string): { label: string; color: string; tooltip: string } | null => {
+    if (!size) return null;
+
+    // Get the appropriate thresholds based on insight type
+    let thresholds: ConfidenceThreshold | undefined;
+    let categoryName = '';
+
+    if (analysisType.includes('trio')) {
+      thresholds = confidenceThresholds.trio;
+      categoryName = 'trios';
+    } else if (analysisType.includes('chemistry') || analysisType.includes('dynamic_duo')) {
+      thresholds = confidenceThresholds.chemistry;
+      categoryName = 'duos';
+    } else if (analysisType.includes('rivalry') || analysisType.includes('nemesis') || analysisType.includes('never_beaten')) {
+      thresholds = confidenceThresholds.rivalry;
+      categoryName = 'rivalries';
+    } else {
+      thresholds = confidenceThresholds.other;
+      categoryName = 'this type';
+    }
+
+    // Use defaults if thresholds not loaded
+    const lowThreshold = thresholds?.lowThreshold ?? 10;
+    const highThreshold = thresholds?.highThreshold ?? 20;
+
+    if (size >= highThreshold) {
+      return { label: 'High', color: 'badge-success', tooltip: `High confidence (${size} games, top third for ${categoryName})` };
+    }
+    if (size >= lowThreshold) {
+      return { label: 'Med', color: 'badge-warning', tooltip: `Medium confidence (${size} games, typical for ${categoryName})` };
+    }
+    return { label: 'Low', color: 'badge-error', tooltip: `Low confidence (${size} games, bottom third for ${categoryName})` };
+  };
+
+  // Show confidence for percentage-based insights (chemistry, rivalries, team color stats)
+  const isPercentageInsight = insight.analysisType.includes('chemistry') ||
+                              insight.analysisType.includes('trio') ||
+                              insight.analysisType.includes('dynamic_duo') ||
+                              insight.analysisType.includes('dream_team') ||
+                              insight.analysisType.includes('rivalry') ||
+                              insight.analysisType.includes('nemesis') ||
+                              insight.analysisType.includes('fiercest') ||
+                              insight.analysisType.includes('never_beaten') ||
+                              insight.analysisType.includes('color_curse') ||
+                              insight.analysisType.includes('color_dominance');
+  const confidenceInfo = isPercentageInsight ? getConfidenceInfo(sampleSize, insight.analysisType) : null;
 
   // Priority-based styling
   const getPriorityStyles = () => {
@@ -437,10 +569,18 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
     if (isCurrentUserInvolved) {
       return 'border-l-4 border-l-primary bg-primary/10 ring-1 ring-primary/30';
     }
-    if (insight.priority >= 8) {
+    // Trophy insights get special gold/silver/bronze styling
+    if (isTrophyInsight && medalPosition) {
+      switch (medalPosition) {
+        case 1: return 'border-l-4 border-l-yellow-500 bg-yellow-500/10';
+        case 2: return 'border-l-4 border-l-gray-400 bg-gray-400/10';
+        case 3: return 'border-l-4 border-l-amber-600 bg-amber-600/10';
+      }
+    }
+    if (insight.priority <= 2) {
       return 'border-l-4 border-l-warning bg-warning/5';
     }
-    if (insight.priority >= 6) {
+    if (insight.priority <= 3) {
       return 'border-l-4 border-l-primary bg-primary/5';
     }
     return 'border-l-4 border-l-base-300';
@@ -448,14 +588,12 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
 
   // Extract player names from details if available
   const getPlayerLinks = () => {
-    const details = insight.details as Record<string, unknown>;
-
     // Try to find player names in details
     const playerNames: { id: string; name: string; isCurrentUser: boolean }[] = [];
 
-    // Common patterns for player names in details
-    const nameKeys = ['player_name', 'winner_name', 'loser_name', 'holder_name', 'player1_name', 'player2_name', 'player3_name'];
-    const idKeys = ['player_id', 'winner_id', 'loser_id', 'holder_id', 'player1_id', 'player2_id', 'player3_id'];
+    // Common patterns for player names in details (including partner for duo awards)
+    const nameKeys = ['player_name', 'winner_name', 'loser_name', 'holder_name', 'player1_name', 'player2_name', 'player3_name', 'partner_name'];
+    const idKeys = ['player_id', 'winner_id', 'loser_id', 'holder_id', 'player1_id', 'player2_id', 'player3_id', 'partner_id'];
 
     nameKeys.forEach((nameKey, i) => {
       const name = details[nameKey] as string | undefined;
@@ -474,6 +612,9 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
 
   const playerLinks = getPlayerLinks();
 
+  // Get the icon to display (medal for trophies, emoji otherwise)
+  const displayIcon = isTrophyInsight && medalPosition ? getMedalIcon(medalPosition) : emoji;
+
   return (
     <motion.div
       layout
@@ -485,14 +626,42 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
     >
       <div className="card-body p-4">
         <div className="flex items-start gap-3">
-          {/* Emoji */}
-          <div className="text-2xl flex-shrink-0">{emoji}</div>
+          {/* Icon/Emoji with background */}
+          <div className={`text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full ${
+            isTrophyInsight && medalPosition === 1 ? 'bg-yellow-500/20' :
+            isTrophyInsight && medalPosition === 2 ? 'bg-gray-400/20' :
+            isTrophyInsight && medalPosition === 3 ? 'bg-amber-600/20' :
+            'bg-base-200'
+          }`}>
+            {displayIcon}
+          </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium leading-relaxed">
               {insight.headline}
             </p>
+
+            {/* Stats row - show WDL and sample size when available */}
+            {(wdlStats || confidenceInfo) && (
+              <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-base-content/60">
+                {/* WDL stats */}
+                {wdlStats && !insight.headline.includes('W-') && !insight.headline.includes('D-') && (
+                  <span className="font-mono bg-base-200 px-1.5 py-0.5 rounded">
+                    {wdlStats}
+                  </span>
+                )}
+                {/* Sample size and confidence */}
+                {confidenceInfo && sampleSize && (
+                  <span
+                    className={`badge badge-xs ${confidenceInfo.color}`}
+                    title={confidenceInfo.tooltip}
+                  >
+                    {sampleSize} games • {confidenceInfo.label}
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Player links */}
             {playerLinks.length > 0 && (
@@ -503,8 +672,8 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
                     to={`/player/${player.id}`}
                     className={`badge badge-sm transition-colors ${
                       player.isCurrentUser
-                        ? 'badge-primary'
-                        : 'badge-outline hover:badge-primary'
+                        ? 'badge-primary text-primary-content'
+                        : 'badge-outline hover:badge-primary hover:text-primary-content'
                     }`}
                   >
                     {player.name}
@@ -519,7 +688,7 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
 
           {/* "You" indicator for highlighted cards */}
           {isCurrentUserInvolved && playerLinks.length === 0 && (
-            <span className="badge badge-sm badge-primary">You</span>
+            <span className="badge badge-sm badge-primary text-primary-content">You</span>
           )}
         </div>
 

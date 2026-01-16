@@ -18,6 +18,12 @@ export interface PostMatchInsight {
   createdAt: string;
 }
 
+export interface ConfidenceThreshold {
+  insightCategory: string;
+  lowThreshold: number;
+  highThreshold: number;
+}
+
 export interface PostMatchAnalysisResult {
   insights: PostMatchInsight[];
   whatsappSummary: string;
@@ -148,6 +154,10 @@ export const groupInsightsByType = (insights: PostMatchInsight[]): Map<string, P
     'rivalry_dominant': 'Dominant Matchups',
     'rivalry_nemesis': 'Nemesis Matchups',
     'rivalry_close': 'Close Rivalries',
+    'rivalry_revenge': 'Revenge Wins',
+    'rivalry_ongoing_drought': 'Rivalry Droughts',
+    'never_beaten_rivalry': 'Never Beaten',
+    'first_ever_win_nemesis': 'Historic First Wins',
     // Partnership insights
     'partnership_first': 'First Pairings',
     'partnership_milestone': 'Partnership Milestones',
@@ -170,10 +180,35 @@ export const groupInsightsByType = (insights: PostMatchInsight[]): Map<string, P
     'streak_milestone': 'Streak Milestones',
     'streak_broken': 'Streaks Ended',
     'team_streak': 'Team Streaks',
+    // Attendance streaks
+    'attendance_streak': 'Attendance Streaks',
+    'attendance_streak_ended': 'Attendance Streak Ended',
     // Other insights
     'cap_milestone': 'Cap Milestones',
     'personal_best': 'Personal Bests',
+    'personal_best_streak': 'Personal Best Streaks',
     'game_record': 'Game Records',
+    // New v2 insights
+    'debut_appearance': 'Debuts',
+    'return_after_absence': 'Welcome Back',
+    'first_game_back_win': 'Comeback Wins',
+    'bench_warmer_promoted': 'Off the Bench',
+    'team_color_loyalty': 'Team Loyalty',
+    'team_color_switch': 'Team Switch',
+    'blowout_game': 'Blowouts',
+    'shutout_game': 'Clean Sheets',
+    // Phase 3 insights - Year-over-year awards
+    'award_defending_champion': 'Defending Champions',
+    // Phase 3 insights - Goal scoring patterns
+    'low_scoring_game': 'Low Scoring',
+    'team_best_score': 'Best Scores',
+    // Phase 3 insights - Team color trends
+    'team_color_dominance': 'Team Dominance',
+    'team_color_streak_broken': 'Streaks Broken',
+    'player_color_curse': 'Color Curse',
+    // Phase 3 insights - Injury token stats
+    'injury_token_used': 'Injury Protection',
+    'injury_token_return': 'Injury Returns',
   };
 
   // Group by type
@@ -203,6 +238,10 @@ export const getInsightEmoji = (analysisType: string): string => {
     'rivalry_dominant': '💪',
     'rivalry_nemesis': '😈',
     'rivalry_close': '⚔️',
+    'rivalry_revenge': '🔥',
+    'rivalry_ongoing_drought': '🏜️',
+    'never_beaten_rivalry': '😰',
+    'first_ever_win_nemesis': '🎉',
     // Partnership insights
     'partnership_first': '🤝',
     'partnership_milestone': '👯',
@@ -226,12 +265,81 @@ export const getInsightEmoji = (analysisType: string): string => {
     'streak_milestone': '🔥',
     'streak_broken': '💔',
     'team_streak': '📊',
+    // Attendance streak insights
+    'attendance_streak': '🏃',
+    'attendance_streak_ended': '😢',
     // Other insights
     'cap_milestone': '🎖️',
     'personal_best': '⭐',
+    'personal_best_streak': '📈',
     'game_record': '⚽',
+    // New v2 insights
+    'debut_appearance': '⭐',
+    'return_after_absence': '👋',
+    'first_game_back_win': '💪',
+    'bench_warmer_promoted': '📣',
+    'team_color_loyalty': '💙',
+    'team_color_switch': '🔄',
+    'blowout_game': '💥',
+    'shutout_game': '🧤',
+    // Phase 3 insights - Year-over-year awards
+    'award_defending_champion': '🏆',
+    // Phase 3 insights - Goal scoring patterns
+    'low_scoring_game': '🧱',
+    'team_best_score': '📈',
+    // Phase 3 insights - Team color trends
+    'team_color_dominance': '💪',
+    'team_color_streak_broken': '⛔',
+    'player_color_curse': '🎭',
+    // Phase 3 insights - Injury token stats
+    'injury_token_used': '🏥',
+    'injury_token_return': '💉',
   };
   return emojis[analysisType] || '📊';
+};
+
+/**
+ * Hook for fetching dynamic confidence thresholds
+ * Thresholds are calculated from actual data distribution (33rd/67th percentiles)
+ */
+export const useConfidenceThresholds = () => {
+  const [thresholds, setThresholds] = useState<Record<string, ConfidenceThreshold>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_confidence_thresholds');
+
+        if (error) throw error;
+
+        const thresholdMap: Record<string, ConfidenceThreshold> = {};
+        (data || []).forEach((row: { insight_category: string; low_threshold: number; high_threshold: number }) => {
+          thresholdMap[row.insight_category] = {
+            insightCategory: row.insight_category,
+            lowThreshold: row.low_threshold,
+            highThreshold: row.high_threshold,
+          };
+        });
+
+        setThresholds(thresholdMap);
+      } catch (err) {
+        console.error('Error fetching confidence thresholds:', err);
+        // Use defaults if fetch fails
+        setThresholds({
+          trio: { insightCategory: 'trio', lowThreshold: 6, highThreshold: 9 },
+          chemistry: { insightCategory: 'chemistry', lowThreshold: 14, highThreshold: 19 },
+          rivalry: { insightCategory: 'rivalry', lowThreshold: 17, highThreshold: 24 },
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchThresholds();
+  }, []);
+
+  return { thresholds, loading };
 };
 
 export default usePostMatchAnalysis;

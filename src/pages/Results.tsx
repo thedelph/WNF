@@ -6,11 +6,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Filter, History } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useUser } from '../hooks/useUser';
 import { useGameResults, GameResultsFilters } from '../hooks/useGameResults';
 import { YearSelector } from '../components/stats/YearSelector';
-import { LockedContent } from '../components/ui/LockedContent';
 import { ResultCard } from '../components/results/ResultCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
@@ -159,17 +159,16 @@ const Results: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <LockedContent
-                  title="Filter by Your Games"
-                  description="Log in to filter by games you played or were reserve"
-                  blurIntensity="sm"
-                >
-                  <div className="join w-full opacity-50">
+                <div className="space-y-2">
+                  <div className="join w-full opacity-40">
                     <button className="join-item btn btn-sm flex-1 btn-ghost" disabled>All</button>
                     <button className="join-item btn btn-sm flex-1 btn-ghost" disabled>Played</button>
                     <button className="join-item btn btn-sm flex-1 btn-ghost" disabled>Reserve</button>
                   </div>
-                </LockedContent>
+                  <p className="text-xs text-base-content/60 text-center">
+                    <Link to="/login?redirect=/results" className="link link-primary">Log in</Link> to filter by your games
+                  </p>
+                </div>
               )}
             </fieldset>
           </div>
@@ -232,16 +231,16 @@ const Results: React.FC = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-8">
-          <div className="join">
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              className="join-item btn"
+              className="btn btn-sm"
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1 || loading}
             >
               First
             </button>
             <button
-              className="join-item btn"
+              className="btn btn-sm"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1 || loading}
             >
@@ -249,19 +248,19 @@ const Results: React.FC = () => {
             </button>
 
             {/* Page indicator */}
-            <button className="join-item btn btn-disabled">
+            <span className="px-3 py-1 text-sm text-base-content/70">
               {currentPage} / {totalPages}
-            </button>
+            </span>
 
             <button
-              className="join-item btn"
+              className="btn btn-sm"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages || loading}
             >
               Next
             </button>
             <button
-              className="join-item btn"
+              className="btn btn-sm"
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages || loading}
             >

@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-01-14 (Login Incentives System implementation)
+**Last Updated:** 2026-01-16 (Post-Match Insights v2.1 - new filter tabs, WhatsApp summary improvements)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -53,6 +53,8 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[WhatsApp Bot Integration](features/WhatsAppBotIntegration.md)** - Automated messaging integration
 - **[Game Flow](GameFlow.md)** - Game lifecycle and status transitions
 - **[Player Selection Explained](PlayerSelectionExplained.md)** - Selection algorithm and mechanics
+- **[Public Game Results](features/PublicGameResults.md)** - Browse completed games with filters and insights *(New Jan 2026)*
+- **[Post-Match Insights](features/PostMatchInsights.md)** - Automated game analysis and insight generation *(New Jan 2026)*
 
 ### Player Features
 - **[Reserve Status Visualization](features/ReserveStatusVisualization.md)** - Last 40 games wheel with reserve tracking

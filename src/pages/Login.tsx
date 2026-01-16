@@ -15,8 +15,13 @@ const Login: React.FC = () => {
   const location = useLocation()
   const auth = useAuth()
 
-  // Get the redirect path from location state (set by LockedContent or other CTAs)
-  const from = (location.state as { from?: string })?.from || '/'
+  // Get the redirect path from location state OR query parameter
+  // Query param: /login?redirect=/results/79
+  // State: navigate('/login', { state: { from: '/results/79' } })
+  const searchParams = new URLSearchParams(location.search)
+  const redirectParam = searchParams.get('redirect')
+  const stateFrom = (location.state as { from?: string })?.from
+  const from = redirectParam || stateFrom || '/'
 
   // Track specific problem users (you can update these)
   const problemUserEmails = [

@@ -358,6 +358,32 @@ SELECT * FROM get_token_history(p_game_id := 'game_uuid');
 SELECT merge_players('test_user_uuid', 'real_user_uuid');
 ```
 
+## Text Helper Functions
+
+### make_possessive
+
+Creates grammatically correct possessive form of a name.
+
+```sql
+make_possessive(name TEXT) RETURNS TEXT
+```
+
+**Grammar Rules:**
+- Names ending in 's', 'x', or 'z': Add only apostrophe (Chris', Maddocks', Max')
+- All other names: Add apostrophe + s (Phil's, Dave's, Tom's)
+
+**Usage:**
+```sql
+SELECT make_possessive('Chris');    -- Returns: Chris'
+SELECT make_possessive('Phil');     -- Returns: Phil's
+SELECT make_possessive('Maddocks'); -- Returns: Maddocks'
+SELECT make_possessive('James');    -- Returns: James'
+```
+
+**Used in:** Post-match insight headlines (streak messages like "Streak ended: Maddocks' 3-game win streak broken")
+
+**Added:** January 15, 2026
+
 ## Error Handling
 Functions include comprehensive error handling for common scenarios:
 - Invalid game IDs

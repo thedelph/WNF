@@ -1,7 +1,7 @@
 # Rivalry System
 
-**Last Updated:** January 7, 2026
-**Version:** 1.0
+**Last Updated:** January 15, 2026
+**Version:** 1.1
 
 ## Overview
 
@@ -228,8 +228,34 @@ The rivalry system contributes to the **"Fiercest Rivalry"** award category, rec
 
 See: [Awards System](/docs/features/AwardsSystem.md)
 
+## Post-Match Insight Types
+
+When a game completes, rivalry insights are generated for cross-team matchups:
+
+| Type | Trigger | Priority | Description |
+|------|---------|----------|-------------|
+| `rivalry_nemesis` | 10+ win advantage | 2 | Dominant rivalry matchup |
+| `rivalry_dominant` | 5-9 win advantage | 3 | Clear H2H lead |
+| `rivalry_close` | ≤3 diff, 15+ games | 3 | Tight competitive series |
+| `rivalry_first_win` | First ever win | 3 | Historic first victory |
+| `rivalry_perfect` | Undefeated, 4+ games | 2 | Perfect H2H record |
+| `rivalry_revenge` | Win after 3+ losses | 2 | Breaking losing streak vs opponent |
+
+### rivalry_close Wording (Fixed Jan 2026)
+
+The wording adapts based on the winner's actual H2H state:
+- Winner ahead overall: "extends lead vs"
+- Winner behind overall: "closes gap vs"
+- Tied overall: "levels the series vs"
+
+**Example:** If Chris beats Phil but Phil leads H2H 10-8:
+- "Chris closes gap vs Phil (9W-0D-10L)"
+
+See: [Post-Match Insights](PostMatchInsights.md) for complete insight generation documentation
+
 ## Related Documentation
 
+- [Post-Match Insights](/docs/features/PostMatchInsights.md) - Insight generation system
 - [Player Chemistry](/docs/features/PlayerChemistry.md) - Same-team performance tracking
 - [Trio Chemistry](/docs/features/TrioChemistry.md) - 3-player synergy tracking
 - [Team Balancing](/docs/features/TeamBalancing.md) - Algorithm integration

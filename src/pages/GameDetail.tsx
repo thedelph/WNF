@@ -5,9 +5,10 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, MapPin, Users, Trophy, Sparkles } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Trophy, Sparkles, LogIn } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { useGameDetail } from '../hooks/useGameDetail';
 import { usePostMatchAnalysis } from '../hooks/usePostMatchAnalysis';
 import { formatDate } from '../utils/dateUtils';
@@ -19,6 +20,8 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 
 const GameDetail: React.FC = () => {
   const { sequenceNumber } = useParams<{ sequenceNumber: string }>();
+  const location = useLocation();
+  const { user } = useAuth();
   const hasTriggeredGeneration = useRef(false);
 
   const {
@@ -207,6 +210,29 @@ const GameDetail: React.FC = () => {
           reserves={reserves}
         />
       </motion.div>
+
+      {/* Login Prompt - Shows benefits for both Match Summary and Post-Match Report */}
+      {!user && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mb-6"
+        >
+          <div className="alert bg-base-200">
+            <LogIn className="w-5 h-5 text-primary" />
+            <span>
+              <Link
+                to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
+                className="link link-primary font-medium"
+              >
+                Log in
+              </Link>{' '}
+              to highlight your name in the summary and filter insights about you
+            </span>
+          </div>
+        </motion.div>
+      )}
 
       {/* Match Summary */}
       {whatsappSummary && (
