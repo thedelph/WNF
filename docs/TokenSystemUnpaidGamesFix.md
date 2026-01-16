@@ -66,3 +66,7 @@ This document serves as a record of the fix. The main TokenSystem.md documentati
 
 ### Consistency with XP System
 This fix ensures consistency with the XP system, which already correctly uses the `player_xp_breakdown` view to apply the -50% XP penalty for unpaid games.
+
+### Related Fixes
+
+- **[Unpaid Games Data Source Fix](fixes/UnpaidGamesDataSourceFix.md)** (January 2026) - Extended the same approach to `useGameRegistrationStats` hook, ensuring all hooks use `player_xp_breakdown` view as the authoritative source for unpaid games data.

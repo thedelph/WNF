@@ -52,6 +52,13 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
   // Fetch shield status
   const { shieldStatus, loading: shieldLoading, refreshShieldStatus } = useShieldStatus(playerId || undefined);
 
+  // Check if player has an active shield for THIS specific game (not just any game)
+  // shieldStatus.shieldActive indicates ANY active shield (for gradual decay display)
+  // hasShieldForThisGame checks if the current game has an active shield entry
+  const hasShieldForThisGame = shieldStatus?.activeShields?.some(
+    shield => shield.game_id === game.id
+  ) ?? false;
+
   useEffect(() => {
     const fetchPlayerData = async () => {
       if (!session?.user) return;
@@ -161,7 +168,7 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
   return (
     <div className="flex flex-col items-center gap-6 my-4">
       {/* Priority Token Toggle (existing functionality) */}
-      {!isUserRegistered && playerId && !shieldStatus?.shieldActive && (
+      {!isUserRegistered && playerId && !hasShieldForThisGame && (
         <TokenToggle
           playerId={playerId}
           disabled={isRegistering}
@@ -173,7 +180,7 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
       {/* Registration Button */}
       <button
         onClick={handleRegistration}
-        disabled={isRegistering || shieldStatus?.shieldActive}
+        disabled={isRegistering || hasShieldForThisGame}
         className={`btn w-48 ${
           isUserRegistered ? 'btn-error' : 'btn-success'
         } ${isRegistering ? 'loading' : ''}`}
@@ -192,8 +199,8 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
         )}
       </button>
 
-      {/* Explainer when shield is active */}
-      {shieldStatus?.shieldActive && (
+      {/* Explainer when shield is active for THIS game */}
+      {hasShieldForThisGame && (
         <div className="alert alert-info max-w-md">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -205,16 +212,17 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
       )}
 
       {/* Shield Token Button - Can't Play This Week */}
-      {playerId && shieldStatus && (shieldStatus.tokensAvailable > 0 || shieldStatus.shieldActive) && (
+      {/* Show section if: tokens available OR has shield for THIS game (to allow cancel) */}
+      {playerId && shieldStatus && (shieldStatus.tokensAvailable > 0 || hasShieldForThisGame) && (
         <>
           <div className="divider">OR</div>
           <div className="flex flex-col items-center gap-3">
-            {!shieldStatus.shieldActive && (
+            {!hasShieldForThisGame && (
               <p className="text-sm text-base-content/70 text-center">
                 Can't play this week? Protect your streak:
               </p>
             )}
-            {shieldStatus.shieldActive && (
+            {hasShieldForThisGame && (
               <p className="text-sm text-success text-center font-semibold">
                 🛡️ Your streak is protected for this game
               </p>
@@ -226,10 +234,10 @@ export const GameRegistration: React.FC<GameRegistrationProps> = ({
               currentStreak={currentStreak}
               isRegistered={isUserRegistered}
               onShieldUsed={handleShieldUsed}
-              disabled={isRegistering || (isUserRegistered && !shieldStatus.shieldActive)}
+              disabled={isRegistering || (isUserRegistered && !hasShieldForThisGame)}
               size="md"
             />
-            {isUserRegistered && !shieldStatus.shieldActive && (
+            {isUserRegistered && !hasShieldForThisGame && (
               <div className="alert alert-info max-w-md">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>

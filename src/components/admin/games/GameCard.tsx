@@ -110,6 +110,19 @@ export const GameCard: React.FC<Props> = ({
       }
       console.log(`Fetched ${playersWithShields?.length || 0} players with shield tokens available`);
 
+      // Fetch currently injured players
+      const { data: injuredPlayers, error: injuredPlayersError } = await supabase
+        .from('players')
+        .select('id, friendly_name')
+        .in('whatsapp_group_member', ['Yes', 'Proxy'])
+        .eq('injury_token_active', true)
+        .order('friendly_name');
+
+      if (injuredPlayersError) {
+        console.error('Error fetching injured players:', injuredPlayersError);
+      }
+      console.log(`Fetched ${injuredPlayers?.length || 0} currently injured players`);
+
       // Query the public_player_token_status view which contains eligibility data
       // This view handles all the complex eligibility logic including:
       // - Recent game participation
@@ -198,7 +211,8 @@ Reply to this message with names of any reserves outside of this group that want
 React with ONE option only:
 👍 Register interest to play
 🪙 Use priority token (guaranteed spot this week, likely no spot next week)
-🛡️ Use shield token (protect your streak if you can't play)`;
+🛡️ Use shield token (1 week off - streak decays slowly, not reset)
+🩹 Report injury (long-term - halves streak, active until you 👍)`;
 
           // Priority token eligible players (comma list)
           if (eligiblePlayers.length > 0) {
@@ -217,6 +231,14 @@ React with ONE option only:
               .map(p => p.friendly_name)
               .join(', ');
             message += `\n\n🛡️ Shield tokens: ${shieldNames}`;
+          }
+
+          // Currently injured players (comma list)
+          if (injuredPlayers && injuredPlayers.length > 0) {
+            const injuredNames = injuredPlayers
+              .map(p => p.friendly_name)
+              .join(', ');
+            message += `\n🩹 Currently injured: ${injuredNames}`;
           }
 
           message += `\n\nRegistration closes ${regEndDate} at ${regEndTime}`;

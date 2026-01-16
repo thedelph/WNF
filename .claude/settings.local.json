@@ -75,7 +75,8 @@
       "WebFetch(domain:api.github.com)",
       "Bash(git merge:*)",
       "Skill(daisyui-frontend)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(echo:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

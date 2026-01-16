@@ -22,8 +22,21 @@ All messages start with consistent game information:
 #### OPEN/UPCOMING Status
 - Registration call-to-action with thumbs up emoji
 - Token eligibility list with coin emoji (🪙)
+- Shield token holders list (🛡️)
+- Currently injured players list (🩹)
 - Registration deadline information
 - Reserve outside group invitation
+
+**Reaction Options:**
+- `👍` Register interest to play
+- `🪙` Use priority token (guaranteed spot this week, likely no spot next week)
+- `🛡️` Use shield token (1 week off - streak decays slowly, not reset)
+- `🩹` Report injury (long-term - halves streak, active until you 👍)
+
+**Player Lists:**
+- `🪙 Priority tokens:` - Players eligible to use a priority token this week
+- `🛡️ Shield tokens:` - Players with shield tokens available
+- `🩹 Currently injured:` - Players with active injury tokens (on injury reserve)
 
 #### PLAYERS_ANNOUNCED Status
 Enhanced with selection reasoning summary:
@@ -72,10 +85,11 @@ Enhanced with selection reasoning summary:
 
 ### Data Sources
 The message generation fetches data from multiple sources:
-- `players` table for WhatsApp membership and unpaid games
+- `players` table for WhatsApp membership, unpaid games, shield tokens, and injury status
 - `player_xp` view for current XP values
 - `public_player_token_status` view for token eligibility
 - `game_registrations` table for player status and selection methods
+- `shield_token_usage` table for shield usage on specific games
 
 ### Selection Method Detection
 - `using_token` field identifies token users
@@ -113,6 +127,14 @@ The WhatsApp messaging fully integrates with the unpaid games penalty system:
 - Identifies specific players with unpaid games
 - Reinforces payment importance through visual indicators
 - Maintains transparency about penalty application
+
+## Injury Token Integration
+The WhatsApp messaging includes injury token information (added January 2026):
+- `🩹 Report injury` reaction option for long-term absences (halves streak on activation)
+- `🩹 Currently injured:` list shows players with active injury tokens
+- Injury tokens stay active until the player registers to play again with 👍
+- Players on injury reserve are automatically excluded from random dropout selection
+- See [Injury Token Feature](/docs/features/InjuryToken.md) for full documentation
 
 ## Future Considerations
 - Message templates could be customizable per admin preference

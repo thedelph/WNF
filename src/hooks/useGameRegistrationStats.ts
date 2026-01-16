@@ -77,6 +77,7 @@ export const useGameRegistrationStats = (
           .from('players')
           .select(`
             id,
+            friendly_name,
             caps,
             current_streak,
             max_streak,
@@ -84,8 +85,6 @@ export const useGameRegistrationStats = (
             active_penalties,
             win_rate,
             bench_warmer_streak,
-            unpaid_games,
-            unpaid_games_modifier,
             shield_active,
             protected_streak_value,
             injury_token_active,
@@ -130,6 +129,16 @@ export const useGameRegistrationStats = (
           .select('friendly_name, current_streak_length, bonus_applies');
 
         if (regStreakError) throw regStreakError;
+
+        // Get unpaid games from the authoritative view (not stale players table column)
+        // The player_xp_breakdown view dynamically calculates the correct unpaid games count
+        const friendlyNames = registrations.map(r => r.player.friendly_name);
+        const { data: unpaidGamesData, error: unpaidGamesError } = await supabase
+          .from('player_xp_breakdown')
+          .select('friendly_name, unpaid_games_count, unpaid_games_modifier')
+          .in('friendly_name', friendlyNames);
+
+        if (unpaidGamesError) throw unpaidGamesError;
 
         // Get player averaged attributes for playstyle matching
         const { data: derivedAttrsData, error: derivedAttrsError } = await supabase
@@ -261,6 +270,15 @@ export const useGameRegistrationStats = (
           }
         }), {});
 
+        // Create a map of unpaid games data for easy lookup (from authoritative view)
+        const unpaidGamesMap = (unpaidGamesData || []).reduce((acc: Record<string, { unpaidGames: number; unpaidGamesModifier: number }>, player: any) => ({
+          ...acc,
+          [player.friendly_name]: {
+            unpaidGames: player.unpaid_games_count || 0,
+            unpaidGamesModifier: player.unpaid_games_modifier || 0
+          }
+        }), {} as Record<string, { unpaidGames: number; unpaidGamesModifier: number }>);
+
         // Create a map of derived attributes for easy lookup
         const derivedAttrsMap = derivedAttrsData?.reduce((acc: any, player: any) => ({
           ...acc,
@@ -329,8 +347,8 @@ export const useGameRegistrationStats = (
           // Check if player has dropped out
           const isDroppedOut = registrationStatusMap[player.id] === 'dropped_out';
 
-          // Only count unpaid games if player hasn't dropped out AND the game is unpaid
-          const shouldCountUnpaidGames = !isDroppedOut && player.unpaid_games > 0;
+          // Get unpaid games from the authoritative view (keyed by friendly_name)
+          const unpaidFromView = player.friendly_name ? unpaidGamesMap[player.friendly_name] : null;
 
           // Calculate closest playstyle match
           const playerAttributes = derivedAttrsMap[player.id];
@@ -356,8 +374,9 @@ export const useGameRegistrationStats = (
               rank: player.player_xp?.rank || undefined,
               registrationStreak: regStreakMap[player.friendly_name]?.registrationStreak || 0,
               registrationStreakApplies: regStreakMap[player.friendly_name]?.registrationStreakApplies || false,
-              unpaidGames: shouldCountUnpaidGames ? player.unpaid_games : 0,
-              unpaidGamesModifier: shouldCountUnpaidGames ? player.unpaid_games * -0.5 : 0,
+              // Use unpaid games from the authoritative view, not the stale players table
+              unpaidGames: !isDroppedOut ? (unpaidFromView?.unpaidGames || 0) : 0,
+              unpaidGamesModifier: !isDroppedOut ? (unpaidFromView?.unpaidGamesModifier || 0) : 0,
               averagedPlaystyle: playstyleMatch?.playstyleName,
               playstyleMatchDistance: playstyleMatch?.matchDistance,
               playstyleCategory: playstyleMatch?.category,

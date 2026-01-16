@@ -574,6 +574,20 @@ All implementation tasks completed on January 12, 2026:
 3. **Shield Token** (`ShieldTokenStatus.tsx`): Clarification text added about Shield vs Injury
 4. **Admin Portal**: New card and route at `/admin/injuries`
 
+### XP Recalculation on Activation (Added January 2026)
+
+When an injury token is activated (either self-serve or admin), the system automatically:
+
+1. **Recalculates player XP** - Calls `calculate_player_xp_v2()` with the player's ID
+2. **Updates player_xp table** - Stores the new XP value and updates `last_calculated` timestamp
+3. **Recalculates all ranks** - Calls `update_player_ranks()` to refresh rankings across all players
+
+This ensures the player's XP immediately reflects their new streak status (return at half) rather than waiting for the next game completion trigger.
+
+**Implementation:** `useInjuryTokenStatus.ts` - Both `activateInjuryToken` and `adminActivateInjuryToken` functions include XP refresh logic.
+
+**Error Handling:** XP update failures are logged but don't block the injury token activation - the primary activation succeeds even if XP refresh fails.
+
 ### Color Scheme
 
 - **Amber/Orange theme** (distinct from Shield's purple)

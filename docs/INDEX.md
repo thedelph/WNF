@@ -137,6 +137,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 ### Query & Performance Fixes
 - **[Payment Splitting Query Limit Fix](fixes/PaymentSplittingQueryLimitFix.md)** - Supabase query limits
 - **[Recent Games Query Limit Fix](fixes/RecentGamesQueryLimitFix.md)** - Last 40 games query optimization
+- **[Unpaid Games Data Source Fix](fixes/UnpaidGamesDataSourceFix.md)** *(New Jan 2026)* - Unified unpaid games to use authoritative view
 - **[Database Functions](DatabaseFunctions.md)** - RPC and trigger optimizations
 
 ### Player Selection Fixes

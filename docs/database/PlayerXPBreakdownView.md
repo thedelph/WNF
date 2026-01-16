@@ -90,6 +90,7 @@ const { data } = await supabase
 4. **Unpaid Games**: 24-hour grace period before penalties apply
 5. **40-Game Window**: Reserve XP respects the same 40-game decay system as base XP (fixed 2025-10-09, see [Reserve XP 40-Game Limit Fix](../fixes/ReserveXP40GameLimitFix.md))
 6. **Late Reserves**: Late reserves (registered after window closes) are excluded from reserve XP calculations
+7. **Authoritative Source**: This view is the single source of truth for unpaid games data. All hooks (usePlayerGrid, useGameRegistrationStats, useTokenStatus) should query this view rather than the legacy `players.unpaid_games` column. See [Unpaid Games Data Source Fix](../fixes/UnpaidGamesDataSourceFix.md).
 
 ## Maintenance
 

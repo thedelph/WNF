@@ -312,6 +312,27 @@ export function useInjuryToken() {
         throw new Error(result?.message || 'Failed to activate injury token');
       }
 
+      // Recalculate and update player XP after successful activation
+      try {
+        const { data: newXp } = await supabase.rpc('calculate_player_xp_v2', {
+          p_player_id: playerId
+        });
+
+        if (newXp !== null) {
+          // Update player_xp table
+          await supabase
+            .from('player_xp')
+            .update({ xp: newXp, last_calculated: new Date().toISOString() })
+            .eq('player_id', playerId);
+
+          // Recalculate all ranks
+          await supabase.rpc('update_player_ranks');
+        }
+      } catch (xpErr) {
+        // Log but don't fail the activation - XP update is secondary
+        console.error('[activateInjuryToken] XP update error:', xpErr);
+      }
+
       return {
         success: true,
         message: result.message,
@@ -355,6 +376,27 @@ export function useInjuryToken() {
 
       if (!result?.success) {
         throw new Error(result?.message || 'Failed to activate injury token');
+      }
+
+      // Recalculate and update player XP after successful activation
+      try {
+        const { data: newXp } = await supabase.rpc('calculate_player_xp_v2', {
+          p_player_id: playerId
+        });
+
+        if (newXp !== null) {
+          // Update player_xp table
+          await supabase
+            .from('player_xp')
+            .update({ xp: newXp, last_calculated: new Date().toISOString() })
+            .eq('player_id', playerId);
+
+          // Recalculate all ranks
+          await supabase.rpc('update_player_ranks');
+        }
+      } catch (xpErr) {
+        // Log but don't fail the activation - XP update is secondary
+        console.error('[adminActivateInjuryToken] XP update error:', xpErr);
       }
 
       return {
