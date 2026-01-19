@@ -563,26 +563,33 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
                               insight.analysisType.includes('color_dominance');
   const confidenceInfo = isPercentageInsight ? getConfidenceInfo(sampleSize, insight.analysisType) : null;
 
-  // Priority-based styling
+  // Priority-based styling - enhanced visual hierarchy
   const getPriorityStyles = () => {
-    // If current user is involved, use special highlight
+    // If current user is involved, use special highlight (highest precedence)
     if (isCurrentUserInvolved) {
-      return 'border-l-4 border-l-primary bg-primary/10 ring-1 ring-primary/30';
+      return 'border-l-4 border-l-primary bg-primary/10 ring-1 ring-primary/30 shadow-md';
     }
     // Trophy insights get special gold/silver/bronze styling
     if (isTrophyInsight && medalPosition) {
       switch (medalPosition) {
-        case 1: return 'border-l-4 border-l-yellow-500 bg-yellow-500/10';
-        case 2: return 'border-l-4 border-l-gray-400 bg-gray-400/10';
-        case 3: return 'border-l-4 border-l-amber-600 bg-amber-600/10';
+        case 1: return 'border-l-4 border-l-yellow-500 bg-yellow-500/10 shadow-md';
+        case 2: return 'border-l-4 border-l-gray-400 bg-gray-400/10 shadow-sm';
+        case 3: return 'border-l-4 border-l-amber-600 bg-amber-600/10 shadow-sm';
       }
     }
-    if (insight.priority <= 2) {
-      return 'border-l-4 border-l-warning bg-warning/5';
+    // Priority 1: Highest importance - red/error with glow effect
+    if (insight.priority === 1) {
+      return 'border-l-4 border-l-error bg-error/10 shadow-lg ring-2 ring-error/30';
     }
+    // Priority 2: High importance - amber/warning with shadow
+    if (insight.priority === 2) {
+      return 'border-l-4 border-l-warning bg-warning/10 shadow-md';
+    }
+    // Priority 3: Medium importance - primary with subtle shadow
     if (insight.priority <= 3) {
-      return 'border-l-4 border-l-primary bg-primary/5';
+      return 'border-l-4 border-l-primary bg-primary/5 shadow-sm';
     }
+    // Priority 4-5: Low importance - neutral
     return 'border-l-4 border-l-base-300';
   };
 

@@ -76,7 +76,9 @@
       "Bash(git merge:*)",
       "Skill(daisyui-frontend)",
       "Bash(done)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(ping:*)",
+      "Bash(date:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

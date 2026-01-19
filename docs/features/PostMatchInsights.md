@@ -1,7 +1,7 @@
 # Post-Match Insights System
 
-**Last Updated:** January 16, 2026
-**Version:** 2.3.0
+**Last Updated:** January 17, 2026
+**Version:** 2.4.0
 
 ## Overview
 
@@ -9,7 +9,7 @@ The Post-Match Insights System automatically generates narrative highlights for 
 
 **Key Features:**
 - On-demand generation when viewing game details
-- 47+ insight types across 8 filter categories
+- 49+ insight types across 8 filter categories (including 2 injury insights)
 - Priority-based display ordering (priority 1 insights always shown)
 - Player involvement tracking for personalized filtering
 - WhatsApp summaries with up to 8 insights for variety
@@ -17,6 +17,7 @@ The Post-Match Insights System automatically generates narrative highlights for 
 - Goal scoring pattern analysis
 - Enhanced team color tracking with dominance/streaks
 - **Confidence-weighted priority** for percentage-based stats (higher sample size = better priority)
+- **Modular architecture** for maintainability (9 helper functions)
 
 ## Insight Categories
 
@@ -63,16 +64,44 @@ Tracks award standings compared to previous year.
 - 30 games: Priority 3
 - 10/20 games: Priority 4
 
-### Injury Token Statistics (Added Jan 2026)
+### Injury Token Statistics (Implemented Jan 2026)
 
-Tracks injury token usage for streak protection.
+Tracks injury token usage for streak protection. These insights show when players are sidelined due to injury and when they return to action.
 
 | Type | Trigger | Priority | Example |
 |------|---------|----------|---------|
-| `injury_token_used` | Player used injury token this game | 4 | "Protected! Chris used injury token - streak safe" |
-| `injury_token_return` | Player returns after using injury token | 3 | "Back in action! Dom returns after injury absence" |
+| `injury_token_used` | Player has active injury for this game (injury_game_id matches) | 1-2 | "🏥 Sidelined: Jack G out with injury (protecting 23-game streak)" |
+| `injury_token_return` | Player returns from injury this game (return_game_id matches) | 2-3 | "💉 Back in action! Jarman returns from injury (streak: 13)" |
 
-**Note:** Injury tokens protect attendance streaks when a player is injured at WNF. The system tracks both when tokens are activated and when players return to action.
+**Priority Logic:**
+- `injury_token_used`: Priority 1 if activated within 48 hours of game, otherwise Priority 2
+- `injury_token_return`: Priority 2 if return_streak >= 20 games, otherwise Priority 3
+
+**Database Query - Injury Absence:**
+```sql
+SELECT itu.*, p.friendly_name
+FROM injury_token_usage itu
+JOIN players p ON p.id = itu.player_id
+WHERE itu.injury_game_id = :game_id
+  AND itu.status = 'active';
+```
+
+**Database Query - Injury Return:**
+```sql
+SELECT itu.*, p.friendly_name
+FROM injury_token_usage itu
+JOIN players p ON p.id = itu.player_id
+WHERE itu.return_game_id = :game_id
+  AND itu.status = 'returned';
+```
+
+**WhatsApp Summary:**
+- `injury_token_return` is included in WhatsApp summaries (positive/celebratory)
+- `injury_token_used` is excluded from WhatsApp (informational, not celebratory)
+
+**Frontend Mappings:**
+- Emoji: `injury_token_used` → 🏥, `injury_token_return` → 💉
+- Category: Both mapped to 'streaks' filter tab
 
 ### Chemistry Insights (Same-Team Pairs)
 
@@ -241,9 +270,32 @@ The WhatsApp summary uses confidence-adjusted priority when selecting insights. 
 
 ## Database Functions
 
+### Modular Architecture (Added Jan 2026)
+
+The insights system uses a modular architecture with **9 helper functions** for maintainability:
+
+```
+Main Orchestrator: generate_game_insights_on_demand (~100 lines)
+  ├── _generate_appearance_insights()    (~120 lines) - Debuts, returns, bench promotions
+  ├── _generate_injury_insights()        (~80 lines)  - Injury absence + returns
+  ├── _generate_streak_insights()        (~150 lines) - Attendance, win/loss streaks
+  ├── _generate_team_color_insights()    (~100 lines) - Team loyalty, switches
+  ├── _generate_game_record_insights()   (~100 lines) - Blowouts, shutouts, close games
+  ├── _generate_milestone_insights()     (~150 lines) - Caps, partnerships
+  ├── _generate_chemistry_insights()     (~120 lines) - Duo chemistry
+  ├── _generate_trio_insights()          (~100 lines) - Trio chemistry
+  └── _generate_rivalry_insights()       (~250 lines) - All rivalry types
+```
+
+**Benefits:**
+- Each helper is 80-250 lines (vs 1,300+ monolithic)
+- Adding new insights only touches relevant helper
+- Context window issues eliminated for AI assistance
+- Same transaction boundary maintained
+
 ### generate_game_insights_on_demand
 
-Main insight generation function. Generates all insights for a completed game.
+Main orchestrator function. Calls all helper functions to generate insights.
 
 ```sql
 generate_game_insights_on_demand(p_game_id UUID)
@@ -258,9 +310,9 @@ RETURNS TABLE(
 
 **Behavior:**
 1. Deletes any existing insights for the game
-2. Calculates all insight types based on game data
-3. Inserts into `post_match_analysis` table
-4. Returns the generated insights
+2. Gets player lists (blue, orange, winners, losers)
+3. Calls each helper function in sequence
+4. Returns all generated insights from `post_match_analysis` table
 
 ### calculate_player_streaks_before_game
 
@@ -484,19 +536,27 @@ The `get_whatsapp_summary` function generates a WhatsApp-formatted summary with 
 **Step 3: Fill remaining slots by priority**
 - Any remaining slots (up to 8 total) filled with highest-priority insights not yet shown
 
-### Categories (9 total)
+### Categories (10 total)
 
-| Category | Insight Types |
-|----------|---------------|
-| trophy | `trophy_change`, `trophy_new`, `trophy_extended`, `trophy_defended` |
-| rivalry | `rivalry_*`, `never_beaten_rivalry`, `first_ever_win_nemesis` |
-| chemistry | `chemistry_*`, `trio_*`, `partnership_*` |
-| attendance | `attendance_streak`, `attendance_streak_ended` |
-| streak | `win_streak`, `losing_streak`, `unbeaten_streak` (not attendance) |
-| record | `game_record`, `blowout_game`, `shutout_game` |
-| milestone | `cap_milestone`, `personal_best*` |
-| appearance | `debut_appearance`, `return_after_absence`, `first_game_back_win`, `bench_warmer_promoted` |
-| team_color | `team_color_loyalty`, `team_color_switch` |
+| Category | Insight Types | Notes |
+|----------|---------------|-------|
+| trophy | `trophy_change`, `trophy_new`, `trophy_extended`, `trophy_defended` | |
+| rivalry | `rivalry_*`, `never_beaten_rivalry`, `first_ever_win_nemesis` | |
+| chemistry | `chemistry_*`, `trio_*`, `partnership_*` | |
+| attendance | `attendance_streak`, `attendance_streak_ended` | |
+| streak | `win_streak`, `losing_streak`, `unbeaten_streak` (not attendance) | |
+| record | `game_record`, `blowout_game`, `shutout_game` | |
+| milestone | `cap_milestone`, `personal_best*` | |
+| appearance | `debut_appearance`, `return_after_absence`, `first_game_back_win`, `bench_warmer_promoted` | |
+| team_color | `team_color_loyalty`, `team_color_switch` | |
+| injury | `injury_token_return` | Only returns are positive/celebratory |
+
+**Excluded from WhatsApp:**
+- `injury_token_used` - Informational only, not celebratory
+- `chemistry_curse`, `trio_cursed` - Negative insights
+- `losing_streak`, `winless_streak` - Negative insights
+- `rivalry_nemesis` - Negative for the victim
+- `player_color_curse` - Negative insight
 
 ### Example Output
 
@@ -510,14 +570,14 @@ The `get_whatsapp_summary` function generates a WhatsApp-formatted summary with 
 3. Iron man! Paul reaches 30 consecutive games
 4. On fire! Simon wins 3 in a row
 5. Clean sheet! Blue keeps opposition scoreless (3-0)
-6. Welcome back! Jimmy returns after 6-game absence
+6. 💉 Back in action! Jack G returns from injury (streak: 12)
 7. True Orange! Nathan has played Orange 70% of the time
 8. On fire! Maddocks wins 3 in a row
 
 🔗 Full report: https://wnf.app/results/78
 ```
 
-This example shows all 9 categories represented with good variety: rivalry, chemistry, attendance, streak, record (shutout), appearance, and team_color.
+This example shows 8 categories represented with good variety: rivalry, chemistry, attendance, streak, record (shutout), injury (return), and team_color.
 
 ## Bug Fixes
 
