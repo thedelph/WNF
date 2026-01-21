@@ -146,6 +146,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 
 ### Player Selection Fixes
 - **[Registration Close Player Selection Fix](fixes/RegistrationClosePlayerSelectionFix.md)** - Automated selection bug
+- **[Admin Add Player Post-Announcement Fix](fixes/AdminAddPlayerPostAnnouncementFix.md)** *(New Jan 2026)* - Players added after announcement get correct status
 - **[Bench Warmer Streak Calculation Fix](fixes/BenchWarmerStreakCalculationFix.md)** - Consecutive reserve counting
 
 ### UI/UX Fixes

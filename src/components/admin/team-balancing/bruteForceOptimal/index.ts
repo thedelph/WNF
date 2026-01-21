@@ -22,7 +22,7 @@ import type {
   TrioMap,
 } from './types';
 import { DEFAULT_WEIGHTS } from './types';
-import { loadAllPlayerData, mergePlayerData } from './dataLoaders';
+import { loadAllPlayerData, mergePlayerData, augmentChemistryWithEstimates } from './dataLoaders';
 import {
   calculateTotalScore,
   calculateScoreWithBreakdown,
@@ -32,6 +32,7 @@ import {
   generateValidCombinations,
   calculateTotalCombinations,
   getTierDistribution,
+  calculateTierChangesFromForm,
 } from './combinationGenerator';
 
 // Re-export types for convenience
@@ -60,8 +61,8 @@ export async function generateOptimalTeams(
   const { stats, performance: perfData, chemistry, rivalry, trios, positions, attributes } =
     await loadAllPlayerData(playerIds);
 
-  // Calculate data loading statistics
-  const dataLoadingStats = {
+  // Calculate data loading statistics (form stats will be added after merging)
+  const baseDataLoadingStats = {
     chemistryPairsLoaded: chemistry.size,
     rivalryPairsLoaded: rivalry.size,
     triosLoaded: trios.size,
@@ -74,17 +75,55 @@ export async function generateOptimalTeams(
 
   // Debug: Log data loading statistics
   console.log('[BruteForce] Data loading stats:');
-  console.log(`  - Chemistry pairs loaded: ${dataLoadingStats.chemistryPairsLoaded}`);
-  console.log(`  - Rivalry pairs loaded: ${dataLoadingStats.rivalryPairsLoaded}`);
-  console.log(`  - Trios loaded: ${dataLoadingStats.triosLoaded}`);
-  console.log(`  - Players with win rate: ${dataLoadingStats.playersWithWinRate}/${dataLoadingStats.totalPlayers}`);
-  console.log(`  - Players with goal diff: ${dataLoadingStats.playersWithGoalDiff}/${dataLoadingStats.totalPlayers}`);
-  console.log(`  - Players with position data: ${dataLoadingStats.playersWithPosition}/${dataLoadingStats.totalPlayers}`);
-  console.log(`  - Players with attributes: ${dataLoadingStats.playersWithAttributes}/${dataLoadingStats.totalPlayers}`);
+  console.log(`  - Chemistry pairs loaded: ${baseDataLoadingStats.chemistryPairsLoaded}`);
+  console.log(`  - Rivalry pairs loaded: ${baseDataLoadingStats.rivalryPairsLoaded}`);
+  console.log(`  - Trios loaded: ${baseDataLoadingStats.triosLoaded}`);
+  console.log(`  - Players with win rate: ${baseDataLoadingStats.playersWithWinRate}/${baseDataLoadingStats.totalPlayers}`);
+  console.log(`  - Players with goal diff: ${baseDataLoadingStats.playersWithGoalDiff}/${baseDataLoadingStats.totalPlayers}`);
+  console.log(`  - Players with position data: ${baseDataLoadingStats.playersWithPosition}/${baseDataLoadingStats.totalPlayers}`);
+  console.log(`  - Players with attributes: ${baseDataLoadingStats.playersWithAttributes}/${baseDataLoadingStats.totalPlayers}`);
 
-  // 2. Merge into unified player objects
-  const allPlayers = mergePlayerData(stats, perfData, positions, attributes);
+  // 2. Merge into unified player objects (with form adjustment)
+  const formAdjustmentFactor = options.formAdjustmentFactor ?? 0.5;
+  const allPlayers = mergePlayerData(stats, perfData, positions, attributes, formAdjustmentFactor);
   console.log(`[BruteForce] Loaded ${allPlayers.length} players`);
+
+  // 2.5 Calculate form adjustment stats
+  const useFormAdjustedTiers = options.useFormAdjustedTiers !== false; // Default true
+  const playersWithFormData = allPlayers.filter(p => p.formDelta !== 0).length;
+  const avgFormDelta = playersWithFormData > 0
+    ? allPlayers.reduce((sum, p) => sum + p.formDelta, 0) / allPlayers.length
+    : 0;
+  const tierChangesFromForm = useFormAdjustedTiers
+    ? calculateTierChangesFromForm(allPlayers)
+    : 0;
+
+  if (options.debug && useFormAdjustedTiers) {
+    console.log('[BruteForce] Form adjustment stats:');
+    console.log(`  - Players with form data: ${playersWithFormData}/${allPlayers.length}`);
+    console.log(`  - Avg form delta: ${(avgFormDelta * 100).toFixed(1)}%`);
+    console.log(`  - Tier changes from form: ${tierChangesFromForm}`);
+  }
+
+  // 2.6 Augment chemistry with estimates if enabled
+  const enableChemistryEstimation = options.enableChemistryEstimation !== false; // Default true
+  let chemistryMapToUse = chemistry;
+  let estimatedChemistryPairs = 0;
+  let avgEstimationConfidence = 0;
+
+  if (enableChemistryEstimation) {
+    const { augmentedMap, stats } = augmentChemistryWithEstimates(chemistry, allPlayers);
+    chemistryMapToUse = augmentedMap;
+    estimatedChemistryPairs = stats.estimatedPairs;
+    avgEstimationConfidence = stats.avgConfidence;
+
+    if (options.debug) {
+      console.log('[BruteForce] Chemistry estimation stats:');
+      console.log(`  - Real chemistry pairs: ${stats.realPairs}`);
+      console.log(`  - Estimated pairs: ${stats.estimatedPairs}`);
+      console.log(`  - Avg estimation confidence: ${(stats.avgConfidence * 100).toFixed(0)}%`);
+    }
+  }
 
   // 3. Handle permanent GK if specified
   const outfieldPlayers = options.permanentGKId
@@ -108,8 +147,21 @@ export async function generateOptimalTeams(
   let bestTeams: [BruteForcePlayer[], BruteForcePlayer[]] | null = null;
   let combinationsEvaluated = 0;
 
-  for (const [blue, orange] of generateValidCombinations(outfieldPlayers)) {
-    const score = calculateTotalScore(blue, orange, chemistry, rivalry, trios, weights);
+  // Prepare scoring options
+  const enablePerMetricTierPenalty = options.enablePerMetricTierPenalty !== false; // Default true
+  const scoreOptions = { enablePerMetricTierPenalty };
+
+  for (const [blue, orange] of generateValidCombinations(outfieldPlayers, useFormAdjustedTiers)) {
+    const score = calculateTotalScore(
+      blue,
+      orange,
+      chemistryMapToUse,
+      rivalry,
+      trios,
+      weights,
+      outfieldPlayers,
+      scoreOptions
+    );
     combinationsEvaluated++;
 
     if (score < bestScore) {
@@ -145,24 +197,42 @@ export async function generateOptimalTeams(
   const scoreBreakdown = calculateScoreWithBreakdown(
     bestTeams[0],
     bestTeams[1],
-    chemistry,
+    chemistryMapToUse,
     rivalry,
     trios,
-    weights
+    weights,
+    outfieldPlayers,
+    scoreOptions
   );
 
-  // 8. Get tier distribution for verification
+  // 8. Get tier distribution for verification (using form-adjusted if enabled)
   const tierDistribution = getTierDistribution(
     bestTeams[0],
     bestTeams[1],
-    outfieldPlayers
+    outfieldPlayers,
+    useFormAdjustedTiers
   );
+
+  // 9. Compile final data loading stats
+  const dataLoadingStats = {
+    ...baseDataLoadingStats,
+    // Form adjustment stats
+    playersWithFormData,
+    avgFormDelta,
+    tierChangesFromForm,
+    // Chemistry estimation stats
+    estimatedChemistryPairs,
+    avgEstimationConfidence,
+  };
 
   console.log(`[BruteForce] Complete!`);
   console.log(`  - Combinations evaluated: ${combinationsEvaluated.toLocaleString()}`);
   console.log(`  - Best score: ${bestScore.toFixed(4)}`);
   console.log(`  - Compute time: ${computeTimeMs.toFixed(0)}ms`);
   console.log(`  - Tier distribution: Blue ${tierDistribution.blue.top}-${tierDistribution.blue.middle}-${tierDistribution.blue.bottom}, Orange ${tierDistribution.orange.top}-${tierDistribution.orange.middle}-${tierDistribution.orange.bottom}`);
+  if (useFormAdjustedTiers) {
+    console.log(`  - Form adjustment: ${tierChangesFromForm} tier changes`);
+  }
 
   return {
     blueTeam: bestTeams[0],
@@ -174,8 +244,8 @@ export async function generateOptimalTeams(
     algorithm: 'brute-force-optimal',
     tierDistribution,
     dataLoadingStats,
-    // Include maps for detailed debug logging
-    chemistryMap: chemistry,
+    // Include maps for detailed debug logging (chemistryMap includes estimates if enabled)
+    chemistryMap: chemistryMapToUse,
     rivalryMap: rivalry,
     trioMap: trios,
   };

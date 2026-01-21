@@ -20,6 +20,7 @@ import {
   getRivalryBreakdown,
   getTrioBreakdown,
 } from './bruteForceOptimal';
+import { calculatePerMetricTierPenalty } from './bruteForceOptimal/scoring';
 
 type AlgorithmType = 'tier-based' | 'brute-force';
 
@@ -142,6 +143,10 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
       // Helper to format goal differential with +/- sign
       const formatGD = (val: number) => val > 0 ? `+${val.toFixed(1)}` : val.toFixed(1);
 
+      // Calculate per-metric tier penalty breakdown
+      const combinedPlayers = [...result.blueTeam, ...result.orangeTeam];
+      const perMetricTier = calculatePerMetricTierPenalty(result.blueTeam, result.orangeTeam, combinedPlayers);
+
       const debugLogStr = [
         '=== Brute-Force Optimal Algorithm ===',
         `Combinations evaluated: ${result.combinationsEvaluated.toLocaleString()}`,
@@ -157,12 +162,33 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
         `Players with position: ${stats.playersWithPosition}/${stats.totalPlayers}`,
         `Players with attributes: ${stats.playersWithAttributes}/${stats.totalPlayers}`,
         '',
+        '=== Form Adjustment Stats ===',
+        `Players with form data: ${stats.playersWithFormData ?? 0}/${stats.totalPlayers}`,
+        `Avg form delta: ${stats.avgFormDelta !== undefined ? `${(stats.avgFormDelta * 100).toFixed(1)}%` : 'N/A'}`,
+        `Tier changes from form: ${stats.tierChangesFromForm ?? 0}`,
+        '',
+        '=== Chemistry Estimation Stats ===',
+        `Real chemistry pairs: ${stats.chemistryPairsLoaded}`,
+        `Estimated pairs: ${stats.estimatedChemistryPairs ?? 0}`,
+        `Avg estimation confidence: ${stats.avgEstimationConfidence !== undefined ? `${(stats.avgEstimationConfidence * 100).toFixed(0)}%` : 'N/A'}`,
+        '',
+        '=== Per-Metric Tier Distribution ===',
+        `                Blue  Orange  Skew  Penalty`,
+        ...perMetricTier.details.map(d => {
+          const skewStr = d.skew > 0 ? `  ${d.skew}` : `  ${d.skew}`;
+          const penaltyStr = d.penalty > 0 ? `  ${d.penalty.toFixed(4)}` : '  -';
+          return `${d.metric.padEnd(12)}:    ${d.blueTopCount}      ${d.orangeTopCount}${skewStr}${penaltyStr}`;
+        }),
+        `Total per-metric penalty: ${perMetricTier.totalPenalty.toFixed(4)}`,
+        '',
         '=== Team Averages Comparison ===',
         `                Blue     Orange   Gap`,
         `Attack:         ${coreBreakdown.blue.attack.toFixed(2).padStart(5)}    ${coreBreakdown.orange.attack.toFixed(2).padStart(5)}    ${coreBreakdown.gaps.attack.toFixed(2)}`,
         `Defense:        ${coreBreakdown.blue.defense.toFixed(2).padStart(5)}    ${coreBreakdown.orange.defense.toFixed(2).padStart(5)}    ${coreBreakdown.gaps.defense.toFixed(2)}`,
         `Game IQ:        ${coreBreakdown.blue.gameIq.toFixed(2).padStart(5)}    ${coreBreakdown.orange.gameIq.toFixed(2).padStart(5)}    ${coreBreakdown.gaps.gameIq.toFixed(2)}`,
         `GK:             ${coreBreakdown.blue.gk.toFixed(2).padStart(5)}    ${coreBreakdown.orange.gk.toFixed(2).padStart(5)}    ${coreBreakdown.gaps.gk.toFixed(2)}`,
+        `Max Gap:        ${coreBreakdown.maxGap.metric.padEnd(8)} = ${coreBreakdown.maxGap.value.toFixed(2)} ${coreBreakdown.maxGap.exceedsThreshold ? `(EXCEEDS threshold ${coreBreakdown.maxGap.threshold})` : `(OK, threshold ${coreBreakdown.maxGap.threshold})`}`,
+        ...(coreBreakdown.penalty.applied ? [`Penalty:        ${coreBreakdown.penalty.amount.toFixed(4)} applied for exceeding max gap`] : []),
         '',
         '=== Performance Balance (Overall/Career) ===',
         `                Blue     Orange   Gap`,
@@ -252,7 +278,16 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
           const pos = p.primaryPosition ? `[${p.primaryPosition}]` : '';
           const wr = p.recentWinRate !== null ? `WR: ${p.recentWinRate.toFixed(0)}%` : '';
           const gd = p.recentGoalDiff !== null ? `GD: ${p.recentGoalDiff > 0 ? '+' : ''}${p.recentGoalDiff.toFixed(0)}` : '';
-          const perf = [wr, gd].filter(Boolean).join(' ');
+          // Calculate actual adjustment with cap for display
+          const MAX_FORM_ADJ = 0.25;
+          const FORM_FACTOR = 0.10;
+          const rawAdj = p.formDelta * FORM_FACTOR * 10;
+          const cappedAdj = Math.max(-MAX_FORM_ADJ, Math.min(MAX_FORM_ADJ, rawAdj));
+          const wasCapped = Math.abs(rawAdj) > MAX_FORM_ADJ;
+          const form = p.formDelta !== 0
+            ? `Form: ${p.formDelta > 0 ? '+' : ''}${(p.formDelta * 100).toFixed(0)}% → ${cappedAdj > 0 ? '+' : ''}${cappedAdj.toFixed(2)} adj${wasCapped ? ' (capped)' : ''}`
+            : '';
+          const perf = [wr, gd, form].filter(Boolean).join(' ');
           return `  - ${p.friendly_name} (ATK: ${p.attack.toFixed(1)}, DEF: ${p.defense.toFixed(1)}, IQ: ${p.gameIq.toFixed(1)}, GK: ${p.gk.toFixed(1)}) ${pos} ${perf}`.trim();
         }),
         '',
@@ -261,7 +296,16 @@ export const TierBasedTeamGenerator: React.FC<TierBasedTeamGeneratorProps> = ({
           const pos = p.primaryPosition ? `[${p.primaryPosition}]` : '';
           const wr = p.recentWinRate !== null ? `WR: ${p.recentWinRate.toFixed(0)}%` : '';
           const gd = p.recentGoalDiff !== null ? `GD: ${p.recentGoalDiff > 0 ? '+' : ''}${p.recentGoalDiff.toFixed(0)}` : '';
-          const perf = [wr, gd].filter(Boolean).join(' ');
+          // Calculate actual adjustment with cap for display
+          const MAX_FORM_ADJ = 0.25;
+          const FORM_FACTOR = 0.10;
+          const rawAdj = p.formDelta * FORM_FACTOR * 10;
+          const cappedAdj = Math.max(-MAX_FORM_ADJ, Math.min(MAX_FORM_ADJ, rawAdj));
+          const wasCapped = Math.abs(rawAdj) > MAX_FORM_ADJ;
+          const form = p.formDelta !== 0
+            ? `Form: ${p.formDelta > 0 ? '+' : ''}${(p.formDelta * 100).toFixed(0)}% → ${cappedAdj > 0 ? '+' : ''}${cappedAdj.toFixed(2)} adj${wasCapped ? ' (capped)' : ''}`
+            : '';
+          const perf = [wr, gd, form].filter(Boolean).join(' ');
           return `  - ${p.friendly_name} (ATK: ${p.attack.toFixed(1)}, DEF: ${p.defense.toFixed(1)}, IQ: ${p.gameIq.toFixed(1)}, GK: ${p.gk.toFixed(1)}) ${pos} ${perf}`.trim();
         }),
       ].join('\n');

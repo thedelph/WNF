@@ -49,17 +49,25 @@ function* combinations<T>(array: T[], k: number): Generator<T[]> {
 }
 
 /**
- * Divide players into thirds based on overall rating
+ * Divide players into thirds based on rating
+ *
+ * @param players - Players to divide
+ * @param useFormAdjusted - Use form-adjusted rating instead of overall rating
  */
 function divideIntoThirds(
-  players: BruteForcePlayer[]
+  players: BruteForcePlayer[],
+  useFormAdjusted: boolean = false
 ): {
   topThird: BruteForcePlayer[];
   middleThird: BruteForcePlayer[];
   bottomThird: BruteForcePlayer[];
 } {
-  // Sort by overall rating (highest first)
-  const sorted = [...players].sort((a, b) => b.overallRating - a.overallRating);
+  // Sort by rating (highest first)
+  const sorted = [...players].sort((a, b) =>
+    useFormAdjusted
+      ? b.formAdjustedRating - a.formAdjustedRating
+      : b.overallRating - a.overallRating
+  );
 
   const totalPlayers = sorted.length;
   const thirdSize = Math.ceil(totalPlayers / 3);
@@ -99,10 +107,12 @@ function calculatePlayersPerThird(
  * - Combinations: C(4,2) * C(4,2) * C(4,2) = 6 * 6 * 6 = 216
  *
  * @param players - All players to distribute
+ * @param useFormAdjusted - Use form-adjusted rating for tier sorting
  * @yields Tuples of [blueTeam, orangeTeam]
  */
 export function* generateValidCombinations(
-  players: BruteForcePlayer[]
+  players: BruteForcePlayer[],
+  useFormAdjusted: boolean = false
 ): Generator<[BruteForcePlayer[], BruteForcePlayer[]]> {
   const totalPlayers = players.length;
   const teamSize = Math.floor(totalPlayers / 2);
@@ -111,11 +121,18 @@ export function* generateValidCombinations(
   // For now, just use the even number and one player will be unassigned
   const effectiveTotal = teamSize * 2;
   const effectivePlayers = [...players]
-    .sort((a, b) => b.overallRating - a.overallRating)
+    .sort((a, b) =>
+      useFormAdjusted
+        ? b.formAdjustedRating - a.formAdjustedRating
+        : b.overallRating - a.overallRating
+    )
     .slice(0, effectiveTotal);
 
-  // Divide into thirds
-  const { topThird, middleThird, bottomThird } = divideIntoThirds(effectivePlayers);
+  // Divide into thirds (using form-adjusted if enabled)
+  const { topThird, middleThird, bottomThird } = divideIntoThirds(
+    effectivePlayers,
+    useFormAdjusted
+  );
 
   // Calculate players per third per team
   const perThirdTop = Math.floor(topThird.length / 2);
@@ -179,12 +196,16 @@ export function calculateTotalCombinations(playerCount: number): number {
 export function getTierDistribution(
   blueTeam: BruteForcePlayer[],
   orangeTeam: BruteForcePlayer[],
-  allPlayers: BruteForcePlayer[]
+  allPlayers: BruteForcePlayer[],
+  useFormAdjusted: boolean = false
 ): {
   blue: { top: number; middle: number; bottom: number };
   orange: { top: number; middle: number; bottom: number };
 } {
-  const { topThird, middleThird, bottomThird } = divideIntoThirds(allPlayers);
+  const { topThird, middleThird, bottomThird } = divideIntoThirds(
+    allPlayers,
+    useFormAdjusted
+  );
 
   const topIds = new Set(topThird.map((p) => p.player_id));
   const midIds = new Set(middleThird.map((p) => p.player_id));
@@ -202,4 +223,43 @@ export function getTierDistribution(
       bottom: orangeTeam.filter((p) => bottomIds.has(p.player_id)).length,
     },
   };
+}
+
+/**
+ * Calculate how many players changed tiers due to form adjustment
+ */
+export function calculateTierChangesFromForm(
+  players: BruteForcePlayer[]
+): number {
+  // Get tiers without form adjustment
+  const { topThird: topOrig, middleThird: midOrig, bottomThird: botOrig } =
+    divideIntoThirds(players, false);
+  const topOrigIds = new Set(topOrig.map((p) => p.player_id));
+  const midOrigIds = new Set(midOrig.map((p) => p.player_id));
+  const botOrigIds = new Set(botOrig.map((p) => p.player_id));
+
+  // Get tiers with form adjustment
+  const { topThird: topForm, middleThird: midForm, bottomThird: botForm } =
+    divideIntoThirds(players, true);
+  const topFormIds = new Set(topForm.map((p) => p.player_id));
+  const midFormIds = new Set(midForm.map((p) => p.player_id));
+  const botFormIds = new Set(botForm.map((p) => p.player_id));
+
+  // Count players who changed tiers
+  let changes = 0;
+  for (const player of players) {
+    const wasTop = topOrigIds.has(player.player_id);
+    const wasMid = midOrigIds.has(player.player_id);
+    const wasBot = botOrigIds.has(player.player_id);
+
+    const isTop = topFormIds.has(player.player_id);
+    const isMid = midFormIds.has(player.player_id);
+    const isBot = botFormIds.has(player.player_id);
+
+    if (wasTop !== isTop || wasMid !== isMid || wasBot !== isBot) {
+      changes++;
+    }
+  }
+
+  return changes;
 }

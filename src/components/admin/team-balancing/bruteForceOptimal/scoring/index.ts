@@ -1,5 +1,12 @@
 import type { BruteForcePlayer, ChemistryMap, RivalryMap, TrioMap, ScoringWeights, ScoreBreakdown } from '../types';
-import { calculateCoreRatingsScore, getCoreRatingsBreakdown } from './coreRatingsScore';
+import {
+  calculateCoreRatingsScore,
+  getCoreRatingsBreakdown,
+  calculatePerMetricTierPenalty,
+  MAX_METRIC_GAP_THRESHOLD,
+  MAX_TIER_SKEW,
+  type CoreRatingsBreakdown,
+} from './coreRatingsScore';
 import { calculateChemistryScore, getChemistryBreakdown } from './chemistryScore';
 import { calculateRivalryScore, getRivalryBreakdown } from './rivalryScore';
 import { calculateTrioScore, getTrioBreakdown } from './trioScore';
@@ -12,6 +19,10 @@ import { calculateAttributeScore, getAttributeBreakdown } from './attributeScore
 export {
   calculateCoreRatingsScore,
   getCoreRatingsBreakdown,
+  calculatePerMetricTierPenalty,
+  MAX_METRIC_GAP_THRESHOLD,
+  MAX_TIER_SKEW,
+  type CoreRatingsBreakdown,
   calculateChemistryScore,
   getChemistryBreakdown,
   calculateRivalryScore,
@@ -77,6 +88,13 @@ function calculateCombinedChemistryScore(
 }
 
 /**
+ * Options for score calculation
+ */
+export interface ScoreCalculationOptions {
+  enablePerMetricTierPenalty?: boolean; // Default: true
+}
+
+/**
  * Calculate the total balance score for a team configuration
  *
  * @param blueTeam - Players on the blue team
@@ -85,6 +103,8 @@ function calculateCombinedChemistryScore(
  * @param rivalryMap - Rivalry data for player pairs (opposite teams)
  * @param trioMap - Trio chemistry data
  * @param weights - Optional custom weights (defaults to WEIGHTS)
+ * @param allPlayers - All players (required for per-metric tier penalty)
+ * @param options - Additional options
  *
  * @returns Total score where 0 = perfect balance, higher = worse
  */
@@ -94,7 +114,9 @@ export function calculateTotalScore(
   chemistryMap: ChemistryMap,
   rivalryMap: RivalryMap = new Map(),
   trioMap: TrioMap = new Map(),
-  weights: ScoringWeights = WEIGHTS
+  weights: ScoringWeights = WEIGHTS,
+  allPlayers?: BruteForcePlayer[],
+  options: ScoreCalculationOptions = {}
 ): number {
   const coreScore = calculateCoreRatingsScore(blueTeam, orangeTeam);
   const { combined: chemistryScore } = calculateCombinedChemistryScore(
@@ -109,13 +131,22 @@ export function calculateTotalScore(
   const positionScore = calculatePositionScore(blueTeam, orangeTeam);
   const attributeScore = calculateAttributeScore(blueTeam, orangeTeam);
 
+  // Calculate per-metric tier penalty if enabled and allPlayers provided
+  const enablePerMetricTierPenalty = options.enablePerMetricTierPenalty !== false;
+  let perMetricPenalty = 0;
+  if (enablePerMetricTierPenalty && allPlayers) {
+    const { totalPenalty } = calculatePerMetricTierPenalty(blueTeam, orangeTeam, allPlayers);
+    perMetricPenalty = totalPenalty;
+  }
+
   return (
     coreScore * weights.coreRatings +
     chemistryScore * weights.chemistry +
     performanceScore * weights.performance +
     formScore * weights.form +
     positionScore * weights.position +
-    attributeScore * weights.attributes
+    attributeScore * weights.attributes +
+    perMetricPenalty // Added directly (not weighted) as a constraint penalty
   );
 }
 
@@ -128,7 +159,9 @@ export function calculateScoreWithBreakdown(
   chemistryMap: ChemistryMap,
   rivalryMap: RivalryMap = new Map(),
   trioMap: TrioMap = new Map(),
-  weights: ScoringWeights = WEIGHTS
+  weights: ScoringWeights = WEIGHTS,
+  allPlayers?: BruteForcePlayer[],
+  options: ScoreCalculationOptions = {}
 ): ScoreBreakdown {
   const coreScore = calculateCoreRatingsScore(blueTeam, orangeTeam);
   const chemistryDetails = calculateCombinedChemistryScore(
@@ -143,13 +176,22 @@ export function calculateScoreWithBreakdown(
   const positionScore = calculatePositionScore(blueTeam, orangeTeam);
   const attributeScore = calculateAttributeScore(blueTeam, orangeTeam);
 
+  // Calculate per-metric tier penalty if enabled and allPlayers provided
+  const enablePerMetricTierPenalty = options.enablePerMetricTierPenalty !== false;
+  let perMetricPenalty = 0;
+  if (enablePerMetricTierPenalty && allPlayers) {
+    const { totalPenalty } = calculatePerMetricTierPenalty(blueTeam, orangeTeam, allPlayers);
+    perMetricPenalty = totalPenalty;
+  }
+
   const total =
     coreScore * weights.coreRatings +
     chemistryDetails.combined * weights.chemistry +
     performanceScore * weights.performance +
     formScore * weights.form +
     positionScore * weights.position +
-    attributeScore * weights.attributes;
+    attributeScore * weights.attributes +
+    perMetricPenalty;
 
   return {
     coreRatings: coreScore,

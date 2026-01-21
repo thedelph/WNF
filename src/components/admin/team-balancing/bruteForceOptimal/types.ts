@@ -104,6 +104,10 @@ export interface BruteForcePlayer {
   gk: number;
   // Computed overall rating for tier sorting
   overallRating: number;
+  // Form-adjusted rating for tier sorting (overallRating + form adjustment)
+  formAdjustedRating: number;
+  // Form delta (recent win rate - career win rate, normalized -1 to +1)
+  formDelta: number;
   // Performance metrics
   recentWinRate: number | null;
   recentGoalDiff: number | null;
@@ -159,6 +163,12 @@ export interface ScoringWeights {
   form: number;
   position: number;
   attributes: number;
+  /**
+   * Maximum acceptable gap for any single metric (attack, defense, gameIq, gk).
+   * If any metric exceeds this threshold, an exponential penalty is applied.
+   * Default: 0.25 (on a 0-10 scale, this means max 0.25 difference allowed)
+   */
+  maxMetricGap?: number;
 }
 
 /**
@@ -205,6 +215,24 @@ export interface DataLoadingStats {
   playersWithPosition: number;
   playersWithAttributes: number;
   totalPlayers: number;
+  // Form adjustment stats
+  playersWithFormData: number;
+  avgFormDelta: number;
+  tierChangesFromForm: number;
+  // Chemistry estimation stats
+  estimatedChemistryPairs: number;
+  avgEstimationConfidence: number;
+}
+
+/**
+ * Per-metric tier skew for debugging
+ */
+export interface MetricTierSkew {
+  metric: 'attack' | 'defense' | 'gameIq' | 'gk';
+  blueTopCount: number;
+  orangeTopCount: number;
+  skew: number;
+  penalty: number;
 }
 
 /**
@@ -238,6 +266,20 @@ export interface BruteForceOptions {
   permanentGKId?: string;
   weights?: Partial<ScoringWeights>;
   debug?: boolean;
+
+  // Feature 1: Form-Adjusted Tiers
+  /** Use form-adjusted ratings for tier sorting (default: true) */
+  useFormAdjustedTiers?: boolean;
+  /** Factor for form adjustment: formDelta * factor * 10 = rating adjustment, capped at ±0.25 (default: 0.10) */
+  formAdjustmentFactor?: number;
+
+  // Feature 2: Per-Metric Tier Constraints
+  /** Enable per-metric tier penalty to prevent all top attackers on one team (default: true) */
+  enablePerMetricTierPenalty?: boolean;
+
+  // Feature 3: Chemistry Estimation
+  /** Enable chemistry estimation for pairs without game history (default: true) */
+  enableChemistryEstimation?: boolean;
 }
 
 /**

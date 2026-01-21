@@ -45,12 +45,24 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
   const [players, setPlayers] = React.useState<Array<{ id: string; friendly_name: string; shield_tokens_available: number }>>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [shieldUsers, setShieldUsers] = React.useState<ShieldUser[]>([]);
+  const [gameStatus, setGameStatus] = React.useState<string>('open');
 
   // Function to fetch registrations
   const fetchRegistrations = async () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Fetch game status for context-aware registration
+      const { data: gameData } = await supabase
+        .from('games')
+        .select('status')
+        .eq('id', gameId)
+        .single();
+
+      if (gameData) {
+        setGameStatus(gameData.status);
+      }
 
       // First, get the registrations for this game
       const { data: registrations, error } = await supabase
@@ -443,6 +455,12 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
         return;
       }
 
+      // Determine status based on game phase
+      // If game is past announcement, add players directly as selected
+      const isPostAnnouncement = ['players_announced', 'teams_announced'].includes(gameStatus);
+      const insertStatus = isPostAnnouncement ? 'selected' : 'registered';
+      const insertMethod = isPostAnnouncement ? 'merit' : 'none';
+
       // Insert only new registrations using admin client
       const { error: insertError } = await supabaseAdmin
         .from('game_registrations')
@@ -450,8 +468,8 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
           newPlayerIds.map(playerId => ({
             game_id: gameId,
             player_id: playerId,
-            status: 'registered',
-            selection_method: 'none',
+            status: insertStatus,
+            selection_method: insertMethod,
             team: null,
             created_at: new Date().toISOString()
           }))
@@ -459,7 +477,8 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
 
       if (insertError) throw insertError;
 
-      toast.success(`${newPlayerIds.length} player(s) registered successfully!`);
+      const actionText = isPostAnnouncement ? 'added to selected' : 'registered';
+      toast.success(`${newPlayerIds.length} player(s) ${actionText} successfully!`);
       fetchRegistrations(); // Refresh registrations
       setSelectedPlayerIds([]);
       setIsSelectAll(false);
@@ -637,7 +656,9 @@ export const GameRegistrations: React.FC<GameRegistrationsProps> = ({
               className="btn btn-primary w-full sm:w-auto text-sm sm:text-base py-2 px-3 sm:py-3 sm:px-4"
               disabled={selectedPlayerIds.length === 0}
             >
-              Register Selected ({selectedPlayerIds.length})
+              {['players_announced', 'teams_announced'].includes(gameStatus)
+                ? `Add to Selected (${selectedPlayerIds.length})`
+                : `Register Selected (${selectedPlayerIds.length})`}
             </motion.button>
           </div>
 

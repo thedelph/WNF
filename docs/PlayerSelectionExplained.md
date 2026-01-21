@@ -306,6 +306,21 @@ Result:
 2. Player B is considered for remaining merit slots
 ```
 
+## Admin-Added Players (Post-Announcement)
+
+When an admin adds a player to a game after the registration window has closed (during `players_announced` or `teams_announced` phases), the player is automatically set with:
+- `status: 'selected'` - Player is immediately part of the selected roster
+- `selection_method: 'merit'` - Consistent with automatic merit-based selection
+
+This ensures:
+1. Admin-added players appear correctly in the selected players list
+2. Data consistency with the automatic selection process
+3. Clear audit trail showing the player was added through normal game flow
+
+See **[Admin Add Player Post-Announcement Fix](./fixes/AdminAddPlayerPostAnnouncementFix.md)** for implementation details.
+
+---
+
 ## Data Storage and Access
 
 ### Database Structure

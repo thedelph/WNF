@@ -5,6 +5,12 @@ import { loadRivalry, getRivalryPairKey, getRivalryAdvantage } from './loadRival
 import { loadTrioChemistry, getTrioKey, getTrioScore, generateTrioCombinations } from './loadTrioChemistry';
 import { loadPositions } from './loadPositions';
 import { loadAttributes } from './loadAttributes';
+import {
+  estimateChemistryScore,
+  augmentChemistryWithEstimates,
+  type EstimatedChemistry,
+  type ChemistryEstimationStats,
+} from './estimateChemistry';
 import type {
   BruteForcePlayer,
   PlayerStats,
@@ -31,6 +37,11 @@ export {
   getTrioKey,
   getTrioScore,
   generateTrioCombinations,
+  // Chemistry estimation
+  estimateChemistryScore,
+  augmentChemistryWithEstimates,
+  type EstimatedChemistry,
+  type ChemistryEstimationStats,
 };
 
 /**
@@ -60,12 +71,19 @@ export async function loadAllPlayerData(playerIds: string[]): Promise<{
 
 /**
  * Merge all data sources into unified BruteForcePlayer objects
+ *
+ * @param stats - Player stats from the database
+ * @param performance - Recent performance data
+ * @param positions - Position consensus data
+ * @param attributes - Derived attributes from playstyles
+ * @param formAdjustmentFactor - Factor for form adjustment (default: 0.10)
  */
 export function mergePlayerData(
   stats: PlayerStats[],
   performance: PlayerPerformance[],
   positions: PlayerPositionData[],
-  attributes: PlayerAttributes[]
+  attributes: PlayerAttributes[],
+  formAdjustmentFactor: number = 0.10
 ): BruteForcePlayer[] {
   // Create lookup maps
   const performanceMap = new Map(performance.map((p) => [p.player_id, p]));
@@ -86,6 +104,39 @@ export function mergePlayerData(
     // Calculate overall rating for tier sorting (simple average of core skills)
     const overallRating = (attack + defense + gameIq + gk) / 4;
 
+    // Calculate form delta (recent vs career win rate)
+    // Normalized to -1 to +1 range where:
+    //   +1 = recent win rate is 100% higher than career
+    //   -1 = recent win rate is 100% lower than career
+    //    0 = no form data or equal performance
+    //
+    // Note: Career win rate may be 0 or null for players with < 10 games
+    // In that case, we skip form adjustment (not enough baseline data)
+    const hasValidCareerWR = stat.win_rate !== null && stat.win_rate > 0;
+    const rawFormDelta =
+      perf?.recent_win_rate !== null && hasValidCareerWR
+        ? (perf.recent_win_rate - stat.win_rate) / 100
+        : 0;
+
+    // Only apply POSITIVE form adjustments if recent win rate > 50%
+    // (A "hot streak" should mean actually winning, not just losing less)
+    // Negative adjustments (cold streaks) always apply regardless of absolute WR
+    const formDelta =
+      rawFormDelta > 0 && perf?.recent_win_rate !== null && perf.recent_win_rate <= 50
+        ? 0 // Don't boost players who are still losing more than winning
+        : rawFormDelta;
+
+    // Form-adjusted rating: hot streaks push players up, cold streaks push down
+    // Example: +10% recent vs career (formDelta = 0.1) with factor 0.10:
+    //   adjustment = 0.1 * 0.10 * 10 = +0.10 rating boost
+    //
+    // Cap at ±0.25 to prevent form from having outsized impact on tier placement
+    // (win rate is noisy and team-dependent, shouldn't override skill ratings much)
+    const MAX_FORM_ADJUSTMENT = 0.25;
+    const rawAdjustment = formDelta * formAdjustmentFactor * 10;
+    const cappedAdjustment = Math.max(-MAX_FORM_ADJUSTMENT, Math.min(MAX_FORM_ADJUSTMENT, rawAdjustment));
+    const formAdjustedRating = overallRating + cappedAdjustment;
+
     return {
       player_id: stat.player_id,
       friendly_name: stat.friendly_name,
@@ -94,6 +145,8 @@ export function mergePlayerData(
       gameIq,
       gk,
       overallRating,
+      formAdjustedRating,
+      formDelta,
       recentWinRate: perf?.recent_win_rate ?? null,
       recentGoalDiff: perf?.recent_goal_differential ?? null,
       overallWinRate: stat.win_rate,
