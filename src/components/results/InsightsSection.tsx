@@ -526,6 +526,9 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
     if (analysisType.includes('trio')) {
       thresholds = confidenceThresholds.trio;
       categoryName = 'trios';
+    } else if (analysisType.includes('partnership')) {
+      thresholds = confidenceThresholds.partnership;
+      categoryName = 'partnerships';
     } else if (analysisType.includes('chemistry') || analysisType.includes('dynamic_duo')) {
       thresholds = confidenceThresholds.chemistry;
       categoryName = 'duos';
@@ -550,9 +553,10 @@ const InsightCard: React.FC<InsightCardProps> = ({ insight, index, currentPlayer
     return { label: 'Low', color: 'badge-error', tooltip: `Low confidence (${size} games, bottom third for ${categoryName})` };
   };
 
-  // Show confidence for percentage-based insights (chemistry, rivalries, team color stats)
+  // Show confidence for percentage-based insights (chemistry, rivalries, partnerships, team color stats)
   const isPercentageInsight = insight.analysisType.includes('chemistry') ||
                               insight.analysisType.includes('trio') ||
+                              insight.analysisType.includes('partnership') ||
                               insight.analysisType.includes('dynamic_duo') ||
                               insight.analysisType.includes('dream_team') ||
                               insight.analysisType.includes('rivalry') ||

@@ -3,10 +3,18 @@
  *
  * This hook fetches curated insights generated after a game is completed,
  * including trophy changes, streak milestones, and game records.
+ *
+ * WhatsApp summary selection is now handled in TypeScript for maintainability.
+ * See docs/features/WhatsAppSummaryRules.md for selection algorithm details.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../utils/supabase';
+import {
+  selectWhatsAppInsights,
+  formatWhatsAppSummary,
+  GameSummary,
+} from '../utils/whatsappSummary';
 
 export interface PostMatchInsight {
   id: string;
@@ -34,12 +42,20 @@ export interface PostMatchAnalysisResult {
   generateOnDemand: () => Promise<void>;
 }
 
+interface GameDetails {
+  sequenceNumber: number;
+  scoreBlue: number;
+  scoreOrange: number;
+  outcome: 'blue_win' | 'orange_win' | 'draw';
+}
+
 /**
  * Fetch post-match analysis for a specific game
  */
 export const usePostMatchAnalysis = (gameId: string | null): PostMatchAnalysisResult => {
   const [insights, setInsights] = useState<PostMatchInsight[]>([]);
-  const [whatsappSummary, setWhatsappSummary] = useState<string>('');
+  const [gameDetails, setGameDetails] = useState<GameDetails | null>(null);
+  const [thresholds, setThresholds] = useState<Record<string, ConfidenceThreshold>>({});
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +63,7 @@ export const usePostMatchAnalysis = (gameId: string | null): PostMatchAnalysisRe
   const fetchAnalysis = useCallback(async () => {
     if (!gameId) {
       setInsights([]);
-      setWhatsappSummary('');
+      setGameDetails(null);
       return;
     }
 
@@ -55,13 +71,17 @@ export const usePostMatchAnalysis = (gameId: string | null): PostMatchAnalysisRe
     setError(null);
 
     try {
-      // Fetch insights
-      const { data: insightsData, error: insightsError } = await supabase
-        .rpc('get_post_match_analysis', { p_game_id: gameId });
+      // Fetch insights, game details, and confidence thresholds in parallel
+      const [insightsResult, gameResult, thresholdsResult] = await Promise.all([
+        supabase.rpc('get_post_match_analysis', { p_game_id: gameId }),
+        supabase.from('games').select('sequence_number, score_blue, score_orange, outcome').eq('id', gameId).single(),
+        supabase.rpc('get_confidence_thresholds'),
+      ]);
 
-      if (insightsError) throw insightsError;
+      if (insightsResult.error) throw insightsResult.error;
+      if (gameResult.error) throw gameResult.error;
 
-      const transformedInsights: PostMatchInsight[] = (insightsData || []).map((row: {
+      const transformedInsights: PostMatchInsight[] = (insightsResult.data || []).map((row: {
         id: string;
         analysis_type: string;
         priority: number;
@@ -81,13 +101,28 @@ export const usePostMatchAnalysis = (gameId: string | null): PostMatchAnalysisRe
 
       setInsights(transformedInsights);
 
-      // Fetch WhatsApp summary
-      const { data: summaryData, error: summaryError } = await supabase
-        .rpc('get_whatsapp_summary', { p_game_id: gameId });
+      // Set game details for WhatsApp summary formatting
+      if (gameResult.data) {
+        setGameDetails({
+          sequenceNumber: gameResult.data.sequence_number,
+          scoreBlue: gameResult.data.score_blue ?? 0,
+          scoreOrange: gameResult.data.score_orange ?? 0,
+          outcome: gameResult.data.outcome as 'blue_win' | 'orange_win' | 'draw',
+        });
+      }
 
-      if (summaryError) throw summaryError;
-
-      setWhatsappSummary(summaryData || '');
+      // Set confidence thresholds for impressiveness calculation
+      if (thresholdsResult.data) {
+        const thresholdMap: Record<string, ConfidenceThreshold> = {};
+        (thresholdsResult.data || []).forEach((row: { insight_category: string; low_threshold: number; high_threshold: number }) => {
+          thresholdMap[row.insight_category] = {
+            insightCategory: row.insight_category,
+            lowThreshold: row.low_threshold,
+            highThreshold: row.high_threshold,
+          };
+        });
+        setThresholds(thresholdMap);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch post-match analysis';
       console.error('Error fetching post-match analysis:', err);
@@ -96,6 +131,34 @@ export const usePostMatchAnalysis = (gameId: string | null): PostMatchAnalysisRe
       setLoading(false);
     }
   }, [gameId]);
+
+  // Compute WhatsApp summary using TypeScript selection logic
+  // This replaces the previous get_whatsapp_summary RPC call
+  const whatsappSummary = useMemo(() => {
+    if (!gameDetails || insights.length === 0) {
+      if (gameDetails) {
+        // Return header with "no notable changes" if we have game but no insights
+        const gameSummary: GameSummary = {
+          sequenceNumber: gameDetails.sequenceNumber,
+          scoreBlue: gameDetails.scoreBlue,
+          scoreOrange: gameDetails.scoreOrange,
+          outcome: gameDetails.outcome,
+        };
+        return formatWhatsAppSummary(gameSummary, []);
+      }
+      return '';
+    }
+
+    const gameSummary: GameSummary = {
+      sequenceNumber: gameDetails.sequenceNumber,
+      scoreBlue: gameDetails.scoreBlue,
+      scoreOrange: gameDetails.scoreOrange,
+      outcome: gameDetails.outcome,
+    };
+
+    const selectedInsights = selectWhatsAppInsights(insights, thresholds);
+    return formatWhatsAppSummary(gameSummary, selectedInsights);
+  }, [insights, gameDetails, thresholds]);
 
   const generateOnDemand = useCallback(async () => {
     if (!gameId) return;
@@ -330,6 +393,7 @@ export const useConfidenceThresholds = () => {
           trio: { insightCategory: 'trio', lowThreshold: 6, highThreshold: 9 },
           chemistry: { insightCategory: 'chemistry', lowThreshold: 14, highThreshold: 19 },
           rivalry: { insightCategory: 'rivalry', lowThreshold: 17, highThreshold: 24 },
+          partnership: { insightCategory: 'partnership', lowThreshold: 15, highThreshold: 25 },
         });
       } finally {
         setLoading(false);

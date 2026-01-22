@@ -55,6 +55,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Player Selection Explained](PlayerSelectionExplained.md)** - Selection algorithm and mechanics
 - **[Public Game Results](features/PublicGameResults.md)** - Browse completed games with filters and insights *(New Jan 2026)*
 - **[Post-Match Insights](features/PostMatchInsights.md)** - Automated game analysis and insight generation *(New Jan 2026)*
+- **[WhatsApp Summary Rules](features/WhatsAppSummaryRules.md)** - Selection algorithm for sharing insights *(New Jan 2026)*
 
 ### Player Features
 - **[Reserve Status Visualization](features/ReserveStatusVisualization.md)** - Last 40 games wheel with reserve tracking
