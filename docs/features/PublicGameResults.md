@@ -1,6 +1,6 @@
 # Public Game Results
 
-**Last Updated:** January 16, 2026
+**Last Updated:** January 22, 2026
 **Version:** 2.1.0
 
 ## Overview
@@ -294,7 +294,7 @@ Filterable post-match insights display with 8 category tabs.
 | `chemistry` | Chemistry | Users | `*chemistry*`, `*trio*`, `*partnership*` |
 | `rivalries` | Rivalries | Swords | `*rivalry*`, `never_beaten_rivalry`, `first_ever_win_nemesis` |
 | `appearances` | Appearances | UserPlus | `debut_appearance`, `return_after_absence`, `first_game_back_win`, `bench_warmer_promoted` |
-| `game` | Game | Gamepad2 | `game_record`, `blowout_game`, `shutout_game`, `team_color_*`, `low_scoring_game`, `team_best_score`, `player_color_curse` |
+| `game` | Game | Gamepad2 | `game_record`, `blowout_game`, `shutout_game`, `team_color_loyalty`, `team_color_switch`, `team_color_dominance`, `team_color_streak_broken`, `low_scoring_game`, `team_best_score`, `player_color_curse` |
 | `milestones` | Milestones | Target | `*milestone*`, `*personal_best*` |
 
 **Confidence Badges:**

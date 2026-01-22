@@ -251,6 +251,22 @@ The wording adapts based on the winner's actual H2H state:
 **Example:** If Chris beats Phil but Phil leads H2H 10-8:
 - "Chris closes gap vs Phil (9W-0D-10L)"
 
+### rivalry_perfect WhatsApp Category (Jan 2026)
+
+In the WhatsApp summary selection, `rivalry_perfect` has its **own granular category** separate from other rivalry types (`rivalry_other`). This ensures:
+- Undefeated records don't compete with revenge/close/dominant insights
+- A player with both a perfect record AND a close rivalry can potentially have both shown
+- Perfect records are treated as a distinct achievement worthy of separate recognition
+
+**Category mapping:**
+| Category | Insight Types |
+|----------|---------------|
+| `rivalry_first_win` | `rivalry_first_win`, `first_ever_win_nemesis` |
+| `rivalry_perfect` | `rivalry_perfect` |
+| `rivalry_other` | `rivalry_dominant`, `rivalry_close`, `rivalry_revenge` |
+
+See: [WhatsApp Summary Rules](WhatsAppSummaryRules.md) for full selection algorithm
+
 See: [Post-Match Insights](PostMatchInsights.md) for complete insight generation documentation
 
 ## Related Documentation

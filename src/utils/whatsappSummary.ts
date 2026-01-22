@@ -73,10 +73,10 @@ const CATEGORY_MAP: Record<string, string> = {
   trophy_new: 'trophy',
   trophy_extended: 'trophy',
   trophy_defended: 'trophy',
-  // Rivalry - split into first wins vs other
+  // Rivalry - split into first wins, perfect records, and other
   rivalry_first_win: 'rivalry_first_win',
   first_ever_win_nemesis: 'rivalry_first_win',
-  rivalry_perfect: 'rivalry_other',
+  rivalry_perfect: 'rivalry_perfect',  // Own category - undefeated record is distinct achievement
   rivalry_dominant: 'rivalry_other',
   rivalry_close: 'rivalry_other',
   rivalry_revenge: 'rivalry_other',
@@ -100,11 +100,17 @@ const CATEGORY_MAP: Record<string, string> = {
   unbeaten_streak: 'streak',
   losing_streak_ended: 'streak',
   winless_streak_ended: 'streak',
+  // Team color streaks
+  team_color_streak_broken: 'team_streak',
+  team_streak: 'team_streak',
   // Game records
   game_record: 'record',
   team_best_score: 'record',
   blowout_game: 'record',
   shutout_game: 'record',
+  low_scoring_game: 'record',
+  // Team color dominance (own category)
+  team_color_dominance: 'team_dominance',
   // Awards
   award_defending_champion: 'award',
   // Injury return (positive)
@@ -130,6 +136,10 @@ export function getCategory(analysisType: string): string {
   if (analysisType.startsWith('team_best')) return 'record';
   if (analysisType.startsWith('blowout')) return 'record';
   if (analysisType.startsWith('shutout')) return 'record';
+  if (analysisType.startsWith('low_scoring')) return 'record';
+  if (analysisType.startsWith('team_color_dominance')) return 'team_dominance';
+  if (analysisType.startsWith('team_color_streak')) return 'team_streak';
+  if (analysisType.startsWith('team_streak')) return 'team_streak';
 
   return 'other';
 }

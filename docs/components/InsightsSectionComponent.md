@@ -1,6 +1,6 @@
 # InsightsSection Component
 
-**Last Updated:** January 16, 2026
+**Last Updated:** January 22, 2026
 **Location:** `src/components/results/InsightsSection.tsx`
 **Size:** ~700 lines (most complex results component)
 
@@ -29,7 +29,7 @@ Filterable post-match insights display with 8 category tabs and player filtering
 | `chemistry` | Chemistry | Chem | Users | `*chemistry*`, `*trio*`, `*partnership*` |
 | `rivalries` | Rivalries | Rival | Swords | `*rivalry*`, `never_beaten_rivalry`, `first_ever_win_nemesis` |
 | `appearances` | Appearances | Appear | UserPlus | `debut_appearance`, `return_after_absence`, `first_game_back_win`, `bench_warmer_promoted` |
-| `game` | Game | Game | Gamepad2 | `game_record`, `blowout_game`, `shutout_game`, `team_color_*`, `low_scoring_game`, `team_best_score`, `player_color_curse` |
+| `game` | Game | Game | Gamepad2 | `game_record`, `blowout_game`, `shutout_game`, `team_color_loyalty`, `team_color_switch`, `team_color_dominance`, `team_color_streak_broken`, `low_scoring_game`, `team_best_score`, `player_color_curse` |
 | `milestones` | Milestones | Miles | Target | `*milestone*`, `*personal_best*` |
 
 **Note:** Categories with 0 insights are hidden from tabs (except "All").

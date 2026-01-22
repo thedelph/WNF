@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-01-16 (Post-Match Analysis documentation - new component docs, updated feature docs)
+**Last Updated:** 2026-01-22 (Post-Match Insights v2.7.0 - 5 new dynamic threshold insights, rivalry_perfect category split, duplicate return fix)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 

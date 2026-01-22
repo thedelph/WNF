@@ -4,7 +4,7 @@
 
 The WhatsApp summary selects the 6 most interesting insights from a game for sharing. Selection logic is implemented in TypeScript (`src/utils/whatsappSummary.ts`) for maintainability.
 
-**Document Date:** January 2026
+**Document Date:** January 22, 2026
 
 ---
 
@@ -70,7 +70,8 @@ Max **1 insight per granular category** in initial selection.
 | `return` | return_after_absence, first_game_back_win |
 | `trophy` | trophy_change, trophy_new, trophy_extended, trophy_defended |
 | `rivalry_first_win` | rivalry_first_win, first_ever_win_nemesis |
-| `rivalry_other` | rivalry_perfect, rivalry_dominant, rivalry_close, rivalry_revenge |
+| `rivalry_perfect` | rivalry_perfect (undefeated record - distinct achievement) |
+| `rivalry_other` | rivalry_dominant, rivalry_close, rivalry_revenge |
 | `partnership_milestone` | partnership_milestone |
 | `partnership_first` | partnership_first |
 | `chemistry_duo` | chemistry_kings |
@@ -79,7 +80,9 @@ Max **1 insight per granular category** in initial selection.
 | `cap` | cap_milestone |
 | `attendance` | attendance_streak |
 | `streak` | win_streak, unbeaten_streak, losing_streak_ended, winless_streak_ended |
-| `record` | game_record, team_best_score, blowout_game, shutout_game |
+| `team_streak` | team_streak, team_color_streak_broken |
+| `record` | game_record, team_best_score, blowout_game, shutout_game, low_scoring_game |
+| `team_dominance` | team_color_dominance |
 | `award` | award_defending_champion, award_* |
 | `injury_return` | injury_token_return |
 | `bench_warmer` | bench_warmer_promoted |
@@ -110,6 +113,10 @@ Never include these negative insight types:
 - `never_beaten_rivalry`
 - `rivalry_ongoing_drought`
 - `trophy_retained`
+
+**Duplicate Prevention (Backend):**
+- `return_after_absence` is not generated for players who get `first_game_back_win`
+- This prevents two return insights appearing for the same player in the same game
 
 ### 5. Priority Tiebreaker
 
@@ -268,20 +275,34 @@ Compare output with SQL function for recent games:
 
 ## Migration Notes
 
-### From SQL to TypeScript
+### From SQL to TypeScript (January 2026)
 
-The SQL function `get_whatsapp_summary` is preserved but the TypeScript version is now primary:
+**Status:** TypeScript is now the **primary implementation** for WhatsApp summary selection.
+
+The SQL function `get_whatsapp_summary` remains in the database for reference but is no longer called by the frontend. All selection logic now runs client-side via the TypeScript utility.
 
 **Advantages of TypeScript:**
 - Version controlled with code
 - Easy to test with unit tests
 - Simpler to modify and debug
 - Consistent with rest of frontend
+- Full access to confidence thresholds for dynamic Bayesian scoring
 
 **Trade-offs:**
 - Fetches all insights (vs just 6 from SQL)
 - Client-side processing (minimal impact)
 
+**Implementation Details:**
+- Selection uses `useMemo` in `usePostMatchAnalysis` hook for efficiency
+- Dynamic k values from `get_confidence_thresholds()` RPC (33rd percentile)
+- Player deduplication tries alternatives without overlap before falling back
+- Headlines use "his" pronoun (WNF is male-only league)
+
+### Related Bug Fixes
+
+- **SQL duplicate column fix** (Jan 2026): Fixed `generate_game_insights_on_demand` passing duplicate `p_blue_team_ids` in RECORD, causing SQL errors
+- **Pronoun update** (Jan 2026): Changed debut headlines from "their" to "his" for consistency
+
 ### Rollback
 
-If issues arise, can revert to SQL-based selection by calling the RPC directly instead of the TypeScript utility.
+If issues arise, can revert to SQL-based selection by calling the `get_whatsapp_summary` RPC directly instead of the TypeScript utility. Note that the SQL version may not have all the latest selection improvements.

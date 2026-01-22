@@ -1,7 +1,7 @@
 # Post-Match Insights System
 
-**Last Updated:** January 17, 2026
-**Version:** 2.4.0
+**Last Updated:** January 22, 2026
+**Version:** 2.7.0
 
 ## Overview
 
@@ -17,6 +17,7 @@ The Post-Match Insights System automatically generates narrative highlights for 
 - Goal scoring pattern analysis
 - Enhanced team color tracking with dominance/streaks
 - **Confidence-weighted priority** for percentage-based stats (higher sample size = better priority)
+- **Dynamic thresholds** for streak-based insights (95th percentile - top 5% only)
 - **Modular architecture** for maintainability (9 helper functions)
 
 ## Insight Categories
@@ -168,32 +169,64 @@ The wording adapts based on the winner's actual H2H record:
 - 20+ games missed: Priority 3
 - 5-19 games missed: Priority 4
 
+**Duplicate Prevention (Jan 2026):**
+When a player returns after 5+ games absence AND wins:
+- Only `first_game_back_win` is generated (not both)
+- `return_after_absence` is skipped for winners to avoid redundancy
+
 ### Goal Scoring Patterns (Added Jan 2026)
 
-Tracks notable goal scoring patterns across games.
+Tracks notable goal scoring patterns across games using dynamic percentile thresholds.
 
 | Type | Trigger | Priority | Example |
 |------|---------|----------|---------|
-| `low_scoring_game` | Total goals ≤ 6 | 4 | "Defensive battle: Only 5 goals scored in WNF #80" |
-| `team_best_score` | Highest score for Blue/Orange this year | 3 | "Orange's best! 12 goals - highest Orange score in 2026" |
+| `low_scoring_game` | Total goals ≤ 10th percentile | 4 | "Defensive battle! Only 5 goals scored in WNF #80" |
+| `team_best_score` | Team score ≥ 95th percentile for current year | 3 | "Orange's best! 12 goals - highest Orange score in 2026" |
 
-**Note:** Best scores are compared within the current calendar year.
+**Dynamic Thresholds:**
+- `low_scoring_game`: Uses `get_low_scoring_game_threshold()` - 10th percentile of total goals (bottom 10% of games), minimum 4 goals
+- `team_best_score`: Uses `get_team_best_score_threshold(team)` - 95th percentile of team scores for current calendar year, minimum 7 goals
+
+**Note:** Best scores are compared within the current calendar year. First high score of the year always triggers.
 
 ### Team Color Insights (Enhanced Jan 2026)
 
-Tracks team color patterns for both teams and individual players.
+Tracks team color patterns for both teams and individual players using dynamic percentile thresholds.
 
 | Type | Trigger | Priority | Example |
 |------|---------|----------|---------|
 | `team_color_loyalty` | 70%+ on one team (20+ games) | 5 | "True Orange! Nathan has played Orange 70% of the time" |
-| `team_color_switch` | Plays other team after 5+ game streak | 5 | "Rare sight! Paul plays Orange for first time in 7 games" |
-| `team_color_dominance` | One team wins 5+ of last 7 games | 3 | "Blue dominance: Won 6 of last 7 games!" |
-| `team_color_streak_broken` | Long team winning streak ends | 3 | "Orange ends Blue's 5-game winning streak" |
-| `player_color_curse` | 30%+ better win rate on one color (20+ games each) | 4 | "Color curse: Nathan wins 65% on Blue, only 40% on Orange" |
+| `team_color_switch` | Plays other team after 95th percentile streak | 5 | "Rare sight! Paul plays Orange for first time in 7 games" |
+| `team_color_dominance` | One team wins ≥80th percentile of last 7 games | 3 | "Blue dominance! Won 6 of the last 7 games" |
+| `team_color_streak_broken` | Notable team winning streak ends (≥80th percentile) | 3 | "Orange ends Blue's 5-game winning streak!" |
+| `player_color_curse` | Win rate difference ≥95th percentile (20+ games each) | 4 | "Color curse! Nathan wins 65% on Blue, only 40% on Orange" |
 
-**Player Color Curse Threshold:**
-- Requires 20+ games on each team
-- Win rate difference must be ≥30 percentage points
+**Dynamic Thresholds:**
+
+| Insight | Function | Percentile | Min | Fallback |
+|---------|----------|------------|-----|----------|
+| `team_color_switch` | `get_color_streak_threshold()` | 95th | 3 | 5 |
+| `team_color_dominance` | `get_team_dominance_threshold()` | 80th | 5/7 | 5 |
+| `team_color_streak_broken` | `get_team_streak_broken_threshold()` | 80th | 3 | 4 |
+| `player_color_curse` | `get_player_color_curse_threshold()` | 95th | 20pp | 25pp |
+
+**player_color_curse Details:**
+- Requires 20+ games on EACH team to qualify
+- Win rate difference must be ≥ threshold (95th percentile of all differences)
+- Only triggers when player is on their "cursed" team AND lost
+- Maximum 2 per game to avoid flooding
+
+**team_color_dominance Details:**
+- Checks wins in 7-game rolling windows
+- Only triggers when winning team reaches dominance threshold
+- Draws don't count toward dominance
+
+**team_color_streak_broken Details:**
+- Tracks consecutive wins by team color
+- Only triggers when a notable streak (80th percentile) is broken
+- Draws don't break team streaks
+
+See [Dynamic Insight Thresholds](#dynamic-insight-thresholds-added-jan-2026) for threshold function details.
 
 ## Priority System
 
@@ -267,6 +300,121 @@ In the InsightsSection, percentage-based insights display a confidence badge sho
 ### WhatsApp Summary Selection
 
 The WhatsApp summary uses confidence-adjusted priority when selecting insights. This means a 70% win rate with 30 games will rank higher than a 100% win rate with only 5 games, ensuring the summary features statistically significant insights.
+
+## Dynamic Insight Thresholds (Added Jan 2026)
+
+Some insights use **dynamic thresholds** that adapt to the actual data distribution, ensuring insights remain meaningful as the league evolves.
+
+### All Dynamic Threshold Functions
+
+| Function | Insight | Percentile | Min | Fallback | Data Req |
+|----------|---------|------------|-----|----------|----------|
+| `get_color_streak_threshold()` | `team_color_switch` | 95th | 3 | 5 | 20 streaks |
+| `get_low_scoring_game_threshold()` | `low_scoring_game` | 10th (bottom) | 4 | 5 | 20 games |
+| `get_team_best_score_threshold(team)` | `team_best_score` | 95th | 7 | 9 | 10 games/year |
+| `get_team_dominance_threshold()` | `team_color_dominance` | 80th | 5 | 5 | 20 windows |
+| `get_team_streak_broken_threshold()` | `team_color_streak_broken` | 80th | 3 | 4 | 20 streaks |
+| `get_player_color_curse_threshold()` | `player_color_curse` | 95th | 20pp | 25pp | 5 players |
+
+### get_color_streak_threshold()
+
+The `team_color_switch` insight fires when a player changes team after playing the same color for an extended streak. Instead of a hard-coded threshold, we calculate the **95th percentile** of all historical same-color streaks, meaning only the top 5% of streaks trigger insights.
+
+```sql
+SELECT get_color_streak_threshold();
+-- Returns: INTEGER (the 95th percentile of streak lengths)
+```
+
+### get_low_scoring_game_threshold()
+
+Returns the **10th percentile** (bottom 10%) of total goals scored in games. Only the lowest-scoring 10% of games trigger the `low_scoring_game` insight.
+
+```sql
+SELECT get_low_scoring_game_threshold();
+-- Returns: INTEGER (threshold for "defensive battle" games)
+```
+
+### get_team_best_score_threshold(team)
+
+Returns the **95th percentile** of team scores for the current calendar year. Only scores in the top 5% trigger the `team_best_score` insight.
+
+```sql
+SELECT get_team_best_score_threshold('blue');
+SELECT get_team_best_score_threshold('orange');
+-- Returns: INTEGER (threshold for "team's best" games)
+```
+
+**Note:** Scoped to current year only. First high score of a new year always triggers.
+
+### get_team_dominance_threshold()
+
+Returns the **80th percentile** of maximum team wins in 7-game rolling windows. Only periods of dominance in the top 20% trigger the `team_color_dominance` insight.
+
+```sql
+SELECT get_team_dominance_threshold();
+-- Returns: INTEGER (minimum wins out of 7 for dominance)
+```
+
+### get_team_streak_broken_threshold()
+
+Returns the **80th percentile** of team winning streak lengths. Only breaking streaks in the top 20% triggers the `team_color_streak_broken` insight.
+
+```sql
+SELECT get_team_streak_broken_threshold();
+-- Returns: INTEGER (minimum streak length to be "notable")
+```
+
+### get_player_color_curse_threshold()
+
+Returns the **95th percentile** of win rate differences between teams for players with 20+ games on each color. Only the top 5% of color-dependent players trigger the `player_color_curse` insight.
+
+```sql
+SELECT get_player_color_curse_threshold();
+-- Returns: INTEGER (minimum percentage point difference)
+```
+
+**Requirements:** Player must have 20+ games on EACH team to qualify.
+
+### Verification Queries
+
+```sql
+-- Check all current threshold values
+SELECT
+  get_color_streak_threshold() as color_streak,
+  get_low_scoring_game_threshold() as low_scoring,
+  get_team_best_score_threshold('blue') as best_blue,
+  get_team_best_score_threshold('orange') as best_orange,
+  get_team_dominance_threshold() as dominance,
+  get_team_streak_broken_threshold() as streak_broken,
+  get_player_color_curse_threshold() as color_curse;
+
+-- Regenerate insights for a game and check new types
+SELECT * FROM generate_game_insights_on_demand('<game_id>')
+WHERE analysis_type IN (
+  'low_scoring_game', 'team_best_score', 'team_color_dominance',
+  'team_color_streak_broken', 'player_color_curse'
+);
+```
+
+### Edge Cases
+
+| Scenario | Behavior |
+|----------|----------|
+| New league (insufficient data) | Falls back to default threshold |
+| Calculated threshold below minimum | Uses minimum threshold |
+| New year (team_best_score) | First high score always triggers |
+| Draws | Don't break team streaks, don't count toward dominance |
+| Player on "good" team | `player_color_curse` only triggers on "bad" team losses |
+
+### Fixed Thresholds (Not Dynamic)
+
+These insights use fixed thresholds that don't adapt:
+- **Milestone triggers:** 10/25/50/75/100/150 caps
+- **Partnership milestones:** 10/25/50/75/100 games together
+- **Trophy changes:** Based on actual position changes
+- **Win/loss streaks:** Fixed at 3+ for win streak, 4+ for losing streak
+- **Blowout games:** Fixed at 5+ goal margin
+- **Shutout games:** Fixed at 0 goals for one team
 
 ## Database Functions
 
@@ -357,12 +505,52 @@ RETURNS TEXT
 ```typescript
 const {
   insights,         // PostMatchInsight[]
-  whatsappSummary,  // string
+  whatsappSummary,  // string - computed via useMemo
   loading,          // boolean
   error,            // string | null
   generating,       // boolean
   generateOnDemand, // () => Promise<void>
+  refetch,          // () => Promise<void>
 } = usePostMatchAnalysis(gameId);
+```
+
+**WhatsApp Summary Selection (TypeScript - v2.5.0):**
+
+The `whatsappSummary` property is computed client-side using TypeScript instead of the SQL `get_whatsapp_summary` RPC. This provides better maintainability and access to dynamic confidence thresholds.
+
+```typescript
+// Internal implementation uses useMemo for efficiency
+const whatsappSummary = useMemo(() => {
+  if (!gameDetails || insights.length === 0) {
+    return gameDetails ? formatWhatsAppSummary(gameSummary, []) : '';
+  }
+
+  const selectedInsights = selectWhatsAppInsights(insights, thresholds);
+  return formatWhatsAppSummary(gameSummary, selectedInsights);
+}, [insights, gameDetails, thresholds]);
+```
+
+**See:** [WhatsApp Summary Rules](WhatsAppSummaryRules.md) for full selection algorithm documentation.
+
+### WhatsApp Summary Utility
+
+**Location:** `src/utils/whatsappSummary.ts`
+
+```typescript
+import {
+  selectWhatsAppInsights,   // Select 6 most interesting insights
+  formatWhatsAppSummary,    // Format into WhatsApp message
+  calculateImpressiveness,  // Z-score for sample size
+  getMagnitude,             // Extract sample size from insight
+  getCategory,              // Map type to granular category
+  DEFAULT_CONFIG,           // Selection configuration
+} from '@/utils/whatsappSummary';
+
+// Select insights with Bayesian confidence scoring
+const selected = selectWhatsAppInsights(insights, thresholds);
+
+// Format into WhatsApp message
+const message = formatWhatsAppSummary(gameSummary, selected);
 ```
 
 ### Helper Functions
@@ -521,9 +709,11 @@ const getFilterCategory = (analysisType: string): InsightFilter => {
 
 ## WhatsApp Integration
 
-The `get_whatsapp_summary` function generates a WhatsApp-formatted summary with up to **8 insights** for maximum variety.
+WhatsApp summaries are now generated client-side using TypeScript for better maintainability. The selection algorithm in `src/utils/whatsappSummary.ts` selects up to **6 insights** with maximum variety and player coverage.
 
-### Selection Logic (Updated Jan 2026)
+**See:** [WhatsApp Summary Rules](WhatsAppSummaryRules.md) for complete algorithm documentation including Bayesian confidence scoring, player deduplication, and category mapping.
+
+### Selection Logic (Updated Jan 2026 - TypeScript)
 
 **Step 1: Priority 1 insights always shown first**
 - Historic moments like `first_ever_win_nemesis` are never filtered out
@@ -597,6 +787,7 @@ This example shows 8 categories represented with good variety: rivalry, chemistr
 ## Related Documentation
 
 - [Public Game Results](PublicGameResults.md) - Where insights are displayed
+- [WhatsApp Summary Rules](WhatsAppSummaryRules.md) - Selection algorithm for WhatsApp sharing
 - [Rivalry System](RivalrySystem.md) - Rivalry insight source data
 - [Player Chemistry](PlayerChemistry.md) - Chemistry insight source data
 - [Trio Chemistry](TrioChemistry.md) - Trio insight source data
