@@ -1030,7 +1030,8 @@ export default function PlayerProfileNew() {
                 gamesTowardNextToken={shieldStatus.gamesTowardNextToken}
                 gamesUntilNextToken={shieldStatus.gamesUntilNextToken}
                 shieldActive={shieldStatus.shieldActive}
-                frozenStreakValue={shieldStatus.frozenStreakValue}
+                protectedStreakValue={shieldStatus.protectedStreakValue}
+                currentStreak={shieldStatus.currentStreak}
                 isLoading={shieldLoading}
                 playerName={player.friendly_name}
               />
@@ -1040,7 +1041,8 @@ export default function PlayerProfileNew() {
                 gamesTowardNextToken={0}
                 gamesUntilNextToken={10}
                 shieldActive={false}
-                frozenStreakValue={null}
+                protectedStreakValue={null}
+                currentStreak={0}
                 isLoading={shieldLoading}
                 playerName={player.friendly_name}
               />

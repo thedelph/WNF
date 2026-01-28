@@ -148,6 +148,7 @@ export default function ProfileContent({
             gamesUntilNextToken={10}
             shieldActive={false}
             protectedStreakValue={null}
+            currentStreak={0}
             isLoading={shieldLoading}
           />
         )}

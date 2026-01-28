@@ -33,6 +33,18 @@ export default function ShieldTokenStatus({
   // Use protectedStreakValue, fall back to legacy frozenStreakValue
   const protectedValue = protectedStreakValue ?? frozenStreakValue ?? null;
 
+  // Calculate XP v2 streak bonus using diminishing returns formula
+  const calculateV2StreakBonus = (streak: number): number => {
+    if (streak <= 0) return 0;
+    if (streak <= 10) {
+      // Games 1-10: Bonus decreases each game (10%, 9%, 8%... 1%)
+      // Sum = streak × 11 - (streak × (streak + 1)) / 2
+      return (streak * 11 - (streak * (streak + 1)) / 2);
+    }
+    // Games 11+: 55% base (sum of 10+9+...+1) + 1% per additional game
+    return 55 + (streak - 10);
+  };
+
   // Calculate gradual decay values
   const decayingProtectedBonus = shieldActive && protectedValue != null
     ? Math.max(0, protectedValue - currentStreak)
@@ -110,15 +122,19 @@ export default function ShieldTokenStatus({
             <div className="bg-base-300 rounded-lg p-3 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="opacity-75">Natural Streak:</span>
-                <span className="font-medium">{currentStreak} games</span>
+                <span className="font-medium">{currentStreak} {currentStreak === 1 ? 'game' : 'games'} <span className="opacity-75">(+{calculateV2StreakBonus(currentStreak)}%)</span></span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="opacity-75">Protected Bonus:</span>
-                <span className="font-medium text-purple-400">+{decayingProtectedBonus}0%</span>
+                <span className="opacity-75">Protected Streak:</span>
+                <span className="font-medium text-purple-400">{decayingProtectedBonus} {decayingProtectedBonus === 1 ? 'game' : 'games'}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="opacity-75">Effective Bonus:</span>
-                <span className="font-bold text-success">+{effectiveStreak}0%</span>
+                <span className="font-bold text-success">+{calculateV2StreakBonus(effectiveStreak)}%</span>
+              </div>
+              <div className="flex justify-between text-sm border-t border-base-content/10 pt-2 mt-1">
+                <span className="opacity-75">Shield Benefit:</span>
+                <span className="font-medium text-purple-400">+{calculateV2StreakBonus(effectiveStreak) - calculateV2StreakBonus(currentStreak)}% XP</span>
               </div>
               {convergencePoint != null && currentStreak < convergencePoint && (
                 <div className="text-xs opacity-75 text-center mt-2">

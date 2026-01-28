@@ -409,12 +409,18 @@ Handles shield token usage and cancellation:
 - `isUsing`: Loading state (shared between use and return operations)
 - `error`: Error state
 
-#### 4. `ShieldTokenStatus` Component (v1.0.5)
+#### 4. `ShieldTokenStatus` Component (v1.0.6)
 Located in: `src/components/profile/ShieldTokenStatus.tsx`
 
 Comprehensive shield token status display for player profile pages:
 - Shows token count with shield emoji (X/4 max)
-- Displays active shield badge when protecting a streak (shows frozen streak value)
+- Displays active shield badge when protecting a streak (shows protected streak value)
+- **Active Shield Display** (when shield is protecting a streak):
+  - **Natural Streak**: X games (+Y%) - shows current consecutive games and v2 XP bonus
+  - **Protected Streak**: X games - shows remaining protection from shield
+  - **Effective Bonus**: +Y% - the actual XP bonus applied (uses v2 diminishing returns formula)
+  - **Shield Benefit**: +Y% XP - the differential showing extra XP gained from shield protection
+  - Games remaining until shield is removed (convergence point)
 - Progress toward next token:
   - Visual progress bar (0-100%)
   - Games counter (X/10 games)
@@ -438,6 +444,13 @@ Comprehensive shield token status display for player profile pages:
 - Handles missing data gracefully (shows 0 tokens and reset progress)
 - Optional `playerName` prop for viewing other players' profiles
 
+**XP v2 Formula Integration (v1.0.6)**:
+The component uses the v2 diminishing returns formula to calculate streak bonuses:
+- Games 1-10: Bonus decreases each game (10%, 9%, 8%... 1%) = cumulative 55% at game 10
+- Games 11+: 55% base + 1% per additional game
+
+This ensures the display matches actual XP calculations and shows realistic benefit values.
+
 Props:
 ```typescript
 {
@@ -445,9 +458,12 @@ Props:
   gamesTowardNextToken: number (0-9)
   gamesUntilNextToken: number (1-10)
   shieldActive: boolean
-  frozenStreakValue: number | null
+  protectedStreakValue?: number | null  // Original streak when shield activated
+  currentStreak?: number                 // Current natural streak (for decay display)
   isLoading: boolean
   playerName?: string  // For viewing other players
+  /** @deprecated Use protectedStreakValue instead */
+  frozenStreakValue?: number | null
 }
 ```
 
@@ -1090,6 +1106,27 @@ For issues or questions:
 4. Contact admin team for manual intervention if needed
 
 ## Changelog
+
+**v1.2.2** - Shield Token Status Display Fix (2026-01-28)
+- **Bug Fix**: Natural Streak showing 0 instead of actual value
+  - `PlayerProfile.tsx` was not passing `currentStreak` prop to `ShieldTokenStatus`
+  - Added `currentStreak={shieldStatus.currentStreak}` prop
+  - Changed from deprecated `frozenStreakValue` to `protectedStreakValue` prop
+- **Bug Fix**: XP bonus display using v1 formula instead of v2
+  - Display was showing `streak × 10%` (v1 linear formula)
+  - Updated to use v2 diminishing returns formula:
+    - Games 1-10: 10% + 9% + 8%... (cumulative 55% at game 10)
+    - Games 11+: 55% + 1% per additional game
+- **UI Improvement**: Clearer shield status breakdown
+  - **Natural Streak**: Shows games and v2 bonus (e.g., "1 game (+10%)")
+  - **Protected Streak**: Shows remaining protection in games (e.g., "28 games")
+  - **Effective Bonus**: Shows actual XP bonus applied (e.g., "+73%")
+  - **Shield Benefit**: NEW - Shows differential benefit from shield (e.g., "+63% XP")
+- **Component Version**: `ShieldTokenStatus` updated to v1.0.6
+- **Files Modified**:
+  - `src/pages/PlayerProfile.tsx` - Fixed prop passing
+  - `src/components/profile/ProfileContent.tsx` - Added missing `currentStreak` prop in fallback
+  - `src/components/profile/ShieldTokenStatus.tsx` - Added v2 formula and shield benefit display
 
 **v1.2.1** - XP v2 Shield Integration Fix (2026-01-09)
 - **Critical Bug Fix**: Shield protection was not being applied in XP v2 calculations
