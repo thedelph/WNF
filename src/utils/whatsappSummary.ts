@@ -481,6 +481,10 @@ export function selectWhatsAppInsights(
     for (const insight of remaining) {
       if (selected.length >= cfg.maxInsights) break;
 
+      // Strict deduplication: skip insights with ANY player overlap
+      const hasOverlap = insight.playerIds.some((pid) => mentionedPlayers.has(pid));
+      if (hasOverlap) continue;
+
       selected.push(insight);
       selectedIds.add(insight.id);
       selectedCategories.add(insight.category);
@@ -529,8 +533,8 @@ function getCandidatesPerCategory(insights: ScoredInsight[]): Map<string, Scored
 }
 
 /**
- * Select best insight from category, preferring one without player overlap.
- * Falls back to best candidate if all have overlap.
+ * Select best insight from category with NO player overlap.
+ * Returns null if all candidates have overlap - caller should try other categories.
  */
 function selectBestWithoutOverlap(
   candidates: ScoredInsight[],
@@ -539,7 +543,7 @@ function selectBestWithoutOverlap(
 ): ScoredInsight | null {
   if (candidates.length === 0) return null;
 
-  // First try: find candidate with NO overlapping players
+  // Find candidate with NO overlapping players
   for (const candidate of candidates) {
     if (candidate.playerIds.length > maxPlayersPerInsight) continue;
     const hasOverlap = candidate.playerIds.some((pid) => mentionedPlayers.has(pid));
@@ -548,18 +552,9 @@ function selectBestWithoutOverlap(
     }
   }
 
-  // Second try: find candidate where at least one player is new
-  for (const candidate of candidates) {
-    if (candidate.playerIds.length > maxPlayersPerInsight) continue;
-    const hasNewPlayer = candidate.playerIds.length === 0 ||
-      candidate.playerIds.some((pid) => !mentionedPlayers.has(pid));
-    if (hasNewPlayer) {
-      return candidate;
-    }
-  }
-
-  // Fallback: use best candidate anyway
-  return candidates[0];
+  // No candidates without overlap - return null to try other categories
+  // This ensures maximum player variety in the WhatsApp summary
+  return null;
 }
 
 // ============================================

@@ -4,13 +4,13 @@
 
 The WhatsApp summary selects the 6 most interesting insights from a game for sharing. Selection logic is implemented in TypeScript (`src/utils/whatsappSummary.ts`) for maintainability.
 
-**Document Date:** January 22, 2026
+**Document Date:** January 29, 2026
 
 ---
 
 ## Selection Algorithm
 
-### Phase 1: Best Insight Per Category (with Player Deduplication)
+### Phase 1: Best Insight Per Category (Strict Player Deduplication)
 
 1. Filter out excluded (negative) insight types
 2. Map each insight to its granular category
@@ -18,19 +18,19 @@ The WhatsApp summary selects the 6 most interesting insights from a game for sha
 4. Calculate impressiveness score (z-score) based on sample size vs population stats
 5. Group all candidates by category, sorted by quality
 6. Process categories in priority order (best priority first):
-   - Try to find insight with **NO player overlap** with already selected
-   - If none, find insight with **at least one new player**
-   - Fallback: use best candidate even if players repeat
+   - **Only** accept insight with **NO player overlap** with already selected
+   - If all candidates in category have overlap, **skip this category entirely**
+   - This ensures maximum player variety - no fallbacks that repeat players
 7. Continue until 6 categories selected or no more categories
 
-### Phase 2: Fill Remaining Slots (Category Variety)
+### Phase 2: Fill Remaining Slots (Strict Category + Player Uniqueness)
 
 If fewer than 6 insights selected:
 1. Consider remaining insights not yet selected
 2. Filter to categories not yet represented
-3. Prefer insights that mention **new players** (player deduplication)
-4. Sort by: new player count DESC, priority, impressiveness, created_at
-5. Fill remaining slots up to 6
+3. **Strictly skip** any insight with player overlap (no exceptions)
+4. Sort remaining by: new player count DESC, priority, impressiveness, created_at
+5. Fill remaining slots up to 6 (may be fewer if no valid candidates)
 
 ### Strict Category Limit (No Phase 3)
 
@@ -88,17 +88,16 @@ Max **1 insight per granular category** in initial selection.
 | `bench_warmer` | bench_warmer_promoted |
 | `other` | everything else |
 
-### 3. Player Uniqueness
+### 3. Player Uniqueness (Strict)
 
-Show each player only once if possible:
+Each player appears in **at most one insight** - no exceptions:
 - Track mentioned player IDs across selected insights
-- When selecting from a category, try alternatives to avoid player overlap:
-  1. **First choice**: Insight with NO overlapping players (completely unique)
-  2. **Second choice**: Insight with at least one NEW player
-  3. **Fallback**: Use the highest-priority insight even if it repeats players
+- When selecting from a category, **only** accept insights with NO overlapping players
+- If all candidates in a category have overlap, skip to the next category
+- Better to show 4-5 diverse insights than 6 with repeated players
 - Only track players for insights with <= 5 player IDs (skip team-wide)
 
-**Example:** If "Dave vs Chris" rivalry is already selected and Chris appears in the best partnership insight, we try to find an alternative partnership insight that doesn't include Chris or Dave.
+**Example:** If "Dave vs Chris" rivalry is already selected and Chris appears in the best partnership insight, we skip that partnership entirely (no fallback) and try the next category. This ensures maximum player variety in the summary.
 
 ### 4. Excluded Types
 
@@ -123,10 +122,10 @@ Never include these negative insight types:
 When impressiveness is equal, use priority (1=highest, 5=lowest):
 | Priority | Meaning | Examples |
 |----------|---------|----------|
-| 1 | Critical | Debuts, 50+ attendance streaks |
-| 2 | Major | Trophy changes, rivalry first wins, 30+ streaks |
-| 3 | Notable | Chemistry kings, partnership milestones |
-| 4 | Supporting | 10-19 game streaks, returns |
+| 1 | Critical | Debuts, 50+ attendance streaks, 100+ cap milestones |
+| 2 | Major | Trophy changes, rivalry first wins, 30+ streaks, 50-75 cap milestones |
+| 3 | Notable | Chemistry kings, partnership milestones, 25 cap milestones |
+| 4 | Supporting | 10-19 game streaks, returns, 10 cap milestones |
 | 5 | Contextual | 5-9 game streaks, minor milestones |
 
 ---
@@ -295,11 +294,12 @@ The SQL function `get_whatsapp_summary` remains in the database for reference bu
 **Implementation Details:**
 - Selection uses `useMemo` in `usePostMatchAnalysis` hook for efficiency
 - Dynamic k values from `get_confidence_thresholds()` RPC (33rd percentile)
-- Player deduplication tries alternatives without overlap before falling back
+- Strict player deduplication - skips categories entirely if all candidates have overlap (no fallbacks)
 - Headlines use "his" pronoun (WNF is male-only league)
 
 ### Related Bug Fixes
 
+- **Strict player deduplication** (Jan 29, 2026): Removed fallback logic that allowed player overlap. Previously, if no candidate without overlap existed, the algorithm would accept insights with "at least one new player" or fall back to the best candidate even with repeats. Now strictly enforces NO player overlap - skips category entirely if all candidates have overlap. Result: WhatsApp summaries feature unique players across all insights (e.g., 6 insights = 6+ different players).
 - **SQL duplicate column fix** (Jan 2026): Fixed `generate_game_insights_on_demand` passing duplicate `p_blue_team_ids` in RECORD, causing SQL errors
 - **Pronoun update** (Jan 2026): Changed debut headlines from "their" to "his" for consistency
 

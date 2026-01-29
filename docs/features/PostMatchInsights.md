@@ -1,7 +1,7 @@
 # Post-Match Insights System
 
-**Last Updated:** January 22, 2026
-**Version:** 2.7.0
+**Last Updated:** January 29, 2026
+**Version:** 2.8.0
 
 ## Overview
 
@@ -143,11 +143,23 @@ The wording adapts based on the winner's actual H2H record:
 
 | Type | Trigger | Priority | Example |
 |------|---------|----------|---------|
-| `cap_milestone` | 10/25/50/75/100/150 caps | 4 | "Century club! Chris played their 100th game" |
-| `partnership_first` | First time together | 5 | "First time! Dave and New Player team up" |
-| `partnership_milestone` | 10/25/50/75/100 games together | 4 | "50 games together: Phil R & Simon" |
+| `cap_milestone` | 100-150 caps | 1 | "🏆 Century club! Chris plays his 100th game!" |
+| `cap_milestone` | 50-75 caps | 2 | "Half century! Simon reaches 50 WNF caps" |
+| `cap_milestone` | 25 caps | 3 | "Quarter century: Dave reaches 25 caps" |
+| `cap_milestone` | 10 caps | 4 | "Milestone: New Player reaches 10 caps" |
+| `partnership_first` | First time together | 3 | "First time! Dave and New Player team up" |
+| `partnership_milestone` | 10/25/50/75/100 games together | 3 | "50 games together: Phil R & Simon" |
 | `game_record` | 15+ goals or 1-goal margin | 5 | "Goal fest! 17 goals scored" |
 | `team_streak` | Blue/Orange 5+ consecutive wins | 4 | "Blue team wins 6 in a row!" |
+
+**Debut Suppression (Jan 2026):**
+When a player makes their WNF debut, `partnership_first` insights are suppressed for all pairs involving that player. A debut inherently means all partnerships are first-time, so `partnership_first` adds no information value. Only the `debut_appearance` insight is generated.
+
+Example:
+- Player debuts with 9 teammates → 1 `debut_appearance`, 0 `partnership_first`
+- Two players debut together → 2 `debut_appearance`, 0 `partnership_first` for any pair involving either
+
+This follows the same pattern as `return_after_absence` being skipped for `first_game_back_win`.
 
 ### Game-Level Insights (Added Jan 2026)
 
