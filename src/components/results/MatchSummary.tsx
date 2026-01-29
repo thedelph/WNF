@@ -69,20 +69,36 @@ const getHighlightEmoji = (text: string): string => {
   return '📊';
 };
 
+// Regex to detect leading emoji in text (includes variation selectors)
+const leadingEmojiRegex = /^([\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B50}-\u{2B55}]\uFE0F?)\s*/u;
+
 // Parse the summary to extract structured data
 const parseSummary = (summary: string) => {
   const lines = summary.split('\n').filter(line => line.trim());
   const highlights: { number: number; text: string; emoji: string }[] = [];
 
   lines.forEach((line) => {
-    // Match numbered items like "1. Some text here"
+    // Match numbered items like "1. Some text here" or "1. 🔥 Some text here"
     const numberedMatch = line.match(/^(\d+)\.\s+(.+)$/);
     if (numberedMatch) {
-      const text = numberedMatch[2].trim();
+      let text = numberedMatch[2].trim();
+      let emoji: string;
+
+      // Check if text starts with an emoji (from WhatsApp summary)
+      const emojiMatch = text.match(leadingEmojiRegex);
+      if (emojiMatch) {
+        // Use the embedded emoji and strip it from text
+        emoji = emojiMatch[1];
+        text = text.replace(leadingEmojiRegex, '').trim();
+      } else {
+        // Fall back to content-based emoji detection
+        emoji = getHighlightEmoji(text);
+      }
+
       highlights.push({
         number: parseInt(numberedMatch[1], 10),
         text,
-        emoji: getHighlightEmoji(text),
+        emoji,
       });
     }
   });

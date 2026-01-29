@@ -5,7 +5,7 @@
  * See docs/features/WhatsAppSummaryRules.md for full documentation.
  */
 
-import { PostMatchInsight, ConfidenceThreshold } from '../hooks/usePostMatchAnalysis';
+import { PostMatchInsight, ConfidenceThreshold, getInsightEmoji } from '../hooks/usePostMatchAnalysis';
 
 // ============================================
 // Types
@@ -579,12 +579,16 @@ export function formatWhatsAppSummary(
 
   summary += '\n\n📊 *Post-Match Analysis*\n';
 
-  // Add insights
+  // Add insights with emojis
   if (selectedInsights.length === 0) {
     summary += '\nNo notable changes this week.';
   } else {
     selectedInsights.forEach((insight, index) => {
-      summary += `\n${index + 1}. ${insight.headline}`;
+      const emoji = getInsightEmoji(insight.analysisType);
+      // Strip any leading emoji from headline to avoid duplicates
+      // Emoji pattern matches common emoji ranges including variation selectors
+      const headlineWithoutLeadingEmoji = insight.headline.replace(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B50}-\u{2B55}]\uFE0F?\s*/u, '');
+      summary += `\n${index + 1}. ${emoji} ${headlineWithoutLeadingEmoji}`;
     });
   }
 
