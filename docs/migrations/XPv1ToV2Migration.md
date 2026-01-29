@@ -326,8 +326,62 @@ LEFT JOIN player_xp px ON p.id = px.player_id;  -- Changed from player_xp_legacy
 - [x] XP triggers use v2 calculation functions
 - [x] **player_stats view uses player_xp (not player_xp_legacy)**
 - [x] **Duplicate XP trigger removed** (January 8, 2026)
-- [ ] (Optional) Drop player_xp_legacy after 30 days if not needed
+- [x] **player_xp_legacy table dropped** (January 29, 2026)
+- [x] **All views updated to use player_xp** (January 29, 2026)
+- [x] **merge_players function updated with all FK tables** (January 29, 2026)
 - [ ] (Optional) Rename v2 functions to remove suffix
+
+---
+
+## Final Cleanup: Legacy Table Removal (January 29, 2026)
+
+### Issue Discovered
+During a test user merge, multiple FK constraint errors occurred because `merge_players` function was missing several tables:
+- `award_snapshots`
+- `player_position_consensus`
+- `player_derived_attributes`
+- `player_position_ratings`
+- `player_xp_legacy`
+- `shield_token_*`
+- `injury_token_*`
+- `trophy_changes`
+- `bot_interactions`
+- `permanent_goalkeepers`
+
+Additionally, several views were still using `player_xp_legacy`:
+- `player_xp_breakdown` (actively used!)
+- `player_ranks`
+- `extended_player_stats`
+- `xp_comparison`
+- `player_xp_comparison`
+
+### Fix Applied
+Migration `fix_merge_players_and_cleanup_legacy_xp`:
+
+1. **Updated views to use `player_xp`:**
+   - `player_xp_breakdown`
+   - `player_ranks`
+   - `extended_player_stats`
+
+2. **Dropped obsolete views:**
+   - `lewis_xp_breakdown`
+   - `zhao_xp_breakdown`
+   - `xp_comparison`
+   - `player_xp_comparison`
+   - `player_stats_with_xp`
+
+3. **Dropped legacy table:**
+   - `player_xp_legacy`
+
+4. **Updated `merge_players` function:**
+   - Added handling for all missing FK tables
+   - Added `recalculate_all_player_xp_v2()` call at end to fix ranks/rarity
+
+### Lesson Learned
+When swapping database tables during migrations:
+1. Audit ALL views that reference the old table
+2. Audit ALL functions that might need to clean up related data
+3. Consider FK constraints from newer features added after the original migration plan
 
 ---
 

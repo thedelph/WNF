@@ -1,61 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../utils/supabase';
 import { PiChartLineUp } from "react-icons/pi";
 import { toast } from 'react-hot-toast';
 import { useAdmin } from '../../hooks/useAdmin';
-import { XPComparisonDashboard } from '../../components/admin/xp/XPComparisonDashboard';
-
-interface XPComparisonData {
-  player_id: string;
-  friendly_name: string;
-  current_streak: number;
-  current_xp: number;
-  current_rank: number;
-  current_rarity: string;
-  v2_xp: number;
-  v2_rank: number;
-  v2_rarity: string;
-  xp_difference: number;
-  rank_difference: number;
-  current_streak_bonus_pct: number;
-  v2_streak_bonus_pct: number;
-}
+import { FaCheckCircle } from 'react-icons/fa';
 
 const XPComparison: React.FC = () => {
   const { isAdmin } = useAdmin();
-  const [comparisonData, setComparisonData] = useState<XPComparisonData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const fetchComparisonData = async () => {
-    try {
-      setLoading(true);
-
-      // Fetch from the player_xp_comparison view
-      const { data, error } = await supabase
-        .from('player_xp_comparison')
-        .select('*')
-        .order('current_xp', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching XP comparison data:', error);
-        throw error;
-      }
-
-      setComparisonData(data || []);
-      setLastUpdated(new Date());
-    } catch (error) {
-      console.error('Error fetching comparison data:', error);
-      toast.error('Failed to load XP comparison data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleRecalculate = async () => {
     try {
       setLoading(true);
-      toast.loading('Recalculating v2 XP for all players...', { id: 'recalc' });
+      toast.loading('Recalculating XP for all players...', { id: 'recalc' });
 
       // Call the recalculate function
       const { error } = await supabase.rpc('recalculate_all_player_xp_v2');
@@ -65,20 +22,14 @@ const XPComparison: React.FC = () => {
         throw error;
       }
 
-      toast.success('XP v2 recalculated successfully', { id: 'recalc' });
-      await fetchComparisonData();
+      toast.success('XP recalculated successfully', { id: 'recalc' });
     } catch (error) {
       console.error('Error recalculating:', error);
-      toast.error('Failed to recalculate XP v2', { id: 'recalc' });
+      toast.error('Failed to recalculate XP', { id: 'recalc' });
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    fetchComparisonData();
-  }, [isAdmin]);
 
   if (!isAdmin) {
     return <div className="text-center mt-8">Access denied. Admin only.</div>;
@@ -90,39 +41,38 @@ const XPComparison: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <PiChartLineUp className="text-primary" />
-            XP System Comparison
+            XP System
           </h1>
           <p className="text-base-content/70 mt-1">
-            Compare current XP system with v2 (diminishing streak returns + linear decay)
+            XP v2 system with diminishing streak returns + linear decay
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleRecalculate}
-            className="btn btn-secondary"
-            disabled={loading}
-          >
-            {loading ? 'Recalculating...' : 'Recalculate v2'}
-          </button>
-          <button
-            onClick={() => fetchComparisonData()}
             className="btn btn-primary"
             disabled={loading}
           >
-            {loading ? 'Refreshing...' : 'Refresh Data'}
+            {loading ? 'Recalculating...' : 'Recalculate All XP'}
           </button>
         </div>
       </div>
 
-      {lastUpdated && (
-        <div className="text-sm text-base-content/50 mb-4">
-          Last updated: {lastUpdated.toLocaleTimeString()}
+      {/* Migration Complete Notice */}
+      <div className="alert alert-success mb-6">
+        <FaCheckCircle className="h-6 w-6" />
+        <div>
+          <h3 className="font-bold">XP v2 Migration Complete</h3>
+          <div className="text-sm">
+            The v1 to v2 XP migration was completed in January 2026.
+            Legacy comparison data has been archived.
+          </div>
         </div>
-      )}
+      </div>
 
       <div className="card bg-base-100 shadow-xl mb-6">
         <div className="card-body">
-          <h2 className="card-title text-lg">v2 System Changes</h2>
+          <h2 className="card-title text-lg">Current XP System (v2)</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="bg-base-200 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Diminishing Streak Bonus</h3>
@@ -134,9 +84,6 @@ const XPComparison: React.FC = () => {
                 <li>10-game streak total: +55%</li>
                 <li>11+ games: +1% each</li>
               </ul>
-              <p className="mt-2 text-xs text-base-content/60">
-                Current: Linear +10% per game (27 games = +270%)
-              </p>
             </div>
             <div className="bg-base-200 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Linear Base XP Decay</h3>
@@ -147,9 +94,6 @@ const XPComparison: React.FC = () => {
                 <li>... (-0.5 per game)</li>
                 <li>38+ games ago: 1 XP (floor)</li>
               </ul>
-              <p className="mt-2 text-xs text-base-content/60">
-                Current: Step function (20, 18, 16, 14, 12, 10, 5, 0)
-              </p>
             </div>
           </div>
         </div>
@@ -157,10 +101,15 @@ const XPComparison: React.FC = () => {
 
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <XPComparisonDashboard
-            data={comparisonData}
-            loading={loading}
-          />
+          <h2 className="card-title text-lg">Manual Recalculation</h2>
+          <p className="text-base-content/70 mb-4">
+            Use the button above to manually trigger a full XP recalculation for all players.
+            This updates XP values, ranks, and rarity tiers based on the current game history.
+          </p>
+          <p className="text-sm text-base-content/50">
+            Note: XP is automatically recalculated after each game completion.
+            Manual recalculation is typically only needed after data migrations or corrections.
+          </p>
         </div>
       </div>
     </div>
