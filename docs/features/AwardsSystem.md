@@ -1,7 +1,7 @@
 # Awards System (Hall of Fame)
 
-**Last Updated:** January 16, 2026
-**Version:** 1.1
+**Last Updated:** February 5, 2026
+**Version:** 1.2
 
 ## Overview
 
@@ -256,6 +256,18 @@ Features:
 - Real-time calculation for all-time standings
 - Cached yearly data
 - Supports year filtering or all-time view
+
+## Known Issues & Fixes
+
+### Dream Team Trio Duplicate Key Conflict (Fixed Feb 2026)
+
+**Problem:** Completing a game via `complete_game()` would fail with a 409 (23505 duplicate key) error when `calculate_awards()` was triggered.
+
+**Root cause:** The `unique_player_award` constraint is on `(player_id, award_category, award_year, partner_id)` and does not include `partner2_id`. When `get_trio_leaderboard()` returns multiple top-3 trios where the same player+partner pair appears with different third players, the insert for the second trio violates the constraint.
+
+**Fix:** Added `ON CONFLICT ON CONSTRAINT unique_player_award DO NOTHING` to all three `dream_team_trio` insert statements (player1, player2, player3) in `calculate_awards()`. The highest-ranked trio is inserted first and wins; lower-ranked duplicates are silently skipped.
+
+**Migration:** `20260205_fix_dream_team_trio_duplicate_key_conflict.sql`, `20260205_fix_all_trio_award_duplicate_key_conflicts.sql`
 
 ## Related Documentation
 

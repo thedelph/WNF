@@ -46,9 +46,13 @@ export const updatePlayerRegistration = async (
       return { success: true };
     } else {
       // Update existing registration
+      // Clear team assignment when dropping out - dropped players shouldn't be on a team
+      const updatePayload = status === 'dropped_out'
+        ? { status: status, team: null }
+        : { status: status };
       const { error: updateError } = await supabase
         .from('game_registrations')
-        .update({ status: status })
+        .update(updatePayload)
         .eq('player_id', playerId)
         .eq('game_id', gameId);
 

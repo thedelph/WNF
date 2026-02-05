@@ -1,7 +1,7 @@
 # Dropout with Shield Protection
 
-**Last Updated:** January 7, 2026
-**Version:** 1.0
+**Last Updated:** February 5, 2026
+**Version:** 1.1
 
 ## Overview
 
@@ -48,11 +48,13 @@ Returns: { success: boolean, message: string }
 
 **What it does:**
 1. Validates the player is registered for the game
-2. Updates registration status to `dropped_out`
+2. Updates registration status to `dropped_out` and **clears team assignment** (`team = NULL`)
 3. If shield used:
    - Records shield usage
    - Sets up streak protection
 4. Creates slot offers for reserve players (if player was selected)
+
+> **Important:** Clearing the team assignment ensures dropped-out players are not counted when checking team sizes. Without this, games would incorrectly show as "uneven teams". Fixed Feb 2026.
 
 ## UI Component
 
