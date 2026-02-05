@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { Game, TeamAssignment } from './types';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import { balanceTeams } from '../../../utils/teamBalancing';
+import { debug } from '@/utils/debug';
 
 /**
  * Custom hook to handle team balancing logic and data fetching
@@ -89,7 +90,7 @@ export const useTeamBalancing = () => {
 
       try {
         // Fetch recent stats (last 10 games), derived attributes, and position consensus
-        console.log('Fetching recent player stats from get_player_recent_win_rates');
+        debug.log('Fetching recent player stats from get_player_recent_win_rates');
 
         // Step 1: Determine adaptive threshold for position data quality
         const { data: maxRatersData } = await supabase
@@ -104,7 +105,7 @@ export const useTeamBalancing = () => {
         // This allows early adoption while maintaining quality standards
         const minRaters = Math.min(5, Math.max(1, Math.floor(maxTotalRaters * 0.4)));
 
-        console.log(`Position data threshold: ${minRaters}+ raters (based on max=${maxTotalRaters})`);
+        debug.log(`Position data threshold: ${minRaters}+ raters (based on max=${maxTotalRaters})`);
 
         const [recentWinRates, recentGoalDiffs, derivedAttributes, positionConsensus] = await Promise.all([
           supabase.rpc('get_player_recent_win_rates', { games_threshold: 10 }),
@@ -152,7 +153,7 @@ export const useTeamBalancing = () => {
         }
 
         // Fetch overall stats (career)
-        console.log('Fetching overall player stats');
+        debug.log('Fetching overall player stats');
         const [overallWinRates, overallGoalDiffs] = await Promise.all([
           supabase.rpc('get_player_win_rates'),
           supabase.rpc('get_player_goal_differentials')
@@ -225,14 +226,14 @@ export const useTeamBalancing = () => {
             }]);
           });
 
-          console.log(`Loaded ${positionConsensus.data.length} position ratings for ${positionConsensusMap.size} unique players`);
+          debug.log(`Loaded ${positionConsensus.data.length} position ratings for ${positionConsensusMap.size} unique players`);
         } else {
-          console.log('No position consensus data loaded');
+          debug.log('No position consensus data loaded');
         }
 
         // Log sample data for debugging
         const samplePlayer = playerIds[0];
-        console.log(`Sample player stats for ${samplePlayer}:`, {
+        debug.log(`Sample player stats for ${samplePlayer}:`, {
           recentWinRate: winRateMap.get(samplePlayer),
           recentGoalDiff: goalDiffMap.get(samplePlayer),
           overallWinRate: overallWinRateMap.get(samplePlayer),
@@ -255,7 +256,7 @@ export const useTeamBalancing = () => {
       // Debug log for Lewis's fresh data
       const lewisData = registrations.find(reg => reg.players.friendly_name.toLowerCase().includes('lewis'));
       if (lewisData) {
-        console.log('Fresh Lewis data from database:', {
+        debug.log('Fresh Lewis data from database:', {
           id: lewisData.players.id,
           name: lewisData.players.friendly_name,
           attack: lewisData.players.average_attack_rating,
@@ -285,7 +286,7 @@ export const useTeamBalancing = () => {
         const gamesPlayed = gamesPlayedMap.get(playerId) || caps || 0;
         
         // Debug log for this player's stats
-        console.log(`Player ${reg.players.friendly_name} stats:`, {
+        debug.log(`Player ${reg.players.friendly_name} stats:`, {
           id: playerId,
           winRate,
           goalDifferential,
@@ -391,8 +392,8 @@ export const useTeamBalancing = () => {
         });
       }
 
-      console.log('Setting final assignments:', finalAssignments);
-      console.log('Sample final assignment:', finalAssignments[0]);
+      debug.log('Setting final assignments:', finalAssignments);
+      debug.log('Sample final assignment:', finalAssignments[0]);
       setAssignments(finalAssignments);
     } catch (err: any) {
       setError(`Error loading data: ${err.message}`);

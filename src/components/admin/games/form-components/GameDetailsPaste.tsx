@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { debug } from '@/utils/debug';
 
 interface GameDetailsPasteProps {
   onDateTimeExtracted: (date: string, time: string) => void;
@@ -33,7 +34,7 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     // Check if it's too long (player names are typically 1-3 words)
     const wordCount = text.split(/\s+/).length;
     if (wordCount > 4) {
-      console.log(`Rejected "${text}" - too many words (${wordCount})`);
+      debug.log(`Rejected "${text}" - too many words (${wordCount})`);
       return false;
     }
     
@@ -47,14 +48,14 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     const lowerText = text.toLowerCase();
     for (const phrase of nonPlayerPhrases) {
       if (lowerText.includes(phrase)) {
-        console.log(`Rejected "${text}" - contains non-player phrase: "${phrase}"`);
+        debug.log(`Rejected "${text}" - contains non-player phrase: "${phrase}"`);
         return false;
       }
     }
     
     // Check if it's too long (more than 30 characters is suspicious for a name)
     if (text.length > 30) {
-      console.log(`Rejected "${text}" - too long (${text.length} chars)`);
+      debug.log(`Rejected "${text}" - too long (${text.length} chars)`);
       return false;
     }
     
@@ -75,7 +76,7 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
         // Remove any emojis at the start (including multiple emojis like "🪙💰")
         line = line.replace(/^[\u{1F300}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]+\s*/gu, '');
         
-        console.log('Parsed player name from line:', { original: line, parsed: line.trim() });
+        debug.log('Parsed player name from line:', { original: line, parsed: line.trim() });
         return line.trim();
       })
       .filter(name => isLikelyPlayerName(name)); // Filter out non-player names
@@ -87,26 +88,26 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     const randomPlayers: string[] = [];
     const tokenPlayers: string[] = [];
 
-    console.log('parseSelectedPlayers - Raw text:', text);
-    console.log('parseSelectedPlayers - Text length:', text.length);
+    debug.log('parseSelectedPlayers - Raw text:', text);
+    debug.log('parseSelectedPlayers - Text length:', text.length);
 
     const lines = text.split('\n');
-    console.log('parseSelectedPlayers - Number of lines after split:', lines.length);
+    debug.log('parseSelectedPlayers - Number of lines after split:', lines.length);
 
     // Process lines but stop at the first empty line (indicates end of player list)
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const trimmed = line.trim();
-      console.log(`Line ${i}: "${line}" -> trimmed: "${trimmed}" (length: ${trimmed.length})`);
+      debug.log(`Line ${i}: "${line}" -> trimmed: "${trimmed}" (length: ${trimmed.length})`);
       
       // Stop processing if we hit an empty line - this indicates end of player list
       if (trimmed.length === 0) {
-        console.log('Found empty line at index', i, '- stopping player list processing');
+        debug.log('Found empty line at index', i, '- stopping player list processing');
         break;
       }
       
       // Process the player line
-      console.log(`Processing player line ${i}: "${trimmed}"`);
+      debug.log(`Processing player line ${i}: "${trimmed}"`);
       
       // Remove numbering (e.g., "17. ")
       let processedLine = trimmed.replace(/^\d+\.\s*/, '');
@@ -127,7 +128,7 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       
       // Extra validation - ensure the player name is meaningful and likely a real player name
       if (playerName && playerName.length > 0 && !/^\s*$/.test(playerName) && isLikelyPlayerName(playerName)) {
-        console.log(`Adding player: "${playerName}" (replacement: ${isReplacement}, random: ${isRandom}, token: ${isToken})`);
+        debug.log(`Adding player: "${playerName}" (replacement: ${isReplacement}, random: ${isRandom}, token: ${isToken})`);
         selectedPlayers.push(playerName);
         if (isRandom) {
           randomPlayers.push(playerName);
@@ -136,11 +137,11 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
           tokenPlayers.push(playerName);
         }
       } else {
-        console.log(`Skipping invalid/non-player text: "${playerName}"`);
+        debug.log(`Skipping invalid/non-player text: "${playerName}"`);
       }
     }
 
-    console.log('parseSelectedPlayers - Final counts:', {
+    debug.log('parseSelectedPlayers - Final counts:', {
       selected: selectedPlayers.length,
       random: randomPlayers.length,
       token: tokenPlayers.length
@@ -187,15 +188,15 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       blueTeam.push(...bluePlayers);
     }
 
-    console.log('Parsed teams:', { orangeTeam, blueTeam });
+    debug.log('Parsed teams:', { orangeTeam, blueTeam });
     return { orangeTeam, blueTeam };
   };
 
   // Function to parse the full game details text
   const handleFullTextPaste = (text: string) => {
-    console.log('=== handleFullTextPaste START ===');
-    console.log('Text length:', text.length);
-    console.log('First 200 chars:', text.substring(0, 200));
+    debug.log('=== handleFullTextPaste START ===');
+    debug.log('Text length:', text.length);
+    debug.log('First 200 chars:', text.substring(0, 200));
     
     // Check if this is a team announcement message
     if (text.includes('🟠 Orange Team') && text.includes('🔵 Blue Team')) {
@@ -210,7 +211,7 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     const maxPlayersMatch = text.match(/⚽\s*(\d+)\s*players/);
     if (maxPlayersMatch) {
       const maxPlayers = parseInt(maxPlayersMatch[1]);
-      console.log('Extracted max players:', maxPlayers);
+      debug.log('Extracted max players:', maxPlayers);
       onMaxPlayersExtracted(maxPlayers);
     }
 
@@ -222,8 +223,8 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       const dateText = dateMatch[1].trim();
       const timeText = timeMatch[1].trim();
 
-      console.log('Parsed date text:', dateText);
-      console.log('Parsed time text:', timeText);
+      debug.log('Parsed date text:', dateText);
+      debug.log('Parsed time text:', timeText);
 
       // Extract date components using the date regex
       const dateRegex = /(\d+)(?:st|nd|rd|th)?\s+(\w+)(?:\s+(\d{4}|\d{2})?)?/;
@@ -245,7 +246,7 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
         year = '20' + year;
       }
 
-      console.log('Extracted date components:', { day, month, year });
+      debug.log('Extracted date components:', { day, month, year });
 
       // Convert month name to number
       const months: { [key: string]: string } = {
@@ -291,8 +292,8 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
       
       const formattedTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
 
-      console.log('Formatted date:', formattedDate);
-      console.log('Formatted time:', formattedTime);
+      debug.log('Formatted date:', formattedDate);
+      debug.log('Formatted time:', formattedTime);
 
       onDateTimeExtracted(formattedDate, formattedTime);
     }
@@ -307,9 +308,9 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     const legacySelectedPlayersMatch = !selectedPlayersMatch ? text.match(/✅\s*Selected Players:\s*\n+([\s\S]*?)(?=\n\n🔄|\n\n❌|$)/) : null;
     const legacyReservesMatch = !reservesMatch ? text.match(/🔄\s*Reserves[^:]*:\s*\n+([\s\S]*?)(?=\n\n❌|$)/) : null;
 
-    console.log('Selected players section:', selectedPlayersMatch?.[2] || legacySelectedPlayersMatch?.[1]);
-    console.log('Reserves section:', reservesMatch?.[2] || legacyReservesMatch?.[1]);
-    console.log('Dropped out section:', droppedOutMatch?.[1]);
+    debug.log('Selected players section:', selectedPlayersMatch?.[2] || legacySelectedPlayersMatch?.[1]);
+    debug.log('Reserves section:', reservesMatch?.[2] || legacyReservesMatch?.[1]);
+    debug.log('Dropped out section:', droppedOutMatch?.[1]);
 
     // Parse player names from each section - handle both new format with counts and legacy format
     const selectedPlayersText = selectedPlayersMatch?.[2] || legacySelectedPlayersMatch?.[1];
@@ -321,7 +322,7 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
     const reservePlayers = reservesText ? parsePlayerNamesFromSection(reservesText) : [];
     const droppedOutPlayers = droppedOutMatch ? parsePlayerNamesFromSection(droppedOutMatch[1]) : [];
 
-    console.log('Parsed players:', {
+    debug.log('Parsed players:', {
       selected: selectedPlayers,
       random: randomPlayers,
       token: tokenPlayers,
@@ -346,7 +347,7 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
           const playerName = playerMatch[1].trim();
           if (playerName && isLikelyPlayerName(playerName)) {
             shieldPlayers.push(playerName);
-            console.log(`Parsed shield player: "${playerName}"`);
+            debug.log(`Parsed shield player: "${playerName}"`);
           }
         }
       }
@@ -369,24 +370,24 @@ export const GameDetailsPaste: React.FC<GameDetailsPasteProps> = ({
           const playerName = playerMatch[1].trim();
           if (playerName && isLikelyPlayerName(playerName)) {
             injuryPlayers.push(playerName);
-            console.log(`Parsed injury player: "${playerName}"`);
+            debug.log(`Parsed injury player: "${playerName}"`);
           }
         }
       }
     }
 
-    console.log('=== Final player counts ===');
-    console.log('Selected players count:', selectedPlayers.length);
-    console.log('Selected player names:', selectedPlayers);
-    console.log('Random players count:', randomPlayers.length);
-    console.log('Token players count:', tokenPlayers.length);
-    console.log('Reserve players count:', reservePlayers.length);
-    console.log('Dropped out players count:', droppedOutPlayers.length);
-    console.log('Shield players count:', shieldPlayers.length);
-    console.log('Shield player names:', shieldPlayers);
-    console.log('Injury players count:', injuryPlayers.length);
-    console.log('Injury player names:', injuryPlayers);
-    console.log('=== handleFullTextPaste END ===');
+    debug.log('=== Final player counts ===');
+    debug.log('Selected players count:', selectedPlayers.length);
+    debug.log('Selected player names:', selectedPlayers);
+    debug.log('Random players count:', randomPlayers.length);
+    debug.log('Token players count:', tokenPlayers.length);
+    debug.log('Reserve players count:', reservePlayers.length);
+    debug.log('Dropped out players count:', droppedOutPlayers.length);
+    debug.log('Shield players count:', shieldPlayers.length);
+    debug.log('Shield player names:', shieldPlayers);
+    debug.log('Injury players count:', injuryPlayers.length);
+    debug.log('Injury player names:', injuryPlayers);
+    debug.log('=== handleFullTextPaste END ===');
 
     onPlayerListsExtracted(selectedPlayers, randomPlayers, reservePlayers, droppedOutPlayers, tokenPlayers);
 

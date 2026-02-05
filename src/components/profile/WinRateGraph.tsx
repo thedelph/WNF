@@ -18,10 +18,11 @@ import {
 } from 'recharts';
 // Import the shared PlayerGameHistory interface that handles all data structures
 import { PlayerGameHistory } from '../../hooks/useGameHistory';
+import { debug } from '@/utils/debug';
 
 // Debug flag - set to true to enable verbose logging
 const DEBUG_WIN_RATE = false;
-const debugLog = (...args: unknown[]) => DEBUG_WIN_RATE && console.log('[WinRateGraph]', ...args);
+const debugLog = (...args: unknown[]) => DEBUG_WIN_RATE && debug.log('[WinRateGraph]', ...args);
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -420,14 +421,14 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
   // Process game data when dependencies change - log for diagnostics
   React.useEffect(() => {
     if (DEBUG_WIN_RATE && graphData.length > 0) {
-      console.log('=== WIN RATE GRAPH DEBUG DATA ===');
-      console.log(`Total games: ${graphData.length}`);
-      console.log(`Official win rate from backend: ${officialWinRate}`);
+      debug.log('=== WIN RATE GRAPH DEBUG DATA ===');
+      debug.log(`Total games: ${graphData.length}`);
+      debug.log(`Official win rate from backend: ${officialWinRate}`);
 
       // Log last 15 games for analysis
       const recentGames = graphData.slice(-15);
-      console.log('Recent 15 games (for copy/paste):');
-      console.table(recentGames.map(g => ({
+      debug.log('Recent 15 games (for copy/paste):');
+      debug.table(recentGames.map(g => ({
         '#': g.gameNumber,
         'Outcome': g.outcome,
         'WinRate': g.winRate,
@@ -443,13 +444,13 @@ export const WinRateGraph: React.FC<UserGameDataProps> = ({
         acc[g.outcome] = (acc[g.outcome] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
-      console.log('Outcome counts:', outcomes);
+      debug.log('Outcome counts:', outcomes);
 
       // Count excluded games
       const excludedCount = graphData.filter(g => g.excludedFromWinRate).length;
-      console.log(`Excluded games: ${excludedCount}`);
+      debug.log(`Excluded games: ${excludedCount}`);
 
-      console.log('=================================');
+      debug.log('=================================');
     }
   }, [games, graphData, officialWinRate, getGameOutcome]);
 

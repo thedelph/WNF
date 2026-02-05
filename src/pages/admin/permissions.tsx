@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useAdmin } from '../../hooks/useAdmin'
 import { supabase } from '../../utils/supabase'
-import { toast } from 'react-toastify'
+import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import AdminPermissionsCard from '../../components/admin/permissions/AdminPermissionsCard'
 

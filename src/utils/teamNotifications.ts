@@ -1,6 +1,6 @@
 import React from 'react';
 import { supabase } from './supabase';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 export interface TeamAnnouncement {
   gameId: string;
@@ -78,12 +78,7 @@ export const showTeamAnnouncementNotification = (announcement: TeamAnnouncement)
     ),
     {
       position: "top-right",
-      autoClose: 10000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
+      duration: 10000,
     }
   );
 };

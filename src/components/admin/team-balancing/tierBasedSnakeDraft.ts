@@ -4,69 +4,46 @@ import { attachPrimaryPositions, evaluateSwapPositionImpact, logPositionBalanceS
 import { comparePositionBalance } from '../../../utils/positionClassifier';
 import { Position, PositionConsensus } from '../../../types/positions';
 
-// Configuration constants for the three-layer system
-const WEIGHT_SKILL = 0.60;      // 60% base skills (Attack/Defense/Game IQ/GK - 15% each)
-const WEIGHT_ATTRIBUTES = 0.20; // 20% derived attributes from playstyles
-const WEIGHT_OVERALL = 0.12;    // 12% track record (career performance)
-const WEIGHT_RECENT = 0.08;     // 8% current form (recent performance)
+// Public types extracted to tierDraft/ for maintainability
+import type {
+  PlayerWithRating,
+  TierInfo,
+  MultiObjectiveScore,
+  OptimizationWeights,
+  SwapEvaluation,
+  SwapPair,
+  TierBasedResult,
+  TierBasedOptions,
+  ComplementaryPairingResult,
+} from './tierDraft/types';
 
-// Goal difference normalization ranges
-const OVERALL_GD_MIN = -50;
-const OVERALL_GD_MAX = 50;
-const RECENT_GD_MIN = -20;
-const RECENT_GD_MAX = 20;
+import {
+  WEIGHT_SKILL,
+  WEIGHT_ATTRIBUTES,
+  WEIGHT_OVERALL,
+  WEIGHT_RECENT,
+  OVERALL_GD_MIN,
+  OVERALL_GD_MAX,
+  RECENT_GD_MIN,
+  RECENT_GD_MAX,
+  WIN_RATE_WEIGHT,
+  GOAL_DIFF_WEIGHT,
+  MIN_GAMES_FOR_STATS,
+  BALANCE_THRESHOLD,
+  SOFT_PENALTY_CONFIG,
+  PAIRING_CONFIG,
+  MOMENTUM_THRESHOLD_SMALL,
+  MOMENTUM_THRESHOLD_LARGE,
+  MOMENTUM_WEIGHT_HOT,
+  MOMENTUM_WEIGHT_COLD,
+  MOMENTUM_WEIGHT,
+  DEFAULT_WEIGHTS,
+} from './tierDraft/constants';
 
-// Win rate and goal diff balance within performance scores
-const WIN_RATE_WEIGHT = 0.7;
-const GOAL_DIFF_WEIGHT = 0.3;
+// Re-export public types for backwards compatibility
+export type { PlayerWithRating, TierInfo, MultiObjectiveScore, OptimizationWeights, SwapEvaluation, SwapPair, TierBasedResult, TierBasedOptions } from './tierDraft/types';
 
-// Other constants
-const MIN_GAMES_FOR_STATS = 10;
-const BALANCE_THRESHOLD = 0.3;
-
-// Soft penalty configuration - replaces hard rejections with graduated penalties
-const SOFT_PENALTY_CONFIG = {
-  // Threshold multipliers for penalty levels
-  MINOR_VIOLATION: 1.0,    // 100% of threshold = minor penalty
-  MODERATE_VIOLATION: 1.5, // 150% of threshold = moderate penalty
-  SEVERE_VIOLATION: 2.0,   // 200% of threshold = severe penalty (still considered)
-  CATASTROPHIC: 2.5,       // 250%+ = hard reject (truly catastrophic)
-
-  // Penalty weights applied to swap score
-  MINOR_PENALTY: 0.05,     // Small penalty, swap likely still accepted
-  MODERATE_PENALTY: 0.15,  // Medium penalty, need good improvement to accept
-  SEVERE_PENALTY: 0.30,    // Large penalty, need excellent improvement
-};
-
-// Complementary skill pairing configuration
-// Enforces that Attack and Defense advantages are on opposite teams
-const PAIRING_CONFIG = {
-  TIE_THRESHOLD: 0.10,          // Skills within 0.1 = tie (no winner)
-  GAME_IQ_SOFT_THRESHOLD: 0.30, // Soft preference - flag in debug if exceeded
-  GAME_IQ_PERFECT_GAP: 0.20,    // Gap for "perfect" pairing status
-  // Note: Game IQ is NOT a hard constraint, only ATK↔DEF pairing is enforced
-};
-
-/**
- * Result of complementary skill pairing check
- * Used to ensure Attack and Defense advantages are on opposite teams
- */
-interface ComplementaryPairingResult {
-  isPaired: boolean;
-  attackWinner: 'blue' | 'orange' | 'tie';
-  defenseWinner: 'blue' | 'orange' | 'tie';
-  gameIqWinner: 'blue' | 'orange' | 'tie';
-  gameIqGap: number;
-  isGameIqAcceptable: boolean;
-  pairingStatus: 'perfect' | 'acceptable' | 'violated';
-  reason: string;
-  blueAttack: number;
-  orangeAttack: number;
-  blueDefense: number;
-  orangeDefense: number;
-  blueGameIq: number;
-  orangeGameIq: number;
-}
+// ComplementaryPairingResult interface moved to tierDraft/types.ts
 
 /**
  * Check if Attack and Defense skills are complementary (won by opposite teams)
@@ -381,122 +358,23 @@ const getAttributeBalanceThreshold = (
   return baseThreshold;
 };
 
-// Momentum constants
-const MOMENTUM_THRESHOLD_SMALL = 0.1;   // Below this, no momentum effect
-const MOMENTUM_THRESHOLD_LARGE = 0.3;   // Above this, maximum momentum effect
-const MOMENTUM_WEIGHT_HOT = 0.05;       // 5% bonus for hot streaks (reduced from 10%)
-const MOMENTUM_WEIGHT_COLD = 0.03;      // 3% penalty for cold streaks (reduced from 5%)
-const MOMENTUM_WEIGHT = 0.10;           // Overall momentum contribution (reduced from 15%)
+// Momentum constants moved to ./types/tierBasedTypes.ts
 
-export interface PlayerWithRating extends TeamAssignment {
-  threeLayerRating: number;
-  baseSkillRating: number;
-  attributesScore?: number;
-  attributesAdjustment?: number;
-  hasPlaystyleRating?: boolean;
-  overallPerformanceScore?: number;
-  recentFormScore?: number;
-  momentumScore?: number;
-  momentumCategory?: 'hot' | 'cold' | 'steady';
-  momentumAdjustment?: number;
-  tier?: number;
-  positions?: PositionConsensus[];
-  primaryPosition?: Position | null;
-}
+// PlayerWithRating interface moved to ./types/tierBasedTypes.ts
 
-export interface TierInfo {
-  tierNumber: number;
-  players: PlayerWithRating[];
-  skillRange: { min: number; max: number };
-}
+// TierInfo interface moved to ./types/tierBasedTypes.ts
 
-// Multi-Objective Optimization Interfaces
-export interface MultiObjectiveScore {
-  skillsBalance: number;      // Max difference in Attack/Defense/Game IQ/GK (lower is better)
-  shootingBalance: number;    // Shooting distribution imbalance score (lower is better)
-  attributeBalance: number;   // Average difference in 6 derived attributes (lower is better)
-  tierFairness: number;       // Tier distribution variance + quality concentration (lower is better)
-  performanceGap: number;     // Combined win rate + goal differential gap (lower is better)
-  coreSkillDominance: number; // Penalty when one team wins 0/3 core skills (lower is better) - Jan 2026
-  systematicBias: number;     // Cross-category dominance penalty (lower is better)
-  positionBalance: number;    // Position distribution balance (lower is better) - prevents striker imbalance
-  avgRatingBalance: number;   // Average three-layer rating difference (lower is better)
-  chemistryBalance: number;   // Team chemistry balance (lower is better) - Dec 2025
-  overall: number;            // Weighted combination of all objectives (lower is better)
-}
+// MultiObjectiveScore interface moved to ./types/tierBasedTypes.ts
 
-export interface OptimizationWeights {
-  skillsBalance: number;      // Default: 0.18
-  shootingBalance: number;    // Default: 0.08
-  attributeBalance: number;   // Default: 0.10
-  tierFairness: number;       // Default: 0.05
-  performanceGap: number;     // Default: 0.08
-  coreSkillDominance: number; // Default: 0.12 - Jan 2026: Penalty for core skill domination
-  systematicBias: number;     // Default: 0.22
-  positionBalance: number;    // Default: 0.09
-  avgRatingBalance: number;   // Default: 0.07
-  chemistryBalance: number;   // Default: 0.10 - Dec 2025: Balance team chemistry
-}
+// OptimizationWeights interface moved to ./types/tierBasedTypes.ts
 
-export interface SwapEvaluation {
-  isImprovement: boolean;
-  improvedObjectives: string[];
-  worsenedObjectives: string[];
-  scoreBefore: MultiObjectiveScore;
-  scoreAfter: MultiObjectiveScore;
-  netImprovement: number;
-}
+// SwapEvaluation interface moved to ./types/tierBasedTypes.ts
 
-// Default weights for multi-objective optimization
-// Priority: Systematic Bias > Core Skill Dominance > Skills > Position Balance > Attributes > Chemistry > Avg Rating
-// Jan 2026 Update: Added coreSkillDominance (12%) to ensure SA finds solutions where each team wins at least 1 core skill
-const DEFAULT_WEIGHTS: OptimizationWeights = {
-  skillsBalance: 0.18,        // Attack/Defense/Game IQ balance (reduced from 0.20)
-  shootingBalance: 0.08,      // Shooting distribution
-  attributeBalance: 0.09,     // Pace, passing, etc. (reduced from 0.11)
-  tierFairness: 0.05,         // Only care about top 4 / bottom 4 split
-  performanceGap: 0.08,       // Win rate gap
-  coreSkillDominance: 0.12,   // NEW Jan 2026: Penalty when one team wins 0/3 core skills
-  systematicBias: 0.20,       // Heavily penalize one team dominating all categories (reduced from 0.22)
-  positionBalance: 0.08,      // Position balance to prevent striker imbalance (reduced from 0.09)
-  avgRatingBalance: 0.07,     // Average three-layer rating difference
-  chemistryBalance: 0.05,     // Intra-team chemistry balance (reduced from 0.10)
-};
+// DEFAULT_WEIGHTS constant moved to ./types/tierBasedTypes.ts
 
-// Phase 4: Multi-Swap Combinations Interface
-export interface SwapPair {
-  swap1: {
-    tier: number;
-    teamA: 'blue' | 'orange';
-    playerA: PlayerWithRating;
-    teamB: 'blue' | 'orange';
-    playerB: PlayerWithRating;
-  };
-  swap2: {
-    tier: number;
-    teamA: 'blue' | 'orange';
-    playerA: PlayerWithRating;
-    teamB: 'blue' | 'orange';
-    playerB: PlayerWithRating;
-  };
-  combinedImprovement: number;
-  scoreBefore: MultiObjectiveScore;
-  scoreAfter: MultiObjectiveScore;
-  evaluation: SwapEvaluation;
-  priority: number; // Higher is better
-}
+// SwapPair interface moved to ./types/tierBasedTypes.ts
 
-export interface TierBasedResult {
-  blueTeam: PlayerWithRating[];
-  orangeTeam: PlayerWithRating[];
-  tiers: TierInfo[];
-  initialScore: number;
-  optimizedScore: number;
-  wasOptimized: boolean;
-  confidenceLevel: 'high' | 'medium' | 'low';
-  confidenceMessage: string;
-  debugLog?: string;
-}
+// TierBasedResult interface moved to ./types/tierBasedTypes.ts
 
 /**
  * Calculate dynamic balance threshold based on team size and rating ranges
@@ -1100,9 +978,6 @@ function calculateAttributeBalanceScore(blueTeam: PlayerWithRating[], orangeTeam
   return avgDiff * penaltyMultiplier * dominancePenalty;
 }
 
-/**
- * Shooting distribution analysis for ensuring balanced shooting threats
- */
 interface ShootingDistribution {
   percentiles: { p25: number; p50: number; p75: number; p90: number };
   nonZeroMean: number;
@@ -1789,9 +1664,6 @@ function calculateTierBalanceScore(blueTeam: PlayerWithRating[], orangeTeam: Pla
   return combinedBalance;
 }
 
-/**
- * Balance score details interface
- */
 interface BalanceScoreDetails {
   totalScore: number;
   skillBalance: number;
@@ -1806,7 +1678,7 @@ interface BalanceScoreDetails {
   dribblingDiff?: number;
   defendingDiff?: number;
   physicalDiff?: number;
-  shootingImbalance?: number; // Weighted shooting threat distribution score
+  shootingImbalance?: number;
   hasAttributes: boolean;
   primaryFactor: 'skills' | 'attributes' | 'both';
   blueWinRate?: number;
@@ -2300,17 +2172,10 @@ const CHEMISTRY_CONFIG = {
   SIGNIFICANT_DIFFERENCE: 500,
 };
 
-/**
- * Team chemistry calculation result
- */
 interface TeamChemistryResult {
-  /** Total chemistry score (sum of all pair chemistry scores) */
   total: number;
-  /** Number of pairs calculated */
   pairCount: number;
-  /** Average chemistry per pair */
   avgPerPair: number;
-  /** Number of high-chemistry pairs (above threshold) */
   highChemistryPairs: number;
 }
 
@@ -4027,10 +3892,6 @@ function emergencyCoreSkillFix(
   return false;
 }
 
-/**
- * Validation grade for tiered quality assessment
- * Used in debug logs to provide nuanced feedback on team balance quality
- */
 type ValidationGrade = 'EXCELLENT' | 'GOOD' | 'ACCEPTABLE' | 'POOR' | 'FAIL';
 
 /**
@@ -4117,10 +3978,6 @@ function calculateOverallGrade(
   return { grade: 'FAIL', score };
 }
 
-/**
- * Final validation check for team balance
- * Returns a summary of all critical issues that could not be fixed
- */
 interface ValidationResult {
   valid: boolean;
   issues: string[];
@@ -4257,9 +4114,6 @@ function finalValidation(
   };
 }
 
-/**
- * Post-optimization pipeline result interface
- */
 interface PostOptimizationResult {
   blueTeam: PlayerWithRating[];
   orangeTeam: PlayerWithRating[];
@@ -5748,18 +5602,14 @@ function getTierDistributionIssues(blueTeam: PlayerWithRating[], orangeTeam: Pla
   return null; // No issues found
 }
 
-/**
- * PHASE 5: Soft Constraint System
- * Interface for penalty scoring instead of hard blocks
- */
 interface SwapPenalties {
-  eliteShooterPenalty: number;      // Penalty for elite shooter clustering
-  shootingMeanPenalty: number;      // Penalty for shooting mean gap
-  shooterRatioPenalty: number;      // Penalty for insufficient shooters above median
-  tierDistributionPenalty: number;  // Penalty for tier concentration
-  chemistryBreakPenalty: number;    // Penalty for breaking high-chemistry pairs (Dec 2025)
-  totalPenalty: number;             // Sum of all penalties
-  details: string[];                // Explanation of each penalty
+  eliteShooterPenalty: number;
+  shootingMeanPenalty: number;
+  shooterRatioPenalty: number;
+  tierDistributionPenalty: number;
+  chemistryBreakPenalty: number;
+  totalPenalty: number;
+  details: string[];
 }
 
 /**
@@ -7779,15 +7629,7 @@ function formatPerformanceDescription(winRate: number, goalDiff: number, isOvera
   }
 }
 
-/**
- * Options for tier-based team balance algorithm
- */
-export interface TierBasedOptions {
-  /** IDs of players designated as permanent goalkeepers */
-  permanentGKIds?: string[];
-  /** Pre-fetched chemistry lookup data for balancing intra-team chemistry */
-  chemistryLookup?: Map<string, number>;
-}
+// TierBasedOptions interface moved to ./types/tierBasedTypes.ts
 
 /**
  * Main function: Find optimal team balance using tier-based snake draft

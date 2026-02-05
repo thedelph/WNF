@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../hooks/useAdmin';
 import { supabase } from '../../utils/supabase';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { PERMISSIONS, PERMISSION_DISPLAY_NAMES, PERMISSION_DESCRIPTIONS, Role } from '../../types/permissions';
 

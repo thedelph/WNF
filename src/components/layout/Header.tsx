@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAdmin } from '../../hooks/useAdmin'
 import { supabase } from '../../utils/supabase'
-import { toast } from 'react-toastify'
+import toast from 'react-hot-toast'
 import NotificationBell from '../notifications/NotificationBell'
 import ThemeToggle from '../ui/ThemeToggle'
 

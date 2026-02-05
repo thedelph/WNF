@@ -10,6 +10,7 @@ import PlayerSelectionDetails from './form-components/PlayerSelectionDetails';
 import TeamAnnouncementDetails from './form-components/TeamAnnouncementDetails';
 import GameDetailsPaste from './form-components/GameDetailsPaste';
 import { ukTimeToUtc } from '../../../utils/dateUtils';
+import { debug } from '@/utils/debug';
 
 interface CreateGameFormProps {
   date?: string;
@@ -188,9 +189,9 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
       // Convert local UK time to UTC for storage
       const gameDateTime = convertToUtcForStorage(localGameDateTime);
       
-      console.log('Game time debug:');
-      console.log('Local input time:', localGameDateTime);
-      console.log('Converted UTC time for storage:', gameDateTime);
+      debug.log('Game time debug:');
+      debug.log('Local input time:', localGameDateTime);
+      debug.log('Converted UTC time for storage:', gameDateTime);
       
       let registrationStartDate = registrationStart;
       let registrationEndDate = registrationEnd;
@@ -363,10 +364,10 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
             console.error('Error activating shield protection:', shieldError);
             toast.error(`Failed to activate shield for player`);
           } else {
-            console.log(`Activated shield for player ${playerId}: protecting ${currentStreak}-game streak`);
+            debug.log(`Activated shield for player ${playerId}: protecting ${currentStreak}-game streak`);
           }
         } else {
-          console.warn(`Player ${playerId} has no shield tokens available`);
+          debug.warn(`Player ${playerId} has no shield tokens available`);
           toast.error(`Player has no shield tokens available`);
         }
       }
@@ -548,7 +549,7 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
     setTeamAPlayers(validOrangePlayers); // Team A = Orange
     setTeamBPlayers(validBluePlayers);   // Team B = Blue
 
-    console.log('Teams extracted:', {
+    debug.log('Teams extracted:', {
       orange: validOrangePlayers,
       blue: validBluePlayers
     });
@@ -624,7 +625,7 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
               .filter((p): p is Player => p !== undefined)
               .map(p => p.id);
             setShieldPlayers(validShieldPlayers);
-            console.log('Shield players extracted:', validShieldPlayers);
+            debug.log('Shield players extracted:', validShieldPlayers);
           }}
           onInjuryPlayersExtracted={(injuryPlayerNames) => {
             // Convert injury player names to IDs
@@ -633,7 +634,7 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
               .filter((p): p is Player => p !== undefined)
               .map(p => p.id);
             setInjuryPlayers(validInjuryPlayers);
-            console.log('Injury players extracted:', validInjuryPlayers);
+            debug.log('Injury players extracted:', validInjuryPlayers);
           }}
         />
 
