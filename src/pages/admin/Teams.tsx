@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { FaChartLine } from 'react-icons/fa';
 import { useAdmin } from '../../hooks/useAdmin';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 interface TeamStats {
   attack: number;

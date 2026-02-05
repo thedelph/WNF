@@ -3,6 +3,7 @@ import { supabase, supabaseAdmin } from '../../utils/supabase'
 import { useAdmin } from '../../hooks/useAdmin'
 import { AlertTriangle, CheckCircle, XCircle, RefreshCw, User, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { debug } from '@/utils/debug'
 
 interface UserSessionInfo {
   id: string
@@ -34,7 +35,7 @@ const SessionDiagnostics: React.FC = () => {
       const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
       if (!serviceRoleKey || serviceRoleKey === import.meta.env.VITE_SUPABASE_ANON_KEY) {
         setServiceRoleKeyMissing(true)
-        console.warn('⚠️ VITE_SUPABASE_SERVICE_ROLE_KEY is not configured or is same as anon key. Some admin features will not work.')
+        debug.warn('⚠️ VITE_SUPABASE_SERVICE_ROLE_KEY is not configured or is same as anon key. Some admin features will not work.')
       }
     }
     checkServiceRoleKey()
@@ -54,7 +55,7 @@ const SessionDiagnostics: React.FC = () => {
 
       if (isSuperAdmin) {
         // Use Admin API to search for user by email
-        console.log('🔍 Searching for user via Admin API:', searchEmail.toLowerCase())
+        debug.log('🔍 Searching for user via Admin API:', searchEmail.toLowerCase())
 
         const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
 
@@ -67,7 +68,7 @@ const SessionDiagnostics: React.FC = () => {
         const foundUser = users.find(u => u.email?.toLowerCase() === searchEmail.toLowerCase())
 
         if (foundUser) {
-          console.log('✅ Found auth user:', {
+          debug.log('✅ Found auth user:', {
             id: foundUser.id,
             email: foundUser.email,
             last_sign_in: foundUser.last_sign_in_at
@@ -84,19 +85,19 @@ const SessionDiagnostics: React.FC = () => {
 
           if (playerData) {
             player = playerData
-            console.log('✅ Found player record:', {
+            debug.log('✅ Found player record:', {
               friendly_name: playerData.friendly_name,
               user_id: playerData.user_id,
               whatsapp_member: playerData.whatsapp_group_member
             })
           } else {
-            console.warn('⚠️ No player record found for user_id:', foundUser.id)
+            debug.warn('⚠️ No player record found for user_id:', foundUser.id)
             if (playerError) {
               console.error('Player query error:', playerError)
             }
           }
         } else {
-          console.warn('⚠️ No auth user found with email:', searchEmail)
+          debug.warn('⚠️ No auth user found with email:', searchEmail)
         }
       } else {
         // Non-super admins: try a different approach
@@ -142,7 +143,7 @@ const SessionDiagnostics: React.FC = () => {
 
       // If still not found, try pagination search as fallback
       if (!authUser && isSuperAdmin) {
-        console.log('User not found in players table, searching in auth system...')
+        debug.log('User not found in players table, searching in auth system...')
 
         try {
           // Use admin auth API to list users and search by email
@@ -164,7 +165,7 @@ const SessionDiagnostics: React.FC = () => {
 
             if (users && users.length > 0) {
               allUsers = [...allUsers, ...users]
-              console.log(`Fetched page ${page}, total users so far: ${allUsers.length}`)
+              debug.log(`Fetched page ${page}, total users so far: ${allUsers.length}`)
 
               // Check if we found the user in this batch
               const authUser = users.find(u => u.email?.toLowerCase() === searchEmail.toLowerCase())
@@ -197,7 +198,7 @@ const SessionDiagnostics: React.FC = () => {
             }
           }
 
-          console.log(`Searched ${allUsers.length} total auth users, did not find ${searchEmail}`)
+          debug.log(`Searched ${allUsers.length} total auth users, did not find ${searchEmail}`)
 
           // Also log some similar emails if any exist
           const similarEmails = allUsers
@@ -205,7 +206,7 @@ const SessionDiagnostics: React.FC = () => {
             .map(u => u.email)
 
           if (similarEmails.length > 0) {
-            console.log('Found similar emails:', similarEmails)
+            debug.log('Found similar emails:', similarEmails)
             toast('No exact match found. Check console for similar emails.', {
               icon: '🔍',
               duration: 5000
@@ -261,7 +262,7 @@ const SessionDiagnostics: React.FC = () => {
       if (error) {
         // If the user doesn't exist, try creating them
         if (error.message?.includes('User not found')) {
-          console.log('User not found, trying to create user with magic link...')
+          debug.log('User not found, trying to create user with magic link...')
           const { error: createError } = await supabaseAdmin.auth.signInWithOtp({
             email: userInfo.email,
             options: {
@@ -398,7 +399,7 @@ const SessionDiagnostics: React.FC = () => {
       }
 
       // Use direct fetch with service role key to update password
-      console.log('🔒 Setting temporary password for user:', userInfo.id)
+      debug.log('🔒 Setting temporary password for user:', userInfo.id)
       const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userInfo.id}`, {
         method: 'PUT',
         headers: {
@@ -412,7 +413,7 @@ const SessionDiagnostics: React.FC = () => {
         })
       })
 
-      console.log('Update password response status:', response.status)
+      debug.log('Update password response status:', response.status)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
@@ -423,7 +424,7 @@ const SessionDiagnostics: React.FC = () => {
       // Copy password to clipboard
       try {
         await navigator.clipboard.writeText(tempPassword)
-        console.log('✅ Password copied to clipboard:', tempPassword)
+        debug.log('✅ Password copied to clipboard:', tempPassword)
 
         // Show persistent alert with the password
         alert(
@@ -516,15 +517,15 @@ const SessionDiagnostics: React.FC = () => {
     const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-    console.log('🔑 Environment check:')
-    console.log('Service role key exists:', !!serviceRoleKey)
-    console.log('Service role key length:', serviceRoleKey?.length || 0)
-    console.log('Anon key length:', anonKey?.length || 0)
-    console.log('Keys are different:', serviceRoleKey !== anonKey)
+    debug.log('🔑 Environment check:')
+    debug.log('Service role key exists:', !!serviceRoleKey)
+    debug.log('Service role key length:', serviceRoleKey?.length || 0)
+    debug.log('Anon key length:', anonKey?.length || 0)
+    debug.log('Keys are different:', serviceRoleKey !== anonKey)
 
     // Check what token the current supabase client is using
     const currentSession = await supabase.auth.getSession()
-    console.log('🔓 Current user session:', {
+    debug.log('🔓 Current user session:', {
       hasSession: !!currentSession.data.session,
       userJWT: currentSession.data.session?.access_token ?
         currentSession.data.session.access_token.substring(0, 30) + '...' : 'none'
@@ -549,8 +550,8 @@ const SessionDiagnostics: React.FC = () => {
 
     try {
       // Use direct fetch with service role key to bypass any session interference
-      console.log('🔒 Attempting to clear sessions for user:', userInfo.id)
-      console.log('Using direct fetch with service role key (bypassing Supabase client)')
+      debug.log('🔒 Attempting to clear sessions for user:', userInfo.id)
+      debug.log('Using direct fetch with service role key (bypassing Supabase client)')
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 
@@ -564,11 +565,11 @@ const SessionDiagnostics: React.FC = () => {
         }
       })
 
-      console.log('Get factors response status:', signOutResponse.status)
+      debug.log('Get factors response status:', signOutResponse.status)
 
       if (signOutResponse.ok) {
         const factors = await signOutResponse.json()
-        console.log('User factors:', factors)
+        debug.log('User factors:', factors)
 
         // Now delete each factor
         if (factors && factors.length > 0) {
@@ -581,7 +582,7 @@ const SessionDiagnostics: React.FC = () => {
                 'Content-Type': 'application/json'
               }
             })
-            console.log(`Deleted factor ${factor.id}:`, deleteResponse.status)
+            debug.log(`Deleted factor ${factor.id}:`, deleteResponse.status)
           }
         }
 

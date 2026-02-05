@@ -7,7 +7,7 @@ import GameFilters from './GameFilters'
 import { Game } from '../../../../types/game'
 import PlayerFilter from './PlayerFilter'
 import { supabase } from '../../../../utils/supabase'
-import { toast } from 'react-toastify'
+import toast from 'react-hot-toast'
 
 interface Props {
   games: Game[]

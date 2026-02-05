@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../../utils/supabase'
-import { toast } from 'react-toastify'
+import toast from 'react-hot-toast'
 import { Role } from '../../types/permissions'
 
 interface AdminFormProps {

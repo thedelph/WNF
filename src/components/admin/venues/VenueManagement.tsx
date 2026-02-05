@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { toast } from 'react-toastify'
+import toast from 'react-hot-toast'
 import { supabase } from '../../../utils/supabase'
 import { Venue } from '../../../types/game'
 import FormContainer from '../../common/containers/FormContainer'

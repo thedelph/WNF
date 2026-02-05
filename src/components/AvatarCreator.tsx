@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createAvatar } from '@dicebear/core';
 import { avataaars } from '@dicebear/collection';
 import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 interface AvatarCreatorProps {
   onSave: (avatarOptions: any, avatarUrl: string) => void;

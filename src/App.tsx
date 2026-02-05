@@ -1,58 +1,74 @@
-import React from "react"
+import React, { Suspense } from "react"
 import { Routes, Route, Outlet, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Analytics } from '@vercel/analytics/react'
 import Layout from "./components/Layout"
 import StandaloneLayout from "./components/layout/StandaloneLayout"
-import AdminPortal from "./pages/admin/AdminPortal"
-import AdminManagement from "./pages/admin/admins"
-import AdminPermissions from "./pages/admin/permissions"
-import GameManagement from "./pages/admin/games"
-import Game from "./pages/Game"
-import Profile from "./pages/Profile"
-import Players from "./pages/admin/players"
-import EditPlayer from "./pages/admin/EditPlayer"
 import { AuthProvider } from "./context/AuthContext"
 import { ViewAsProvider } from "./context/ViewAsContext"
 import { ThemeProvider } from "./context/ThemeContext"
 import ErrorBoundary from './components/ErrorBoundary'
 import { Toaster } from 'react-hot-toast'
-import HistoricalGames from './pages/admin/history/HistoricalGames'
-import PlayerList from './pages/PlayerList'
-import PlayerProfile from './pages/PlayerProfile'
-import PaymentDashboard from './components/admin/payments/PaymentDashboard'
-import Ratings from './pages/Ratings'
-import RatingsView from './pages/admin/ratings'
-import Teams from './pages/admin/Teams'
-import TeamBalancingOverview from './components/admin/pages/TeamBalancingOverview'
+import { ScrollToTop } from './components/ui/ScrollToTop'
+
+// ── Eagerly loaded routes (core user-facing pages) ──────────────────────
+import Leaderboards from './pages/Leaderboards'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import NotificationsPage from './pages/NotificationsPage'
-import { SlotOffersPage } from './pages/admin/SlotOffersPage'
-import EmailVerification from './pages/EmailVerification'
-import Changelog from './pages/Changelog'
-import Stats from './pages/Stats'
-import Awards from './pages/Awards'
-import Leaderboards from './pages/Leaderboards'
-import StandaloneStats from './pages/StandaloneStats'
-import { ScrollToTop } from './components/ui/ScrollToTop'
-import TokenManagement from './pages/admin/TokenManagement'
-import AccountManagement from './pages/admin/AccountManagement'
-import RoleManagement from './pages/admin/RoleManagement'
-import FeatureFlagManagement from './pages/admin/FeatureFlagManagement'
-import TeamBalancingVisualization from './pages/admin/TeamBalancingVisualization'
-import SessionDiagnostics from './pages/admin/SessionDiagnostics'
-import ShieldTokenManagement from './pages/admin/ShieldTokenManagement'
-import InjuryTokenManagement from './pages/admin/InjuryTokenManagement'
-import XPComparison from './pages/admin/XPComparison'
-import WhatsAppBotHelp from './pages/WhatsAppBotHelp'
-import WeatherDemo from './pages/WeatherDemo'
-import DesignPreview from './pages/DesignPreview'
-import Results from './pages/Results'
-import GameDetail from './pages/GameDetail'
+import Game from "./pages/Game"
+
+// ── Lazy loaded routes ──────────────────────────────────────────────────
+// Auth pages (rarely revisited after login)
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'))
+const EmailVerification = React.lazy(() => import('./pages/EmailVerification'))
+
+// Player-facing pages
+const Profile = React.lazy(() => import("./pages/Profile"))
+const PlayerList = React.lazy(() => import('./pages/PlayerList'))
+const PlayerProfile = React.lazy(() => import('./pages/PlayerProfile'))
+const Ratings = React.lazy(() => import('./pages/Ratings'))
+const Results = React.lazy(() => import('./pages/Results'))
+const GameDetail = React.lazy(() => import('./pages/GameDetail'))
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'))
+const Changelog = React.lazy(() => import('./pages/Changelog'))
+const StandaloneStats = React.lazy(() => import('./pages/StandaloneStats'))
+
+// Misc pages
+const WhatsAppBotHelp = React.lazy(() => import('./pages/WhatsAppBotHelp'))
+const WeatherDemo = React.lazy(() => import('./pages/WeatherDemo'))
+const DesignPreview = React.lazy(() => import('./pages/DesignPreview'))
+
+// Admin pages (only loaded for admin users)
+const AdminPortal = React.lazy(() => import("./pages/admin/AdminPortal"))
+const AdminManagement = React.lazy(() => import("./pages/admin/admins"))
+const AdminPermissions = React.lazy(() => import("./pages/admin/permissions"))
+const GameManagement = React.lazy(() => import("./pages/admin/games"))
+const Players = React.lazy(() => import("./pages/admin/players"))
+const EditPlayer = React.lazy(() => import("./pages/admin/EditPlayer"))
+const HistoricalGames = React.lazy(() => import('./pages/admin/history/HistoricalGames'))
+const PaymentDashboard = React.lazy(() => import('./components/admin/payments/PaymentDashboard'))
+const RatingsView = React.lazy(() => import('./pages/admin/ratings'))
+const Teams = React.lazy(() => import('./pages/admin/Teams'))
+const TeamBalancingOverview = React.lazy(() => import('./components/admin/pages/TeamBalancingOverview'))
+const SlotOffersPage = React.lazy(() => import('./pages/admin/SlotOffersPage').then(m => ({ default: m.SlotOffersPage })))
+const TokenManagement = React.lazy(() => import('./pages/admin/TokenManagement'))
+const AccountManagement = React.lazy(() => import('./pages/admin/AccountManagement'))
+const RoleManagement = React.lazy(() => import('./pages/admin/RoleManagement'))
+const FeatureFlagManagement = React.lazy(() => import('./pages/admin/FeatureFlagManagement'))
+const TeamBalancingVisualization = React.lazy(() => import('./pages/admin/TeamBalancingVisualization'))
+const SessionDiagnostics = React.lazy(() => import('./pages/admin/SessionDiagnostics'))
+const ShieldTokenManagement = React.lazy(() => import('./pages/admin/ShieldTokenManagement'))
+const InjuryTokenManagement = React.lazy(() => import('./pages/admin/InjuryTokenManagement'))
+const XPComparison = React.lazy(() => import('./pages/admin/XPComparison'))
+
+// ── Loading fallback ────────────────────────────────────────────────────
+const RouteLoader = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="loading loading-spinner loading-lg text-primary" />
+  </div>
+)
 
 // Create a client
 const queryClient = new QueryClient({
@@ -74,20 +90,21 @@ const App: React.FC = () => {
           <ViewAsProvider>
             <ErrorBoundary>
             <ScrollToTop />
+            <Suspense fallback={<RouteLoader />}>
             <Routes>
             {/* Redirect root to leaderboards */}
             <Route path="/" element={<Navigate to="/leaderboards" replace />} />
-            
+
             {/* Standalone Stats Route */}
-              <Route 
-                path="/standalone-stats" 
+              <Route
+                path="/standalone-stats"
                 element={
                   <StandaloneLayout>
                     <StandaloneStats />
                   </StandaloneLayout>
-                } 
+                }
               />
-              
+
               {/* Regular Layout Routes */}
               <Route element={
                 <Layout>
@@ -118,7 +135,6 @@ const App: React.FC = () => {
                 <Route path="/players" element={<PlayerList />} />
                 <Route path="/players/:id" element={<PlayerProfile />} />
                 <Route path="/player/:friendlyName" element={<PlayerProfile />} />
-                <Route path="/players/:id" element={<PlayerProfile />} />
                 <Route path="/admin/payments" element={<PaymentDashboard />} />
                 <Route path="/ratings" element={<Ratings />} />
                 <Route path="/admin/ratings" element={<RatingsView />} />
@@ -139,6 +155,7 @@ const App: React.FC = () => {
                 <Route path="/design-preview" element={<DesignPreview />} />
               </Route>
             </Routes>
+            </Suspense>
             <Toaster />
             </ErrorBoundary>
           </ViewAsProvider>

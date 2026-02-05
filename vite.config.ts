@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             vendor: ['react', 'react-dom', 'react-router-dom'],
-            ui: ['framer-motion', 'react-hot-toast', 'lucide-react'],
+            ui: ['framer-motion', 'react-hot-toast', 'lucide-react', 'recharts'],
             supabase: ['@supabase/supabase-js', '@supabase/auth-helpers-react']
           },
           chunkFileNames: 'assets/[name]-[hash].js',
