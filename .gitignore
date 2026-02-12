@@ -32,6 +32,8 @@ dist-ssr
 
 # Keep production env checked in
 
+# Claude Code local settings
+.claude/settings.local.json
+
 # MCP configuration
-.mcp.json
 .mcp.json
