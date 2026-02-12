@@ -516,6 +516,7 @@ All implementation tasks completed on January 12, 2026:
 8. [x] Add audit logging
 9. [x] Test edge cases
 10. [x] Deploy and announce to community
+11. [x] Fix return processing bugs (February 12, 2026) - see [Return Processing Fix](#return-processing-fix-february-2026)
 
 ---
 
@@ -533,6 +534,7 @@ All implementation tasks completed on January 12, 2026:
 - `injury_return_streak` (INTEGER)
 - `injury_activated_at` (TIMESTAMPTZ)
 - `injury_game_id` (UUID)
+- `injury_streak_bonus` (INTEGER) - Added Feb 2026. Bonus added to natural consecutive game count on return. Cleared when streak breaks.
 
 **RPC Functions:**
 | Function | Purpose |
@@ -540,7 +542,8 @@ All implementation tasks completed on January 12, 2026:
 | `check_injury_token_eligibility` | Validates player can claim for a game |
 | `activate_injury_token` | Player self-serve activation |
 | `admin_activate_injury_token` | Admin activation with audit |
-| `process_injury_return` | Auto-return on game registration |
+| `process_injury_return` | Sets `injury_streak_bonus` and clears injury fields |
+| `process_injury_returns_on_game_complete` | Auto-return trigger on game completion |
 | `deny_injury_token` | Admin denial with reason |
 | `get_injury_token_status` | Get player's current status |
 | `get_eligible_injury_games` | Games eligible for claiming |
@@ -569,10 +572,12 @@ All implementation tasks completed on January 12, 2026:
 
 ### Integration Points
 
-1. **Game Registration** (`useGameRegistration.ts`): Auto-processes injury return when player registers
-2. **Player Card** (`PlayerCardModifiers.tsx`): Shows amber injury badge when active
-3. **Shield Token** (`ShieldTokenStatus.tsx`): Clarification text added about Shield vs Injury
-4. **Admin Portal**: New card and route at `/admin/injuries`
+1. **Game Completion Trigger** (`a_process_injury_returns_on_game_complete`): Auto-processes injury return when game is marked complete. This is the primary return mechanism. Fires before streak triggers via alphabetical ordering.
+2. **Game Registration** (`useGameRegistration.ts`): Also processes injury return when player self-registers (belt-and-suspenders for instant user feedback)
+3. **Streak Triggers** (`update_streaks_on_game_change`, `update_player_streaks`): Add `injury_streak_bonus` to natural consecutive game count. Clear bonus when streak breaks.
+4. **Player Card** (`PlayerCardModifiers.tsx`): Shows amber injury badge when active
+5. **Shield Token** (`ShieldTokenStatus.tsx`): Clarification text added about Shield vs Injury
+6. **Admin Portal**: New card and route at `/admin/injuries`
 
 ### XP Recalculation on Activation (Added January 2026)
 
@@ -664,6 +669,64 @@ Players using injury tokens without registering for a game get status `absent`:
 
 ---
 
+---
+
+## Return Processing Fix (February 2026)
+
+### Bugs Found and Fixed
+
+On February 11, 2026, the first injury token return (Joe, game #83) revealed four bugs working together:
+
+| Bug | Description | Severity |
+|-----|-------------|----------|
+| **Bug 1: Return never called** | `process_injury_return` was only called during player self-registration (`useGameRegistration.ts`). Admin-created registrations or game completions never triggered it. | High |
+| **Bug 2: Streak triggers overwrite** | `update_streaks_on_game_change()` and `update_player_streaks()` recalculate ALL streaks from game history with zero awareness of injury tokens. Even if Bug 1 were fixed, the streak would be immediately overwritten. | Critical |
+| **Bug 3: Toast field mismatch** | Frontend read `returnResult[0].return_streak` but the RPC returns `new_streak`. Toast showed "undefined". | Minor |
+| **Bug 4: XP semi-correct by accident** | Since `injury_token_active` remained true, `calculate_player_xp_v2` used `injury_return_streak` (7) as effective streak. Accidentally close to correct but using the wrong code path. | Minor |
+
+### Solution: `injury_streak_bonus` Column
+
+**Key insight:** The shield token avoids this problem because it never writes to `current_streak` - it stores protection in `protected_streak_value` and computes the effective streak only at the XP layer.
+
+We follow the same pattern:
+
+```
+effective_streak = natural_consecutive_games + injury_streak_bonus
+```
+
+For Joe: `1 (game #83) + 7 (bonus) = 8`
+
+### Changes Made
+
+| Component | Change |
+|-----------|--------|
+| `players.injury_streak_bonus` | New column - stores return streak as bonus |
+| `process_injury_return()` | Sets `injury_streak_bonus` instead of `current_streak` |
+| `update_streaks_on_game_change()` | Adds `injury_streak_bonus` to streak; clears on break; skips active injury players |
+| `update_player_streaks()` | Same injury-awareness as above |
+| `process_injury_returns_on_game_complete()` | New trigger function - auto-calls `process_injury_return` on game completion |
+| `a_process_injury_returns_on_game_complete` | New trigger (ROW, AFTER UPDATE on games) - `a_` prefix ensures it fires before streak triggers |
+| `useGameRegistration.ts:143` | Fixed `return_streak` to `new_streak` |
+
+### Trigger Execution Order
+
+All AFTER UPDATE on `games`, alphabetical within same timing/orientation:
+
+1. `a_process_injury_returns_on_game_complete` (ROW) - sets `injury_streak_bonus`
+2. `update_streaks_on_game_change` (ROW) - recalculates individual streaks + bonus
+3. `game_streaks_update` (STATEMENT) - recalculates ALL streaks + bonus
+
+### Bonus Lifecycle
+
+1. Player activates injury token -> `injury_token_active = true`, `injury_return_streak = N`
+2. Player plays a game -> game completion trigger fires `process_injury_return`
+3. `injury_streak_bonus = N`, `injury_token_active = false`
+4. Streak triggers calculate: `current_streak = consecutive_games + injury_streak_bonus`
+5. Player continues playing -> bonus persists, streak grows naturally
+6. Player misses a game -> streak resets to 0, `injury_streak_bonus` cleared to NULL
+
+---
+
 *Document created: January 2026*
-*Last updated: January 12, 2026*
-*Status: ✅ Implemented*
+*Last updated: February 12, 2026*
+*Status: ✅ Implemented (return processing fixed Feb 2026)*

@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-01-22 (Post-Match Insights v2.7.0 - 5 new dynamic threshold insights, rivalry_perfect category split, duplicate return fix)
+**Last Updated:** 2026-02-12 (Injury Token return processing fix - injury_streak_bonus column, auto-return trigger, streak trigger awareness)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -170,6 +170,7 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Specialist Detection Fix](fixes/SpecialistDetectionFix.md)** - Playstyle specialist logic
 - **[Similarity-Based Specialist Detection](fixes/SimilarityBasedSpecialistDetection.md)** - Improved detection
 - **[Streak Reset on Game Completion Fix](fixes/StreakResetOnGameCompletionFix.md)** - Streak calculation
+- **[Injury Token Return Processing Fix](features/InjuryToken.md#return-processing-fix-february-2026)** *(New Feb 2026)* - Auto-return trigger, streak trigger injury awareness, injury_streak_bonus column
 - **[Registration Streak Bonus Fix](fixes/RegistrationStreakBonusFix.md)** - Bonus calculation
 - **[DaisyUI v5 Migration](fixes/DaisyUIv5Migration.md)** *(New Jan 2026)* - v2.51.6 to v5.5.14 upgrade documentation
 

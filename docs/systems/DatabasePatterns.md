@@ -1,6 +1,6 @@
 # Database Patterns & Conventions
 
-**Last Updated:** 2025-11-17
+**Last Updated:** 2026-02-12
 
 This document outlines database architecture patterns, naming conventions, and best practices used in the WNF project.
 
@@ -592,6 +592,48 @@ ALTER TABLE players ...;
 -- Verify success, then drop backup
 DROP TABLE players_backup;
 ```
+
+---
+
+## 🔀 Trigger Ordering Patterns
+
+### Alphabetical Execution Order
+
+PostgreSQL fires triggers in **alphabetical order** within the same timing/orientation group. Use naming prefixes to control execution order:
+
+```sql
+-- a_ prefix fires first
+CREATE TRIGGER a_process_injury_returns_on_game_complete  -- Fires 1st (sets bonus)
+    AFTER UPDATE ON games FOR EACH ROW ...
+
+-- Default names fire after
+CREATE TRIGGER update_streaks_on_game_change              -- Fires 2nd (uses bonus)
+    AFTER UPDATE ON games FOR EACH ROW ...
+
+-- game_ prefix fires between a_ and u_
+CREATE TRIGGER game_streaks_update                        -- Fires 3rd (statement level)
+    AFTER UPDATE ON games FOR STATEMENT ...
+```
+
+**Real example:** Injury token return processing must set `injury_streak_bonus` before streak triggers recalculate streaks. The `a_` prefix ensures correct ordering.
+
+### Bonus Column Pattern (Surviving Trigger Recalculations)
+
+When a value needs to survive trigger-based recalculations, store it as a **bonus column** rather than writing directly to the target field:
+
+```sql
+-- ❌ WRONG - Trigger will immediately overwrite current_streak
+UPDATE players SET current_streak = v_return_streak WHERE id = p_player_id;
+
+-- ✅ CORRECT - Store as bonus, triggers add it to natural count
+UPDATE players SET injury_streak_bonus = v_return_streak WHERE id = p_player_id;
+
+-- In streak triggers:
+SET current_streak = calculate_player_streak(p.id) + COALESCE(p.injury_streak_bonus, 0)
+```
+
+**Used by:** Injury Token system (`injury_streak_bonus`)
+**Similar pattern:** Shield Token (`protected_streak_value` - computed at XP layer only)
 
 ---
 

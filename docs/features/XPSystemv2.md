@@ -207,6 +207,12 @@ A: Yes! Visit `/admin/xp-comparison` (admin only) to see v1 vs v2 XP side-by-sid
   - When injury token is activated, `calculate_player_xp_v2()` is called for that player
   - Then `update_player_ranks()` recalculates all player rankings
   - Ensures immediate XP update reflecting return-at-half streak
+- **Injury Token Return** (trigger-based, fixed February 2026)
+  - `a_process_injury_returns_on_game_complete` trigger fires on game completion
+  - Sets `injury_streak_bonus` on the player (not `current_streak` directly)
+  - Streak triggers then add bonus to natural consecutive game count
+  - `effective_streak = natural_consecutive_games + injury_streak_bonus`
+  - Bonus cleared when streak breaks (player misses a game)
 
 ### Important Note: player_stats View
 The `player_stats` view is used by both the simulation feature and actual player selection (`playerSelection.ts`). This view was updated on January 3, 2026 to use `player_xp` (v2) instead of `player_xp_legacy` (v1) to ensure consistent XP values across display and selection.

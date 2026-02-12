@@ -140,7 +140,7 @@ export const useGameRegistration = ({
               console.error('Error processing injury return:', returnError);
               // Don't fail registration, just log the error
             } else if (returnResult?.[0]?.success) {
-              const returnStreak = returnResult[0].return_streak;
+              const returnStreak = returnResult[0].new_streak;
               toast.success(
                 `Welcome back from injury! Your streak is now ${returnStreak} games.`,
                 { duration: 5000, icon: '🩹' }
