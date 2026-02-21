@@ -55,7 +55,7 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
       className="bg-gradient-to-br from-base-200 to-base-300 rounded-2xl p-6 md:p-8"
     >
       {hasScore ? (
-        <div className="flex items-center justify-center gap-4 md:gap-8">
+        <div className="flex items-start justify-center gap-4 md:gap-8">
           {/* Blue Team */}
           <div className="flex-1 text-center">
             <div className="text-sm md:text-base font-semibold text-blue-500 mb-2">
@@ -102,11 +102,12 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
           </div>
 
           {/* Divider */}
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center">
+            <div className="text-sm md:text-base font-semibold mb-2 opacity-0 select-none" aria-hidden="true">&nbsp;</div>
             <div className="text-2xl md:text-4xl font-light text-base-content/30">
               -
             </div>
-            <div className="text-xs text-base-content/50 uppercase tracking-wider">
+            <div className="text-xs text-base-content/50 uppercase tracking-wider mt-2">
               Full Time
             </div>
           </div>
