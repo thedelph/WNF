@@ -13,6 +13,8 @@ export interface GameHighlight {
   description: string;
   scorer_player_id: string | null;
   scorer_team: 'blue' | 'orange' | null;
+  assister_player_id: string | null;
+  is_own_goal: boolean;
   created_at: string;
   updated_at: string;
   // Joined relations
@@ -25,6 +27,10 @@ export interface GameHighlight {
     id: string;
     friendly_name: string;
   } | null;
+  assister?: {
+    id: string;
+    friendly_name: string;
+  } | null;
 }
 
 export interface CreateHighlightInput {
@@ -34,6 +40,8 @@ export interface CreateHighlightInput {
   description: string;
   scorer_player_id?: string;
   scorer_team?: 'blue' | 'orange';
+  assister_player_id?: string;
+  is_own_goal?: boolean;
 }
 
 export interface UpdateHighlightInput {
@@ -41,6 +49,8 @@ export interface UpdateHighlightInput {
   timestamp_seconds?: number;
   scorer_player_id?: string | null;
   scorer_team?: 'blue' | 'orange' | null;
+  assister_player_id?: string | null;
+  is_own_goal?: boolean;
 }
 
 export const HIGHLIGHT_TYPES: {

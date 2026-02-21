@@ -39,6 +39,8 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
   );
   const [description, setDescription] = useState('');
   const [scorerPlayerId, setScorerPlayerId] = useState('');
+  const [isOwnGoal, setIsOwnGoal] = useState(false);
+  const [assisterPlayerId, setAssisterPlayerId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,13 +59,25 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
     return { blue, orange };
   }, [registrations]);
 
-  // Determine scorer's team from selection
-  const scorerTeam = useMemo((): 'blue' | 'orange' | null => {
+  // Determine scorer's actual team from selection
+  const scorerActualTeam = useMemo((): 'blue' | 'orange' | null => {
     if (!scorerPlayerId) return null;
     if (teamPlayers.blue.some(p => p.id === scorerPlayerId)) return 'blue';
     if (teamPlayers.orange.some(p => p.id === scorerPlayerId)) return 'orange';
     return null;
   }, [scorerPlayerId, teamPlayers]);
+
+  // For own goals, credit goes to the OTHER team
+  const scorerTeam = scorerActualTeam
+    ? (isOwnGoal ? (scorerActualTeam === 'blue' ? 'orange' : 'blue') : scorerActualTeam)
+    : null;
+
+  // Players eligible to assist: teammates from the credited team, excluding the scorer
+  const assistEligiblePlayers = useMemo(() => {
+    if (!scorerTeam || isOwnGoal) return [];
+    const teamList = scorerTeam === 'blue' ? teamPlayers.blue : teamPlayers.orange;
+    return teamList.filter(p => p.id !== scorerPlayerId);
+  }, [scorerTeam, isOwnGoal, teamPlayers, scorerPlayerId]);
 
   // Goal capacity checks
   const blueGoalsRemaining = (scoreBlue ?? 0) - existingGoals.blue;
@@ -102,6 +116,10 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
     if (isGoal && scorerPlayerId && scorerTeam) {
       input.scorer_player_id = scorerPlayerId;
       input.scorer_team = scorerTeam;
+      input.is_own_goal = isOwnGoal;
+      if (assisterPlayerId && !isOwnGoal) {
+        input.assister_player_id = assisterPlayerId;
+      }
     }
 
     const result = await onSubmit(input);
@@ -152,6 +170,8 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
                         setHighlightType(type.value);
                         if (type.value !== 'goal') {
                           setScorerPlayerId('');
+                          setIsOwnGoal(false);
+                          setAssisterPlayerId('');
                         }
                       }}
                       className={`btn btn-sm gap-1.5 transition-all ${
@@ -236,18 +256,21 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
                     <>
                       <select
                         value={scorerPlayerId}
-                        onChange={(e) => setScorerPlayerId(e.target.value)}
+                        onChange={(e) => {
+                          setScorerPlayerId(e.target.value);
+                          setAssisterPlayerId('');
+                        }}
                         className={`select select-bordered w-full ${selectedTeamAtCapacity ? 'select-error' : ''}`}
                       >
                         <option value="">Select scorer...</option>
-                        {blueGoalsRemaining > 0 && (
+                        {teamPlayers.blue.length > 0 && (
                           <optgroup label={`Blue Team (${blueGoalsRemaining} goal${blueGoalsRemaining !== 1 ? 's' : ''} remaining)`}>
                             {teamPlayers.blue.map((p) => (
                               <option key={p.id} value={p.id}>{p.friendly_name}</option>
                             ))}
                           </optgroup>
                         )}
-                        {orangeGoalsRemaining > 0 && (
+                        {teamPlayers.orange.length > 0 && (
                           <optgroup label={`Orange Team (${orangeGoalsRemaining} goal${orangeGoalsRemaining !== 1 ? 's' : ''} remaining)`}>
                             {teamPlayers.orange.map((p) => (
                               <option key={p.id} value={p.id}>{p.friendly_name}</option>
@@ -259,7 +282,54 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
                       {selectedTeamAtCapacity && (
                         <p className="text-xs text-error mt-1">
                           All goals for the {scorerTeam === 'blue' ? 'Blue' : 'Orange'} team have been claimed
+                          {isOwnGoal && scorerActualTeam && (
+                            <span className="block mt-0.5 text-base-content/50">
+                              (own goal credits the {scorerTeam === 'blue' ? 'Blue' : 'Orange'} team)
+                            </span>
+                          )}
                         </p>
+                      )}
+
+                      {/* Own Goal toggle */}
+                      {scorerPlayerId && (
+                        <label className="flex items-center gap-2 mt-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isOwnGoal}
+                            onChange={(e) => {
+                              setIsOwnGoal(e.target.checked);
+                              if (e.target.checked) {
+                                setAssisterPlayerId('');
+                              }
+                            }}
+                            className="checkbox checkbox-sm checkbox-error"
+                          />
+                          <span className="text-sm">Own Goal</span>
+                          {isOwnGoal && scorerActualTeam && (
+                            <span className="text-xs text-base-content/50">
+                              (credits {scorerActualTeam === 'blue' ? 'Orange' : 'Blue'} team)
+                            </span>
+                          )}
+                        </label>
+                      )}
+
+                      {/* Assist dropdown */}
+                      {scorerPlayerId && !isOwnGoal && assistEligiblePlayers.length > 0 && (
+                        <div className="mt-3">
+                          <label className="text-xs font-medium text-base-content/60 mb-1 block">
+                            Assisted by <span className="text-base-content/40 font-normal">(optional)</span>
+                          </label>
+                          <select
+                            value={assisterPlayerId}
+                            onChange={(e) => setAssisterPlayerId(e.target.value)}
+                            className="select select-bordered select-sm w-full"
+                          >
+                            <option value="">No assist</option>
+                            {assistEligiblePlayers.map((p) => (
+                              <option key={p.id} value={p.id}>{p.friendly_name}</option>
+                            ))}
+                          </select>
+                        </div>
                       )}
 
                       {/* Goal capacity summary */}

@@ -18,6 +18,43 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '2.2.0',
+    date: '21/02/2026',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Goal Assists',
+            details: "When adding a goal highlight, you can now optionally credit the player who set it up with an assist. The assist dropdown shows teammates from the scoring team (excluding the scorer). Assists are displayed with an \u{1F170}\uFE0F badge next to the scorer on highlight cards."
+          },
+          {
+            title: 'Own Goals',
+            details: "Goals can now be marked as own goals. When toggled, the goal credit automatically flips to the opposing team. Own goals display with a red-tinted '(OG)' badge and a dashed red border on the highlight card. Assists are disabled for own goals."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Scorer Dropdown Updated',
+            details: "The goal scorer dropdown now shows all players from both teams regardless of remaining goal capacity. This allows selecting players from a team whose regular goals are full, so they can be marked as own goal scorers."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'N/A',
+            details: "No fixes in this release."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '2.1.0',
     date: '21/02/2026',
     sections: [

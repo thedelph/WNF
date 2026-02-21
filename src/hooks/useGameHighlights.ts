@@ -52,6 +52,10 @@ export const useGameHighlights = (
           scorer:players!game_highlights_scorer_player_id_fkey (
             id,
             friendly_name
+          ),
+          assister:players!game_highlights_assister_player_id_fkey (
+            id,
+            friendly_name
           )
         `)
         .eq('game_id', gameId)
@@ -107,6 +111,8 @@ export const useGameHighlights = (
           description: input.description,
           scorer_player_id: input.scorer_player_id || null,
           scorer_team: input.scorer_team || null,
+          assister_player_id: input.assister_player_id || null,
+          is_own_goal: input.is_own_goal ?? false,
         });
 
       if (insertError) throw insertError;

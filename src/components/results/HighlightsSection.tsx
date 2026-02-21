@@ -545,11 +545,13 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
     && playerId !== activeDispute.disputer_player_id
     && playerId !== highlight.player_id;
 
-  // Team-colored left border for goals
+  // Team-colored left border for goals (own goals get red dashed border)
   const borderClass = isGoal
-    ? highlight.scorer_team === 'blue'
-      ? 'border-l-4 border-l-blue-500'
-      : 'border-l-4 border-l-orange-500'
+    ? highlight.is_own_goal
+      ? 'border-l-4 border-l-red-500 border-dashed'
+      : highlight.scorer_team === 'blue'
+        ? 'border-l-4 border-l-blue-500'
+        : 'border-l-4 border-l-orange-500'
     : '';
 
   // Highlight own cards
@@ -599,14 +601,21 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
 
                 {/* Goal scorer badge */}
                 {isGoal && highlight.scorer?.friendly_name && (
-                  <div className="mt-1.5">
+                  <div className="mt-1.5 flex flex-wrap gap-1">
                     <span className={`badge badge-sm gap-1 ${
-                      highlight.scorer_team === 'blue'
-                        ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
-                        : 'bg-orange-500/15 text-orange-400 border-orange-500/30'
+                      highlight.is_own_goal
+                        ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                        : highlight.scorer_team === 'blue'
+                          ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
+                          : 'bg-orange-500/15 text-orange-400 border-orange-500/30'
                     }`}>
-                      {'\u26BD'} {highlight.scorer.friendly_name}
+                      {'\u26BD'} {highlight.scorer.friendly_name}{highlight.is_own_goal ? ' (OG)' : ''}
                     </span>
+                    {highlight.assister?.friendly_name && (
+                      <span className="badge badge-sm badge-ghost gap-1">
+                        🅰️ {highlight.assister.friendly_name}
+                      </span>
+                    )}
                   </div>
                 )}
 
