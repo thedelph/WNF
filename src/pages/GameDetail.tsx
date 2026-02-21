@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { useGameDetail } from '../hooks/useGameDetail';
 import { usePostMatchAnalysis } from '../hooks/usePostMatchAnalysis';
 import { formatDate } from '../utils/dateUtils';
-import { ScoreHero } from '../components/results/ScoreHero';
+import { ScoreHero, GoalInfo } from '../components/results/ScoreHero';
 import { MatchSummary } from '../components/results/MatchSummary';
 import { InsightsSection } from '../components/results/InsightsSection';
 import { HighlightsSection } from '../components/results/HighlightsSection';
@@ -29,6 +29,7 @@ const GameDetail: React.FC = () => {
   // Read ?highlight= query param for deep linking
   const focusHighlightId = new URLSearchParams(location.search).get('highlight');
   const hasTriggeredGeneration = useRef(false);
+  const [goalHighlights, setGoalHighlights] = useState<GoalInfo[]>([]);
   const [seekToSeconds, setSeekToSeconds] = useState<number | undefined>(undefined);
   const [seekKey, setSeekKey] = useState(0);
   const videoRef = useRef<HTMLDivElement>(null);
@@ -149,6 +150,7 @@ const GameDetail: React.FC = () => {
           scoreBlue={game.score_blue}
           scoreOrange={game.score_orange}
           outcome={game.outcome}
+          goals={goalHighlights}
         />
       </motion.div>
 
@@ -185,6 +187,7 @@ const GameDetail: React.FC = () => {
             registrations={game.game_registrations}
             scoreBlue={game.score_blue}
             scoreOrange={game.score_orange}
+            onGoalsChanged={setGoalHighlights}
             onSeekTo={(s) => {
               setSeekToSeconds(Math.max(0, s - 3));
               setSeekKey(k => k + 1);

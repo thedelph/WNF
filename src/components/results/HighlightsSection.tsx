@@ -36,6 +36,13 @@ import { HighlightAwardsVoting } from './HighlightAwardsVoting';
 
 type HighlightFilter = 'all' | HighlightType;
 
+interface GoalInfo {
+  scorerName: string | null;
+  scorerTeam: 'blue' | 'orange' | null;
+  timestampSeconds: number;
+  isOwnGoal: boolean;
+}
+
 interface HighlightsSectionProps {
   gameId: string;
   youtubeUrl: string;
@@ -51,6 +58,8 @@ interface HighlightsSectionProps {
   sequenceNumber?: number;
   /** Game date for 7-day voting window check */
   gameDate?: string;
+  /** Callback when goal highlights change, for ScoreHero goalscorer display */
+  onGoalsChanged?: (goals: GoalInfo[]) => void;
 }
 
 // Filter configuration including "All"
@@ -75,6 +84,7 @@ export const HighlightsSection: React.FC<HighlightsSectionProps> = ({
   focusHighlightId,
   sequenceNumber,
   gameDate,
+  onGoalsChanged,
 }) => {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
@@ -120,6 +130,21 @@ export const HighlightsSection: React.FC<HighlightsSectionProps> = ({
     isVotingOpen: awardVotingOpen,
     castVote: castAwardVote,
   } = useHighlightAwards(gameId, gameDate, highlightIds, playerId);
+
+  // Notify parent of goal changes for ScoreHero goalscorer display
+  useEffect(() => {
+    if (onGoalsChanged) {
+      const goals = highlights
+        .filter(h => h.highlight_type === 'goal')
+        .map(h => ({
+          scorerName: h.scorer?.friendly_name ?? null,
+          scorerTeam: h.scorer_team,
+          timestampSeconds: h.timestamp_seconds,
+          isOwnGoal: h.is_own_goal,
+        }));
+      onGoalsChanged(goals);
+    }
+  }, [highlights, onGoalsChanged]);
 
   // Compute award badges per highlight
   const awardBadges = useMemo(() => {
@@ -576,6 +601,7 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
         {isEditing ? (
           <EditHighlightInline
             highlight={highlight}
+            registrations={registrations}
             onSave={onEditSave}
             onCancel={onEditCancel}
           />
@@ -899,25 +925,65 @@ const ResolvedDisputeBadge: React.FC<{ dispute: GoalDispute }> = ({ dispute }) =
 
 interface EditHighlightInlineProps {
   highlight: GameHighlight;
+  registrations: GameDetailRegistration[];
   onSave: (updates: UpdateHighlightInput) => void;
   onCancel: () => void;
 }
 
 const EditHighlightInline: React.FC<EditHighlightInlineProps> = ({
   highlight,
+  registrations,
   onSave,
   onCancel,
 }) => {
   const [description, setDescription] = useState(highlight.description);
   const [timestampInput, setTimestampInput] = useState(formatTimestamp(highlight.timestamp_seconds));
+  const [scorerPlayerId, setScorerPlayerId] = useState(highlight.scorer_player_id ?? '');
+  const [isOwnGoal, setIsOwnGoal] = useState(highlight.is_own_goal);
+  const [assisterPlayerId, setAssisterPlayerId] = useState(highlight.assister_player_id ?? '');
 
   const isGoal = highlight.highlight_type === 'goal';
+
+  // Group players by team for the scorer dropdown (same pattern as AddHighlightForm)
+  const teamPlayers = useMemo(() => {
+    const blue = registrations
+      .filter(r => r.team === 'blue' && r.status === 'selected')
+      .map(r => r.player)
+      .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name));
+    const orange = registrations
+      .filter(r => r.team === 'orange' && r.status === 'selected')
+      .map(r => r.player)
+      .sort((a, b) => a.friendly_name.localeCompare(b.friendly_name));
+    return { blue, orange };
+  }, [registrations]);
+
+  // Determine scorer's actual team from selection
+  const scorerActualTeam = useMemo((): 'blue' | 'orange' | null => {
+    if (!scorerPlayerId) return null;
+    if (teamPlayers.blue.some(p => p.id === scorerPlayerId)) return 'blue';
+    if (teamPlayers.orange.some(p => p.id === scorerPlayerId)) return 'orange';
+    return null;
+  }, [scorerPlayerId, teamPlayers]);
+
+  // For own goals, credit goes to the OTHER team
+  const scorerTeam = scorerActualTeam
+    ? (isOwnGoal ? (scorerActualTeam === 'blue' ? 'orange' : 'blue') : scorerActualTeam)
+    : null;
+
+  // Players eligible to assist: teammates from the credited team, excluding the scorer
+  const assistEligiblePlayers = useMemo(() => {
+    if (!scorerTeam || isOwnGoal) return [];
+    const teamList = scorerTeam === 'blue' ? teamPlayers.blue : teamPlayers.orange;
+    return teamList.filter(p => p.id !== scorerPlayerId);
+  }, [scorerTeam, isOwnGoal, teamPlayers, scorerPlayerId]);
+
   const parsedTimestamp = parseTimestamp(timestampInput);
   const descriptionTrimmed = description.trim();
   const moderationResult = descriptionTrimmed.length > 0 ? containsBannedWords(descriptionTrimmed) : { hasBanned: false };
   const canSave = parsedTimestamp !== null
     && descriptionTrimmed.length <= 200
     && (isGoal || descriptionTrimmed.length >= 3)
+    && (!isGoal || !!scorerPlayerId)
     && !moderationResult.hasBanned;
 
   const handleSave = () => {
@@ -925,6 +991,21 @@ const EditHighlightInline: React.FC<EditHighlightInlineProps> = ({
     const updates: UpdateHighlightInput = {};
     if (descriptionTrimmed !== highlight.description) updates.description = descriptionTrimmed;
     if (parsedTimestamp !== highlight.timestamp_seconds) updates.timestamp_seconds = parsedTimestamp;
+    if (isGoal) {
+      if (scorerPlayerId !== (highlight.scorer_player_id ?? '')) {
+        updates.scorer_player_id = scorerPlayerId || null;
+      }
+      if (scorerTeam !== highlight.scorer_team) {
+        updates.scorer_team = scorerTeam;
+      }
+      if (isOwnGoal !== highlight.is_own_goal) {
+        updates.is_own_goal = isOwnGoal;
+      }
+      const newAssister = (assisterPlayerId && !isOwnGoal) ? assisterPlayerId : null;
+      if (newAssister !== (highlight.assister_player_id ?? null)) {
+        updates.assister_player_id = newAssister;
+      }
+    }
     onSave(updates);
   };
 
@@ -949,6 +1030,80 @@ const EditHighlightInline: React.FC<EditHighlightInlineProps> = ({
       {moderationResult.hasBanned && (
         <p className="text-xs text-error">Please keep it clean!</p>
       )}
+
+      {/* Goal-specific fields */}
+      {isGoal && (
+        <div className="space-y-2 pt-1">
+          <label className="text-xs font-medium text-base-content/60 block">Goal Scorer</label>
+          <select
+            value={scorerPlayerId}
+            onChange={(e) => {
+              setScorerPlayerId(e.target.value);
+              setAssisterPlayerId('');
+            }}
+            className="select select-bordered select-sm w-full"
+          >
+            <option value="">Select scorer...</option>
+            {teamPlayers.blue.length > 0 && (
+              <optgroup label="Blue Team">
+                {teamPlayers.blue.map((p) => (
+                  <option key={p.id} value={p.id}>{p.friendly_name}</option>
+                ))}
+              </optgroup>
+            )}
+            {teamPlayers.orange.length > 0 && (
+              <optgroup label="Orange Team">
+                {teamPlayers.orange.map((p) => (
+                  <option key={p.id} value={p.id}>{p.friendly_name}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+
+          {/* Own Goal toggle */}
+          {scorerPlayerId && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isOwnGoal}
+                onChange={(e) => {
+                  setIsOwnGoal(e.target.checked);
+                  if (e.target.checked) {
+                    setAssisterPlayerId('');
+                  }
+                }}
+                className="checkbox checkbox-sm checkbox-error"
+              />
+              <span className="text-sm">Own Goal</span>
+              {isOwnGoal && scorerActualTeam && (
+                <span className="text-xs text-base-content/50">
+                  (credits {scorerActualTeam === 'blue' ? 'Orange' : 'Blue'} team)
+                </span>
+              )}
+            </label>
+          )}
+
+          {/* Assist dropdown */}
+          {scorerPlayerId && !isOwnGoal && assistEligiblePlayers.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-base-content/60 mb-1 block">
+                Assisted by <span className="text-base-content/40 font-normal">(optional)</span>
+              </label>
+              <select
+                value={assisterPlayerId}
+                onChange={(e) => setAssisterPlayerId(e.target.value)}
+                className="select select-bordered select-sm w-full"
+              >
+                <option value="">No assist</option>
+                {assistEligiblePlayers.map((p) => (
+                  <option key={p.id} value={p.id}>{p.friendly_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex justify-end gap-2">
         <button onClick={onCancel} className="btn btn-ghost btn-xs">Cancel</button>
         <button onClick={handleSave} disabled={!canSave} className="btn btn-primary btn-xs">Save</button>

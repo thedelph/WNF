@@ -31,6 +31,10 @@ export const changelogData: ChangelogEntry[] = [
           {
             title: 'Own Goals',
             details: "Goals can now be marked as own goals. When toggled, the goal credit automatically flips to the opposing team. Own goals display with a red-tinted '(OG)' badge and a dashed red border on the highlight card. Assists are disabled for own goals."
+          },
+          {
+            title: 'Edit Goal Highlights',
+            details: "You can now edit the scorer, own goal toggle, and assister on existing goal highlights. Previously you had to delete and re-create the highlight to change these fields. The inline edit form shows the same scorer/assister dropdowns as the add form when editing a goal."
           }
         ]
       },

@@ -1,23 +1,52 @@
 /**
  * ScoreHero - Sky Sports style large score display
  * Shows final score with team colors and winner indication
+ * Displays goalscorers with minutes below each team's score
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+
+export interface GoalInfo {
+  scorerName: string | null;
+  scorerTeam: 'blue' | 'orange' | null;
+  timestampSeconds: number;
+  isOwnGoal: boolean;
+}
 
 interface ScoreHeroProps {
   scoreBlue: number | null;
   scoreOrange: number | null;
   outcome: 'blue_win' | 'orange_win' | 'draw' | null;
+  goals?: GoalInfo[];
 }
 
 export const ScoreHero: React.FC<ScoreHeroProps> = ({
   scoreBlue,
   scoreOrange,
   outcome,
+  goals = [],
 }) => {
   const hasScore = scoreBlue !== null && scoreOrange !== null;
+
+  const blueGoals = useMemo(() =>
+    goals
+      .filter(g => g.scorerTeam === 'blue')
+      .sort((a, b) => a.timestampSeconds - b.timestampSeconds),
+    [goals]
+  );
+
+  const orangeGoals = useMemo(() =>
+    goals
+      .filter(g => g.scorerTeam === 'orange')
+      .sort((a, b) => a.timestampSeconds - b.timestampSeconds),
+    [goals]
+  );
+
+  const blueTbcCount = Math.max(0, (scoreBlue ?? 0) - blueGoals.length);
+  const orangeTbcCount = Math.max(0, (scoreOrange ?? 0) - orangeGoals.length);
+
+  const formatMinute = (seconds: number) => `${Math.floor(seconds / 60)}'`;
 
   return (
     <motion.div
@@ -55,6 +84,20 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
                   Winner
                 </span>
               </motion.div>
+            )}
+            {(scoreBlue ?? 0) > 0 && (
+              <div className="mt-2 space-y-0.5">
+                {blueGoals.map((g, i) => (
+                  <div key={i} className={`text-xs ${g.isOwnGoal ? 'text-red-400' : 'text-base-content/50'}`}>
+                    {g.scorerName ?? 'TBC'} {g.isOwnGoal && <span className="text-red-400">(OG)</span>} {formatMinute(g.timestampSeconds)}
+                  </div>
+                ))}
+                {Array.from({ length: blueTbcCount }).map((_, i) => (
+                  <div key={`tbc-${i}`} className="text-xs text-base-content/30 italic">
+                    TBC
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
@@ -96,6 +139,20 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
                   Winner
                 </span>
               </motion.div>
+            )}
+            {(scoreOrange ?? 0) > 0 && (
+              <div className="mt-2 space-y-0.5">
+                {orangeGoals.map((g, i) => (
+                  <div key={i} className={`text-xs ${g.isOwnGoal ? 'text-red-400' : 'text-base-content/50'}`}>
+                    {g.scorerName ?? 'TBC'} {g.isOwnGoal && <span className="text-red-400">(OG)</span>} {formatMinute(g.timestampSeconds)}
+                  </div>
+                ))}
+                {Array.from({ length: orangeTbcCount }).map((_, i) => (
+                  <div key={`tbc-${i}`} className="text-xs text-base-content/30 italic">
+                    TBC
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
