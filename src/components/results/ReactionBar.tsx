@@ -21,16 +21,20 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
   const [showPicker, setShowPicker] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  // Close picker on outside click
+  // Close picker on outside click/tap
   useEffect(() => {
     if (!showPicker) return;
-    const handleClick = (e: MouseEvent) => {
+    const handleClick = (e: MouseEvent | TouchEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
         setShowPicker(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('touchstart', handleClick);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick);
+    };
   }, [showPicker]);
 
   const activeReactions = REACTION_TYPES.filter(rt => summary.counts[rt.key] > 0);
@@ -51,7 +55,7 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
             key={rt.key}
             onClick={() => canReact && onToggleReaction(rt.key)}
             disabled={!canReact}
-            className={`btn btn-xs gap-1 ${
+            className={`btn btn-sm gap-1 ${
               isUserReaction ? 'btn-primary' : 'btn-ghost'
             }`}
             title={formatTooltip(summary.reactorNames[rt.key])}
@@ -67,13 +71,13 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
         <div className="relative" ref={pickerRef}>
           <button
             onClick={() => setShowPicker(!showPicker)}
-            className="btn btn-ghost btn-xs gap-1 text-base-content/50"
+            className="btn btn-ghost btn-sm gap-1 text-base-content/50"
           >
             + React
           </button>
 
           {showPicker && (
-            <div className="absolute bottom-full left-0 mb-1 p-1.5 bg-base-200 rounded-lg shadow-lg border border-base-300 flex gap-1 z-50">
+            <div className="absolute bottom-full left-0 mb-1 p-2 bg-base-200 rounded-lg shadow-lg border border-base-300 flex gap-1.5 z-50">
               {REACTION_TYPES.map(rt => {
                 const isUserReaction = summary.userReaction === rt.key;
                 return (
@@ -83,7 +87,7 @@ export const ReactionBar: React.FC<ReactionBarProps> = ({
                       onToggleReaction(rt.key);
                       setShowPicker(false);
                     }}
-                    className={`btn btn-sm btn-circle ${
+                    className={`btn btn-md btn-circle ${
                       isUserReaction ? 'btn-primary' : 'btn-ghost'
                     }`}
                     title={rt.label}
