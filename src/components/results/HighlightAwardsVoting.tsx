@@ -82,7 +82,7 @@ export const HighlightAwardsVoting: React.FC<HighlightAwardsVotingProps> = ({
       <div className="border border-base-300 rounded-lg overflow-hidden">
         <button
           onClick={() => toggleSection(awardType)}
-          className="w-full flex items-center justify-between p-2.5 hover:bg-base-200 transition-colors"
+          className="w-full flex items-center justify-between p-3 hover:bg-base-200 active:bg-base-200 transition-colors"
         >
           <div className="flex items-center gap-2">
             {icon}
@@ -121,11 +121,11 @@ export const HighlightAwardsVoting: React.FC<HighlightAwardsVotingProps> = ({
                       key={highlight.id}
                       onClick={() => handleVote(highlight.id, awardType)}
                       disabled={!canVote || !isVotingOpen || voting}
-                      className={`w-full flex items-center gap-2 p-2 rounded-lg text-left transition-all ${
+                      className={`w-full flex items-center gap-2 p-3 rounded-lg text-left transition-all ${
                         isUserVote
                           ? 'ring-1 ring-primary bg-primary/10'
                           : canVote && isVotingOpen
-                          ? 'hover:bg-base-200 cursor-pointer'
+                          ? 'hover:bg-base-200 active:bg-base-200 cursor-pointer'
                           : 'cursor-default'
                       }`}
                     >

@@ -296,7 +296,7 @@ export const HighlightsSection: React.FC<HighlightsSectionProps> = ({
       {/* Collapsible Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+        className="w-full flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 active:bg-base-300 transition-colors"
       >
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Film className="w-5 h-5 text-primary" />
@@ -608,77 +608,80 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
         ) : (
           <>
             <div className="flex items-start gap-3">
-              {/* Clickable timestamp badge */}
+              {/* Tappable content area - seeks video on tap (mobile-friendly) */}
               <button
                 onClick={() => onSeekTo(highlight.timestamp_seconds)}
-                className="btn btn-ghost btn-xs font-mono gap-1 hover:btn-primary transition-colors flex-shrink-0"
-                title="Jump to this moment"
+                className="flex items-start gap-3 flex-1 min-w-0 text-left rounded-lg p-1 -m-1 active:bg-base-200 hover:bg-base-200/50 transition-colors cursor-pointer"
+                title="Jump to this moment in video"
               >
-                <Clock className="w-3 h-3" />
-                {formatTimestamp(highlight.timestamp_seconds)}
+                {/* Timestamp badge */}
+                <span className="inline-flex items-center gap-1 font-mono text-xs px-2 py-1 rounded bg-primary/10 text-primary font-medium flex-shrink-0 whitespace-nowrap">
+                  <Clock className="w-3.5 h-3.5" />
+                  {formatTimestamp(highlight.timestamp_seconds)}
+                </span>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm leading-relaxed">
+                    <span className="mr-1.5">{typeInfo?.emoji}</span>
+                    {highlight.description}
+                  </p>
+
+                  {/* Goal scorer badge */}
+                  {isGoal && highlight.scorer?.friendly_name && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      <span className={`badge badge-sm gap-1 ${
+                        highlight.is_own_goal
+                          ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                          : highlight.scorer_team === 'blue'
+                            ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
+                            : 'bg-orange-500/15 text-orange-400 border-orange-500/30'
+                      }`}>
+                        {'\u26BD'} {highlight.scorer.friendly_name}{highlight.is_own_goal ? ' (OG)' : ''}
+                      </span>
+                      {highlight.assister?.friendly_name && (
+                        <span className="badge badge-sm badge-ghost gap-1">
+                          🅰️ {highlight.assister.friendly_name}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Award badges */}
+                  {awardBadges && awardBadges.length > 0 && (
+                    <div className="flex gap-1.5 mt-1.5">
+                      {awardBadges.includes('best_goal') && (
+                        <span className="badge badge-xs gap-0.5 bg-amber-500/15 text-amber-600 border-amber-500/30">
+                          🏆 Best Goal
+                        </span>
+                      )}
+                      {awardBadges.includes('play_of_the_match') && (
+                        <span className="badge badge-xs gap-0.5 bg-amber-500/15 text-amber-600 border-amber-500/30">
+                          ⭐ Play of the Match
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Submitted by */}
+                  <div className="flex items-center gap-1.5 mt-1.5 text-xs text-base-content/40">
+                    <User className="w-3 h-3" />
+                    {highlight.player?.friendly_name || 'Unknown'}
+                    {isOwn && <span className="badge badge-xs badge-primary">You</span>}
+                  </div>
+                </div>
               </button>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm leading-relaxed">
-                  <span className="mr-1.5">{typeInfo?.emoji}</span>
-                  {highlight.description}
-                </p>
-
-                {/* Goal scorer badge */}
-                {isGoal && highlight.scorer?.friendly_name && (
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    <span className={`badge badge-sm gap-1 ${
-                      highlight.is_own_goal
-                        ? 'bg-red-500/15 text-red-400 border-red-500/30'
-                        : highlight.scorer_team === 'blue'
-                          ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
-                          : 'bg-orange-500/15 text-orange-400 border-orange-500/30'
-                    }`}>
-                      {'\u26BD'} {highlight.scorer.friendly_name}{highlight.is_own_goal ? ' (OG)' : ''}
-                    </span>
-                    {highlight.assister?.friendly_name && (
-                      <span className="badge badge-sm badge-ghost gap-1">
-                        🅰️ {highlight.assister.friendly_name}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Award badges */}
-                {awardBadges && awardBadges.length > 0 && (
-                  <div className="flex gap-1.5 mt-1.5">
-                    {awardBadges.includes('best_goal') && (
-                      <span className="badge badge-xs gap-0.5 bg-amber-500/15 text-amber-600 border-amber-500/30">
-                        🏆 Best Goal
-                      </span>
-                    )}
-                    {awardBadges.includes('play_of_the_match') && (
-                      <span className="badge badge-xs gap-0.5 bg-amber-500/15 text-amber-600 border-amber-500/30">
-                        ⭐ Play of the Match
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Submitted by */}
-                <div className="flex items-center gap-1.5 mt-1.5 text-xs text-base-content/40">
-                  <User className="w-3 h-3" />
-                  {highlight.player?.friendly_name || 'Unknown'}
-                  {isOwn && <span className="badge badge-xs badge-primary">You</span>}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-1 flex-shrink-0">
+              {/* Actions - larger touch targets for mobile */}
+              <div className="flex flex-wrap gap-0.5 flex-shrink-0 -mr-1">
                 {/* Comment toggle button */}
                 {onAddComment && (
                   <button
                     onClick={() => setShowComments(!showComments)}
-                    className={`btn btn-ghost btn-xs gap-1 ${showComments ? 'btn-active' : ''}`}
+                    className={`btn btn-ghost btn-sm gap-1 ${showComments ? 'btn-active' : ''}`}
                     title="Comments"
                   >
-                    <MessageCircle className="w-3 h-3" />
+                    <MessageCircle className="w-4 h-4" />
                     {(commentCount ?? 0) > 0 && (
                       <span className="text-xs">{commentCount}</span>
                     )}
@@ -688,30 +691,30 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
                 {onShareLink && (
                   <button
                     onClick={onShareLink}
-                    className="btn btn-ghost btn-xs btn-circle"
+                    className="btn btn-ghost btn-sm btn-square"
                     title="Copy link to highlight"
                   >
-                    <Link2 className="w-3 h-3" />
+                    <Link2 className="w-4 h-4" />
                   </button>
                 )}
                 {/* Bookmark button - logged-in users only */}
                 {currentUser && onToggleBookmark && (
                   <button
                     onClick={onToggleBookmark}
-                    className={`btn btn-ghost btn-xs btn-circle ${isBookmarked ? 'text-primary' : ''}`}
+                    className={`btn btn-ghost btn-sm btn-square ${isBookmarked ? 'text-primary' : ''}`}
                     title={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
                   >
-                    <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-current' : ''}`} />
+                    <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
                   </button>
                 )}
                 {/* Dispute flag button */}
                 {canDispute && (
                   <button
                     onClick={() => setShowDisputeForm(true)}
-                    className="btn btn-ghost btn-xs btn-circle text-warning hover:bg-warning/10"
+                    className="btn btn-ghost btn-sm btn-square text-warning active:bg-warning/10"
                     title="Dispute this goal"
                   >
-                    <Flag className="w-3 h-3" />
+                    <Flag className="w-4 h-4" />
                   </button>
                 )}
                 {(isOwn || isAdmin) && (
@@ -719,18 +722,18 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
                     {isOwn && (
                       <button
                         onClick={onEdit}
-                        className="btn btn-ghost btn-xs btn-circle"
+                        className="btn btn-ghost btn-sm btn-square"
                         title="Edit"
                       >
-                        <Pencil className="w-3 h-3" />
+                        <Pencil className="w-4 h-4" />
                       </button>
                     )}
                     <button
                       onClick={onDelete}
-                      className="btn btn-ghost btn-xs btn-circle text-error hover:bg-error/10"
+                      className="btn btn-ghost btn-sm btn-square text-error active:bg-error/10"
                       title="Delete"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </>
                 )}
