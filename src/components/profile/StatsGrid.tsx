@@ -48,6 +48,7 @@ interface StatsGridProps {
     caps?: number;
     active_bonuses?: number;
     active_penalties?: number;
+    motmCount?: number;
   };
 }
 
@@ -230,6 +231,19 @@ export const StatsGrid: FC<StatsGridProps> = ({ stats }) => {
         </div>
       ),
       tooltip: `Games played: ${stats.caps.toLocaleString()}`
+    });
+  }
+
+  // Add MOTM awards if player has any
+  if (stats.motmCount !== undefined && stats.motmCount > 0) {
+    statsItems.push({
+      label: 'MOTM Awards',
+      value: (
+        <div className="text-lg font-semibold">
+          👑 {stats.motmCount}
+        </div>
+      ),
+      tooltip: `Man of the Match awards won: ${stats.motmCount}`
     });
   }
 

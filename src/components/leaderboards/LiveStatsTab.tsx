@@ -15,6 +15,7 @@ import { HighestXPCard } from '../stats/HighestXPCard';
 import { Stats, PlayerStats, ChemistryPairStats, TeamColorStats, BestBuddies } from '../../hooks/useStats';
 import { useRivalryLeaderboard } from '../../hooks/useRivalry';
 import { useTrioLeaderboard } from '../../hooks/useTrioChemistry';
+import { useMotmLeaderboard } from '../../hooks/useMotmLeaderboard';
 import { RivalryPairLeaderboard, TrioLeaderboard } from '../../types/chemistry';
 
 interface LiveStatsTabProps {
@@ -27,6 +28,7 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
   const yearFilter = selectedYear === 'all' ? null : selectedYear;
   const { rivalries } = useRivalryLeaderboard(yearFilter, 5);
   const { dreamTeams, cursedTrios } = useTrioLeaderboard(yearFilter, 5);
+  const { leaders: motmLeaders } = useMotmLeaderboard(5);
 
   // Animation variants for container
   const containerVariants = {
@@ -286,6 +288,22 @@ export const LiveStatsTab = ({ stats, selectedYear }: LiveStatsTabProps) => {
 
           {/* Goal Differentials */}
           <GoalDifferentialsCard goalDifferentials={stats.goalDifferentials} />
+
+          {/* MOTM Leaders */}
+          {motmLeaders.length > 0 && (
+            <AwardCard
+              title="MOTM Leaders"
+              winners={motmLeaders.map(l => ({
+                id: l.playerId,
+                name: l.playerName,
+                value: `${l.motmCount} award${l.motmCount !== 1 ? 's' : ''}`,
+                rawValue: l.motmCount,
+              }))}
+              icon={<Crown className="w-6 h-6" />}
+              color="amber"
+              description="Most Man of the Match awards"
+            />
+          )}
         </div>
       </section>
 

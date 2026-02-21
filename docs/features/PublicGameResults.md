@@ -51,8 +51,10 @@ The detail page presents a comprehensive match report with:
 1. **ScoreHero** - Large animated score display with team colors
 2. **Metadata Row** - Date, venue, player count, insights count
 3. **Team Rosters** - Collapsible blue/orange team lists with reserves
-4. **Match Summary** - Numbered WhatsApp summary highlights
-5. **Post-Match Insights** - Filterable insights by category
+4. **MOTM Voting** - Man of the Match voting section (see [MotmVoting](MotmVoting.md))
+5. **Highlights** - Video highlights with award badges (see [HighlightAwards](HighlightAwards.md))
+6. **Match Summary** - Numbered WhatsApp summary highlights
+7. **Post-Match Insights** - Filterable insights by category
 
 **Auto-Generation:** If a completed game has no insights yet, they are generated on-demand when visiting the detail page.
 

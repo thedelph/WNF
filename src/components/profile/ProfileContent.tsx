@@ -5,6 +5,7 @@ import TokenStatus from './TokenStatus'
 import ShieldTokenStatus from './ShieldTokenStatus'
 import PaymentHistory from './PaymentHistory'
 import WhatsAppSettings from './WhatsAppSettings'
+import { usePlayerMotmStats } from '../../hooks/usePlayerMotmStats'
 // Import types from the root src directory
 import type { ExtendedPlayerData } from 'src/types/profile'
 import type { TokenStatus as TokenStatusType } from 'src/hooks/useTokenStatus'
@@ -25,6 +26,8 @@ export default function ProfileContent({
   shieldLoading,
   onProfileUpdate
 }: ProfileContentProps) {
+  const { stats: motmStats } = usePlayerMotmStats(profile?.id ?? null)
+
   if (!profile) return null
 
   console.log('[ProfileContent] Profile data:', {
@@ -61,7 +64,8 @@ export default function ProfileContent({
             recent_win_rate: profile.recent_win_rate,
             caps: profile.caps,
             active_bonuses: 0,
-            active_penalties: 0
+            active_penalties: 0,
+            motmCount: motmStats?.motmWins
           }} 
         />
       </motion.div>

@@ -63,7 +63,8 @@ export interface Game {
   score_blue?: number       // Blue team's score
   score_orange?: number     // Orange team's score
   outcome?: 'blue_win' | 'orange_win' | 'draw' | null  // Game outcome
-  
+  youtube_url?: string  // YouTube video URL for game recording
+
   // Database has venue_id column (foreign key to venues table)
   venue_id: string
   

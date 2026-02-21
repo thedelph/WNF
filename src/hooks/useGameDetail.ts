@@ -29,6 +29,7 @@ export interface GameDetail {
   score_orange: number | null;
   outcome: 'blue_win' | 'orange_win' | 'draw' | null;
   status: string;
+  youtube_url?: string;
   venue?: {
     id: string;
     name: string;
@@ -74,6 +75,7 @@ export const useGameDetail = (sequenceNumber: string | undefined): UseGameDetail
           score_orange,
           outcome,
           status,
+          youtube_url,
           venue:venue_id (
             id,
             name,
@@ -114,6 +116,7 @@ export const useGameDetail = (sequenceNumber: string | undefined): UseGameDetail
         score_orange: data.score_orange,
         outcome: data.outcome,
         status: data.status,
+        youtube_url: data.youtube_url,
         venue: data.venue as GameDetail['venue'],
         game_registrations: (data.game_registrations || [])
           .filter((reg: { player: unknown }) => reg.player)

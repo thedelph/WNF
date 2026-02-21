@@ -26,6 +26,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
   const [orangeScore, setOrangeScore] = useState(game.score_orange?.toString() || '')
   const [outcome, setOutcome] = useState<GameOutcome>(game.outcome || null)
   const [paymentLink, setPaymentLink] = useState<string>(game.payment_link || '')
+  const [youtubeUrl, setYoutubeUrl] = useState<string>(game.youtube_url || '')
   const [players, setPlayers] = useState<PlayerWithTeam[]>([])
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([])
   const [statusChanges, setStatusChanges] = useState<StatusChange[]>([])
@@ -320,7 +321,8 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
         registration_window_start: regStart.toISOString(),
         registration_window_end: regEnd.toISOString(),
         max_players: Math.max(players.filter(p => p.team).length, 10),
-        payment_link: paymentLink || null
+        payment_link: paymentLink || null,
+        youtube_url: youtubeUrl || null
       } as any
 
       // Only add scores and outcome if they are valid
@@ -523,6 +525,18 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
                   className="input w-full"
                   placeholder="https://monzo.me/..."
                 />
+              </fieldset>
+
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">YouTube Video URL (optional)</legend>
+                <input
+                  type="url"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  className="input w-full"
+                  placeholder="https://youtu.be/..."
+                />
+                <p className="text-xs text-base-content/60 mt-1">Paste YouTube link for the game recording</p>
               </fieldset>
 
               <div className="grid grid-cols-2 gap-4">

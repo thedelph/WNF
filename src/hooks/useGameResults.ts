@@ -20,9 +20,11 @@ export interface GameResultItem {
   score_blue: number | null;
   score_orange: number | null;
   outcome: 'blue_win' | 'orange_win' | 'draw' | null;
+  youtube_url?: string;
   venue?: { name: string };
   user_team?: 'blue' | 'orange' | null;
   user_status?: 'selected' | 'reserve' | null;
+  motm_winner?: { player_id: string; friendly_name: string; vote_count: number };
 }
 
 interface UseGameResultsReturn {
@@ -70,6 +72,7 @@ export const useGameResults = (
           score_blue,
           score_orange,
           outcome,
+          youtube_url,
           venue:venue_id (
             name
           ),
@@ -122,6 +125,7 @@ export const useGameResults = (
           score_blue: game.score_blue,
           score_orange: game.score_orange,
           outcome: game.outcome,
+          youtube_url: game.youtube_url,
           venue: game.venue as { name: string } | undefined,
           user_team: userReg?.team as 'blue' | 'orange' | null || null,
           user_status: userReg?.status as 'selected' | 'reserve' | null || null,
@@ -157,6 +161,35 @@ export const useGameResults = (
           if (filters.outcome === 'my_loss') return userLost;
           return true;
         });
+      }
+
+      // Batch-fetch MOTM winners for all games
+      if (transformedGames.length > 0) {
+        try {
+          const gameIds = transformedGames.map(g => g.id);
+          const { data: motmData } = await supabase.rpc('get_motm_winners_batch', {
+            p_game_ids: gameIds,
+          });
+
+          if (motmData && motmData.length > 0) {
+            const motmMap = new Map<string, { player_id: string; friendly_name: string; vote_count: number }>();
+            for (const row of motmData as { game_id: string; player_id: string; friendly_name: string; vote_count: number }[]) {
+              motmMap.set(row.game_id, {
+                player_id: row.player_id,
+                friendly_name: row.friendly_name,
+                vote_count: Number(row.vote_count),
+              });
+            }
+
+            transformedGames = transformedGames.map(game => ({
+              ...game,
+              motm_winner: motmMap.get(game.id),
+            }));
+          }
+        } catch (motmErr) {
+          console.error('Error fetching MOTM winners:', motmErr);
+          // Non-critical, continue without MOTM data
+        }
       }
 
       if (append) {

@@ -196,6 +196,8 @@ await supabase.auth.resetPasswordForEmail(email) // Sends reset email
 - **[XP System v1](/docs/XPSystemExplained.md)** - Legacy system (pre-Jan 2026)
 
 ### Recent Major Features (2026)
+- **[MOTM Voting](/docs/features/MotmVoting.md)** (Feb 2026) - Man of the Match community voting with 7-day window
+- **[Highlight Awards](/docs/features/HighlightAwards.md)** (Feb 2026) - Best Goal & Play of the Match voting
 - **[Public Game Results](/docs/features/PublicGameResults.md)** (Jan 2026) - Results list + game detail pages with insights
 - **[Post-Match Insights](/docs/features/PostMatchInsights.md)** (Jan 2026) - Automated insight generation (streaks, chemistry, rivalries)
 - **[Login Incentives](/docs/features/LoginIncentivesSystem.md)** (Jan 2026) - Locked content, user highlighting, login CTAs

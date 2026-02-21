@@ -18,6 +18,55 @@ export interface ChangelogEntry {
  */
 export const changelogData: ChangelogEntry[] = [
   {
+    version: '2.1.0',
+    date: '21/02/2026',
+    sections: [
+      {
+        type: 'Added',
+        items: [
+          {
+            title: 'Man of the Match Voting',
+            details: "After every completed game, participants can now vote for their Man of the Match! Voting is open for 7 days after the game. See who earned the most votes with ranked results, progress bars, and a crown for the winner. You can change or remove your vote at any time during the voting window."
+          },
+          {
+            title: 'Highlight Awards',
+            details: "Two new community-voted awards per game: Best Goal (⚽) and Play of the Match (⭐). Vote for your favourite highlights and winning highlights get a trophy/star badge. Award winners are shown in a banner at the top of the highlights section."
+          },
+          {
+            title: 'MOTM on Result Cards',
+            details: "The results list now shows the MOTM winner on each game card with a gold crown badge, so you can see at a glance who was voted the best player in each game."
+          },
+          {
+            title: 'MOTM Awards on Profile',
+            details: "Your profile now shows your total Man of the Match awards in the stats grid. Collect those crowns!"
+          },
+          {
+            title: 'MOTM Leaderboard',
+            details: "A new 'MOTM Leaders' card on the Stats page shows who has the most Man of the Match awards overall."
+          }
+        ]
+      },
+      {
+        type: 'Changed',
+        items: [
+          {
+            title: 'Game Detail Page Enhanced',
+            details: "The game detail page now features MOTM voting between the team rosters and login prompt sections. Highlight awards voting appears below the highlights grid."
+          }
+        ]
+      },
+      {
+        type: 'Fixed',
+        items: [
+          {
+            title: 'Avatar Rendering in MOTM',
+            details: "Fixed player avatars not displaying in the MOTM voting section. Avatars now render correctly using the same pattern as team rosters."
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '2.0.0',
     date: '15/01/2026',
     sections: [

@@ -19,6 +19,7 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
   const [scoreOrange, setScoreOrange] = useState<number | undefined>(game.score_orange)
   const [outcome, setOutcome] = useState<string | undefined>(game.outcome)
   const [paymentLink, setPaymentLink] = useState<string>(game.payment_link || '')
+  const [youtubeUrl, setYoutubeUrl] = useState<string>(game.youtube_url || '')
   const [players, setPlayers] = useState<PlayerWithTeam[]>([])
   const [loading, setLoading] = useState(false)
   const [gameDate] = useState<Date>(new Date(game.date))
@@ -470,6 +471,14 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
 
       if (error) throw error
 
+      // Save YouTube URL if provided (separate from RPC)
+      if (youtubeUrl) {
+        await supabaseAdmin
+          .from('games')
+          .update({ youtube_url: youtubeUrl })
+          .eq('id', game.id)
+      }
+
       // Fetch post-match insights for toast
       const { data: insightsData } = await supabaseAdmin
         .rpc('get_post_match_analysis', { p_game_id: game.id })
@@ -545,6 +554,17 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
                 placeholder="https://monzo.me/..."
                 required
               />
+            </fieldset>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">YouTube Video URL (optional)</legend>
+              <input
+                type="url"
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                className="input w-full"
+                placeholder="https://youtu.be/..."
+              />
+              <p className="text-xs text-base-content/60 mt-1">Paste YouTube link for the game recording</p>
             </fieldset>
           </div>
 

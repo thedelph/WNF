@@ -4,7 +4,7 @@
  * Auto-generates insights for completed games that don't have them
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, MapPin, Users, Trophy, Sparkles, LogIn } from 'lucide-react';
@@ -15,14 +15,28 @@ import { formatDate } from '../utils/dateUtils';
 import { ScoreHero } from '../components/results/ScoreHero';
 import { MatchSummary } from '../components/results/MatchSummary';
 import { InsightsSection } from '../components/results/InsightsSection';
+import { HighlightsSection } from '../components/results/HighlightsSection';
+import { MotmVotingSection } from '../components/results/MotmVotingSection';
 import { TeamRoster } from '../components/results/TeamRoster';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { VideoPlayer } from '../components/results/VideoPlayer';
 
 const GameDetail: React.FC = () => {
   const { sequenceNumber } = useParams<{ sequenceNumber: string }>();
   const location = useLocation();
   const { user } = useAuth();
+
+  // Read ?highlight= query param for deep linking
+  const focusHighlightId = new URLSearchParams(location.search).get('highlight');
   const hasTriggeredGeneration = useRef(false);
+  const [seekToSeconds, setSeekToSeconds] = useState<number | undefined>(undefined);
+  const [seekKey, setSeekKey] = useState(0);
+  const videoRef = useRef<HTMLDivElement>(null);
+  const getVideoTimeRef = useRef<(() => number | null) | null>(null);
+
+  const handlePlayerReady = useCallback((getCurrentTime: () => number | null) => {
+    getVideoTimeRef.current = getCurrentTime;
+  }, []);
 
   const {
     game,
@@ -138,11 +152,57 @@ const GameDetail: React.FC = () => {
         />
       </motion.div>
 
+      {/* Video Player - below ScoreHero */}
+      {game.youtube_url && (
+        <motion.div
+          ref={videoRef}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-6"
+        >
+          <VideoPlayer
+            youtubeUrl={game.youtube_url}
+            title={`WNF #${game.sequence_number} - Match Video`}
+            seekToSeconds={seekToSeconds}
+            seekKey={seekKey}
+            onPlayerReady={handlePlayerReady}
+          />
+        </motion.div>
+      )}
+
+      {/* Match Highlights - below video */}
+      {game.youtube_url && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-6"
+        >
+          <HighlightsSection
+            gameId={game.id}
+            youtubeUrl={game.youtube_url}
+            registrations={game.game_registrations}
+            scoreBlue={game.score_blue}
+            scoreOrange={game.score_orange}
+            onSeekTo={(s) => {
+              setSeekToSeconds(Math.max(0, s - 3));
+              setSeekKey(k => k + 1);
+              videoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            getVideoCurrentTime={() => getVideoTimeRef.current?.() ?? null}
+            focusHighlightId={focusHighlightId}
+            sequenceNumber={game.sequence_number}
+            gameDate={game.date}
+          />
+        </motion.div>
+      )}
+
       {/* Game Metadata Stats */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.3 }}
         className="stats stats-vertical md:stats-horizontal shadow w-full mb-6 bg-base-200"
       >
         <div className="stat">
@@ -201,7 +261,7 @@ const GameDetail: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.4 }}
         className="mb-8"
       >
         <TeamRoster
@@ -211,12 +271,28 @@ const GameDetail: React.FC = () => {
         />
       </motion.div>
 
+      {/* Man of the Match Voting - for all completed games */}
+      {game.status === 'completed' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.42 }}
+          className="mb-8"
+        >
+          <MotmVotingSection
+            gameId={game.id}
+            gameDate={game.date}
+            registrations={game.game_registrations}
+          />
+        </motion.div>
+      )}
+
       {/* Login Prompt - Shows benefits for both Match Summary and Post-Match Report */}
       {!user && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
+          transition={{ delay: 0.45 }}
           className="mb-6"
         >
           <div className="alert bg-base-200">
@@ -228,7 +304,7 @@ const GameDetail: React.FC = () => {
               >
                 Log in
               </Link>{' '}
-              to highlight your name in the summary and filter insights about you
+              to add match highlights, filter insights about you, and more
             </span>
           </div>
         </motion.div>
@@ -239,7 +315,7 @@ const GameDetail: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
           className="mb-8"
         >
           <MatchSummary summary={whatsappSummary} />
@@ -265,7 +341,7 @@ const GameDetail: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.6 }}
       >
         <InsightsSection insights={insights} loading={insightsLoading || generating} />
       </motion.div>

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronRight, Crown, Video } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '../../utils/dateUtils';
 import { GameResultItem } from '../../hooks/useGameResults';
@@ -71,6 +71,11 @@ export const ResultCard: React.FC<ResultCardProps> = ({ game, index = 0 }) => {
               <h3 className="card-title text-primary text-lg">
                 WNF #{game.sequence_number}
               </h3>
+              {game.youtube_url && (
+                <span className="badge badge-sm badge-ghost gap-1">
+                  <Video className="w-3 h-3" />
+                </span>
+              )}
               {isUserGame && (
                 <span className={`badge badge-sm ${wasReserve ? 'badge-warning' : 'badge-primary'}`}>
                   {wasReserve ? 'Reserve' : 'You played'}
@@ -120,9 +125,18 @@ export const ResultCard: React.FC<ResultCardProps> = ({ game, index = 0 }) => {
             )}
           </div>
 
-          {/* Outcome badge and user result */}
+          {/* Outcome badge, MOTM, and user result */}
           <div className="flex items-center justify-between mt-2">
-            {getOutcomeBadge()}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {getOutcomeBadge()}
+              {game.motm_winner && (
+                <span className="badge badge-sm bg-yellow-500/15 text-yellow-600 border-yellow-500/30 gap-1">
+                  <Crown className="w-3 h-3" />
+                  <span className="hidden sm:inline">MOTM: {game.motm_winner.friendly_name}</span>
+                  <span className="sm:hidden">{game.motm_winner.friendly_name.split(' ')[0]}</span>
+                </span>
+              )}
+            </div>
             {isUserGame && !wasReserve && game.outcome && (
               <span className={`badge badge-sm ${
                 userWon ? 'badge-success' : userLost ? 'badge-error' : 'badge-neutral'

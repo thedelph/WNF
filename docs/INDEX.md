@@ -1,6 +1,6 @@
 # WNF Documentation Index
 
-**Last Updated:** 2026-02-12 (Injury Token return processing fix - injury_streak_bonus column, auto-return trigger, streak trigger awareness)
+**Last Updated:** 2026-02-21 (MOTM Voting, Highlight Awards, community voting integration)
 
 This index provides a comprehensive guide to all WNF documentation. Use this as your starting point to find information about features, systems, components, and fixes.
 
@@ -54,6 +54,8 @@ This index provides a comprehensive guide to all WNF documentation. Use this as 
 - **[Game Flow](GameFlow.md)** - Game lifecycle and status transitions
 - **[Player Selection Explained](PlayerSelectionExplained.md)** - Selection algorithm and mechanics
 - **[Public Game Results](features/PublicGameResults.md)** - Browse completed games with filters and insights *(New Jan 2026)*
+- **[MOTM Voting](features/MotmVoting.md)** - Man of the Match community voting system *(New Feb 2026)*
+- **[Highlight Awards](features/HighlightAwards.md)** - Best Goal & Play of the Match voting *(New Feb 2026)*
 - **[Post-Match Insights](features/PostMatchInsights.md)** - Automated game analysis and insight generation *(New Jan 2026)*
 - **[WhatsApp Summary Rules](features/WhatsAppSummaryRules.md)** - Selection algorithm for sharing insights *(New Jan 2026)*
 
