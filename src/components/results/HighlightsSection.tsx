@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Film, ChevronDown, ChevronUp, Plus, Pencil, Trash2, Clock, User,
   Flag, ThumbsUp, ThumbsDown, Check, X, ShieldCheck, Link2, Bookmark, MessageCircle,
+  Play, MoreHorizontal,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getHighlightShareUrl, copyToClipboard } from '../../utils/highlights';
@@ -324,35 +325,45 @@ export const HighlightsSection: React.FC<HighlightsSectionProps> = ({
           >
             <div className="space-y-4">
               {/* Filter Tabs + Add Button Row */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="tabs tabs-boxed bg-base-200 p-1 flex-wrap flex-1">
-                  {FILTERS.map((filter) => {
-                    const count = categoryCounts[filter.id] ?? 0;
-                    if (filter.id !== 'all' && count === 0) return null;
-                    return (
-                      <button
-                        key={filter.id}
-                        onClick={() => setActiveFilter(filter.id)}
-                        className={`tab gap-1 flex-1 min-w-fit ${
-                          activeFilter === filter.id ? 'tab-active' : ''
-                        }`}
-                      >
-                        <span>{filter.emoji}</span>
-                        <span className="hidden sm:inline">{filter.label}</span>
-                        <span className="sm:hidden">{filter.shortLabel}</span>
-                        {filter.id !== 'all' && count > 0 && (
-                          <span className="badge badge-xs">{count}</span>
-                        )}
-                      </button>
-                    );
-                  })}
+              <div className="flex items-center gap-2">
+                {/* Horizontally scrollable filter chips */}
+                <div className="flex-1 min-w-0 overflow-x-auto scrollbar-none -mx-1 px-1">
+                  <div className="flex gap-1.5 py-0.5 w-max">
+                    {FILTERS.map((filter) => {
+                      const count = categoryCounts[filter.id] ?? 0;
+                      if (filter.id !== 'all' && count === 0) return null;
+                      const isActive = activeFilter === filter.id;
+                      return (
+                        <button
+                          key={filter.id}
+                          onClick={() => setActiveFilter(filter.id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all active:scale-95 ${
+                            isActive
+                              ? 'bg-primary text-primary-content shadow-sm'
+                              : 'bg-base-200 text-base-content/70 hover:bg-base-300 active:bg-base-300'
+                          }`}
+                        >
+                          <span>{filter.emoji}</span>
+                          <span className="hidden sm:inline">{filter.label}</span>
+                          <span className="sm:hidden">{filter.shortLabel}</span>
+                          {filter.id !== 'all' && count > 0 && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center ${
+                              isActive ? 'bg-primary-content/20' : 'bg-base-300'
+                            }`}>
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Add Highlight Button - only for logged-in participants */}
                 {user && isParticipant && (
                   <button
                     onClick={() => setShowAddForm(true)}
-                    className="btn btn-primary btn-sm gap-1.5 whitespace-nowrap"
+                    className="btn btn-primary btn-sm gap-1.5 whitespace-nowrap flex-shrink-0"
                   >
                     <Plus className="w-4 h-4" />
                     <span className="hidden sm:inline">Add Highlight</span>
@@ -373,7 +384,7 @@ export const HighlightsSection: React.FC<HighlightsSectionProps> = ({
               {/* Highlights Grid */}
               <AnimatePresence mode="popLayout">
                 {filteredHighlights.length > 0 ? (
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
                     {filteredHighlights.map((highlight, index) => (
                       <HighlightCard
                         key={highlight.id}
@@ -558,6 +569,8 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
   const { user: currentUser } = useAuth();
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showMoreActions, setShowMoreActions] = useState(false);
+  const moreActionsRef = useRef<HTMLDivElement>(null);
   const typeInfo = HIGHLIGHT_TYPES.find(t => t.value === highlight.highlight_type);
   const isGoal = highlight.highlight_type === 'goal';
 
@@ -570,235 +583,300 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
     && playerId !== activeDispute.disputer_player_id
     && playerId !== highlight.player_id;
 
-  // Team-colored left border for goals (own goals get red dashed border)
-  const borderClass = isGoal
+  // Team-colored top accent for goals
+  const accentClass = isGoal
     ? highlight.is_own_goal
-      ? 'border-l-4 border-l-red-500 border-dashed'
+      ? 'border-t-2 border-t-red-500'
       : highlight.scorer_team === 'blue'
-        ? 'border-l-4 border-l-blue-500'
-        : 'border-l-4 border-l-orange-500'
+        ? 'border-t-2 border-t-blue-500'
+        : 'border-t-2 border-t-orange-500'
     : '';
 
   // Highlight own cards
-  const ownClass = isOwn ? 'ring-1 ring-primary/30' : '';
+  const ownClass = isOwn ? 'ring-1 ring-primary/20' : '';
   const focusClass = isFocused ? 'ring-2 ring-primary animate-pulse' : '';
+
+  // Whether to show the overflow menu (edit/delete/dispute)
+  const hasOverflowActions = (isOwn || isAdmin || canDispute);
+
+  // Close overflow menu on outside click/tap
+  useEffect(() => {
+    if (!showMoreActions) return;
+    const handleClick = (e: MouseEvent | TouchEvent) => {
+      if (moreActionsRef.current && !moreActionsRef.current.contains(e.target as Node)) {
+        setShowMoreActions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('touchstart', handleClick);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick);
+    };
+  }, [showMoreActions]);
 
   return (
     <motion.div
       ref={cardRef}
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={isFocused
-        ? { opacity: 1, scale: 1, boxShadow: ['0 0 0 0 rgba(var(--p), 0)', '0 0 0 8px rgba(var(--p), 0.2)', '0 0 0 0 rgba(var(--p), 0)'] }
-        : { opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+        ? { opacity: 1, y: 0, boxShadow: ['0 0 0 0 rgba(var(--p), 0)', '0 0 0 8px rgba(var(--p), 0.2)', '0 0 0 0 rgba(var(--p), 0)'] }
+        : { opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
       transition={isFocused
         ? { duration: 0.6, repeat: 2, repeatType: 'loop' as const }
         : { duration: 0.2, delay: index * 0.03 }}
-      className={`card bg-base-100 shadow-sm ${borderClass} ${ownClass} ${focusClass}`}
+      className={`card bg-base-100 shadow-sm overflow-hidden ${accentClass} ${ownClass} ${focusClass}`}
     >
-      <div className="card-body p-4">
-        {isEditing ? (
+      {isEditing ? (
+        <div className="card-body p-3 sm:p-4">
           <EditHighlightInline
             highlight={highlight}
             registrations={registrations}
             onSave={onEditSave}
             onCancel={onEditCancel}
           />
-        ) : (
-          <>
-            <div className="flex items-start gap-3">
-              {/* Tappable content area - seeks video on tap (mobile-friendly) */}
-              <button
-                onClick={() => onSeekTo(highlight.timestamp_seconds)}
-                className="flex items-start gap-3 flex-1 min-w-0 text-left rounded-lg p-1 -m-1 active:bg-base-200 hover:bg-base-200/50 transition-colors cursor-pointer"
-                title="Jump to this moment in video"
-              >
-                {/* Timestamp badge */}
-                <span className="inline-flex items-center gap-1 font-mono text-xs px-2 py-1 rounded bg-primary/10 text-primary font-medium flex-shrink-0 whitespace-nowrap">
-                  <Clock className="w-3.5 h-3.5" />
+        </div>
+      ) : (
+        <>
+          {/* ── Tappable Card Body ── */}
+          <button
+            onClick={() => onSeekTo(highlight.timestamp_seconds)}
+            className="w-full text-left p-3 sm:p-4 pb-2 sm:pb-2.5 active:bg-base-200/60 transition-colors cursor-pointer group"
+            title="Tap to jump to this moment"
+          >
+            {/* Header: Type + Timestamp + Submitter */}
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-base flex-shrink-0">{typeInfo?.emoji}</span>
+                <span className="inline-flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium flex-shrink-0">
+                  <Clock className="w-3 h-3" />
                   {formatTimestamp(highlight.timestamp_seconds)}
                 </span>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm leading-relaxed">
-                    <span className="mr-1.5">{typeInfo?.emoji}</span>
-                    {highlight.description}
-                  </p>
-
-                  {/* Goal scorer badge */}
-                  {isGoal && highlight.scorer?.friendly_name && (
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      <span className={`badge badge-sm gap-1 ${
-                        highlight.is_own_goal
-                          ? 'bg-red-500/15 text-red-400 border-red-500/30'
-                          : highlight.scorer_team === 'blue'
-                            ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
-                            : 'bg-orange-500/15 text-orange-400 border-orange-500/30'
-                      }`}>
-                        {'\u26BD'} {highlight.scorer.friendly_name}{highlight.is_own_goal ? ' (OG)' : ''}
-                      </span>
-                      {highlight.assister?.friendly_name && (
-                        <span className="badge badge-sm badge-ghost gap-1">
-                          🅰️ {highlight.assister.friendly_name}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Award badges */}
-                  {awardBadges && awardBadges.length > 0 && (
-                    <div className="flex gap-1.5 mt-1.5">
-                      {awardBadges.includes('best_goal') && (
-                        <span className="badge badge-xs gap-0.5 bg-amber-500/15 text-amber-600 border-amber-500/30">
-                          🏆 Best Goal
-                        </span>
-                      )}
-                      {awardBadges.includes('play_of_the_match') && (
-                        <span className="badge badge-xs gap-0.5 bg-amber-500/15 text-amber-600 border-amber-500/30">
-                          ⭐ Play of the Match
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Submitted by */}
-                  <div className="flex items-center gap-1.5 mt-1.5 text-xs text-base-content/40">
-                    <User className="w-3 h-3" />
-                    {highlight.player?.friendly_name || 'Unknown'}
-                    {isOwn && <span className="badge badge-xs badge-primary">You</span>}
-                  </div>
-                </div>
-              </button>
-
-              {/* Actions - larger touch targets for mobile */}
-              <div className="flex flex-wrap gap-0.5 flex-shrink-0 -mr-1">
-                {/* Comment toggle button */}
-                {onAddComment && (
-                  <button
-                    onClick={() => setShowComments(!showComments)}
-                    className={`btn btn-ghost btn-sm gap-1 ${showComments ? 'btn-active' : ''}`}
-                    title="Comments"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    {(commentCount ?? 0) > 0 && (
-                      <span className="text-xs">{commentCount}</span>
-                    )}
-                  </button>
-                )}
-                {/* Share link button */}
-                {onShareLink && (
-                  <button
-                    onClick={onShareLink}
-                    className="btn btn-ghost btn-sm btn-square"
-                    title="Copy link to highlight"
-                  >
-                    <Link2 className="w-4 h-4" />
-                  </button>
-                )}
-                {/* Bookmark button - logged-in users only */}
-                {currentUser && onToggleBookmark && (
-                  <button
-                    onClick={onToggleBookmark}
-                    className={`btn btn-ghost btn-sm btn-square ${isBookmarked ? 'text-primary' : ''}`}
-                    title={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
-                  >
-                    <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
-                  </button>
-                )}
-                {/* Dispute flag button */}
-                {canDispute && (
-                  <button
-                    onClick={() => setShowDisputeForm(true)}
-                    className="btn btn-ghost btn-sm btn-square text-warning active:bg-warning/10"
-                    title="Dispute this goal"
-                  >
-                    <Flag className="w-4 h-4" />
-                  </button>
-                )}
-                {(isOwn || isAdmin) && (
-                  <>
-                    {isOwn && (
-                      <button
-                        onClick={onEdit}
-                        className="btn btn-ghost btn-sm btn-square"
-                        title="Edit"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button
-                      onClick={onDelete}
-                      className="btn btn-ghost btn-sm btn-square text-error active:bg-error/10"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
+                {isOwn && <span className="badge badge-xs badge-primary flex-shrink-0">You</span>}
+              </div>
+              <div className="flex items-center gap-1 text-primary/60 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity flex-shrink-0">
+                <Play className="w-3 h-3 fill-current" />
+                <span className="text-xs font-medium hidden sm:inline">Play</span>
               </div>
             </div>
 
-            {/* Reactions */}
-            {reactionSummary && onToggleReaction && (
-              <ReactionBar
-                summary={reactionSummary}
-                onToggleReaction={onToggleReaction}
-                canReact={!!currentUser && !!playerId}
-              />
+            {/* Description */}
+            <p className="text-sm sm:text-base leading-relaxed text-base-content/90">
+              {highlight.description}
+            </p>
+
+            {/* Goal scorer + assister badges */}
+            {isGoal && highlight.scorer?.friendly_name && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <span className={`badge badge-sm gap-1 ${
+                  highlight.is_own_goal
+                    ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                    : highlight.scorer_team === 'blue'
+                      ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
+                      : 'bg-orange-500/15 text-orange-400 border-orange-500/30'
+                }`}>
+                  {'\u26BD'} {highlight.scorer.friendly_name}{highlight.is_own_goal ? ' (OG)' : ''}
+                </span>
+                {highlight.assister?.friendly_name && (
+                  <span className="badge badge-sm badge-ghost gap-1">
+                    🅰️ {highlight.assister.friendly_name}
+                  </span>
+                )}
+              </div>
             )}
 
+            {/* Award badges */}
+            {awardBadges && awardBadges.length > 0 && (
+              <div className="flex gap-1.5 mt-2">
+                {awardBadges.includes('best_goal') && (
+                  <span className="badge badge-sm gap-1 bg-amber-500/15 text-amber-600 border-amber-500/30">
+                    🏆 Best Goal
+                  </span>
+                )}
+                {awardBadges.includes('play_of_the_match') && (
+                  <span className="badge badge-sm gap-1 bg-amber-500/15 text-amber-600 border-amber-500/30">
+                    ⭐ Play of the Match
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Submitted by */}
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-base-content/40">
+              <User className="w-3 h-3" />
+              <span>{highlight.player?.friendly_name || 'Unknown'}</span>
+            </div>
+          </button>
+
+          {/* ── Bottom Action Toolbar ── */}
+          <div className="px-3 sm:px-4 pb-2.5 sm:pb-3">
+            {/* Reactions row */}
+            {reactionSummary && onToggleReaction && (
+              <div className="mb-2">
+                <ReactionBar
+                  summary={reactionSummary}
+                  onToggleReaction={onToggleReaction}
+                  canReact={!!currentUser && !!playerId}
+                />
+              </div>
+            )}
+
+            {/* Action buttons bar */}
+            <div className="flex items-center border-t border-base-200 pt-2 -mx-1">
+              {/* Comment */}
+              {onAddComment && (
+                <button
+                  onClick={() => setShowComments(!showComments)}
+                  className={`flex items-center gap-1.5 flex-1 justify-center py-1.5 rounded-lg text-sm transition-colors active:bg-base-200 ${
+                    showComments ? 'text-primary font-medium' : 'text-base-content/50 hover:text-base-content/70'
+                  }`}
+                >
+                  <MessageCircle className={`w-[18px] h-[18px] ${showComments ? 'fill-primary/20' : ''}`} />
+                  {(commentCount ?? 0) > 0 && (
+                    <span className="text-xs">{commentCount}</span>
+                  )}
+                </button>
+              )}
+
+              {/* Share */}
+              {onShareLink && (
+                <button
+                  onClick={onShareLink}
+                  className="flex items-center gap-1.5 flex-1 justify-center py-1.5 rounded-lg text-sm text-base-content/50 hover:text-base-content/70 transition-colors active:bg-base-200"
+                >
+                  <Link2 className="w-[18px] h-[18px]" />
+                </button>
+              )}
+
+              {/* Bookmark */}
+              {currentUser && onToggleBookmark && (
+                <button
+                  onClick={onToggleBookmark}
+                  className={`flex items-center gap-1.5 flex-1 justify-center py-1.5 rounded-lg text-sm transition-colors active:bg-base-200 ${
+                    isBookmarked ? 'text-primary' : 'text-base-content/50 hover:text-base-content/70'
+                  }`}
+                >
+                  <Bookmark className={`w-[18px] h-[18px] ${isBookmarked ? 'fill-current' : ''}`} />
+                </button>
+              )}
+
+              {/* Overflow menu for edit/delete/dispute */}
+              {hasOverflowActions && (
+                <div className="relative flex-1 flex justify-center" ref={moreActionsRef}>
+                  <button
+                    onClick={() => setShowMoreActions(!showMoreActions)}
+                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-sm text-base-content/50 hover:text-base-content/70 transition-colors active:bg-base-200"
+                  >
+                    <MoreHorizontal className="w-[18px] h-[18px]" />
+                  </button>
+
+                  {/* Overflow dropdown */}
+                  <AnimatePresence>
+                    {showMoreActions && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute bottom-full right-0 mb-1 py-1 bg-base-200 rounded-lg shadow-lg border border-base-300 z-50 min-w-[10rem]"
+                      >
+                        {canDispute && (
+                          <button
+                            onClick={() => { setShowDisputeForm(true); setShowMoreActions(false); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-warning hover:bg-base-300 active:bg-base-300 transition-colors"
+                          >
+                            <Flag className="w-4 h-4" />
+                            Dispute Goal
+                          </button>
+                        )}
+                        {isOwn && (
+                          <button
+                            onClick={() => { onEdit(); setShowMoreActions(false); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-base-content/70 hover:bg-base-300 active:bg-base-300 transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                            Edit
+                          </button>
+                        )}
+                        {(isOwn || isAdmin) && (
+                          <button
+                            onClick={() => { onDelete(); setShowMoreActions(false); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-error hover:bg-base-300 active:bg-base-300 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Expandable Sections ── */}
+          <div className="px-3 sm:px-4">
             {/* Active Dispute Banner */}
             {activeDispute && (
-              <DisputeBanner
-                dispute={activeDispute}
-                canVote={!!canVote}
-                isAdmin={isAdmin}
-                voteTally={getVoteTally(activeDispute.id)}
-                userVote={getUserVote(activeDispute.id)}
-                onVote={(vote) => onVote(activeDispute.id, vote)}
-                onAdminResolve={(resolution) => onAdminResolve(activeDispute.id, resolution)}
-              />
+              <div className="pb-3">
+                <DisputeBanner
+                  dispute={activeDispute}
+                  canVote={!!canVote}
+                  isAdmin={isAdmin}
+                  voteTally={getVoteTally(activeDispute.id)}
+                  userVote={getUserVote(activeDispute.id)}
+                  onVote={(vote) => onVote(activeDispute.id, vote)}
+                  onAdminResolve={(resolution) => onAdminResolve(activeDispute.id, resolution)}
+                />
+              </div>
             )}
 
             {/* Resolved Dispute Badge */}
             {!activeDispute && resolvedDispute && (
-              <ResolvedDisputeBadge dispute={resolvedDispute} />
+              <div className="pb-3">
+                <ResolvedDisputeBadge dispute={resolvedDispute} />
+              </div>
             )}
 
             {/* Dispute Form (inline) */}
             <AnimatePresence>
               {showDisputeForm && (
-                <DisputeForm
-                  highlightId={highlight.id}
-                  gameId={gameId}
-                  currentScorerId={highlight.scorer_player_id}
-                  registrations={registrations}
-                  onSubmit={onCreateDispute}
-                  onClose={() => setShowDisputeForm(false)}
-                />
+                <div className="pb-3">
+                  <DisputeForm
+                    highlightId={highlight.id}
+                    gameId={gameId}
+                    currentScorerId={highlight.scorer_player_id}
+                    registrations={registrations}
+                    onSubmit={onCreateDispute}
+                    onClose={() => setShowDisputeForm(false)}
+                  />
+                </div>
               )}
             </AnimatePresence>
 
             {/* Comment Section */}
             {showComments && onAddComment && onEditComment && onDeleteComment && onAdminDeleteComment && (
-              <CommentSection
-                highlightId={highlight.id}
-                comments={cardComments ?? []}
-                isLoggedIn={!!currentUser}
-                isAdmin={isAdmin}
-                playerId={playerId}
-                registrations={registrations}
-                onAddComment={onAddComment}
-                onEditComment={onEditComment}
-                onDeleteComment={onDeleteComment}
-                onAdminDeleteComment={onAdminDeleteComment}
-              />
+              <div className="pb-3">
+                <CommentSection
+                  highlightId={highlight.id}
+                  comments={cardComments ?? []}
+                  isLoggedIn={!!currentUser}
+                  isAdmin={isAdmin}
+                  playerId={playerId}
+                  registrations={registrations}
+                  onAddComment={onAddComment}
+                  onEditComment={onEditComment}
+                  onDeleteComment={onDeleteComment}
+                  onAdminDeleteComment={onAdminDeleteComment}
+                />
+              </div>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </motion.div>
   );
 };
@@ -829,38 +907,38 @@ const DisputeBanner: React.FC<DisputeBannerProps> = ({
     : 'Not a goal';
 
   return (
-    <div className="mt-2 p-2.5 rounded-lg bg-warning/10 border border-warning/30 space-y-2">
+    <div className="p-3 rounded-xl bg-warning/10 border border-warning/30 space-y-2.5">
       {/* Dispute info */}
-      <div className="text-xs">
-        <span className="font-medium text-warning">
+      <div className="text-xs leading-relaxed">
+        <span className="font-semibold text-warning">
           Disputed by {dispute.disputer?.friendly_name ?? 'Unknown'}
         </span>
-        <span className="text-base-content/60 ml-1">— {disputeLabel}</span>
+        <span className="text-base-content/60 block sm:inline sm:ml-1">— {disputeLabel}</span>
       </div>
 
       {dispute.reason && (
-        <p className="text-xs text-base-content/50 italic">"{dispute.reason}"</p>
+        <p className="text-xs text-base-content/50 italic leading-relaxed">"{dispute.reason}"</p>
       )}
 
-      {/* Voting row */}
+      {/* Voting row - larger touch targets */}
       {canVote && (
         <div className="flex items-center gap-2">
           <button
             onClick={() => onVote('agree')}
-            className={`btn btn-xs gap-1 ${
+            className={`btn btn-sm gap-1.5 flex-1 ${
               userVote === 'agree' ? 'btn-primary' : 'btn-ghost'
             }`}
           >
-            <ThumbsUp className="w-3 h-3" />
+            <ThumbsUp className="w-4 h-4" />
             Agree ({voteTally.agree})
           </button>
           <button
             onClick={() => onVote('disagree')}
-            className={`btn btn-xs gap-1 ${
+            className={`btn btn-sm gap-1.5 flex-1 ${
               userVote === 'disagree' ? 'btn-primary' : 'btn-ghost'
             }`}
           >
-            <ThumbsDown className="w-3 h-3" />
+            <ThumbsDown className="w-4 h-4" />
             Disagree ({voteTally.disagree})
           </button>
         </div>
@@ -877,21 +955,21 @@ const DisputeBanner: React.FC<DisputeBannerProps> = ({
 
       {/* Admin override */}
       {isAdmin && (
-        <div className="flex items-center gap-2 pt-1 border-t border-warning/20">
+        <div className="flex items-center gap-2 pt-2 border-t border-warning/20">
           <span className="text-xs text-base-content/40 flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> Admin:
+            <ShieldCheck className="w-3.5 h-3.5" /> Admin:
           </span>
           <button
             onClick={() => onAdminResolve('upheld')}
-            className="btn btn-xs btn-success gap-1"
+            className="btn btn-sm btn-success gap-1.5"
           >
-            <Check className="w-3 h-3" /> Uphold
+            <Check className="w-3.5 h-3.5" /> Uphold
           </button>
           <button
             onClick={() => onAdminResolve('rejected')}
-            className="btn btn-xs btn-error gap-1"
+            className="btn btn-sm btn-error gap-1.5"
           >
-            <X className="w-3 h-3" /> Reject
+            <X className="w-3.5 h-3.5" /> Reject
           </button>
         </div>
       )}
@@ -915,7 +993,7 @@ const ResolvedDisputeBadge: React.FC<{ dispute: GoalDispute }> = ({ dispute }) =
   const suffix = resolvedByAdmin ? `(by ${resolverName})` : '(auto-resolved)';
 
   return (
-    <div className="mt-2 opacity-60">
+    <div className="opacity-60">
       <span className={`badge badge-sm gap-1 ${isUpheld ? 'badge-success' : 'badge-error'}`}>
         {label}
       </span>

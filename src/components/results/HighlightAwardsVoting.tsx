@@ -1,6 +1,7 @@
 /**
  * HighlightAwardsVoting - Inline voting UI for Best Goal and Play of the Match
  * Placed after the highlights grid inside the collapsible area
+ * Mobile-optimised: larger touch targets, better spacing, accessible voting cards
  */
 
 import React, { useState, useMemo } from 'react';
@@ -79,16 +80,18 @@ export const HighlightAwardsVoting: React.FC<HighlightAwardsVotingProps> = ({
     });
 
     return (
-      <div className="border border-base-300 rounded-lg overflow-hidden">
+      <div className="border border-base-300 rounded-xl overflow-hidden">
         <button
           onClick={() => toggleSection(awardType)}
-          className="w-full flex items-center justify-between p-3 hover:bg-base-200 active:bg-base-200 transition-colors"
+          className="w-full flex items-center justify-between p-3.5 hover:bg-base-200 active:bg-base-200 transition-colors"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {icon}
-            <span className="text-sm font-medium">{label}</span>
+            <span className="text-sm font-semibold">{label}</span>
             {totalVotes > 0 && (
-              <span className="badge badge-xs badge-ghost">{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-base-content/40 font-normal">
+                {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+              </span>
             )}
           </div>
           {isExpanded ? (
@@ -107,13 +110,13 @@ export const HighlightAwardsVoting: React.FC<HighlightAwardsVotingProps> = ({
               transition={{ duration: 0.15 }}
               className="overflow-hidden"
             >
-              <div className="p-2 pt-0 space-y-1.5">
+              <div className="px-2 pb-2 space-y-1">
                 {sorted.map(highlight => {
                   const typeInfo = HIGHLIGHT_TYPES.find(t => t.value === highlight.highlight_type);
                   const voteCount = counts[highlight.id] || 0;
                   const isUserVote = userVote === highlight.id;
-                  const desc = highlight.description.length > 50
-                    ? highlight.description.slice(0, 50) + '...'
+                  const desc = highlight.description.length > 60
+                    ? highlight.description.slice(0, 60) + '...'
                     : highlight.description;
 
                   return (
@@ -121,7 +124,7 @@ export const HighlightAwardsVoting: React.FC<HighlightAwardsVotingProps> = ({
                       key={highlight.id}
                       onClick={() => handleVote(highlight.id, awardType)}
                       disabled={!canVote || !isVotingOpen || voting}
-                      className={`w-full flex items-center gap-2 p-3 rounded-lg text-left transition-all ${
+                      className={`w-full flex items-center gap-2.5 p-3 rounded-xl text-left transition-all active:scale-[0.98] ${
                         isUserVote
                           ? 'ring-1 ring-primary bg-primary/10'
                           : canVote && isVotingOpen
@@ -129,25 +132,27 @@ export const HighlightAwardsVoting: React.FC<HighlightAwardsVotingProps> = ({
                           : 'cursor-default'
                       }`}
                     >
-                      <span className="flex-shrink-0">{typeInfo?.emoji}</span>
+                      <span className="flex-shrink-0 text-base">{typeInfo?.emoji}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs truncate">{desc}</p>
+                        <p className="text-sm leading-snug line-clamp-2">{desc}</p>
                         {highlight.scorer?.friendly_name && (
-                          <p className="text-xs text-base-content/40">{highlight.scorer.friendly_name}</p>
+                          <p className="text-xs text-base-content/40 mt-0.5">{highlight.scorer.friendly_name}</p>
                         )}
                       </div>
-                      {isUserVote && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
-                      {voteCount > 0 && (
-                        <span className="badge badge-xs badge-ghost flex-shrink-0">
-                          {voteCount}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {isUserVote && <Check className="w-4 h-4 text-primary" />}
+                        {voteCount > 0 && (
+                          <span className="text-xs text-base-content/40 tabular-nums min-w-[1.25rem] text-center">
+                            {voteCount}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
 
                 {!isVotingOpen && (
-                  <p className="text-xs text-center text-base-content/40 py-1">Voting closed</p>
+                  <p className="text-xs text-center text-base-content/40 py-2">Voting closed</p>
                 )}
               </div>
             </motion.div>
@@ -158,8 +163,8 @@ export const HighlightAwardsVoting: React.FC<HighlightAwardsVotingProps> = ({
   };
 
   return (
-    <div className="space-y-2 pt-2 border-t border-base-300">
-      <p className="text-xs font-medium text-base-content/50 uppercase tracking-wide">
+    <div className="space-y-2.5 pt-3 border-t border-base-300">
+      <p className="text-xs font-semibold text-base-content/50 uppercase tracking-wider">
         Highlight Awards
       </p>
 
