@@ -41,6 +41,7 @@ import { PairTeamPlacementCard } from '../components/profile/PairTeamPlacementCa
 import { useTeamPlacements, usePairTeamPlacement } from '../hooks/useTeamPlacements';
 import { LockedContent } from '../components/ui/LockedContent';
 import { PairChemistryCardSkeleton, RivalryCardSkeleton, TeamHistorySkeleton } from '../components/profile/ProfileSkeletons';
+import { usePlayerMotmStats } from '../hooks/usePlayerMotmStats';
 
 // Helper function to format date consistently as "12 Mar 2025"
 const formatDate = (dateString: string | null): string => {
@@ -93,6 +94,7 @@ export default function PlayerProfileNew() {
   const { tokenStatus, loading: tokenLoading } = useTokenStatus(player?.id || '');
   const { shieldStatus, loading: shieldLoading } = useShieldStatus(player?.id);
   const { injuryStatus, loading: injuryLoading } = useInjuryTokenStatus(player?.id);
+  const { stats: motmStats } = usePlayerMotmStats(player?.id ?? null);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
 
   // Fetch chemistry data for the viewed player
@@ -838,7 +840,8 @@ export default function PlayerProfileNew() {
             rarity: player.rarity,
             win_rate: player.win_rate,
             recent_win_rate: player.recent_win_rate,
-            caps: player.caps
+            caps: player.caps,
+            motmCount: motmStats?.motmWins
           }} />
         </div>
 
