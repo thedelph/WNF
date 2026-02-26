@@ -65,6 +65,10 @@ export default function HistoricalGames() {
           score_blue,
           score_orange,
           outcome,
+          pitch_cost,
+          payment_link,
+          youtube_url,
+          team_left,
           venue:venue_id (
             id,
             name,

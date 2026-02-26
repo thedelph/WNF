@@ -28,7 +28,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
   const [pitchCost, setPitchCost] = useState<string>(game.pitch_cost?.toString() || '')
   const [paymentLink, setPaymentLink] = useState<string>(game.payment_link || '')
   const [youtubeUrl, setYoutubeUrl] = useState<string>(game.youtube_url || '')
-  const [teamLeft, setTeamLeft] = useState<'blue' | 'orange'>((game as any).team_left ?? 'blue')
+  const [teamLeft, setTeamLeft] = useState<'blue' | 'orange'>(game.team_left ?? 'blue')
   const [players, setPlayers] = useState<PlayerWithTeam[]>([])
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([])
   const [statusChanges, setStatusChanges] = useState<StatusChange[]>([])
