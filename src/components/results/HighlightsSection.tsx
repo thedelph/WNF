@@ -43,6 +43,7 @@ interface GoalInfo {
   timestampSeconds: number;
   isOwnGoal: boolean;
   isPenalty: boolean;
+  assisterName?: string | null;
 }
 
 interface HighlightsSectionProps {
@@ -144,6 +145,7 @@ export const HighlightsSection: React.FC<HighlightsSectionProps> = ({
           timestampSeconds: h.timestamp_seconds,
           isOwnGoal: h.is_own_goal,
           isPenalty: h.is_penalty,
+          assisterName: h.assister?.friendly_name ?? null,
         }));
       onGoalsChanged(goals);
     }

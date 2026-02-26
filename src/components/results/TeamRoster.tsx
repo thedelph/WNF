@@ -16,6 +16,7 @@ interface TeamRosterProps {
   orangeTeam: GameDetailRegistration[];
   reserves: GameDetailRegistration[];
   defaultExpanded?: boolean;
+  teamLeft?: 'blue' | 'orange';
 }
 
 export const TeamRoster: React.FC<TeamRosterProps> = ({
@@ -23,7 +24,9 @@ export const TeamRoster: React.FC<TeamRosterProps> = ({
   orangeTeam,
   reserves,
   defaultExpanded = true,
+  teamLeft = 'blue',
 }) => {
+  const isSwapped = teamLeft === 'orange';
   const { player: currentPlayer } = useUser();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -143,29 +146,29 @@ export const TeamRoster: React.FC<TeamRosterProps> = ({
             <div className="space-y-4">
               {/* Team Grids */}
               <div className="grid gap-4 md:grid-cols-2">
-                {/* Blue Team */}
-                <div className="card bg-blue-500/5 border border-blue-500/20">
+                {/* Left Team */}
+                <div className={`card ${isSwapped ? 'bg-orange-500/5 border border-orange-500/20' : 'bg-blue-500/5 border border-blue-500/20'}`}>
                   <div className="card-body p-4">
-                    <h4 className="card-title text-blue-500 text-base">
-                      Blue Team
-                      <span className="badge badge-sm bg-blue-500/20 text-blue-500 border-blue-500/30">
-                        {blueTeam.length}
+                    <h4 className={`card-title text-base ${isSwapped ? 'text-orange-500' : 'text-blue-500'}`}>
+                      {isSwapped ? 'Orange' : 'Blue'} Team
+                      <span className={`badge badge-sm ${isSwapped ? 'bg-orange-500/20 text-orange-500 border-orange-500/30' : 'bg-blue-500/20 text-blue-500 border-blue-500/30'}`}>
+                        {isSwapped ? orangeTeam.length : blueTeam.length}
                       </span>
                     </h4>
-                    {renderPlayerList(blueTeam, 'blue')}
+                    {renderPlayerList(isSwapped ? orangeTeam : blueTeam, isSwapped ? 'orange' : 'blue')}
                   </div>
                 </div>
 
-                {/* Orange Team */}
-                <div className="card bg-orange-500/5 border border-orange-500/20">
+                {/* Right Team */}
+                <div className={`card ${isSwapped ? 'bg-blue-500/5 border border-blue-500/20' : 'bg-orange-500/5 border border-orange-500/20'}`}>
                   <div className="card-body p-4">
-                    <h4 className="card-title text-orange-500 text-base">
-                      Orange Team
-                      <span className="badge badge-sm bg-orange-500/20 text-orange-500 border-orange-500/30">
-                        {orangeTeam.length}
+                    <h4 className={`card-title text-base ${isSwapped ? 'text-blue-500' : 'text-orange-500'}`}>
+                      {isSwapped ? 'Blue' : 'Orange'} Team
+                      <span className={`badge badge-sm ${isSwapped ? 'bg-blue-500/20 text-blue-500 border-blue-500/30' : 'bg-orange-500/20 text-orange-500 border-orange-500/30'}`}>
+                        {isSwapped ? blueTeam.length : orangeTeam.length}
                       </span>
                     </h4>
-                    {renderPlayerList(orangeTeam, 'orange')}
+                    {renderPlayerList(isSwapped ? blueTeam : orangeTeam, isSwapped ? 'blue' : 'orange')}
                   </div>
                 </div>
               </div>

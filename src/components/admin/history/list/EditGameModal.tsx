@@ -28,6 +28,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
   const [pitchCost, setPitchCost] = useState<string>(game.pitch_cost?.toString() || '')
   const [paymentLink, setPaymentLink] = useState<string>(game.payment_link || '')
   const [youtubeUrl, setYoutubeUrl] = useState<string>(game.youtube_url || '')
+  const [teamLeft, setTeamLeft] = useState<'blue' | 'orange'>((game as any).team_left ?? 'blue')
   const [players, setPlayers] = useState<PlayerWithTeam[]>([])
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([])
   const [statusChanges, setStatusChanges] = useState<StatusChange[]>([])
@@ -324,7 +325,8 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
         max_players: Math.max(players.filter(p => p.team).length, 10),
         pitch_cost: pitchCost !== '' ? parseFloat(pitchCost) : null,
         payment_link: paymentLink || null,
-        youtube_url: youtubeUrl || null
+        youtube_url: youtubeUrl || null,
+        team_left: teamLeft,
       } as any
 
       // Only add scores and outcome if they are valid
@@ -552,6 +554,19 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
                   placeholder="https://youtu.be/..."
                 />
                 <p className="text-xs text-base-content/60 mt-1">Paste YouTube link for the game recording</p>
+              </fieldset>
+
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Team on LEFT in video</legend>
+                <select
+                  className="select w-full"
+                  value={teamLeft}
+                  onChange={(e) => setTeamLeft(e.target.value as 'blue' | 'orange')}
+                >
+                  <option value="blue">Blue (default)</option>
+                  <option value="orange">Orange</option>
+                </select>
+                <p className="text-xs text-base-content/60 mt-1">Which team plays on the left side of the pitch in the video?</p>
               </fieldset>
 
               <div className="grid grid-cols-2 gap-4">

@@ -20,6 +20,7 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
   const [outcome, setOutcome] = useState<string | undefined>(game.outcome)
   const [paymentLink, setPaymentLink] = useState<string>(game.payment_link || '')
   const [youtubeUrl, setYoutubeUrl] = useState<string>(game.youtube_url || '')
+  const [teamLeft, setTeamLeft] = useState<'blue' | 'orange'>((game as any).team_left ?? 'blue')
   const [players, setPlayers] = useState<PlayerWithTeam[]>([])
   const [loading, setLoading] = useState(false)
   const [gameDate] = useState<Date>(new Date(game.date))
@@ -471,13 +472,14 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
 
       if (error) throw error
 
-      // Save YouTube URL if provided (separate from RPC)
-      if (youtubeUrl) {
-        await supabaseAdmin
-          .from('games')
-          .update({ youtube_url: youtubeUrl })
-          .eq('id', game.id)
-      }
+      // Save YouTube URL and team_left (separate from RPC)
+      await supabaseAdmin
+        .from('games')
+        .update({
+          youtube_url: youtubeUrl || null,
+          team_left: teamLeft,
+        })
+        .eq('id', game.id)
 
       // Fetch post-match insights for toast
       const { data: insightsData } = await supabaseAdmin
@@ -565,6 +567,18 @@ const GameCompletionForm: React.FC<GameCompletionFormProps> = ({ game, onComplet
                 placeholder="https://youtu.be/..."
               />
               <p className="text-xs text-base-content/60 mt-1">Paste YouTube link for the game recording</p>
+            </fieldset>
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Team on LEFT in video</legend>
+              <select
+                className="select w-full"
+                value={teamLeft}
+                onChange={(e) => setTeamLeft(e.target.value as 'blue' | 'orange')}
+              >
+                <option value="blue">Blue (default)</option>
+                <option value="orange">Orange</option>
+              </select>
+              <p className="text-xs text-base-content/60 mt-1">Which team plays on the left side of the pitch in the video?</p>
             </fieldset>
           </div>
 

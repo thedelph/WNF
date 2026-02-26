@@ -4,10 +4,13 @@
  * Supports seeking to timestamps and exposes getCurrentTime for highlight forms
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Video, Clock } from 'lucide-react';
+import { Video, Clock, Eye, EyeOff } from 'lucide-react';
 import { extractYouTubeId, formatTimestamp } from '../../utils/youtube';
+import { useVideoPlaybackScore } from '../../hooks/useVideoPlaybackScore';
+import { VideoScoreOverlay } from './VideoScoreOverlay';
+import type { GoalInfo } from './ScoreHero';
 
 // YouTube IFrame API types
 declare global {
@@ -75,6 +78,10 @@ interface VideoPlayerProps {
   seekKey?: number;
   /** Called once the player is ready; provides a function to read current playback time */
   onPlayerReady?: (getCurrentTime: () => number | null) => void;
+  /** Goal highlights for live scoreboard overlay */
+  goals?: GoalInfo[];
+  /** Which team plays on the left side of the pitch in the video */
+  teamLeft?: 'blue' | 'orange';
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -83,12 +90,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   seekToSeconds,
   seekKey,
   onPlayerReady,
+  goals = [],
+  teamLeft = 'blue',
 }) => {
   const videoId = extractYouTubeId(youtubeUrl);
   const playerRef = useRef<YTPlayer | null>(null);
   const containerIdRef = useRef(`yt-player-${Math.random().toString(36).slice(2, 9)}`);
   const onPlayerReadyRef = useRef(onPlayerReady);
   onPlayerReadyRef.current = onPlayerReady;
+  const [showOverlay, setShowOverlay] = useState(true);
 
   const getCurrentTime = useCallback((): number | null => {
     try {
@@ -100,6 +110,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
     return null;
   }, []);
+
+  const hasGoals = goals.length > 0;
+  const playbackScore = useVideoPlaybackScore(getCurrentTime, goals, hasGoals);
 
   // Initialize the YT player
   useEffect(() => {
@@ -172,9 +185,30 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               {formatTimestamp(seekToSeconds)}
             </span>
           )}
+          {hasGoals && (
+            <button
+              onClick={() => setShowOverlay((v) => !v)}
+              className="ml-auto btn btn-ghost btn-xs gap-1 opacity-70 hover:opacity-100"
+              title={showOverlay ? 'Hide live score' : 'Show live score'}
+            >
+              {showOverlay ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline text-xs">Score</span>
+            </button>
+          )}
         </h3>
-        <div className="aspect-video rounded-lg overflow-hidden bg-black">
+        <div className="aspect-video rounded-lg overflow-hidden bg-black relative">
           <div id={containerIdRef.current} className="w-full h-full" />
+          {hasGoals && (
+            <VideoScoreOverlay
+              blueScore={playbackScore.blueScore}
+              orangeScore={playbackScore.orangeScore}
+              latestGoalTeam={playbackScore.latestGoalTeam}
+              latestGoalTimestamp={playbackScore.latestGoalTimestamp}
+              latestGoal={playbackScore.latestGoal}
+              visible={showOverlay}
+              teamLeft={teamLeft}
+            />
+          )}
         </div>
       </div>
     </motion.div>

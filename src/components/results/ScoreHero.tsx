@@ -13,6 +13,7 @@ export interface GoalInfo {
   timestampSeconds: number;
   isOwnGoal: boolean;
   isPenalty: boolean;
+  assisterName?: string | null;
 }
 
 interface ScoreHeroProps {
@@ -20,6 +21,7 @@ interface ScoreHeroProps {
   scoreOrange: number | null;
   outcome: 'blue_win' | 'orange_win' | 'draw' | null;
   goals?: GoalInfo[];
+  teamLeft?: 'blue' | 'orange';
 }
 
 export const ScoreHero: React.FC<ScoreHeroProps> = ({
@@ -27,8 +29,10 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
   scoreOrange,
   outcome,
   goals = [],
+  teamLeft = 'blue',
 }) => {
   const hasScore = scoreBlue !== null && scoreOrange !== null;
+  const isSwapped = teamLeft === 'orange';
 
   const blueGoals = useMemo(() =>
     goals
@@ -57,43 +61,43 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
     >
       {hasScore ? (
         <div className="flex items-start justify-center gap-4 md:gap-8">
-          {/* Blue Team */}
+          {/* Left Team */}
           <div className="flex-1 text-center">
-            <div className="text-sm md:text-base font-semibold text-blue-500 mb-2">
-              Blue
+            <div className={`text-sm md:text-base font-semibold mb-2 ${isSwapped ? 'text-orange-500' : 'text-blue-500'}`}>
+              {isSwapped ? 'Orange' : 'Blue'}
             </div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               className={`text-5xl md:text-7xl lg:text-8xl font-bold ${
-                outcome === 'blue_win'
-                  ? 'text-blue-500'
+                (isSwapped ? outcome === 'orange_win' : outcome === 'blue_win')
+                  ? isSwapped ? 'text-orange-500' : 'text-blue-500'
                   : 'text-base-content/70'
               }`}
             >
-              {scoreBlue}
+              {isSwapped ? scoreOrange : scoreBlue}
             </motion.div>
-            {outcome === 'blue_win' && (
+            {(isSwapped ? outcome === 'orange_win' : outcome === 'blue_win') && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
                 className="mt-2"
               >
-                <span className="badge badge-sm bg-blue-500/20 text-blue-500 border-blue-500/30">
+                <span className={`badge badge-sm ${isSwapped ? 'bg-orange-500/20 text-orange-500 border-orange-500/30' : 'bg-blue-500/20 text-blue-500 border-blue-500/30'}`}>
                   Winner
                 </span>
               </motion.div>
             )}
-            {(scoreBlue ?? 0) > 0 && (
+            {((isSwapped ? scoreOrange : scoreBlue) ?? 0) > 0 && (
               <div className="mt-2 space-y-0.5">
-                {blueGoals.map((g, i) => (
+                {(isSwapped ? orangeGoals : blueGoals).map((g, i) => (
                   <div key={i} className={`text-xs ${g.isOwnGoal ? 'text-red-400' : 'text-base-content/50'}`}>
                     {g.scorerName ?? 'TBC'} {g.isOwnGoal && <span className="text-red-400">(OG)</span>}{g.isPenalty && <span className="text-warning"> (PEN)</span>} {formatMinute(g.timestampSeconds)}
                   </div>
                 ))}
-                {Array.from({ length: blueTbcCount }).map((_, i) => (
+                {Array.from({ length: isSwapped ? orangeTbcCount : blueTbcCount }).map((_, i) => (
                   <div key={`tbc-${i}`} className="text-xs text-base-content/30 italic">
                     TBC
                   </div>
@@ -113,43 +117,43 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
             </div>
           </div>
 
-          {/* Orange Team */}
+          {/* Right Team */}
           <div className="flex-1 text-center">
-            <div className="text-sm md:text-base font-semibold text-orange-500 mb-2">
-              Orange
+            <div className={`text-sm md:text-base font-semibold mb-2 ${isSwapped ? 'text-blue-500' : 'text-orange-500'}`}>
+              {isSwapped ? 'Blue' : 'Orange'}
             </div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className={`text-5xl md:text-7xl lg:text-8xl font-bold ${
-                outcome === 'orange_win'
-                  ? 'text-orange-500'
+                (isSwapped ? outcome === 'blue_win' : outcome === 'orange_win')
+                  ? isSwapped ? 'text-blue-500' : 'text-orange-500'
                   : 'text-base-content/70'
               }`}
             >
-              {scoreOrange}
+              {isSwapped ? scoreBlue : scoreOrange}
             </motion.div>
-            {outcome === 'orange_win' && (
+            {(isSwapped ? outcome === 'blue_win' : outcome === 'orange_win') && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
                 className="mt-2"
               >
-                <span className="badge badge-sm bg-orange-500/20 text-orange-500 border-orange-500/30">
+                <span className={`badge badge-sm ${isSwapped ? 'bg-blue-500/20 text-blue-500 border-blue-500/30' : 'bg-orange-500/20 text-orange-500 border-orange-500/30'}`}>
                   Winner
                 </span>
               </motion.div>
             )}
-            {(scoreOrange ?? 0) > 0 && (
+            {((isSwapped ? scoreBlue : scoreOrange) ?? 0) > 0 && (
               <div className="mt-2 space-y-0.5">
-                {orangeGoals.map((g, i) => (
+                {(isSwapped ? blueGoals : orangeGoals).map((g, i) => (
                   <div key={i} className={`text-xs ${g.isOwnGoal ? 'text-red-400' : 'text-base-content/50'}`}>
                     {g.scorerName ?? 'TBC'} {g.isOwnGoal && <span className="text-red-400">(OG)</span>}{g.isPenalty && <span className="text-warning"> (PEN)</span>} {formatMinute(g.timestampSeconds)}
                   </div>
                 ))}
-                {Array.from({ length: orangeTbcCount }).map((_, i) => (
+                {Array.from({ length: isSwapped ? blueTbcCount : orangeTbcCount }).map((_, i) => (
                   <div key={`tbc-${i}`} className="text-xs text-base-content/30 italic">
                     TBC
                   </div>

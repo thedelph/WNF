@@ -151,6 +151,7 @@ const GameDetail: React.FC = () => {
           scoreOrange={game.score_orange}
           outcome={game.outcome}
           goals={goalHighlights}
+          teamLeft={game.team_left}
         />
       </motion.div>
 
@@ -169,6 +170,8 @@ const GameDetail: React.FC = () => {
             seekToSeconds={seekToSeconds}
             seekKey={seekKey}
             onPlayerReady={handlePlayerReady}
+            goals={goalHighlights}
+            teamLeft={game.team_left}
           />
         </motion.div>
       )}
@@ -271,6 +274,7 @@ const GameDetail: React.FC = () => {
           blueTeam={blueTeam}
           orangeTeam={orangeTeam}
           reserves={reserves}
+          teamLeft={game.team_left}
         />
       </motion.div>
 
