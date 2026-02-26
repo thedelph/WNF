@@ -25,6 +25,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
   const [blueScore, setBlueScore] = useState(game.score_blue?.toString() || '')
   const [orangeScore, setOrangeScore] = useState(game.score_orange?.toString() || '')
   const [outcome, setOutcome] = useState<GameOutcome>(game.outcome || null)
+  const [pitchCost, setPitchCost] = useState<string>(game.pitch_cost?.toString() || '')
   const [paymentLink, setPaymentLink] = useState<string>(game.payment_link || '')
   const [youtubeUrl, setYoutubeUrl] = useState<string>(game.youtube_url || '')
   const [players, setPlayers] = useState<PlayerWithTeam[]>([])
@@ -321,6 +322,7 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
         registration_window_start: regStart.toISOString(),
         registration_window_end: regEnd.toISOString(),
         max_players: Math.max(players.filter(p => p.team).length, 10),
+        pitch_cost: pitchCost !== '' ? parseFloat(pitchCost) : null,
         payment_link: paymentLink || null,
         youtube_url: youtubeUrl || null
       } as any
@@ -516,6 +518,19 @@ const EditGameModal: React.FC<Props> = ({ game, onClose, onGameUpdated }) => {
           {/* Payment & Scores Tab */}
           {activeTab === 'payment' && (
             <div className="space-y-6">
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Pitch Cost (£)</legend>
+                <input
+                  type="number"
+                  value={pitchCost}
+                  onChange={(e) => setPitchCost(e.target.value)}
+                  className="input w-full"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                />
+              </fieldset>
+
               <fieldset className="fieldset">
                 <legend className="fieldset-legend">Payment Link (Monzo)</legend>
                 <input
