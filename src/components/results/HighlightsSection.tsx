@@ -42,6 +42,7 @@ interface GoalInfo {
   scorerTeam: 'blue' | 'orange' | null;
   timestampSeconds: number;
   isOwnGoal: boolean;
+  isPenalty: boolean;
 }
 
 interface HighlightsSectionProps {
@@ -142,6 +143,7 @@ export const HighlightsSection: React.FC<HighlightsSectionProps> = ({
           scorerTeam: h.scorer_team,
           timestampSeconds: h.timestamp_seconds,
           isOwnGoal: h.is_own_goal,
+          isPenalty: h.is_penalty,
         }));
       onGoalsChanged(goals);
     }
@@ -677,13 +679,22 @@ const HighlightCard: React.FC<HighlightCardProps> = ({
                       ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
                       : 'bg-orange-500/15 text-orange-400 border-orange-500/30'
                 }`}>
-                  {'\u26BD'} {highlight.scorer.friendly_name}{highlight.is_own_goal ? ' (OG)' : ''}
+                  {'\u26BD'} {highlight.scorer.friendly_name}{highlight.is_own_goal ? ' (OG)' : ''}{highlight.is_penalty ? ' (PEN)' : ''}
                 </span>
                 {highlight.assister?.friendly_name && (
                   <span className="badge badge-sm badge-ghost gap-1">
                     🅰️ {highlight.assister.friendly_name}
                   </span>
                 )}
+              </div>
+            )}
+
+            {/* Non-goal player involved badge */}
+            {!isGoal && highlight.scorer?.friendly_name && (
+              <div className="mt-2">
+                <span className="badge badge-sm badge-ghost gap-1">
+                  {typeInfo?.emoji} {highlight.scorer.friendly_name}
+                </span>
               </div>
             )}
 
@@ -1021,7 +1032,11 @@ const EditHighlightInline: React.FC<EditHighlightInlineProps> = ({
   const [timestampInput, setTimestampInput] = useState(formatTimestamp(highlight.timestamp_seconds));
   const [scorerPlayerId, setScorerPlayerId] = useState(highlight.scorer_player_id ?? '');
   const [isOwnGoal, setIsOwnGoal] = useState(highlight.is_own_goal);
+  const [isPenalty, setIsPenalty] = useState(highlight.is_penalty);
   const [assisterPlayerId, setAssisterPlayerId] = useState(highlight.assister_player_id ?? '');
+  const [involvedPlayerId, setInvolvedPlayerId] = useState(
+    highlight.highlight_type !== 'goal' ? (highlight.scorer_player_id ?? '') : ''
+  );
 
   const isGoal = highlight.highlight_type === 'goal';
 
@@ -1082,9 +1097,24 @@ const EditHighlightInline: React.FC<EditHighlightInlineProps> = ({
       if (isOwnGoal !== highlight.is_own_goal) {
         updates.is_own_goal = isOwnGoal;
       }
+      if (isPenalty !== highlight.is_penalty) {
+        updates.is_penalty = isPenalty;
+      }
       const newAssister = (assisterPlayerId && !isOwnGoal) ? assisterPlayerId : null;
       if (newAssister !== (highlight.assister_player_id ?? null)) {
         updates.assister_player_id = newAssister;
+      }
+    } else {
+      // Non-goal: update player involved
+      const newInvolved = involvedPlayerId || null;
+      if (newInvolved !== (highlight.scorer_player_id ?? null)) {
+        updates.scorer_player_id = newInvolved;
+        if (newInvolved) {
+          const involvedTeam = teamPlayers.blue.some(p => p.id === newInvolved) ? 'blue' as const : 'orange' as const;
+          updates.scorer_team = involvedTeam;
+        } else {
+          updates.scorer_team = null;
+        }
       }
     }
     onSave(updates);
@@ -1110,6 +1140,36 @@ const EditHighlightInline: React.FC<EditHighlightInlineProps> = ({
       />
       {moderationResult.hasBanned && (
         <p className="text-xs text-error">Please keep it clean!</p>
+      )}
+
+      {/* Non-goal: Player Involved dropdown */}
+      {!isGoal && (
+        <div className="pt-1">
+          <label className="text-xs font-medium text-base-content/60 mb-1 block">
+            Player Involved <span className="text-base-content/40 font-normal">(optional)</span>
+          </label>
+          <select
+            value={involvedPlayerId}
+            onChange={(e) => setInvolvedPlayerId(e.target.value)}
+            className="select select-bordered select-sm w-full"
+          >
+            <option value="">None</option>
+            {teamPlayers.blue.length > 0 && (
+              <optgroup label="Blue Team">
+                {teamPlayers.blue.map((p) => (
+                  <option key={p.id} value={p.id}>{p.friendly_name}</option>
+                ))}
+              </optgroup>
+            )}
+            {teamPlayers.orange.length > 0 && (
+              <optgroup label="Orange Team">
+                {teamPlayers.orange.map((p) => (
+                  <option key={p.id} value={p.id}>{p.friendly_name}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </div>
       )}
 
       {/* Goal-specific fields */}
@@ -1161,6 +1221,19 @@ const EditHighlightInline: React.FC<EditHighlightInlineProps> = ({
                   (credits {scorerActualTeam === 'blue' ? 'Orange' : 'Blue'} team)
                 </span>
               )}
+            </label>
+          )}
+
+          {/* Penalty toggle */}
+          {scorerPlayerId && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isPenalty}
+                onChange={(e) => setIsPenalty(e.target.checked)}
+                className="checkbox checkbox-sm checkbox-warning"
+              />
+              <span className="text-sm">Penalty</span>
             </label>
           )}
 

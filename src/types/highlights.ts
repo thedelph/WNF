@@ -15,6 +15,7 @@ export interface GameHighlight {
   scorer_team: 'blue' | 'orange' | null;
   assister_player_id: string | null;
   is_own_goal: boolean;
+  is_penalty: boolean;
   created_at: string;
   updated_at: string;
   // Joined relations
@@ -42,6 +43,7 @@ export interface CreateHighlightInput {
   scorer_team?: 'blue' | 'orange';
   assister_player_id?: string;
   is_own_goal?: boolean;
+  is_penalty?: boolean;
 }
 
 export interface UpdateHighlightInput {
@@ -51,6 +53,7 @@ export interface UpdateHighlightInput {
   scorer_team?: 'blue' | 'orange' | null;
   assister_player_id?: string | null;
   is_own_goal?: boolean;
+  is_penalty?: boolean;
 }
 
 export const HIGHLIGHT_TYPES: {

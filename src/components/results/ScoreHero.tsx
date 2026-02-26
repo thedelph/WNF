@@ -12,6 +12,7 @@ export interface GoalInfo {
   scorerTeam: 'blue' | 'orange' | null;
   timestampSeconds: number;
   isOwnGoal: boolean;
+  isPenalty: boolean;
 }
 
 interface ScoreHeroProps {
@@ -89,7 +90,7 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
               <div className="mt-2 space-y-0.5">
                 {blueGoals.map((g, i) => (
                   <div key={i} className={`text-xs ${g.isOwnGoal ? 'text-red-400' : 'text-base-content/50'}`}>
-                    {g.scorerName ?? 'TBC'} {g.isOwnGoal && <span className="text-red-400">(OG)</span>} {formatMinute(g.timestampSeconds)}
+                    {g.scorerName ?? 'TBC'} {g.isOwnGoal && <span className="text-red-400">(OG)</span>}{g.isPenalty && <span className="text-warning"> (PEN)</span>} {formatMinute(g.timestampSeconds)}
                   </div>
                 ))}
                 {Array.from({ length: blueTbcCount }).map((_, i) => (
@@ -145,7 +146,7 @@ export const ScoreHero: React.FC<ScoreHeroProps> = ({
               <div className="mt-2 space-y-0.5">
                 {orangeGoals.map((g, i) => (
                   <div key={i} className={`text-xs ${g.isOwnGoal ? 'text-red-400' : 'text-base-content/50'}`}>
-                    {g.scorerName ?? 'TBC'} {g.isOwnGoal && <span className="text-red-400">(OG)</span>} {formatMinute(g.timestampSeconds)}
+                    {g.scorerName ?? 'TBC'} {g.isOwnGoal && <span className="text-red-400">(OG)</span>}{g.isPenalty && <span className="text-warning"> (PEN)</span>} {formatMinute(g.timestampSeconds)}
                   </div>
                 ))}
                 {Array.from({ length: orangeTbcCount }).map((_, i) => (

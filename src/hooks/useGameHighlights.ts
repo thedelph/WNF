@@ -113,6 +113,7 @@ export const useGameHighlights = (
           scorer_team: input.scorer_team || null,
           assister_player_id: input.assister_player_id || null,
           is_own_goal: input.is_own_goal ?? false,
+          is_penalty: input.is_penalty ?? false,
         });
 
       if (insertError) throw insertError;

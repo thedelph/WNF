@@ -40,7 +40,9 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
   const [description, setDescription] = useState('');
   const [scorerPlayerId, setScorerPlayerId] = useState('');
   const [isOwnGoal, setIsOwnGoal] = useState(false);
+  const [isPenalty, setIsPenalty] = useState(false);
   const [assisterPlayerId, setAssisterPlayerId] = useState('');
+  const [involvedPlayerId, setInvolvedPlayerId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -117,9 +119,15 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
       input.scorer_player_id = scorerPlayerId;
       input.scorer_team = scorerTeam;
       input.is_own_goal = isOwnGoal;
+      input.is_penalty = isPenalty;
       if (assisterPlayerId && !isOwnGoal) {
         input.assister_player_id = assisterPlayerId;
       }
+    } else if (!isGoal && involvedPlayerId) {
+      // Reuse scorer_player_id for non-goal player tagging
+      input.scorer_player_id = involvedPlayerId;
+      const involvedTeam = teamPlayers.blue.some(p => p.id === involvedPlayerId) ? 'blue' : 'orange';
+      input.scorer_team = involvedTeam;
     }
 
     const result = await onSubmit(input);
@@ -171,6 +179,7 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
                         if (type.value !== 'goal') {
                           setScorerPlayerId('');
                           setIsOwnGoal(false);
+                          setIsPenalty(false);
                           setAssisterPlayerId('');
                         }
                       }}
@@ -313,6 +322,19 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
                         </label>
                       )}
 
+                      {/* Penalty toggle */}
+                      {scorerPlayerId && (
+                        <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isPenalty}
+                            onChange={(e) => setIsPenalty(e.target.checked)}
+                            className="checkbox checkbox-sm checkbox-warning"
+                          />
+                          <span className="text-sm">Penalty</span>
+                        </label>
+                      )}
+
                       {/* Assist dropdown */}
                       {scorerPlayerId && !isOwnGoal && assistEligiblePlayers.length > 0 && (
                         <div className="mt-3">
@@ -346,6 +368,36 @@ export const AddHighlightForm: React.FC<AddHighlightFormProps> = ({
                     </>
                   )}
                 </motion.fieldset>
+              )}
+
+              {/* Player Involved (non-goal highlights) */}
+              {!isGoal && (
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend text-sm font-medium">
+                    Player Involved <span className="text-base-content/40 font-normal">(optional)</span>
+                  </legend>
+                  <select
+                    value={involvedPlayerId}
+                    onChange={(e) => setInvolvedPlayerId(e.target.value)}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="">None</option>
+                    {teamPlayers.blue.length > 0 && (
+                      <optgroup label="Blue Team">
+                        {teamPlayers.blue.map((p) => (
+                          <option key={p.id} value={p.id}>{p.friendly_name}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {teamPlayers.orange.length > 0 && (
+                      <optgroup label="Orange Team">
+                        {teamPlayers.orange.map((p) => (
+                          <option key={p.id} value={p.id}>{p.friendly_name}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </fieldset>
               )}
 
               {/* Error display */}
