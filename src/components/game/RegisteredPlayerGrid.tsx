@@ -142,6 +142,8 @@ export const RegisteredPlayerGrid: React.FC<RegisteredPlayerGridProps> = ({
           onTokenCooldown={tokenCooldownPlayerIds.has(registration.player.id)}
           shieldActive={playerStats[registration.player.id]?.shieldActive || false}
           protectedStreakValue={playerStats[registration.player.id]?.protectedStreakValue || null}
+          injuryTokenActive={playerStats[registration.player.id]?.injuryTokenActive || false}
+          injuryStreakBonus={playerStats[registration.player.id]?.injuryStreakBonus ?? null}
         />
 
         {/* Selection odds badge and dots container - only for random zone */}

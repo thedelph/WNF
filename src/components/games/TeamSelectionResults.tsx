@@ -168,6 +168,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
             win_rate,
             unpaid_games,
             unpaid_games_modifier,
+            injury_token_active,
+            injury_streak_bonus,
             player_xp (
               xp,
               rank,
@@ -331,7 +333,9 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
               playstyleCategory: playstyleMatch?.category,
               playstyleRatingsCount: derivedAttrsMap[player.id]?.total_ratings_count || 0,
               recentGames: recentGamesMap?.[player.id] || 0,
-              gameParticipation: participationMap[player.id] || new Array(40).fill(null)
+              gameParticipation: participationMap[player.id] || new Array(40).fill(null),
+              injuryTokenActive: player.injury_token_active || false,
+              injuryStreakBonus: player.injury_streak_bonus ?? null
             }
           };
         }, {});
@@ -445,6 +449,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       gameParticipation={playerStats[player.id]?.gameParticipation || new Array(40).fill(null)}
                       shieldActive={playerStats[player.id]?.shieldActive || false}
                       protectedStreakValue={playerStats[player.id]?.protectedStreakValue || null}
+                      injuryTokenActive={playerStats[player.id]?.injuryTokenActive || false}
+                      injuryStreakBonus={playerStats[player.id]?.injuryStreakBonus ?? null}
                     />
                   </motion.div>
                 ))}
@@ -503,6 +509,8 @@ export const TeamSelectionResults: React.FC<TeamSelectionResultsProps> = ({ game
                       gameParticipation={playerStats[player.id]?.gameParticipation || new Array(40).fill(null)}
                       shieldActive={playerStats[player.id]?.shieldActive || false}
                       protectedStreakValue={playerStats[player.id]?.protectedStreakValue || null}
+                      injuryTokenActive={playerStats[player.id]?.injuryTokenActive || false}
+                      injuryStreakBonus={playerStats[player.id]?.injuryStreakBonus ?? null}
                     />
                   </motion.div>
                 ))}

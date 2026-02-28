@@ -33,6 +33,7 @@ interface PlayerStats {
   protectedStreakValue: number | null;
   injuryTokenActive: boolean;
   injuryReturnStreak: number | null;
+  injuryStreakBonus: number | null;
 }
 
 interface UseGameRegistrationStatsReturn {
@@ -89,6 +90,7 @@ export const useGameRegistrationStats = (
             protected_streak_value,
             injury_token_active,
             injury_return_streak,
+            injury_streak_bonus,
             player_xp (
               xp,
               rank,
@@ -386,7 +388,8 @@ export const useGameRegistrationStats = (
               shieldActive: player.shield_active || false,
               protectedStreakValue: player.protected_streak_value || null,
               injuryTokenActive: player.injury_token_active || false,
-              injuryReturnStreak: player.injury_return_streak || null
+              injuryReturnStreak: player.injury_return_streak || null,
+              injuryStreakBonus: player.injury_streak_bonus ?? null
             }
           };
         }, {});
