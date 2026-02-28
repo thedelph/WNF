@@ -55,6 +55,7 @@ export const usePlayerGrid = () => {
               injury_token_active,
               injury_original_streak,
               injury_return_streak,
+              injury_streak_bonus,
               player_xp (
                 xp,
                 rank,
@@ -133,6 +134,7 @@ export const usePlayerGrid = () => {
           injury_token_active: boolean | null;
           injury_original_streak: number | null;
           injury_return_streak: number | null;
+          injury_streak_bonus: number | null;
           player_xp: {
             xp: number;
             rank: number;
@@ -349,6 +351,7 @@ export const usePlayerGrid = () => {
             injuryTokenActive: player.injury_token_active || false,
             injuryOriginalStreak: player.injury_original_streak || null,
             injuryReturnStreak: player.injury_return_streak || null,
+            injuryStreakBonus: player.injury_streak_bonus ?? null,
             recentGames: recentGamesMap[player.id] || 0,
             gameParticipation: recentGamesParticipationMap[player.id] || new Array<'selected' | 'reserve' | 'dropped_out' | null>(40).fill(null)
           };

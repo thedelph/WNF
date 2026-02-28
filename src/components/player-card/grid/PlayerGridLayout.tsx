@@ -71,6 +71,7 @@ export const PlayerGridLayout: React.FC<LayoutProps> = ({ players }) => {
               injuryTokenActive={player.injuryTokenActive}
               injuryOriginalStreak={player.injuryOriginalStreak}
               injuryReturnStreak={player.injuryReturnStreak}
+              injuryStreakBonus={player.injuryStreakBonus}
               recentGames={player.recentGames}
               gameParticipation={player.gameParticipation}
             />

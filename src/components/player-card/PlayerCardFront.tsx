@@ -37,6 +37,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   injuryTokenActive?: boolean,
   injuryOriginalStreak?: number | null,
   injuryReturnStreak?: number | null,
+  injuryStreakBonus?: number | null,
   recentGames?: number,
   gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>, // Array of 40 elements showing participation status in each of the last 40 games
   onTokenCooldown?: boolean,
@@ -77,6 +78,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
   injuryTokenActive = false,
   injuryOriginalStreak = null,
   injuryReturnStreak = null,
+  injuryStreakBonus = null,
   recentGames = 0,
   gameParticipation = new Array(40).fill(null),
   onTokenCooldown = false,
@@ -348,6 +350,7 @@ export const PlayerCardFront: React.FC<PlayerCardProps & {
         injuryTokenActive={injuryTokenActive}
         injuryOriginalStreak={injuryOriginalStreak}
         injuryReturnStreak={injuryReturnStreak}
+        injuryStreakBonus={injuryStreakBonus}
       />
 
       <div className="mt-auto">

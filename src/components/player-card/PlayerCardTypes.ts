@@ -43,6 +43,7 @@ export interface PlayerCardProps {
   injuryTokenActive?: boolean // Whether player is injured
   injuryOriginalStreak?: number | null // Original streak before injury
   injuryReturnStreak?: number | null // Streak value when returning
+  injuryStreakBonus?: number | null // Bonus games added to streak from injury return
   recentGames?: number // Number of games played in last 40 completed games (XP-relevant window)
   gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null> // Array of 40 elements showing participation status in each of the last 40 games (index 0 = oldest, 39 = most recent)
 }
@@ -75,6 +76,7 @@ export interface PlayerCardModifiersProps {
   injuryTokenActive?: boolean // Whether player is injured
   injuryOriginalStreak?: number | null // Original streak before injury
   injuryReturnStreak?: number | null // Streak value when returning
+  injuryStreakBonus?: number | null // Bonus games added to streak from injury return
 }
 
 export interface PlayerCardStatsProps {

@@ -277,6 +277,7 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
             shield_tokens_available,
             injury_token_active,
             injury_return_streak,
+            injury_streak_bonus,
             player_xp (
               xp,
               rank,
@@ -441,7 +442,8 @@ export const PlayerSelectionResults: React.FC<PlayerSelectionResultsProps> = ({ 
               protectedStreakValue: player.protected_streak_value || null,
               shieldTokensAvailable: player.shield_tokens_available || 0,
               injuryTokenActive: player.injury_token_active || false,
-              injuryReturnStreak: player.injury_return_streak || null
+              injuryReturnStreak: player.injury_return_streak || null,
+              injuryStreakBonus: player.injury_streak_bonus ?? null
             }
           };
         }, {});

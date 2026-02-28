@@ -52,6 +52,7 @@ interface PlayerCardProps {
   injuryTokenActive?: boolean
   injuryOriginalStreak?: number | null
   injuryReturnStreak?: number | null
+  injuryStreakBonus?: number | null
   recentGames?: number
   gameParticipation?: Array<'selected' | 'reserve' | 'dropped_out' | null>
   onTokenCooldown?: boolean
@@ -99,6 +100,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   injuryTokenActive = false,
   injuryOriginalStreak = null,
   injuryReturnStreak = null,
+  injuryStreakBonus = null,
   recentGames = 0,
   gameParticipation = new Array(40).fill(null),
   onTokenCooldown = false,
@@ -192,6 +194,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               injuryTokenActive={injuryTokenActive}
               injuryOriginalStreak={injuryOriginalStreak}
               injuryReturnStreak={injuryReturnStreak}
+              injuryStreakBonus={injuryStreakBonus}
               recentGames={recentGames}
               gameParticipation={gameParticipation}
               onTokenCooldown={onTokenCooldown}

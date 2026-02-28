@@ -727,6 +727,70 @@ All AFTER UPDATE on `games`, alphabetical within same timing/orientation:
 
 ---
 
+---
+
+## "Back from Injury" Player Card Indicator (February 2026)
+
+### Problem
+
+When a player returns from injury, their `current_streak` includes the `injury_streak_bonus` (e.g., 3 natural games + 7 bonus = 10 game streak). Other players see "10 Game Streak" with no explanation and are confused about why someone who missed several games has a high streak.
+
+### Solution
+
+Added a visual "Back from Injury" indicator on the player card streak display. When `injury_streak_bonus > 0` AND `injury_token_active = false` (player has returned from injury), the streak badge shows:
+
+- **Amber/green gradient** background (visually distinct from normal green streak and active amber injury badge)
+- **Bandage icon** (🩹) alongside the flame icon
+- **Subtitle**: "Back from injury (+N bonus)" showing the bonus portion
+- **Tooltip**: Full context about the bonus and natural streak
+
+### Visual Comparison
+
+**Normal streak:**
+```
+🔥 10 Game Streak                    +55%
+```
+
+**Injury return streak:**
+```
+🔥🩹 10 Game Streak                  +55%
+    Back from injury (+7 bonus)
+```
+
+**Active injury (unchanged):**
+```
+🩹 Injured                           ↩ +49%
+```
+
+### Data Flow
+
+1. `injury_streak_bonus` column fetched from `players` table via `usePlayerGrid.ts` and `PlayerSelectionResults.tsx`
+2. Mapped to `injuryStreakBonus` prop through `PlayerCardTypes.ts` → `PlayerCard.tsx` → `PlayerCardFront.tsx` → `PlayerCardModifiers.tsx`
+3. Display logic in `PlayerCardModifiers.tsx`: When `injuryStreakBonus > 0 && !injuryTokenActive`, show the injury return variant instead of the normal green streak
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `PlayerCardTypes.ts` | Added `injuryStreakBonus` to `PlayerCardProps` and `PlayerCardModifiersProps` |
+| `usePlayerGrid.ts` | Fetch `injury_streak_bonus` from DB, map to `injuryStreakBonus` |
+| `PlayerSelectionResults.tsx` | Fetch `injury_streak_bonus` from DB, map to `injuryStreakBonus` |
+| `PlayerCard.tsx` | Pass `injuryStreakBonus` prop through |
+| `PlayerCardFront.tsx` | Pass `injuryStreakBonus` to `PlayerCardModifiers` |
+| `PlayerCardModifiers.tsx` | Render injury return variant when bonus active |
+| `PlayerGridLayout.tsx` | Pass `injuryStreakBonus` to `PlayerCard` |
+
+### Bonus Lifecycle (Display Perspective)
+
+| State | `injuryTokenActive` | `injuryStreakBonus` | Display |
+|-------|---------------------|---------------------|---------|
+| Not injured | `false` | `null` or `0` | Normal green streak |
+| On injury reserve | `true` | `null` | Amber "Injured" badge |
+| Returned from injury | `false` | `> 0` | Amber/green "Back from injury" |
+| Streak broken after return | `false` | `null` (cleared) | No streak shown |
+
+---
+
 *Document created: January 2026*
-*Last updated: February 12, 2026*
-*Status: ✅ Implemented (return processing fixed Feb 2026)*
+*Last updated: February 28, 2026*
+*Status: ✅ Implemented (return processing fixed Feb 2026, player card indicator added Feb 2026)*

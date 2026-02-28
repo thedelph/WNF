@@ -32,6 +32,7 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
   injuryTokenActive = false,
   injuryOriginalStreak = null,
   injuryReturnStreak = null,
+  injuryStreakBonus = null,
 }) => {
   const { player } = useUser()
   const [showShieldTooltip, setShowShieldTooltip] = useState(false)
@@ -208,19 +209,43 @@ export const PlayerCardModifiers: React.FC<PlayerCardModifiersProps> = ({
               </motion.div>
             </Tooltip>
           ) : currentStreak > 0 ? (
-            <motion.div
-              className="flex justify-between items-center rounded-lg p-2 bg-green-500/20"
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-            >
-              <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4" />
-                <span className="text-sm font-semibold">{currentStreak} Game Streak</span>
-              </div>
-              <span className="text-sm font-bold">
-                +{(streakModifier * 100).toFixed(0)}%
-              </span>
-            </motion.div>
+            !injuryTokenActive && injuryStreakBonus != null && injuryStreakBonus > 0 ? (
+              <Tooltip content={`Returned from injury with a ${injuryStreakBonus}-game streak bonus. Natural streak: ${currentStreak - injuryStreakBonus} games.`}>
+                <motion.div
+                  className="rounded-lg p-2 bg-gradient-to-r from-amber-500/20 to-green-500/20 border border-amber-400/30"
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Flame className="w-4 h-4" />
+                      <span>🩹</span>
+                      <span className="text-sm font-semibold">{currentStreak} Game Streak</span>
+                    </div>
+                    <span className="text-sm font-bold">
+                      +{(streakModifier * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="text-xs text-amber-200/80 mt-1 ml-6">
+                    Back from injury (+{injuryStreakBonus} bonus)
+                  </div>
+                </motion.div>
+              </Tooltip>
+            ) : (
+              <motion.div
+                className="flex justify-between items-center rounded-lg p-2 bg-green-500/20"
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+              >
+                <div className="flex items-center gap-2">
+                  <Flame className="w-4 h-4" />
+                  <span className="text-sm font-semibold">{currentStreak} Game Streak</span>
+                </div>
+                <span className="text-sm font-bold">
+                  +{(streakModifier * 100).toFixed(0)}%
+                </span>
+              </motion.div>
+            )
           ) : null}
 
           {/* Mobile-only expanded tooltip - positioned below the streak bonus */}
